@@ -1,0 +1,25 @@
+﻿@namespace App.Pages.Blazors
+@page "/Radzens"
+@using Radzen.Blazor
+@using Radzen
+
+
+开源 Blazor 控件库，样式很漂亮
+
+<a href="https://blazor.radzen.com/get-started">Radzen blazor controls</a>
+
+
+<div class="row">
+    <div class="col-md-6">
+        <RadzenButton Text="Button" Icon="account_circle" Style="margin-bottom: 20px; width: 150px" />
+        <RadzenSplitButton Text="SplitButton" Style="margin-bottom: 20px;">
+            <ChildContent>
+                <RadzenSplitButtonItem Text="Item1" Value="1" />
+                <RadzenSplitButtonItem Text="Item2" Value="2" />
+            </ChildContent>
+        </RadzenSplitButton>
+    </div>
+</div>
+
+@code {
+}

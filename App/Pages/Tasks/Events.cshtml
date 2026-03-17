@@ -1,0 +1,30 @@
+@page
+@model App.Pages.OA.EventsModel
+@{
+    ViewData["Title"] = "事件管理";
+}
+
+@section body {
+    <EleTable Title="事件" FormPage="EventForm" EnableBatch="true" >
+        <Toolbar>
+            <EleInput For="Item.Title" Width="200px" Label="标题" LabelWidth="60px"></EleInput>
+            <EleSelect For="Item.TypeId" Width="150px" Label="类别" LabelWidth="60px" Items="Model.EventTypes" Clearable="true"></EleSelect>
+            <div class="flex w-80">
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
+                <EleButton Type="Info" Click="navigateTo('/OA/EventTypes')" Icon="Setting" VPower="EventTypeEdit">类别管理</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
+            </div>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleOpColumn UPower="EventEdit" DPower="EventDelete" Width="100" Fixed="right"></EleOpColumn>
+            <EleColumn For="Item.Title" Label="标题" Link="true" MinWidth="200" Sortable="true"></EleColumn>
+            <EleColumn For="Item.Type.Name" Label="类别" Width="100"></EleColumn>
+            <EleColumn For="Item.TriggleDt" Label="时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.Org.Name" Label="组织" Width="120"></EleColumn>
+            <EleColumn For="Item.Publisher.Name" Label="发布人" Width="100"></EleColumn>
+            <EleColumn For="Item.AllowComment" Label="允许评论" Width="80" Format="@ColumnFormat.Switch"></EleColumn>
+        </Columns>
+    </EleTable>
+}

@@ -1,0 +1,14 @@
+@page
+@model App.Pages.OA.ArticleDirFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "文档目录信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleTreeSelect For="Item.ParentId" Label="上级目录" Items="Model.CategoryTree" Clearable="true"></EleTreeSelect>
+        <EleNumber For="Item.SortId" Label="排序"></EleNumber>
+    </EleForm>
+}

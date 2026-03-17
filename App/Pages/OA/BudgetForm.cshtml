@@ -1,0 +1,20 @@
+@page
+@model App.Pages.OA.BudgetFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "预算信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleNumber For="Item.Year" Label="年份" Required="true" Precision="0" Step="1"></EleNumber>
+        <EleSelect For="Item.TypeId" Label="分类" Items="Model.BudgetTypes" Required="true"></EleSelect>
+        <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Required="true"></EleTreeSelect>
+        <EleInput For="Item.Company" Label="厂商"></EleInput>
+        <EleInput For="Item.Project" Label="关联项目"></EleInput>
+        <EleDatePicker For="Item.PayDt" Label="支付日期"></EleDatePicker>
+        <EleSelect For="Item.PayStatus" Label="支付状态"></EleSelect>
+        <EleInput For="Item.Remark" Label="备注" Rows="3" FillRow="true"></EleInput>
+    </EleForm>
+}

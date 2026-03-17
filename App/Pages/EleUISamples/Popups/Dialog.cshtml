@@ -1,0 +1,110 @@
+@page
+@model App.Pages.EleUISamples.DialogModel
+
+@section body {
+    <div id="app" class="p-4 space-y-4">
+        <EleCard Title="EleDialog 测试页" class="box-card">
+            <Column Gap="4">
+                <Row>
+                    <EleButton Type="Primary" VClick="baseVisible = true">打开基础对话框</EleButton>
+                    <EleButton Type="Success" VClick="centerVisible = true">打开居中对话框</EleButton>
+                    <EleButton Type="Warning" VClick="fullscreenVisible = true">打开全屏对话框</EleButton>
+                    <EleButton Type="Info" VClick="closeHandlerVisible = true">测试关闭回调</EleButton>
+                </Row>
+
+                <div class="text-sm text-gray-500">
+                    支持标题、宽度、拖拽、居中、全屏、Header/Content/Footer 插槽、Radius、Shadow 和关闭回调。
+                </div>
+
+                <div class="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600 space-y-1">
+                    <div>客户端关闭次数：{{ closeClientCount }}</div>
+                    <div>最近关闭动作：{{ lastCloseAction || '暂无' }}</div>
+                </div>
+            </Column>
+        </EleCard>
+
+        <EleDialog VModel="baseVisible" Title="基础对话框" Width="560px" Top="10vh" Draggable="true" Radius="18px" Shadow="0 24px 60px rgba(15, 23, 42, 0.24)">
+            <Content>
+                <Column Gap="2" class="py-1">
+                    <p>这是基础对话框内容区域。</p>
+                    <p class="text-sm text-gray-500">该示例演示 Radius 和 Shadow 的视觉效果，可在这里放置表单、提示文本或任意组件。</p>
+                </Column>
+            </Content>
+            <Footer Align="End">
+                <EleButton VClick="baseVisible = false">取消</EleButton>
+                <EleButton Type="Primary" VClick="baseVisible = false">确定</EleButton>
+            </Footer>
+        </EleDialog>
+
+        <EleDialog VModel="centerVisible" Title="居中对话框" Width="520px" Center="true" AlignCenter="true" CloseOnClickModal="false" Draggable="true" Radius="24px" Shadow="0 30px 80px rgba(30, 41, 59, 0.28)">
+            <Content>
+                <div class="py-2 space-y-2">
+                    <p>该示例演示居中布局与更明显的圆角、阴影。</p>
+                    <p class="text-sm text-gray-500">点击遮罩不会关闭（CloseOnClickModal=false）。</p>
+                </div>
+            </Content>
+            <Footer Align="Center">
+                <EleButton Type="Primary" VClick="centerVisible = false">我知道了</EleButton>
+            </Footer>
+        </EleDialog>
+
+        <EleDialog VModel="fullscreenVisible" Title="全屏对话框" Fullscreen="true" ShowClose="true" DestroyOnClose="true">
+            <Content>
+                <div class="h-[70vh] overflow-auto rounded border border-slate-200 p-4">
+                    <Column Gap="3">
+                        <h3 class="text-lg font-semibold">全屏内容区域</h3>
+                        <p>这里可承载更复杂的配置页、工作流页面或表格编辑器。</p>
+                        <p class="text-sm text-gray-500">关闭后内容节点会销毁并在下次打开时重建。</p>
+                    </Column>
+                </div>
+            </Content>
+            <Footer Align="Center">
+                <EleButton Type="Primary" VClick="fullscreenVisible = false">关闭</EleButton>
+            </Footer>
+        </EleDialog>
+
+        <EleDialog VModel="closeHandlerVisible" Title="关闭回调测试" Width="640px" Radius="20px" Shadow="0 32px 90px rgba(2, 8, 23, 0.28)" ClientCloseHandler="dialogClosedClientHandler" ServerCloseHandler="DialogClosed">
+            <Content>
+                <Column Gap="3" class="py-1">
+                    <div class="rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+                        关闭方式包括：右上角关闭、遮罩关闭、Footer 按钮关闭。关闭完成后会同时触发客户端和服务端回调。
+                    </div>
+
+                    <div class="rounded border border-slate-200 p-3 text-sm text-slate-600 space-y-1">
+                        <div>客户端关闭次数：{{ closeClientCount }}</div>
+                        <div>最近关闭动作：{{ lastCloseAction || '暂无' }}</div>
+                    </div>
+                </Column>
+            </Content>
+            <Footer Align="End">
+                <EleButton VClick="closeHandlerVisible = false">本地关闭</EleButton>
+                <EleButton Type="Primary" VClick="closeHandlerVisible = false">确认关闭</EleButton>
+            </Footer>
+        </EleDialog>
+    </div>
+}
+
+@section script {
+    <script>
+        const { ref } = Vue;
+        window.DialogModel = {
+            baseVisible: ref(false),
+            centerVisible: ref(false),
+            fullscreenVisible: ref(false),
+            closeHandlerVisible: ref(false),
+            closeClientCount: ref(0),
+            lastCloseAction: ref('')
+        };
+
+        window.dialogClosedClientHandler = function(action) {
+            window.DialogModel.closeClientCount.value += 1;
+            window.DialogModel.lastCloseAction.value = action || 'close';
+
+            if (typeof EleManager !== 'undefined' && typeof EleManager.notifyInfo === 'function') {
+                EleManager.notifyInfo('客户端回调: Dialog 已关闭, action=' + (action || 'close'));
+            }
+        };
+    </script>
+
+    <EleApp Expose="DialogModel" />
+}

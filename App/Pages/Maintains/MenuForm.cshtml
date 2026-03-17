@@ -1,0 +1,24 @@
+@page
+@using Newtonsoft.Json
+@model App.Pages.Maintains.MenuFormModel
+@{
+    ViewData["Title"] = "菜单表单";
+}
+
+@section body {
+    <EleForm LabelWidth="100px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleTreeSelect For="Item.ParentId" Label="上级菜单" Api="/httpapi/auths/GetMenuTree"  Clearable="true" CheckStrictly="true"></EleTreeSelect>        
+        <EleInput For="Item.NavigateUrl" Label="链接"></EleInput>
+        <EleSelect For="Item.Power" Label="权限" Items="Model.PowerOptions" Clearable="true" Filterable="true"></EleSelect>
+        <EleIconSelect For="Item.ImageUrl" Label="图标" Multi="false" Popup="/Shared/IconSelector" TextProp="ImageUrl"></EleIconSelect>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
+        <EleSelect For="Item.Target" Label="目标" AllowCreate="true" Filterable="true" Items="@("['_blank', '_top']")" Placeholder="_blank 或 _top"></EleSelect>
+        <EleSwitch For="Item.Visible" Label="是否可见"></EleSwitch>
+        <EleSwitch For="Item.Expanded" Label="默认展开"></EleSwitch>
+        <EleSwitch For="Item.Fixed" Label="固底"></EleSwitch>
+    </EleForm>
+
+
+}
+

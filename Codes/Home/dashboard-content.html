@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Content</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./tailwindConfig.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- colors are loaded from /Design/colors.js -->
+</head>
+<body class="bg-slate-100">
+    <div class="p-6 overflow-auto h-screen">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-slate-900">Dashboard</h1>
+            <p class="text-slate-600 mt-2">欢迎回来！这是您的主仪表板。</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Stat Card 1 -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-slate-600 text-sm font-semibold">活跃用户</h3>
+                    <i class="fas fa-users text-primary-600 text-xl"></i>
+                </div>
+                <div class="text-3xl font-bold text-slate-900">2,543</div>
+                <p class="text-green-600 text-xs mt-2">
+                    <i class="fas fa-arrow-up"></i> +12.5% 较上月
+                </p>
+            </div>
+
+            <!-- Stat Card 2 -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-slate-600 text-sm font-semibold">总收入</h3>
+                    <i class="fas fa-dollar-sign text-green-600 text-xl"></i>
+                </div>
+                <div class="text-3xl font-bold text-slate-900">$45,231.89</div>
+                <p class="text-green-600 text-xs mt-2">
+                    <i class="fas fa-arrow-up"></i> +8.2% 较上月
+                </p>
+            </div>
+
+            <!-- Stat Card 3 -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-slate-600 text-sm font-semibold">转化率</h3>
+                    <i class="fas fa-chart-pie text-primary-600 text-xl"></i>
+                </div>
+                <div class="text-3xl font-bold text-slate-900">3.24%</div>
+                <p class="text-red-600 text-xs mt-2">
+                    <i class="fas fa-arrow-down"></i> -2.4% 较上月
+                </p>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Revenue Chart -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                <h3 class="text-lg font-semibold text-slate-900 mb-4">收入概览</h3>
+                <div class="bg-slate-50 rounded h-64 flex items-center justify-center text-slate-500">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line text-4xl mb-2"></i>
+                        <p>📊 图表可视化</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Growth Chart -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                <h3 class="text-lg font-semibold text-slate-900 mb-4">用户增长</h3>
+                <div class="bg-slate-50 rounded h-64 flex items-center justify-center text-slate-500">
+                    <div class="text-center">
+                        <i class="fas fa-chart-bar text-4xl mb-2"></i>
+                        <p>📈 图表可视化</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+            <h3 class="text-lg font-semibold text-slate-900 mb-4">最近交易</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-slate-200">
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-slate-600">ID</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-slate-600">用户</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-slate-600">金额</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-slate-600">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-slate-100 hover:bg-slate-50">
+                            <td class="py-3 px-4 text-sm text-slate-900">TXN001</td>
+                            <td class="py-3 px-4 text-sm text-slate-600">张三</td>
+                            <td class="py-3 px-4 text-sm text-slate-900">$1,250.00</td>
+                            <td class="py-3 px-4 text-sm">
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">已完成</span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-slate-100 hover:bg-slate-50">
+                            <td class="py-3 px-4 text-sm text-slate-900">TXN002</td>
+                            <td class="py-3 px-4 text-sm text-slate-600">李四</td>
+                            <td class="py-3 px-4 text-sm text-slate-900">$850.50</td>
+                            <td class="py-3 px-4 text-sm">
+                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">处理中</span>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="py-3 px-4 text-sm text-slate-900">TXN003</td>
+                            <td class="py-3 px-4 text-sm text-slate-600">王五</td>
+                            <td class="py-3 px-4 text-sm text-slate-900">$2,100.00</td>
+                            <td class="py-3 px-4 text-sm">
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">已完成</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

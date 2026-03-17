@@ -1,0 +1,425 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.WinTitle</title>
+    <!-- Element Plus & Vue -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@@element-plus/icons-vue"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-image: url("/images/bg_tech.jpg");
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .login-card {
+            width: 400px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            padding-bottom: 20px;
+        }
+        .login-header {
+            background: transparent;
+            color: #303133;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .login-body {
+            padding: 10px 40px 30px;
+        }
+        .copyright {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            font-size: 12px;
+            pointer-events: none;
+        }
+        /* Slider CSS - Beautified */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 42px;
+            background: #c0c4cc;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            border: 1px solid #dcdfe6;
+            user-select: none;
+            overflow: hidden;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        .slider-container:hover {
+            border-color: #c0c4cc;
+        }
+        .slider-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: #67c23a;
+            border-radius: 4px 0 0 4px;
+            z-index: 1;
+            transition: background-color 0.3s;
+        }
+        .slider-bg.success {
+            background-color: #67c23a;
+        }
+        .slider-bg.fail {
+            background-color: #f56c6c;
+        }
+        .slider-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #909399;
+            z-index: 2;
+            pointer-events: none; /* Let clicks pass through */
+            background: -webkit-linear-gradient(left, #909399, #303133 50%, #909399);
+            -webkit-background-clip: text;
+            background-size: 200% 100%;
+            animation: shine 3s infinite linear;
+        }
+        .slider-text.text-success {
+            color: #fff;
+            background: none;
+            z-index: 3;
+            font-weight: bold;
+            /*text-shadow: 0 1px 2px rgba(0,0,0,0.1);*/
+        }
+        .slider-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 42px;
+            height: 40px; /* height - 2 borders */
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            cursor: grab;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+            transition: background 0.2s, transform 0.1s;
+            color: #606266;
+        }
+        .slider-btn:active {
+            cursor: grabbing;
+            background: #f2f6fc;
+        }
+        .slider-btn:hover {
+            color: #409EFF;
+        }
+        .slider-btn.success {
+            color: #67c23a;
+            cursor: default;
+        }
+
+        @@keyframes shine {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+        /* 示例：shine-text 通常用于实现文字发光/渐变动画效果 */
+        .shine-text {
+            background: linear-gradient(to right, #ccc, #fff, #ccc);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shine 2s linear infinite;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="login-card">
+            <div class="login-header">
+                @Model.WinTitle
+            </div>
+            <div class="login-body">
+                @Html.AntiForgeryToken()
+                <el-form :model="form" :rules="rules" ref="formRef" label-width="0">
+                    <el-form-item prop="userName">
+                        <el-input v-model="form.userName" placeholder="账户" prefix-icon="User" size="large" />
+                    </el-form-item>
+                    <el-form-item prop="password">
+                        <el-input v-model="form.password" type="password" placeholder="密码" prefix-icon="Lock" size="large" show-password />
+                    </el-form-item>
+                    
+                    <div class="slider-container" ref="sliderContainer" @@mouseleave="onMouseLeave">
+                        <div class="slider-bg" :class="{ 'success': isVerified, 'fail': !isVerified && isDragging }" :style="{ width: sliderX + 'px' }"></div>
+                        <!-- Slider Text -->
+                        <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center text-sm z-20 pointer-events-none select-none slider-text"
+                             :class="[isVerified ? 'text-white z-30' : 'text-gray-900 shine-text']">
+                            {{ isVerified ? '验证通过' : '请按住滑块，拖动到最右边' }}
+                        </div>
+                        <div class="slider-btn" :class="{ 'success': isVerified }" :style="{ left: sliderX + 'px' }" @@mousedown="startDrag" @@touchstart="startDrag">
+                            <el-icon v-if="isVerified"><Check /></el-icon>
+                            <el-icon v-else><ArrowRight /></el-icon>
+                        </div>
+                    </div>
+
+                    <el-button type="primary" size="large" :loading="loading" @@click="handleLogin" style="width: 100%; margin-top: 10px;">
+                        登录
+                    </el-button>
+                </el-form>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <div>COPYRIGHT 2026©</div>
+            <div>@Model.Site?.BeiAnNo</div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, reactive, ref } = Vue;
+        const { ElMessage } = ElementPlus;
+
+        const app = createApp({
+            setup() {
+                const form = reactive({
+                    userName: 'admin',
+                    password: ''
+                });
+                
+                const rules = {
+                    userName: [{ required: true, message: '请输入账户', trigger: 'blur' }],
+                    password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+                };
+
+                const formRef = ref(null);
+                const loading = ref(false);
+                
+                // Slider Logic
+                const isVerified = ref(false);
+                const sliderX = ref(0);
+                const sliderContainer = ref(null);
+                const isDragging = ref(false);
+                let startX = 0;
+                let startTime = 0;
+                let points = [];
+
+                const startDrag = (e) => {
+                    if (isVerified.value) return;
+                    isDragging.value = true;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    startX = clientX - sliderX.value;
+                    startTime = Date.now();
+                    points = [{ x: clientX, y: clientY, t: 0 }]; // Reset points
+                    
+                    document.addEventListener('mousemove', onDrag);
+                    document.addEventListener('mouseup', stopDrag);
+                    document.addEventListener('touchmove', onDrag);
+                    document.addEventListener('touchend', stopDrag);
+                    
+                    document.body.classList.add('select-none');
+                };
+
+                const onDrag = (e) => {
+                    if (!isDragging.value) return;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    const containerWidth = sliderContainer.value.offsetWidth;
+                    const btnWidth = 40;
+                    const maxX = containerWidth - btnWidth;
+                    
+                    let x = clientX - startX; // Relative to initial click
+                    
+                    if (x < 0) x = 0;
+                    if (x > maxX) x = maxX;
+                    
+                    sliderX.value = x;
+                    
+                    // Record point (throttle if needed, but for now every move is ok for small duration)
+                    points.push({
+                        x: Math.round(clientX),
+                        y: Math.round(clientY),
+                        t: Date.now() - startTime
+                    });
+
+                    if (x >= maxX) {
+                        verifySlider();
+                        stopDrag();
+                    }
+                };
+
+                const verifySlider = async () => {
+                    try {
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                        const duration = Date.now() - startTime;
+                        
+                        const response = await fetch('/Login?handler=CheckSlider', {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': token,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                duration: duration,
+                                points: points
+                            })
+                        });
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const result = await response.json();
+                        if (result.code === 0) {
+                            isVerified.value = true;
+                            sliderX.value = sliderContainer.value.offsetWidth - 42; // Lock at end
+                        } else {
+                            console.error('Slider verify failed:', result.msg);
+                            resetSlider();
+                        }
+                    } catch (e) {
+                        console.error('Slider error:', e);
+                        resetSlider();
+                        ElMessage.error('验证失败，请重试');
+                    }
+                };
+
+                const resetSlider = () => {
+                    isVerified.value = false;
+                    sliderX.value = 0;
+                };
+
+                const stopDrag = () => {
+                    isDragging.value = false;
+                    document.removeEventListener('mousemove', onDrag);
+                    document.removeEventListener('mouseup', stopDrag);
+                    document.removeEventListener('touchmove', onDrag);
+                    document.removeEventListener('touchend', stopDrag);
+                    
+                    document.body.classList.remove('select-none');
+                    
+                    if (!isVerified.value) {
+                        // If verified, sliderX is locked by verifySlider success logic
+                        // If not yet verified (and not pending verification), reset
+                        // But wait, verifySlider is async. 
+                        // So we should only reset if x < maxX. 
+                        // If x >= maxX, verifySlider is running. We shouldn't reset immediately.
+                        // Let's rely on verifySlider to set success or reset.
+                        
+                        // However, stopDrag is called on mouseup. 
+                        // If user releases mouse BEFORE end, we reset.
+                        // If user releases mouse AT end, onDrag already called verifySlider.
+                        
+                        // We need to check if we are at the end position roughly.
+                        const containerWidth = sliderContainer.value.offsetWidth;
+                        const btnWidth = 42;
+                        if (sliderX.value < containerWidth - btnWidth) {
+                             sliderX.value = 0;
+                        }
+                    }
+                };
+
+                const onMouseLeave = () => {
+                    if (isDragging.value && !isVerified.value) {
+                        stopDrag();
+                        resetSlider();
+                    }
+                };
+
+                const handleLogin = async () => {
+                    if (!formRef.value) return;
+                    await formRef.value.validate(async (valid) => {
+                        if (valid) {
+                            if (!isVerified.value) {
+                                ElMessage.warning('请先完成滑块验证');
+                                return;
+                            }
+
+                            loading.value = true;
+                            try {
+                                const formData = new FormData();
+                                formData.append('userName', form.userName);
+                                formData.append('password', form.password);
+                                
+                                // Get AntiForgeryToken
+                                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                                const response = await fetch('/Login', {
+                                    method: 'POST',
+                                    headers: {
+                                        'RequestVerificationToken': token
+                                    },
+                                    body: formData
+                                });
+                                
+                                const result = await response.json();
+                                console.log('Login response:', result);
+                                if (result.code === 0) {
+                                    ElMessage.success('登录成功');
+                                    window.location.href = result.data.redirect;
+                                } else {
+                                    ElMessage.error(result.msg || '登录失败');
+                                    isVerified.value = false; // Reset slider on failure
+                                    sliderX.value = 0;
+                                }
+                            } catch (error) {
+                                ElMessage.error('网络错误');
+                            } finally {
+                                loading.value = false;
+                            }
+                        }
+                    });
+                };
+
+                return {
+                    form,
+                    rules,
+                    formRef,
+                    loading,
+                    handleLogin,
+                    // Slider
+                    sliderContainer,
+                    sliderX,
+                    isVerified,
+                    startDrag,
+                    onMouseLeave
+                };
+            }
+        });
+
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>

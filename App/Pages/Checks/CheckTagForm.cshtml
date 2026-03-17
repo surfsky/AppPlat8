@@ -1,0 +1,15 @@
+@page
+@using Newtonsoft.Json
+@model App.Pages.Checks.CheckTagFormModel
+@{
+    ViewData["Title"] = "菜单表单";
+}
+
+@section body {
+    <EleForm LabelWidth="100px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleTreeSelect For="Item.ParentId" Label="上级" Api="/httpapi/checks/GetCheckTagTree"></EleTreeSelect>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
+        <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+    </EleForm>
+}

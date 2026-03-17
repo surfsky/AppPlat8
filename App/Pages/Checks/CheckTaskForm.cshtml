@@ -1,0 +1,17 @@
+@page
+@model App.Pages.Checks.CheckTaskFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "检查任务信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="任务名称" Required="true"></EleInput>
+        <EleDatePicker For="Item.ExpireDt" Label="截止时间"></EleDatePicker>
+        <EleInput For="Item.Remark" Label="过滤条件" Rows="3" FillRow="true"></EleInput>
+        <EleLabel Label="承接组织" FillRow="true"></EleLabel>
+        <EleLabel Label="检查企业" FillRow="true"></EleLabel>
+        <EleLabel Label="检查表单" FillRow="true"></EleLabel>        
+    </EleForm>
+}

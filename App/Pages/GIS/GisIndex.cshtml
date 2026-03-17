@@ -1,0 +1,213 @@
+@page
+@model App.Pages.Gis.GisIndexModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>驾驶舱</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Mapbox GL JS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: #000; color: #fff; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .header-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0));
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .panel-left {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            bottom: 20px;
+            width: 300px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-right {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            bottom: 20px;
+            width: 300px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 4px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ade80;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="header-bar">
+        <h1 class="text-2xl font-bold tracking-wider text-blue-400">驾驶舱</h1>
+    </div>
+
+    <div class="panel-left">
+        <div class="glass-panel flex-1">
+            <h2 class="text-lg font-bold mb-4 border-l-4 border-blue-500 pl-2">实时监控</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="stat-card">
+                    <div class="stat-value">1,234</div>
+                    <div class="stat-label">今日访问</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">56</div>
+                    <div class="stat-label">异常报警</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">89%</div>
+                    <div class="stat-label">设备在线</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">12</div>
+                    <div class="stat-label">待处理</div>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <h3 class="text-md font-semibold mb-2">趋势分析</h3>
+                <div class="h-32 bg-gray-800/50 rounded flex items-end justify-between px-2 pb-2">
+                    <!-- Dummy Chart Bars -->
+                    <div class="w-4 bg-blue-500 h-[40%]"></div>
+                    <div class="w-4 bg-blue-500 h-[60%]"></div>
+                    <div class="w-4 bg-blue-500 h-[30%]"></div>
+                    <div class="w-4 bg-blue-500 h-[80%]"></div>
+                    <div class="w-4 bg-blue-500 h-[50%]"></div>
+                    <div class="w-4 bg-blue-500 h-[70%]"></div>
+                </div>
+            </div>
+        </div>
+        <div class="glass-panel h-1/3">
+            <h2 class="text-lg font-bold mb-4 border-l-4 border-yellow-500 pl-2">系统日志</h2>
+            <ul class="text-sm space-y-2 text-gray-300">
+                <li>[12:00] 系统启动成功</li>
+                <li>[12:05] 检测到新设备接入</li>
+                <li>[12:10] 数据同步完成</li>
+                <li>[12:15] 异常数据过滤</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="panel-right">
+        <div class="glass-panel h-1/2">
+            <h2 class="text-lg font-bold mb-4 border-l-4 border-green-500 pl-2">区域分布</h2>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-sm mb-1"><span>A区</span><span>85%</span></div>
+                    <div class="h-2 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-green-500 w-[85%]"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1"><span>B区</span><span>60%</span></div>
+                    <div class="h-2 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-yellow-500 w-[60%]"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1"><span>C区</span><span>40%</span></div>
+                    <div class="h-2 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-red-500 w-[40%]"></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="glass-panel flex-1">
+            <h2 class="text-lg font-bold mb-4 border-l-4 border-purple-500 pl-2">详细信息</h2>
+            <div id="info-content" class="text-gray-400 text-sm text-center pt-10">
+                点击地图标记查看详情
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = window.MAPBOX_ACCESS_TOKEN || 'YOUR_MAPBOX_ACCESS_TOKEN';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v10', // Dark theme
+            center: [120.1551, 30.2741], // Hangzhou
+            zoom: 11,
+            pitch: 45
+        });
+
+        map.on('load', () => {
+            // Fetch markers
+            fetch('?handler=Markers')
+                .then(response => response.json())
+                .then(res => {
+                    if (res.code === 0) {
+                        res.data.forEach(marker => {
+                            // Create a DOM element for the marker
+                            const el = document.createElement('div');
+                            el.className = 'marker';
+                            el.style.backgroundImage = 'url(https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png)';
+                            el.style.width = '32px';
+                            el.style.height = '32px';
+                            el.style.backgroundSize = '100%';
+                            el.style.cursor = 'pointer';
+
+                            el.addEventListener('click', () => {
+                                document.getElementById('info-content').innerHTML = `
+                                    <div class="text-left">
+                                        <h3 class="text-white text-lg font-bold">${marker.title}</h3>
+                                        <p class="mt-2">${marker.description}</p>
+                                        <p class="mt-1 text-gray-500">Lat: ${marker.lat.toFixed(4)}</p>
+                                        <p class="text-gray-500">Lng: ${marker.lng.toFixed(4)}</p>
+                                    </div>
+                                `;
+                            });
+
+                            new mapboxgl.Marker(el)
+                                .setLngLat([marker.lng, marker.lat])
+                                .addTo(map);
+                        });
+                    }
+                });
+        });
+    </script>
+</body>
+</html>

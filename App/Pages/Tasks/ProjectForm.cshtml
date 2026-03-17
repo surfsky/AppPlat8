@@ -1,0 +1,18 @@
+@page
+@model App.Pages.OA.ProjectFormModel
+@{
+    ViewData["Title"] = "项目信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.Alias" Label="简称"></EleInput>
+        <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree"  ></EleTreeSelect>
+        <EleInput For="Item.PersonInCharge" Label="责任人"></EleInput>
+        <EleInput For="Item.DevCompany" Label="开发厂商"></EleInput>
+        <EleInput For="Item.MaintCompany" Label="维护厂商"></EleInput>
+        <EleDatePicker For="Item.ContractDt" Label="合同时间"></EleDatePicker>
+        <EleNumber For="Item.Progress" Label="进度(%)" Precision="2" Step="0.01"></EleNumber>
+    </EleForm>
+}

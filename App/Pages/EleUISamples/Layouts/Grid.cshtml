@@ -1,0 +1,33 @@
+@page
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Grid 布局";
+}
+
+@section body {
+    <div class="p-4 space-y-6">
+        <EleCard Title="响应式 Grid（Cols=1, MiddleCols=2, LargeCols=4）" class="shadow-sm">
+            <Grid Cols="1" MiddleCols="2" LargeCols="4" Gap="4" MaxWidth="7xl" PaddingX="0">
+                <div class="rounded-lg border border-blue-100 bg-blue-50 p-6 text-center text-blue-700">卡片 1</div>
+                <div class="rounded-lg border border-blue-100 bg-blue-50 p-6 text-center text-blue-700">卡片 2</div>
+                <div class="rounded-lg border border-blue-100 bg-blue-50 p-6 text-center text-blue-700">卡片 3</div>
+                <div class="rounded-lg border border-blue-100 bg-blue-50 p-6 text-center text-blue-700">卡片 4</div>
+                <div class="rounded-lg border border-blue-100 bg-blue-50 p-6 text-center text-blue-700">卡片 5</div>
+            </Grid>
+        </EleCard>
+
+        <EleCard Title="多断点示例（Small/Middle/Large/XLarge）" class="shadow-sm">
+            <Grid Cols="1" SmallCols="2" MiddleCols="3" LargeCols="4" XLargeCols="6" Gap="3" MaxWidth="max-w-none" Center="false" PaddingX="0">
+                <div class="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-center text-emerald-700">1</div>
+                <div class="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-center text-emerald-700">2</div>
+                <div class="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-center text-emerald-700">3</div>
+                <div class="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-center text-emerald-700">4</div>
+                <div class="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-center text-emerald-700">5</div>
+                <div class="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-center text-emerald-700">6</div>
+                <div class="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-center text-emerald-700">7</div>
+            </Grid>
+        </EleCard>
+    </div>
+
+    <EleApp />
+}

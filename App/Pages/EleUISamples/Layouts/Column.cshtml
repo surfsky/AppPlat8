@@ -1,0 +1,46 @@
+@page
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Column 布局";
+}
+
+@section body {
+    <div class="p-4 space-y-6">
+        <EleCard Title="EleColumn 基础" class="shadow-sm">
+            <Column Gap="3" class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div class="rounded-md bg-white p-3 text-slate-700">第一行内容</div>
+                <div class="rounded-md bg-white p-3 text-slate-700">第二行内容</div>
+                <div class="rounded-md bg-white p-3 text-slate-700">第三行内容</div>
+            </Column>
+        </EleCard>
+
+        <EleCard Title="纵向对齐" class="shadow-sm">
+            <Row Gap="4">
+                <Column Items="start" Gap="2" class="h-[220px] w-full rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+                    <span class="font-semibold text-indigo-700">items-start</span>
+                    <EleButton Type="Primary">按钮</EleButton>
+                </Column>
+
+                <Column Items="center" Gap="2" class="h-[220px] w-full rounded-lg border border-cyan-100 bg-cyan-50 p-4">
+                    <span class="font-semibold text-cyan-700">items-center</span>
+                    <EleButton Type="Success">按钮</EleButton>
+                </Column>
+
+                <Column Items="end" Gap="2" class="h-[220px] w-full rounded-lg border border-rose-100 bg-rose-50 p-4">
+                    <span class="font-semibold text-rose-700">items-end</span>
+                    <EleButton Type="Danger">按钮</EleButton>
+                </Column>
+            </Row>
+        </EleCard>
+
+        <EleCard Title="反向排列" class="shadow-sm">
+            <Column Reverse="true" Gap="2" class="rounded-lg border border-amber-100 bg-amber-50 p-4">
+                <div class="rounded-md bg-white p-3 text-slate-700">A</div>
+                <div class="rounded-md bg-white p-3 text-slate-700">B</div>
+                <div class="rounded-md bg-white p-3 text-slate-700">C</div>
+            </Column>
+        </EleCard>
+    </div>
+
+    <EleApp />
+}

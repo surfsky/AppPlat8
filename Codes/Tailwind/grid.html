@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tailwind Grid 响应式布局</title>
+  <!-- 引入 Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-6">
+  <div class="max-w-7xl mx-auto">
+    <h3 class="text-xl font-bold mb-4">响应式 Grid 布局示例</h3>
+    
+    <!-- 核心 Grid 容器 -->
+    <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+      <!-- 子项 1 -->
+      <div class="p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+        <h4 class="font-semibold text-blue-600">卡片 1</h4>
+        <p class="text-gray-600 mt-2">小屏1列 / 中屏2列 / 大屏4列</p>
+      </div>
+      <!-- 子项 2 -->
+      <div class="p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+        <h4 class="font-semibold text-blue-600">卡片 2</h4>
+        <p class="text-gray-600 mt-2">自适应布局，无需手写媒体查询</p>
+      </div>
+      <!-- 子项 3 -->
+      <div class="p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+        <h4 class="font-semibold text-blue-600">卡片 3</h4>
+        <p class="text-gray-600 mt-2">Tailwind 断点自动适配</p>
+      </div>
+      <!-- 子项 4 -->
+      <div class="p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+        <h4 class="font-semibold text-blue-600">卡片 4</h4>
+        <p class="text-gray-600 mt-2">gap-4 控制间距</p>
+      </div>
+      <!-- 更多子项（验证自动换行） -->
+      <div class="p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">卡片 5</div>
+      <div class="p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">卡片 6</div>
+      <div class="p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">卡片 7</div>
+      <div class="p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">卡片 8</div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawer Resize Test</title>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Element Plus -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <script src="https://unpkg.com/element-plus"></script>
+    <!-- Tailwind (via CDN for test) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+        /* Fix drawer body padding to be 0 for full height content */
+        .el-drawer__body {
+            padding: 0 !important;
+            overflow: hidden !important; /* Prevent scrollbar if iframe matches size */
+        }
+        /* Make drawer visible for test without backdrop blocking everything? No, we use standard drawer */
+    </style>
+</head>
+<body>
+    <div id="app" class="h-full w-full bg-gray-100 flex items-center justify-center">
+        <el-button type="primary" @click="visible = true">Open Drawer</el-button>
+
+        <el-drawer
+            v-model="visible"
+            title="Test Drawer"
+            direction="rtl"
+            :size="drawerSize"
+            :with-header="true"
+            :destroy-on-close="false"
+            :close-on-click-modal="false"
+        >
+            <template #header>
+                <div class="flex items-center justify-between px-4">
+                    <span>Test Drawer Header</span>
+                </div>
+            </template>
+            
+            <!-- Resize Handle -->
+            <!-- Note: z-index 10000, negative margin to center on edge -->
+            <div 
+                class="absolute top-0 left-0 bottom-0 w-[10px] -ml-[5px] cursor-col-resize z-[10000] hover:bg-blue-400 hover:opacity-50 transition-opacity bg-red-500 opacity-20"
+                @mousedown="startResize"
+                title="Drag to resize"
+            ></div>
+
+            <div class="h-full w-full bg-white relative">
+                <!-- Iframe mock -->
+                <iframe src="about:blank" class="w-full h-full border-0"></iframe>
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span class="text-2xl text-gray-300">Iframe Content</span>
+                </div>
+            </div>
+        </el-drawer>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+
+        const app = createApp({
+            setup() {
+                const visible = ref(true);
+                const drawerSize = ref('500px');
+                const isResizing = ref(false);
+
+                const startResize = (e) => {
+                    console.log('startResize triggered', e);
+                    e.preventDefault();
+                    isResizing.value = true;
+                    
+                    const startX = e.clientX;
+                    // Find drawer element
+                    const drawerEl = e.target.closest('.el-drawer');
+                    console.log('drawerEl:', drawerEl);
+                    const startWidth = drawerEl ? drawerEl.offsetWidth : 500;
+                    console.log('startWidth:', startWidth);
+
+                    // Overlay
+                    const overlay = document.createElement('div');
+                    overlay.style.position = 'fixed';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.width = '100vw';
+                    overlay.style.height = '100vh';
+                    overlay.style.zIndex = '99999';
+                    overlay.style.cursor = 'col-resize';
+                    overlay.style.backgroundColor = 'rgba(0,0,0,0.1)'; // Slight color to see it
+                    document.body.appendChild(overlay);
+
+                    const doResize = (moveEvent) => {
+                        if (!isResizing.value) return;
+                        // RTL: moving left (smaller X) increases width
+                        const offset = startX - moveEvent.clientX;
+                        const newWidth = startWidth + offset;
+                        console.log('Resizing:', newWidth);
+                        
+                        if (newWidth > 300 && newWidth < window.innerWidth - 50) {
+                            drawerSize.value = `${newWidth}px`;
+                        }
+                    };
+
+                    const stopResize = () => {
+                        console.log('stopResize');
+                        isResizing.value = false;
+                        document.removeEventListener('mousemove', doResize);
+                        document.removeEventListener('mouseup', stopResize);
+                        if (overlay && overlay.parentNode) {
+                            overlay.parentNode.removeChild(overlay);
+                        }
+                    };
+
+                    document.addEventListener('mousemove', doResize);
+                    document.addEventListener('mouseup', stopResize);
+                };
+
+                return {
+                    visible,
+                    drawerSize,
+                    startResize
+                };
+            }
+        });
+
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+@page
+@model App.Pages.Maintains.SiteConfigFormModel
+@{
+    ViewData["Title"] = "站点配置";
+}
+
+@section body {
+    <EleForm LabelWidth="140px">
+        <EleImageUpload For="Item.Icon"    Label="网站图标"  FillRow="true" ItemWidth="64" ></EleImageUpload>
+        <EleImageUpload For="Item.LoginBg" Label="登录页背景" FillRow="true" ></EleImageUpload>
+        <EleInput For="Item.Title" Label="网站标题" Required="true"></EleInput>
+        <EleInput For="Item.BeiAnNo" Label="备案号"></EleInput>
+        <EleInput For="Item.DefaultPassword" Label="默认密码"></EleInput>
+        
+        <EleNumber For="Item.PageSize" Label="分页大小" ></EleNumber>
+        <EleNumber For="Item.UpFileSize" Label="上传大小限制" Append="MB"></EleNumber>
+        <EleInput For="Item.UpFileTypes" Label="上传文件类型" Type="TextArea" Rows="3" FillRow="true"></EleInput>
+    </EleForm>
+}

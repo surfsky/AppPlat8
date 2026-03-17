@@ -1,0 +1,110 @@
+@page
+@model App.Pages.Dev.IconFasModel
+@{
+    ViewData["Title"] = "FontAwesome 图标列表";
+}
+
+@section body {
+    <div id="app" class="p-5">
+        <div class="mb-4 flex items-center">
+            <el-input v-model="search" placeholder="搜索图标" clearable style="width: 300px;"></el-input>
+            <span class="ml-4 text-gray-500 text-sm">点击图标复制代码</span>
+            <span class="ml-auto text-gray-400 text-xs">共 {{ filteredIcons.length }} 个图标</span>
+        </div>
+
+        <div class="flex-1 overflow-auto" style="max-height:calc(100vh - 100px);">
+            <div v-if="filteredIcons.length > 0" class="flex flex-wrap gap-4">
+                <div v-for="name in filteredIcons" :key="name" 
+                     class="flex flex-col items-center justify-center p-4 border border-gray-300 rounded cursor-pointer hover:bg-gray-50 w-24 h-24 transition-colors relative group"
+                     @@click="copyIcon(name)">
+                    <i :class="name" class="mb-2 text-gray-700 group-hover:text-blue-600 text-2xl"></i>
+                    <span class="text-xs text-gray-500 truncate w-full text-center group-hover:text-blue-600" :title="name">{{ name.replace('fas fa-', '') }}</span>
+                </div>
+            </div>
+            <div v-else class="text-center text-gray-400 py-10">
+                未找到匹配的图标
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp } = Vue;
+        
+        const app = createApp({
+            data() {
+                return {
+                    icons: [],
+                    search: ''
+                };
+            },
+            computed: {
+                filteredIcons() {
+                    if (!this.search) return this.icons;
+                    const q = this.search.toLowerCase();
+                    return this.icons.filter(i => i.toLowerCase().includes(q));
+                }
+            },
+            mounted() {
+                // ensure FontAwesome CSS loaded
+                if (!document.querySelector('link[data-fa]')) {
+                    const l = document.createElement('link');
+                    l.rel = 'stylesheet';
+                    l.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+                    l.setAttribute('data-fa', '1');
+                    document.head.appendChild(l);
+                }
+
+                // 统一的 FontAwesome 图标列表（扩展）
+                this.icons = [
+                    "fas fa-user","fas fa-users","fas fa-user-tag","fas fa-user-cog","fas fa-user-shield",
+                    "fas fa-home","fas fa-tachometer-alt","fas fa-chart-line","fas fa-chart-bar","fas fa-chart-pie",
+                    "fas fa-cog","fas fa-cogs","fas fa-wrench","fas fa-tools","fas fa-sliders-h",
+                    "fas fa-envelope","fas fa-envelope-open","fas fa-comment","fas fa-comments","fas fa-bullhorn",
+                    "fas fa-file","fas fa-file-alt","fas fa-file-pdf","fas fa-file-word","fas fa-file-excel",
+                    "fas fa-folder","fas fa-folder-open","fas fa-folder-plus","fas fa-folder-minus","fas fa-file",
+                    "fas fa-check","fas fa-check-circle","fas fa-check-square","fas fa-check-double",
+                    "fas fa-times","fas fa-times-circle","fas fa-plus","fas fa-plus-circle","fas fa-minus",
+                    "fas fa-edit","fas fa-pen","fas fa-pencil-alt","fas fa-trash","fas fa-trash-alt",
+                    "fas fa-search","fas fa-search-plus","fas fa-search-minus","fas fa-filter",
+                    "fas fa-lock","fas fa-unlock","fas fa-key","fas fa-shield-alt",
+                    "fas fa-calendar","fas fa-calendar-alt","fas fa-calendar-check","fas fa-clock",
+                    "fas fa-map","fas fa-map-marker-alt","fas fa-location-arrow","fas fa-globe",
+                    "fas fa-link","fas fa-external-link-alt","fas fa-share","fas fa-share-alt",
+                    "fas fa-download","fas fa-upload","fas fa-cloud","fas fa-cloud-upload-alt",
+                    "fas fa-list","fas fa-list-alt","fas fa-list-ul","fas fa-list-ol","fas fa-th","fas fa-th-large",
+                    "fas fa-bars","fas fa-ellipsis-h","fas fa-ellipsis-v",
+                    "fas fa-info-circle","fas fa-question-circle","fas fa-exclamation-circle","fas fa-exclamation-triangle",
+                    "fas fa-sitemap","fas fa-project-diagram","fas fa-tasks","fas fa-clipboard-list",
+                    "fas fa-cubes","fas fa-cube","fas fa-box","fas fa-boxes",
+                    "fas fa-desktop","fas fa-laptop","fas fa-mobile-alt","fas fa-tablet-alt",
+                    "fas fa-print","fas fa-camera","fas fa-video","fas fa-image",
+                    "fas fa-shopping-cart","fas fa-money-bill","fas fa-credit-card",
+                    "fas fa-briefcase","fas fa-building","fas fa-university","fas fa-hospital",
+                    "fas fa-bell","fas fa-bell-slash","fas fa-book","fas fa-book-open","fas fa-graduation-cap",
+                    "fas fa-rocket","fas fa-heart","fas fa-star","fas fa-star-half-alt","fas fa-thumbs-up",
+                    "fas fa-thumbs-down","fas fa-handshake","fas fa-award","fas fa-trophy","fas fa-medal",
+                    "fas fa-lightbulb","fas fa-battery-full","fas fa-battery-half","fas fa-battery-quarter","fas fa-battery-empty",
+                    "fas fa-music","fas fa-headphones","fas fa-microphone","fas fa-gift","fas fa-birthday-cake",
+                    "fas fa-utensils","fas fa-wifi","fas fa-sync","fas fa-sync-alt","fas fa-redo","fas fa-undo",
+                    "fas fa-map-pin","fas fa-map-signs","fas fa-clipboard","fas fa-flag","fas fa-rss",
+                    "fas fa-bug","fas fa-hands-helping","fas fa-hand-holding-heart"
+                ];
+            },
+            methods: {
+                copyIcon(name) {
+                    const code = `<i class="${name}"></i>`;
+                    navigator.clipboard.writeText(code).then(() => {
+                        ElementPlus.ElMessage.success({ message: `已复制: ${code}`, type: 'success' });
+                    }).catch(() => {
+                        ElementPlus.ElMessage.error('复制失败');
+                    });
+                }
+            }
+        });
+
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+}

@@ -1,0 +1,51 @@
+@page
+@model App.Pages.EleUISamples.DrawerModel
+
+@section body {
+    <div id="app" class="p-4">
+        <EleCard Title="EleDrawer 测试页" class="box-card">
+            <Column Gap="4">
+                <EleLabel Text="基础抽屉" FillRow="true" />
+                <Row>
+                    <EleButton Type="Primary" VClick="drawerVisible = true">打开内容抽屉</EleButton>
+                    <EleButton Type="Success" VClick="iframeDrawerVisible = true">打开 IFrame 抽屉</EleButton>
+                </Row>
+
+                <Row>
+                    <div class="text-sm text-gray-500">支持 Header(标题+关闭按钮)、中间内容区、Footer 工具栏；IFrameUrl 不为空时自动全区域 iframe。</div>
+                </Row>
+            </Column>
+        </EleCard>
+
+        <EleDrawer VModel="drawerVisible" Title="内容抽屉" Direction="Rtl" Size="45%" IsModal="true">
+            <Content>
+                <div class="space-y-3 p-1">
+                    <p>这是普通内容区域（div 填满可滚动）。</p>
+                    <p>可以在这里放表单、说明、列表等内容。</p>
+                </div>
+            </Content>
+            <Footer Align="Center" Height="56px">
+                <EleButton VClick="drawerVisible = false">取消</EleButton>
+                <EleButton Type="Primary" VClick="drawerVisible = false">确定</EleButton>
+            </Footer>
+        </EleDrawer>
+
+        <EleDrawer VModel="iframeDrawerVisible" Title="IFrame 抽屉" Direction="Rtl" Size="70%" IsModal="false" IFrameUrl="https://element-plus.org/zh-CN/component/drawer.html">
+            <Footer Align="End" Height="52px">
+                <EleButton Type="Primary" VClick="iframeDrawerVisible = false">关闭</EleButton>
+            </Footer>
+        </EleDrawer>
+    </div>
+}
+
+@section script {
+    <script>
+        const { ref } = Vue;
+        window.DrawerModel = {
+            drawerVisible: ref(false),
+            iframeDrawerVisible: ref(false)
+        };
+    </script>
+
+    <EleApp Expose="DrawerModel" />
+}

@@ -1,0 +1,17 @@
+@page
+@model App.Pages.OA.ProjectLogFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "项目进度历史信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleNumber For="Item.ProjectId" Label="项目Id" Disabled="true"></EleNumber>
+        <EleDatePicker For="Item.LogDt" Label="时间" Type="@EleDatePickerType.DateTime" Required="true"></EleDatePicker>
+        <EleInput For="Item.Person" Label="人员" Required="true"></EleInput>
+        <EleInput For="Item.Status" Label="状态"></EleInput>
+        <EleNumber For="Item.Progress" Label="进度(%)" Precision="2" Step="0.01"></EleNumber>
+        <EleInput For="Item.Description" Label="说明" Rows="3"></EleInput>
+    </EleForm>
+}

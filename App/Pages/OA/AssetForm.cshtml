@@ -1,0 +1,21 @@
+@page
+@model App.Pages.OA.AssetFormModel
+@{
+    ViewData["Title"] = "固定资产信息";
+}
+
+@section body {
+<EleForm Model="form" LabelWidth="120px">
+    <EleImageUpload For="Item.Image" Label="图片" ColSpan="24"></EleImageUpload>
+    <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+    <EleSelect For="Item.Category" Label="类别"></EleSelect>
+    <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree"  Required="false"></EleTreeSelect>
+    <EleSelector For="Item.ChargeUserId" Label="责任人" Multi="false" Popup="/Shared/UserSelector"></EleSelector>
+    <EleInput For="Item.Location" Label="位置"></EleInput>
+    <EleInput For="Item.Manufacturer" Label="厂商"></EleInput>
+    <EleDatePicker For="Item.EnableDt" Label="启用时间"></EleDatePicker>
+    <EleDatePicker For="Item.ExpireDt" Label="过期时间"></EleDatePicker>
+    <EleInput For="Item.Parameters" Label="设备参数" Rows="3"></EleInput>
+    <EleSwitch For="Item.IsExpireAlert" Label="到期提醒"></EleSwitch>
+</EleForm>
+}

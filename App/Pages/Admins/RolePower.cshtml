@@ -1,0 +1,316 @@
+@page
+@model App.Pages.Admin.RolePowerModel
+@{ViewData["Title"] = "RolePower";}
+
+@section body {
+<div id="app" class="h-screen flex flex-col overflow-hidden">
+    <el-container class="h-full">
+        <div class="border-r border-r-gray-200 h-full flex flex-col bg-white w-[300px]">
+            <div class="px-4 h-[69px] flex items-center justify-between border-b border-b-gray-200 border-r border-r-gray-200 font-bold text-base text-blue-700">
+                <el-button type="primary" v-on:click="openRoleManager" plain >编辑角色</el-button>
+            </div>
+            <div class="px-4 h-[44px] leading-[44px] border-b border-b-gray-200 text-gray-700 font-bold bg-gray-50">
+                角色
+            </div>
+            <el-scrollbar>
+                <div v-for="role in roles" :key="role.id" 
+                     class="h-[53px] cursor-pointer px-4 py-2 border-b border-b-gray-200 hover:bg-gray-100 transition"
+                     :class="{ 'h-[44px] bg-blue-50 text-blue-500 border-l-4 border-r-blue-500': currentRoleId === role.id }"
+                     v-on:click="handleRoleClick(role)">
+                    {{ role.name }}
+                </div>
+            </el-scrollbar>
+        </div>
+        
+        <el-container>
+            <el-header class="border-b border-b-gray-200 h-[50px] leading-[44px] p-0 text-blue-700 pl-4 flex items-center">
+                <el-button type="primary" v-on:click="savePowers" :loading="saving" :disabled="!currentRoleId">
+                    <el-icon class="mr-1"><Check /></el-icon>
+                    保存
+                </el-button>
+                <el-button v-on:click="selectAllPowers(true)" :disabled="!currentRoleId">全选</el-button>
+                <el-button v-on:click="inverseSelectPowers" :disabled="!currentRoleId">反选</el-button>
+            </el-header>
+            
+            <div v-loading="loading" class="bg-white p-0 m-0 flex-1 min-h-0 flex flex-col">
+                <!-- 表头：权限分组、权限清单 -->
+                <div class="h-[44px] flex border-b border-b-gray-200 bg-gray-50 text-gray-700 font-medium">
+                    <div class="w-[150px] px-4 py-2 border-r border-r-gray-200 flex-none font-bold">权限分组</div>
+                    <div class="flex-1 px-4 py-2 font-bold">权限清单</div>
+                </div>
+                <!-- 内容容器，可滚动 -->
+                <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+                    <div v-for="group in groupPowers" :key="group.groupName" class="h-[44px] h-auto flex border-b border-b-gray-200 bg-white hover:bg-gray-50">
+                        <!-- 权限分组名称 -->
+                        <div class="w-[150px] px-4 py-2 border-r border-r-gray-200 flex items-center font-bold flex-none">
+                            <el-checkbox
+                                v-model="group.checkAll"
+                                :indeterminate="group.isIndeterminate"
+                                v-on:change="(val) => handleCheckAllChange(val, group)">
+                                {{ group.groupName }}
+                            </el-checkbox>
+                        </div>
+                        <!-- 权限清单 -->
+                        <div class="flex-1 px-4 py-2 flex flex-wrap items-center">
+                            <el-checkbox-group v-model="currentPowerIds" v-on:change="() => handleCheckedPowersChange(group)">
+                                <div class="mr-5 mb-1 min-w-[120px] inline-block" v-for="power in group.powers" :key="power.id">
+                                    <el-checkbox :label="power.id">
+                                        {{ power.title }}
+                                    </el-checkbox>
+                                </div>
+                            </el-checkbox-group>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </el-container>
+    </el-container>
+
+    <!-- 角色管理弹窗 -->
+    <el-dialog
+        v-model="roleDialogVisible"
+        title="角色管理"
+        width="80%"
+        top="5vh"
+        :close-on-click-modal="false"
+        destroy-on-close
+        v-on:close="handleRoleDialogClose"
+    >
+        <div class="h-[70vh]">
+            <iframe :src="roleManagerUrl" class="w-full h-full border-0"></iframe>
+        </div>
+    </el-dialog>
+</div>
+}
+
+@section script {
+
+    <script>
+        const { createApp, ref, onMounted, reactive, computed } = Vue;
+        const { ElMessage } = ElementPlus;
+
+        const app = createApp({
+            setup() {
+                // 参数
+                const roles = ref([]);                  // 角色列表
+                const groupPowers = ref([]);            // 分组权限
+                const currentRoleId = ref(null);        // 当前选中角色Id
+                const currentRoleName = ref('');        // 当前选中角色名称
+                const currentPowerIds = ref([]);        // 当前选中角色的权限Id列表
+                const loading = ref(false);             // 加载中
+                const saving = ref(false);              // 保存中
+                const roleDialogVisible = ref(false);   // 角色弹窗是否可见
+                const roleManagerUrl = '/Admins/Roles'; // 角色管理页面
+
+                // 获取 CSRF Token
+                const getCsrfToken = () => {
+                    return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                };
+
+                // 处理角色点击事件
+                const loadRoles = async () => {
+                    try {
+                        const res = await axios.get('?handler=Roles');
+                        if (res.data.code === 0) {
+                            roles.value = res.data.data;
+                            // 如果当前没有选中角色，或者选中的角色不在列表中了，默认选中第一个
+                            if (!currentRoleId.value && roles.value.length > 0) {
+                                handleRoleClick(roles.value[0]);
+                            } else if (currentRoleId.value) {
+                                const exists = roles.value.find(r => r.id === currentRoleId.value);
+                                if (!exists && roles.value.length > 0) {
+                                    handleRoleClick(roles.value[0]);
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        ElMessage.error('加载角色失败');
+                    }
+                };
+
+                // 加载分组权限
+                const loadGroupPowers = async () => {
+                    try {
+                        const res = await axios.get('?handler=GroupPowers');
+                        if (res.data.code === 0) {
+                            // 添加前端辅助字段
+                            groupPowers.value = res.data.data.map(g => ({
+                                ...g,
+                                checkAll: false,
+                                isIndeterminate: false
+                            }));
+                        } else {
+                            ElMessage.error('加载权限数据异常: ' + (res.data.msg || '未知错误'));
+                        }
+                    } catch (err) {
+                        console.error('loadGroupPowers error:', err);
+                        ElMessage.error('加载权限数据失败');
+                    }
+                };
+
+                // 处理角色点击事件
+                const handleRoleClick = async (role) => {
+                    if (currentRoleId.value === role.id) return;
+                    
+                    currentRoleId.value = role.id;
+                    currentRoleName.value = role.name;
+                    loading.value = true;
+                    try {
+                        const res = await axios.get('?handler=RolePowerIds&roleId=' + role.id);
+                        if (res.data.code === 0) {
+                            currentPowerIds.value = res.data.data;
+                            updateGroupCheckState();
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        ElMessage.error('加载角色权限失败');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                // 更新分组的全选状态
+                const updateGroupCheckState = () => {
+                    groupPowers.value.forEach(group => {
+                        const groupPowerIds = group.powers.map(p => p.id);
+                        const checkedCount = groupPowerIds.filter(id => currentPowerIds.value.includes(id)).length;
+                        
+                        group.checkAll = checkedCount === group.powers.length && group.powers.length > 0;
+                        group.isIndeterminate = checkedCount > 0 && checkedCount < group.powers.length;
+                    });
+                };
+
+                // 处理分组全选/取消全选
+                const handleCheckAllChange = (val, group) => {
+                    const groupPowerIds = group.powers.map(p => p.id);
+                    if (val) {
+                        // 全选：把没选中的加进去
+                        groupPowerIds.forEach(id => {
+                            if (!currentPowerIds.value.includes(id)) {
+                                currentPowerIds.value.push(id);
+                            }
+                        });
+                    } else {
+                        // 全不选：把该组的都移除
+                        currentPowerIds.value = currentPowerIds.value.filter(id => !groupPowerIds.includes(id));
+                    }
+                    group.isIndeterminate = false;
+                };
+
+                // 处理分组内权限变化
+                const handleCheckedPowersChange = (group) => {
+                    const groupPowerIds = group.powers.map(p => p.id);
+                    const checkedCount = groupPowerIds.filter(id => currentPowerIds.value.includes(id)).length;
+                    
+                    group.checkAll = checkedCount === group.powers.length;
+                    group.isIndeterminate = checkedCount > 0 && checkedCount < group.powers.length;
+                };
+
+                // 全局全选
+                const selectAllPowers = (checked) => {
+                    if (!groupPowers.value.length) return;
+                    
+                    let allPowerIds = [];
+                    groupPowers.value.forEach(group => {
+                        group.powers.forEach(p => allPowerIds.push(p.id));
+                    });
+
+                    if (checked) {
+                        // 简单粗暴，直接替换为所有Id
+                        currentPowerIds.value = allPowerIds;
+                    } else {
+                        currentPowerIds.value = [];
+                    }
+                    updateGroupCheckState();
+                };
+
+                // 全局反选
+                const inverseSelectPowers = () => {
+                    let allPowerIds = [];
+                    groupPowers.value.forEach(group => {
+                        group.powers.forEach(p => allPowerIds.push(p.id));
+                    });
+
+                    // 找出不在 currentPowerIds 中的 Id
+                    const newSelectedIds = allPowerIds.filter(id => !currentPowerIds.value.includes(id));
+                    currentPowerIds.value = newSelectedIds;
+                    updateGroupCheckState();
+                };
+
+                // 保存权限
+                const savePowers = async () => {
+                    if (!currentRoleId.value) return;
+                    saving.value = true;
+                    try {
+                        const res = await axios.post('?handler=SaveRolePowers', {
+                            roleId: currentRoleId.value,
+                            powerIds: currentPowerIds.value
+                        }, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': getCsrfToken()
+                            }
+                        });
+
+                        if (res.data.code === 0) {
+                            ElMessage.success('保存成功');
+                        } else {
+                            ElMessage.error(res.data.msg || '保存失败');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        ElMessage.error('保存请求失败');
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+                
+                // 打开角色管理弹窗
+                const openRoleManager = () => {
+                    roleDialogVisible.value = true;
+                };
+                
+                // 处理角色弹窗关闭
+                const handleRoleDialogClose = () => {
+                    // 关闭弹窗时重新加载角色列表，因为可能在弹窗里修改了角色
+                    loadRoles();
+                };
+
+                // 初始化加载分组权限和角色列表
+                onMounted(() => {
+                    loadGroupPowers();
+                    loadRoles();
+                });
+
+                return {
+                    roles,
+                    groupPowers,
+                    currentRoleId,
+                    currentRoleName,
+                    currentPowerIds,
+                    loading,
+                    saving,
+                    roleDialogVisible,
+                    roleManagerUrl,
+                    handleRoleClick,
+                    handleCheckAllChange,
+                    handleCheckedPowersChange,
+                    savePowers,
+                    selectAllPowers,
+                    inverseSelectPowers,
+                    openRoleManager,
+                    handleRoleDialogClose
+                };
+            }
+        });
+
+        app.use(ElementPlus);
+        // 注册图标
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component)
+        }
+        app.mount('#app');
+    </script>
+}

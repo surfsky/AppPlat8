@@ -1,0 +1,148 @@
+@page
+@model App.Pages.EleUISamples.ManagerServerModel
+
+@section body {
+    <EleCard Title="EleManagerServer (Handler + 服务端命令)" class="box-card p-4">
+        <Column Gap="4">
+            <EleLabel Label="Toast/Notify" FillRow="true" />
+            <Row>
+                <EleButton Type="Warning" Handler="Toast">Toast</EleButton>
+                <EleButton Type="Success" Handler="Notify">Notify</EleButton>
+            </Row>
+
+            <EleLabel Label="MessageBox" FillRow="true" />
+            <Row>
+                <EleButton Type="Primary" Handler="OpenMessageBoxAlert">Alert</EleButton>
+                <EleButton Type="Info"    Handler="OpenMessageBoxServer">Confirm</EleButton>
+                <EleButton Type="Primary" Handler="OpenInputBox">InputBox</EleButton>
+                <EleButton Type="Info"    Handler="OpenInputBoxServer">InputBox (Server)</EleButton>
+                <EleButton Type="Warning" Handler="OpenInputBoxValidate">InputBox with Validation</EleButton>
+            </Row>
+
+
+            <EleLabel Label="Drawer - 基本用法" FillRow="true" />
+            <Row>
+                <EleButton Type="Primary" Click="openDrawer()">客户端打开 (rtl)</EleButton>
+                <EleButton Type="Success" Click="openDrawerLtr()">客户端打开 (ltr)</EleButton>
+                <EleButton Type="Warning" Click="openDrawerBtt()">客户端打开 (btt)</EleButton>
+                <EleButton Type="Info"    Handler="OpenDrawer">服务端打开</EleButton>
+                <EleButton Type="Danger"  Handler="CloseDrawer">关闭 Drawer</EleButton>
+            </Row>
+
+            <EleLabel Label="Drawer - beforeCloseHandler（关闭前确认）" FillRow="true" />
+            <Row>
+                <EleButton Type="Primary" Click="openDrawerBeforeClose()">Confirm 确认关闭</EleButton>
+                <EleButton Type="Warning" Click="openDrawerBeforeCloseAsync()">异步校验后关闭</EleButton>
+            </Row>
+
+            <Row>
+                <div class="text-sm text-gray-500">说明：Drawer 按钮通过 Handler POST 服务端后由服务端下发客户端命令；客户端按钮直接调用 EleManager API。</div>
+            </Row>
+        </Column>
+    </EleCard>
+}
+
+@section script {
+    <script>
+        // 输入框回调处理函数
+        window.inputHandler = function(action, value) {
+            if (action === 'confirm') {
+                if (typeof value === 'string') {
+                    EleManager.notifySuccess('客户端回调: 输入值 = ' + value);
+                } else {
+                    EleManager.notifySuccess('客户端回调: 点击了确定');
+                }
+                return;
+            }
+            EleManager.notifyInfo('客户端回调: 点击了取消');
+        };
+
+        // ----- Drawer 基本用法 -----
+
+        window.openDrawer = function() {
+            EleManager.openDrawer({
+                direction: 'rtl',
+                size: '40%',
+                title: '客户端打开 Drawer (rtl)',
+                content: '这是从右侧滑入的 Drawer，带有底部按钮和关闭回调。',
+                showFooter: true,
+                footerButtons: [
+                    { text: '关闭', type: 'primary', action: 'close' }
+                ],
+                clientCloseHandler: (action) => {
+                    EleManager.notifyInfo('已关闭 (action=' + (action || 'close') + ')');
+                },
+                serverCloseHandler: 'DrawerClosed'
+            });
+        };
+
+        window.openDrawerLtr = function() {
+            EleManager.openDrawer({
+                direction: 'ltr',
+                size: '35%',
+                title: '客户端打开 Drawer (ltr)',
+                content: '这是从左侧滑入的 Drawer。',
+                showFooter: true,
+                footerButtons: [
+                    { text: '确认', type: 'primary', action: 'close' },
+                    { text: '取消', type: 'default', action: 'close' }
+                ]
+            });
+        };
+
+        window.openDrawerBtt = function() {
+            EleManager.openDrawer({
+                direction: 'btt',
+                size: '260px',
+                title: '客户端打开 Drawer (ttb)',
+                content: '这是从顶部向下展开的 Drawer。',
+                showFooter: false
+            });
+        };
+
+        // ----- beforeCloseHandler 演示 -----
+
+        window.openDrawerBeforeClose = function() {
+            EleManager.openDrawer({
+                title: '关闭前需要确认',
+                content: '点击关闭按钮或点击遮罩层，都会弹出确认对话框。只有点击"确定"后才会真正关闭。',
+                showFooter: true,
+                footerButtons: [
+                    { text: '关闭', type: 'danger', action: 'close' }
+                ],
+                beforeCloseHandler: (done) => {
+                    EleManager.confirm('确定要关闭吗？', '关闭确认').then(() => {
+                        EleManager.notifySuccess('已确认，正在关闭...');
+                        done();
+                    }).catch(() => {
+                        EleManager.notifyWarning('已取消关闭');
+                    });
+                },
+                clientCloseHandler: () => {
+                    EleManager.notifyInfo('Drawer 已关闭（clientCloseHandler 触发）');
+                }
+            });
+        };
+
+        window.openDrawerBeforeCloseAsync = function() {
+            EleManager.openDrawer({
+                title: '异步校验后关闭',
+                content: '模拟一个需要异步保存数据的场景：关闭前会等待 1.5s（模拟保存），然后自动关闭。',
+                showFooter: true,
+                footerButtons: [
+                    { text: '保存并关闭', type: 'primary', action: 'close' }
+                ],
+                beforeCloseHandler: async (done) => {
+                    EleManager.showLoading('正在保存数据...');
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    EleManager.closeLoading();
+                    EleManager.notifySuccess('保存成功');
+                    done();
+                }
+            });
+        };
+
+    </script>
+
+    <EleApp />
+}

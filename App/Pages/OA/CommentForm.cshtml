@@ -1,0 +1,16 @@
+@page
+@model App.Pages.OA.CommentFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "评论信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleNumber For="Item.TargetId" Label="内容Id" Required="true" Enable="false"></EleNumber>
+        <EleInput For="Item.Type" Label="类别" Required="true"></EleInput>
+        <EleInput For="Item.Author" Label="评论人" Required="true"></EleInput>
+        <EleNumber For="Item.Rating" Label="评分"></EleNumber>
+        <EleInput For="Item.Content" Label="内容" Rows="4"></EleInput>
+    </EleForm>
+}

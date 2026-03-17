@@ -1,0 +1,54 @@
+@page
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "卡片 Card";
+}
+
+@section body {
+    <div id="app" class="p-4 space-y-4 h-full overflow-y-auto">
+        <Grid Cols="1" MiddleCols="2" LargeCols="3" Gap="4" MaxWidth="max-w-none" Center="false" PaddingX="0" Overflow="AutoY">
+            <EleLabel Label="基本卡片外观控制" Size="2xl" Bold="true" FillRow="true" />
+            <EleCard Title="默认阴影" Icon="PictureFilled" class="h-full" Radius="12px">
+                <Column Gap="2" class="text-slate-700">
+                    <p>EleCard 默认使用 shadow=always。</p>
+                    <p class="text-sm text-slate-500">用于信息块展示最直接。</p>
+                </Column>
+            </EleCard>
+
+            <EleCard Title="FontAwesome 图标示例" Icon="fa-solid fa-layer-group" Collapsable="true" Shadow="hover" Radius="16px">
+                <Column Gap="2" class="text-slate-700">
+                    <p>Icon 支持图标类名形式。</p>
+                    <p class="text-sm text-slate-500">例如 Font Awesome 图标类。</p>
+                </Column>
+            </EleCard>
+
+            <EleLabel Label="自定义 Header Slot" Size="2xl" Bold="true" FillRow="true" />
+            <EleCard class="overflow-hidden">
+                <Header>
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold">自定义 Header Slot</span>
+                        <EleButton Type="Primary" Text="true" VClick="headerCount++">点击次数 {{headerCount}}</EleButton>
+                    </div>
+                </Header>
+                <Column Gap="2" class="text-slate-700">
+                    <p>自定义标题内容</p>
+                    <p class="text-sm text-slate-500">悲剧啊悲剧你快睡觉吧那肯定就是看不见</p>
+                </Column>
+            </EleCard>
+
+        </Grid>
+
+
+    </div>
+
+    <EleApp Expose="CardModel" />
+}
+
+@section script {
+    <script>
+        const { ref } = Vue;
+        window.CardModel = {
+            headerCount: ref(0)
+        };
+    </script>
+}

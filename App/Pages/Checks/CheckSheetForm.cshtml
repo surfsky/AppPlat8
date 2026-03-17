@@ -1,0 +1,13 @@
+@page
+@model App.Pages.Checks.CheckSheetFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "检查表信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="100px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleSelect For="Item.Scope" Label="领域"></EleSelect>
+    </EleForm>
+}

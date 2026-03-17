@@ -1,0 +1,27 @@
+﻿@page
+@model App.Pages.ErrorModel
+@{Layout = null;}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@Model.ErrorCode</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+</head>
+<body>
+
+    <h1 class="text-danger">@Model.ErrorCode</h1>
+    <h2 class="text-danger">@Model.ErrorMessage</h2>
+
+    @if (!String.IsNullOrEmpty(Model.RequestId))
+    {
+        <p>
+            <span>Request Id:</span> <code>@Model.RequestId</code>
+        </p>
+    }
+
+</body>
+</html>
+
+

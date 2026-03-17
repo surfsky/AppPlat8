@@ -1,0 +1,36 @@
+@page
+@model App.Pages.LoginDevModel
+@{
+    ViewData["Title"] = "Dev Login";
+}
+
+<div style="max-width: 600px; margin: 100px auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
+    <h2>开发环境快速登录</h2>
+    <p class="text-danger">仅用于开发测试环境，生产环境请删除此页面！</p>
+    
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <form method="post" asp-page-handler="Login">
+            <input type="hidden" name="userName" value="admin" />
+            <button type="submit" class="btn btn-primary">Login as Admin</button>
+        </form>
+
+        <form method="post" asp-page-handler="Login">
+            <input type="hidden" name="userName" value="user" />
+            <button type="submit" class="btn btn-info">Login as User</button>
+        </form>
+        
+        <form method="post" asp-page-handler="Login">
+            <input type="hidden" name="userName" value="test" />
+            <button type="submit" class="btn btn-warning">Login as Test</button>
+        </form>
+    </div>
+
+    <hr />
+    <form method="post" asp-page-handler="Login">
+        <div class="form-group">
+            <label>Custom User Name:</label>
+            <input type="text" name="userName" class="form-control" placeholder="Enter username" />
+        </div>
+        <button type="submit" class="btn btn-default" style="margin-top: 10px;">Login</button>
+    </form>
+</div>

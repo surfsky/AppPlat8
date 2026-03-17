@@ -1,0 +1,125 @@
+DB
+    //var sqlserver = Configuration.GetConnectionString("SQLServer");
+    //var mysql = Configuration.GetConnectionString("MySQL");
+    //var dm = Configuration.GetConnectionString("DM");
+    //services.AddDbContext<AppPlatContext>(options => 
+    //{
+    //    options.UseSqlServer(sqlserver, builder =>
+    //    {
+    //        builder.EnableRetryOnFailure(); //
+    //        builder.CommandTimeout(60);
+    //        builder.UseRowNumberForPaging(); //Use a ROW_NUMBER() in queries instead of OFFSET/FETCH. 
+    //        //builder.MigrationsAssembly("App.BLL.dll");
+    //    });
+    //});  // SqlServer linux. ok
+    //services.AddDbContext<AppPlatContext>(options => options.UseSqlServer(sqlserver, options=> options.UseRowNumberForPaging()));  // SqlServer 2008. EFCore 2.2 ok, EFCore 3.1 fail. see https://aka.ms/AA6h122
+    //services.AddDbContext<AppPlatContext>(options => options.UseMySql(mysql));         // MySql(MariDB) linux. ok
+    //services.AddDbContext<AppPlatContext>(options => options.UseDm(dm));               // fail
+
+
+
+EntityBase
+
+    //---------------------------------------------
+    // IInit & IFix
+    //---------------------------------------------
+    /// <summary>批量初始化数据（请用 new T().Init()方式调用）</summary>
+    public virtual void Init()
+    {
+    }
+
+    /// <summary>批量修正数据（请用 new T().Fix()方式调用）</summary>
+    public virtual int Fix()
+    {
+        return 0;
+    }
+
+    /// <summary>修正单条数据</summary>
+    public virtual object FixItem()
+    {
+        return this;
+    }
+
+
+    //---------------------------------------------
+    // UI 配置
+    //---------------------------------------------
+    // 理论上用静态方法更合适，用new覆盖
+    /// <summary>网格设置信息</summary>
+    public virtual UISetting GridUI()
+    {
+        return new UISetting(this.GetType());
+    }
+    /// <summary>表单设置i信息</summary>
+    public virtual UISetting FormUI()
+    {
+        return new UISetting(this.GetType());
+    }
+    public virtual UISetting SearchUI()
+    {
+        var m = GetSearchMethod(this.GetType());
+        if (m != null)
+            return new UISetting(m);
+        return null;
+    }
+    /// <summary>找到实体检索方法（具有[SearcherAttribute]，若没有则尝试找名称为"Search"的方法）</summary>
+    static MethodInfo GetSearchMethod(Type type)
+    {
+        foreach (var m in type.GetMethods())
+        {
+            if (m.GetAttribute<SearcherAttribute>() != null)
+                return m;
+        }
+        return type.GetMethods("Search", false).FirstOrDefault();
+    }
+
+
+BasePageModel
+
+    private DAL.AppPlatContext _db;
+    /// <summary>每个请求共享一个数据库连接实例</summary>
+    protected DAL.AppPlatContext DB
+    {
+        get
+        {
+            if (_db == null)
+                _db = Common.GetDbConnection();
+            return _db;
+        }
+    }
+
+
+
+
+        /*
+        /// <summary>自定义条件过滤、排序等</summary>
+        public static IQueryable<T> Search(
+            Expression<Func<T, bool>> condition = null,
+            Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+            string includeProperties = ""
+            )
+        {
+            IQueryable<T> query = Set;
+            if (condition != null)
+            {
+                query = query.Where(condition);
+                // bool judeg = typeof(TEntity).IsAssignableFrom(typeof(ILogicDelable)); 判断是否继承
+                // 如果 TEntity  继承 ILogicDelable 添加条件  where (p=>p.IsDel == false)
+            }
+            foreach (var includeProperty in includeProperties.Split<string>())
+                query = query.Include(includeProperty);
+
+            if (orderBy != null)
+                return orderBy(query);
+            else
+                return query;
+        }
+        */
+
+        /// <summary>修改实体属性。用以实现链式表达式。如：entity.SetValue(x => x.UpdateDt = DateTime.Now);</summary>
+        public EntityBase SetValue(Action<EntityBase> action)
+        {
+            action?.Invoke(this);
+            return this;
+        }
+

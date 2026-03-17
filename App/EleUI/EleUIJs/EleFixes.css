@@ -1,0 +1,111 @@
+/* Minimal Fix for Element Plus Table in Tailwind Environment */
+/* Only fix the most critical conflict: border-collapse */
+.el-table table {
+    border-collapse: separate !important; 
+}
+
+/* Reset Body for Full Screen Layout */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Prevent body scroll */
+}
+
+/* Ensure Header Alignment is standard */
+.el-table th.el-table__cell {
+    text-align: left !important;
+    height: 45px !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
+    background-color: #f5f7fa !important;
+}
+
+/* Force Header Cell Content Layout */
+.el-table th.el-table__cell > .cell {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 100% !important;
+    line-height: normal !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+}
+
+/* Defensive Fix for Body Cell Content */
+.el-table td.el-table__cell .cell {
+    line-height: 24px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    display: block !important;
+}
+
+/* Widen pagination page size select */
+.el-pagination .el-select {
+    width: 120px !important;
+}
+
+/* Drawer with Iframe: remove padding to allow full edge dragging */
+.ele-drawer-iframe .el-drawer__body {
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Reduce Form Item Height */
+.el-form-item {
+    margin-bottom: 4px !important; /* Default is usually 18px */
+}
+
+/* Image Viewer: non-loop mode hide disabled edge arrows */
+.el-image-viewer__prev.is-disabled,
+.el-image-viewer__next.is-disabled {
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* Image Viewer: hide both arrows when only one image */
+.ele-image-viewer-single .el-image-viewer__prev,
+.ele-image-viewer-single .el-image-viewer__next {
+    display: none !important;
+}
+
+/* Shared corner close button: orange fill + white line icon */
+.ele-corner-close-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    background-color: #f59e0b;
+    border: 1px solid #f59e0b;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+    transition: background-color .2s ease, border-color .2s ease;
+}
+
+.ele-corner-close-btn:hover {
+    background-color: #ea580c;
+    border-color: #ea580c;
+}
+
+.ele-corner-close-icon {
+    color: #fff !important;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 400;
+}
+
+.ele-corner-close-elicon {
+    color: #fff !important;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Reduce Input Height if needed (Optional, Element Plus defaults are usually fine, but margin is the main spacer) */
+/*
+.el-input__inner {
+    height: 32px !important;
+}
+*/

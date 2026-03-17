@@ -1,0 +1,26 @@
+@page
+@model App.Pages.Maintains.MenusModel
+@{
+    ViewData["Title"] = "菜单管理";
+}
+
+@section body {
+    <EleTable Title="菜单管理" FormPage="MenuForm" EnableBatch="false"  RowKey="id" >
+        <Toolbar>
+            <EleButton Type="Primary" Command="Add" Icon="Plus" Width="120px">新增菜单</EleButton>
+        </Toolbar>
+        <Columns>
+            <EleOpColumn Width="100"></EleOpColumn>
+            <EleColumn For="Item.Name" Label="名称" Width="200"></EleColumn>
+            <EleColumn For="Item.Id" Label="Id" Width="100"></EleColumn>
+            <EleColumn For="Item.NavigateUrl" Label="链接" Width="200"></EleColumn>
+            <EleColumn For="Item.PowerName" Label="权限" Width="200"></EleColumn>
+            <EleIconColumn For="Item.ImageUrl" Label="图标" Width="60"></EleIconColumn>
+            <EleColumn For="Item.SortId" Label="排序" Width="80"></EleColumn>
+            <EleColumn For="Item.Target" Label="目标" Width="80"></EleColumn>
+            <EleColumn For="Item.Visible" Label="可见" Width="80"></EleColumn>
+            <EleColumn For="Item.Expanded" Label="展开" Width="80"></EleColumn>
+            <EleColumn For="Item.Fixed" Label="固底" ></EleColumn>
+        </Columns>
+    </EleTable>
+}

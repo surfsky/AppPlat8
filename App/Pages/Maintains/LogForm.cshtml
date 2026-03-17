@@ -1,0 +1,21 @@
+@page
+@model App.Pages.Maintains.LogFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "日志详情";
+}
+
+@section body {
+    <EleForm :ReadOnly="true">
+        <EleInput For="Item.Operator" Label="操作者"></EleInput>
+        <EleDatePicker For="Item.LogDt" Label="记录时间" Type="DateTime"></EleDatePicker>
+        <EleInput For="Item.LevelName" Label="级别"></EleInput>
+        <EleInput For="Item.IP" Label="IP地址"></EleInput>
+        
+        <EleInput For="Item.URL" Label="URL" FillRow="true"></EleInput>
+        <EleInput For="Item.Referrer" Label="来源页面" FillRow="true"></EleInput>
+        
+        <EleInput For="Item.Summary" Label="摘要" Type="TextArea" Rows="2" FillRow="true"></EleInput>
+        <EleInput For="Item.Message" Label="详细信息" Type="TextArea" Rows="15" FillRow="true"></EleInput>
+    </EleForm>
+}

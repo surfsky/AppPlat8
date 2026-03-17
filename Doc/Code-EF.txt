@@ -1,0 +1,44 @@
+数据库自动更新
+    https://learn.microsoft.com/zh-cn/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli
+    dotnet ef migrations add InitialCreate
+    dotnet ef migrations add 231026
+    dotnet ef database update
+    dotnet ef migrations remove
+
+
+  "ConnectionStrings": {
+    "SQLServer": "Data Source=(local);Integrated Security=true;Initial Catalog=AppPlatCore;Persist Security Info=True;MultipleActiveResultSets=true;",
+    "Sqlite": "Data Source=sqlite.db;",
+    "MySQL": "server=localhost; user id=root; password=wzcc.com; database=AppPlatCore; charset=utf-8 ",
+    "DM": "Server=localhost; User Id=SYSDBA; PWD=SYSDBA; SCHEMA=App; PORT=5236; CONNPOOLING=TRUE;"
+  },
+
+
+Log.Get(id) 返回null？1833214689845186600
+    经测试是 sqlite 的问题，或者是ef的问题
+    换回int自增的id，就没问题了
+
+
+
+实体类变更迁移
+    https://learn.microsoft.com/zh-cn/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli
+        services.AddDbContext<AppPlatContext>(options => {
+            options.UseSqlite(sqlite, builder => builder.MigrationsAssembly("App"));
+        });
+        dotnet ef migrations add InitialCreate
+        dotnet ef migrations add UseEntityBase
+        dotnet ef database update
+        dotnet ef migrations remove
+    创建迁移时报错
+        Unable to create an object of type 'EFDbContext'. Add an implementation of 'IDesignTimeDbContextFactory<EFDbContext>' to the project, or see https://go.microsoft.com/fwlink/?linkid=851728 for additional patterns supported at design time.
+        https://blog.csdn.net/weixin_34187822/article/details/94630370
+        Dbcontext没有在Web项目里面，所以他找不到链接字符串，没办法实例化DbContext
+        解决方案：我们在Dbcontext的同级目录新建一个类DesignTimeDbContextFactory
+        让这个类继承IDesignTimeDbContextFactory接口
+    执行迁移时报错
+    重建数据库
+        dotnet ef database drop
+        dotnet ef migrations add InitialCreate
+        dotnet ef database update
+
+        

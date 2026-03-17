@@ -1,0 +1,41 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.user
+*.suo
+*.pdb
+
+# Build outputs
+**/[Bb]in/
+**/[Oo]bj/
+
+# Logs
+**/Logs/
+*.log
+
+# Databases and local runtime files
+*.db
+*.db-shm
+*.db-wal
+
+# App runtime/generated content
+App/Files/
+App/Caches/
+App/.config/
+App/Migrations/
+App/DataProtection/
+
+# Local tools/temp
+cookies.txt
+.trae/
+
+# Node.js / debug tools
+node_modules/
+debug-tools/node_modules/
+debug-tools/*.png
+debug-tools/*.html

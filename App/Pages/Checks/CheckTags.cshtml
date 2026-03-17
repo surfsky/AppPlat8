@@ -1,0 +1,20 @@
+@page
+@model App.Pages.Checks.CheckTagsModel
+@{
+    ViewData["Title"] = "检查项标签管理";
+}
+
+@section body {
+    <EleTable Title="检查项标签管理" FormPage="CheckTagForm" EnableBatch="false"  RowKey="id" >
+        <Toolbar>
+            <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+            <EleButton Type="Primary" Command="Add" Icon="Plus" Width="120px">新增</EleButton>
+        </Toolbar>
+        <Columns>
+            <EleOpColumn Width="100"></EleOpColumn>
+            <EleColumn For="Item.Name" Label="名称" Width="400"></EleColumn>
+            <EleColumn For="Item.Id" Label="Id" Width="100"></EleColumn>
+            <EleColumn For="Item.OrgName" Label="组织" ></EleColumn>
+        </Columns>
+    </EleTable>
+}

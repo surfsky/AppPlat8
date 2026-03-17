@@ -1,0 +1,101 @@
+@page
+@model App.Pages.EleUISamples.ManagerModel
+
+@section body {
+    <div id="app" class="p-4">
+        <EleCard Title="EleManager 客户端交互能力测试" class="box-card">
+            <Column Gap="4">
+                <EleLabel Label="Toast" FillRow="true" />
+                <Row>
+                    <EleButton Type="Success" Click="EleManager.showSuccess('操作成功！')">Success</EleButton>
+                    <EleButton Type="Danger" Click="EleManager.showError('操作失败！')">Error</EleButton>
+                    <EleButton Type="Warning" Click="EleManager.showWarning('这是警告信息')">Warning</EleButton>
+                    <EleButton Type="Info" Click="EleManager.showInfo('这是提示信息')">Info</EleButton>
+                </Row>
+
+                <EleLabel Label="Notify" FillRow="true" />
+                <Row>
+                    <EleButton Type="Success" Click="EleManager.notifySuccess('通知成功')">Success</EleButton>
+                    <EleButton Type="Warning" Click="EleManager.notifyWarning('通知警告')">Warning</EleButton>
+                    <EleButton Type="Danger" Click="EleManager.notifyError('通知失败')">Error</EleButton>
+                    <EleButton Type="Info" Click="EleManager.notifyInfo('通知信息')">Info</EleButton>
+                </Row>
+
+                <EleLabel Label="Messagebox" FillRow="true" />
+                <Row>
+                    <EleButton Type="Primary" Click="window.eleManagerDemo.testAlert()">Alert</EleButton>
+                    <EleButton Type="Primary" Click="window.eleManagerDemo.testConfirm()">Confirm</EleButton>
+                    <EleButton Type="Primary" Click="window.eleManagerDemo.testPrompt()">Prompt/InputBox</EleButton>
+                </Row>
+
+                <EleLabel Label="Misc" FillRow="true" />
+                <Row Items="center">
+                    <ElePopconfirm Title="确定执行这个操作吗？" Confirm="confirmPop">
+                        <template #reference>
+                            <EleButton Type="Warning">Popconfirm</EleButton>
+                        </template>
+                    </ElePopconfirm>
+
+                    <ElePopover Placement="top" Title="Popover" Width="220" Trigger="click" Content="这是 Popover 内容示例。">
+                        <template #reference>
+                            <EleButton>Popover</EleButton>
+                        </template>
+                    </ElePopover>
+
+                    <EleTooltip Content="这是 Tooltip 提示" Placement="top">
+                        <EleButton>Tooltip</EleButton>
+                    </EleTooltip>
+                </Row>
+
+                <EleLabel Label="Loading" FillRow="true" />
+                <Row>
+                    <EleButton Type="Primary" Click="window.eleManagerDemo.testLoading()">Loading 1.5s</EleButton>
+                    <EleButton Type="Info" Click="EleManager.showLoading('手动开启 Loading...')">Open Loading</EleButton>
+                    <EleButton Click="EleManager.closeLoading()">Close Loading</EleButton>
+                </Row>
+            </Column>
+        </EleCard>
+    </div>
+}
+
+@section script {
+    <script>
+        const { ref } = Vue;
+
+        window.eleManagerDemo = {
+            //EleManager: EleManager,
+            drawerVisible: ref(false),
+            serverResult: ref('-'),
+
+            testAlert: () => {
+                EleManager.alert('这是 Alert 示例', 'Alert');
+            },
+
+            testConfirm: () => {
+                EleManager.confirm('确定要执行此操作吗？', '确认提示')
+                    .then(() => EleManager.showSuccess('点击了确定'))
+                    .catch(() => EleManager.showInfo('点击了取消'));
+            },
+
+            testPrompt: () => {
+                EleManager.prompt('请输入反馈内容', 'Prompt')
+                    .then(({ value }) => EleManager.showSuccess('输入内容: ' + (value || '(空)')))
+                    .catch(() => EleManager.showInfo('已取消输入'));
+            },
+
+            testLoading: () => {
+                EleManager.showLoading('模拟处理中...');
+                setTimeout(() => {
+                    EleManager.closeLoading();
+                    EleManager.showSuccess('处理完成');
+                }, 1500);
+            },
+
+            confirmPop: () => {
+                EleManager.showSuccess('Popconfirm 已确认');
+            },
+        };
+    </script>
+
+    <EleApp Expose="eleManagerDemo" />
+}

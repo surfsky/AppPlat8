@@ -1,0 +1,16 @@
+@page
+@model App.Pages.OA.ArticleFormModel
+@{
+    ViewData["Title"] = "文档信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleTreeSelect For="Item.CategoryId" Label="目录" Items="Model.Categories" ></EleTreeSelect>
+        <EleInput For="Item.Content" Label="内容" Rows="10"></EleInput>
+        <EleInput For="Item.Attachments" Label="附件" Rows="3"></EleInput>
+        <EleSwitch For="Item.AllowComment" Label="允许评论"></EleSwitch>
+    </EleForm>
+}
+

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Window Manager - Element Plus Drawer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus"></script>
+    <script src="./tailwindConfig.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .phone-frame {
+            background: #000;
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 25px;
+            background: #000;
+            border-radius: 0 0 25px 25px;
+            z-index: 10;
+        }
+
+        .screen {
+            background: #f5f5f5;
+            border-radius: 30px;
+            height: 720px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            touch-action: pan-y;
+            user-select: none;
+        }
+
+        .status-bar {
+            background: #323232;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 28px;
+        }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .window-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .window-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .window-item i {
+            font-size: 24px;
+            color: var(--primary-500);
+            min-width: 30px;
+        }
+
+        .window-info {
+            flex: 1;
+        }
+
+        .window-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .window-desc {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .arrow {
+            color: #ccc;
+            font-size: 16px;
+        }
+
+        /* Drawer Header Styles */
+        .el-drawer__header {
+            border-bottom: 1px solid #eee;
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: #e0e0e0;
+        }
+
+        .back-button:active {
+            transform: scale(0.95);
+        }
+
+        .window-header-title {
+            flex: 1;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        /* Drawer Content */
+        .drawer-content {
+            padding: 20px 0;
+            min-height: 500px;
+        }
+
+        .content-section {
+            padding: 0 20px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .content-item {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .swipe-hint {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+            opacity: 0.7;
+        }
+
+        /* Animation for swipe feedback */
+        .swipe-feedback {
+            position: fixed;
+            top: 50%;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            pointer-events: none;
+            animation: slideOut 1s ease forwards;
+            z-index: 9999;
+        }
+
+        @keyframes slideOut {
+            0% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-60px);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .phone-frame {
+                padding: 8px;
+            }
+
+            .screen {
+                height: 600px;
+            }
+
+            .status-bar {
+                padding-top: 20px;
+            }
+        }
+
+        .home-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .home-header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .home-header p {
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="phone-frame">
+            <div class="screen">
+                <!-- Status Bar -->
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <div>
+                        <i class="fas fa-signal"></i>
+                        <i class="fas fa-wifi"></i>
+                        <i class="fas fa-battery-full"></i>
+                    </div>
+                </div>
+
+                <!-- App Content -->
+                <div class="app-content">
+                    <!-- Home Screen -->
+                    <div v-if="!currentDrawer">
+                        <div class="home-header">
+                            <h1>窗口管理器</h1>
+                            <p>选择一个窗口打开</p>
+                        </div>
+
+                        <div 
+                            v-for="(window, index) in windows" 
+                            :key="index"
+                            class="window-item"
+                            @click="openWindow(index)"
+                        >
+                            <i :class="window.icon"></i>
+                            <div class="window-info">
+                                <div class="window-title">{{ window.title }}</div>
+                                <div class="window-desc">{{ window.description }}</div>
+                            </div>
+                            <i class="fas fa-chevron-right arrow"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drawer Component -->
+        <el-drawer
+            v-model="drawerVisible"
+            :title="currentDrawer?.title"
+            direction="rtl"
+            :size="'100%'"
+            :lock-scroll="false"
+            :close-on-press-escape="true"
+            @close="closeDrawer"
+        >
+            <template #header>
+                <div class="drawer-header">
+                    <button class="back-button" @click="closeDrawer">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="window-header-title">{{ currentDrawer?.title }}</div>
+                </div>
+            </template>
+
+            <div class="drawer-content" ref="drawerContentRef" @touchstart="handleTouchStart" @touchmove="handleTouchMove" @touchend="handleTouchEnd">
+                <div v-if="currentDrawer">
+                    <div v-for="(section, index) in currentDrawer.sections" :key="index" class="content-section">
+                        <div class="section-title">{{ section.name }}</div>
+                        <div v-for="(item, itemIndex) in section.items" :key="itemIndex" class="content-item">
+                            {{ item }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="swipe-hint">
+                    <i class="fas fa-hand-paper"></i> 右滑返回
+                </div>
+            </div>
+        </el-drawer>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+        const { ElDrawer } = ElementPlus;
+
+        createApp({
+            components: {
+                ElDrawer
+            },
+            setup() {
+                const drawerVisible = ref(false);
+                const currentDrawer = ref(null);
+                const drawerContentRef = ref(null);
+                
+                // Touch swipe detection
+                let touchStartX = 0;
+                let touchCurrentX = 0;
+
+                const windows = [
+                    {
+                        icon: 'fas fa-message',
+                        title: '消息',
+                        description: '查看所有信息'
+                    },
+                    {
+                        icon: 'fas fa-camera',
+                        title: '相机',
+                        description: '拍照和录制'
+                    },
+                    {
+                        icon: 'fas fa-heart',
+                        title: '喜爱',
+                        description: '我的收藏'
+                    },
+                    {
+                        icon: 'fas fa-cog',
+                        title: '设置',
+                        description: '应用设置'
+                    },
+                    {
+                        icon: 'fas fa-user',
+                        title: '个人资料',
+                        description: '用户信息'
+                    },
+                    {
+                        icon: 'fas fa-star',
+                        title: '评分',
+                        description: '评价应用'
+                    }
+                ];
+
+                const windowContents = [
+                    {
+                        title: '消息',
+                        sections: [
+                            {
+                                name: '今天',
+                                items: ['张三: 你好吗？', '李四: 明天见面', '王五: 已处理']
+                            },
+                            {
+                                name: '昨天',
+                                items: ['赵六: 会议时间改了', '孙七: 好的，收到', '周八: 谢谢反馈']
+                            }
+                        ]
+                    },
+                    {
+                        title: '相机',
+                        sections: [
+                            {
+                                name: '最近照片',
+                                items: ['IMG_001.jpg', 'IMG_002.jpg', 'IMG_003.jpg', 'IMG_004.jpg']
+                            },
+                            {
+                                name: '相机设置',
+                                items: ['分辨率: 高清', '闪光灯: 自动', '网格: 开启', '延时拍摄: 3秒']
+                            }
+                        ]
+                    },
+                    {
+                        title: '喜爱',
+                        sections: [
+                            {
+                                name: '收藏项目',
+                                items: ['App Store', 'GitHub 项目', '设计灵感', '代码片段']
+                            },
+                            {
+                                name: '标签',
+                                items: ['重要', '稍后查看', '需要回复', '学习资源']
+                            }
+                        ]
+                    },
+                    {
+                        title: '设置',
+                        sections: [
+                            {
+                                name: '通用',
+                                items: ['关于', '软件更新', '存储空间']
+                            },
+                            {
+                                name: '隐私',
+                                items: ['位置服务', '相机权限', '麦克风权限', '联系人访问']
+                            },
+                            {
+                                name: '显示',
+                                items: ['亮度: 70%', '字体大小: 中等', '暗黑模式: 关闭']
+                            }
+                        ]
+                    },
+                    {
+                        title: '个人资料',
+                        sections: [
+                            {
+                                name: '账户信息',
+                                items: ['用户名: 张三', '邮箱: zhangsan@example.com', '手机: 158****0123']
+                            },
+                            {
+                                name: '统计',
+                                items: ['账户等级: VIP 2', '累计积分: 8,520', '成就: 23个']
+                            }
+                        ]
+                    },
+                    {
+                        title: '评分',
+                        sections: [
+                            {
+                                name: '应用评价',
+                                items: ['当前版本: 2.5.0', '用户评分: 4.8★', '评价数: 12,456']
+                            },
+                            {
+                                name: '反馈梳理',
+                                items: ['功能建议', '错误报告', '用户体验优化建议']
+                            }
+                        ]
+                    }
+                ];
+
+                const openWindow = (index) => {
+                    currentDrawer.value = windowContents[index];
+                    drawerVisible.value = true;
+                };
+
+                const closeDrawer = () => {
+                    drawerVisible.value = false;
+                    setTimeout(() => {
+                        currentDrawer.value = null;
+                    }, 300);
+                };
+
+                const handleTouchStart = (e) => {
+                    if (drawerVisible.value) {
+                        touchStartX = e.touches[0].clientX;
+                        touchCurrentX = touchStartX;
+                    }
+                };
+
+                const handleTouchMove = (e) => {
+                    if (drawerVisible.value) {
+                        touchCurrentX = e.touches[0].clientX;
+                    }
+                };
+
+                const handleTouchEnd = (e) => {
+                    if (!drawerVisible.value) return;
+
+                    const diff = touchCurrentX - touchStartX;
+                    
+                    // If swiped right more than 100px, close drawer
+                    if (diff > 100) {
+                        showSwipeFeedback();
+                        closeDrawer();
+                    }
+                };
+
+                const showSwipeFeedback = () => {
+                    const feedback = document.createElement('div');
+                    feedback.className = 'swipe-feedback';
+                    feedback.innerHTML = '<i class="fas fa-arrow-left"></i> 滑动返回';
+                    document.body.appendChild(feedback);
+                    setTimeout(() => feedback.remove(), 1000);
+                };
+
+                return {
+                    drawerVisible,
+                    currentDrawer,
+                    windows,
+                    openWindow,
+                    closeDrawer,
+                    handleTouchStart,
+                    handleTouchMove,
+                    handleTouchEnd,
+                    drawerContentRef
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

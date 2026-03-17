@@ -1,0 +1,36 @@
+@page
+@model App.Pages.Checks.CheckLogsModel
+@{
+    ViewData["Title"] = "检查记录管理";
+}
+
+@section body {
+    <EleTable Title="检查记录" FormPage="CheckLogForm" EnableBatch="true" >
+        <Toolbar>
+            <EleInput For="Item.CheckObject.Name" Width="250px" Label="对象名称" ></EleInput>
+            <EleInput For="Item.Checker.Name" Width="250px" Label="检查人" ></EleInput>
+            <EleDatePicker For="Item.CheckDt" Label="检查时间" Width="250px"></EleDatePicker>
+            <div class="flex w-80">
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
+            </div>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleOpColumn DPower="CheckLogDelete" Width="60" Fixed="right"></EleOpColumn>
+            <EleColumn For="Item.CheckObject.Name" Label="检查对象" MinWidth="150"></EleColumn>
+            <EleColumn For="Item.Task.Name" Label="关联任务" Width="150"></EleColumn>
+            <EleColumn For="Item.Checker.Name" Label="检查人" Width="100"></EleColumn>
+            <EleColumn For="Item.CheckDt" Label="检查时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.Result" Label="结果" Width="80"></EleColumn>
+            <EleColumn For="Item.HazardCount" Label="隐患数" Width="80"></EleColumn>
+            <EleColumn For="Item.RemainHazardCount" Label="未处理隐患数" Width="80"></EleColumn>
+            <EleColumn For="Item.IsClosed" Label="闭环" Width="80">
+                <template #default="{ row }">
+                    <el-tag :type="row.isClosed ? 'success' : 'warning'">{{ row.isClosed ? '是' : '否' }}</el-tag>
+                </template>
+            </EleColumn>
+        </Columns>
+    </EleTable>
+}

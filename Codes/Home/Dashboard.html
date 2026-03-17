@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - AppPlat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./tailwindConfig.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- colors are loaded from /Design/colors.js -->
+    <style>
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 font-system">
+    <!-- Menu Toggle Button -->
+    <button id="menuToggle" class="hidden fixed top-5 right-5 z-50 bg-primary-600 hover:bg-primary-700 text-white w-10 h-10 rounded transition-all duration-300 flex items-center justify-center md:hidden">
+        <i class="fas fa-bars text-lg"></i>
+    </button>
+
+    <div class="dashboard-container flex h-screen overflow-hidden relative">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar w-60 h-screen bg-gradient-to-b from-primary-500 via-primary-700 to-primary-900 flex flex-col p-3 overflow-y-auto shadow-lg transition-all duration-300 md:relative md:translate-x-0 fixed left-0 top-0 -translate-x-full z-40">
+            <!-- Logo Area -->
+            <div class="flex flex-col items-center justify-center h-15 mb-3 border-b-2 border-primary-500 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                        <i class="fas fa-rocket text-primary-600 text-base"></i>
+                    </div>
+                    <div class="text-white text-xl font-bold">AppPlat</div>
+                </div>
+            </div>
+
+            <!-- Navigation Items -->
+            <div class="flex-1 flex flex-col gap-1 pt-5">
+                <!-- Dashboard -->
+                <div class="nav-item flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 bg-white bg-opacity-20 text-blue-100">
+                    <i class="fas fa-th-large w-5"></i>
+                    <span class="text-sm">Dashboard</span>
+                </div>
+
+                <!-- Analytics Group -->
+                <div class="nav-group">
+                    <div class="nav-item-parent flex items-center justify-between h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-chart-line w-5"></i>
+                            <span class="text-sm">Analytics</span>
+                        </div>
+                        <i class="fas fa-chevron-right w-4 transition-transform" style="display: inline-block;"></i>
+                    </div>
+                    <div class="nav-sub-items pl-6 flex flex-col gap-1 hidden">
+                        <div class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>Reports</span>
+                        </div>
+                        <div class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>Trends</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports -->
+                <div class="nav-item flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300">
+                    <i class="fas fa-file-alt w-5"></i>
+                    <span class="text-sm">Reports</span>
+                </div>
+
+                <!-- Settings Group -->
+                <div class="nav-group">
+                    <div class="nav-item-parent flex items-center justify-between h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-cog w-5"></i>
+                            <span class="text-sm">Settings</span>
+                        </div>
+                        <i class="fas fa-chevron-right w-4 transition-transform" style="display: inline-block;"></i>
+                    </div>
+                    <div class="nav-sub-items pl-6 flex flex-col gap-1 hidden">
+                        <div class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>Profile</span>
+                        </div>
+                        <div class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>Security</span>
+                        </div>
+                        <div class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>Preferences</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="h-px bg-slate-600 my-5"></div>
+
+            <!-- Footer Navigation -->
+            <div class="flex flex-col gap-2">
+                <div class="nav-footer-item flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="text-sm">Account</span>
+                </div>
+                <div class="nav-footer-item flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span class="text-sm">Logout</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content flex-1 flex flex-col p-6 overflow-y-auto bg-slate-100 md:pt-6 pt-20">
+            <!-- Header -->
+            <div class="flex items-center justify-between h-15 mb-6 gap-4">
+                <div class="flex flex-col justify-center flex-1">
+                    <div class="page-title text-3xl font-bold text-slate-900">Dashboard</div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area flex flex-col gap-6 flex-1">
+                <!-- Stats Grid -->
+                <div class="stats-grid grid grid-cols-1 lg:grid-cols-3 gap-5 h-auto lg:h-32">
+                    <!-- Stat Card 1 -->
+                    <div class="stat-card bg-white border border-slate-200 rounded-lg p-4 flex flex-col gap-3">
+                        <div class="stat-label text-xs text-slate-500 font-semibold">Active Users</div>
+                        <div class="stat-value text-2xl font-bold text-slate-900">2,543</div>
+                        <div class="stat-change text-xs font-medium text-green-600">+12.5% from last month</div>
+                    </div>
+                    <!-- Stat Card 2 -->
+                    <div class="stat-card bg-white border border-slate-200 rounded-lg p-4 flex flex-col gap-3">
+                        <div class="stat-label text-xs text-slate-500 font-semibold">Total Revenue</div>
+                        <div class="stat-value text-2xl font-bold text-slate-900">$45,231.89</div>
+                        <div class="stat-change text-xs font-medium text-green-600">+8.2% from last month</div>
+                    </div>
+                    <!-- Stat Card 3 -->
+                    <div class="stat-card bg-white border border-slate-200 rounded-lg p-4 flex flex-col gap-3">
+                        <div class="stat-label text-xs text-slate-500 font-semibold">Conversion Rate</div>
+                        <div class="stat-value text-2xl font-bold text-slate-900">3.24%</div>
+                        <div class="stat-change text-xs font-medium text-red-600">-2.4% from last month</div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid grid grid-cols-1 lg:grid-cols-2 gap-5 h-auto lg:h-80">
+                    <!-- Chart Card 1 -->
+                    <div class="chart-card bg-white border border-slate-200 rounded-lg p-5 flex flex-col gap-4">
+                        <div class="chart-title text-base font-semibold text-slate-900">Revenue Overview</div>
+                        <div class="chart-area flex-1 bg-slate-50 rounded flex items-center justify-center">
+                            <div class="chart-placeholder text-xs text-slate-500">📊 Chart Visualization</div>
+                        </div>
+                    </div>
+                    <!-- Chart Card 2 -->
+                    <div class="chart-card bg-white border border-slate-200 rounded-lg p-5 flex flex-col gap-4">
+                        <div class="chart-title text-base font-semibold text-slate-900">User Growth</div>
+                        <div class="chart-area flex-1 bg-slate-50 rounded flex items-center justify-center">
+                            <div class="chart-placeholder text-xs text-slate-500">📈 Chart Visualization</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Section -->
+                <div class="table-section bg-white border border-slate-200 rounded-lg p-5 flex flex-col gap-4 h-auto">
+                    <div class="table-title text-base font-semibold text-slate-900">Recent Transactions</div>
+                    
+                    <!-- Table Header -->
+                    <div class="table-header grid grid-cols-4 gap-5 h-10 items-center bg-slate-50 px-3 rounded">
+                        <div class="table-header-col text-xs font-bold text-slate-900">ID</div>
+                        <div class="table-header-col text-xs font-bold text-slate-900">User</div>
+                        <div class="table-header-col text-xs font-bold text-slate-900">Amount</div>
+                        <div class="table-header-col text-xs font-bold text-slate-900">Status</div>
+                    </div>
+
+                    <!-- Table Row 1 -->
+                    <div class="table-row grid grid-cols-4 gap-5 h-10 items-center px-3 border-b border-slate-200">
+                        <div class="table-cell text-xs text-slate-900">TXN001</div>
+                        <div class="table-cell text-xs text-slate-600">John Doe</div>
+                        <div class="table-cell text-xs text-slate-900">$1,250.00</div>
+                        <div class="badge bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium w-fit">Completed</div>
+                    </div>
+
+                    <!-- Table Row 2 -->
+                    <div class="table-row grid grid-cols-4 gap-5 h-10 items-center px-3 border-b border-slate-200">
+                        <div class="table-cell text-xs text-slate-900">TXN002</div>
+                        <div class="table-cell text-xs text-slate-600">Jane Smith</div>
+                        <div class="table-cell text-xs text-slate-900">$850.50</div>
+                        <div class="badge bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium w-fit">Pending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Menu toggle functionality
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('translate-x-0');
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Close menu when clicking on a nav item
+        const navItems = document.querySelectorAll('.nav-item, .nav-footer-item');
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+            });
+        });
+
+        // Close menu when clicking outside (on smaller screens)
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                if (window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebar.classList.remove('translate-x-0');
+                }
+            }
+        });
+
+        // Show/hide menu toggle button based on screen size
+        function updateMenuToggleDisplay() {
+            if (window.innerWidth >= 768) {
+                menuToggle.classList.add('hidden');
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+            } else {
+                menuToggle.classList.remove('hidden');
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+
+        window.addEventListener('resize', updateMenuToggleDisplay);
+        updateMenuToggleDisplay();
+
+        // Tree menu toggle functionality
+        const navGroups = document.querySelectorAll('.nav-group');
+        navGroups.forEach(group => {
+            const parentItem = group.querySelector('.nav-item-parent');
+            const subItems = group.querySelector('.nav-sub-items');
+            const chevron = parentItem.querySelector('.fa-chevron-right');
+
+            parentItem.addEventListener('click', (e) => {
+                e.preventDefault();
+                const isHidden = subItems.classList.contains('hidden');
+                subItems.classList.toggle('hidden');
+                chevron.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+            });
+        });
+    </script>
+</body>
+</html>

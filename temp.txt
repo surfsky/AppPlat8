@@ -1,0 +1,439 @@
+@page
+
+@section body {
+    <div id="app" class="p-4">
+        <el-card class="box-card">
+            <template #header>
+                <div class="card-header">
+                    <span>EleManager 测试</span>
+                </div>
+            </template>
+            
+            <div class="space-y-4">
+                <div class="flex flex-wrap gap-2">
+                    <el-button type="success" @@click="showSuccess">Show Success</el-button>
+                    <el-button type="danger" @@click="showError">Show Error</el-button>
+                    <el-button type="warning" @@click="showWarning">Show Warning</el-button>
+                    <el-button type="info" @@click="showInfo">Show Info</el-button>
+                    <el-button type="primary" @@click="testConfirm">Test Confirm</el-button>
+                </div>
+
+            </div>
+        </el-card>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp } = Vue;
+        const app = createApp({
+            setup() {
+                const showSuccess = () => window.EleManager.showSuccess('操作成功！');
+                const showError = () => window.EleManager.showError('操作失败！');
+                const showWarning = () => window.EleManager.showWarning('这是警告信息');
+                const showInfo = () => window.EleManager.showInfo('这是提示信息');
+
+                const testConfirm = () => {
+                    window.EleManager.confirm('确定要执行此操作吗？', '确认提示')
+                        .then(() => {
+                            window.EleManager.showSuccess('点击了确定');
+                        })
+                        .catch(() => {
+                            window.EleManager.showInfo('点击了取消');
+                        });
+                };
+
+                return {
+                    showSuccess,
+                    showError,
+                    showWarning,
+                    showInfo,
+                    testConfirm
+                };
+            }
+        });
+
+        if (window.ElementPlus) {
+            app.use(window.ElementPlus, { locale: window.ElementPlusLocaleZhCn });
+        }
+
+        if (window.ElementPlusIconsVue) {
+            for (const [key, component] of Object.entries(window.ElementPlusIconsVue)) {
+                app.component(key, component);
+            }
+        }
+
+        app.mount('#app');
+    </script>
+}
+
+
+# Vue 常用手册速查
+
+- 创建应用
+  - const app = Vue.createApp({ setup() { /*...*/ } }); app.use(ElementPlus); app.mount('#app');
+
+- 响应式数据
+  - ref：const n = ref(0)；n.value
+  - reactive：const state = reactive({ a: 1 })
+  - computed：const doubled = computed(() => n.value * 2)
+  - watch：watch(n, (val, old) => { /*...*/ })
+  - watchEffect：watchEffect(() => { /* 依赖自动收集 */ })
+
+- 生命周期
+  - onMounted、onUpdated、onUnmounted
+  - 示例：onMounted(() => { load(); })
+
+- Props / Emits
+  - const props = defineProps({ title: String, count: Number })
+  - const emit = defineEmits(['save', 'close']); emit('save', data)
+
+- v-model
+  - 组件：props: modelValue；emit: update:modelValue
+  - 父用法：<Comp v-model="val" />
+
+- 指令
+  - v-if / v-else-if / v-else、v-show
+  - v-for="(item, i) in list" :key="item.id"
+  - v-bind：:class="cls"、:style="sty"、:disabled="isDis"
+  - v-on：事件绑定需写 v-on:click（Razor 中避免 @click）<mccoremem id="01KFFDQB131JHZBBCEDQBHBM7P" />
+  - v-model 语法糖：等价于 :modelValue + v-on:update:modelValue
+
+- 插槽
+  - 默认：<slot />
+  - 具名：<slot name="header" />
+  - 使用：<template #header>...</template>
+
+- 组件注册
+  - 局部：app.component('Comp', Comp)；或在 setup 返回中引用
+  - 全局图标：for (const [k, c] of Object.entries(ElementPlusIconsVue)) app.component(k, c)
+
+
+- Provide / Inject
+  - provide('key', val)；inject('key')
+
+- 常见模式
+  - 列表 + 操作：使用 el-table + 操作列插槽
+  - 弹窗：el-dialog v-model 控制显隐，:close-on-click-modal="false"
+  - 抽屉：el-drawer v-model + size='50%'
+
+- 错误处理
+  - try...catch；ElementPlus ElMessage.error('失败')
+
+
+## Vue 常用手册详解及示例
+
+- 创建应用
+
+```html
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://unpkg.com/element-plus@2.3.1/dist/index.full.js"></script>
+<div id="app">{{ msg }}</div>
+<script>
+const app = Vue.createApp({            // 创建应用
+  setup() {                            // 应用设置
+    const msg = ref('Hello Vue!');     // 响应式变量
+    return { msg };                    // 返回响应式变量
+  }
+});
+app.use(ElementPlus);                  // 使用 ElementPlus 插件
+app.mount('#app');                     // 挂载应用到 #app 元素
+</script>
+```
+
+- 响应式数据
+
+
+``` js
+const n = ref(0);
+const state = reactive({ a: 1 });
+const doubled = computed(() => n.value * 2);
+watch(n, (val, old) => {
+  console.log(`n changed from ${old} to ${val}`);
+});
+watchEffect(() => {
+  console.log(`doubled: ${doubled.value}`);
+});
+```
+
+ref: 响应式变量，存储单个基础类型数据
+    ref 会把基础类型 “包裹” 成一个带 .value 属性的响应式对象。
+    const n = ref(0);
+    n.value = 1 → 触发响应式更新。用 n.value 访问值：
+    {{n}} → 输出 1.模板中可省略 .value，Vue 会自动解包；
+    
+reactive: 响应式对象，定义一个对象/数组类型的响应式数据
+    ref 也能包裹对象（如 ref({a:1})），但 reactive 更适合复杂对象 / 数组，无需写 .value
+    reactive 只能用于对象和数组，不能用于基础类型（reactive(1) 无效）
+    const state = reactive({ a: 1 })
+    state.a = 2 // 直接操作属性，触发响应式更新
+
+computed: 计算属性，依赖自动更新
+    const doubled = computed(() => n.value * 2);  // 依赖 n.value，自动更新
+    const doubled = computed({
+      get: () => n.value * 2,
+      set: (val) => { n.value = val / 2 }         // 赋值
+    });
+
+watch: 监听响应式数据变化
+    const n = ref(2);
+    watch(n, (val, old) => {
+      console.log(`n changed from ${old} to ${val}`);
+    });
+    ----------------------------------------------------
+    const state = reactive({ a: 1 });
+    watch(state, (newState, oldState) => {
+      console.log('state 发生变化：', newState, oldState);
+      console.log('新值 a：', newState.a);
+      console.log('旧值 a：', oldState.a);
+    });
+    ----------------------------------------------------
+    watch(() => state.a, (newVal, oldVal) => {
+        console.log(`state.a 变化：旧值=${oldVal}，新值=${newVal}`);
+      }
+    );
+    watch(() => state.c.e, (newVal, oldVal) => {
+        console.log(`state.c.e.f 变化：新值=${newVal.f}，旧值=${oldVal.f}`);
+      },
+      { deep: true } // 若监听的是嵌套对象（如 state.c.e）：必须加 deep: true
+    );
+    watch([() => state.a, () => state.b],([newA, newB], [oldA, oldB]) => {
+        console.log(`state.a 变化：${oldA} → ${newA}`);
+        console.log(`state.b 变化：${oldB} → ${newB}`);
+      }
+    );
+
+watchEffect: 监听所有响应式数据变化
+    watchEffect(() => {
+      console.log(`doubled: ${doubled.value}`);
+    });
+
+
+- 生命周期
+
+
+
+        // id, mode, selectId
+        const selectedId = this.selectedIds.value.length > 0 ? this.selectedIds.value[0] : null;
+        const effectiveSelectId = selectedId ?? (id && id !== 0 && id !== '0' ? id : null);
+        const query = new URLSearchParams({ id: `${id}`, md: 'view', readOnly: '1' });
+        if (effectiveSelectId !== null && typeof effectiveSelectId !== 'undefined') {
+            query.set('selectId', `${effectiveSelectId}`);
+        }
+        const separator = urlBase.includes('?') ? '&' : '?';
+        this.formUrl.value = `${urlBase}${separator}${query.toString()}`;
+        this.drawerReadOnly.value = true;        // 只读模式
+        this.drawerVisible.value = true;     // 打开表单弹窗
+
+
+        // id, mode, selectId
+        const mode = (id === 0 || id === '0') ? 'new' : md;
+        const selectedId = this.selectedIds.value.length > 0 ? this.selectedIds.value[0] : null;
+        const effectiveSelectId = selectedId ?? (id && id !== 0 && id !== '0' ? id : null);
+        const query = new URLSearchParams({ id: `${id}`, md: mode });
+        if (effectiveSelectId !== null && typeof effectiveSelectId !== 'undefined') {
+            query.set('selectId', `${effectiveSelectId}`);
+        }
+
+        const separator = urlBase.includes('?') ? '&' : '?';
+        this.formUrl.value = `${urlBase}${separator}${query.toString()}`;
+        this.drawerReadOnly.value = false;      // 可编辑模式
+        this.drawerVisible.value = true;    // 打开表单弹窗
+
+        [HttpGet("js/{name}")]
+        public IActionResult GetJs(string name)
+        {
+            return GetResource(name, "application/javascript");
+        }
+
+        [HttpGet("css/{name}")]
+        public IActionResult GetCss(string name)
+        {
+            return GetResource(name, "text/css");
+        }
+
+        private IActionResult GetResource(string name, string contentType)
+        {
+            var assembly = typeof(App.Startup).Assembly;
+            
+            // Try full name first
+            var resourceName = name;
+            var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null) 
+            {
+                // Try to find resource case-insensitive
+                var allNames = assembly.GetManifestResourceNames();
+                foreach (var n in allNames)
+                {
+                    if (n.Equals(resourceName, System.StringComparison.OrdinalIgnoreCase) || 
+                        n.EndsWith($".{name}", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        stream = assembly.GetManifestResourceStream(n);
+                        break;
+                    }
+                }
+            }
+            if (stream == null)
+                return NotFound($"Resource not found: {name}");            
+
+            //
+            return File(stream, contentType);
+        }
+
+        this.drawerReadOnly = ref(false);
+
+        public List<TreeItem> CheckTagTree { get; set; }
+        public List<TreeItem> OrgTree { get; set; }
+            CheckTagTree = EleHelper.ToTreeItems(CheckTag.All, null);
+            OrgTree = EleHelper.ToTreeItems(Org.All, null);
+
+
+            if (!string.IsNullOrWhiteSpace(clickAction))
+            {
+                if (!string.IsNullOrWhiteSpace(VClick))
+                    output.Attributes.SetAttribute("v-on:click", clickAction);
+                else if (!string.IsNullOrWhiteSpace(Click))
+                    output.Attributes.SetAttribute("onclick", clickAction);
+                else
+                    output.Attributes.SetAttribute("v-on:click", clickAction);
+            }
+
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using App.Web;
+using App.Utils;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using App.Components;
+using Microsoft.AspNetCore.Http;
+using App.DAL;
+
+namespace App.Pages.EleUISamples
+{
+    public class SwitchRequest
+    {
+        public bool ShowItem { get; set; }
+    }
+
+
+    public class ButtonModel : BaseModel
+    {
+        [BindProperty]
+        public bool ShowItem {get;set;} = true;
+
+        public void OnGet(){}
+
+        public IActionResult OnPostSwitch([FromBody] SwitchRequest data)
+        {
+            var current = data?.ShowItem ?? ShowItem;
+            ShowItem = !current;
+            return BuildResult(0, "切换成功", new { showItem = ShowItem });
+        }
+    }
+}
+
+
+        /// <summary>显示客户端消息</summary>
+        public static IActionResult ShowClientMessage(string message, NotifyType type=NotifyType.Info, string title="Title")
+        {
+            return BuildClientCommandResult(
+                ClientCommandType.Message,
+                new NotifyArgs(Type: type, Message: message, Title: title)
+            );
+        }
+
+
+        //public IActionResult OnPostMessage()
+        //{
+        //    return EleManager.ShowClientMessage("服务端下发 Message 成功", NotifyType.Success);
+        //}
+
+                    <EleButton Type="Primary" Handler="Message">Message</EleButton>
+
+
+    <div class="m-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+
+            <Header>
+                <div class="flex items-center justify-between w-full">
+                    <span class="font-bold text-lg">自定义 Header</span>
+                    <EleButton Text Type="Primary" VClick="centerVisible = false">关闭</EleButton>
+                </div>
+            </Header>
+
+
+
+@page
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "分隔面板 Splitter";
+}
+
+@section body {
+    <Column Gap="6" id="app" class="p-4 w-full h-full overflow-y-auto">
+        <Grid Cols="1" LargeCols="2" Gap="4" MaxWidth="max-w-none" Center="false" PaddingX="0" Overflow="AutoY">
+            <EleLabel Label="EleSplitPanel 基础用法示例" Size="2xl" Bold="true" FillRow="true" />
+            <EleSplitPanel Height="220px" Radius="8px" Border="1px solid #d1d5db">
+                <PanelItem Size="220">
+                    <div class="flex h-full items-center justify-center bg-blue-100 text-blue-700">Left (220px)</div>
+                </PanelItem>
+                <PanelItem>
+                    <div class="flex h-full items-center justify-center bg-green-100 text-green-700">Right (Auto)</div>
+                </PanelItem>
+            </EleSplitPanel>
+
+            <EleLabel Label="EleSplitPanel 基础用法示例" Size="2xl" Bold="true" FillRow="true" />
+            <EleSplitPanel Layout="Vertical" Height="220px" Radius="8px">
+                <PanelItem Size="100">
+                    <div class="flex h-full items-center justify-center bg-yellow-100 text-yellow-700">Top (100px)</div>
+                </PanelItem>
+                <PanelItem>
+                    <div class="flex h-full items-center justify-center bg-red-100 text-red-700">Bottom (Auto)</div>
+                </PanelItem>
+            </EleSplitPanel>
+
+            <EleLabel Label="可折叠 (Collapsible)" Size="2xl" Bold="true" FillRow="true" />
+            <EleSplitPanel Height="240px">
+                <PanelItem Size="220" Min="0" Collapsible="true">
+                    <div class="flex h-full items-center justify-center bg-purple-100 text-purple-700">Collapsible Left</div>
+                </PanelItem>
+                <PanelItem>
+                    <div class="flex h-full items-center justify-center bg-gray-100 text-gray-700">Right</div>
+                </PanelItem>
+            </EleSplitPanel>
+
+            <EleLabel Label="嵌套 (Nested)" Size="2xl" Bold="true" FillRow="true" />
+            <EleSplitPanel Height="240px" Layout="Vertical">
+                <PanelItem Size="100" Collapsible="true">
+                    <div class="flex h-full items-center justify-center bg-pink-100 text-slate-700">Header</div>
+                </PanelItem>
+                <PanelItem Size="220" Min="0" Collapsible="false">
+                    <EleSplitPanel Layout="Horizontal">
+                        <PanelItem Size="220" Min="140" Max="280" Collapsible="true">
+                            <div class="flex h-full items-center justify-center bg-blue-50 text-blue-700">Sidebar</div>
+                        </PanelItem>
+                        <PanelItem>
+                            <div class="flex h-full items-center justify-center bg-gray-50 text-gray-700">Main Content</div>
+                        </PanelItem>
+                    </EleSplitPanel>
+                </PanelItem>
+            </EleSplitPanel>
+        </Grid>
+    </Column>
+
+    <EleApp />
+}
+
+
+        // Drawer 初始化
+        EleManager.setDrawer({
+            title: '服务端 Drawer',
+            direction: 'rtl',
+            size: '40%',
+            showFooter: true,
+            footerButtons: [
+                { text: '本地关闭', type: 'primary', action: 'close' }
+            ]
+        });

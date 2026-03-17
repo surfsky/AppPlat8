@@ -1,0 +1,83 @@
+@page
+@model App.Pages.Checks.CheckObjectFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "检查对象信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="140px">
+        <div v-if="form.Item">
+            <input type="hidden" v-model="form.Item.id" />
+        </div>
+        <EleLabel Label="基础信息" FillRow="true"></EleLabel>
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.SocialCreditCode" Label="社会信用代码"></EleInput>
+        <EleInput For="Item.Code" Label="对象编码"></EleInput>
+        <EleInput For="Item.AreaCode" Label="地块号"></EleInput>
+        <EleInput For="Item.Address" Label="地址"></EleInput>
+        <EleSwitch For="Item.InUsed" Label="是否有效"></EleSwitch>
+
+        <EleLabel Label="责任信息" FillRow="true"></EleLabel>
+        <EleInput For="Item.DutyUserName" Label="负责人信息"></EleInput>
+        <EleInput For="Item.SafetyAdminName" Label="安全管理员"></EleInput>
+        <EleInput For="Item.ThirdPartySafetyAgency" Label="三方机构"></EleInput>
+        <EleTreeSelect For="Item.DutyOrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+        <EleUserSelect For="Item.CheckerId" Label="技术检查员"></EleUserSelect>
+        <EleUserSelect For="Item.SocialCheckerId" Label="社区网格员"></EleUserSelect>
+
+        <EleLabel Label="企业信息" FillRow="true"></EleLabel>
+        <EleSelect For="Item.ObjectType" Label="对象类型" ></EleSelect>
+        <EleSelect For="Item.Scope" Label="领域" ></EleSelect>
+        <EleSelect For="Item.Scale" Label="规模"></EleSelect>
+        <EleInput For="Item.ProductContent" Label="生产内容" Rows="2" FillRow="false"></EleInput>
+        <EleDatePicker For="Item.ArchieveDt" Label="建档日期"></EleDatePicker>
+        <EleImageUpload For="Item.OutlookImage" Label="外观图片" FillRow="true"></EleImageUpload>
+        <EleImageUpload For="Item.LicenseImage" Label="工商执照" FillRow="true"></EleImageUpload>
+        <EleInput For="Item.EleMeeterNum" Label="电表号"></EleInput>
+        <EleNumber For="Item.EmployeeCount" Label="员工数"></EleNumber>
+
+        <EleLabel Label="风险信息" FillRow="true"></EleLabel>
+        <EleSelect For="Item.RiskLevel" Label="风险等级" ></EleSelect>
+        <EleSelect For="Item.RiskColor" Label="风险四色"></EleSelect>
+        <EleInput For="Item.IndustryType" Label="行业类型"></EleInput>
+        <EleInput For="Item.IndustryRisk" Label="行业风险"></EleInput>
+        <EleInput For="Item.InternalRewardMechanism" Label="内部奖励机制"></EleInput>
+        <EleInput For="Item.StandardizationStatus" Label="标准化创建"></EleInput>
+        <EleSwitch For="Item.IsKeySupervision" Label="重点监管"></EleSwitch>
+        <EleSwitch For="Item.IsDemonstration" Label="示范企业"></EleSwitch>
+        <EleSwitch For="Item.IsProductInNight" Label="夜间生产"></EleSwitch>
+        <EleSwitch For="Item.IsProductInSpringFestival" Label="春节生产"></EleSwitch>
+        <EleSwitch For="Item.IsThreePlacesThreeEnterprises" Label="三场所三企业"></EleSwitch>
+        <EleSwitch For="Item.IsParkFactoryOverlayRisk" Label="园中园厂中厂"></EleSwitch>
+        <EleSwitch For="Item.HasWelding" Label="涉及电气焊"></EleSwitch>
+        <EleSwitch For="Item.HasSprinklerSystem" Label="喷淋系统"></EleSwitch>
+        <EleSwitch For="Item.HasEnvironmentalEquipment" Label="环保设备"></EleSwitch>
+        <EleSwitch For="Item.SafetySteward" Label="有安全管家"></EleSwitch>
+        <EleSwitch For="Item.IsYiEnterprise" Label="亿元企业"></EleSwitch>
+
+
+        <EleLabel Label="建筑信息" FillRow="true"></EleLabel>
+        <EleSelect For="Item.BuildingType" Label="建筑类型" ></EleSelect>
+        <EleNumber For="Item.LandArea" Label="占地面积" Append="㎡" ControlPosition="right" ></EleNumber>
+        <EleNumber For="Item.BuildingArea" Label="建筑面积" Append="㎡" ControlPosition="right" ></EleNumber>
+        <EleInput For="Item.FactoryUsageType" Label="厂房使用权"></EleInput>
+        <EleInput For="Item.BuildingStructure" Label="房屋结构"></EleInput>
+
+
+        <EleLabel Label="系统信息" FillRow="true"></EleLabel>
+        <EleSwitch For="Item.IsInOnlinePlatform" Label="录入工业在线"></EleSwitch>
+        <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
+    </EleForm>
+
+    <style>
+        .form-group-header {
+            margin: 20px 0 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+    </style>
+}

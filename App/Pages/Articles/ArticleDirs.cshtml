@@ -1,0 +1,22 @@
+@page
+@model App.Pages.OA.ArticleDirsModel
+@{
+    ViewData["Title"] = "文档目录管理";
+}
+
+@section body {
+    <EleTable Title="文档目录" FormPage="ArticleDirForm" EnableBatch="false"  RowKey="id">
+        <Toolbar>
+            <div class="flex w-80">
+                <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
+            </div>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleOpColumn UPower="ArticleEdit" DPower="ArticleDelete" Width="100" Fixed="right"></EleOpColumn>
+            <EleColumn For="Item.Name" Label="名称" MinWidth="150"></EleColumn>
+            <EleColumn For="Item.SortId" Label="排序" Width="80"></EleColumn>
+            <EleColumn For="Item.CreateDt" Label="创建时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+        </Columns>
+    </EleTable>
+}

@@ -1,0 +1,725 @@
+--------------------------------------------------------
+Task
+--------------------------------------------------------
+梳理目录结构，清除掉原有的 git，然后重建git（设置好gitignore）
+
+子表的表示方式
+    保存后可显示子表按钮
+    点击后弹出子表数据窗口（用drawer）
+    辅助子表页面管理方式：
+    将EleApp到逻辑迁移到 EleFormApp、EleTableApp，作为基类？
+    检查项目管理页面(子表的表示方式)
+
+改造EleUI
+    改造eleform：剥离eleformapp
+    改造eletable，剥离eletableapp，toolbar部分用form实现（并加上table的信息）
+    EleControl 增加  Resizable 属性
+    给EleApp页面增加 Loading 效果
+
+
+    剥离通用的方法到 EleUtils.js 文件
+    创建 EleFormApp、EleTableApp
+    将 EleUI 迁移为一个单独项目
+    EleUI 类重构子函数化简化
+    EleUI 剥离 Drawer、App构建逻辑
+    重新梳理页面结构框架，实现一个简单 vue app，自由组合各种界面元素，tableapp也可以拆分为 form、table
+    Vue框架很难控制，看能否用js实现控制
+    c#代码中不做command处理，统一交给js处理
+    实现 Theme 逻辑
+
+实现更多的ElementPlus 控件
+    Avatar：https://element-plus.org/zh-CN/component/avatar
+    Badge
+    el-container, header, asde, main, footer
+        <el-container>
+        <el-header>Header</el-header>
+        <el-container>
+            <el-aside width="200px">Aside</el-aside>
+            <el-main>Main</el-main>
+        </el-container>
+        </el-container>
+    Tour: 使用帮助
+
+
+重构
+    优化列表页面的查询工具栏，在右侧显示一个下箭头按钮，点击后可展开完整检索条件，收缩后可显示第一行检索条件；
+    HttpAPI
+        考虑用 header bearer 方式传递token，不用cookie
+            setHeaderToken(token, type = 'Bearer') {
+                // type 可选：Bearer（默认）、Basic 等认证类型
+                this.headers['Authorization'] = `${type} ${token}`;
+            }
+            写HttpApiConfig 全局处理，可处理 token 处理逻辑。这两种方式可以合并
+    Entity
+        Online 逻辑有点啰嗦，可参考 appplat4实现（容后）
+    other
+        删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
+
+核心业务
+    完成对象管理页面，并导入数据；******
+    融合展示检查对象、检查、隐患、培训信息、联系人信息
+        实现对象的附件功能
+        实现对象的联系人功能
+    实现检查表细项（主表、子表）
+    实现检查任务流程
+        检查任务：包括检查人、检查组织、检查表单的选择
+    实现项目管理的附件功能
+    实现项目管理的历史功能
+    BUG：
+        /检查记录表单
+        隐患无法录入
+
+
+
+修正测试页面
+    EleForm
+        表单 EleForm label的位置可控制
+        增加CloseButtonVisible
+    EleControl
+        实现Panel控件及测试，一个页面可以展示多个panel，可联动
+        删除 EleUserSelect，用通用的 EleSelector
+        考虑用枚举来展示Icon，如
+            public enum Icon
+            {
+                [UI("fas fa-home")]   Home
+                ...
+            }
+    EleTable 优化
+        可设置drawer的显示方式：如全屏、下滑出
+        数据分页支持下拉刷新模式
+        用 inline form 设置 EleTable 的 Toolbar 部分：https://element-plus.org/en-US/component/form
+        重写梳理一下 post 后的响应方法，后端可根据command进行响应
+    处理子表的展示问题（都用滑屏显示吧，手机端全屏，电脑端半屏）
+        检查表/检查项
+        检查任务/检查表/检查项/检查企业
+        对象的联系人子表
+        文档附件
+    复杂页面结构如何支持
+        剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
+        剥离 EleTableTagHelper 中的App创建部分，拆分出 EleTableAppTagHelper，只管网格页面渲染
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {{
+                var mixins = [];
+                if (typeof userSelectMixin !== 'undefined') mixins.push(userSelectMixin);
+                if (typeof pageMixin !== 'undefined') mixins.push(pageMixin);
+                new EleFormAppBuilder().mount('#app', {{
+                    dataHandler: '{DataHandler}',
+                    saveHandler: '{SaveHandler}',
+                    mixins: mixins
+                }});
+            }});
+        </script>
+
+misc
+    驾驶舱的手机端适配，检索条件面板要缩小为图标，点击后才弹出
+
+
+需补充数据模型：
+    项目进度日志：ID、项目ID、操作人、说明、项目状态、进度百分比
+    资产变更日志：ID、资产ID、执有人、说明
+    企业培训Train：ID、对象ID、培训日期TrainDt、主题、内容、图片列表（和事件非常相似，看能否复用，事件类别=培训）
+    隐患复查记录：隐患ID、记录人ID、日志时间、说明、图片列表、整改状态
+    驾驶舱业务
+        图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
+        点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
+
+
+
+统计
+	对象类报表
+		企业分类统计表（表四）
+		工矿企业备查点汇总表（六）
+		周期排查进度表（三）
+	隐患类报表
+		隐患排查闭环表（二）
+	任务类报表
+		工业企业排查进度统计表（一）
+		基础专项任务进度统计表（四）
+	个人工作量报表
+    -----------------------------------
+    定时任务
+        每日定时统计数据
+        每日到期提醒
+    展示框架
+        用vtable展示
+            透视表:https://visactor.com/vtable/demo/table-type/pivot-chart
+            表内图表：
+            表头分组（https://visactor.com/vtable/demo/basic-functionality/list-table-header-group-collapse）
+        甘特图可做任务进度（交办）管理、日历图
+            表格直接编辑：https://visactor.com/vtable/demo/edit/add-delete-records
+
+
+UI任务
+    导入导出
+        实现导出excel逻辑：根据Export() 方法和 UIAttribute 可以自动输出列
+        实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
+    网页自动化
+        创建自动展示列表的页面 UISetting
+        创建自动展示表单编辑的页面，实现 IDataForm
+    集成工作流引擎，增加工作流程图
+        用于oa文档流转
+        用于后台自动调度生成统计报表
+    实现全文检索，改用 postgresql
+    集成ai
+        AI 对话
+        AI MCP 可访问数据库（看如何限制权限）
+
+参考
+    更换 PostgreSql
+    恢复使用 IForm 接口
+        应用于窗体编辑页面，定义其 view、new、edit、select 四种模式的行为。但感觉和现有的pagemodel方式匹配不起来
+        实现Select模式
+    尝试使用 TDesign UI、Uniapp、vant 框架编写前端手机端页面：或混合使用。
+        tencent出品，风格为移动端，含chat组件
+        https://tdesign.tencent.com/uniapp/live#/pages-more/swipe-cell/swipe-cell
+
+
+
+--------------------------------------------------------
+Done
+--------------------------------------------------------
+/EleApp
+    /直接挂载到body上，以简化代码
+    /EleApp内置一个drawer
+    /试试opendialog、opendrawer，直接用方法创建
+
+
+/美化/eleuisamples/index页面
+/测试布局控件
+/补充 EleDialog
+/完善Dialog，增加 Radius、Shadow
+/实现响应式容器 Container
+/实现EleCard 的Clapsabe能力
+/优化loading外观
+
+/将 EleManager 中的方法改为静态的，这样就不用注册到 window
+/创建
+    /梳理：标签、检查表、检查项之间的关系
+    /标签管理页面
+    /检查表管理页面
+
+/实现EleManager.ShowMessageBox()
+/将 EleDrawer 增加 Content 子节点，并将 EleDrawerFooter 节点名称简化为 Footer
+/实现 EleLabel 的  TextFor -》 For
+/实现 EleInput.PlaceholderFor 和 TextFor， For已经有了
+/完善 EleManger 类，配合 EleManager.js，实现message, notify, toast, drawer 等客户端逻辑
+/简化和完善 EleDrawer
+    /实现属性：Title, IsModal, IFrameUrl 等；
+    /顶部是包含标题部分：标题文本和一个图标关闭按钮
+    /中间是内容区域：用一个div填满，或一个iframe。若IFrameUrl不为空，则内置一个IFrame，并自适应覆盖内容区域。
+    /底部是工具栏区域：可放置自定义的按钮
+    /创建Drawer 页面进行测试
+
+        /弄一个manager
+            /统一处理前后端数据交互
+            /控制 toast、dialog（drawer）、messagebox 等
+            /参考FineUI，实现服务器端向客户端发送命令，如EleClient.ShowAlert(), ShowToast(), ShowDrawer()...
+/创建VsibleFor、TextFor 等属性
+‘        /EleManager 完善测试页面，包括服务器端调用、服务器端消息
+        /修改EleApp，直接作为根容器如何，实验起来
+            <EleApp>
+                <EleForm>...</EleForm>
+            </EleApp>
+            /内置 EleManager
+/创建 Ele 标签基类
+/实现 Handler 按钮逻辑，可将命令传递到服务器端
+/编写测试页面
+/完善EleApp 标签，可以自动将页面模型映射到客户端
+
+/弄个好看的网站图标
+/修改下chats.html
+/所有表格的列默认都可以排序
+/修正rolepower对齐缺陷、权限表格可滚动
+    /实现授权部门逻辑
+    /创建 <EleManager> 标签，用于动态生成js调用、通用 vueapp 生成
+        创建其他控件
+            panel：用 div + tailwind 直接创建，显示为一个面板，带 Collapable、Border、Width、Height 等属性
+            progress
+            tabpage
+        /操作成功应该显示提示，如 toast
+        /再看一下图片上传如何处理，用base64传输会更简单一点？
+        /尽量用 IDataForm 来修改Form页面（容后容后看情况，与model不兼容）
+        /修正：IconSelector 初始值设置无效的bug，好像是可以设置，但显示不出来
+        /分页控件
+            /处理分页控件区的展示问题
+            /数据分页是否要改为下刷逻辑，或自动兼容两种模式
+        /参考FineUI，创建单例对象 EleManager
+            /在客户的运行，支持全局窗口调度、服务器端脚本执行等逻辑
+            /接口方法如：Alert, MessageBox, Toast, ShowDrawer, RunCallback 等
+            /完善 EleManager通用能力：弹窗、Drawer、Toast等，创建测试页面
+    /将 pages/admins/目录下的逐步用 EleRazor 控件库替代,逐步替代原有页面框架
+            修复登陆页面 login2，用拖动滑块的方式。咨询一下这些不用图片验证码的都用什么方式，来避免机器人绕过用户界面直接使用数据接口？
+            修改后台主页的布局，弃用 FineUI
+            用新框架重构 Admins/Orgs 组织管理页面
+            用新框架重构 Admins/Users 用户管理页面
+            用新框架重构 Admins/Roles 角色管理页面
+            删除老的组织管理页面 /admins/Orgs, OrgForm, OrgUser, OrgUserNew，根据新框架重新创建组织树的管理页面 /admins/Orgs, OrgForm
+            删除老的账户管理页面 /admins/Users
+    
+/forms
+    /修正EleImageUpload 控件的删除按钮外观
+    /约束一下 EleControl.Width 指的是控件的大小，不包括Label，这样可以统一设置
+    /row、colmn、grid：用 div+tailwind 创建，
+/改造EleUI
+        /合并剥离目录到：App/EleUI/。
+        /尝试把示例页面放到 App/EleUI/Samples/ 里面去，但razorpage不识别（失败）
+        /实现简单页面，测试hello world
+        /实现Row、Column、Grid
+        /实现Panel、SplitPanel布局容器
+        /拆分出 EleTableAppBuilder.js, EleFormAppBuilder.js
+        /通用listhandler -> dataHandler
+        /用标准html5 module 来改造，模块间用 import 方式引用，引用一个 js 就行
+        /实现App标签
+            /实现EleApp -> <App>
+            /剥离EleTableApp <TableApp>
+            /剥离EleFormApp  <FormApp>
+
+/变更组织树下拉框权限管理
+    <EleTreeSelect For="Item.DutyOrgId" Label="责任组织" Api="/httpapi/auths/GetOrgTree" ></EleTreeSelect>
+    变更为
+    <EleTreeSelect For="Item.DutyOrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+    /部分字段可修改，部分不可修改，该如何实现，如User，那么
+        /创建类或record: public record UserModel(long Id, string Name, ....., List<long> UserIds, IsNameReadonly, IsxxxReadony), 算了，太麻烦了
+        /还是用 User, IsxxxReadony 这样的结构
+/EleManager
+    /pages/EleUI/Manager 放置一些 EleButton 点击后调用 EleManager 相关方法。
+/简化BaseModel, AdminModel
+    /找找以前的项目（商城？），看BLL层的业务逻辑是怎么写的
+    /完善tree select
+        /MenuForm 
+            /bug：list -》 form 页面时，未传递进当前选择数据的id（列表）
+        /文档表单树无法显示
+            /ArticleDirs -》 ArticleDirForm parentId 传递为0，不能正常显示？
+        /交办任务责任组织无法显示（TreeSelect 绑定 Tree 还未彻底解决， 还包含一个不可选择项的逻辑）
+    /完善tree table 的绑定
+        /User.Roles 凑合先跑起来了
+        /private List<DAL.Menu> GetUserMenus()  有问题，要用clone方式，否则所有用户看到的都一样？？？
+        /简化 ITree的结构，使用 TreeEntity 一堆的附属结构是不要的，不用存储或用扩展类实现，不用在实体类中
+            /Menu 已继承自 TreeEntity
+            /Org
+            /ArticleDir
+            /AssignTask
+            /CheckTag
+    /整理 Startup.cs
+        /创建 ExceptionLogMiddleware
+    /Entity
+        /EntityBase.Reses -> File or Attach
+        /先删除 UISetting 相关逻辑
+        /AppConfig -> Application
+        /参考AppPlat4架构，加入一些实体，重构了目录结构
+        /增加工作流引擎相关实体和类
+        /添加App.DAL.Logic类，用于处理跨模型的业务逻辑。
+        /各种 History 改为 Log
+        /ArticleCategory 改为 ArticleDir or ArticleCate
+/删除BasePageModel中的DB部分
+    /oa
+        /公告页面：报错
+        /资产表单报错
+        /预算表单报错
+        /项目表单报错
+        /事件表单未实现
+        /用户表单保存有问题：角色如何处理
+/页面
+    /创建通用页面：shared/OrgSelector
+    /创建通用页面：shared/RoleSelector（不用，用select就行了）
+    /实现所有列表页面的导出功能
+/Uploader->GetImageUrls -> SaveFiles
+    /弄个页面显示所有图标，可供选择（如设置菜单图标）
+    /尝试改用 HttpAPI 接口方式会更好一点
+        统一接口，写一次就行
+        可以写自动测试工具，确保接口正确
+        我感觉这种razor+vite+element的方式，ai不是很擅长，返工率很高，也不方便测试
+        优化 HttpApi，详细见 App.API/TASK.md
+    /删除 UserSelectOrg, UserSelectRole，这些用PageMode.Select就行了
+    /网格优化
+        /完成网格模版列
+        /完成网格操作列的定制（如不是自己的数据不能删除）（算了，以后实现授权部门数据即可）
+/老系统代码重构
+    /从ModelBase类中剥离数据库操作相关的代码
+    /排序支持用linq语法，强名称
+
+    /用户：UserForm无法保存，提示密码未录入。
+    /网站配置
+        /保存数据丢失
+        /完善配置：默认密码、密码复杂度要求
+/人员选择页面有问题，请修正
+/优化一下 EleImageUpload 的外观，图片的关闭按钮不好看
+/优化一下 IconChoose 的外观，图标的关闭按钮不好看
+
+/EleImageUpload 控件
+    /图片上传都改为用base64来传递
+    /图片无法正常展示，右上角的关闭按钮也未正常显示；
+    /修改上传逻辑，在客户端改为base64上传图片数据
+    /支持多文件上传(EleUI/EleForm)
+        App.Pages.Checks.CheckHazardForm
+        <EleImageUpload For="Item.Images" Label="隐患图片" Multiple="true"></EleImageUpload>
+
+/统一页面方法为 onGetData()
+/梳理UserForm页面，梳理清楚密码设置逻辑、图片上传逻辑。
+    // 比较  IActionResult OnPost([FromBody] User item) 这两种方式
+    //public IActionResult OnPost()
+
+
+/删除FineUI 所有代码
+/删除无用的老旧js、css、images
+/剥离 EntityBase 类中的统计部分为 StatHelper
+/分析一下有没有页面注入漏洞，服务器端传递到客户的文本是否做了标签的转义处理？ Razorpage的@Model.Property方式会自动转义字符
+/删除 HttpApi.Pager， 统一合并到 App.Entities.PagingInfo -> Paging
+/固定端口启动 6060
+    /合并 PagingInfo 和 Pager 类（算了）
+	/登陆注销接口
+	/基础数据接口：部门、人员、角色、网站信息等
+	/各类枚举数据接口
+    /重构数据实体类，补足export、search方法
+        /Button 的图标无法正常展示了。
+    /checkobjectForm
+        /pages/checks/checkobjectForm 编辑一个已有对象保存时有问题，却变成新增，修正一下
+        /图标无法正常显示
+                        <span class=""text-xs text-gray-500 truncate w-full text-center px-1"">{{{{ {formModel}.{textProp} }}}}</span>
+        /上级菜单无法正确显示
+        /权限列表的数据有问题，一堆的ListItem文本
+/统一 /pages/shared/IconSelector 和 /pages/dev/icons 中的图标清单
+/Icons 页面支持卷屏
+/Button增加Icon属性
+        /EleTable 列枚举无法正常显示：
+        /实现EleButton 的 Export 功能（参考 admins/users页面）
+/把项目名  App.BLL 更名为 App.Data（不改了，这不是通用库，表示这是业务库）
+/用新ui框架
+    /树状对象管理
+        /组织管理
+        /文档目录管理
+    /用户管理：要限制部门、校验角色逻辑
+    /删除FineUI残余
+        /dll
+        /basemodel
+    /优化树状实体的缓存能力
+        /方案一：缓存全部、按当前用户的情况取数
+        /方案二：httpapi接口根据当前用户进行取数后缓存，根据当前token或根据
+        /统一用接口实现缓存和权限控制
+
+
+
+/u.LastLoginDt
+/数据库迁移有问题，计划重建数据库，先备份menu表
+/完善 EleTable：弹窗若过窄，全屏显示
+/删除在线统计逻辑，精简系统（先保留吧，以后聊天用得到）
+        /EleForm EleLabel双列布局有错位问题
+/数据库：
+    /ID -> Id
+    /修改所有的ID为Id，避免一些潜在的序列化错误
+    /修改 SortIndex 为 SortId
+    
+    /EleForm 行高过于高了
+/关于select的数据源：
+    CheckTaskForm
+    <EleSelect For="Item.Status" Width="250px" Label="状态" Clearable="true" Items="@(new List<string>{"待整改", "整改中", "已整改"}.Select(s => new SelectListItem(s, s)))"></EleSelect>
+    考虑写个方法： EleHelper.ToOptions(string[]/List<string>)
+/完善测试页面：/pages/EleUI/EleForms, 测试 <TreeSelect Items 绑定到List<object> 的模式
+/将/appplat/components/eleui/EleUIJs/ 内的相关文件设置为内嵌资源，并修改 Pages/shared/_layout.cshtml 中的js引用部分
+/简化下拉树结构和树表格
+    <EleSelect For="Item.Power" Label="权限" Items="Model.PowerOptions" Clearable="true" Filterable="true"></EleSelect>
+    <EleTree .... Items="Model.MenuTree"...>
+    简化 MenuForm 中的树展示代码
+        @section script {
+            <script>
+            var MenuTree     = @Html.Raw(Model.MenuTree.ToJson());
+            var PowerOptions = @Html.Raw(Model.PowerOptions.ToJson());
+            if (!MenuTree) MenuTree = [];
+            var pageMixin = {
+                data() {
+                    return {
+                        MenuTree: MenuTree,
+                        PowerOptions: PowerOptions
+                    };
+                }
+            };
+            </script>
+        }
+/完善 EleTable 弹窗逻辑，如果窄屏状态，右边滑入的draw，则draw占满页面宽度
+/修正index页面的目录
+    子目录太小
+    /相对目录无法解析，算了不解析了
+    /图标没有出来
+    /多级目录无法展示
+    /给menu增加一个属性 fixBottom
+    /MenuForm 的树代码有点冗余
+    /使用缓存加速menu tree
+
+            /Power属性改为强类型枚举：<EleOpColumn UPower="OrgEdit" DPower="OrgDelete" Width="100"></EleOpColumn>
+        /创建测试页面
+            /EleForms 各种表单控件
+            /EleTables 模拟User管理
+            /1、创建 /pages/dev/EleTables.cshtml 表格测试页面
+            /2、用模拟的页面数据模型，实现用户管理
+    /日志管理
+    /删除所有FineUI痕迹
+        /layout
+        /page
+/修正所有权限使用情况，用强类型，不用文本
+/参照实现 <f:HiddenField For="CurrentUser.ID" Name="hfUserID" /> 用于保存ID，或者用 Label 就行
+/修正Button继承情况
+/简化 MenuTree = EleHelper.BuildTree(allMenus.ToLookup(m => m.ParentID ?? null), null);
+/用正式的本地的tailwindcss
+/menuform窗口特别慢，是网络原因，还是客户端展示原因？
+/把js都搞到本地，远程的不靠谱
+/检测接口：http://127.0.0.1:59426/httpapi/auths/GetOrgTree
+        /优化EleControls
+            EleSelector 控件弹出对话框时，可控制弹窗的位置（见用户选择）
+            统一EleControl Disabled="true" Enabled
+        /重建后台页面，基于ElementPlus + Tailwindcss 创建，响应式布局
+            顶部
+                左侧：网站图标、网站名称
+                右侧：消息、登陆人组织、登陆人姓名菜单（个人设置、意见反馈、安全退出）
+            左侧栏
+                上面：系统菜单
+                响应式布局，随着页面变窄外观变更：图标+文字 -> 图标  -> 菜单
+            主区域
+                顶部：标签页，右侧显示“关闭所有”、“全屏”等图标按钮。
+                下面：显示表格、欢迎页面等主页面信息
+/实现IconSelect 解决弹窗的传递数据问题
+/修正列表页面，过滤条件控件的布局问题
+/重构美化后台首页，改为响应式布局
+/给EleTable增加DrawerDirection属性，用于控制弹窗的位置
+/重构EleInput
+/重构EleNumber
+    /测试 Users、Orgs、Roles 等管理页面
+    /重构js：
+        /弄一个目录容纳 /wwwroot/js/EleRazor/
+            /ele-crud-form.js  更名为 ele-form.js  考虑分拆
+            /ele-crud-grid.js  更名为 ele-table.js
+        /创建 EleManager.js，单例模式，负责toast、消息框、弹窗、drawer、标签页、样式等统一管理。
+        /修改相应的layout文件、修改相应的cshtml文件
+    /把 AssetForm 中的图片上传逻辑封装成组件 EleImageUpload, 不要写任何js
+    /更新readme.md，将各项目代码组织和功能描述清楚
+    /修复登陆页 Login2，恢复滑块
+
+/重构表单网页布局，可根据窗口宽度自动切换为1、2、4列
+/把AssetForm中的人员选择窗口改为公共窗口
+/简化 HttpApi.Code 改为int
+/在Config表中插入 APISecret, 创建独立的LoginBySecret(userID, password, apiSecret) 数据接口，供自动测试化工具使用。修改相关的登陆测试脚本
+/Bug: 用户窗口上传图片时会进行表单校验，如何跳过校验？（老系统不改了）
+    /弄个文件浏览页面？显示上传的文件？用文档管理好了
+/修改页面模型
+    /简化列表页面（PageListor）：集成绑定、排序、分页等逻辑
+    /简化编辑页面（PageEditor）
+    /实现自动编辑页面，根据实体定义自动生成编辑页面
+
+
+/页面架构重构
+    /用element plus + tailswindcss 重构后台ui（rolepower、announcement、index、全后台）
+    /手机端适配
+    /创建 API，以逐步创建和替代 cshtml页面
+    /弹窗改为右边滑出，看看fineui能不能支持（不能）
+
+    /用 Export() 方法来导出数据，简化列表页面和表单页面
+/简化 APIResult：code改为数字类型；
+/在列表页面工具栏区增加一些配置按钮，点击后可以跳到对应的配置页面，如
+    /文档Articles->文档目录管理AriticleCategories（需ArticleCategoryEdit权限）
+    /预算Budgets->预算类别BudgetTypes（需要BudgetTypeEdit权限）
+    /事件Events->事件类别管理EventTypes（需要EventTypeEdit权限）
+/公告：
+    /拆分出OA目录：公告、事件、交办督办。。。
+/扩展 FineUI 控件（算了放弃）
+    简化 TwinTriggerBox 两个按钮的操作 -》AI操作失败，无法创建 TwinTriggerBoxPro 作为一个新的标签不会被 FineUICore 的控件管线识别
+    实现 WindowField，缩减代码
+    实现 GridPro，内置分页、排序等逻辑
+/FineUI 控件优化（逐步放弃fineui）
+    /默认的控件Helper没有完全覆盖到所有控件的属性
+        Image 没有For属性
+        MenuCheckBox 没有OnClientClick 属性
+        Window 没有 OnClientClose 属性
+    /看能不能用扩展方法实现，参考
+        UIHelper.Label("xxx")
+        FineUICore.LabelTagHelper
+    /研究 Grid 的强类型列绑定
+    /拿个配置示例，用element plus grid 来实现和显示表格，并内置分页排序等逻辑，替代f.table
+    /Grid页面
+    /Form页面
+    /HttpApi改造 -> 
+        /更名为 App.API
+        /删除result字段，直接用code
+        /info -》 msg
+        /extra 改为 pager
+        /默认为lowCamel方式
+    /Admins/目录中页面改造
+/首页右上侧的全屏按钮无效
+/解决BUG：目录的target属性似乎没有用，这个必须解决，否则驾驶舱调整实现不了
+/做好完备日志
+/新建菜单时，应把当前选中节点作为父节点，传递给MenuForm窗口
+/编辑页面只需要一个Form，支持new、edit、view
+/删除Title相关的代码
+/迁移到net8
+/Dept 修改为 Org
+/删除 WebConfig.Helper
+/OrgHelper，改为 Org.Tree
+/MenuHelper， 改为 Menu.Tree
+/优化登陆页面：设置登录对话框背景、设置登录页背景
+/RolePower 页面无法正确显示数据，要页面刷新才能正确显示 -》 RowPower2
+
+    /权限用枚举
+    /Menu 增加 Target 属性
+    /实体类全部改为继承自 EntityBase
+/完善 Menu
+    /完善 Menus 页面，列表显示 PowerName
+    /完善 MenuForm 页面，用下拉列表或弹窗显示权限
+/密码复杂度需求
+    // 密码复杂性校验的正则表达式：小写、大写、数字、8位
+    string pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$";
+    var regex = new Regex(@"
+        (?=.*[0-9])                     #必须包含数字
+        (?=.*[a-zA-Z])                  #必须包含小写或大写字母
+        (?=([\x21-\x7e]+)[^a-zA-Z0-9])  #必须包含特殊符号
+        .{8,30}                         #至少8个字符，最多30个字符
+        ", RegexOptions.Multiline | RegexOptions.IgnorePatternWhitespace);
+    bool pwdIsMatch = regex.IsMatch(user.USER_PASS);
+/用户列表页面显示缩略图: 图像列
+/迁移到 EntityBase
+/准备用 Powers 枚举来实现权限校验
+    角色权限管理
+    页面访问控制
+    FormPage 再看如何简化，融合到FormPageModel中去
+/应用重新改为 AppPlat 或 AppPlatCore（算了）
+/实现 PageMode 逻辑
+    /用户编辑和查看页面显示显示用户头像
+/实现 FormPage，支持New、Edit、View 三种显示模式
+    /先手工撸一个，实现所有代码
+    /DeptForm
+    /MenuForm
+    /PowerForm
+    /RoleForm
+    /UserForm
+
+/修改目录 Admin 为 Admins
+/修改所有列表页面为 XXXs
+
+/实现自定义 404 页面
+/简化首页 RegionPanel 的写法，改不动，一放到 Content中去就消失了
+/回复git history 比对能力：git config --global --add safe.directory "*";
+/删除所有 ViewBag，用属性方式替代。(RazorPageBase.ViewBag/ModelBase.ViewBag 感觉有重叠，算了不用就是了，不动了)
+/实现日志管理页面: Log.Get(id) 返回null？   1833214689845186600，经测试是 sqlite 的问题，或者是ef的问题，换回int自增的id，就没问题了
+/实现菜单隐藏能力
+/相关依赖项目更新到 net6，使用System.Drawing.Common
+/设置网站端口 dotnet app.dll --ursl=http://localhost:8080
+/捕捉错误，避免错误崩溃： /Error
+/先用 System.Drawing.Common 替代 DrawingCore，linux支持的问题以后再说
+    External component has thrown an exception.
+       at System.DrawingCore.GDIPlus.GdipDeletePrivateFontCollection(IntPtr& collection)
+       at System.DrawingCore.Text.PrivateFontCollection.Dispose(Boolean disposing)
+       at System.DrawingCore.Text.FontCollection.Finalize()
+    /看是否要迁移到 SkiaSharp/Aspose.Drawing, System.Drawing.Common 在net6以后的版本也不支持
+/AI/JewelsAI -> ClassifyAI
+
+/部署(写个工具)：
+    拷贝AppPlatCore项目
+    CopyFolder("AppPlatCore", "AppPlatCore-Deploy");
+    Cd("AppPlatCore-Deploy");
+    DeleteHideFiles();     // .git,ds_store, thumbs.db
+    DeleteFiles("*.cs"); 
+    DeleteFolder("/Caches");
+    DeleteFolder("/Files");
+    DeleteFolder("/Logs");
+    DeleteFolder("/objs");
+    DeleteFolder("/Bin/Debug/net6.0/*.pdb");
+    DeleteFolders("/Bin/Debug/net6.0/", "zh-CN", false);    // 除了zh-CN目录其它同级别目录统统删除
+    不用了，直接用project、右键、deploy解决
+    
+/实现业务逻辑
+    /生成AI识别框架
+    /实现AI识别分类页面
+    /实现上传缩略图（用 ImageMiddleware ）
+    /展示分类结果
+    /异步编译“AI模型”
+    /展示子目录图像：用图片列表展示
+    /显示 FTP 地址，供管理员上传图片
+
+/移除 Humanizer 乱七八糟的语言支持目录: 
+    https://www.cnblogs.com/qinfeng888/p/12619772.html
+    <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
+/移除多余的数据库支撑能力，只保留sqlite和sqlserver
+/简化 PagingInfo
+/设置AI/Config/Ftp
+
+
+/优化BaseModel
+    /BaseModel代码过重，考虑把UI相关的抽出来，数据库相关的用 partial class
+    /用Attribute的方式自动检测权限 CheckPowerAttribute
+    /简化CheckPowerAttribute构造函数
+
+/集成
+    /集成Responsive page
+    /集成signalR
+    /集成blazor
+    /更新到 net 6.0
+    /更新到最新 fineui core raver page
+    /cshtml 页面修改后可直接运行，添加nuget包：Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation
+    /优化ChatHub
+
+/bug
+    //部门页面修改后页面空白
+        //角色新增后页面也报错，分页出问题
+        //菜单没问题，用的是window close post 事件处理，会带上grid fields？
+        //设置 fields=“grid1”就可以了，会将参数带到服务器端
+    /修正菜单重复bug: 调试时重入会出现
+    /处理BUG：第一次启动的时候老是报错：
+        /ButtonMenu\MenuTreeNodes要初始化不能为空
+        /是不是 Task OnGet() 的原因，好像跑了2次
+
+/修改页面
+    /login: 实现验证码图片
+        /login: 点击验证码图片刷新
+        /增加备案号
+    /index
+        /Logo跳转链接
+        /修改顶部栏
+        /修改底部栏版本号链接：<a target="_blank" href="http://fineui.com/mvc">
+        /优化首页：关闭所有窗口；
+        /缩减button listener代码
+        /优化 theme：主区域标题栏透明，已写入 wwwroot/res/themes/image_blue_moon/thrme.css
+        /合并菜单及相关页面: deptuser, roleuser, rolepower, titleuser
+        /将修改密码、安全退出放到一起去
+        /修改首页样式 index.css
+            .mainpanel {
+                background-image: none; /*url(./moon.jpg);*/
+                background-size: cover;
+                background-position: center 0;
+                background-repeat: no-repeat;
+                background-color: #052767;
+            }
+        /menu 增加 target 属性
+    /增加 logout 页面
+    /优化用户相关页面：user, userview（改为用textbox更美观）, usernew
+    /用户管理（给用户加头像）
+        /实现图片上传
+        /保存用户数据
+        /点击图片上传
+        /实现用户图标
+    /修正在线用户网页
+    /将所有列表页面的操作按钮放到左侧，且设置宽度为38
+    /简化CheckPowerAttribute，增加构造函数。
+    /优化角色权限页面：修正角色全选“全选反选”逻辑
+    /menu：优化菜单管理
+        /菜单加上 folder: ~/res/icon/folder.png
+        /优化菜单图标列表
+
+
+
+/数据库及DAL
+    /修正 SqlServer 数据库访问异常，启用Rownum
+    /修改配置页面
+        /用SiteConfig替代Config， 其实 Config 过度设计了，直接用类字段就行了
+        /SiteConfig增加字段：Icon、LoginBg、BeiAnNo
+    /继承自 EntityBase
+        /简化保存代码： User.Save();
+        /实现ID自增加能力
+        /实现雪花ID
+        /实现数据变更日志
+        /实现附件附表
+        /实现父子表结构，实现树结构逻辑
+        /实现属性：All，Entity等
+    /实现实体类变更数据库自动迁移：https://learn.microsoft.com/zh-cn/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli
+    /EntityBase.Instance 用了缓存有点问题，无法保存，要用普通方法。
+    /移除 Title 数据库表
+
+/其它
+    /更新到 github
+/检测为什么会出现访问🈲的情况，要用vscode调试

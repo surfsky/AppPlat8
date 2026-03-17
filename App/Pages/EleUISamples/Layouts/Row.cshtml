@@ -1,0 +1,51 @@
+@page
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Row 布局";
+}
+
+@section body {
+    <div class="p-4 space-y-6" id="app">
+        <EleCard Title="EleRow 基础" class="shadow-sm">
+            <Row>
+                <EleButton Type="Primary">Primary</EleButton>
+                <EleButton Type="Success">Success</EleButton>
+                <EleButton Type="Warning">Warning</EleButton>
+                <EleButton Type="Danger">Danger</EleButton>
+            </Row>
+        </EleCard>
+
+        <EleCard Title="对齐与分布" class="shadow-sm">
+            <Column Gap="4">
+                <Row Items="center" Gap="4" Rounded="lg" Border="true" BorderColor="slate-200" Bg="slate-50" P="3">
+                    <span class="text-sm text-slate-600">items-center + gap-4</span>
+                    <EleButton>操作一</EleButton>
+                    <EleButton>操作二</EleButton>
+                </Row>
+
+                <Row Justify="between" Items="center" Rounded="lg" Border="true" BorderColor="slate-200" Bg="white" P="3">
+                    <span class="font-medium text-slate-700">justify-between</span>
+                    <Row>
+                        <EleButton Type="Info">详情</EleButton>
+                        <EleButton Type="Primary">编辑</EleButton>
+                    </Row>
+                </Row>
+            </Column>
+        </EleCard>
+
+        <EleCard Title="和 EleColumn 组合" class="shadow-sm">
+            <Row Gap="4">
+                <Column MinW="[220px]" Rounded="lg" Border="true" BorderColor="blue-100" Bg="blue-50" P="4" Gap="2">
+                    <h3 class="font-semibold text-blue-700">左侧信息</h3>
+                    <p class="text-sm text-blue-600">EleRow + EleColumn 可以快速搭建面板式布局。</p>
+                </Column>
+                <Column Grow="true" Rounded="lg" Border="true" BorderColor="emerald-100" Bg="emerald-50" P="4" Gap="2">
+                    <h3 class="font-semibold text-emerald-700">右侧内容</h3>
+                    <p class="text-sm text-emerald-600">设置 Grow=true 后会自动填充剩余空间。</p>
+                </Column>
+            </Row>
+        </EleCard>
+    </div>
+
+    <EleApp />
+}

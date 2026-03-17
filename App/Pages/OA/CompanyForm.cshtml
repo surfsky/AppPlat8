@@ -1,0 +1,19 @@
+@page
+@model App.Pages.Base.CompanyFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "厂商信息";
+}
+
+@section body {
+<EleForm Model="form" LabelWidth="140px">
+    <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+    <EleInput For="Item.AbbrName" Label="简称"></EleInput>
+    <EleInput For="Item.UnifiedSocialCreditCode" Label="统一社会信用代码"></EleInput>
+    <EleInput For="Item.LegalPerson" Label="法人"></EleInput>
+    <EleInput For="Item.LegalPersonPhone" Label="法人联系方式"></EleInput>
+    <EleInput For="Item.Contact" Label="联系人"></EleInput>
+    <EleInput For="Item.ContactPhone" Label="联系方式"></EleInput>
+    <EleInput For="Item.Address" Label="地址" Type="@EleInputType.TextArea" Rows="3"></EleInput>
+</EleForm>
+}

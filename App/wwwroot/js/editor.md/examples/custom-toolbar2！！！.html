@@ -1,0 +1,36 @@
+﻿<html>
+    <body>
+        <div id="test-editormd">
+            <textarea style="display:none;">### Custom toolbar</textarea>
+        </div>
+        
+        <link rel="stylesheet" href="../css/editormd.css" />
+        <script src="js/jquery.min.js"></script>
+        <script src="../editormd.js"></script> 
+        <script type="text/javascript">
+            $(function() {
+                var testEditor = editormd("test-editormd", {
+                    width: "90%",
+                    height: 640,
+                    path : '../lib/',
+                    watch : false,
+                    toolbarIcons : function() {
+                        //return editormd.toolbarModes["simple"]; // full, simple, mini
+                        // Using "||" set icons align right.
+                        //return ["undo", "redo", "|", "bold", "hr", "|", "preview", "watch", "|", "fullscreen", "info", "testIcon", "testIcon2", "file", "faicon", "||", "watch", "fullscreen", "preview", "testIcon", "file"]
+                        return [
+                              "h1", "h2", "h3", "|", 
+                              "bold", "del", "italic", "quote", "|", 
+                              "list-ul", "list-ol", "hr", "table", "|",
+                              "link", "image", "||",
+                              "watch", "fullscreen"
+                         ]
+                    },
+                    imageUpload    : true,
+                    imageFormats   : ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+                    imageUploadURL : "./php/upload.php"
+                });
+            });
+        </script>
+    </body>
+</html>

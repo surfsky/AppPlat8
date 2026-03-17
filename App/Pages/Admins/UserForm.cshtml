@@ -1,0 +1,22 @@
+@page
+@model App.Pages.Admins.UserFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "用户信息";
+}
+
+@section body {
+    <EleForm LabelWidth="120px">
+        <EleInput For="Item.Name" Label="账号" Required="true" Disabled="@Model.IsNameEditable"></EleInput>
+        <EleInput For="Item.RealName" Label="姓名" Required="true"></EleInput>
+        <EleTreeSelect For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" IdField="id" NameField="name" Required="true" CheckStrictly="true"></EleTreeSelect>
+        <EleSelect For="Item.RoleIds" Label="角色" Items="Model.RoleList" Multiple="true" ></EleSelect>
+        <EleInput For="Item.Title" Label="职务"></EleInput>
+        <EleInput For="Item.Email" Label="邮箱"></EleInput>
+        <EleInput For="Item.Mobile" Label="手机"></EleInput>
+        <EleRadio For="Item.Gender" Label="性别" Items="男, 女"></EleRadio>
+        <EleSwitch For="Item.InUsed" Label="启用"></EleSwitch>
+        <EleImageUpload For="Item.Photo" Label="头像"></EleImageUpload>
+        <EleInput For="Item.Remark" Label="备注" Rows="4" FillRow="true"></EleInput>
+    </EleForm>
+}

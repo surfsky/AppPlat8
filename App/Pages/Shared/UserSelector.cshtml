@@ -1,0 +1,105 @@
+@page
+@model App.Pages.Shared.UserSelectorModel
+@{
+    ViewData["Title"] = "选择人员";
+}
+
+@section body {
+    <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
+        <div class="flex mb-4 flex-none items-center">
+            <el-input v-model="keyword" class="mr-2" style="width: 300px;" @@keyup.enter="loadUsers"></el-input>
+            <el-button type="primary" @@click="loadUsers" :loading="loading">搜索</el-button>
+            <el-button type="success" @@click="confirmSelection" :disabled="!currentRow" class="ml-2">选择</el-button>
+        </div>
+        <div class="flex-1 overflow-hidden">
+            <el-table :data="users" @@current-change="handleCurrentChange" @@row-dblclick="handleRowDblClick" border stripe highlight-current-row v-loading="loading" height="100%">
+                <el-table-column prop="name" label="姓名" width="120"></el-table-column>
+                <el-table-column prop="nickName" label="账号" width="120"></el-table-column>
+                <el-table-column prop="dept" label="部门"></el-table-column>
+            </el-table>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        const app = createApp({
+            setup() {
+                const keyword = ref('');
+                const users = ref([]);
+                const loading = ref(false);
+                const currentRow = ref(null);
+
+                const loadUsers = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await axios.get('?handler=Users', { params: { keyword: keyword.value } });
+                        if (res.data.code === 0) {
+                            users.value = res.data.data;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const handleCurrentChange = (val) => {
+                    currentRow.value = val;
+                };
+
+                const handleRowDblClick = (row) => {
+                    currentRow.value = row;
+                    confirmSelection();
+                };
+
+                const confirmSelection = () => {
+                    if (currentRow.value) {
+                        console.log('Confirming selection:', currentRow.value);
+                        // Send message to parent
+                        // Fix DataCloneError: Clone the proxy object to a plain object
+                        const plainRow = JSON.parse(JSON.stringify(currentRow.value));
+                        
+                        if (window.parent) {
+                            const payload = {
+                                type: 'EleSelector', // Standardized type
+                                data: [plainRow] // Return array as requested
+                            };
+                            window.parent.postMessage(payload, '*');
+                            
+                            // Also send legacy format just in case
+                            window.parent.postMessage({
+                                type: 'user-selected',
+                                data: plainRow
+                            }, '*');
+                        } else {
+                            console.error('No parent window found');
+                        }
+                    }
+                };
+
+                onMounted(() => {
+                    loadUsers();
+                });
+
+                return {
+                    keyword,
+                    users,
+                    loading,
+                    currentRow,
+                    loadUsers,
+                    handleCurrentChange,
+                    handleRowDblClick,
+                    confirmSelection
+                };
+            }
+        });
+        
+        app.use(ElementPlus, { locale: ElementPlusLocaleZhCn });
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        app.mount('#app');
+    </script>
+}

@@ -1,0 +1,33 @@
+@page
+@model App.Pages.Maintains.LogsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "日志管理";
+}
+
+@section body {
+    <EleTable Title="日志管理" FormPage="/Maintains/LogForm" EnableBatch="false" >
+        <Toolbar>
+             <EleInput For="Item.Operator" Label="操作者"></EleInput>
+             <EleInput For="Item.Message" Label="内容"></EleInput>
+             <EleInput For="Item.IP" Label="IP"></EleInput>
+             <EleSelect For="Item.Level" Label="级别" Clearable="true"></EleSelect>
+             <EleDatePicker For="Item.CreateDt" Label="起始时间"></EleDatePicker>
+             <div class="flex-1 w-200">
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete"  Icon="Delete">批量删除</EleButton>
+            </div>
+        </Toolbar>
+        
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleColumn For="Item.Id" Width="80" Sortable="true"></EleColumn>
+            <EleColumn For="Item.CreateDt" Label="记录时间" Width="220" Sortable="true" Formatter="DateTime"></EleColumn>
+            <EleColumn For="Item.LevelName" Label="级别" Width="80"></EleColumn>
+            <EleColumn For="Item.Operator" Label="操作者" Width="120" Sortable="true"></EleColumn>
+            <EleColumn For="Item.IP" Label="IP" Width="120"></EleColumn>
+            <EleColumn For="Item.Message" Label="内容" MinWidth="200" ShowOverflowTooltip="true"></EleColumn>
+        </Columns>
+
+    </EleTable>
+}

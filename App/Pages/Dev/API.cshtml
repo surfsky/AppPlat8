@@ -1,0 +1,124 @@
+@page
+@model App.Pages.Dev.APIModel
+@{
+    ViewData["Title"] = "API 接口文档";
+}
+
+@section body {
+    <div id="app" class="h-screen flex flex-row overflow-hidden">
+        <!-- 左侧菜单 -->
+        <div class="flex-none border-r border-r-gray-300 bg-white flex flex-col transition-all duration-300 ease-in-out" 
+             :class="isCollapse ? 'w-16' : 'w-64'">
+            <div class="h-12 flex items-center justify-center border-b border-gray-50 font-bold text-lg overflow-hidden whitespace-nowrap">
+                <span v-if="!isCollapse">HTTP API</span>
+                <span v-else>API</span>
+            </div>
+            <div class="flex-1 overflow-y-auto overflow-x-hidden">
+                <ul class="menu-list">
+                    <li v-for="(item, index) in apiList" :key="index" 
+                        class="h-12 cursor-pointer hover:bg-gray-100 border-b border-gray-50 transition-colors flex items-center"
+                        :class="[{'bg-blue-50 text-blue-600': currentUrl === item.url}, isCollapse ? 'justify-center px-0' : 'justify-between px-4']"
+                        @@click="selectApi(item)"
+                        :title="item.name">
+                        
+                        <div class="flex items-center overflow-hidden whitespace-nowrap">
+                            <el-icon :size="18" :class="{'mr-2': !isCollapse}"><component :is="item.icon"></component></el-icon>
+                            <span v-if="!isCollapse">{{ item.name }}</span>
+                        </div>
+                        
+                    </li>
+                </ul>
+            </div>
+            <!-- 折叠按钮 -->
+            <div class="h-10 border-t border-gray-50 flex items-center justify-center cursor-pointer hover:bg-gray-100 text-gray-500" @@click="toggleCollapse">
+                <el-icon :size="16">
+                    <component :is="isCollapse ? 'Expand' : 'Fold'"></component>
+                </el-icon>
+            </div>
+        </div>
+        
+        <!-- 右侧内容 -->
+        <div class="flex-1 bg-gray-50 flex flex-col h-full overflow-hidden relative">
+            <iframe v-if="currentUrl" :src="currentUrl" class="w-full h-full border-0" frameborder="0"></iframe>
+            <div v-else class="flex items-center justify-center h-full text-gray-400">
+                请选择左侧 API 接口
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, onMounted, onUnmounted } = Vue;
+        
+        const app = createApp({
+            setup() {
+                const apiList = ref([
+                    { name: '授权', url: '/HttpApi/Auths/api', icon: 'Key' },
+                    { name: '公共', url: '/HttpApi/Common/api', icon: 'Share' },
+                    { name: '排查', url: '/HttpApi/Check/api', icon: 'Tools' },
+                    { name: '示例', url: '/HttpApi/Demo/api', icon: 'Monitor' }
+                ]);
+                
+                const currentUrl = ref(apiList.value[0].url);
+                const isCollapse = ref(false);
+
+                const selectApi = (item) => {
+                    currentUrl.value = item.url;
+                };
+
+                const toggleCollapse = () => {
+                    isCollapse.value = !isCollapse.value;
+                }
+
+                const checkWidth = () => {
+                    if (window.innerWidth < 768) {
+                        isCollapse.value = true;
+                    } else {
+                        isCollapse.value = false;
+                    }
+                };
+
+                onMounted(() => {
+                    checkWidth();
+                    window.addEventListener('resize', checkWidth);
+                });
+
+                onUnmounted(() => {
+                    window.removeEventListener('resize', checkWidth);
+                });
+
+                return {
+                    apiList,
+                    currentUrl,
+                    isCollapse,
+                    selectApi,
+                    toggleCollapse
+                };
+            }
+        });
+
+        app.use(ElementPlus);
+        
+        // 注册图标
+        if (typeof ElementPlusIconsVue !== 'undefined') {
+            for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+                app.component(key, component);
+            }
+        }
+        
+        app.mount('#app');
+    </script>
+    
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        /* 简单的自定义样式 */
+        .menu-list li.bg-blue-50 {
+            border-left: 5px solid var(--el-color-primary);
+        }
+    </style>
+}

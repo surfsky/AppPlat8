@@ -1,0 +1,101 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>App.Utils</AssemblyName>
+    <RootNamespace>App.Utils</RootNamespace>
+    <Authors>surfsky</Authors>
+    <Description>AppPlat utility library (ui-independent, platform-independent)
+This library supports many useful convinient extensions and methods, such as:
+
+    - Object.ToXXX
+    - List.CastXXX
+    - List.MoveXXX
+    - String.FindXXX
+    - String.ParseXXX
+    - Reflection
+    - Encode/Decode
+    - Interop
+    - EF extensions
+    - ...</Description>
+    <PackageProjectUrl>https://github.com/surfsky/App.Utils</PackageProjectUrl>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AssemblyVersion>2.0.0.4</AssemblyVersion>
+    <FileVersion>2.0.0.4</FileVersion>
+    <Version>2.0.0.6</Version>
+    <Copyright>MIT</Copyright>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/surfsky/App.Utils</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>SYSLIB0011;SYSLIB0014;SYSLIB0021;SYSLIB0023;CS0618;CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Web\**" />
+    <EmbeddedResource Remove="Web\**" />
+    <None Remove="Web\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Reflections\TypeBuilder.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\Agent Red.TTF" />
+    <None Remove="Resources\Pusab.ttf" />
+    <None Remove="Resources\Stencil ICG.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Agent Red.TTF" />
+    <EmbeddedResource Include="Resources\Pusab.ttf" />
+    <EmbeddedResource Include="Resources\Stencil ICG.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Jint" Version="3.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="PinYinConverterCore" Version="1.0.2" />
+    <PackageReference Include="SkiaSharp" Version="3.119.1" />
+    <PackageReference Include="System.CodeDom" Version="8.0.0" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

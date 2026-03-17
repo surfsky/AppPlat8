@@ -1,0 +1,26 @@
+﻿-----------------------------------------
+axio
+-----------------------------------------
+about
+    Axios 是专注于网络数据请求的库，比原生的 XMLHttpRequest 对象易用。
+    相比于 jQuery，axios 更加轻量化，只专注于网络数据请求。
+
+get
+    var ps = {name: 'kevin', password:'xxxxx'};
+    axio.get(url, {params: ps}).then(function(res){
+        var data = res.Data;
+    });
+
+post
+    axio.post(url, ps).then(function(res){
+        var data = res.Data;
+    });
+
+ajax
+    axio.ajax({
+        method: 'POST',
+        url: url,
+        data: ps
+    }).then(function(res){
+        var data = res.Data;
+    });

@@ -1,0 +1,12 @@
+@page
+@model App.Pages.OA.BudgetTypeFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "预算分类信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+    </EleForm>
+}

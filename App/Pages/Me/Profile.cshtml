@@ -1,0 +1,139 @@
+@page
+@model App.Pages.ProfileModel
+@{
+    ViewData["Title"] = "个人资料";
+}
+
+@section body {
+    <div class="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto mt-6">
+        <div class="flex items-center space-x-6 mb-8 pb-8 border-b border-gray-100">
+            <div class="relative">
+                @if (!string.IsNullOrEmpty(Model.UserInfo.Photo))
+                {
+                    <img src="@Model.UserInfo.Photo" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-gray-50 shadow-md">
+                }
+                else
+                {
+                    <div class="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-3xl font-bold border-4 border-gray-50 shadow-md">
+                        @(Model.UserInfo.Name?.Substring(0, 1).ToUpper())
+                    </div>
+                }
+                <div class="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-2 border-white rounded-full" title="在线"></div>
+            </div>
+            
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">
+                    @(string.IsNullOrEmpty(Model.UserInfo.RealName) ? Model.UserInfo.Name : Model.UserInfo.RealName)
+                </h1>
+                <p class="text-gray-500 mt-1 flex items-center">
+                    <i class="fas fa-briefcase mr-2 text-gray-400"></i>
+                    <span>@(Model.UserInfo.Title ?? "未设置职务")</span>
+                    <span class="mx-2 text-gray-300">|</span>
+                    <i class="fas fa-building mr-2 text-gray-400"></i>
+                    <span>@(Model.UserInfo.Org?.Name ?? "未分配部门")</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- 基本信息 -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-user-circle mr-2 text-primary-600"></i> 基本信息
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">用户名</span>
+                        <span class="text-gray-800">@Model.UserInfo.Name</span>
+                    </div>
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">真实姓名</span>
+                        <span class="text-gray-800">@Model.UserInfo.RealName</span>
+                    </div>
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">性别</span>
+                        <span class="text-gray-800">@Model.UserInfo.Gender</span>
+                    </div>
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">生日</span>
+                        <span class="text-gray-800">@(Model.UserInfo.Birthday?.ToString("yyyy-MM-dd"))</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 联系方式 -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-address-card mr-2 text-primary-600"></i> 联系方式
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">手机号</span>
+                        <span class="text-gray-800">@Model.UserInfo.Mobile</span>
+                    </div>
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">邮箱</span>
+                        <span class="text-gray-800">@Model.UserInfo.Email</span>
+                    </div>
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">办公电话</span>
+                        <span class="text-gray-800">@Model.UserInfo.OfficePhone</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 其他信息 -->
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-info-circle mr-2 text-primary-600"></i> 其他信息
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">所属角色</span>
+                        <div class="flex flex-wrap gap-2">
+                            @if (Model.UserInfo.Roles != null)
+                            {
+                                foreach (var r in Model.UserInfo.Roles)
+                                {
+                                    <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">@r.Name</span>
+                                }
+                            }
+                        </div>
+                    </div>
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">入职时间</span>
+                        <span class="text-gray-800">@(Model.UserInfo.TakeOfficeDt?.ToString("yyyy-MM-dd"))</span>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">上次登录</span>
+                        <span class="text-gray-800">@(Model.UserInfo.LastLoginDt?.ToString("yyyy-MM-dd HH:mm:ss"))</span>
+                    </div>
+                    <div class="flex border-b border-gray-50 pb-2">
+                        <span class="text-gray-500 w-24 flex-shrink-0">注册时间</span>
+                        <span class="text-gray-800">@(Model.UserInfo.CreateDt?.ToString("yyyy-MM-dd HH:mm:ss"))</span>
+                    </div>
+                </div>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(Model.UserInfo.Address))
+            {
+                <div class="mt-4 flex border-b border-gray-50 pb-2">
+                    <span class="text-gray-500 w-24 flex-shrink-0">地址</span>
+                    <span class="text-gray-800">@Model.UserInfo.Address</span>
+                </div>
+            }
+            
+            @if (!string.IsNullOrEmpty(Model.UserInfo.Remark))
+            {
+                <div class="mt-4 flex">
+                    <span class="text-gray-500 w-24 flex-shrink-0">备注</span>
+                    <span class="text-gray-800 text-sm bg-gray-50 p-3 rounded w-full">@Model.UserInfo.Remark</span>
+                </div>
+            }
+        </div>
+    </div>
+}

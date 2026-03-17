@@ -1,0 +1,13 @@
+@page
+@model App.Pages.Admins.RoleFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "角色信息";
+}
+
+@section body {
+    <EleForm LabelWidth="100px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.Remark" Label="备注" Type="@EleInputType.TextArea"></EleInput>
+    </EleForm>
+}

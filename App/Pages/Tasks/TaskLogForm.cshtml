@@ -1,0 +1,15 @@
+@page
+@model App.Pages.OA.TaskLogFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "任务处理历史信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleNumber For="Item.TaskId" Label="任务Id" Disabled="true"></EleNumber>
+        <EleInput For="Item.Handler" Label="处理人" Required="true"></EleInput>
+        <EleNumber For="Item.Progress" Label="进度(%)" Precision="2" Step="0.01"></EleNumber>
+        <EleSelect For="Item.Status" Label="状态"></EleSelect>
+    </EleForm>
+}

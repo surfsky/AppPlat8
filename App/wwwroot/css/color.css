@@ -1,0 +1,70 @@
+/*
+色彩预设
+https://www.github.com/surfsky/
+2019-07
+*/
+
+/* 命名色（文本色、背景色、边框色） */
+.white               {color:white;}
+.black               {color:black;}
+.red                 {color:red;}
+.orange              {color:orange;}
+.yellow              {color:yellow;}
+.yellowgreen         {color:yellowgreen;}
+.green               {color:green;}
+.cyan                {color:cyan;}
+.blue                {color:blue;}
+.blueviolet          {color:blueviolet;}
+.violet              {color:violet;}
+.pink                {color:pink;}
+.bg-white            {background-color:white;}
+.bg-black            {background-color:black;}
+.bg-red              {background-color:red;}
+.bg-orange           {background-color:orange;}
+.bg-yellow           {background-color:yellow;}
+.bg-yellowgreen      {background-color:yellowgreen;}
+.bg-green            {background-color:green;}
+.bg-cyan             {background-color:cyan;}
+.bg-blue             {background-color:blue;}
+.bg-blueviolet       {background-color:blueviolet;}
+.bg-violet           {background-color:violet;}
+.bg-pink             {background-color:pink;}
+.border-white        {border-color:white;}
+.border-black        {border-color:black;}
+.border-red          {border-color:red;}
+.border-orange       {border-color:orange;}
+.border-yellow       {border-color:yellow;}
+.border-yellowgreen  {border-color:yellowgreen;}
+.border-green        {border-color:green;}
+.border-cyan         {border-color:cyan;}
+.border-blue         {border-color:blue;}
+.border-blueviolet   {border-color:blueviolet;}
+.border-violet       {border-color:violet;}
+.border-pink         {border-color:pink;}
+
+
+/* 主题色（文本色、背景色、边框色） */
+.primary             {color:#007bff;}
+.secondary           {color:#6c757d;}
+.success             {color:#28a745;}
+.info                {color:#17a2b8;}
+.warning             {color:#ffc107;}
+.danger              {color:#dc3545;}
+.dark                {color:#343a40;}
+.light               {color:#f8f9fa;}
+.bg-primary          {background-color:#007bff;}
+.bg-secondary        {background-color:#6c757d;}
+.bg-success          {background-color:#28a745;}
+.bg-info             {background-color:#17a2b8;}
+.bg-warning          {background-color:#ffc107;}
+.bg-danger           {background-color:#dc3545;}
+.bg-dark             {background-color:#343a40;}
+.bg-light            {background-color:#f8f9fa;}
+.border-primary      {border-color:#007bff;}
+.border-secondary    {border-color:#020203;}
+.border-success      {border-color:#28a745;}
+.border-info         {border-color:#17a2b8;}
+.border-warning      {border-color:#ffc107;}
+.border-danger       {border-color:#dc3545;}
+.border-dark         {border-color:#343a40;}
+.border-light        {border-color:#f8f9fa;}

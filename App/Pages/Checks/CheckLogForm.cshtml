@@ -1,0 +1,20 @@
+@page
+@model App.Pages.Checks.CheckLogFormModel
+@{
+    ViewData["Title"] = "检查记录表单";
+    Layout = "_Layout";
+}
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleSelect For="Item.CheckObjectId" Label="检查对象" Items="Model.CheckObjects" Required="true" Filterable="true"></EleSelect>
+        <EleSelect For="Item.TaskId" Label="关联任务" Items="Model.Tasks" Filterable="true"></EleSelect>
+        <EleTreeSelect For="Item.OrgId" Label="检查科室" Api="/httpapi/orgs/GetAuthOrgTree"  Placeholder="请选择科室"></EleTreeSelect>
+        <EleUserSelect For="Item.CheckerId" Label="检查人员"></EleUserSelect>
+        <EleDatePicker For="Item.CheckDt" Label="检查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+        <EleSwitch For="Item.Result" Label="检查结果"></EleSwitch>
+        <EleNumber For="Item.HazardCount" Label="隐患数量"></EleNumber>
+        <EleNumber For="Item.RemainHazardCount" Label="未处理隐患"></EleNumber>
+        <EleSwitch For="Item.IsClosed" Label="是否闭环"></EleSwitch>
+    </EleForm>
+}
+

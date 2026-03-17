@@ -1,0 +1,17 @@
+@page
+@model App.Pages.GIS.RegionFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "GIS区域信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.Alias" Label="简称"></EleInput>
+        <EleSelect For="Item.RegionType" Label="类型"></EleSelect>
+        <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"  ></EleTreeSelect>
+        <EleInput For="Item.Creator" Label="编辑者"></EleInput>
+        <EleInput For="Item.JsonData" Label="JSON数据" Rows="5"></EleInput>
+    </EleForm>
+}

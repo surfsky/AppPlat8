@@ -1,0 +1,20 @@
+@page
+@model App.Pages.OA.TaskFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "任务信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.Initiator" Label="发起人"></EleInput>
+        <EleInput For="Item.PersonInCharge" Label="责任人" Required="true"></EleInput>
+        <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+        <EleInput For="Item.Cycle" Label="提交周期"></EleInput>
+        <EleDatePicker For="Item.StartDt" Label="开始日期"></EleDatePicker>
+        <EleDatePicker For="Item.NextReportDt" Label="下次填报"></EleDatePicker>
+        <EleNumber For="Item.Progress" Label="进度(%)" Precision="2" Step="0.01"></EleNumber>
+        <EleSelect For="Item.Status" Label="状态"></EleSelect>
+    </EleForm>
+}

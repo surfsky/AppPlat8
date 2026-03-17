@@ -1,0 +1,450 @@
+@page
+@using App.Web
+@model App.Pages.IndexModel
+@{
+    Layout = null; // 使用自定义布局
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@Model.SiteTitle - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/ui/tailwindConfig.js"></script>
+    <script src="/ui/MenuTree.js?v=@DateTime.Now.Ticks"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Smooth animations for sidebar and transitions */
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+
+        .main-content {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Slide animations for header */
+        @@keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @@keyframes slideUp {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+        }
+
+        #topHeader {
+            animation: slideDown 0.3s ease-out forwards;
+        }
+
+        #topHeader.hide-mobile {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        /* Sub-items collapse/expand animation */
+        .nav-sub-items {
+            transition: all 0.3s ease;
+            max-height: 2000px; /* Increased to support multi-level menus */
+            overflow: hidden;
+        }
+
+        /* Use 'collapsed' instead of 'hidden' to avoid conflict with Tailwind's display:none */
+        .nav-sub-items.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        /* Sidebar overlay for mobile - fixed positioning */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 30;
+            display: none;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="app" class="flex flex-col h-screen overflow-hidden">
+        <!-- Unified Top Header Bar - Fixed Position, Always Visible -->
+        <div id="topHeader" class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary-800 to-primary-700 h-16 flex items-center justify-between px-4 shadow-lg">
+            <!-- Left Section: Back Button (Hidden by default) + Logo (Hidden on mobile) -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <!-- Back Button - only show when there is navigation history -->
+                <button id="backBtn" class="hidden w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white hover:opacity-100 opacity-30" @@click="navigateBack" title="Back">
+                    <i class="fas fa-chevron-left text-lg"></i>
+                </button>
+                <!-- Logo - only show on desktop -->
+                <div class="hidden md:flex items-center gap-2 flex-shrink-0" id="logoContainer">
+                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                        <i class="fas fa-rocket text-primary-600 text-base"></i>
+                    </div>
+                    <div class="text-white text-lg font-bold">@Model.SiteTitle</div>
+                </div>
+            </div>
+
+            <!-- Center Title - Always visible and horizontally centered -->
+            <div class="flex-1 text-center px-2 md:px-4 md:hidden ">
+                <h2 id="headerTitle" class="text-white font-semibold truncate text-md md:text-base">仪表板</h2>
+            </div>
+
+            <!-- Right Section: Toolbar Icons -->
+            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <!-- AI Chat Button -->
+                <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="AI Chat">
+                    <i class="fas fa-comments text-lg"></i>
+                </button>
+                <!-- Refresh Button -->
+                <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="刷新" @@click="refreshMainContent">
+                    <i class="fas fa-rotate-right text-lg"></i>
+                </button>
+                <!-- Message Button -->
+                <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="Settings" @@click="navigateTo('setting-general', '设置 - 常规')">
+                    <i class="fas fa-envelope text-lg"></i>
+                </button>
+                <!-- Menu Button - only show on mobile -->
+                <button id="menuBtn" class="md:hidden w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" @@click="openSidebar" title="Menu">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Container - Add top padding to account for fixed header -->
+        <div class="flex flex-1 overflow-hidden pt-16">
+            <!-- Sidebar Navigation -->
+            <div id="sidebar" class="sidebar w-60 bg-primary-800 fixed left-0 top-16 md:relative md:top-0 h-[calc(100vh-64px)] md:h-auto z-40 flex flex-col overflow-y-auto -translate-x-full md:translate-x-0 transition-transform duration-300">
+                <!-- Navigation Items Section -->
+                <div class="flex-1 flex flex-col gap-1 pt-4 md:pt-4 px-3">
+                    <menu-tree 
+                        :menu-data="mainMenuItems" 
+                        default-target="contentFrame" 
+                        :text-color="menuTextColor"
+                        :active-key="currentPage"
+                        @@navigate="handleMenuNavigate"
+                    ></menu-tree>
+                </div>
+
+                <!-- Footer Navigation Section -->
+                <div class="flex flex-col gap-2 px-3 py-3 border-t border-primary-700">
+                    <menu-tree 
+                        :menu-data="bottomMenuItems" 
+                        default-target="contentFrame" 
+                        :text-color="menuTextColor"
+                        :active-key="currentPage"
+                        @@navigate="handleMenuNavigate"
+                    ></menu-tree>
+                </div>
+            </div>
+
+            <!-- Sidebar Overlay for Mobile - Click to close -->
+            <div id="sidebarOverlay" class="sidebar-overlay" @@click="closeSidebar"></div>
+
+            <!-- Main Content Area -->
+            <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden">
+                <!-- Content Container with iframe -->
+                <div class="flex-1 overflow-hidden">
+                    <iframe id="contentFrame" src="/me/dashboard" class="w-full h-full"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            components: {
+                'menu-tree': MenuTree
+            },
+            setup() {
+                const currentPage = ref('dashboard');
+                const currentTitle = ref('仪表板');
+                const sidebarOpen = ref(false);
+                const navigationHistory = ref([]);
+                const menuTextColor = ref('#cbd5e1');
+
+                // Generate Menu Data from Model
+                const menuItems = ref([]);
+
+                // 获取 key，用横杆分隔的小写字符串如："me-dashboard"
+                const getKey = (url) => {
+                    if (!url) return null;
+                    return url.toLowerCase().replace(/^\.\//, '').replace(/\//g, '-').replace(/\.html?$/, '');
+                };
+                
+                // Helper to convert C# menu structure to JS structure
+                const convertMenu = (nodes) => {
+                    return nodes.map(node => {
+                        const item = {
+                            text: node.name,
+                            key: getKey(node.navigateUrl) || ('group-' + node.id),
+                            icon: node.imageUrl || (node.isTreeLeaf ? "fa fa-file" : "fa fa-folder"),
+                            isOpen: node.expanded,
+                            fixBottom: node.fixed,
+                            target: node.target,
+                            url: node.navigateUrl || null,
+                        };
+                        if (node.children && node.children.length > 0) {
+                            item.children = convertMenu(node.children);
+                        }
+                        return item;
+                    });
+                };
+
+                // Server-side data injection
+                const serverMenuData = @Html.Raw(Model.Menus.ToJson());
+                if (serverMenuData) {
+                    const processedMenu = convertMenu(serverMenuData);
+                    menuItems.value = processedMenu;
+                }
+
+                // Filtered Lists
+                const mainMenuItems = computed(() => menuItems.value.filter(i => !i.fixBottom && !i.hidden));
+                const bottomMenuItems = computed(() => menuItems.value.filter(i => i.fixBottom && !i.hidden));
+
+                // Flatten menu for easy lookup
+                const pageMap = {};
+                const buildPageMap = (items) => {
+                    items.forEach(item => {
+                        if (item.children) {
+                            buildPageMap(item.children);
+                        } else {
+                            pageMap[item.key] = { 
+                                url: item.url, 
+                                text: item.text,
+                                target: item.target
+                            };
+                        }
+                    });
+                };
+                // Watch menuItems changes to rebuild map
+                buildPageMap(menuItems.value);
+
+
+                const navigateTo = (page, title = '', pushHistory = true, loadIframe = true) => {
+                    // Rebuild map if needed (lazy way)
+                    if (Object.keys(pageMap).length === 0) buildPageMap(menuItems.value);
+
+                    const pageConfig = pageMap[page];
+                    if (!pageConfig) return;
+
+                    // Handle different targets
+                    if (pageConfig.target === '_blank') {
+                        if (pageConfig.url) window.open(pageConfig.url, '_blank');
+                        return;
+                    }
+                    if (pageConfig.target === '_top') {
+                        if (pageConfig.url) window.top.location.href = pageConfig.url;
+                        return;
+                    }
+
+                    // Default: Show in iframe
+                    if (!pageConfig.url) return;
+
+                    if (pushHistory) navigationHistory.value.push(currentPage.value);
+                    currentPage.value = page;
+                    currentTitle.value = title || pageConfig.text || page;
+                    
+                    if (loadIframe) {
+                        const iframe = document.getElementById('contentFrame');
+                        iframe.src = pageConfig.url;
+                    }
+
+                    // Set location hash for direct navigation
+                    try { location.hash = page; } catch (e) { /* ignore */ }
+
+                    // Close sidebar on mobile
+                    closeSidebar();
+
+                    // Update title in unified header
+                    const headerTitle = document.getElementById('headerTitle');
+                    if (headerTitle) {
+                        headerTitle.innerText = `${currentTitle.value}`;
+                    }
+
+                    // Update back button visibility
+                    updateBackButtonVisibility();
+                };
+
+                const handleMenuNavigate = (item) => {
+                    navigateTo(item.key, item.text, true, false);
+                };
+
+                // Helper for iframe pages to request navigation
+                window.navigateToFromIframe = (page, title) => {
+                    navigateTo(page, title);
+                };
+
+                // Update back button visibility and show when history exists
+                const updateBackButtonVisibility = () => {
+                    const backBtn = document.getElementById('backBtn');
+                    const logoContainer = document.getElementById('logoContainer');
+                    
+                    if (backBtn) {
+                        if (navigationHistory.value.length > 0) {
+                            // Show back button with full opacity
+                            backBtn.classList.remove('hidden');
+                            backBtn.classList.add('flex');
+                            backBtn.style.opacity = '1';
+                            backBtn.style.pointerEvents = 'auto';
+                        } else {
+                            // Hide back button on first page
+                            backBtn.classList.add('hidden');
+                            backBtn.classList.remove('flex');
+                            backBtn.style.opacity = '0.3';
+                            backBtn.style.pointerEvents = 'none';
+                        }
+                    }
+                };
+
+                // Initialize on mount
+                onMounted(() => {
+                    buildPageMap(menuItems.value);
+                    
+                    // Initialize back button visibility
+                    updateBackButtonVisibility();
+
+                    // Check for direct hash navigation
+                    const hash = (location.hash || '').replace('#', '').trim();
+                    if (hash && pageMap[hash]) {
+                        navigateTo(hash, pageMap[hash].text, false);
+                    } else {
+                        const iframe = document.getElementById('contentFrame');
+                        const defaultPageConfig = pageMap['dashboard'];
+                        if (defaultPageConfig && defaultPageConfig.url) {
+                            iframe.src = defaultPageConfig.url;
+                        }
+                    }
+                });
+
+                const navigateBack = () => {
+                    if (navigationHistory.value.length > 0) {
+                        const prevPage = navigationHistory.value.pop();
+                        currentPage.value = prevPage;
+                        currentTitle.value = pageMap[prevPage]?.text || prevPage;
+                        
+                        const iframe = document.getElementById('contentFrame');
+                        const pageConfig = pageMap[prevPage];
+                        if (pageConfig) {
+                            iframe.src = pageConfig.url;
+                        }
+
+                        // Update title in unified header
+                        const headerTitle = document.getElementById('headerTitle');
+                        if (headerTitle) {
+                            headerTitle.innerHTML = `<h2 class="text-white font-semibold truncate text-xs sm:text-sm md:text-base">${currentTitle.value}</h2>`;
+                        }
+
+                        // Update back button visibility
+                        updateBackButtonVisibility();
+                    }
+                };
+
+                const openSidebar = () => {
+                    sidebarOpen.value = true;
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+                    
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebar.classList.add('translate-x-0');
+                    overlay.classList.add('active');
+                };
+
+                const closeSidebar = () => {
+                    sidebarOpen.value = false;
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+                    sidebar.classList.add('-translate-x-full');
+                    sidebar.classList.remove('translate-x-0');
+                    overlay.classList.remove('active');
+                };
+
+                const refreshMainContent = () => {
+                    const iframe = document.getElementById('contentFrame');
+                    if (!iframe) return;
+
+                    try {
+                        if (iframe.contentWindow) {
+                            iframe.contentWindow.location.reload();
+                            return;
+                        }
+                    } catch (e) {
+                        // ignore and fallback to src reset
+                    }
+
+                    const currentSrc = iframe.getAttribute('src');
+                    if (currentSrc) iframe.setAttribute('src', currentSrc);
+                };
+
+                return {
+                    currentPage,
+                    currentTitle,
+                    sidebarOpen,
+                    menuItems,
+                    mainMenuItems,
+                    bottomMenuItems,
+                    menuTextColor,
+                    navigateTo,
+                    navigateBack,
+                    handleMenuNavigate,
+                    openSidebar,
+                    closeSidebar,
+                    refreshMainContent
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

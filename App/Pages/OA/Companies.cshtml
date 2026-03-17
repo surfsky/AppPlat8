@@ -1,0 +1,31 @@
+@page
+@model App.Pages.OA.CompaniesModel
+@{
+    ViewData["Title"] = "厂商管理";
+}
+
+@section body {
+    <EleTable Title="厂商" FormPage="CompanyForm" EnableBatch="true" >
+        <Toolbar>
+            <EleInput For="Item.Name" Width="250px" Label="名称" LabelWidth="70px"></EleInput>
+            <EleInput For="Item.UnifiedSocialCreditCode" Width="500px" Label="统一社会信用代码" ></EleInput>
+            <div class="flex w-80">
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Primary" Command="Add" Icon="Plus" VPower="CompanyNew">新增</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" VPower="CompanyDelete">批量删除</EleButton>
+            </div>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleOpColumn UPower="CompanyEdit" DPower="CompanyDelete" Width="100" Fixed="right"></EleOpColumn>
+            <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="200" Sortable="true"></EleColumn>
+            <EleColumn For="Item.AbbrName" Label="简称" MinWidth="100" Sortable="true"></EleColumn>
+            <EleColumn For="Item.UnifiedSocialCreditCode" Label="统一社会信用代码" Width="180"></EleColumn>
+            <EleColumn For="Item.LegalPerson" Label="法人" Width="100"></EleColumn>
+            <EleColumn For="Item.LegalPersonPhone" Label="法人电话" Width="120"></EleColumn>
+            <EleColumn For="Item.Contact" Label="联系人" Width="100"></EleColumn>
+            <EleColumn For="Item.ContactPhone" Label="联系电话" Width="120"></EleColumn>
+            <EleColumn For="Item.Address" Label="地址" MinWidth="200"></EleColumn>
+        </Columns>
+    </EleTable>
+}

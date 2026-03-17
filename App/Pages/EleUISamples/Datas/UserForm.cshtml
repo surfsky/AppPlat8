@@ -1,0 +1,29 @@
+@page
+@model App.Pages.EleUISamples.UserFormModel
+
+@{
+    ViewData["Title"] = "用户表单示例";
+}
+
+@section body {
+    <EleForm LabelWidth="120px">
+        <Toolbar Position="Bottom">
+            <EleButton Type="Primary" Command="Save" Icon="fas fa-floppy-disk">保存</EleButton>
+            <EleButton Type="Info" Command="Close" Icon="Close">关闭</EleButton>
+        </Toolbar>
+
+        <EleInput For="Item.Name" Label="账号" Required="true"></EleInput>
+        <EleInput For="Item.ChineseName" Label="中文名" Required="true"></EleInput>
+        <EleSelect For="Item.RoleIds" Label="角色" Items="Model.RoleList" Multiple="true"></EleSelect>
+        <EleNumber For="Item.Age" Label="年龄"></EleNumber>
+        <EleNumber For="Item.Score" Label="分数" Precision="2" Step="0.1"></EleNumber>
+        <EleDatePicker For="Item.Birthday" Label="生日"></EleDatePicker>
+        <EleSwitch For="Item.IsEnabled" Label="启用"></EleSwitch>
+        <EleRadio For="Item.Gender" Label="性别" Items="男, 女, 未知"></EleRadio>
+        <EleSelect For="Item.City" Label="城市" Items="Model.CityList"></EleSelect>
+        <EleSelect For="Item.Types" Label="类型" Items="Model.TypeList" Multiple="true"></EleSelect>
+        <EleImageUpload For="Item.Photo" Label="头像" ItemWidth="140" LimitWidth="1024"></EleImageUpload>
+        <EleImageUpload For="Item.Photos" Label="相册" Multi="true" MultiLimit="5" ItemWidth="140" LimitWidth="1024"></EleImageUpload>
+        <EleInput For="Item.Description" Label="备注" Type="TextArea" Rows="3" FillRow="true"></EleInput>
+    </EleForm>
+}

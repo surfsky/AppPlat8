@@ -1,0 +1,25 @@
+@page
+@model App.Pages.Admins.OrgsModel
+@{
+    ViewData["Title"] = "组织管理";
+}
+
+@section body {
+    <EleTable Title="组织管理" FormPage="OrgForm" EnableBatch="false" RowKey="id">
+        <Toolbar>
+            <EleInput For="Item.Name" Width="500px" Label="名称" ></EleInput>
+            <div class="flex-1 w-100">
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Primary" Command="Add" Icon="Plus">新增组织</EleButton>
+            </div>
+        </Toolbar>
+        <Columns>
+            <EleOpColumn UPower="OrgEdit" DPower="OrgDelete" Width="100"></EleOpColumn>
+            <EleColumn For="Item.Name" Label="名称" Width="300"></EleColumn>
+            <EleColumn For="Item.Remark" Label="备注"></EleColumn>
+            <EleColumn For="Item.SortId" Label="排序" Width="80"></EleColumn>
+        </Columns>
+    </EleTable>
+}
+
+

@@ -1,0 +1,103 @@
+@page
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>图标选择</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .icon-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .icon-item:hover {
+            background-color: #f3f4f6;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="p-4 bg-white">
+    <div class="mb-4">
+        <input type="text" id="searchInput" placeholder="搜索图标..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="grid grid-cols-6 gap-4" id="iconGrid">
+        <!-- Icons will be populated here -->
+    </div>
+
+    <script>
+        // 统一的 FontAwesome 图标列表（扩展）
+        const icons = [
+            "fas fa-user","fas fa-users","fas fa-user-tag","fas fa-user-cog","fas fa-user-shield",
+            "fas fa-home","fas fa-tachometer-alt","fas fa-chart-line","fas fa-chart-bar","fas fa-chart-pie",
+            "fas fa-cog","fas fa-cogs","fas fa-wrench","fas fa-tools","fas fa-sliders-h",
+            "fas fa-envelope","fas fa-envelope-open","fas fa-comment","fas fa-comments","fas fa-bullhorn",
+            "fas fa-file","fas fa-file-alt","fas fa-file-pdf","fas fa-file-word","fas fa-file-excel",
+            "fas fa-folder","fas fa-folder-open","fas fa-folder-plus","fas fa-folder-minus","fas fa-file",
+            "fas fa-check","fas fa-check-circle","fas fa-check-square","fas fa-check-double",
+            "fas fa-times","fas fa-times-circle","fas fa-plus","fas fa-plus-circle","fas fa-minus",
+            "fas fa-edit","fas fa-pen","fas fa-pencil-alt","fas fa-trash","fas fa-trash-alt",
+            "fas fa-search","fas fa-search-plus","fas fa-search-minus","fas fa-filter",
+            "fas fa-lock","fas fa-unlock","fas fa-key","fas fa-shield-alt",
+            "fas fa-calendar","fas fa-calendar-alt","fas fa-calendar-check","fas fa-clock",
+            "fas fa-map","fas fa-map-marker-alt","fas fa-location-arrow","fas fa-globe",
+            "fas fa-link","fas fa-external-link-alt","fas fa-share","fas fa-share-alt",
+            "fas fa-download","fas fa-upload","fas fa-cloud","fas fa-cloud-upload-alt",
+            "fas fa-list","fas fa-list-alt","fas fa-list-ul","fas fa-list-ol","fas fa-th","fas fa-th-large",
+            "fas fa-bars","fas fa-ellipsis-h","fas fa-ellipsis-v",
+            "fas fa-info-circle","fas fa-question-circle","fas fa-exclamation-circle","fas fa-exclamation-triangle",
+            "fas fa-sitemap","fas fa-project-diagram","fas fa-tasks","fas fa-clipboard-list",
+            "fas fa-cubes","fas fa-cube","fas fa-box","fas fa-boxes",
+            "fas fa-desktop","fas fa-laptop","fas fa-mobile-alt","fas fa-tablet-alt",
+            "fas fa-print","fas fa-camera","fas fa-video","fas fa-image",
+            "fas fa-shopping-cart","fas fa-money-bill","fas fa-credit-card",
+            "fas fa-briefcase","fas fa-building","fas fa-university","fas fa-hospital",
+            "fas fa-bell","fas fa-bell-slash","fas fa-book","fas fa-book-open","fas fa-graduation-cap",
+            "fas fa-rocket","fas fa-heart","fas fa-star","fas fa-star-half-alt","fas fa-thumbs-up",
+            "fas fa-thumbs-down","fas fa-handshake","fas fa-award","fas fa-trophy","fas fa-medal",
+            "fas fa-lightbulb","fas fa-battery-full","fas fa-battery-half","fas fa-battery-quarter","fas fa-battery-empty",
+            "fas fa-music","fas fa-headphones","fas fa-microphone","fas fa-gift","fas fa-birthday-cake",
+            "fas fa-utensils","fas fa-wifi","fas fa-sync","fas fa-sync-alt","fas fa-redo","fas fa-undo",
+            "fas fa-map-pin","fas fa-map-signs","fas fa-clipboard","fas fa-flag","fas fa-rss",
+            "fas fa-bug","fas fa-hands-helping","fas fa-hand-holding-heart"
+        ];
+
+        const grid = document.getElementById('iconGrid');
+        const searchInput = document.getElementById('searchInput');
+
+        function renderIcons(filter = '') {
+            grid.innerHTML = '';
+            icons.forEach(icon => {
+                if (icon.toLowerCase().includes(filter.toLowerCase())) {
+                    const div = document.createElement('div');
+                    div.className = 'icon-item flex flex-col items-center justify-center p-3 border border-gray-100 rounded hover:shadow-sm';
+                    div.innerHTML = `
+                        <i class="${icon} text-2xl text-gray-600 mb-2"></i>
+                        <span class="text-xs text-gray-500 truncate w-full text-center" title="${icon}">${icon.replace('fas fa-', '')}</span>
+                    `;
+                    div.onclick = () => selectIcon(icon);
+                    grid.appendChild(div);
+                }
+            });
+        }
+
+        function selectIcon(icon) {
+            // 发送消息给父窗口
+            if (window.parent) {
+                // 构造标准返回数据结构
+                const data = { id: icon, name: icon };
+                // 发送 EleSelector 消息
+                window.parent.postMessage({ type: 'EleSelector', data: data }, '*');
+            }
+        }
+
+        searchInput.addEventListener('input', (e) => renderIcons(e.target.value));
+
+        // Initial render
+        renderIcons();
+    </script>
+</body>
+</html>

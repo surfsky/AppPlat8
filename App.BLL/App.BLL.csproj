@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>App</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="AutoMigration.cs" />
+    <Compile Remove="DAL\Title.cs" />
+    <Compile Remove="DAL\TitleUser.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="aliyun-net-sdk-core" Version="1.5.11" />
+    <PackageReference Include="aliyun-net-sdk-dysmsapi" Version="1.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Z.EntityFramework.Extensions.EFCore" Version="8.101.0" />
+    <PackageReference Include="Z.EntityFramework.Plus.EFCore" Version="8.101.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\App.Utils\App.Utils\App.Utils.csproj" />
+  </ItemGroup>
+
+</Project>

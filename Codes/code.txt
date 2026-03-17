@@ -1,0 +1,556 @@
+        /// <summary>构建树结构（父子层级）</summary>
+        public static List<T> BuildTreeHierarchy<T>(this List<T> items)
+            where T : class, ITree<T>
+        {
+            var dict = items.ToDictionary(x => x.Id);
+            var roots = new List<T>();
+
+            // 重置所有节点的子节点列表，防止因 EF Core 自动填充或多次调用导致的重复数据
+            foreach (var item in items)
+            {
+                item.Children = new List<T>();
+            }
+
+            foreach (var item in items)
+            {
+                if (item.ParentId.HasValue && dict.ContainsKey(item.ParentId.Value))
+                {
+                    var parent = dict[item.ParentId.Value];
+                    parent.Children.Add(item);
+                    item.Parent = parent;
+                }
+                else
+                {
+                    roots.Add(item);
+                }
+            }
+            return roots;
+        }
+        
+        /// <summary>构建树结构</summary>
+        static int DoBuildTree<T>(List<T> items, long? rootId, int level, ref List<T> result)
+            where T : class, ITree
+        {
+            int count = 0;
+            var root = items.FirstOrDefault(d => d.Id == rootId);
+            foreach (var item in items.Where(d => d.ParentId == rootId))
+            {
+                count++;
+                item.TreeLevel = level;
+                item.IsTreeLeaf = true;
+                item.Enabled = true;
+                //if (root?.Children != null)
+                //    root.Children.Add(item);
+                result.Add(item);
+
+                level++;
+                // 如果这个节点下没有子节点，则这是个终结节点
+                int childCount = DoBuildTree(items, item.Id, level, ref result);
+                if (childCount != 0)
+                    item.IsTreeLeaf = false;
+                level--;
+            }
+            return count;
+        }
+
+        /// <summary>拷贝树结构列表（并构造父子结构）</summary>
+        public static List<T> CloneTree<T>(this List<T> items)
+            where T : class, ITree<T>
+        {
+            // 先拷贝一份
+            var result = new List<T>();
+            foreach (var item in items)
+                result.Add((T)item.Clone());
+
+            // 构建父子结构
+            foreach (var item in result)
+            {
+                item.Parent = result.FirstOrDefault(t => t.Id == item.ParentId);
+                item.Children = result.Where(t => t.ParentId == item.Id).ToList();
+            }
+
+            //
+            result = result.BuildTreeHierarchy();
+            return result;
+        }
+
+
+    /// <summary>
+    /// 数据分页描述信息
+    /// </summary>
+    public class Pager
+    {
+        public int Total { get; set; }
+        public int PageCount { get; set; }
+
+
+        public int PageSize { get; set; }
+        public int PageIndex { get; set; }
+
+
+        public Pager(int total, int pageIndex, int pageSize)
+        {
+            Total = total;
+            PageSize = pageSize;
+            int pageCount = Convert.ToInt32(Math.Ceiling((double)Total / (double)PageSize));
+            PageCount = pageCount < 1 ? 1 : pageCount;
+            PageIndex = pageIndex;
+        }
+
+    }
+
+
+剥离 EntityBaseT 中的统计部分，能否改为
+        //---------------------------------------------
+        // 统计
+        //---------------------------------------------
+        /// <summary>日增统计</summary>
+        public static List<StatItem> StatDayNew(DateTime startDt, DateTime? endDt, Expression<Func<T, bool>> whereExpression = null)
+        {
+            var q = Set.Where(t => t.CreateDt >= startDt);
+            if (endDt != null) q = q.Where(t => t.CreateDt <= endDt);
+            if (whereExpression != null) q = q.Where(whereExpression);
+
+            // 每日的增量数据（未测试）
+            var items = q
+                .GroupBy(t => new
+                {
+                    //Day = DbFunctions.TruncateTime(t.CreateDt).Value
+                    Day = t.CreateDt.Value.Date
+                    //Day = EF.Functions..
+                })
+                .Select(t => new
+                {
+                    Day = t.Key.Day,
+                    Cnt = t.Count()
+                })
+                .OrderBy(t => new { t.Day })
+                .ToList()
+                .Select(t => new StatItem("", t.Day.ToString("MMdd"), t.Cnt))
+                .ToList()
+                ;
+            ;
+            return items;
+        }
+
+        /// <summary>日存量统计</summary>
+        public static List<StatItem> StatDayAmount(DateTime startDt, DateTime? endDt, Expression<Func<T, bool>> whereExpression = null)
+        {
+            var n = Set.Where(t => t.CreateDt < startDt).Where(whereExpression).Count();    // 初始数据
+            var items = StatDayNew(startDt, endDt, whereExpression); // 每日新增数据
+            return ToAmountData(items, n);
+        }
+
+        /// <summary>将日数据转化为累计数据</summary>
+        public static List<StatItem> ToAmountData(List<StatItem> items, int baseAmount)
+        {
+            // 存量 = 之前量 + 今日增量
+            return items
+                .Each2((item, preItem) => item.Value = item.Value + (preItem?.Value ?? 0))
+                .Each(t => t.Value += baseAmount)
+                ;
+        }
+
+        // => ReflectionHelper.TryGetType(this.EntityTypeName);
+        //{
+        //    get { return this.SettingText.ParseJson<UISetting>(); }
+        //    set { this.SettingText = value.ToJson(); }
+        //}
+
+
+        public IActionResult OnGetData(long id)
+        {
+            var item = new App.DAL.User();
+            var roleIds = new List<long>();
+            
+            if (id > 0)
+            {
+                item = App.DAL.User.Get(id);
+                if (item != null)
+                {
+                    roleIds = RoleUser.Set.Where(ru => ru.UserId == id).Select(ru => ru.RoleId).ToList();
+                }
+            }
+            else
+            {
+                item.InUsed = true;
+            }
+
+            return new JsonResult(new { 
+                code = 0, 
+                msg = "success", 
+                data = item,
+                extra = new { RoleIds = roleIds }
+            });
+        }
+
+        @if (Model.Item.Id == 0)
+        {
+            <EleInput For="Item.Password" Label="密码" Required="true" Type="@EleInputType.Password" ShowPassword="true"></EleInput>
+        }
+        else
+        {
+            <EleInput For="Item.Password" Label="密码" Placeholder="留空则不修改" Type="@EleInputType.Password" ShowPassword="true"></EleInput>
+        }
+            // Update
+            else
+            {
+                var user = App.DAL.User.Get(Item.Id);
+                user.RealName = Item.RealName;
+                user.OrgId = Item.OrgId;
+                user.Title = Item.Title;
+                user.Email = Item.Email;
+                user.Mobile = Item.Mobile;
+                user.Gender = Item.Gender;
+                user.InUsed = Item.InUsed ?? true;
+                user.Photo = Item.Photo;
+                user.Remark = Item.Remark;
+                user.Save();
+                RoleUser.SetUserRoles(user.Id, RoleIds);
+                Item = user; // Update reference for saving roles
+            }
+
+
+        <EleInput For="Item.Name" Label="账号" Required="true" Disabled="@(Model.Item.Id > 0)"></EleInput>
+
+
+    <link rel="stylesheet" href="~/res/css/common.css" type="text/css" />
+    <script src="~/js/common.js"></script>
+
+
+        this.search = ref('');
+                    search: this.search.value,
+    onSearchClear() {
+        this.search.value = '';
+        this.loadData();
+    }
+
+                search: this.search.value,
+
+        private string GenerateDefaultHeader()
+        {
+            return $@"
+            <div class=""flex items-center space-x-2"">
+                <el-button type=""primary"" v-on:click=""openForm(0)"">新增</el-button>
+            </div>
+            <div class=""ml-auto flex items-center space-x-2 w-[360px]"">
+                <el-input v-model=""search"" clearable class=""flex-1"" v-on:clear=""onSearchClear"" v-on:keyup.enter.native=""reload""></el-input>
+                <el-button v-on:click=""reload"">查询</el-button>
+            </div>";
+        }
+
+
+
+
+        public IActionResult OnPostUpload(IFormFile file)
+        {
+            return new JsonResult(Uploader.UploadImage(file));
+        }
+
+
+        /// <summary>上传图片</summary>
+        public static APIResult UploadImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return new APIResult(1, "请选择文件");
+            try
+            {
+                var exts = new List<string> { ".jpg", ".png", ".gif", ".mp3", ".mp4", ".txt", ".md" };
+                var ext = System.IO.Path.GetExtension(file.FileName).ToLower();
+                if (!exts.Contains(ext))
+                    return new APIResult(-1, "File deny");
+
+                // 构造存储路径
+                var url = Uploader.GetUploadPath("Images", file.FileName);
+                var path = App.Web.Asp.MapPath(url);
+                var fi = new System.IO.FileInfo(path);
+                if (!fi.Directory.Exists)
+                    System.IO.Directory.CreateDirectory(fi.Directory.FullName);
+
+                // 存储文件
+                using (var stream = System.IO.File.Create(path))
+                {
+                     file.CopyTo(stream);
+                }
+
+                return new APIResult(0, "上传成功", new { url = url });
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Upload Fail: " + ex.Message);
+                return new APIResult(1, "上传失败: " + ex.Message);
+            }
+        }        
+
+
+            // 
+            //var config = host.Services.GetRequiredService<IConfiguration>();
+            //var urls = config["urls"];
+
+            // 
+            //var server = host.Services.GetRequiredService<IServer>();
+            //var addrfeature = server.Features.Get<IServerAddressesFeature>();
+            //addrfeature.Addresses.Add(urls);
+
+        /// This method gets called by the runtime. Use this method to add services to the container.
+        /// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkId=398940
+            //services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + "DataProtection"));  // kill warn: Microsoft.AspNetCore.Session.SessionMiddleware
+
+                //options.Cookie.Name = ".AppPlat.Session";
+                //options.Cookie.IsEssential = true;
+                    //webBuilder.UseUrls("http://*:8080", "https://*:8088");
+                    //webBuilder.UseKestrel(opts =>
+                    //{
+                    //    // Bind directly to a socket handle or Unix socket
+                    //    // opts.ListenHandle(123554);
+                    //    // opts.ListenUnixSocket("/tmp/kestrel-test.sock");
+                    //    opts.Listen(IPAddress.Loopback, port: 5002);
+                    //    opts.ListenAnyIP(5003);
+                    //    opts.ListenLocalhost(5004, opts => opts.UseHttps());
+                    //});
+            //host.Run("http://localhost:8000");
+            app.Use(async (context, next) =>
+            {
+                try
+                {
+                    await next();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Global Exception: {0}\r\n{1}", ex.Message, ex.StackTrace);
+                    throw; // Re-throw to let standard handlers process it (e.g. DeveloperExceptionPage or Error page)
+                }
+            });
+
+                item.IsTreeLeaf = item.Children.Count == 0;
+
+        
+
+        /// <summary>构建树节点</summary>
+        /// <param name="lookup">组织lookup</param>
+        /// <param name="parentId">父ID</param>
+        /// <returns></returns>
+        public static List<TreeItem> BuildTree(ILookup<long?, ITree> lookup, long? parentId)
+        {
+            var nodes = new List<TreeItem>();
+            foreach (var item in lookup[parentId])
+            {
+                var children = BuildTree(lookup, item.Id);
+                var node = new TreeItem
+                {
+                    Value = item.Id,
+                    Label = item.Name,
+                    Children = children.Any() ? children : null
+                };
+                nodes.Add(node);
+            }
+
+            return nodes;
+        }
+
+        [NotMapped]      public bool IsTreeLeaf { get; set; }
+
+
+        /// <summary>是否叶子节点（默认true）</summary>
+        bool IsTreeLeaf { get; set; }
+
+        /// <summary>父节点</summary>
+        T Parent { get; set; }
+
+        virtual public T Parent { get; set; }
+
+        [JsonIgnore] public virtual ArticleDir Parent { get; set; }
+
+        /// <summary>是否可用（默认true）</summary>
+        bool Enabled { get; set; }
+
+    /// <summary>树接口</summary>
+    public interface ITree :  IId, ISort
+    {
+        /// <summary>父Id</summary>
+        long? ParentId { get; set; }
+
+        /// <summary>名称</summary>
+        string Name { get; set; }
+
+        /// <summary>是否可用（默认true）</summary>
+        bool Enabled { get; set; }
+
+        /// <summary>菜单在树形结构中的层级（从0开始）</summary>
+        int TreeLevel { get; set; }
+    }
+
+        [NotMapped]      public bool Enabled { get; set; }
+
+
+
+
+
+            foreach (var menu in DAL.Menu.GetTree())
+            {
+                // 如果此菜单不属于任何模块，或者此用户所属角色拥有对此模块的权限
+                if (menu.Visible == false) continue;
+                if (menu.Power == null || powers.Contains(menu.Power.Value))
+                {
+                    // TODO: 这里测试有问题，先凑合用，应该要用 clone 方式
+                    var m = menu.Clone();
+                    m.ImageUrl = Asp.ResolveUrl(m.ImageUrl);
+                    m.NavigateUrl = Asp.ResolveUrl(m.NavigateUrl);
+                    menus.Add(m);
+                }
+            }
+            return menus;
+
+
+
+            foreach (var menu in allMenus)
+            {
+                if (menu.Power == null || powers.Contains(menu.Power.Value))
+                {
+                    menus.Add(menu);
+                }
+            }
+            return menus.ToTree();
+
+        // <summary>获取当前用户显示名称</summary>
+        protected string GetUserDisplayName()
+        {
+            var userName = GetUserName();
+            if (String.IsNullOrEmpty(userName))
+                return "";
+            var user = App.DAL.User.Set.FirstOrDefault(u => u.Name == userName);
+            if (user == null)
+                return userName;
+            return String.IsNullOrEmpty(user.RealName) ? user.Name : user.RealName;
+        }
+
+        [NotMapped] public virtual List<Power> Powers { get; set; }// => IO.GetCache(this.UniId + "-Power", () => GetUserPowers(this));
+        [NotMapped] public virtual List<Menu> Menus { get; set; }  // => GetAllowMenus(this.Powers);
+
+        [UI("拥有角色")]        public List<RoleUser> RoleUsers { get; set; }
+
+
+            // 用户所属的角色字符串，以逗号分隔
+            //string roleIds = String.Empty;
+            //if (user.Roles != null)
+            //    roleIds = String.Join(",", user.Roles.Select(r => r.Id).ToArray());
+
+
+        [UI("拥有角色")]
+        public List<Role> Roles
+        {
+            get => this.GetRoles();
+            set => this.SetRoles(value?.Select(t => t.Id).ToList() ?? new List<long>());
+        }
+
+
+
+        //------------------------------------------------------
+        // 角色
+        //------------------------------------------------------
+        /// <summary>获取用户的角色列表</summary>
+        public List<Role> GetRoles()
+        {
+            if (this.Id <= 0) return new List<Role>();
+            return UserRole.Search(t => t.UserId == this.Id).Select(t => t.Role).ToList();
+        }
+
+        /// <summary>设置某个用户拥有的角色清单</summary>
+        public void SetRoles(List<long> roleIds)
+        {
+            roleIds ??= new List<long>();
+            UserRole.Delete(t => t.UserId == this.Id);
+            roleIds.ForEach(roleId =>
+            {
+                new UserRole().Let(item =>
+                {
+                    item.UserId = this.Id;
+                    item.RoleId = roleId;
+                }).Save();
+            });
+        }
+
+
+    /// <summary>
+    /// 用户角色关联表
+    /// </summary>
+    public class UserRole : EntityBase<UserRole>
+    {
+        public long UserId { get; set; }
+        public long RoleId { get; set; }
+
+        public virtual User User { get; set; }
+        public virtual Role Role { get; set; }
+    }
+
+
+        //-----------------------------------------------
+        // 公共方法
+        //-----------------------------------------------
+        /// <summary>导出</summary>
+        public override object Export(ExportMode type = ExportMode.Normal)
+        {
+            return new
+            {
+                Id = this.Id,
+                this.UserId,
+                this.RoleId,
+                UserName = this.User.Name,
+                RoleName = this.Role.Name
+            };
+        }
+
+        /// <summary>获取详情</summary>
+        public new static RoleUser GetDetail(long id)
+        {
+            return Set.Include(t => t.User).Include(t => t.Role).Where(t => t.Id == id).FirstOrDefault();
+        }
+
+        /// <summary>检索</summary>
+        public static IQueryable<RoleUser> Search(
+            long? userId = null,
+            string userName = null,
+            long? roleId = null,
+            string roleName = null
+            )
+        {
+            IQueryable<RoleUser>       q = Set.Include(t => t.User).Include(t => t.Role);
+            if (userId.IsNotEmpty())   q = q.Where(t => t.UserId == userId);
+            if (userName.IsNotEmpty()) q = q.Where(t => t.User.Name.Contains(userName));
+            if (roleId.IsNotEmpty())   q = q.Where(t => t.RoleId == roleId);
+            if (roleName.IsNotEmpty()) q = q.Where(t => t.Role.Name.Contains(roleName));
+            return q;
+        }
+
+        /// <summary>设置某个用户拥有的角色清单</summary>
+        public static void SetUserRoles(long userId, List<long> roleIds)
+        {
+            RoleUser.Set.Where(t => t.UserId == userId).Delete();
+            foreach (var roleId in roleIds)
+            {
+                var item = new RoleUser();
+                item.RoleId = roleId;
+                item.UserId = userId;
+                item.Save();
+            }
+        }
+
+        /// <summary>设置某个角色拥有的用户清单</summary>
+        public static void SetRoleUsers(long roleId, List<long> userIds)
+        {
+            RoleUser.Set.Where(t => t.RoleId == roleId).Delete();
+            foreach (var userId in userIds)
+            {
+                var item = new RoleUser();
+                item.RoleId = roleId;
+                item.UserId = userId;
+                item.Save();
+            }
+        }
+
+        public void SetRoles(List<long> roleIds)
+        {
+            this.Roles = roleIds.Cast(t => Role.Get(t));
+            this.Save();
+        }
+

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="应急数字化平台火箭图标">
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#ffffff"/>
+  <rect x="5" y="5" width="54" height="54" rx="13" fill="none" stroke="#dbeafe"/>
+
+  <g transform="translate(32 32) rotate(-32) translate(-32 -32)">
+    <path d="M32 14c5.2 5.8 8.2 13.1 8.2 20.7V39L32 47l-8.2-8v-4.3C23.8 27.1 26.8 19.8 32 14z" fill="#1d4ed8"/>
+    <circle cx="32" cy="30" r="3.1" fill="#ffffff"/>
+    <path d="M23.8 35.5l-4.5 2.2 2.4-6.2z" fill="#60a5fa"/>
+    <path d="M40.2 35.5l4.5 2.2-2.4-6.2z" fill="#60a5fa"/>
+    <path d="M28.5 48l3.5-1.2 3.5 1.2-3.5 8z" fill="#2563eb"/>
+  </g>
+</svg>

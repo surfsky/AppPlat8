@@ -1,0 +1,85 @@
+@page
+@model App.Pages.Dev.IconsModel
+@{
+    ViewData["Title"] = "图标列表";
+}
+
+@section body {
+    <div id="app" class="p-5">
+        <div class="mb-4 flex items-center">
+            <el-input v-model="search" placeholder="搜索图标" clearable style="width: 300px;"></el-input>
+            <span class="ml-4 text-gray-500 text-sm">点击图标复制代码</span>
+            <span class="ml-auto text-gray-400 text-xs">共 {{ filteredIcons.length }} 个图标</span>
+        </div>
+
+        <div class="flex-1 overflow-auto" style="max-height:calc(100vh - 100px);">
+            <div v-if="filteredIcons.length > 0" class="flex flex-wrap gap-4">
+                <div v-for="name in filteredIcons" :key="name" 
+                     class="flex flex-col items-center justify-center p-4 border border-gray-300 rounded cursor-pointer hover:bg-gray-50 w-24 h-24 transition-colors relative group"
+                     @@click="copyIcon(name)">
+                    <el-icon :size="24" class="mb-2 text-gray-700 group-hover:text-blue-600">
+                        <component :is="name"></component>
+                    </el-icon>
+                    <span class="text-xs text-gray-500 truncate w-full text-center group-hover:text-blue-600" :title="name">{{ name }}</span>
+                </div>
+            </div>
+            <div v-else class="text-center text-gray-400 py-10">
+                未找到匹配的图标
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp } = Vue;
+        
+        const app = createApp({
+            data() {
+                return {
+                    icons: [],
+                    search: ''
+                };
+            },
+            computed: {
+                filteredIcons() {
+                    if (!this.search) return this.icons;
+                    const q = this.search.toLowerCase();
+                    return this.icons.filter(i => i.toLowerCase().includes(q));
+                }
+            },
+            mounted() {
+                if (typeof ElementPlusIconsVue !== 'undefined') {
+                    this.icons = Object.keys(ElementPlusIconsVue);
+                } else {
+                    console.error('Element Plus Icons library not loaded');
+                    ElementPlus.ElMessage.error('图标库加载失败');
+                }
+            },
+            methods: {
+                copyIcon(name) {
+                    const code = `<el-icon><${name} /></el-icon>`;
+                    navigator.clipboard.writeText(code).then(() => {
+                        ElementPlus.ElMessage.success({
+                            message: `已复制: ${code}`,
+                            type: 'success',
+                        });
+                    }).catch(() => {
+                        ElementPlus.ElMessage.error('复制失败');
+                    });
+                }
+            }
+        });
+
+        app.use(ElementPlus);
+        
+        // Register all icons globally
+        if (typeof ElementPlusIconsVue !== 'undefined') {
+            for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+                app.component(key, component);
+            }
+        }
+        
+        app.mount('#app');
+    </script>
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>响应式 Grid 表单（Label 居左）</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-6">
+  <!-- 表单容器：限制最大宽度 + 居中 -->
+  <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-md p-6 md:p-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-8">响应式表单示例（Label 居左）</h2>
+    
+    <!-- 核心 Grid 表单布局：小屏1列、中屏2列、大屏4列 -->
+    <form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- 控件 1：姓名 -->
+      <div class="flex items-center space-x-3 w-full">
+        <label class="text-sm font-medium text-gray-700 w-24 shrink-0 text-right">姓名</label>
+        <input 
+          type="text" 
+          placeholder="请输入姓名" 
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+        >
+      </div>
+
+      <!-- 控件 2：手机号 -->
+      <div class="flex items-center space-x-3 w-full">
+        <label class="text-sm font-medium text-gray-700 w-24 shrink-0 text-right">手机号</label>
+        <input 
+          type="tel" 
+          placeholder="请输入手机号" 
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+        >
+      </div>
+
+      <!-- 控件 3：邮箱 -->
+      <div class="flex items-center space-x-3 w-full">
+        <label class="text-sm font-medium text-gray-700 w-24 shrink-0 text-right">邮箱</label>
+        <input 
+          type="email" 
+          placeholder="请输入邮箱" 
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+        >
+      </div>
+
+      <!-- 控件 4：年龄 -->
+      <div class="flex items-center space-x-3 w-full">
+        <label class="text-sm font-medium text-gray-700 w-24 shrink-0 text-right">年龄</label>
+        <input 
+          type="number" 
+          placeholder="请输入年龄" 
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+        >
+      </div>
+
+      <!-- 控件 5：地址 -->
+      <div class="flex items-center space-x-3 w-full">
+        <label class="text-sm font-medium text-gray-700 w-24 shrink-0 text-right">地址</label>
+        <input 
+          type="text" 
+          placeholder="请输入地址" 
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+        >
+      </div>
+
+      <!-- 控件 6：身份证号 -->
+      <div class="flex items-center space-x-3 w-full">
+        <label class="text-sm font-medium text-gray-700 w-24 shrink-0 text-right">身份证号</label>
+        <input 
+          type="text" 
+          placeholder="请输入身份证号" 
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+        >
+      </div>
+
+      <!-- 控件 7：职业 -->
+      <div class="flex items-center space-x-3 w-full">
+        <label class="text-sm font-medium text-gray-700 w-24 shrink-0 text-right">职业</label>
+        <input 
+          type="text" 
+          placeholder="请输入职业" 
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+        >
+      </div>
+
+      <!-- 控件 8：薪资 -->
+      <div class="flex items-center space-x-3 w-full">
+        <label class="text-sm font-medium text-gray-700 w-24 shrink-0 text-right">薪资</label>
+        <input 
+          type="number" 
+          placeholder="请输入薪资" 
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
+        >
+      </div>
+
+      <!-- 提交按钮：跨列显示 -->
+      <div class="lg:col-span-4 md:col-span-2 col-span-1 mt-4 pl-24">
+        <button 
+          type="submit" 
+          class="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          提交表单
+        </button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

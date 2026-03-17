@@ -1,0 +1,18 @@
+@page
+@model App.Pages.OA.EventFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "事件信息";
+}
+
+@section body {
+    <EleForm LabelWidth="120px">
+        <EleInput For="Item.Title" Label="标题" Required="true"></EleInput>
+        <EleSelect For="Item.TypeId" Label="类别" Items="Model.EventTypes" Required="true"></EleSelect>
+        <EleDatePicker For="Item.TriggleDt" Label="时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+        <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree"  CheckStrictly="true"></EleTreeSelect>
+        <EleInput For="Item.Content" Label="内容" Rows="5"></EleInput>
+        <EleImageUpload For="Item.MainImage" Label="主图" ></EleImageUpload>
+        <EleSwitch For="Item.AllowComment" Label="允许评论"></EleSwitch>
+    </EleForm>
+}
