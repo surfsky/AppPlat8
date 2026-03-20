@@ -49,6 +49,19 @@ namespace App.EleUI
             var autoExposeModelJson = BuildAutoExposeModelJson();
 
             output.Content.SetHtmlContent($@"
+<div id=""ele-page-loading"" style=""position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);transition:opacity 0.3s;"">
+    <div class=""ele-page-loading-spinner""></div>
+</div>
+<style>
+    .ele-page-loading-spinner {{
+        width: 38px; height: 38px;
+        border: 3px solid #dcdfe6;
+        border-top-color: #409eff;
+        border-radius: 50%;
+        animation: ele-page-spin 0.7s linear infinite;
+    }}
+    @keyframes ele-page-spin {{ to {{ transform: rotate(360deg); }} }}
+</style>
 <script>
     (() => {{
         const exposeName = {exposeCode};
@@ -62,6 +75,14 @@ namespace App.EleUI
             }}
         }}
 
+        const hidePageLoading = () => {{
+            const el = document.getElementById('ele-page-loading');
+            if (!el) return;
+            el.style.opacity = '0';
+            el.style.pointerEvents = 'none';
+            setTimeout(() => el.remove(), 320);
+        }};
+
         const mountApp = (retry = 0) => {{
             if (!window.EleAppBuilder) {{
                 if (retry < 40) {{
@@ -69,14 +90,19 @@ namespace App.EleUI
                     return;
                 }}
                 console.error('EleAppBuilder is not available. Ensure /res/App.EleUI.EleUIJs.EleUI.js is loaded.');
+                hidePageLoading();
                 return;
             }}
 
-            new window.EleAppBuilder().mount('{mountCode}', {{
-                useLocale: {(UseLocale ? "true" : "false")},
-                registerIcons: {(RegisterIcons ? "true" : "false")},
-                exposeName: exposeName
-            }});
+            try {{
+                new window.EleAppBuilder().mount('{mountCode}', {{
+                    useLocale: {(UseLocale ? "true" : "false")},
+                    registerIcons: {(RegisterIcons ? "true" : "false")},
+                    exposeName: exposeName
+                }});
+            }} finally {{
+                hidePageLoading();
+            }}
         }};
 
         if (document.readyState === 'loading') {{

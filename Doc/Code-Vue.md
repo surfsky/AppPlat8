@@ -329,10 +329,10 @@ const res = await axios.get('?handler=List', {
 });
 
 // post
-const payload = { ids: selectedIds.value };
-const res = await axios.post('?handler=Delete', payload, {
-  headers: { 'Content-Type': 'application/json' }
-});
+const res = await axios.post('?handler=Delete', 
+  { ids: selectedIds.value }, 
+  { headers: { 'Content-Type': 'application/json' }}
+  );
 
 // 并行请求
 const [a, b] = await Promise.all([

@@ -1,18 +1,20 @@
 import { EleTable } from "./App.EleUI.EleUIJs.EleTable.js";
+import { EleAppBuilder } from "./App.EleUI.EleUIJs.EleAppBuilder.js";
 
 /***********************************************************************
  * EleTableAppBuilder Class
  * Handles Vue application mounting for EleTable
  **********************************************************************/
-export class EleTableAppBuilder {
+export class EleTableAppBuilder extends EleAppBuilder {
     constructor() {
-        this.Vue = window.Vue;
+        super();
     }
 
     mount(selector, config = {}) {
-        const { createApp, ref, onMounted, onUnmounted, nextTick } = this.Vue;
+        const { ref, onMounted, onUnmounted, nextTick } = this.Vue;
+        const builder = this;
 
-        const app = createApp({
+        const app = this.createConfiguredApp(config, {
             setup() {
                 // Initialize EleTable instance with configuration
                 const table = new EleTable({
@@ -87,27 +89,30 @@ export class EleTableAppBuilder {
                     }
                 }
 
+                const inheritedPostHandler = async (name, payload) => {
+                    return builder.postHandler(name, payload || {
+                        selectedIds: table.selectedIds.value,
+                        filters: table.filters.value,
+                        pageIndex: table.pageIndex.value,
+                        pageSize: table.pageSize.value,
+                        sortField: table.sortField.value,
+                        sortDirection: table.sortDirection.value
+                    });
+                };
+
                 // Return all bindings for template access
                 return {
                     ...bindings,
                     openForm,
                     openView,
+                    Utils: window.Utils,
+                    postHandler: inheritedPostHandler,
+                    invokeCommand: async (name, payload) => inheritedPostHandler(name, payload),
                     hasEditPower, hasViewPower, hasDeletePower,
                     ...extraMethods
                 };
             }
         });
-
-        // Register Element Plus and its icons if available
-        if (window.ElementPlus) {
-            const locale = window.ElementPlusLocaleZhCn;
-            app.use(window.ElementPlus, { locale });
-        }
-        if (window.ElementPlusIconsVue) {
-            for (const [key, component] of Object.entries(window.ElementPlusIconsVue)) {
-                app.component(key, component);
-            }
-        }
 
         // Mount the app
         app.mount(selector);

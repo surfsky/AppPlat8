@@ -1,31 +1,50 @@
 --------------------------------------------------------
 Task
 --------------------------------------------------------
-梳理目录结构，清除掉原有的 git，然后重建git（设置好gitignore）
+重构EleUI
+    创建顶级通用型drawer
+        EleManager.openDrawer()会打开顶级drawer，如果原先有，及覆盖原先的。
+        关闭后怎么处理？
+        可以模拟实现手机端view的切换效果
+        用该drawer逻辑代替form、table中的所有drawer
+        页面可直接调用 EleManager.closeMe（）关闭当前窗口
+    
+op列可增加联系人列
+实现顶级通用型drawer弹窗逻辑
+    - 模拟实现手机端效果
+    - 默认宽度33%，若屏幕很小为100%
+    - 用该drawer逻辑代替form、table等中的所有drawer
+    - 用drawer打开页面：EleManager.OpenDrawer（title, url，closeHandle)
+    - 页面可调用 EleManager.closePageDrawer（｛code,message,data）关闭当前页面所处的drawer
+    - 实现未保存关闭提示
+    - 实现右滑关闭逻辑
 
-子表的表示方式
-    保存后可显示子表按钮
-    点击后弹出子表数据窗口（用drawer）
-    辅助子表页面管理方式：
-    将EleApp到逻辑迁移到 EleFormApp、EleTableApp，作为基类？
-    检查项目管理页面(子表的表示方式)
+
+
+    改造各EleApp
+        改造<EleForm>：剥离 <EleFormApp>，修改所有相关页面
+        改造<EleTable>，剥离<EleTableApp>，修改所有相关页面
+        <EleApp> 内置一个 Drawer 可供调用，删除 EleTableApp、EleFormApp 中重复的 drawer
+        改造<EleTable>，将其中的toolbar部分用EleForm实现，以复用代码（仅参考，逻辑会简单很多）
+        尝试
+            用 <EleApp> 来改造FormApp
+            EleForm -> EleFormApp
+            EleTable -> EleTableApp
+    创建：角色、用户双列表混合视图
+    将 EleUI 迁移为一个单独项目，
+    优化tableapp： 如果检索条件太多顶部会很复杂，有没有什么优化办法。另外手机端该如何展示检索条件？显示一个小检索图标。
+    EleForm/EleTable c#代码中不做command处理，统一交给js处理
+
+
+容后
+    实现 Theme 逻辑：dark/light（容后）
+
+业务
+    实现对象的联系人子表
+    op列可增加自定义按钮，如“联系人”
+
 
 改造EleUI
-    改造eleform：剥离eleformapp
-    改造eletable，剥离eletableapp，toolbar部分用form实现（并加上table的信息）
-    EleControl 增加  Resizable 属性
-    给EleApp页面增加 Loading 效果
-
-
-    剥离通用的方法到 EleUtils.js 文件
-    创建 EleFormApp、EleTableApp
-    将 EleUI 迁移为一个单独项目
-    EleUI 类重构子函数化简化
-    EleUI 剥离 Drawer、App构建逻辑
-    重新梳理页面结构框架，实现一个简单 vue app，自由组合各种界面元素，tableapp也可以拆分为 form、table
-    Vue框架很难控制，看能否用js实现控制
-    c#代码中不做command处理，统一交给js处理
-    实现 Theme 逻辑
 
 实现更多的ElementPlus 控件
     Avatar：https://element-plus.org/zh-CN/component/avatar
@@ -178,6 +197,24 @@ UI任务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+/数据库放到一个目录去，如 Db，便于以后迁移到其他数据库。
+/检索条件label过长的话会显示...
+
+    /给EleApp页面增加 Loading 效果
+    /剥离通用的方法到 EleUtils.js 文件
+    /创建 EleFormApp、EleTableApp
+    /EleUI 类重构子函数化简化
+    /EleUI 剥离 Drawer、App构建逻辑
+    /重新梳理页面结构框架，实现一个简单 vue app，自由组合各种界面元素，tableapp也可以拆分为 form、table
+    /Vue框架很难控制，看能否用js实现控制
+    /创建通用类 EleUIJs/Utils.js, 里面包含静态方法。
+    /将 EleManager.js 中的通用方法，剥离封装到类 Utils.js，调用如： Utils.xxxx()
+    /将 EleManager.js 中的 Drawer 部分，封装为类 DrawerHelper.js
+    /将 EleFormAppBuilder.js 继承自 EleAppBuilder, 内置实现与服务器端交互的能力
+    /将 EleTableAppBuilder.js 继承自 EleAppBuilder, 内置实现与服务器端交互的能力
+    /将EleApp到逻辑迁移到 EleFormApp、EleTableApp，作为基类？
+
+/梳理目录结构，清除掉原有的 git，然后重建git（设置好gitignore）
 /EleApp
     /直接挂载到body上，以简化代码
     /EleApp内置一个drawer

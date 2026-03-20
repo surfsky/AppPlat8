@@ -9,7 +9,12 @@
         <Toolbar>
             <EleInput For="Item.Name" Width="250px" Label="名称" ></EleInput>
             <EleSelect For="Item.ObjectType" Width="250px" Label="类型" Clearable="true"></EleSelect>
-            <EleInput For="Item.SocialCreditCode" Width="250px" Label="社会信用编码" ></EleInput>
+            <EleInput For="Item.SocialCreditCode" Width="250px" Label="信用编码" ></EleInput>
+            <EleSwitch For="Item.InUsed" Width="250px" Label="是否在用" ></EleSwitch>
+            <EleSwitch For="Item.IsKeySupervision" Width="250px" Label="重点监管" ></EleSwitch>
+            <EleSwitch For="Item.IsProductInNight" Width="250px" Label="夜晚生产" ></EleSwitch>
+            <EleSwitch For="Item.IsDemonstration" Width="250px" Label="示范企业" ></EleSwitch>
+            <EleSwitch For="Item.IsThreePlacesThreeEnterprises" Width="250px" Label="三场所三企业" ></EleSwitch>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

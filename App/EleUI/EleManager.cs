@@ -49,7 +49,7 @@ namespace App.EleUI
     /// <summary>
     /// 客户端命令
     /// </summary>
-    public record ClientCommand(ClientCommandType Command, object Args, string RequestId, DateTime IssuedAtUtc);
+    public record ClientCommand(ClientCommandType Command, object Args, string RequestId, DateTime Utc);
 
     /// <summary>
     /// 通知参数
@@ -88,7 +88,7 @@ namespace App.EleUI
         bool? ShowFooter = null,
         string FooterAlign = null,
         List<DrawerFooterButtonArgs> FooterButtons = null,
-        string ClientCloseHandler = null,
+        string CloseHandler = null,
         string ServerCloseHandler = null,
         bool? Html = null);
 
@@ -149,7 +149,7 @@ namespace App.EleUI
                 Command: commandType,
                 Args: args,
                 RequestId: Guid.NewGuid().ToString("N"),
-                IssuedAtUtc: DateTime.UtcNow
+                Utc: DateTime.UtcNow
             );
             return BuildResult(0, msg, cmd);
         }
@@ -202,7 +202,7 @@ namespace App.EleUI
             bool? showFooter = null,
             string footerAlign = null,
             List<DrawerFooterButtonArgs> footerButtons = null,
-            string clientCloseHandler = null,
+            string closeHandler = null,
             string serverCloseHandler = null,
             bool? html = null)
         {
@@ -222,7 +222,7 @@ namespace App.EleUI
                     ShowFooter: showFooter,
                     FooterAlign: footerAlign,
                     FooterButtons: footerButtons,
-                    ClientCloseHandler: clientCloseHandler,
+                    CloseHandler: closeHandler,
                     ServerCloseHandler: serverCloseHandler,
                     Html: html)
             );

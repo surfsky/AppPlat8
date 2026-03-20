@@ -42,19 +42,6 @@ export class EleTable {
         this.options = ref({}); 
     }
 
-    // Helpers
-    getCsrfToken() {
-        return typeof EleManager !== 'undefined' ? EleManager.getCsrfToken() : (document.querySelector('input[name="__RequestVerificationToken"]')?.value || '');
-    }
-
-    formatDt(s, type) {
-        return typeof EleManager !== 'undefined' ? EleManager.formatDate(s, type) : s;
-    }
-
-    // 枚举格式化代理到 EleManager
-    formatEnum(val, options) {
-        return typeof EleManager !== 'undefined' ? EleManager.formatEnum(val, options) : val;
-    }
 
     // reload data
     async loadData() {
@@ -79,11 +66,11 @@ export class EleTable {
                     this.total.value = res.data.extra.total;
                 }
             } else {
-                if (typeof EleManager !== 'undefined') EleManager.showError(res.data.info || res.data.msg || '加载失败');
+                EleManager.showError(res.data.info || res.data.msg || '加载失败');
             }
         } catch (e) {
             console.error(e);
-            if (typeof EleManager !== 'undefined') EleManager.showError('请求异常');
+            EleManager.showError('请求异常');
         }
     }
 
@@ -114,7 +101,7 @@ export class EleTable {
             }
 
             // 添加 CSRF 令牌
-            const token = this.getCsrfToken();
+            const token = Utils.getCsrfToken();
             if (token) {
                 const tokenInput = document.createElement('input');
                 tokenInput.type = 'hidden';
@@ -127,10 +114,10 @@ export class EleTable {
             form.submit();
             document.body.removeChild(form);
             
-            (typeof EleManager !== 'undefined' ? EleManager : null)?.showSuccess('导出中...');
+            EleManager.showSuccess('导出中...');
         } catch (e) {
             console.error(e);
-            (typeof EleManager !== 'undefined' ? EleManager : null)?.showError('导出失败');
+            EleManager.showError('导出失败');
         }
     }    
 
@@ -182,14 +169,10 @@ export class EleTable {
     }
 
     // 打开表单
-    openForm(id, urlBase) {
-        this.openDataDrawer(id, urlBase, 'edit');
-    }
+    openForm(id, urlBase) { this.openDataDrawer(id, urlBase, 'edit'); }
 
     // 打开详情
-    openView(id, urlBase) {
-        this.openDataDrawer(id, urlBase, 'view');
-    }
+    openView(id, urlBase) { this.openDataDrawer(id, urlBase, 'view'); }
 
     // 打开表单
     openDataDrawer(id, urlBase, modeParam) {
@@ -232,7 +215,7 @@ export class EleTable {
         }
         try {
             const res = await axios.post(this.deleteHandler, this.selectedIds.value, {
-                headers: { 'RequestVerificationToken': this.getCsrfToken() }
+                headers: { 'RequestVerificationToken': Utils.getCsrfToken() }
             });
             if (res.data.result === true || res.data.code === 0 || res.data.code === '0') {
                 EleManager.showSuccess(res.data.info || '删除成功');
@@ -255,7 +238,7 @@ export class EleTable {
         }
         try {
             const res = await axios.post(this.deleteHandler, [id], {
-                headers: { 'RequestVerificationToken': this.getCsrfToken() }
+                headers: { 'RequestVerificationToken': Utils.getCsrfToken() }
             });
             if (res.data.result === true || res.data.code === 0 || res.data.code === '0') {
                 EleManager.showSuccess(res.data.info || '删除成功');
@@ -329,17 +312,17 @@ export class EleTable {
             };
 
             const res = await axios.post('?handler=' + name, payload, {
-                headers: { 'RequestVerificationToken': this.getCsrfToken() }
+                headers: { 'RequestVerificationToken': Utils.getCsrfToken() }
             });
 
             if (res.data.code === 0 || res.data.code === '0' || res.data.result === true) {
-                (typeof EleManager !== 'undefined' ? EleManager : null)?.showSuccess(res.data.msg || res.data.info || '操作成功');
+                EleManager.showSuccess(res.data.msg || res.data.info || '操作成功');
                 this.loadData();
             } else {
-                (typeof EleManager !== 'undefined' ? EleManager : null)?.showError(res.data.msg || res.data.info || '操作失败');
+                EleManager.showError(res.data.msg || res.data.info || '操作失败');
             }
         } catch (e) {
-            (typeof EleManager !== 'undefined' ? EleManager : null)?.showError('请求失败');
+            EleManager.showError('请求失败');
             console.error(e);
         }
     }

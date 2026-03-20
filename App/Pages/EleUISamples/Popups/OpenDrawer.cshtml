@@ -1,0 +1,46 @@
+@page
+@using App.Utils;
+@{
+    var levelText = Request.Query["level"].ToString();
+    var level = levelText.ParseInt() ?? 1;
+    ViewData["Title"] = "OpenDrawer 堆栈测试";
+}
+
+@section body {
+    <EleCard Title="Drawer 嵌套与堆栈返回测试" class="box-card">
+        <Column Gap="4">
+            <Row>
+                <EleButton Type="Primary" Click="openSelf()" Icon="Open">再次打开当前页面</EleButton>
+                <EleButton Type="Success" Click="EleManager.closePage({value:0})" Icon="Close">关闭当前页面(return 0)</EleButton>
+                <EleButton Type="Warning" Click="EleManager.closePage({value:1})" Icon="Close">关闭当前页面(return 1)</EleButton>
+            </Row>
+
+            <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 break-all">
+                回传结果：<span id="closeResultText">暂无</span>
+            </div>
+        </Column>
+    </EleCard>
+}
+
+@section script {
+    <script>
+        window.openSelf = function() {
+            const currentLevel = @level;
+            const nextLevel = currentLevel + 1;
+            const url = '/EleUISamples/Popups/OpenDrawer?level=' + nextLevel;
+
+            EleManager.openDrawer({
+                title: 'OpenDrawer Level ' + nextLevel,
+                url: url,
+                direction: 'rtl',
+                closeOnClickModal: false,
+                destroyOnClose: true,
+                closeHandler: function(data) {
+                    document.getElementById('closeResultText').textContent = JSON.stringify(data);
+                }
+            });
+        };
+    </script>
+
+    <EleApp />
+}

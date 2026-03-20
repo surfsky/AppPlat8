@@ -437,3 +437,64 @@ namespace App.Pages.EleUISamples
                 { text: '本地关闭', type: 'primary', action: 'close' }
             ]
         });
+
+    setDrawerDefaults(options = {}) { return this.setDrawer(options);}
+
+    /**
+     * Format Date
+     */
+    formatDate(s, type) {
+        return Utils.formatDate(s, type);
+    }
+
+    /**
+     * 格式化枚举值
+     * @param {any} val  原始枚举值
+     * @param {Array<{Id:number,Value:any,Title:string}>} options 通过 EnumHelper.GetEnumInfos 输出的数组
+     */
+    formatEnum(val, options) {
+        return Utils.formatEnum(val, options);
+    }
+
+    /**
+     * Get CSRF Token
+     */
+    getCsrfToken() {
+        return Utils.getCsrfToken();
+    }
+
+    /**
+     * Request helper (wraps axios or fetch)
+     * @param {string} url 
+     * @param {object} data 
+     * @param {string} method 
+     */
+    async request(url, data = null, method = 'POST') {
+        return Utils.request(url, data, method);
+    }
+
+
+        if (typeof EleManager === 'undefined' || typeof EleManager.executeServerCommand !== 'function') {
+            return;
+        }
+
+
+
+创建EleField 控件，可保存两个数据，如Id和Name,
+    <EleField IdFor="Item.ObjectId" TextFor="Item.ObjectName (Item.ObjectId)" Url="ObjectForm?id={id}" Label="对象" />
+    或
+    <EleField For="Item.Object" TextFor="Item.ObjectName" Url="ObjectForm?id={id}" Label="对象" />
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px" SaveHandler="?handler=Save&objectId=@Model.ObjectId">
+        <EleInput Prop="objectDisplay" Label="所属对象" Disabled="true" FillRow="true"></EleInput>
+        <EleInput Prop="objectId" Label="对象ID" Disabled="true"></EleInput>
+        <EleInput For="Item.Name" Label="姓名" Required="true"></EleInput>
+        <EleInput For="Item.Phone" Label="联系方式"></EleInput>
+        <EleInput For="Item.IdCard" Label="证件号"></EleInput>
+        <EleDatePicker For="Item.CertDt" Label="执证日期"></EleDatePicker>
+        <EleDatePicker For="Item.CertExpireDt" Label="过期日期"></EleDatePicker>
+        <EleImageUpload For="Item.Photo" Label="照片" FillRow="true"></EleImageUpload>
+        <EleImageUpload For="Item.IdCardImage" Label="证件照片" FillRow="true"></EleImageUpload>
+    </EleForm>
+}

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
+using App.EleUI;
 using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -89,6 +90,25 @@ namespace App.Pages.Checks
 
             item.Save();
             return BuildResult(0, "保存成功");
+        }
+
+        public IActionResult OnPostShowContacts([FromBody] CheckObject req)
+        {
+            var objectId = req?.Id ?? 0;
+            if (objectId <= 0)
+            {
+                return EleManager.ShowClientNotify("请先保存检查对象，再维护联系人", NotifyType.Warning, "提示");
+            }
+
+            var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Checks/ObjectContacts?objectId={objectId}&objectName={objectName}";
+            return EleManager.OpenClientDrawer(
+                title: "对象联系人",
+                url: url,
+                size: "80%",
+                direction: "rtl",
+                closeOnClickModal: false,
+                destroyOnClose: true);
         }
     }
 }

@@ -68,8 +68,8 @@ namespace App.EleUI
         public string IFrameUrl { get; set; }
 
         /// <summary>客户端关闭回调函数名（支持 window 上的路径，如 managerClientHandler）</summary>
-        [HtmlAttributeName("ClientCloseHandler")]
-        public string ClientCloseHandler { get; set; }
+        [HtmlAttributeName("CloseHandler")]
+        public string CloseHandler { get; set; }
 
         /// <summary>服务端关闭回调处理器名（会 POST 到 ?handler={name}）</summary>
         [HtmlAttributeName("ServerCloseHandler")]
@@ -92,7 +92,7 @@ namespace App.EleUI
             output.Attributes.SetAttribute("direction", Direction.ToString().ToLowerInvariant());
             output.Attributes.SetAttribute("size", Size);
             output.Attributes.SetAttribute(":show-close", "false");
-            if (!string.IsNullOrWhiteSpace(ClientCloseHandler) || !string.IsNullOrWhiteSpace(ServerCloseHandler))
+            if (!string.IsNullOrWhiteSpace(CloseHandler) || !string.IsNullOrWhiteSpace(ServerCloseHandler))
             {
                 output.Attributes.SetAttribute("v-on:closed", BuildClosedHandlerExpr());
             }
@@ -166,7 +166,7 @@ namespace App.EleUI
 
         private string BuildClosedHandlerExpr()
         {
-            var clientHandler = EscapeJs(ClientCloseHandler);
+            var clientHandler = EscapeJs(CloseHandler);
             var serverHandler = EscapeJs(ServerCloseHandler);
 
             return $@"() => {{
@@ -185,7 +185,7 @@ namespace App.EleUI
                     }}
                 }}
 
-                if (__server && typeof EleManager !== 'undefined' && typeof EleManager.request === 'function') {{
+                if (__server) {{
                     EleManager.request('?handler=' + encodeURIComponent(__server), {{ action: 'close' }}, 'POST')
                         .then((res) => {{
                             if (res && (res.code === 0 || res.code === '0') && res.data && typeof res.data === 'object' && res.data.command) {{

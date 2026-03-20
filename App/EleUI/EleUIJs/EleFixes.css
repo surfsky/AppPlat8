@@ -103,6 +103,19 @@ html, body {
     line-height: 1;
 }
 
+/* EleTable toolbar labels: truncate instead of wrapping */
+.ele-table-toolbar .el-form-item {
+    min-width: 0;
+}
+
+.ele-table-toolbar .el-form-item__label {
+    display: block;
+    max-width: 100%;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
 /* Reduce Input Height if needed (Optional, Element Plus defaults are usually fine, but margin is the main spacer) */
 /*
 .el-input__inner {

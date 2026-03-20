@@ -69,7 +69,7 @@
                 footerButtons: [
                     { text: '关闭', type: 'primary', action: 'close' }
                 ],
-                clientCloseHandler: (action) => {
+                closeHandler: (action) => {
                     EleManager.notifyInfo('已关闭 (action=' + (action || 'close') + ')');
                 },
                 serverCloseHandler: 'DrawerClosed'
@@ -118,8 +118,8 @@
                         EleManager.notifyWarning('已取消关闭');
                     });
                 },
-                clientCloseHandler: () => {
-                    EleManager.notifyInfo('Drawer 已关闭（clientCloseHandler 触发）');
+                closeHandler: () => {
+                    EleManager.notifyInfo('Drawer 已关闭（closeHandler 触发）');
                 }
             });
         };

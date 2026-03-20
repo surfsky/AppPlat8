@@ -155,7 +155,7 @@ namespace App.EleUI
                      
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
-                            <span>{{{{ formatDt(scope.row.{propName}, '{jsType}') }}}}</span>
+                            <span>{{{{ Utils.formatDate(scope.row.{propName}, '{jsType}') }}}}</span>
                         </template>
                     ");
                 }
@@ -163,7 +163,7 @@ namespace App.EleUI
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
-                            <span>{{{{ formatDt(scope.row.{propName}, 'DateTime') }}}}</span>
+                            <span>{{{{ Utils.formatDate(scope.row.{propName}, 'DateTime') }}}}</span>
                         </template>
                     ");
                 }
@@ -171,7 +171,7 @@ namespace App.EleUI
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
-                            <span>{{{{ formatDt(scope.row.{propName}, 'Date') }}}}</span>
+                            <span>{{{{ Utils.formatDate(scope.row.{propName}, 'Date') }}}}</span>
                         </template>
                     ");
                 }
@@ -179,7 +179,7 @@ namespace App.EleUI
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
-                            <span>{{{{ formatDt(scope.row.{propName}, 'Time') }}}}</span>
+                            <span>{{{{ Utils.formatDate(scope.row.{propName}, 'Time') }}}}</span>
                         </template>
                     ");
                 }
@@ -216,7 +216,7 @@ namespace App.EleUI
                         var json = Newtonsoft.Json.JsonConvert.SerializeObject(options);                        
                         output.Content.SetHtmlContent($@"
                             <template #default=""scope"">
-                                <span>{{{{ formatEnum(scope.row.{propName}, {json}) }}}}</span>
+                                <span>{{{{ Utils.formatEnum(scope.row.{propName}, {json}) }}}}</span>
                             </template>
                         ");
                     }

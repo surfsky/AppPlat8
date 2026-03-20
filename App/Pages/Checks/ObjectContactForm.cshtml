@@ -1,0 +1,19 @@
+@page
+@model App.Pages.Checks.ObjectContactFormModel
+@{
+    ViewData["Title"] = "联系人信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px" SaveHandler="?handler=Save&objectId=@Model.ObjectId">
+        <EleInput Prop="objectDisplay" Label="所属对象" Disabled="true" FillRow="true"></EleInput>
+        <EleInput Prop="objectId" Label="对象ID" Disabled="true"></EleInput>
+        <EleInput For="Item.Name" Label="姓名" Required="true"></EleInput>
+        <EleInput For="Item.Phone" Label="联系方式"></EleInput>
+        <EleInput For="Item.IdCard" Label="证件号"></EleInput>
+        <EleDatePicker For="Item.CertDt" Label="执证日期"></EleDatePicker>
+        <EleDatePicker For="Item.CertExpireDt" Label="过期日期"></EleDatePicker>
+        <EleImageUpload For="Item.Photo" Label="照片" FillRow="true"></EleImageUpload>
+        <EleImageUpload For="Item.IdCardImage" Label="证件照片" FillRow="true"></EleImageUpload>
+    </EleForm>
+}

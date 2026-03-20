@@ -63,7 +63,7 @@
             </Footer>
         </EleDialog>
 
-        <EleDialog VModel="closeHandlerVisible" Title="关闭回调测试" Width="640px" Radius="20px" Shadow="0 32px 90px rgba(2, 8, 23, 0.28)" ClientCloseHandler="dialogClosedClientHandler" ServerCloseHandler="DialogClosed">
+        <EleDialog VModel="closeHandlerVisible" Title="关闭回调测试" Width="640px" Radius="20px" Shadow="0 32px 90px rgba(2, 8, 23, 0.28)" CloseHandler="dialogClosedClientHandler" ServerCloseHandler="DialogClosed">
             <Content>
                 <Column Gap="3" class="py-1">
                     <div class="rounded border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
@@ -99,10 +99,7 @@
         window.dialogClosedClientHandler = function(action) {
             window.DialogModel.closeClientCount.value += 1;
             window.DialogModel.lastCloseAction.value = action || 'close';
-
-            if (typeof EleManager !== 'undefined' && typeof EleManager.notifyInfo === 'function') {
-                EleManager.notifyInfo('客户端回调: Dialog 已关闭, action=' + (action || 'close'));
-            }
+            EleManager.notifyInfo('客户端回调: Dialog 已关闭, action=' + (action || 'close'));
         };
     </script>
 

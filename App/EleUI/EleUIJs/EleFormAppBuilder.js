@@ -1,18 +1,20 @@
 import { EleForm } from "./App.EleUI.EleUIJs.EleForm.js";
+import { EleAppBuilder } from "./App.EleUI.EleUIJs.EleAppBuilder.js";
 
 /************************************************************************
  * EleFormAppBuilder Class
  * Handles Vue application mounting for EleForm
  ***********************************************************************/
-export class EleFormAppBuilder {
+export class EleFormAppBuilder extends EleAppBuilder {
     constructor() {
-        this.Vue = window.Vue;
+        super();
     }
 
     mount(selector, config = {}) {
-        const { createApp, ref, onMounted, onUnmounted, nextTick } = this.Vue;
+        const { onMounted, onUnmounted, nextTick } = this.Vue;
+        const builder = this;
 
-        const app = createApp({
+        const app = this.createConfiguredApp(config, {
             mixins: config.mixins || [],
             setup() {
                 const defaultForm = config.defaultForm || {};
@@ -62,20 +64,17 @@ export class EleFormAppBuilder {
                     }
                 }
 
+                // 让表单构建器默认具备基类的服务端交互能力
+                const inheritedPostHandler = async (name, payload) => {
+                    const data = payload || (form.form ? form.form.value : {});
+                    return builder.postHandler(name, data, form.form ? form.form.value : null);
+                };
+                bindings.postHandler = inheritedPostHandler;
+                bindings.invokeCommand = async (name, payload) => inheritedPostHandler(name, payload);
+
                 return { ...bindings };
             }
         });
-
-        // Register ElementPlus plugins if available
-        if (window.ElementPlus) {
-            const locale = window.ElementPlusLocaleZhCn;
-            app.use(window.ElementPlus, { locale });
-        }
-        if (window.ElementPlusIconsVue) {
-            for (const [key, component] of Object.entries(window.ElementPlusIconsVue)) {
-                app.component(key, component);
-            }
-        }
 
         // Mount the app
         app.mount(selector);

@@ -47,10 +47,7 @@ export class EleForm {
         this.previewIndex = ref(0); // start index when previewing list
     }
 
-    getCsrfToken() {
-        return typeof EleManager !== 'undefined' ? EleManager.getCsrfToken() : '';
-    }
-
+    // 加载表单数据
     async load() {
         const url = new URL(window.location.href);
         const id = parseInt(url.searchParams.get('id') || '0', 10);
@@ -125,18 +122,18 @@ export class EleForm {
         this.saving.value = true;
         try {
             const res = await axios.post(this.saveHandler, this.form.value, {
-                headers: { 'RequestVerificationToken': this.getCsrfToken() }
+                headers: { 'RequestVerificationToken': EleManager.getCsrfToken() }
             });
             if (res.data.code === 0 || res.data.code === '0') {
                 this.success.value = '保存成功';
-                if (typeof EleManager !== 'undefined') EleManager.showSuccess(res.data.msg || '保存成功');
+                EleManager.showSuccess(res.data.msg || '保存成功');
                 this.originalForm.value = JSON.parse(JSON.stringify(this.form.value));
                 try { window.parent.postMessage('ItemSaved', '*'); } catch {}
                 try { window.top.postMessage('ItemSaved', '*'); } catch {}
                 try { window.parent.postMessage('AnnouncementSaved', '*'); } catch {} 
             } else {
                 this.error.value = res.data.msg || '保存失败';
-                if (typeof EleManager !== 'undefined') EleManager.showError(res.data.msg || '保存失败');
+                EleManager.showError(res.data.msg || '保存失败');
             }
         } catch (e) {
             this.error.value = '请求失败';
@@ -171,16 +168,14 @@ export class EleForm {
         this.saving.value = true;
         try {
             const res = await axios.post('?handler=' + name, this.form.value, {
-                headers: { 'RequestVerificationToken': this.getCsrfToken() }
+                headers: { 'RequestVerificationToken': EleManager.getCsrfToken() }
             });
             if (res && (res.data && (res.data.code === 0 || res.data.code === '0'))) {
                 this.success.value = res.data.msg || '操作成功';
-                if (typeof EleManager !== 'undefined')
-                    EleManager.showSuccess(res.data.msg || '操作成功');
+                EleManager.showSuccess(res.data.msg || '操作成功');
             } else {
                 this.error.value = (res && res.data && res.data.msg) || '操作失败';
-                if (typeof EleManager !== 'undefined')
-                    EleManager.showError(this.error.value);
+                EleManager.showError(this.error.value);
             }
         } catch (e) {
             this.error.value = '请求失败';
@@ -343,9 +338,9 @@ export class EleForm {
             if (prop && this.form.value) {
                 this.form.value[prop] = res.data.url;
             }
-            if (typeof EleManager !== 'undefined') EleManager.showSuccess('上传成功');
+            EleManager.showSuccess('上传成功');
         } else {
-            if (typeof EleManager !== 'undefined') EleManager.showError(res.msg);
+            EleManager.showError(res.msg);
         }
     }
 
@@ -408,21 +403,20 @@ export class EleForm {
                     if (propName && this.form.value) {
                         this.form.value[propName] = base64Data;
                     }
-                    
-                    if (typeof EleManager !== 'undefined') EleManager.showSuccess('图片已加载');
+                    EleManager.showSuccess('图片已加载');
                 };
                 
                 img.onerror = () => {
-                    if (typeof EleManager !== 'undefined') EleManager.showError('图片加载失败');
+                    EleManager.showError('图片加载失败');
                 };
             };
             
             reader.onerror = () => {
-                if (typeof EleManager !== 'undefined') EleManager.showError('文件读取失败');
+                EleManager.showError('文件读取失败');
             };
         } catch (e) {
             console.error('Image upload error:', e);
-            if (typeof EleManager !== 'undefined') EleManager.showError('图片处理失败');
+            EleManager.showError('图片处理失败');
         }
     }
 
@@ -440,9 +434,7 @@ export class EleForm {
 
         // Check file count limit
         if (multiLimit > 0 && totalAfterUpload > multiLimit) {
-            if (typeof EleManager !== 'undefined') {
-                EleManager.showError(`最多只能上传${multiLimit}个图片，当前已有${currentList.length}个`);
-            }
+            EleManager.showError(`最多只能上传${multiLimit}个图片，当前已有${currentList.length}个`);
             event.target.value = '';
             return;
         }
@@ -485,19 +477,18 @@ export class EleForm {
                 this.form.value[propName] = merged;
             }
 
-            if (typeof EleManager !== 'undefined') {
-                if (appended.length === files.length) {
-                    EleManager.showSuccess(`已加载${appended.length}个图片`);
-                } else if (appended.length > 0) {
-                    EleManager.showWarning(`成功${appended.length}个，失败${files.length - appended.length}个`);
-                } else {
-                    EleManager.showError('图片处理失败');
-                }
+            //
+            if (appended.length === files.length) {
+                EleManager.showSuccess(`已加载${appended.length}个图片`);
+            } else if (appended.length > 0) {
+                EleManager.showWarning(`成功${appended.length}个，失败${files.length - appended.length}个`);
+            } else {
+                EleManager.showError('图片处理失败');
             }
             event.target.value = '';
         } catch (e) {
             console.error('Multi image upload error:', e);
-            if (typeof EleManager !== 'undefined') EleManager.showError('图片处理失败');
+            EleManager.showError('图片处理失败');
             event.target.value = '';
         }
     }
