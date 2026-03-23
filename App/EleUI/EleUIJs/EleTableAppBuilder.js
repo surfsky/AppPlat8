@@ -89,6 +89,7 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     }
                 }
 
+                // Inherited postHandler with additional context
                 const inheritedPostHandler = async (name, payload) => {
                     return builder.postHandler(name, payload || {
                         selectedIds: table.selectedIds.value,

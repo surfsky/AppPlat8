@@ -58,9 +58,13 @@ namespace App.EleUI
         [HtmlAttributeName("Look")]
         public EleButtonLook Look { get; set; } = EleButtonLook.Fill;
 
-        /// <summary>图标名称，可以是 ElementPlus 组件名也可以是 css 类。如："el-icon-edit" 或 "fas fa-edit"</summary>
+        /// <summary>图标名称</summary>
         [HtmlAttributeName("Icon")]
-        public string Icon { get; set; }
+        public EleIconName Icon { get; set; } = EleIconName.None;
+
+        /// <summary>图标 CSS 类，如："fas fa-edit"</summary>
+        [HtmlAttributeName("IconCls")]
+        public string IconCls { get; set;}
 
         /// <summary>点击事件（原生 onclick）。作用域是当前 DOM 元素，不能直接访问 Vue 实例的 data、methods、props 等</summary>
         [HtmlAttributeName("Click")]
@@ -91,7 +95,6 @@ namespace App.EleUI
         {
             if (!CheckPower(output)) 
                 return;
-
             output.TagName = "el-button";
             AddCommonAttributes(context, output);
             
@@ -105,63 +108,38 @@ namespace App.EleUI
             // 2) Command -> v-on:click (inner command pipeline)
             // 3) Click -> native onclick
             // 4) VClick -> v-on:click
-            string clickAction = "";
-            if (!string.IsNullOrEmpty(Handler))
-            {
-                clickAction = $"postHandler('{Handler}')";
-                output.Attributes.SetAttribute("v-on:click", clickAction);
-            }
-            else if (Command != Command.None)
-            {
-                // - close/cancel: direct close() method
-                // - add: open form with id=0
-                // - all others: invokeCommand() to POST to ?handler={Command} on server
-                if (Command == Command.Close || Command == Command.Cancel)
-                    clickAction = "close";
-                else if (Command == Command.Add)
-                    clickAction = "openForm(0)";
-                else
-                    clickAction = $"invokeCommand('{Command.ToString()}')";
-                output.Attributes.SetAttribute("v-on:click", clickAction);
-            }
-            else if (!string.IsNullOrEmpty(Click))
-            {
-                clickAction = Click;
-                output.Attributes.SetAttribute("onclick", clickAction);
-            }
-            else if (!string.IsNullOrEmpty(VClick))
-            {
-                clickAction = VClick;
-                output.Attributes.SetAttribute("v-on:click", clickAction);
-            }
+            if (!string.IsNullOrEmpty(Handler))     output.Attributes.SetAttribute("v-on:click", $"postHandler('{Handler}')");
+            else if (Command != Command.None)       output.Attributes.SetAttribute("v-on:click", $"invokeCommand('{Command.ToString()}')");
+            else if (!string.IsNullOrEmpty(Click))  output.Attributes.SetAttribute("onclick", Click);
+            else if (!string.IsNullOrEmpty(VClick)) output.Attributes.SetAttribute("v-on:click", VClick);
 
             // loading
             if (!string.IsNullOrEmpty(Loading)) 
                 output.Attributes.SetAttribute(":loading", Loading);
 
-            // icon
+            // text
             var childContent = await output.GetChildContentAsync();
             var buttonText = childContent.GetContent();
             var textExpr = GetClientBindPath(TextFor);
             if (!string.IsNullOrWhiteSpace(textExpr))
                 buttonText = $"{{{{ {textExpr} }}}}";
 
-            if (!string.IsNullOrEmpty(Icon))
-            {
-                // 如果包含'fa-'，则认为是 fontawesome css 类
-                // 否则把图标名字当成已注册的Element Plus 图标组件名，直接使用该标签
-                string iconName = Icon;
-                string iconHtml;
-                if (iconName.Contains("fa-"))
-                    iconHtml = $"<i class=\"{iconName}\"></i> ";
-                else
-                    iconHtml = $"<el-icon><{iconName} /></el-icon> ";
-                output.Content.SetHtmlContent(iconHtml + buttonText);
-            }
-            else
-            {
+            // icon
+            var iconHtml = "";
+            if (!string.IsNullOrEmpty(this.IconCls))
+                iconHtml = $"<i class=\"{this.IconCls}\"></i> ";
+            else if (Icon != EleIconName.None)
+                iconHtml = $"<el-icon><component :is=\"'{this.Icon}'\"></component></el-icon> ";  // 用动态组件规避 link/view/filter/switch 等与原生标签同名导致的渲染冲突
+
+            // icon + text
+            if (!string.IsNullOrEmpty(iconHtml) && !string.IsNullOrEmpty(buttonText))
+                output.Content.SetHtmlContent(iconHtml + $"<span class=\"ml-1\">{buttonText}</span>");
+             else if (!string.IsNullOrEmpty(iconHtml))
+                output.Content.SetHtmlContent(iconHtml);
+             else if (!string.IsNullOrEmpty(buttonText))
                 output.Content.SetHtmlContent(buttonText);
-            }
+             else
+                output.Content.SetHtmlContent(""); // 保持 <el-button></el-button>，不输出空格或换行
         }
     }
 }

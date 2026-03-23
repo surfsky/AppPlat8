@@ -177,8 +177,29 @@ export class EleAppBuilder {
                     return builder.postHandler(name, data, state);
                 };
 
-                // 定义一个方法，允许组件调用服务器命令
-                const invokeCommand = async (name, payload) => postHandler(name, payload);
+                // 处理内置命令
+                const invokeCommand = async (name, payload) => {
+                    if (!name) return;
+                    const command = ('' + name).trim();
+                    const key = command.toLowerCase();
+
+                    // Close/Cancel
+                    if (key === 'close' || key === 'cancel') {
+                        if (typeof state.close === 'function') {
+                            return state.close(payload);
+                        }
+                    }
+
+                    // add
+                    if (key === 'add') {
+                        if (typeof state.openForm === 'function') {
+                            return state.openForm(0);
+                        }
+                    }
+
+                    // 其他命令默认走服务端 Handler
+                    return postHandler(command, payload);
+                };
 
                 // 将状态和方法暴露给组件使用
                 const bindings = {

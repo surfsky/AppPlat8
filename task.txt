@@ -2,24 +2,14 @@
 Task
 --------------------------------------------------------
 重构EleUI
-    创建顶级通用型drawer
-        EleManager.openDrawer()会打开顶级drawer，如果原先有，及覆盖原先的。
-        关闭后怎么处理？
-        可以模拟实现手机端view的切换效果
-        用该drawer逻辑代替form、table中的所有drawer
-        页面可直接调用 EleManager.closeMe（）关闭当前窗口
     
 op列可增加联系人列
 实现顶级通用型drawer弹窗逻辑
-    - 模拟实现手机端效果
-    - 默认宽度33%，若屏幕很小为100%
     - 用该drawer逻辑代替form、table等中的所有drawer
-    - 用drawer打开页面：EleManager.OpenDrawer（title, url，closeHandle)
-    - 页面可调用 EleManager.closePageDrawer（｛code,message,data）关闭当前页面所处的drawer
     - 实现未保存关闭提示
     - 实现右滑关闭逻辑
 
-
+实现 ListView/ListItem 控件，可指定 
 
     改造各EleApp
         改造<EleForm>：剥离 <EleFormApp>，修改所有相关页面
@@ -197,6 +187,14 @@ UI任务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+    /模拟实现手机端效果
+    /默认宽度33%，若屏幕很小为100%
+    /用drawer打开页面：EleManager.OpenDrawer（title, url，closeHandle)
+    /页面可调用 EleManager.closePageDrawer（｛code,message,data）关闭当前页面所处的drawer
+    /实现Icon
+    /实现Table.Icon
+    /实现EleCard.Icon
+    /实现EleCard中的Collapsible 动画效果
 /数据库放到一个目录去，如 Db，便于以后迁移到其他数据库。
 /检索条件label过长的话会显示...
 

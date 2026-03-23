@@ -19,12 +19,14 @@ export class DrawerHelper {
             direction: 'rtl',
             withHeader: true,
             showClose: true,
+            resizable: true,
             modal: true,
             closeOnClickModal: true,
             destroyOnClose: false,
             showFooter: false,
             footerButtons: [],
             footerAlign: 'end',
+            closeConfirm: '',
             closeHandler: null,
             beforeCloseHandler: null,
             serverCloseHandler: ''
@@ -179,6 +181,7 @@ export class DrawerHelper {
                 direction: Utils.safeType(merged.direction, ['ltr', 'rtl', 'ttb', 'btt'], 'rtl'),
                 withHeader: Utils.toBool(merged.withHeader, true),
                 showClose: Utils.toBool(merged.showClose, true),
+                resizable: Utils.toBool(merged.resizable, true),
                 modal: this._instances.length === 0 ? Utils.toBool(merged.modal, true) : false,
                 closeOnClickModal: Utils.toBool(merged.closeOnClickModal, true),
                 destroyOnClose: Utils.toBool(merged.destroyOnClose, false),
@@ -187,6 +190,7 @@ export class DrawerHelper {
                 footerAlignClass: alignMap[align] || 'justify-end',
                 isMobile: (hostWindow?.innerWidth || window.innerWidth || 1280) <= 768,
                 closePayload: null,
+                closeConfirm: Utils.safeText(merged.closeConfirm, 200),
                 closeHandler: typeof merged.closeHandler === 'function'
                     ? merged.closeHandler
                     : Utils.safeText(merged.closeHandler, 120),
@@ -244,6 +248,20 @@ export class DrawerHelper {
 
                         helper.disposeInstance(instance);
                     },
+                    async handleCloseClick() {
+                        if (state.closeConfirm) {
+                            try {
+                                await hostWindow.ElementPlus.ElMessageBox.confirm(
+                                    state.closeConfirm,
+                                    '提示',
+                                    { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' }
+                                );
+                            } catch {
+                                return; // 用户取消
+                            }
+                        }
+                        state.visible = false;
+                    },
                     onFooterClick(btn) {
                         if (btn && btn.handler) {
                             const fn = Utils.resolveHandler(btn.handler);
@@ -256,10 +274,14 @@ export class DrawerHelper {
                         }
                     }
                 },
+
+                //  <el-drawer ... resizable>
+                //  v-bind="state.resizable ? { resizable: '' } : {}" 渲染为 resizable="" (等价于 resizable)
                 template: `
 <el-drawer
     v-model="state.visible"
     class="ele-manager-drawer"
+    v-bind="state.resizable ? { resizable: '' } : {}"
     :direction="state.direction"
     :before-close="state.beforeCloseHandler ? beforeClose : undefined"
     :size="state.size"
@@ -272,14 +294,14 @@ export class DrawerHelper {
 >
     <template #header v-if="state.withHeader">
         <div v-if="state.isMobile" class="ele-manager-drawer-header is-mobile">
-            <button v-if="state.showClose" class="ele-manager-drawer-close-btn" type="button" @click="state.visible = false" aria-label="Close">
+            <button v-if="state.showClose" class="ele-manager-drawer-close-btn" type="button" @click="handleCloseClick()" aria-label="Close">
                 <span>←</span>
             </button>
             <span class="ele-manager-drawer-title">{{ state.title }}</span>
         </div>
         <div v-else class="ele-manager-drawer-header">
             <span class="ele-manager-drawer-title">{{ state.title }}</span>
-            <button v-if="state.showClose" class="ele-manager-drawer-close-btn" type="button" @click="state.visible = false" aria-label="Close">
+            <button v-if="state.showClose" class="ele-manager-drawer-close-btn" type="button" @click="handleCloseClick()" aria-label="Close">
                 <span>×</span>
             </button>
         </div>

@@ -39,13 +39,13 @@ namespace App.EleUI
         public string Title { get; set; }
 
         [HtmlAttributeName("Icon")]
-        public string Icon { get; set; }
+        public EleIconName Icon { get; set; } = EleIconName.None;
 
-        [HtmlAttributeName("Collapsable")]
-        public bool Collapsable { get; set; } = false;
+        [HtmlAttributeName("IconCls")]
+        public string IconCls { get; set; }
 
         [HtmlAttributeName("Collapsible")]
-        public bool CollapsibleAlias { get; set; } = false;
+        public bool Collapsible { get; set; } = false;
 
         [HtmlAttributeName("BodyStyle")]
         public string BodyStyle { get; set; }
@@ -79,7 +79,7 @@ namespace App.EleUI
             var headerTemplate = string.Empty;
 
             var cardCtx = (CardContext)context.Items[typeof(CardContext)];
-            var isCollapsable = Collapsable || CollapsibleAlias;
+            var isCollapsible = Collapsible;
             var bodyId = $"ele_card_body_{SanitizeId(context.UniqueId)}";
             var arrowId = $"ele_card_arrow_{SanitizeId(context.UniqueId)}";
 
@@ -88,41 +88,131 @@ namespace App.EleUI
                 // 优先使用 <Header> 子标签提供的自定义 header
                 headerTemplate = $"<template #header>{cardCtx.HeaderHtml}</template>";
             }
-            else if (!string.IsNullOrWhiteSpace(Title) || !string.IsNullOrWhiteSpace(Icon) || isCollapsable)
+            else if (!string.IsNullOrWhiteSpace(Title) || Icon != EleIconName.None || !string.IsNullOrWhiteSpace(IconCls) || isCollapsible)
             {
                 var headerClass = string.IsNullOrWhiteSpace(HeaderClass)
                     ? "flex items-center justify-between"
                     : $"{HeaderClass} flex items-center justify-between";
                 var title = string.IsNullOrWhiteSpace(Title) ? "Card" : Title;
-                var iconHtml = BuildIconHtml(Icon);
+                var iconHtml = BuildIconHtml(Icon, IconCls);
                 var leftHtml = $"<div class='flex items-center gap-2'>{iconHtml}<span>{title}</span></div>";
-                var rightHtml = isCollapsable
+                var rightHtml = isCollapsible
                     ? $"<button type='button' class='inline-flex items-center justify-center text-slate-500 hover:text-slate-700 transition-colors' onclick=\"window.__eleToggleCardBody && window.__eleToggleCardBody('{bodyId}','{arrowId}');return false;\" aria-label='toggle card body'><el-icon id='{arrowId}'><component :is=\"'ArrowDown'\"></component></el-icon></button>"
                     : "";
 
                 headerTemplate = $"<template #header><div class='{headerClass}'>{leftHtml}{rightHtml}</div></template>";
             }
 
-            if (isCollapsable)
+            if (isCollapsible)
             {
-                content = $"<div id='{bodyId}'>{content}</div>";
+                content = $"<div id='{bodyId}' class='ele-card-collapse-body' data-collapsed='false'>{content}</div>";
                 output.PostElement.AppendHtml(@"<script>
 if (!window.__eleToggleCardBody) {
-  window.__eleToggleCardBody = function(bodyId, arrowId) {
-    var inner = document.getElementById(bodyId);
-    var arrow = document.getElementById(arrowId);
-    if (!inner) return;
-    var cardBody = inner.parentElement;
-    if (!cardBody) return;
-    var isHidden = cardBody.style.display === 'none';
-    cardBody.style.display = isHidden ? '' : 'none';
-    if (arrow) {
-      arrow.style.transition = 'transform 0.2s ease';
-      arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
-    }
-  };
+    window.__eleInitCardBody = function(bodyId) {
+        var inner = document.getElementById(bodyId);
+        if (!inner || inner.dataset.eleCardInited === 'true') return;
+        var cardBody = inner.parentElement;
+        if (!cardBody) return;
+
+        inner.dataset.eleCardInited = 'true';
+        cardBody.dataset.eleCardInited = 'true';
+        cardBody.dataset.collapsed = 'false';
+
+        var bodyStyle = window.getComputedStyle(cardBody);
+        cardBody.dataset.originPaddingTop = bodyStyle.paddingTop || '20px';
+        cardBody.dataset.originPaddingBottom = bodyStyle.paddingBottom || '20px';
+
+        cardBody.style.overflow = 'hidden';
+        cardBody.style.opacity = '1';
+        cardBody.style.maxHeight = 'none';
+        cardBody.style.transition = 'max-height 0.25s ease, padding-top 0.25s ease, padding-bottom 0.25s ease, opacity 0.2s ease';
+    };
+
+    window.__eleToggleCardBody = function(bodyId, arrowId) {
+        var inner = document.getElementById(bodyId);
+        var arrow = document.getElementById(arrowId);
+        if (!inner) return;
+        window.__eleInitCardBody(bodyId);
+        var cardBody = inner.parentElement;
+        if (!cardBody) return;
+
+        var originPaddingTop = cardBody.dataset.originPaddingTop || '20px';
+        var originPaddingBottom = cardBody.dataset.originPaddingBottom || '20px';
+        var isCollapsed = cardBody.dataset.collapsed === 'true';
+        var durationMs = 260;
+
+        if (cardBody.__eleAnimTimer) {
+            clearTimeout(cardBody.__eleAnimTimer);
+            cardBody.__eleAnimTimer = null;
+        }
+
+        if (isCollapsed) {
+            cardBody.style.display = '';
+            var fullHeight = inner.scrollHeight +
+                parseFloat(originPaddingTop || '0') +
+                parseFloat(originPaddingBottom || '0');
+
+            cardBody.style.transition = 'none';
+            cardBody.style.maxHeight = '0px';
+            cardBody.style.paddingTop = '0px';
+            cardBody.style.paddingBottom = '0px';
+            cardBody.style.opacity = '0';
+            cardBody.offsetHeight;
+
+            window.requestAnimationFrame(function() {
+                window.requestAnimationFrame(function() {
+                    cardBody.style.transition = 'max-height 0.25s ease, padding-top 0.25s ease, padding-bottom 0.25s ease, opacity 0.2s ease';
+                    cardBody.style.maxHeight = fullHeight + 'px';
+                    cardBody.style.paddingTop = originPaddingTop;
+                    cardBody.style.paddingBottom = originPaddingBottom;
+                    cardBody.style.opacity = '1';
+                });
+            });
+
+            cardBody.dataset.collapsed = 'false';
+            cardBody.__eleAnimTimer = setTimeout(function() {
+                if (cardBody.dataset.collapsed === 'false') {
+                    cardBody.style.maxHeight = 'none';
+                }
+                cardBody.__eleAnimTimer = null;
+            }, durationMs);
+        } else {
+            cardBody.style.display = '';
+            cardBody.style.transition = 'none';
+            cardBody.style.maxHeight = cardBody.scrollHeight + 'px';
+            cardBody.style.paddingTop = originPaddingTop;
+            cardBody.style.paddingBottom = originPaddingBottom;
+            cardBody.style.opacity = '1';
+            cardBody.offsetHeight;
+
+            window.requestAnimationFrame(function() {
+                window.requestAnimationFrame(function() {
+                    cardBody.style.transition = 'max-height 0.25s ease, padding-top 0.25s ease, padding-bottom 0.25s ease, opacity 0.2s ease';
+                    cardBody.style.maxHeight = '0px';
+                    cardBody.style.paddingTop = '0px';
+                    cardBody.style.paddingBottom = '0px';
+                    cardBody.style.opacity = '0';
+                });
+            });
+
+            cardBody.dataset.collapsed = 'true';
+            cardBody.__eleAnimTimer = setTimeout(function() {
+                if (cardBody.dataset.collapsed === 'true') {
+                    cardBody.style.display = 'none';
+                }
+                cardBody.__eleAnimTimer = null;
+            }, durationMs);
+        }
+
+        if (arrow) {
+            arrow.style.transition = 'transform 0.2s ease';
+            arrow.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
+    };
 }
-</script>");
+
+window.__eleInitCardBody && window.__eleInitCardBody('__BODY_ID__');
+</script>".Replace("__BODY_ID__", bodyId));
             }
 
             output.Content.SetHtmlContent(headerTemplate + content);
@@ -136,15 +226,20 @@ if (!window.__eleToggleCardBody) {
             return value.Replace("-", "_").Replace(":", "_");
         }
 
-        private static string BuildIconHtml(string icon)
+        private static string BuildIconHtml(EleIconName icon, string iconCls)
         {
-            if (string.IsNullOrWhiteSpace(icon))
+            if (!string.IsNullOrWhiteSpace(iconCls))
+            {
+                var escapedClass = iconCls.Trim().Replace("'", "\\'").Replace("\"", "&quot;");
+                return $"<i class='{escapedClass}'></i>";
+            }
+
+            if (icon == EleIconName.None)
                 return string.Empty;
 
-            var trimmed = icon.Trim();
-            var escaped = trimmed.Replace("'", "\\'").Replace("\"", "&quot;");
+            var escaped = icon.ToString().Replace("'", "\\'").Replace("\"", "&quot;");
 
-            if (trimmed.Contains(" ") || trimmed.StartsWith("fa") || trimmed.Contains("icon-"))
+            if (escaped.Contains(" ") || escaped.StartsWith("fa") || escaped.Contains("icon-"))
                 return $"<i class='{escaped}'></i>";
 
             return $"<el-icon><component :is=\"'{escaped}'\"></component></el-icon>";

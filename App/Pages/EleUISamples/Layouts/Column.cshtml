@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <div class="p-4 space-y-6">
+    <div class="p-4 space-y-6 overflow-y-auto w-full h-full">
         <EleCard Title="EleColumn 基础" class="shadow-sm">
             <Column Gap="3" class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div class="rounded-md bg-white p-3 text-slate-700">第一行内容</div>
@@ -40,6 +40,14 @@
                 <div class="rounded-md bg-white p-3 text-slate-700">C</div>
             </Column>
         </EleCard>
+
+        <!-- 固定在页面底部的 AppBar -->
+        <Row class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 shadow-sm p-4 justify-center">
+            <EleButton Look="Circle" Icon="Edit"    Type="Primary"></EleButton>
+            <EleButton Look="Circle" Icon="Check"   Type="Success"></EleButton>
+            <EleButton Look="Circle" Icon="Message" Type="Danger"></EleButton>
+            <EleButton Look="Circle" Icon="Star"    Type="Info"></EleButton>
+        </Row>
     </div>
 
     <EleApp />

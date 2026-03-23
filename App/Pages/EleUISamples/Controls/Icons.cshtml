@@ -1,0 +1,75 @@
+@page
+@using App.EleUI
+@using System.Linq
+@{
+    ViewData["Title"] = "EleIcon 图标";
+    var icons = ((EleIconName[])System.Enum.GetValues(typeof(EleIconName)))
+                    .Where(x => x != EleIconName.None).ToArray();
+    var colorSamples = new (string Color, string Label)[]
+    {
+        ("#409EFF", "primary"),
+        ("#67C23A", "success"),
+        ("#E6A23C", "warning"),
+        ("#F56C6C", "danger"),
+        ("#909399", "info"),
+        ("#303133", "default"),
+    };
+}
+
+@section body {
+<div class="p-4 space-y-6 overflow-y-auto w-full h-full">
+    @* ── 尺寸示例 ── *@
+    <EleCard Title="图标尺寸" class="mb-4">
+        <div class="flex items-end gap-8">
+            @foreach (var size in new[] { "12", "16", "20", "24", "32", "48" })
+            {
+                <div class="flex flex-col items-center gap-1">
+                    <EleIcon Name="Edit" Size="@size" />
+                    <span class="text-xs text-gray-500">@size px</span>
+                </div>
+            }
+        </div>
+    </EleCard>
+
+    @* ── 颜色示例 ── *@
+    <EleCard Title="图标颜色" class="mb-4">
+        <div class="flex flex-wrap items-center gap-6">
+            @foreach (var (color, label) in colorSamples)
+            {
+                <div class="flex flex-col items-center gap-1">
+                    <EleIcon Name="Edit" Size="28" Color="@color" />
+                    <span class="text-xs text-gray-500">@label</span>
+                    <span class="text-xs text-gray-400">@color</span>
+                </div>
+            }
+        </div>
+    </EleCard>
+
+    @* ── 按钮内嵌图标 ── *@
+    <EleCard Title="与按钮组合" class="mb-4">
+        <div class="flex flex-wrap gap-3 items-center">
+            <EleButton Type="Primary" Icon="Edit">编辑</EleButton>
+            <EleButton Type="Success" Icon="Check">确认</EleButton>
+            <EleButton Type="Danger" Icon="Delete">删除</EleButton>
+            <EleButton Type="Danger" Icon="Link">链接</EleButton>
+            <EleButton Type="Info" Icon="Search" Circle="true"></EleButton>
+            <EleButton Type="Warning" Icon="Setting" Circle="true"></EleButton>
+        </div>
+    </EleCard>
+
+    @* ── 全部图标 ── *@
+    <EleCard Title="@($"全部图标（共 {icons.Length} 个）")" Collapsible="true">
+        <div class="grid gap-1" style="grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));">
+            @foreach (EleIconName icon in icons)
+            {
+                <div class="flex flex-col items-center gap-1 p-3 rounded cursor-default hover:bg-gray-50 transition-colors">
+                    <EleIcon Name="@icon" Size="24" />
+                    <span class="text-xs text-gray-500 text-center break-all leading-tight">@icon</span>
+                </div>
+            }
+        </div>
+    </EleCard>
+</div>
+
+<EleApp />
+}
