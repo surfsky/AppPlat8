@@ -498,3 +498,37 @@ namespace App.Pages.EleUISamples
         <EleImageUpload For="Item.IdCardImage" Label="证件照片" FillRow="true"></EleImageUpload>
     </EleForm>
 }
+
+
+        /// <summary>创建脚本HTML</summary>
+        private string CreateScript()
+        {
+            return $@"
+<script>
+    document.addEventListener('DOMContentLoaded', function() {{
+        var mixins = [];
+        if (typeof userSelectMixin !== 'undefined') mixins.push(userSelectMixin);
+        if (typeof pageMixin !== 'undefined')       mixins.push(pageMixin);
+
+        new EleFormAppBuilder().mount('#app', {{
+            dataHandler: '{DataHandler}',
+            saveHandler: '{SaveHandler}',
+            mixins: mixins
+        }});
+    }});
+</script>
+";
+
+        删除mixins 逻辑
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {{
+                    var mixins = [];
+                    if (typeof userSelectMixin !== 'undefined') mixins.push(userSelectMixin);
+                    if (typeof pageMixin !== 'undefined') mixins.push(pageMixin);
+                    new EleFormAppBuilder().mount('#app', {{
+                        dataHandler: '{DataHandler}',
+                        saveHandler: '{SaveHandler}',
+                        mixins: mixins
+                    }});
+                }});
+            </script>

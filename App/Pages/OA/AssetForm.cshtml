@@ -10,7 +10,7 @@
     <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
     <EleSelect For="Item.Category" Label="类别"></EleSelect>
     <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree"  Required="false"></EleTreeSelect>
-    <EleSelector For="Item.ChargeUserId" Label="责任人" Multi="false" Popup="/Shared/UserSelector"></EleSelector>
+    <EleSelector For="Item.ChargeUserId" TextFor="Item.ChargeUserName" Label="责任人" Multi="false" PopupUrl="/Shared/UserSelector"></EleSelector>
     <EleInput For="Item.Location" Label="位置"></EleInput>
     <EleInput For="Item.Manufacturer" Label="厂商"></EleInput>
     <EleDatePicker For="Item.EnableDt" Label="启用时间"></EleDatePicker>

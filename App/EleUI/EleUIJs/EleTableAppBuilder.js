@@ -108,7 +108,6 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     openView,
                     Utils: window.Utils,
                     postHandler: inheritedPostHandler,
-                    invokeCommand: async (name, payload) => inheritedPostHandler(name, payload),
                     hasEditPower, hasViewPower, hasDeletePower,
                     ...extraMethods
                 };

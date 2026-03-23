@@ -60,12 +60,17 @@
                         // Send message to parent
                         // Fix DataCloneError: Clone the proxy object to a plain object
                         const plainRow = JSON.parse(JSON.stringify(currentRow.value));
+                        const payload = {
+                            type: 'EleSelector',
+                            data: [plainRow]
+                        };
+
+                        // Unified close protocol for top-level drawer host.
+                        if (window.EleManager && typeof window.EleManager.closePage === 'function') {
+                            window.EleManager.closePage(payload);
+                        }
                         
                         if (window.parent) {
-                            const payload = {
-                                type: 'EleSelector', // Standardized type
-                                data: [plainRow] // Return array as requested
-                            };
                             window.parent.postMessage(payload, '*');
                             
                             // Also send legacy format just in case
@@ -75,6 +80,10 @@
                             }, '*');
                         } else {
                             console.error('No parent window found');
+                        }
+
+                        if (window.top && window.top !== window.parent) {
+                            window.top.postMessage(payload, '*');
                         }
                     }
                 };

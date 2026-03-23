@@ -18,6 +18,7 @@ namespace App.DAL
         [UI("任务")]    public long? TaskId { get; set; }
         [UI("检查科室")] public long? OrgId { get; set; }
         [UI("检查人员")] public long? CheckerId { get; set; }
+        [NotMapped]      public string CheckerName { get; set; }
         [UI("检查对象")] public long? CheckObjectId { get; set; }
         [UI("检查表")]   public long? CheckSheetId { get; set; }
         [UI("检查项Id")] public long? CheckItemId { get; set; }

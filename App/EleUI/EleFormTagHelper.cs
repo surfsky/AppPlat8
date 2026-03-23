@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 namespace App.EleUI
 {
     [HtmlTargetElement("EleForm")]
-    //[RestrictChildren("EleInput", "EleSelect", "EleTreeSelect", "EleDatePicker", "EleSwitch", "EleNumber", "EleUpload", "EleButton", "EleUserSelect", "EleSelector", "EleRadio", "el-form-item", "div", "span", "p", "el-col", "el-row", "EleDrawer", "EleImageUpload", "EleLabel")]
     public class EleFormTagHelper : TagHelper
     {
         [HtmlAttributeName("Model")]
@@ -47,7 +46,6 @@ namespace App.EleUI
             var wrapperClass = GetWrapperClass(hasToolbar, toolbarPosition);
             var formHtml = CreateToolbar(toolbarHtml, toolbarPosition, hasToolbar)
                 + CreateForm(innerHtml)
-                + CreateDrawer()
                 + CreateFooter(toolbarHtml, toolbarPosition, hasToolbar)
                 ;
             var wrapperHtml = $"<div class=\"{wrapperClass}\">{formHtml}</div>";
@@ -149,16 +147,6 @@ namespace App.EleUI
             return formHtml;
         }
 
-        /// <summary>创建选择器抽屉HTML</summary>
-        private string CreateDrawer()
-        {
-            var drawerHtml = "<el-drawer v-model=\"selectorVisible\" :title=\"selectorTitle\" direction=\"rtl\" :size=\"selectorDrawerSize\" :with-header=\"true\" append-to-body :destroy-on-close=\"true\" class=\"ele-drawer-iframe\">";
-            drawerHtml += "<div class=\"h-full overflow-hidden\">";
-            drawerHtml += "<iframe v-if=\"selectorVisible\" :src=\"selectorUrl\" style=\"width: 100%; height: 100%; border: 0;\"></iframe>";
-            drawerHtml += "</div></el-drawer>\n";
-            return drawerHtml;
-        }
-
         /// <summary>创建表单页脚HTML</summary>
         private string CreateFooter(string toolbarHtml, string toolbarPosition, bool hasToolbar)
         {
@@ -167,7 +155,7 @@ namespace App.EleUI
                 var footerHtml = "<div class=\"px-4 pb-3 fixed bottom-0 left-0 bg-white w-full border-t border-gray-100 py-2 z-10 flex justify-center shadow-sm\">";
                 footerHtml += "<div class=\"flex items-center space-x-2\">";
                 footerHtml += "<el-button type=\"primary\" v-on:click=\"save\" :loading=\"saving\" v-if=\"!readOnly\">保存</el-button>";
-                footerHtml += "<el-button v-on:click=\"close\">关闭</el-button>";
+                footerHtml += "<el-button v-on:click=\"onCloseClick\">关闭</el-button>";
                 footerHtml += "<span class=\"text-red-500 text-sm ml-4\" v-if=\"error\">{{ error }}</span>";
                 footerHtml += "<span class=\"text-green-600 text-sm ml-2\" v-if=\"success\">{{ success }}</span>";
                 footerHtml += "</div></div>\n";
@@ -203,14 +191,9 @@ namespace App.EleUI
             return $@"
 <script>
     document.addEventListener('DOMContentLoaded', function() {{
-        var mixins = [];
-        if (typeof userSelectMixin !== 'undefined') mixins.push(userSelectMixin);
-        if (typeof pageMixin !== 'undefined')       mixins.push(pageMixin);
-
         new EleFormAppBuilder().mount('#app', {{
             dataHandler: '{DataHandler}',
-            saveHandler: '{SaveHandler}',
-            mixins: mixins
+            saveHandler: '{SaveHandler}'
         }});
     }});
 </script>

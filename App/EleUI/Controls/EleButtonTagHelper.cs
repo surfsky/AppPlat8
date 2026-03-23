@@ -74,6 +74,13 @@ namespace App.EleUI
         [HtmlAttributeName("VClick")]
         public string VClick { get; set; }
 
+        /// <summary>
+        /// 弹窗URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。
+        /// 会生成：v-on:click="openForm(0, '...')"。
+        /// </summary>
+        [HtmlAttributeName("PopupUrl")]
+        public string PopupUrl { get; set; }
+
         /// <summary>命令类型。如果设置了命令类型，点击事件将自动绑定为 invokeCommand('{Command.ToString()}')</summary>
         [HtmlAttributeName("Command")]
         public Command Command { get; set; } // Default is None (0)
@@ -106,10 +113,16 @@ namespace App.EleUI
             // click priority:
             // 1) Handler -> v-on:click (direct post with form data)
             // 2) Command -> v-on:click (inner command pipeline)
-            // 3) Click -> native onclick
-            // 4) VClick -> v-on:click
+            // 3) PopupUrl -> v-on:click openForm(0, url)
+            // 4) Click -> native onclick
+            // 5) VClick -> v-on:click
             if (!string.IsNullOrEmpty(Handler))     output.Attributes.SetAttribute("v-on:click", $"postHandler('{Handler}')");
             else if (Command != Command.None)       output.Attributes.SetAttribute("v-on:click", $"invokeCommand('{Command.ToString()}')");
+            else if (!string.IsNullOrEmpty(PopupUrl))
+            {
+                var popupUrlExpr = PopupUrl.Replace("'", "\\'");
+                output.Attributes.SetAttribute("v-on:click", $"openForm(0, '{popupUrlExpr}')");
+            }
             else if (!string.IsNullOrEmpty(Click))  output.Attributes.SetAttribute("onclick", Click);
             else if (!string.IsNullOrEmpty(VClick)) output.Attributes.SetAttribute("v-on:click", VClick);
 

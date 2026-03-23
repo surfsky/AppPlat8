@@ -40,6 +40,8 @@ namespace App.DAL
         [UI("基础", "责任组织")]    public long? DutyOrgId { get; set; }
         [UI("基础", "技术检查员")] public long? CheckerId { get; set; }
         [UI("基础", "社区网格员")] public long? SocialCheckerId { get; set; }
+        [NotMapped] public string CheckerName { get; set; }
+        [NotMapped] public string SocialCheckerName { get; set; }
         [UI("基础", "电表号")] public string EleMeeterNum { get; set; }
         [UI("基础", "员工数")] public int? EmployeeCount { get; set; }
 
@@ -110,7 +112,9 @@ namespace App.DAL
                 ObjectType,
                 DutyOrgId,
                 CheckerId,
+                CheckerName = Checker?.Name,
                 SocialCheckerId,
+                SocialCheckerName = SocialChecker?.Name,
                 EleMeeterNum,
                 EmployeeCount,
                 ProductContent,

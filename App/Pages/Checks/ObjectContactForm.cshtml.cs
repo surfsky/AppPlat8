@@ -16,6 +16,9 @@ namespace App.Pages.Checks
         [BindProperty(SupportsGet = true)]
         public string ObjectName { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public string ObjectDisplay { get; set; }
+
         public CheckObjectContact Item { get; set; }
 
         public void OnGet(long objectId, string objectName)

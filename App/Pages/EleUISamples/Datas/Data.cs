@@ -43,6 +43,7 @@ namespace App.Pages.EleUISamples
         [Display(Name = "多图片")]             public List<string> Photos { get; set; }
         [Display(Name = "图标(IconSelect)")]   public string Icon { get; set; }
         [Display(Name = "用户(Selector)")]     public string UserId { get; set; }
+        [Display(Name = "用户名称(Selector)")] public string UserName { get; set; }
         [Display(Name = "组织")]             public string OrgId { get; set; }
         [Display(Name = "部门")]             public long? DeptId { get; set; } 
         [Display(Name = "角色")]             public List<long> RoleIds { get; set; }

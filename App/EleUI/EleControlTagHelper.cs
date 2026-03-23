@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 using App.DAL;
 using App.Components;
 using System;
+using System.Text.RegularExpressions;
 
 namespace App.EleUI
 {
@@ -67,6 +68,13 @@ namespace App.EleUI
 
         [HtmlAttributeName("BindDisabledFor")]
         public ModelExpression BindDisabledFor { get; set; } // Strongly typed dynamic disabled expression
+
+        /// <summary>
+        /// 启用条件（自动转换为 :disabled="!(...)"）。
+        /// 示例：EnableFor="Item.Id > 0"。
+        /// </summary>
+        [HtmlAttributeName("EnableFor")]
+        public string EnableFor { get; set; }
 
 
         /*
@@ -152,17 +160,48 @@ namespace App.EleUI
             // If we set class, it merges.
 
             // Disabled handling
-            // Priority: BindDisabled > Disabled > "readOnly" variable (if none set)
+            // Priority: EnableFor > BindDisabled > Disabled > "readOnly" variable (if none set)
             // But base class shouldn't assume "readOnly" variable exists unless it's a common convention.
             // Let's keep logic simple here: apply if set.
-            var bindDisabledExpr = GetClientBindPath(BindDisabledFor);
-            if (string.IsNullOrWhiteSpace(bindDisabledExpr))
-                bindDisabledExpr = BindDisabled;
+            if (!string.IsNullOrWhiteSpace(EnableFor))
+            {
+                var enableExpr = NormalizeEnableExpression(EnableFor);
+                output.Attributes.SetAttribute(":disabled", $"!({enableExpr})");
+            }
+            else
+            {
+                var bindDisabledExpr = GetClientBindPath(BindDisabledFor);
+                if (string.IsNullOrWhiteSpace(bindDisabledExpr))
+                    bindDisabledExpr = BindDisabled;
 
-            if (!string.IsNullOrEmpty(bindDisabledExpr))
-                output.Attributes.SetAttribute(":disabled", bindDisabledExpr);
-            else if (Disabled.HasValue)
-                output.Attributes.SetAttribute(":disabled", Disabled.Value.ToString().ToLower());
+                if (!string.IsNullOrEmpty(bindDisabledExpr))
+                    output.Attributes.SetAttribute(":disabled", bindDisabledExpr);
+                else if (Disabled.HasValue)
+                    output.Attributes.SetAttribute(":disabled", Disabled.Value.ToString().ToLower());
+            }
+        }
+
+        protected virtual string NormalizeEnableExpression(string expr)
+        {
+            var text = (expr ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(text)) return "true";
+
+            // Allow Razor-style model paths while keeping concise syntax in .cshtml.
+            text = Regex.Replace(text, @"\bModel\.", "");
+
+            // EleForm controls map Item.X to flat form.x (not form.Item.x).
+            text = Regex.Replace(text, @"\bItem\.([A-Za-z_][A-Za-z0-9_]*)\b", m =>
+            {
+                var field = m.Groups[1].Value;
+                if (string.IsNullOrEmpty(field)) return "form";
+                var camel = char.ToLowerInvariant(field[0]) + field.Substring(1);
+                return $"form.{camel}";
+            });
+
+            // Support checks like "Item != null" by treating Item as form root.
+            text = Regex.Replace(text, @"\bItem\b", "form");
+
+            return text;
         }
 
         protected string GetClientBindPath(ModelExpression expression)

@@ -21,8 +21,8 @@
 - 项目网址：https://github.com/surfsky/AppPlat8
 - License: MIT
 
-![web](./doc/web.png)
-![mobile](./doc/mobile.png)
+![web](./Doc/web.png)
+![mobile](./Doc/mobile.png)
 
 
 ## 快速开始

@@ -26,3 +26,56 @@
 - Element Plus:
   - Element Plus，一套为开发者、设计师和产品经理准备的基于 Vue 3.0 的桌面端组件库
   - https://element-plus.org/#/zh-CN
+
+
+## 控件清单
+
+- Columns
+  - EleIconColumn
+  - EleImageColumn
+  - EleNumColumn
+  - EleOpColumn
+  - EleToolbar
+  - EleTableColumn
+
+- Containers
+  - EleCard
+  - EleContainer
+  - EleSplitPanel
+
+- Controls
+  - EleButton
+  - EleDatePicker
+  - EleFormControl
+  - EleHidden
+  - EleIconSelect
+  - EleIcon
+  - EleImageUpload
+  - EleInput
+  - EleLabel
+  - EleNumber
+  - EleRadio
+  - EleSelector
+  - EleSelect
+  - EleSwitch
+  - EleTreeSelect
+  
+- Layouts
+  - EleLayoutColumn
+  - EleLayoutRow
+  - EleLayoutGrid
+
+- Popups
+  - EleDialog
+  - EleDrawer
+  - ElePopconfirm
+  - ElePopover
+  - EleTooltip
+
+- EleApp
+- EleControl
+- EleForm
+- EleTable
+- EleItem
+- EleManager
+- Toolbar (考虑删除或合并)

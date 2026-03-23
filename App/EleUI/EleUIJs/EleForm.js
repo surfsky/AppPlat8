@@ -31,11 +31,6 @@ export class EleForm {
         this.selectorTargetId = ref('');
         this.selectorTargetText = ref('');
         this.selectorMulti = ref(false);
-        
-        // Responsive Drawer Size
-        this.selectorDrawerSize = computed(() => {
-            return window.innerWidth < 768 ? '100%' : '600px';
-        });
 
         // Dynamic Options (for TreeSelect etc)
         this.options = ref({}); // Stores options data by key
@@ -93,16 +88,27 @@ export class EleForm {
         }
     }
 
-    async close() {
-        if (this.isDirty.value && !this.readOnly.value && !this.success.value) { 
+    async close(data = {}) {
+        const closeData = (data && typeof data === 'object') ? data : {};
+        if (this.isDirty.value && !this.readOnly.value && !this.success.value && !closeData.saved) { 
             try {
                 await EleManager.confirm('数据已修改，确定关闭？');
             } catch {
                 return; 
             }
         }
-        try { window.parent.postMessage('CloseForm', '*'); } catch {}
-        try { window.top.postMessage('CloseForm', '*'); } catch {}
+        try {
+            if (EleManager && typeof EleManager.closePage === 'function') {
+                EleManager.closePage(closeData);
+                return;
+            }
+        } catch {}
+        try { EleManager.closeDrawer(); } catch {}
+    }
+
+    // Keep a dedicated click handler name to avoid potential mixin method name collisions.
+    async onCloseClick() {
+        return this.close();
     }
 
     async save() {
@@ -128,9 +134,7 @@ export class EleForm {
                 this.success.value = '保存成功';
                 EleManager.showSuccess(res.data.msg || '保存成功');
                 this.originalForm.value = JSON.parse(JSON.stringify(this.form.value));
-                try { window.parent.postMessage('ItemSaved', '*'); } catch {}
-                try { window.top.postMessage('ItemSaved', '*'); } catch {}
-                try { window.parent.postMessage('AnnouncementSaved', '*'); } catch {} 
+                await this.close({ saved: true });
             } else {
                 this.error.value = res.data.msg || '保存失败';
                 EleManager.showError(res.data.msg || '保存失败');
@@ -198,6 +202,24 @@ export class EleForm {
         this.selectorMulti.value = multi;
         this.selectorTitle.value = title || '选择';
         this.selectorVisible.value = true;
+
+        const width = '50%';
+        EleManager.openDrawer({
+            title: this.selectorTitle.value,
+            url: this.selectorUrl.value,
+            direction: 'rtl',
+            size: width,
+            resizable: true,
+            closeOnClickModal: false,
+            destroyOnClose: true,
+            closeHandler: (payload) => {
+                if (payload && payload.data && payload.data.type === 'EleSelector') {
+                    this.handleSelectorMessage({ data: payload.data });
+                    return;
+                }
+                this.selectorVisible.value = false;
+            }
+        });
     }
 
     // Handle messages from selector drawer
@@ -237,6 +259,7 @@ export class EleForm {
         }
 
         this.selectorVisible.value = false;
+        EleManager.closeDrawer();
     }
 
     // 

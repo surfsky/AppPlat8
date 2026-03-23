@@ -7,9 +7,7 @@
 
 @section body {
     <EleForm Model="form" LabelWidth="140px">
-        <div v-if="form.Item">
-            <input type="hidden" v-model="form.Item.id" />
-        </div>
+        <EleHidden For="Item.Id"></EleHidden>
         <EleLabel Label="基础信息" FillRow="true"></EleLabel>
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleInput For="Item.SocialCreditCode" Label="社会信用代码"></EleInput>
@@ -23,8 +21,8 @@
         <EleInput For="Item.SafetyAdminName" Label="安全管理员"></EleInput>
         <EleInput For="Item.ThirdPartySafetyAgency" Label="三方机构"></EleInput>
         <EleTreeSelect For="Item.DutyOrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
-        <EleUserSelect For="Item.CheckerId" Label="技术检查员"></EleUserSelect>
-        <EleUserSelect For="Item.SocialCheckerId" Label="社区网格员"></EleUserSelect>
+        <EleSelector For="Item.CheckerId" TextFor="Item.CheckerName" Label="技术检查员" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
+        <EleSelector For="Item.SocialCheckerId" TextFor="Item.SocialCheckerName" Label="社区网格员" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
 
         <EleLabel Label="企业信息" FillRow="true"></EleLabel>
         <EleSelect For="Item.ObjectType" Label="对象类型" ></EleSelect>
@@ -70,7 +68,7 @@
         <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
 
         <EleLabel Label="联系人" FillRow="true"></EleLabel>
-        <EleButton Type="Primary" Icon="User" Handler="ShowContacts">联系人</EleButton>
+        <EleButton Type="Primary" Icon="User" Handler="ShowContacts" EnableFor="Item.Id > 0">联系人</EleButton>
     </EleForm>
 
     <style>

@@ -155,7 +155,7 @@ namespace App.EleUI
             }
 
             // Default Disabled logic for Form Controls (fallback to "readOnly" variable)
-            if (!Disabled.HasValue && string.IsNullOrEmpty(BindDisabled))
+            if (!Disabled.HasValue && string.IsNullOrEmpty(BindDisabled) && string.IsNullOrEmpty(EnableFor))
             {
                 output.Attributes.SetAttribute(":disabled", "readOnly");
             }

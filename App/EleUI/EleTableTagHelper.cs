@@ -72,7 +72,6 @@ namespace App.EleUI
             string toolbarHtml = tableContext.ToolbarHtml?.ToString();
             string tableHtml = CreateTable(tableContext);
             string footerHtml = CreateFooter();
-            string drawerHtml = CreateDrawer();
             string scriptHtml = this.BuildApp ? CreateScript() : "";
 
             output.Content.AppendHtml(" <el-container class='h-full w-full flex flex-col overflow-hidden'>");
@@ -80,7 +79,6 @@ namespace App.EleUI
             output.Content.AppendHtml(tableHtml);
             output.Content.AppendHtml(footerHtml);
             output.Content.AppendHtml("    </el-container>");
-            output.Content.AppendHtml(drawerHtml);
             output.Content.AppendHtml(scriptHtml);
         }
 
@@ -141,47 +139,14 @@ namespace App.EleUI
 ";
         }
 
-        // 3. Drawer
-        private string CreateDrawer()
-        {
-            return $@"
-    <el-drawer
-        v-model=""drawerVisible""
-        title=""{Title}""
-        direction=""rtl""
-        :size=""drawerSize""
-        :with-header=""true""
-        :destroy-on-close=""true""
-        :close-on-click-modal=""false""
-        class=""ele-drawer-iframe""
-        v-on:close=""handleDrawerClose""
-    >
-        <template #header>
-             <span class=""font-bold text-lg"">{{{{ '{Title}' }}}}</span>
-        </template>
-        <!-- Resize Handle -->
-        <div 
-            v-if=""drawerSize !== '100%'""
-            class=""absolute top-0 left-0 bottom-0 w-[10px] cursor-col-resize z-[10000] hover:bg-blue-400 opacity-0 hover:opacity-25 transition-opacity""
-            style=""left: 0;""
-            v-on:mousedown=""startResize""
-            title=""拖动调整宽度""
-        ></div>
-
-        <div class=""h-full"">
-            <iframe ref=""formFrame"" :src=""formUrl"" class=""w-full h-full border-0""></iframe>
-        </div>
-    </el-drawer>
-";
-        }
-
-        // 4. Script
+        // 3. Script
         private string CreateScript()
         {
             return $@"
 <script>
     document.addEventListener('DOMContentLoaded', function() {{
         new EleTableAppBuilder().mount('#app', {{
+            drawerTitle: '{Title}',
             dataHandler: '{DataHandler}',
             deleteHandler: '{DeleteHandler}',
             editPage: '{FormPage}',

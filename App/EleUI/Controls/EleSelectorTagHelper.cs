@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using System.Threading.Tasks;
 
 namespace App.EleUI
@@ -9,17 +10,16 @@ namespace App.EleUI
     [HtmlTargetElement("EleSelector")]
     public class EleSelectorTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Popup")]
-        public string Popup { get; set; }
+        
+        [HtmlAttributeName("PopupUrl")]
+        public string PopupUrl { get; set; }
 
         [HtmlAttributeName("Multi")]
         public bool Multi { get; set; } = false;
 
-        [HtmlAttributeName("Text")]
-        public string Text { get; set; } // The property name for displaying text (e.g. Item.UserName)
+        [HtmlAttributeName("TextFor")]
+        public ModelExpression TextFor { get; set; }
 
-        [HtmlAttributeName("Src")]
-        public string Src { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -31,7 +31,7 @@ namespace App.EleUI
             // Build the VModel for Id
             var vModel = GetVModel(context);
             var propName = GetPropName(); // e.g. chargeUserId
-            var textProp = Text;
+            var textProp = TextFor?.Name;
 
             // If TextProp is not provided, try to guess from For (e.g. Item.ChargeUserId -> Item.ChargeUserName)
             if (string.IsNullOrEmpty(textProp) && For != null)
@@ -51,33 +51,16 @@ namespace App.EleUI
             }
             textProp = ToCamelCase(textProp);
 
-            var popupUrl = !string.IsNullOrEmpty(Src) ? Src : Popup;
+            var popupUrl = this.PopupUrl;
             var title = Label ?? "选择";
             var multiStr = Multi.ToString().ToLower();
 
-            // We need to bind to `form.chargeUserId` and display `form.chargeUserName`.
-            // The mixin will handle the popup and data return.
-            
-            // The HTML structure:
-            /*
-            <div class="el-input el-input--suffix group cursor-pointer" @click="openSelector(...)">
-                <div class="el-input__wrapper">
-                    <div class="flex flex-wrap gap-1 items-center w-full py-1">
-                         <!-- Multi Mode -->
-                         <template v-if="true">
-                             <el-tag v-if="form.chargeUserName" type="info" closable @close.stop="clearSelector(...)">
-                                {{ form.chargeUserName }}
-                             </el-tag>
-                         </template>
-                         <!-- Placeholder -->
-                         <span v-if="!form.chargeUserName" class="text-gray-400 text-sm">请选择{Label}</span>
-                    </div>
-                    <span class="el-input__suffix">
-                        <el-icon><Search /></el-icon>
-                    </span>
-                </div>
-            </div>
-            */
+            var bindDisabledExpr = GetClientBindPath(BindDisabledFor);
+            if (string.IsNullOrWhiteSpace(bindDisabledExpr))
+                bindDisabledExpr = BindDisabled;
+            if (string.IsNullOrWhiteSpace(bindDisabledExpr))
+                bindDisabledExpr = Disabled.HasValue ? Disabled.Value.ToString().ToLower() : "readOnly";
+
 
             await RenderWrapper(output); // Renders el-col and el-form-item wrapper
             
@@ -92,11 +75,14 @@ namespace App.EleUI
             var formModel = context.Items.ContainsKey("EleFormModel") ? context.Items["EleFormModel"] as string : "form";
 
             var content = $@"
-            <div class=""el-input el-input--suffix cursor-pointer"" style=""width: 100%;"" @click=""openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
+            <div class=""el-input el-input--suffix"" :class=""{{ 'cursor-pointer': !({bindDisabledExpr}), 'is-disabled': ({bindDisabledExpr}) }}"" style=""width: 100%;"" @click=""!({bindDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
                 <div class=""el-input__wrapper"" style=""width: 100%;"">
                     <div class=""flex flex-wrap gap-1 items-center w-full py-1"" style=""min-height: 30px;"">
                         <template v-if=""{formModel}.{textProp}"">
-                            <el-tag type=""info"" disable-transitions closable @close.stop=""clearSelector('{propName}', '{textProp}')"">
+                            <el-tag type=""info"" disable-transitions v-if=""!({bindDisabledExpr})"" closable @close.stop=""clearSelector('{propName}', '{textProp}')"">
+                                {{{{ {formModel}.{textProp} }}}}
+                            </el-tag>
+                            <el-tag type=""info"" disable-transitions v-else>
                                 {{{{ {formModel}.{textProp} }}}}
                             </el-tag>
                         </template>
@@ -104,7 +90,7 @@ namespace App.EleUI
                     </div>
                     <span class=""el-input__suffix"">
                         <span class=""el-input__suffix-inner"">
-                            <el-icon><Search /></el-icon>
+                            <el-icon><component :is=""({bindDisabledExpr}) ? 'Lock' : 'Search'""></component></el-icon>
                         </span>
                     </span>
                 </div>

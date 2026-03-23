@@ -6,7 +6,7 @@
 export class EleTable {
     constructor(options = {}) {
         const { ref } = Vue;
-        this.options = options;
+        this.config = options;
 
         // State
         this.items = ref([]);
@@ -14,9 +14,6 @@ export class EleTable {
         this.pageIndex = ref(0);
         this.filters = ref({});
         this.selectedIds = ref([]);
-        this.formUrl = ref('');
-        this.drawerVisible = ref(false);
-        this.formFrame = ref(null);
         this.pageSize = ref(options.pageSize || 10);
         this.sortField = ref(options.defaultSortField || 'Id');
         this.sortDirection = ref(options.defaultSortDirection || 'DESC');
@@ -24,19 +21,10 @@ export class EleTable {
         this.deleteHandler = options.deleteHandler || '?handler=Delete';
         this.exportHandler = options.exportHandler || '?handler=Export';
 
-        // Drawer
+        // Kept for compatibility with existing extensions that may call startResize.
         this.drawerSize = ref(window.innerWidth < 768 ? '100%' : '50%');
-        this.drawerPosition = ref('rtl'); // Default right-to-left
+        this.drawerPosition = ref('rtl');
         this.isResizing = ref(false);
-
-        // Resize Listener
-        window.addEventListener('resize', () => {
-            if (window.innerWidth < 768) {
-                this.drawerSize.value = '100%';
-            } else if (this.drawerSize.value === '100%') {
-                this.drawerSize.value = '50%'; // Restore to default if it was full width
-            }
-        });
 
         // Dynamic Options (for TreeSelect etc)
         this.options = ref({}); 
@@ -52,7 +40,7 @@ export class EleTable {
                     pageSize: this.pageSize.value,
                     sortField: this.sortField.value,
                     sortDirection: this.sortDirection.value,
-                    ...this.options.extraParams,
+                    ...this.config.extraParams,
                     ...this.filters.value
                 }
             });
@@ -176,6 +164,8 @@ export class EleTable {
 
     // 打开表单
     openDataDrawer(id, urlBase, modeParam) {
+        const resolvedBase = this.resolveDrawerUrlBase(urlBase);
+
         // id, mode, selectId
         const mode = (id === 0 || id === '0') ? 'new' : modeParam;
         const selectedId = this.selectedIds.value.length > 0 ? this.selectedIds.value[0] : null;
@@ -185,23 +175,38 @@ export class EleTable {
             query.set('selectId', `${effectiveSelectId}`);
         }
 
-        const separator = urlBase.includes('?') ? '&' : '?';
-        var url = `${urlBase}${separator}${query.toString()}`;
+        const separator = resolvedBase.includes('?') ? '&' : '?';
+        var url = `${resolvedBase}${separator}${query.toString()}`;
         this.openDrawer(url);
+    }
+
+    // Resolve relative FormPage against current page URL before handing it to top-level drawer host.
+    resolveDrawerUrlBase(urlBase) {
+        if (!urlBase) return '';
+        try {
+            const absolute = new URL(urlBase, window.location.href);
+            return `${absolute.pathname}${absolute.search}${absolute.hash}`;
+        } catch (e) {
+            return urlBase;
+        }
     }
 
     // 打开抽屉式表单
     openDrawer(url, width=null, position = 'rtl') {
-        this.formUrl.value = url;
-        this.drawerPosition.value = position;
-        if (width) {
-            this.drawerSize.value = width;
-        } else {
-            this.drawerSize.value = window.innerWidth < 768 ? '100%' : '50%';
-        }
-
-        // 打开抽屉弹窗
-        this.drawerVisible.value = true;
+        const size = width || (window.innerWidth < 768 ? '100%' : '50%');
+        const title = this.config?.drawerTitle || this.config?.title || '编辑';
+        this.drawerSize.value = size;
+        this.drawerPosition.value = position || 'rtl';
+        EleManager.openDrawer({
+            title,
+            url,
+            direction: this.drawerPosition.value,
+            size,
+            resizable: true,
+            closeOnClickModal: false,
+            destroyOnClose: true,
+            closeHandler: () => this.handleDrawerClose()
+        });
     }
 
 
@@ -273,12 +278,12 @@ export class EleTable {
     // 处理消息事件
     messageHandler(e) {
         if (!e) return;
-        if (e.data === 'AnnouncementSaved' || e.data === 'ItemSaved') { 
-            this.drawerVisible.value = false;
-            this.loadData();
-        }
-        if (e.data === 'CloseForm' || e.data === 'CloseAnnouncementForm') {
-            this.drawerVisible.value = false;
+
+        // New unified protocol: close payload from EleManager.closePage(...)
+        const payload = e.data;
+        if (payload && typeof payload === 'object' && payload.__elePageClose === true) {
+            EleManager.closeDrawer();
+            return;
         }
     }
 
@@ -287,13 +292,18 @@ export class EleTable {
     async invokeCommand(commandName) {
         if (!commandName) return;
         const name = commandName;
+        const key = ('' + name).trim().toLowerCase();
 
         // Handle special cases
-        if (name === 'Data') {
+        if (name === 'Data' || key === 'search') {
             return this.loadData();
         }
         if (name === 'Export') {
             return this.exportData();
+        }
+        if (key === 'add') {
+            const editPage = this.config?.editPage || 'Form';
+            return this.openForm(0, editPage);
         }
         if (name === 'Delete' || name === 'BatchDelete') {
             return this.deleteItems();

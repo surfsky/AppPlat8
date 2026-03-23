@@ -105,10 +105,8 @@ namespace App.Pages.Checks
             return EleManager.OpenClientDrawer(
                 title: "对象联系人",
                 url: url,
-                size: "80%",
-                direction: "rtl",
-                closeOnClickModal: false,
-                destroyOnClose: true);
+                size: "50%"
+                );
         }
     }
 }

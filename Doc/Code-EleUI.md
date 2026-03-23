@@ -38,6 +38,6 @@ EleImageUpload 控件
         <EleIconSelect For="Item.Icon" Label="图标选择"></EleIconSelect>
 
         <EleLabel Label="Popup" FillRow="true"></EleLabel>
-        <EleSelector For="Item.UserId" Label="用户选择" Text="Item.UserName" Title="选择用户" Src="/Shared/UserSelector?multi=0"></EleSelector>
+        <EleSelector For="Item.UserId" Label="用户选择" TextFor="Item.UserName" Title="选择用户" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
     </EleForm>
 ```

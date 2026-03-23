@@ -24,6 +24,7 @@ namespace App.DAL.OA
         [UI("类别")]        public AssetCategory? Category { get; set; }
         [UI("组织")]        public long? OrgId { get; set; }
         [UI("责任人")]      public long? ChargeUserId { get; set; }
+        [NotMapped]         public string ChargeUserName { get; set; }
         [UI("位置")]        public string Location { get; set; }
         [UI("厂商")]        public string Manufacturer { get; set; }
         [UI("图片")]        public string Image { get; set; }

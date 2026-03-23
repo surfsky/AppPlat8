@@ -11,27 +11,30 @@ class EleManagerCore {
             return EleManagerCore.instance;
         }
         EleManagerCore.instance = this;
+
+        this._uiWindow = this._resolveUiHostWindow();
+        const ep = this._uiWindow?.ElementPlus || window.ElementPlus;
         
         // Initialize Element Plus shortcuts
-        this.ElMessage = window.ElementPlus ? window.ElementPlus.ElMessage : { 
+        this.ElMessage = ep ? ep.ElMessage : {
             success: (msg) => console.log('Success:', msg),
             error: (msg) => console.error('Error:', msg),
             warning: (msg) => console.warn('Warning:', msg),
             info: (msg) => console.info('Info:', msg)
         };
         
-        this.ElMessageBox = window.ElementPlus ? window.ElementPlus.ElMessageBox : {
+        this.ElMessageBox = ep ? ep.ElMessageBox : {
             confirm: () => Promise.resolve(),
             alert: () => Promise.resolve(),
             prompt: () => Promise.resolve()
         };
 
-        this.ElNotification = window.ElementPlus ? window.ElementPlus.ElNotification : {
+        this.ElNotification = ep ? ep.ElNotification : {
             success: () => {},
             error: () => {}
         };
 
-        this.ElLoading = window.ElementPlus ? window.ElementPlus.ElLoading : {
+        this.ElLoading = ep ? ep.ElLoading : {
             service: () => ({ close: () => {} })
         };
 
@@ -91,6 +94,17 @@ class EleManagerCore {
                 return this.closeDrawer();
             }
         };
+    }
+
+    _resolveUiHostWindow() {
+        try {
+            if (window.top && window.top !== window && window.top.ElementPlus) {
+                return window.top;
+            }
+        } catch {
+            // Cross-origin top window; fallback to current window.
+        }
+        return window;
     }
 
 
@@ -212,10 +226,12 @@ class EleManagerCore {
         if (this._loadingStyleInjected) return;
         this._loadingStyleInjected = true;
 
-        const styleId = 'ele-manager-loading-style';
-        if (document.getElementById(styleId)) return;
+        const hostDocument = this._uiWindow?.document || document;
 
-        const style = document.createElement('style');
+        const styleId = 'ele-manager-loading-style';
+        if (hostDocument.getElementById(styleId)) return;
+
+        const style = hostDocument.createElement('style');
         style.id = styleId;
         style.textContent = `
 .el-loading-mask.ele-manager-loading .el-loading-spinner .el-loading-text {
@@ -229,7 +245,7 @@ class EleManagerCore {
     stroke: #fff !important;
 }
 `;
-        document.head.appendChild(style);
+        hostDocument.head.appendChild(style);
     }
 
     /**
