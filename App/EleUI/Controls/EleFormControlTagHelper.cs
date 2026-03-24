@@ -22,10 +22,6 @@ namespace App.EleUI
         [HtmlAttributeName("Label")]
         public string Label { get; set; }
 
-        /// <summary>Manual prop path (e.g. form.title)???</summary>
-        [HtmlAttributeName("Prop")]
-        public string Prop { get; set; } // Manual prop path
-
         [HtmlAttributeName("Required")]
         public bool Required { get; set; }
 
@@ -35,6 +31,9 @@ namespace App.EleUI
         [HtmlAttributeName("Clearable")]
         public bool? Clearable { get; set; } = true;
 
+        [HtmlAttributeName("Placeholder")]
+        public string Placeholder { get; set; } = "";
+
         /// <summary>Column span for form item？？？</summary>
         [HtmlAttributeName("ColSpan")]
         public int? ColSpan { get; set; }
@@ -42,7 +41,11 @@ namespace App.EleUI
         [HtmlAttributeName("FillRow")]
         public bool FillRow { get; set; }
 
-        // Helper to get Vue Model Path (e.g. form.title)
+        /// <summary>Manual prop path (e.g. form.title)???</summary>
+        [HtmlAttributeName("Prop")]
+        public string Prop { get; set; } // Manual prop path
+
+        // Get Vue Model Path (e.g. form.title)
         protected string GetVModel(TagHelperContext context)
         {
             // Prefer VModel if set explicitly in base
@@ -128,44 +131,37 @@ namespace App.EleUI
 
         protected override void AddCommonAttributes(TagHelperContext context, TagHelperOutput output)
         {
-            // Call base to handle VModel, VIf, VShow, explicit Width/Height/Disabled
+            // Call base to handle VModel, explicit Width/Height/Disabled
             base.AddCommonAttributes(context, output);
+            if (!string.IsNullOrEmpty(Placeholder))      
+                output.Attributes.SetAttribute("placeholder", Placeholder);
             
             TryAutoSetLabel();
 
+            // Set v-model data
             var vModel = GetVModel(context);
-            // Ensure v-model is set if we calculated it and it wasn't set explicitly
             if (!string.IsNullOrEmpty(vModel) && string.IsNullOrEmpty(VModel))
                  output.Attributes.SetAttribute("v-model", vModel);
             
-            // Default Width logic for Form Controls
+            // Width
             if (string.IsNullOrEmpty(Width))
             {
-                // Check if inside a form or filter
                 // If label is present, we assume it's in a form/column structure, default 100%
                 if (!string.IsNullOrEmpty(Label))
-                {
                      output.Attributes.SetAttribute("style", "width: 100%");
-                }
                 else
-                {
                     // Filter context default width
                     output.Attributes.SetAttribute("style", "width: 200px");
-                }
             }
 
-            // Default Disabled logic for Form Controls (fallback to "readOnly" variable)
-            if (!Disabled.HasValue && string.IsNullOrEmpty(BindDisabled) && string.IsNullOrEmpty(EnableFor))
-            {
+            // Enable/Disable
+            if (!Disabled.HasValue && DisabledFor == null)
                 output.Attributes.SetAttribute(":disabled", "readOnly");
-            }
 
             // Clearable default logic
-            bool isClearable = Clearable ?? (!context.Items.ContainsKey("IsEleForm"));
+            bool isClearable = this.Clearable ?? (!context.Items.ContainsKey("IsEleForm"));  //???
             if (isClearable)
-            {
                  output.Attributes.SetAttribute("clearable", "true");
-            }
         }
 
         protected async Task RenderWrapper(TagHelperOutput output)
@@ -194,9 +190,9 @@ namespace App.EleUI
                 else if (ColSpan.HasValue)
                 {
                      // Simple mapping for 4-col grid
-                     if (ColSpan >= 24) classAttr = @" class=""col-span-full""";
+                     if (ColSpan >= 24)      classAttr = @" class=""col-span-full""";
                      else if (ColSpan >= 12) classAttr = @" class=""col-span-1 md:col-span-2 lg:col-span-2""";
-                     else if (ColSpan >= 6) classAttr = @" class=""col-span-1""";
+                     else if (ColSpan >= 6)  classAttr = @" class=""col-span-1""";
                 }
 
                 output.PreElement.SetHtmlContent($@"<el-form-item label=""{Label}"" prop=""{prop}"" {rulesAttr} {labelWidthAttr}{classAttr}>");

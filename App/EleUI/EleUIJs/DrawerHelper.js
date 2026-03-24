@@ -276,7 +276,6 @@ export class DrawerHelper {
                 },
 
                 //  <el-drawer ... resizable>
-                //  v-bind="state.resizable ? { resizable: '' } : {}" 渲染为 resizable="" (等价于 resizable)
                 template: `
 <el-drawer
     v-model="state.visible"

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using System;
 using System.Threading.Tasks;
 
 namespace App.EleUI
@@ -46,40 +47,44 @@ namespace App.EleUI
             
             // Convert Text prop to camelCase for JS binding
             if (!string.IsNullOrEmpty(textProp) && textProp.Contains("."))
-            {
                 textProp = textProp.Substring(textProp.LastIndexOf('.') + 1);
-            }
             textProp = ToCamelCase(textProp);
 
+            //
             var popupUrl = this.PopupUrl;
             var title = Label ?? "选择";
             var multiStr = Multi.ToString().ToLower();
 
-            var bindDisabledExpr = GetClientBindPath(BindDisabledFor);
-            if (string.IsNullOrWhiteSpace(bindDisabledExpr))
-                bindDisabledExpr = BindDisabled;
-            if (string.IsNullOrWhiteSpace(bindDisabledExpr))
-                bindDisabledExpr = Disabled.HasValue ? Disabled.Value.ToString().ToLower() : "readOnly";
+            // 禁用状态
+            var disabledForPath = GetBindPath(DisabledFor);
+            string vDisabledExpr;
+            if (!string.IsNullOrWhiteSpace(disabledForPath))
+            {
+                var clientPath = ToClientFormPath(disabledForPath);
+                var modelType = Nullable.GetUnderlyingType(DisabledFor.ModelExplorer.ModelType) ?? DisabledFor.ModelExplorer.ModelType;
+                vDisabledExpr = modelType == typeof(bool) ? clientPath : $"!({clientPath})";
+            }
+            else
+            {
+                vDisabledExpr = Disabled.HasValue ? Disabled.Value.ToString().ToLower() : "readOnly";
+            }
 
+            //
+            await RenderWrapper(output);
 
-            await RenderWrapper(output); // Renders el-col and el-form-item wrapper
-            
-            // Apply width style to the wrapper (ele-selector-wrapper)
+            //
             output.Attributes.SetAttribute("style", "width: 100%");
-
-            // Now content inside el-form-item
             output.TagName = "div";
             output.Attributes.SetAttribute("class", "ele-selector-wrapper");
             
             // Get form model name from context (default 'form')
             var formModel = context.Items.ContainsKey("EleFormModel") ? context.Items["EleFormModel"] as string : "form";
-
             var content = $@"
-            <div class=""el-input el-input--suffix"" :class=""{{ 'cursor-pointer': !({bindDisabledExpr}), 'is-disabled': ({bindDisabledExpr}) }}"" style=""width: 100%;"" @click=""!({bindDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
+            <div class=""el-input el-input--suffix"" :class=""{{ 'cursor-pointer': !({vDisabledExpr}), 'is-disabled': ({vDisabledExpr}) }}"" style=""width: 100%;"" @click=""!({vDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
                 <div class=""el-input__wrapper"" style=""width: 100%;"">
                     <div class=""flex flex-wrap gap-1 items-center w-full py-1"" style=""min-height: 30px;"">
                         <template v-if=""{formModel}.{textProp}"">
-                            <el-tag type=""info"" disable-transitions v-if=""!({bindDisabledExpr})"" closable @close.stop=""clearSelector('{propName}', '{textProp}')"">
+                            <el-tag type=""info"" disable-transitions v-if=""!({vDisabledExpr})"" closable @close.stop=""clearSelector('{propName}', '{textProp}')"">
                                 {{{{ {formModel}.{textProp} }}}}
                             </el-tag>
                             <el-tag type=""info"" disable-transitions v-else>
@@ -90,7 +95,7 @@ namespace App.EleUI
                     </div>
                     <span class=""el-input__suffix"">
                         <span class=""el-input__suffix-inner"">
-                            <el-icon><component :is=""({bindDisabledExpr}) ? 'Lock' : 'Search'""></component></el-icon>
+                            <el-icon><component :is=""({vDisabledExpr}) ? 'Lock' : 'Search'""></component></el-icon>
                         </span>
                     </span>
                 </div>

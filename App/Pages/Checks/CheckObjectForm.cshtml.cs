@@ -18,8 +18,9 @@ namespace App.Pages.Checks
     {
         public CheckObject Item { get; set; }
 
-        public void OnGet()
+        public void OnGet(long id = 0)
         {
+            Item = new CheckObject { Id = id };
         }
 
         public IActionResult OnGetData(long id)

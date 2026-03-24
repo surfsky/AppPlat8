@@ -6,7 +6,7 @@
 
 @section body {
     <EleForm Model="form" LabelWidth="120px" SaveHandler="?handler=Save&objectId=@Model.ObjectId">
-        <EleSelector For="ObjectId" TextFor="ObjectDisplay" Label="所属对象" BindDisabled="true" FillRow="true" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
+        <EleSelector For="ObjectId" TextFor="ObjectDisplay" Label="所属对象" Disabled="true" FillRow="true" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
         <EleInput For="Item.Name" Label="姓名" Required="true"></EleInput>
         <EleInput For="Item.Phone" Label="联系方式"></EleInput>
         <EleInput For="Item.IdCard" Label="证件号"></EleInput>

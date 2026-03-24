@@ -133,7 +133,7 @@ namespace App.EleUI
             // text
             var childContent = await output.GetChildContentAsync();
             var buttonText = childContent.GetContent();
-            var textExpr = GetClientBindPath(TextFor);
+            var textExpr = GetBindPath(TextFor);
             if (!string.IsNullOrWhiteSpace(textExpr))
                 buttonText = $"{{{{ {textExpr} }}}}";
 

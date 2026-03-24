@@ -27,9 +27,6 @@ namespace App.EleUI
         [HtmlAttributeName("ValueFormat")]
         public string ValueFormat { get; set; }
 
-        [HtmlAttributeName("Placeholder")]
-        public string Placeholder { get; set; }
-
         [HtmlAttributeName("StartPlaceholder")]
         public string StartPlaceholder { get; set; }
 
@@ -39,12 +36,13 @@ namespace App.EleUI
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             if (!CheckPower(output)) return;
-
             output.TagName = "el-date-picker";
             AddCommonAttributes(context, output);
+
+            // Type
             output.Attributes.SetAttribute("type", Type.ToString().ToLower());
             
-            // Set default formats based on type
+            // ValueFormat
             if (string.IsNullOrEmpty(ValueFormat))
             {
                 if (Type == EleDatePickerType.DateTime || Type == EleDatePickerType.DateTimeRange)
@@ -57,9 +55,9 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("value-format", ValueFormat);
             }
 
-            if (!string.IsNullOrEmpty(Placeholder)) output.Attributes.SetAttribute("placeholder", Placeholder);
+            // Placeholder
             if (!string.IsNullOrEmpty(StartPlaceholder)) output.Attributes.SetAttribute("start-placeholder", StartPlaceholder);
-            if (!string.IsNullOrEmpty(EndPlaceholder)) output.Attributes.SetAttribute("end-placeholder", EndPlaceholder);
+            if (!string.IsNullOrEmpty(EndPlaceholder))   output.Attributes.SetAttribute("end-placeholder", EndPlaceholder);
 
             await RenderWrapper(output);
         }

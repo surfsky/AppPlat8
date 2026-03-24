@@ -532,3 +532,99 @@ namespace App.Pages.EleUISamples
                     }});
                 }});
             </script>
+
+            if (!string.IsNullOrEmpty(Placeholder))     output.Attributes.SetAttribute("placeholder", Placeholder);
+
+            var placeholder = string.IsNullOrEmpty(Placeholder) ? "请选择" : Placeholder;
+            if (!string.IsNullOrEmpty(placeholder)) output.Attributes.SetAttribute("placeholder", placeholder);
+
+            var placeholder = string.IsNullOrEmpty(Placeholder) ? "请选择" : Placeholder;
+            if (!string.IsNullOrEmpty(placeholder)) output.Attributes.SetAttribute("placeholder", placeholder);
+
+            // Default TextArea to full width if ColSpan not set
+            //if (Type == EleInputType.TextArea && !ColSpan.HasValue)
+            //    ColSpan = 24;
+
+
+        [HtmlAttributeName("DataName")]
+        public string DataName { get; set; } // Property name for binding data source name (考虑删除)
+            // Use DataName for binding existing data source in Vue component (e.g. from parent or global store)
+            else if (!string.IsNullOrEmpty(DataName))
+            {
+                var sourceIdField   = NormalizeFieldForVue(IdField ?? ValueField ?? "value");
+                var sourceNameField = NormalizeFieldForVue(NameField ?? "label");
+                var sourceChildrenField = NormalizeFieldForVue(ChildrenField ?? "children");
+                output.Attributes.SetAttribute(":data", DataName);
+                output.Attributes.SetAttribute("data-tree-id-field", sourceIdField);
+                output.Attributes.SetAttribute("data-tree-children-field", sourceChildrenField);
+                output.Attributes.SetAttribute("node-key", sourceIdField);
+                output.Attributes.SetAttribute(":props", $"{{ label: '{sourceNameField}', children: '{sourceChildrenField}', value: '{sourceIdField}' }}");
+                output.Attributes.SetAttribute("default-expand-all", "true");
+                output.Attributes.SetAttribute(":key", $"({DataName} || []).length");
+            }
+
+            // Set default width
+            if (string.IsNullOrEmpty(Width))        output.Attributes.SetAttribute("class", "w-full");
+
+            if (string.IsNullOrEmpty(Height) && string.IsNullOrEmpty(output.Attributes["style"]?.Value?.ToString()))
+            {
+                 // Maybe default to something? Or let user specify.
+                 // Usually splitters take full height of parent or explicit height.
+                 // Let's leave it to user to specify Height="500px" or class="h-full"
+            }
+\        /// <summary>
+        /// 启用条件（自动转换为 :disabled="!(...)"）。
+        /// 示例：EnableFor="Item.Id > 0"。
+        /// </summary>
+        [HtmlAttributeName("EnableFor")]
+        public string EnableFor { get; set; }
+
+
+
+        /*
+        /// <summary>处理标签</summary>
+        public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+        {
+            if (!CheckPower(output)) return;
+
+            output.TagName = "div";
+            AddCommonAttributes(context, output);
+            var childContent = await output.GetChildContentAsync();
+            var innerHtml = childContent.GetContent();
+            output.Content.SetHtmlContent(innerHtml);
+        }
+        */
+            if (!string.IsNullOrWhiteSpace(EnableFor))
+            {
+                var enableExpr = NormalizeEnableExpression(EnableFor);
+                output.Attributes.SetAttribute(":disabled", $"!({enableExpr})");
+            }
+            else
+            {
+            }
+
+        //
+        protected virtual string NormalizeEnableExpression(string expr)
+        {
+            var text = (expr ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(text)) return "true";
+
+            // Allow Razor-style model paths while keeping concise syntax in .cshtml.
+            text = Regex.Replace(text, @"\bModel\.", "");
+
+            // EleForm controls map Item.X to flat form.x (not form.Item.x).
+            text = Regex.Replace(text, @"\bItem\.([A-Za-z_][A-Za-z0-9_]*)\b", m =>
+            {
+                var field = m.Groups[1].Value;
+                if (string.IsNullOrEmpty(field)) return "form";
+                var camel = char.ToLowerInvariant(field[0]) + field.Substring(1);
+                return $"form.{camel}";
+            });
+
+            // Support checks like "Item != null" by treating Item as form root.
+            text = Regex.Replace(text, @"\bItem\b", "form");
+
+            return text;
+        }
+
+        <EleButton Type="Primary" Icon="User" Handler="ShowContacts" VDisabled="(form.id || 0) == 0">联系人</EleButton>

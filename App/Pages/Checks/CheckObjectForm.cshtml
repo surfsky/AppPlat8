@@ -25,7 +25,7 @@
         <EleSelector For="Item.SocialCheckerId" TextFor="Item.SocialCheckerName" Label="社区网格员" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
 
         <EleLabel Label="企业信息" FillRow="true"></EleLabel>
-        <EleSelect For="Item.ObjectType" Label="对象类型" ></EleSelect>
+        <EleSelect For="Item.ObjectType" Label="对象类型" Placeholder="请选择"></EleSelect>
         <EleSelect For="Item.Scope" Label="领域" ></EleSelect>
         <EleSelect For="Item.Scale" Label="规模"></EleSelect>
         <EleInput For="Item.ProductContent" Label="生产内容" Rows="2" FillRow="false"></EleInput>
@@ -68,7 +68,7 @@
         <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
 
         <EleLabel Label="联系人" FillRow="true"></EleLabel>
-        <EleButton Type="Primary" Icon="User" Handler="ShowContacts" EnableFor="Item.Id > 0">联系人</EleButton>
+        <EleButton Type="Primary" Icon="User" Handler="ShowContacts" DisabledFor="Item.Id">联系人</EleButton>
     </EleForm>
 
     <style>

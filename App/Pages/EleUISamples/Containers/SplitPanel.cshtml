@@ -37,12 +37,12 @@
         </EleSplitPanel>
 
         <EleLabel Label="嵌套 (Nested)" Size="2xl" Bold="true" FillRow="true" />
-        <EleSplitPanel Height="240px" Layout="Vertical">
+        <EleSplitPanel Height="240px" Direction="Vertical">
             <PanelItem Size="100" Collapsible="true">
                 <div class="flex h-full items-center justify-center bg-pink-100 text-slate-700">Header</div>
             </PanelItem>
             <PanelItem Size="220" Min="0" Collapsible="false">
-                <EleSplitPanel Layout="Horizontal">
+                <EleSplitPanel Direction="Horizontal">
                     <PanelItem Size="220" Min="140" Max="280" Collapsible="true">
                         <div class="flex h-full items-center justify-center bg-blue-50 text-blue-700">Sidebar</div>
                     </PanelItem>

@@ -13,13 +13,10 @@ namespace App.EleUI
     public class EleTreeSelectTagHelper : EleFormControlTagHelper
     {
         [HtmlAttributeName("Api")]
-        public string Api { get; set; }      // API endpoint for remote data fetch
-
-        [HtmlAttributeName("DataName")]
-        public string DataName { get; set; } // Property name for binding data source name
+        public string Api { get; set; }      // Bind from API endpoint data
 
         [HtmlAttributeName("Items")]
-        public object Items { get; set; }    // Optional direct items for non-API, non-Source usage
+        public object Items { get; set; }    // Bind items to tree select
 
 
         [HtmlAttributeName("IdField")]
@@ -34,37 +31,34 @@ namespace App.EleUI
         [HtmlAttributeName("ChildrenField")]
         public string ChildrenField { get; set; }
 
-        [HtmlAttributeName("Placeholder")]
-        public string Placeholder { get; set; }
-
         [HtmlAttributeName("CheckStrictly")]
         public bool CheckStrictly { get; set; } = true;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             if (!CheckPower(output)) return;
+            this.Placeholder = string.IsNullOrEmpty(Placeholder) ? "请选择" : Placeholder;
             output.TagName = "el-tree-select";
             AddCommonAttributes(context, output);
+
+            // set data-tree-model
             var propName = GetPropName();
             if (!string.IsNullOrEmpty(propName))
-            {
                 output.Attributes.SetAttribute("data-tree-model", propName);
-            }
-            if (CheckStrictly)
-            {
-                output.Attributes.SetAttribute("check-strictly", "true");
-            }
 
+            // check-strictly
+            if (CheckStrictly)
+                output.Attributes.SetAttribute("check-strictly", "true");
         
-            // If Api is provided, use it for remote data fetch
+            // fields
             var idField = NormalizeFieldForVue(IdField ?? ValueField ?? "id");
             var nameField = NormalizeFieldForVue(NameField ?? "name");
             var childrenField = NormalizeFieldForVue(ChildrenField ?? "children");
+
+            // Remote data source via API
             if (!string.IsNullOrEmpty(Api))
             {
                 var url = Api;
-                // Bind to options dictionary
-                // Add marker attributes for auto-fetch
                 output.Attributes.SetAttribute(":data", $"options['{propName}']");                
                 output.Attributes.SetAttribute("data-source", url);
                 output.Attributes.SetAttribute("data-key", propName);
@@ -73,32 +67,10 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("node-key", idField);
                 output.Attributes.SetAttribute(":props", $"{{ label: '{nameField}', children: '{childrenField}', value: '{idField}' }}");
                 output.Attributes.SetAttribute("default-expand-all", "true");
-                // when options arrive asynchronously we want the tree-select to recreate so that
-                // it can map the initial value to the corresponding label. binding a key that
-                // changes when the data array length changes forces a rerender.
                 output.Attributes.SetAttribute(":key", $"options['{propName}'] ? options['{propName}'].length : 0");
             }
 
-            // If Source is provided, use it for local data binding
-            else if (!string.IsNullOrEmpty(DataName))
-            {
-                // Direct data binding via Model property name (e.g. OrgTree)
-                // Use provided fields or default to value/label (standard Select/TreeSelect behavior)
-                // If user doesn't provide IdField/NameField, we default to 'value' and 'label' for Source mode
-                // because typically local data is formatted for the component.
-                var sourceIdField   = NormalizeFieldForVue(IdField ?? ValueField ?? "value");
-                var sourceNameField = NormalizeFieldForVue(NameField ?? "label");
-                var sourceChildrenField = NormalizeFieldForVue(ChildrenField ?? "children");
-                output.Attributes.SetAttribute(":data", DataName);
-                output.Attributes.SetAttribute("data-tree-id-field", sourceIdField);
-                output.Attributes.SetAttribute("data-tree-children-field", sourceChildrenField);
-                output.Attributes.SetAttribute("node-key", sourceIdField);
-                output.Attributes.SetAttribute(":props", $"{{ label: '{sourceNameField}', children: '{sourceChildrenField}', value: '{sourceIdField}' }}");
-                output.Attributes.SetAttribute("default-expand-all", "true");
-                output.Attributes.SetAttribute(":key", $"({DataName} || []).length");
-            }
-
-            // If Items are provided, use them for local data binding
+            // Use items
             else if (Items != null)
             {
                 if (Items is IEnumerable enumerable && Items is not string)
@@ -116,12 +88,10 @@ namespace App.EleUI
                 }
             }
 
-            // Set placeholder and default width
-            if (!string.IsNullOrEmpty(Placeholder)) output.Attributes.SetAttribute("placeholder", Placeholder);
-            if (string.IsNullOrEmpty(Width))        output.Attributes.SetAttribute("class", "w-full");
             await RenderWrapper(output);
         }
 
+        // Get object field value by trying multiple possible field names
         private (string idField, string nameField, string childrenField) ResolveItemsFieldNames(IEnumerable items)
         {
             var idField = IdField ?? ValueField;
@@ -151,6 +121,7 @@ namespace App.EleUI
             return (idField, nameField, childrenField);
         }
 
+        // Normalize field name to Vue case
         private string NormalizeFieldForVue(string field)
         {
             if (string.IsNullOrEmpty(field))
@@ -158,6 +129,7 @@ namespace App.EleUI
             return ToCamelCase(field);
         }
 
+        // Normalize field name to serialized JSON case
         private string NormalizeFieldForSerializedJson(IEnumerable<string> props, string field)
         {
             if (string.IsNullOrEmpty(field))
@@ -170,6 +142,7 @@ namespace App.EleUI
             return field;
         }
 
+        // Pick field name from candidates
         private static string PickField(IEnumerable<string> props, params string[] candidates)
         {
             foreach (var candidate in candidates)
