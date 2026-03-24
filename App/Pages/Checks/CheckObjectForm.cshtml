@@ -6,7 +6,7 @@
 }
 
 @section body {
-    <EleForm Model="form" LabelWidth="140px">
+    <EleForm BuildMode="Server" DataFor="JsonData">
         <EleHidden For="Item.Id"></EleHidden>
         <EleLabel Label="基础信息" FillRow="true"></EleLabel>
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
@@ -70,15 +70,4 @@
         <EleLabel Label="联系人" FillRow="true"></EleLabel>
         <EleButton Type="Primary" Icon="User" Handler="ShowContacts" DisabledFor="Item.Id">联系人</EleButton>
     </EleForm>
-
-    <style>
-        .form-group-header {
-            margin: 20px 0 10px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #eee;
-            font-weight: bold;
-            color: #333;
-            font-size: 14px;
-        }
-    </style>
 }

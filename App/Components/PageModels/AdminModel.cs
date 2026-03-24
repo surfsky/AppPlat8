@@ -16,6 +16,8 @@ namespace App
     [Authorize]
     public class AdminModel : BaseModel
     {
+        public string JsonData { get; set; } = "{}";
+
         public PageMode Mode
         {
             get

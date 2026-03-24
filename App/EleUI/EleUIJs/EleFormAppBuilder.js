@@ -17,8 +17,8 @@ export class EleFormAppBuilder extends EleAppBuilder {
         const app = this.createConfiguredApp(config, {
             mixins: config.mixins || [],
             setup() {
-                const defaultForm = config.defaultForm || {};
-                const form = new EleForm(defaultForm, {
+                const initData = config.initData || {};
+                const form = new EleForm(initData, {
                     dataHandler: config.dataHandler,
                     saveHandler: config.saveHandler
                 });
@@ -27,7 +27,17 @@ export class EleFormAppBuilder extends EleAppBuilder {
                 const msgHandler = (e) => form.messageHandler(e);
                 const selHandler = (e) => form.handleSelectorMessage(e);
                 onMounted(() => {
-                    form.load();
+                    if (config.autoLoad === false) {
+                        const url = new URL(window.location.href);
+                        if (typeof config.readOnly !== 'undefined') {
+                            form.readOnly.value = !!config.readOnly;
+                        } else {
+                            form.readOnly.value = (url.searchParams.get('md') || '').toLowerCase() === 'view';
+                        }
+                        form.originalForm.value = JSON.parse(JSON.stringify(form.form.value || {}));
+                    } else {
+                        form.load();
+                    }
                     window.addEventListener('message', msgHandler);
                     window.addEventListener('message', selHandler);
                 });

@@ -1,17 +1,29 @@
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using App.Utils;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace App.EleUI
 {
+
     [HtmlTargetElement("EleForm")]
     public class EleFormTagHelper : TagHelper
     {
+        [HtmlAttributeNotBound]
+        [ViewContext]
+        public ViewContext ViewContext { get; set; }
+
         [HtmlAttributeName("Model")]
         public string Model { get; set; } = "form";
 
         [HtmlAttributeName("LabelWidth")]
         public string LabelWidth { get; set; } = "120px";
+
+        [HtmlAttributeName("LabelPosition")]
+        public EleFormLabelPosition LabelPosition { get; set; } = EleFormLabelPosition.Right;
 
         [HtmlAttributeName("DataHandler")]
         public string DataHandler { get; set; } = "?handler=Data";
@@ -19,8 +31,11 @@ namespace App.EleUI
         [HtmlAttributeName("SaveHandler")]
         public string SaveHandler { get; set; } = "?handler=Save";
 
-        [HtmlAttributeName("BuildApp")]
-        public bool BuildApp { get; set; } = true;
+        [HtmlAttributeName("BuildMode")]
+        public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;
+
+        [HtmlAttributeName("DataFor")]
+        public ModelExpression DataFor { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -49,7 +64,7 @@ namespace App.EleUI
                 + CreateFooter(toolbarHtml, toolbarPosition, hasToolbar)
                 ;
             var wrapperHtml = $"<div class=\"{wrapperClass}\">{formHtml}</div>";
-            var scriptHtml = this.BuildApp ? CreateScript() : "";
+            var scriptHtml = CreateScript();
             output.Content.SetHtmlContent(wrapperHtml + scriptHtml);
         }
 
@@ -141,10 +156,15 @@ namespace App.EleUI
         /// <summary>创建表单HTML</summary>
         private string CreateForm(string innerHtml)
         {
-            var formHtml = $"<el-form :model=\"{Model}\" label-width=\"{LabelWidth}\" class=\"w-full px-4 pt-4 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4\" ref=\"formRef\" status-icon scroll-to-error>\n";
+            var formHtml = $"<el-form :model=\"{Model}\" label-width=\"{LabelWidth}\" label-position=\"{GetLabelPositionValue()}\" class=\"w-full px-4 pt-4 grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4\" ref=\"formRef\" status-icon scroll-to-error>\n";
             formHtml += innerHtml + "\n";
             formHtml += "</el-form>\n";
             return formHtml;
+        }
+
+        private string GetLabelPositionValue()
+        {
+            return LabelPosition.ToString().ToLowerInvariant();
         }
 
         /// <summary>创建表单页脚HTML</summary>
@@ -188,6 +208,30 @@ namespace App.EleUI
         /// <summary>创建脚本HTML</summary>
         private string CreateScript()
         {
+            if (BuildMode == EleAppBuildMode.None)
+                return string.Empty;
+
+            if (BuildMode == EleAppBuildMode.Server)
+            {
+                var initData = ResolveInitDataJson();
+
+                initData = initData.Replace("</script", "<\\/script", StringComparison.OrdinalIgnoreCase);
+
+                return $@"
+<script>
+    document.addEventListener('DOMContentLoaded', function() {{
+        const initData = {initData};
+        new EleFormAppBuilder().mount('#app', {{
+            dataHandler: '{DataHandler}',
+            saveHandler: '{SaveHandler}',
+            initData: initData,
+            autoLoad: false
+        }});
+    }});
+</script>
+";
+            }
+
             return $@"
 <script>
     document.addEventListener('DOMContentLoaded', function() {{
@@ -198,6 +242,23 @@ namespace App.EleUI
     }});
 </script>
 ";
+        }
+
+        private string ResolveInitDataJson()
+        {
+            if (DataFor != null)
+            {
+                var value = DataFor.Model;
+                if (value == null)
+                    return "{}";
+
+                if (value is string json)
+                    return string.IsNullOrWhiteSpace(json) ? "{}" : json;
+
+                return value.ToJson();
+            }
+
+            return "{}";
         }
     }
 }

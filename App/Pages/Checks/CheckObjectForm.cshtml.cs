@@ -20,14 +20,15 @@ namespace App.Pages.Checks
 
         public void OnGet(long id = 0)
         {
-            Item = new CheckObject { Id = id };
+            Item = CheckObject.GetDetail(id) ?? new CheckObject();
+            JsonData = Item.Export(ExportMode.Normal).ToJson();
         }
 
-        public IActionResult OnGetData(long id)
-        {
-            var item = CheckObject.GetDetail(id) ?? new CheckObject();
-            return BuildResult(0, "success", item.Export(ExportMode.Normal));
-        }
+        //public IActionResult OnGetData(long id)
+        //{
+        //    var item = CheckObject.GetDetail(id) ?? new CheckObject();
+        //    return BuildResult(0, "success", item.Export(ExportMode.Normal));
+        //}
 
         public IActionResult OnPostSave([FromBody] CheckObject req)
         {

@@ -49,8 +49,8 @@ namespace App.EleUI
         [HtmlAttributeName("RowKey")]
         public string RowKey { get; set; }
 
-        [HtmlAttributeName("BuildApp")]
-        public bool BuildApp { get; set; } = true;
+        [HtmlAttributeName("BuildMode")]
+        public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;
 
         public override void Init(TagHelperContext context)
         {
@@ -72,7 +72,7 @@ namespace App.EleUI
             string toolbarHtml = tableContext.ToolbarHtml?.ToString();
             string tableHtml = CreateTable(tableContext);
             string footerHtml = CreateFooter();
-            string scriptHtml = this.BuildApp ? CreateScript() : "";
+            string scriptHtml = (this.BuildMode == EleAppBuildMode.Client) ? CreateScript() : "";
 
             output.Content.AppendHtml(" <el-container class='h-full w-full flex flex-col overflow-hidden'>");
             output.Content.AppendHtml(toolbarHtml);

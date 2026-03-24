@@ -2,8 +2,7 @@
 Task - 业务
 --------------------------------------------------------
 核心业务
-    BUG：
-        隐患无法录入
+    隐患无法录入
     导入用户数据
     完成对象管理页面，并导入数据；******
     融合展示检查对象、检查、隐患、培训信息、联系人信息
@@ -60,20 +59,9 @@ Task - 业务
 Task - 框架
 --------------------------------------------------------
 EleUI 优化
-    /简化 EleControlTagHelper，删除没有在页面中使用到的 VDisabled, VDisableFor, VShow, VIf, VIfFor 这类有强烈Vue 风格的属性。
-    /备注：我的初衷是屏蔽技术细节乃至可以更换底层ui框架，创建一个强类型的razor page 控件库
-    /简化EleControl 基类，很多重复的东西：BindDisabled
-    /考虑删除：EleTreeSelect.DataName
-
-    合并 EleForm 的model 两步式初始化的逻辑： OnGet(), OnGetData()
-        合并 OnGet 和 OnGetData”
-        因为 EleForm 的逻辑是先显示控件，再和model通讯后显示数据，会导致 @Model.xxx 的写法因为模型未初始化而出错。
-        能否将这两个方法（OnGet(), OnGetData()）合并，一次性完成控件初始化和数据显示。
-
-
-    检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
     优化通用drawer弹窗
-        - 实现右滑关闭逻辑（含提示）
+        实现右滑关闭逻辑（含提示）
+        检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
     改造<EleTable>
         简化检索条件工具栏
             如果检索条件太多顶部会很复杂，有没有什么优化办法。另外手机端该如何展示检索条件？显示一个小检索图标。
@@ -90,7 +78,6 @@ EleUI 优化
                <EleButton ...>关闭</EleButton>
            </Bottom>
         剥离 <EleFormApp>，修改所有相关页面
-        表单 EleForm label的位置可控制
         增加 CloseButtonVisible
     Controls
         实现Panel控件及测试，一个页面可以展示多个panel，可联动
@@ -153,6 +140,16 @@ UI优化
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+ /表单 EleForm label的位置可控制
+    /简化 EleControlTagHelper，删除没有在页面中使用到的 VDisabled, VDisableFor, VShow, VIf, VIfFor 这类有强烈Vue 风格的属性。
+    /备注：我的初衷是屏蔽技术细节乃至可以更换底层ui框架，创建一个强类型的razor page 控件库
+    /简化EleControl 基类，很多重复的东西：BindDisabled
+    /考虑删除：EleTreeSelect.DataName
+    /合并 EleForm 的model 两步式初始化的逻辑： OnGet(), OnGetData()
+        合并 OnGet 和 OnGetData”
+        因为 EleForm 的逻辑是先显示控件，再和model通讯后显示数据，会导致 @Model.xxx 的写法因为模型未初始化而出错。
+        能否将这两个方法（OnGet(), OnGetData()）合并，一次性完成控件初始化和数据显示。
+        <EleForm BuildMode="Server" DataFor="...">
     /实现对象的联系人子表
     /创建部门
 

@@ -8,8 +8,8 @@
 @section body {
     <EleForm Model="form" LabelWidth="120px">
         <EleInput For="Item.CheckItemText" Label="检查项内容" Disabled="true"></EleInput>
-        <EleInput For="Item.Description" Label="隐患描述" Rows="3"></EleInput>
-        <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true"></EleImageUpload>
+        <EleInput For="Item.Description" Label="隐患描述" Rows="1"></EleInput>
+        <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true" FillRow="true"></EleImageUpload>
         
         <EleSelect For="Item.Status" Label="状态"></EleSelect>
         <EleDatePicker For="Item.ExpireDt" Label="整改期限"></EleDatePicker>
