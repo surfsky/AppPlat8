@@ -7,8 +7,8 @@ namespace App.EleUI
     /// <summary>
     /// 图标选择器组件
     /// </summary>
-    [HtmlTargetElement("EleIconSelect")]
-    public class EleIconSelectTagHelper : EleFormControlTagHelper
+    [HtmlTargetElement("EleIconSelector")]
+    public class EleIconSelectorTagHelper : EleFormControlTagHelper
     {
         [HtmlAttributeName("Popup")]
         public string Popup { get; set; }

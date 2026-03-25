@@ -23,6 +23,9 @@ namespace App.EleUI
         [HtmlAttributeName("Size")]
         public string Size { get; set; } = "16px";
 
+        [HtmlAttributeName("Bold")]
+        public bool Bold { get; set; } = true;
+
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             // Auto-set Label from For expression if not provided
@@ -31,7 +34,11 @@ namespace App.EleUI
             output.TagName = "div";
             output.TagMode = TagMode.StartTagAndEndTag;
             
-            var style = "font-weight: bold; margin-bottom: 10px; margin-top: 10px;";
+            var style = "margin-bottom: 10px; margin-top: 10px;";
+            if (Bold)
+            {
+                style += " font-weight: bold;";
+            }
             if (!string.IsNullOrEmpty(Size))
             {
                 style += $" font-size: {Size};";

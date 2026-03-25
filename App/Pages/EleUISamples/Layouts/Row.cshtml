@@ -8,22 +8,22 @@
     <div class="p-4 space-y-6" id="app">
         <EleCard Title="EleRow 基础" class="shadow-sm">
             <Row>
-                <EleButton Type="Primary">Primary</EleButton>
-                <EleButton Type="Success">Success</EleButton>
-                <EleButton Type="Warning">Warning</EleButton>
-                <EleButton Type="Danger">Danger</EleButton>
+                <Item Border="1" BorderColor="blue-500">Primary</Item>
+                <Item Border="1" BorderColor="blue-500">Success</Item>
+                <Item Border="1" BorderColor="blue-500">Warning</Item>
+                <Item Border="1" BorderColor="blue-500">Danger</Item>
             </Row>
         </EleCard>
 
         <EleCard Title="对齐与分布" class="shadow-sm">
             <Column Gap="4">
-                <Row Items="center" Gap="4" Rounded="lg" Border="true" BorderColor="slate-200" Bg="slate-50" P="3">
-                    <span class="text-sm text-slate-600">items-center + gap-4</span>
+                <Row Items="center" Gap="4" Rounded="lg" Border="true" BorderColor="slate-200" Bg="slate-50" P="4">
                     <EleButton>操作一</EleButton>
+                    <EleButton>操作二</EleButton>
                     <EleButton>操作二</EleButton>
                 </Row>
 
-                <Row Justify="between" Items="center" Rounded="lg" Border="true" BorderColor="slate-200" Bg="white" P="3">
+                <Row Justify="between" Items="center" Rounded="lg" Border="true" BorderColor="slate-200" Bg="white" P="4">
                     <span class="font-medium text-slate-700">justify-between</span>
                     <Row>
                         <EleButton Type="Info">详情</EleButton>
@@ -33,7 +33,7 @@
             </Column>
         </EleCard>
 
-        <EleCard Title="和 EleColumn 组合" class="shadow-sm">
+        <EleCard Title="和 Column 组合" class="shadow-sm">
             <Row Gap="4">
                 <Column MinW="[220px]" Rounded="lg" Border="true" BorderColor="blue-100" Bg="blue-50" P="4" Gap="2">
                     <h3 class="font-semibold text-blue-700">左侧信息</h3>

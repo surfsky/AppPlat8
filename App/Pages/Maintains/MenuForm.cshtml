@@ -11,7 +11,7 @@
         <EleTreeSelect For="Item.ParentId" Label="上级菜单" Api="/httpapi/auths/GetMenuTree"  Clearable="true" CheckStrictly="true"></EleTreeSelect>        
         <EleInput For="Item.NavigateUrl" Label="链接"></EleInput>
         <EleSelect For="Item.Power" Label="权限" Items="Model.PowerOptions" Clearable="true" Filterable="true"></EleSelect>
-        <EleIconSelect For="Item.ImageUrl" Label="图标" Multi="false" Popup="/Shared/IconSelector" TextProp="ImageUrl"></EleIconSelect>
+        <EleIconSelector For="Item.ImageUrl" Label="图标" Multi="false" Popup="/Shared/IconSelector" TextProp="ImageUrl"></EleIconSelector>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
         <EleSelect For="Item.Target" Label="目标" AllowCreate="true" Filterable="true" Items="@("['_blank', '_top']")" Placeholder="_blank 或 _top"></EleSelect>
         <EleSwitch For="Item.Visible" Label="是否可见"></EleSwitch>

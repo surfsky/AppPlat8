@@ -1,0 +1,68 @@
+@page
+@{
+    ViewData["Title"] = "App List";
+}
+
+@section body {
+<div id="app" class="p-4 space-y-3 bg-slate-50 min-h-screen">
+    <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-800">用户列表</h2>
+        <span class="text-xs text-slate-500">{{ users.length }} users</span>
+    </div>
+
+    <div v-for="user in users" :key="user.id"
+         class="w-full h-full overflow-y-auto rounded-xl border border-slate-200 p-3 bg-white flex items-center justify-between cursor-pointer hover:border-blue-300"
+         @@click="openForm(user)">
+        <div>
+            <p class="text-sm font-medium text-slate-800">{{ user.name }}</p>
+            <p class="text-xs text-slate-500">{{ user.email }} · {{ user.role }}</p>
+        </div>
+        <el-tag :type="user.active ? 'success' : 'info'" size="small">{{ user.active ? '启用' : '停用' }}</el-tag>
+    </div>
+</div>
+}
+
+@section script {
+<script>
+    const { ref } = Vue;
+
+    window.model = {
+        users: ref(Array.from({ length: 16 }, (_, idx) => ({
+            id: idx + 1,
+            name: `用户${idx + 1}`,
+            email: `user${idx + 1}@@demo.local`,
+            role: idx % 3 === 0 ? '管理员' : (idx % 3 === 1 ? '编辑' : '访客'),
+            note: `这是用户${idx + 1}的备注信息`,
+            active: idx % 2 === 0
+        }))),
+        openForm(user) {
+            const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                console.error('EleManager.openDrawer is unavailable.');
+                return;
+            }
+
+            const qs = new URLSearchParams({
+                id: String(user.id),
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                note: user.note,
+                active: user.active ? '1' : '0'
+            }).toString();
+
+            manager.openDrawer({
+                title: '编辑用户 - ' + user.name,
+                url: '/EleUISamples/Apps/Form?' + qs,
+                direction: 'rtl',
+                size: '90%',
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true
+            });
+        }
+    };
+</script>
+
+<EleApp />
+}

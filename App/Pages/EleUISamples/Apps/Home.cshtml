@@ -1,0 +1,25 @@
+@page
+@{
+    ViewData["Title"] = "App Home";
+}
+
+@section body {
+<div class="p-4 space-y-4 bg-slate-50 min-h-screen">
+    <div class="rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white p-5">
+        <p class="text-xs opacity-90">MOBILE SHELL</p>
+        <h2 class="text-xl font-semibold mt-1">Home</h2>
+        <p class="text-sm mt-2 opacity-90">这是独立 Home 页面。</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-xl border border-slate-200 p-3 bg-white">
+            <p class="text-xs text-slate-500">待办</p>
+            <p class="text-lg font-semibold text-slate-800">12</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-3 bg-white">
+            <p class="text-xs text-slate-500">通知</p>
+            <p class="text-lg font-semibold text-slate-800">5</p>
+        </div>
+    </div>
+</div>
+}

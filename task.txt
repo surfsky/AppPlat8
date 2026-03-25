@@ -59,6 +59,8 @@ Task - 业务
 Task - 框架
 --------------------------------------------------------
 EleUI 优化
+    考虑合并 EleItem, EleControl
+    将 EleUI 迁移为一个单独项目，js也可以正常显示编程提示，可编译合并
     优化通用drawer弹窗
         实现右滑关闭逻辑（含提示）
         检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
@@ -68,7 +70,6 @@ EleUI 优化
             优化列表页面的查询工具栏，在右侧显示一个下箭头按钮，点击后可展开完整检索条件，收缩后可显示第一行检索条件；
             改造<EleTable>，将其中的toolbar部分用EleForm实现，以复用代码（仅参考，逻辑会简单很多）
         op列可增加联系人列
-        可设置drawer的显示方式：如全屏、下滑出
         数据分页支持下拉刷新模式
         用 inline form 设置 EleTable 的 Toolbar 部分：https://element-plus.org/en-US/component/form
     改造<EleForm>
@@ -84,15 +85,7 @@ EleUI 优化
         实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
     其他
         创建：角色、用户双列表混合视图测试页面
-        将 EleUI 迁移为一个单独项目，js也可以正常显示编程提示
         实现 Theme 逻辑：dark/light（容后）
-    简化结构
-        用script setup来简化vue 页面结构
-            <script setup>
-            import { ref } from 'vue'
-            const msg = ref('hello')
-            // 不用return！直接在template用
-            </script>
     支持复杂页面结构
         剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
         剥离 EleTableTagHelper 中的App创建部分，拆分出 EleTableAppTagHelper，只管网格页面渲染
@@ -140,6 +133,16 @@ UI优化
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+        /可设置drawer的显示方式：如全屏、下滑出
+/简化结构
+        用script setup来简化vue 页面结构（越改越复杂，放弃）
+            <script setup>
+            import { ref } from 'vue'
+            const msg = ref('hello')
+            // 不用return！直接在template用
+            </script>
+/重构了一下 EleItem，将属性前移到父节点
+/修正IconFont
  /表单 EleForm label的位置可控制
     /简化 EleControlTagHelper，删除没有在页面中使用到的 VDisabled, VDisableFor, VShow, VIf, VIfFor 这类有强烈Vue 风格的属性。
     /备注：我的初衷是屏蔽技术细节乃至可以更换底层ui框架，创建一个强类型的razor page 控件库

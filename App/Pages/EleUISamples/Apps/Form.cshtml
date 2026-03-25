@@ -1,0 +1,83 @@
+@page
+@{
+    ViewData["Title"] = "App Form";
+}
+
+@section body {
+<div id="app" class="p-4 space-y-4 bg-slate-50 min-h-screen">
+    <h2 class="text-lg font-semibold text-slate-800">编辑用户</h2>
+
+    <div class="rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-500">
+        用户 ID: {{ formData.id || '-' }}
+    </div>
+
+    <el-form label-position="top" :model="formData" class="rounded-xl border border-slate-200 bg-white p-4">
+        <el-form-item label="姓名">
+            <el-input v-model="formData.name" placeholder="请输入姓名"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱">
+            <el-input v-model="formData.email" placeholder="请输入邮箱"></el-input>
+        </el-form-item>
+        <el-form-item label="角色">
+            <el-select v-model="formData.role" placeholder="请选择角色" class="w-full">
+                <el-option label="管理员" value="管理员"></el-option>
+                <el-option label="编辑" value="编辑"></el-option>
+                <el-option label="访客" value="访客"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+            <el-switch v-model="formData.active" active-text="启用" inactive-text="停用"></el-switch>
+        </el-form-item>
+        <el-form-item label="备注">
+            <el-input v-model="formData.note" type="textarea" :rows="3" placeholder="请输入备注"></el-input>
+        </el-form-item>
+
+        <div class="grid grid-cols-2 gap-3">
+            <el-button @@click="closeSelf">关闭</el-button>
+            <el-button type="primary" @@click="submitForm">提交</el-button>
+        </div>
+    </el-form>
+</div>
+}
+
+@section script {
+<script>
+    const { reactive } = Vue;
+
+    window.model = {
+        formData: reactive({
+            id: '',
+            name: '',
+            email: '',
+            role: '访客',
+            active: true,
+            note: ''
+        }),
+        closeSelf() {
+            const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+            if (manager && typeof manager.closeDrawer === 'function') {
+                manager.closeDrawer();
+            }
+        },
+        submitForm() {
+            const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+            if (manager && typeof manager.showSuccess === 'function') {
+                manager.showSuccess('提交成功');
+            }
+            this.closeSelf();
+        }
+    };
+
+    (() => {
+        const qs = new URLSearchParams(window.location.search);
+        window.model.formData.id = qs.get('id') || '';
+        window.model.formData.name = qs.get('name') || '';
+        window.model.formData.email = qs.get('email') || '';
+        window.model.formData.role = qs.get('role') || '访客';
+        window.model.formData.note = qs.get('note') || '';
+        window.model.formData.active = (qs.get('active') || '1') === '1';
+    })();
+</script>
+
+<EleApp />
+}

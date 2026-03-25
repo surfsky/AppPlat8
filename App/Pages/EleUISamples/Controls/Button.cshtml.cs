@@ -22,7 +22,7 @@ namespace App.Pages.EleUISamples
         public IActionResult OnPostSwitch([FromBody] ButtonModel data)
         {
             data.ShowItem = !data.ShowItem;
-            return BuildResult(0, "切换成功", data.ExportBindData());
+            return BuildResult(0, "切换成功", data.Export());
         }
     }
 }

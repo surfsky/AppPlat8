@@ -23,7 +23,7 @@ namespace App
         /// <summary>
         /// 导出当前模型上标记了 [BindProperty] 的属性，供前端初始化/回传使用。
         /// </summary>
-        public object ExportBindData()
+        public object Export()
         {
             IDictionary<string, object> data = new ExpandoObject();
             var properties = GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);

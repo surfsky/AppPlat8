@@ -1,64 +1,50 @@
 @page
-@using App.Utils;
 @{
-    var levelText = Request.Query["level"].ToString();
-    var level = levelText.ParseInt() ?? 1;
-    ViewData["Title"] = "Application";
+    ViewData["Title"] = "Application Mobile";
 }
 
 @section body {
-<div class="p-4 space-y-6 overflow-y-auto w-full h-full">
-    <!-- 标题图片 -->
-    <EleImage Source="./Images/Title.png" class="w-full h-48" />
+<div id="app" class="h-full w-full bg-slate-100 flex items-center justify-center p-3 md:p-6">
+    <div class="relative w-full max-w-[430px] h-full max-h-[900px] rounded-[28px] border border-slate-200 bg-white shadow-xl overflow-hidden">
+        <div class="h-full pb-16 bg-slate-50">
+            <iframe :src="tabUrlMap[activeTab]" class="w-full h-full border-0" frameborder="0"></iframe>
+        </div>
 
-
-    <!-- 嵌套Drawer测试 -->
-    <EleCard Title="Application" class="box-card">
-        <Column>
-            <EleButton Type="Primary" Click="openSelf()" Icon="Open">Open Drawer</EleButton>
-            <EleButton Type="Success" Click="EleManager.closePage({value:0})" Icon="Close">关闭当前页面(return 0)</EleButton>
-            <EleButton Type="Warning" Click="EleManager.closePage({value:1})" Icon="Close">关闭当前页面(return 1)</EleButton>
-
-            <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 break-all">
-                回传结果：<span id="closeResultText">暂无</span>
-            </div>
-        </Column>
-    </EleCard>
-
-    <!-- 循环显示1000条数据 -->
-    <div v-for="i in 1000" :key="i" class="p-2 bg-white rounded shadow-sm text-slate-700">
-        这是第 {{ i }} 条数据
+        <nav class="absolute left-0 right-0 bottom-0 h-16 border-t border-slate-200 bg-white grid grid-cols-3">
+            <button type="button" class="flex flex-col items-center justify-center gap-1 text-xs transition-colors"
+                    :class="activeTab === 'home' ? 'text-blue-600' : 'text-slate-500'" @@click="switchTab('home')">
+                <el-icon><House /></el-icon>
+                <span>Home</span>
+            </button>
+            <button type="button" class="flex flex-col items-center justify-center gap-1 text-xs transition-colors"
+                    :class="activeTab === 'list' ? 'text-blue-600' : 'text-slate-500'" @@click="switchTab('list')">
+                <el-icon><List /></el-icon>
+                <span>List</span>
+            </button>
+            <button type="button" class="flex flex-col items-center justify-center gap-1 text-xs transition-colors"
+                    :class="activeTab === 'about' ? 'text-blue-600' : 'text-slate-500'" @@click="switchTab('about')">
+                <el-icon><User /></el-icon>
+                <span>About</span>
+            </button>
+        </nav>
     </div>
-
-    <!-- 固定在页面底部的 AppBar -->
-    <Row class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 shadow-sm p-4 justify-center">
-        <EleButton Look="Circle" Icon="Edit"    Type="Primary"></EleButton>
-        <EleButton Look="Circle" Icon="Check"   Type="Success"></EleButton>
-        <EleButton Look="Circle" Icon="Message" Type="Danger"></EleButton>
-        <EleButton Look="Circle" Icon="Star"    Type="Info"></EleButton>
-    </Row>
 </div>
 }
 
 @section script {
     <script>
-        window.openSelf = function() {
-            const currentLevel = @level;
-            const nextLevel = currentLevel + 1;
-            const url = '/EleUISamples/Popups/OpenDrawer?level=' + nextLevel;
+        const { ref } = Vue;
 
-            EleManager.openDrawer({
-                title: 'OpenDrawer Level ' + nextLevel,
-                url: url,
-                direction: 'rtl',
-                resizable: true,
-                closeOnClickModal: false,
-                destroyOnClose: true,
-                closeConfirm: '确定要关闭吗？',
-                closeHandler: function(data) {
-                    document.getElementById('closeResultText').textContent = JSON.stringify(data);
-                }
-            });
+        window.model = {
+            activeTab: ref('home'),
+            tabUrlMap: {
+                home: '/EleUISamples/Apps/Home',
+                list: '/EleUISamples/Apps/List',
+                about: '/EleUISamples/Apps/About'
+            },
+            switchTab(tab) {
+                this.activeTab = tab;
+            }
         };
     </script>
 
