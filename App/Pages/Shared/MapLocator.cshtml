@@ -1,0 +1,258 @@
+@page
+@model App.Pages.Shared.MapLocatorModel
+@{
+    Layout = "_Layout";
+}
+
+@section head {
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        html, body, #app { height: 100%; margin: 0; }
+        #map { width: 100%; height: 100%; }
+        .panel {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+        }
+        .footer {
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+        }
+    </style>
+}
+
+@section body {
+    <div id="app">
+        <div class="panel">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <el-input v-model="keyword" placeholder="输入地名搜索定位" clearable @@keyup.enter="searchPlace"></el-input>
+                <el-button type="primary" @@click="searchPlace" :loading="searching">搜索</el-button>
+                <el-button @@click="locateMe">定位到当前位置</el-button>
+            </div>
+            <div v-if="searchResults.length > 0" style="margin-top:8px; max-height:180px; overflow:auto; border:1px solid #e5e7eb; border-radius:6px;">
+                <div v-for="item in searchResults" :key="item.id" @@click="chooseSearchResult(item)" style="padding:8px 10px; cursor:pointer; border-bottom:1px solid #f3f4f6;">
+                    <div style="font-size:13px; color:#111827;">{{ item.place_name }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="footer">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="font-size:13px; color:#374151;">经度：{{ lngText }}，纬度：{{ latText }}</div>
+                <div style="display:flex; gap:8px;">
+                    <el-button @@click="closeOnly">取消</el-button>
+                    <el-button type="primary" @@click="confirmLocation">确定位置</el-button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        const app = createApp({
+            setup() {
+                const keyword = ref('');
+                const searching = ref(false);
+                const searchResults = ref([]);
+                const lng = ref(@(Model.Lng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "120.1551"));
+                const lat = ref(@(Model.Lat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "30.2741"));
+                const lngText = ref(lng.value.toFixed(6));
+                const latText = ref(lat.value.toFixed(6));
+
+                let map = null;
+                let marker = null;
+                //const accessToken = (new URLSearchParams(window.location.search).get('token') || window.MAPBOX_ACCESS_TOKEN || '').trim();
+                const accessToken = "@SiteConfig.Instance.MapKey";
+
+                const showError = (msg) => {
+                    if (window.EleManager && typeof window.EleManager.showError === 'function') {
+                        window.EleManager.showError(msg);
+                    } else {
+                        alert(msg);
+                    }
+                };
+
+                const updateCoordText = () => {
+                    lngText.value = Number(lng.value).toFixed(6);
+                    latText.value = Number(lat.value).toFixed(6);
+                };
+
+                const setPoint = (newLng, newLat, fly = true) => {
+                    lng.value = Number(newLng);
+                    lat.value = Number(newLat);
+                    updateCoordText();
+                    if (!marker) {
+                        marker = new mapboxgl.Marker({ color: '#ef4444', draggable: true })
+                            .setLngLat([lng.value, lat.value])
+                            .addTo(map);
+                        marker.on('dragend', () => {
+                            const p = marker.getLngLat();
+                            setPoint(p.lng, p.lat, false);
+                        });
+                    } else {
+                        marker.setLngLat([lng.value, lat.value]);
+                    }
+                    if (fly && map) {
+                        map.flyTo({ center: [lng.value, lat.value], zoom: Math.max(map.getZoom(), 13) });
+                    }
+                };
+
+                const initMap = () => {
+                    if (!accessToken) {
+                        showError('缺少 Mapbox Token，请在 URL 追加 token 参数或配置 window.MAPBOX_ACCESS_TOKEN');
+                        return;
+                    }
+                    mapboxgl.accessToken = accessToken;
+                    map = new mapboxgl.Map({
+                        container: 'map',
+                        style: 'mapbox://styles/mapbox/streets-v11',
+                        center: [lng.value, lat.value],
+                        zoom: 12
+                    });
+
+                    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+                    map.on('load', () => {
+                        setPoint(lng.value, lat.value, false);
+                    });
+
+                    map.on('click', (e) => {
+                        setPoint(e.lngLat.lng, e.lngLat.lat, false);
+                    });
+                };
+
+                const searchPlace = async () => {
+                    const q = (keyword.value || '').trim();
+                    if (!q) {
+                        searchResults.value = [];
+                        return;
+                    }
+                    if (!accessToken) {
+                        showError('缺少 Mapbox Token，无法搜索地名');
+                        return;
+                    }
+
+                    searching.value = true;
+                    try {
+                        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json`;
+                        const res = await axios.get(url, {
+                            params: {
+                                access_token: accessToken,
+                                limit: 8,
+                                language: 'zh'
+                            }
+                        });
+                        searchResults.value = Array.isArray(res.data?.features) ? res.data.features : [];
+                    } catch (e) {
+                        console.error(e);
+                        showError('地名搜索失败');
+                    } finally {
+                        searching.value = false;
+                    }
+                };
+
+                const chooseSearchResult = (item) => {
+                    const center = item?.center || [];
+                    if (center.length >= 2) {
+                        setPoint(center[0], center[1], true);
+                        searchResults.value = [];
+                    }
+                };
+
+                const locateMe = () => {
+                    if (!navigator.geolocation) {
+                        showError('当前浏览器不支持定位');
+                        return;
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            setPoint(pos.coords.longitude, pos.coords.latitude, true);
+                        },
+                        () => {
+                            showError('定位失败，请检查浏览器定位权限');
+                        },
+                        { enableHighAccuracy: true, timeout: 12000 }
+                    );
+                };
+
+                const closeOnly = () => {
+                    if (window.EleManager && typeof window.EleManager.closePage === 'function') {
+                        window.EleManager.closePage({});
+                        return;
+                    }
+                    if (window.parent) {
+                        window.parent.postMessage({ __elePageClose: true, data: {} }, '*');
+                    }
+                    if (window.top && window.top !== window.parent) {
+                        window.top.postMessage({ __elePageClose: true, data: {} }, '*');
+                    }
+                };
+
+                const confirmLocation = () => {
+                    const gps = `${Number(lng.value).toFixed(6)}, ${Number(lat.value).toFixed(6)}`;
+                    const payload = {
+                        type: 'EleSelector',
+                        data: [{
+                            id: gps,
+                            name: gps
+                        }]
+                    };
+
+                    if (window.EleManager && typeof window.EleManager.closePage === 'function') {
+                        window.EleManager.closePage(payload);
+                        return;
+                    }
+                    // Fallback: when running outside drawer host, notify parent/top directly.
+                    if (window.parent) {
+                        window.parent.postMessage(payload, '*');
+                    }
+                    if (window.top && window.top !== window.parent) {
+                        window.top.postMessage(payload, '*');
+                    }
+                };
+
+                onMounted(() => {
+                    updateCoordText();
+                    initMap();
+                });
+
+                return {
+                    keyword,
+                    searching,
+                    searchResults,
+                    lngText,
+                    latText,
+                    searchPlace,
+                    chooseSearchResult,
+                    locateMe,
+                    closeOnly,
+                    confirmLocation
+                };
+            }
+        });
+
+        app.use(ElementPlus, { locale: ElementPlusLocaleZhCn });
+        for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+            app.component(key, component);
+        }
+        app.mount('#app');
+    </script>
+}

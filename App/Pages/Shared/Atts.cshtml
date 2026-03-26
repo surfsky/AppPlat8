@@ -1,0 +1,99 @@
+@page
+@model App.Pages.Shared.AttsModel
+@{
+    ViewData["Title"] = "附件管理";
+    var uniIdEncoded = System.Net.WebUtility.UrlEncode(Model.UniId ?? string.Empty);
+    var nameEncoded = System.Net.WebUtility.UrlEncode(Model.Name ?? string.Empty);
+    var titleSuffix = string.IsNullOrWhiteSpace(Model.Name) ? string.Empty : $" - {Model.Name}";
+}
+
+@section body {
+    <EleTable Title="附件管理@titleSuffix" EnableBatch="true" DataHandler="?handler=Data&uniId=@uniIdEncoded" DeleteHandler="?handler=Delete&uniId=@uniIdEncoded">
+        <Toolbar>
+            <EleInput For="Item.FileName" Width="240px" Label="文件名"></EleInput>
+            <EleSelect For="Item.Type" Width="140px" Label="类型" Clearable="true"></EleSelect>
+            <input id="attUploadInput" type="file" style="display:none" multiple @@change="onAttFileSelected" />
+            <div class="flex w-80">
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Primary" Icon="Upload" VClick="openAttUpload">上传</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
+            </div>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleColumn Label="操作" Width="120" Fixed="right">
+                <template #default="scope">
+                    <el-icon class="cursor-pointer text-blue-500 hover:text-blue-600 mr-2" @@click="downloadFile(scope.row.id)">
+                        <Download />
+                    </el-icon>
+                    <el-icon class="cursor-pointer text-red-500 hover:text-red-600" @@click="deleteSingleItem(scope.row.id)">
+                        <Delete />
+                    </el-icon>
+                </template>
+            </EleColumn>
+            <EleImageColumn Prop="imageUrl" Label="缩略图" Width="80" ThumbnailWidth="44" ThumbnailHeight="44"></EleImageColumn>
+            <EleColumn For="Item.FileName" Label="文件名" MinWidth="220"></EleColumn>
+            <EleColumn For="Item.Type" Label="类型" Width="100"></EleColumn>
+            <EleColumn For="Item.FileSizeText" Label="文件大小" Width="120"></EleColumn>
+            <EleColumn For="Item.CreateDt" Label="上传时间" Width="180" Format="DateTime"></EleColumn>
+            <EleColumn For="Item.Remark" Label="备注" MinWidth="180"></EleColumn>
+        </Columns>
+    </EleTable>
+}
+
+@section script {
+    <script>
+        const userMixin = {
+            methods: {
+                openAttUpload() {
+                    const input = document.getElementById('attUploadInput');
+                    if (input) input.click();
+                },
+                downloadFile(id) {
+                    if (!id) {
+                        EleManager.showWarning('下载地址不存在');
+                        return;
+                    }
+
+                    const url = '?handler=Download&uniId=@uniIdEncoded&id=' + encodeURIComponent(id);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                },
+                async onAttFileSelected(event) {
+                    const input = event.target;
+                    const files = input && input.files ? Array.from(input.files) : [];
+                    if (files.length === 0) return;
+
+                    const formData = new FormData();
+                    for (const file of files) {
+                        formData.append('files', file);
+                    }
+
+                    try {
+                        const res = await axios.post('?handler=Upload&uniId=@uniIdEncoded', formData, {
+                            headers: {
+                                'RequestVerificationToken': (window.Utils && Utils.getCsrfToken) ? Utils.getCsrfToken() : ''
+                            }
+                        });
+
+                        if (res.data && (res.data.code === 0 || res.data.code === '0')) {
+                            EleManager.showSuccess(res.data.msg || '上传成功');
+                            await this.loadData();
+                        } else {
+                            EleManager.showError((res.data && (res.data.msg || res.data.info)) || '上传失败');
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        const serverMsg = e?.response?.data?.msg || e?.response?.data?.info;
+                        EleManager.showError(serverMsg || '上传失败');
+                    } finally {
+                        if (input) input.value = '';
+                    }
+                }
+            }
+        };
+    </script>
+}

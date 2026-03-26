@@ -46,6 +46,7 @@ namespace App.Pages.Checks
             item.Code = req.Code;
             item.DutyOrgId = req.DutyOrgId;
             item.Address = req.Address;
+            item.Gps = req.Gps;
             item.SocialCreditCode = req.SocialCreditCode;
             item.ObjectType = req.ObjectType;
             item.Field = req.Field;
@@ -94,6 +95,7 @@ namespace App.Pages.Checks
             return BuildResult(0, "保存成功");
         }
 
+        /// <summary>显示联系人</summary>
         public IActionResult OnPostShowContacts([FromBody] CheckObject req)
         {
             var objectId = req?.Id ?? 0;
@@ -106,6 +108,19 @@ namespace App.Pages.Checks
             var url = $"/Checks/ObjectContacts?objectId={objectId}&objectName={objectName}";
             return EleManager.OpenClientDrawer(
                 title: "对象联系人",
+                url: url,
+                size: "50%"
+                );
+        }
+
+        /// <summary>显示文件</summary>
+        public IActionResult OnPostShowFiles([FromBody] CheckObject req)
+        {
+            var uniId = req.UniId;
+            var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Shared/Atts?uniId={uniId}&name={objectName}";
+            return EleManager.OpenClientDrawer(
+                title: "文件",
                 url: url,
                 size: "50%"
                 );

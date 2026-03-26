@@ -40,6 +40,7 @@ namespace App.Pages.Maintains
             cfg.DefaultPassword = req.DefaultPassword;
             cfg.UpFileTypes = req.UpFileTypes;
             cfg.UpFileSize = req.UpFileSize;
+            cfg.MapKey = req.MapKey;
 
             cfg.Save();
             SiteConfig.ClearCache();

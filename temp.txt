@@ -628,3 +628,16 @@ namespace App.Pages.EleUISamples
         }
 
         <EleButton Type="Primary" Icon="User" Handler="ShowContacts" VDisabled="(form.id || 0) == 0">联系人</EleButton>
+
+                <h2 id="headerTitle" class="text-white font-semibold truncate text-md md:text-base">仪表板</h2>
+
+
+                <div id="headerTitle" class="text-white text-lg font-bold">@Model.SiteTitle</div>
+
+            <!-- Center Title - Always visible and horizontally centered -->
+            <div class="flex-1 text-center px-2 md:px-4 md:hidden ">
+                <div id="headerTitle" class="text-white text-lg font-bold">@Model.SiteTitle</div>
+            </div>
+
+                <div class="hidden md:flex items-center gap-2 flex-shrink-0" id="logoContainer">
+                </div>

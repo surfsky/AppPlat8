@@ -70,15 +70,16 @@ namespace App.Entities
         {
             return new
             {
+                this.Id,
                 this.FileName,
                 this.Url,
+                ImageUrl      = this.Type == AttType.Image ? this.Url : null,
                 this.FileSizeText,
+                this.Type,
+                this.CreateDt,
 
-                Id            = type.HasFlag(ExportMode.Detail) ? (long?)this.Id : null,
-                Type          = type.HasFlag(ExportMode.Detail) ? this.Type : null,
                 MimeType      = type.HasFlag(ExportMode.Detail) ? this.MimeType : null,
                 FileSize      = type.HasFlag(ExportMode.Detail) ? this.FileSize : null,
-                CreateDt      = type.HasFlag(ExportMode.Detail) ? this.CreateDt : null,
                 FileExtension = type.HasFlag(ExportMode.Detail) ? this.FileExtension : null,
                 FileMD5       = type.HasFlag(ExportMode.Detail) ? this.FileMD5 : null,
                 FileVisitCnt  = type.HasFlag(ExportMode.Detail) ? this.FileVisitCnt : null,

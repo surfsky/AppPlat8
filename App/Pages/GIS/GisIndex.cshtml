@@ -1,213 +1,668 @@
 @page
 @model App.Pages.Gis.GisIndexModel
 @{
-    Layout = null;
+    Layout = "_Layout";
+    ViewData["Title"] = "GIS驾驶舱";
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>驾驶舱</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Mapbox GL JS -->
+@section head {
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #000; color: #fff; }
+        body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111827; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        
-        /* Glassmorphism Panels */
         .glass-panel {
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.24);
             border-radius: 8px;
-            padding: 20px;
+            padding: 16px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
         }
-
         .header-bar {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 60px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0));
+            height: 96px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.92), rgba(255,255,255,0));
             z-index: 10;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
+        .header-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            background: linear-gradient(135deg, rgba(219, 234, 254, 0.88), rgba(255, 255, 255, 0.9));
+            box-shadow: 0 8px 24px rgba(30, 64, 175, 0.2);
+            color: #1e3a8a;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+        .header-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: #2563eb;
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.16);
+        }
+        .map-toolbar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 11;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+            transition: all .25s ease;
+        }
+        .map-toolbar.toolbar-collapsed {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-50%) translateY(20px);
+        }
+        .view-menu {
+            position: absolute;
+            top: 68px;
+            left: 70px;
+            z-index: 12;
+            min-width: 156px;
+            padding: 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(148, 163, 184, 0.32);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-6px);
+            transition: all .2s ease;
+        }
+        .view-menu.menu-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .view-menu-item {
+            width: 100%;
+            text-align: left;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: transparent;
+            color: #0f172a;
+            font-size: 13px;
+            padding: 7px 9px;
+            cursor: pointer;
+            margin: 2px 0;
+        }
+        .view-menu-item:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+        .view-menu-item.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+        .toolbar-btn {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #0f172a;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .toolbar-btn:hover { background: #f8fafc; }
+        .toolbar-btn.active {
+            border-color: #2563eb;
+            color: #fff;
+            background: #2563eb;
+        }
+        .toolbar-input {
+            width: 220px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            color: #111827;
+            outline: none;
+            background: #fff;
+        }
         .panel-left {
             position: absolute;
-            top: 80px;
+            top: 110px;
             left: 20px;
-            bottom: 20px;
-            width: 300px;
+            bottom: 86px;
+            width: 320px;
             z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 14px;
+            transition: transform .25s ease, opacity .25s ease;
         }
-
-        .panel-right {
-            position: absolute;
-            top: 80px;
-            right: 20px;
-            bottom: 20px;
-            width: 300px;
-            z-index: 10;
+        .panel-left .glass-panel {
+            height: 100%;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 20px;
         }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 4px;
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
         }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4ade80;
+        .panel-head h2 {
+            margin: 0;
         }
-        
-        .stat-label {
+        .panel-minimize-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            background: #ffffff;
+            color: #334155;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s ease;
+        }
+        .panel-minimize-btn:hover {
+            color: #1d4ed8;
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+        .panel-left.panel-hidden {
+            transform: translateX(-125%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .layer-tree {
+            flex: 1;
+            overflow: auto;
+            font-size: 13px;
+        }
+        .layer-node {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .tag-chip {
+            display: inline-block;
+            padding: 3px 8px;
+            margin: 0 6px 6px 0;
+            border-radius: 999px;
             font-size: 12px;
-            color: #9ca3af;
+            background: rgba(99, 102, 241, 0.22);
+            border: 1px solid rgba(129, 140, 248, 0.5);
+            color: #e0e7ff;
+        }
+        .floating-toggle-group {
+            position: absolute;
+            top: 18px;
+            left: 20px;
+            z-index: 12;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .floating-toggle {
+            width: 42px;
+            height: 42px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #1e3a8a;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .floating-toggle .toggle-icon {
+            font-size: 18px;
+            line-height: 1;
+            width: 1em;
+            text-align: center;
+        }
+        .floating-toggle.active {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+        @@media (max-width: 768px) {
+            .header-bar { height: 76px; }
+            .header-title { font-size: 14px; padding: 8px 12px; }
+            .panel-left {
+                width: 260px;
+                top: 92px;
+                bottom: 92px;
+                left: 10px;
+            }
+            .map-toolbar {
+                width: calc(100% - 20px);
+                left: 10px;
+                transform: none;
+                justify-content: flex-start;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .view-menu {
+                left: 56px;
+                top: 58px;
+                min-width: 140px;
+            }
+            .toolbar-input { width: 180px; }
+            .floating-toggle-group {
+                left: 10px;
+                top: 12px;
+            }
         }
     </style>
-</head>
-<body>
+}
 
+@section body {
     <div id="map"></div>
 
     <div class="header-bar">
-        <h1 class="text-2xl font-bold tracking-wider text-blue-400">驾驶舱</h1>
-    </div>
-
-    <div class="panel-left">
-        <div class="glass-panel flex-1">
-            <h2 class="text-lg font-bold mb-4 border-l-4 border-blue-500 pl-2">实时监控</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="stat-card">
-                    <div class="stat-value">1,234</div>
-                    <div class="stat-label">今日访问</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">56</div>
-                    <div class="stat-label">异常报警</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">89%</div>
-                    <div class="stat-label">设备在线</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">12</div>
-                    <div class="stat-label">待处理</div>
-                </div>
-            </div>
-            
-            <div class="mt-6">
-                <h3 class="text-md font-semibold mb-2">趋势分析</h3>
-                <div class="h-32 bg-gray-800/50 rounded flex items-end justify-between px-2 pb-2">
-                    <!-- Dummy Chart Bars -->
-                    <div class="w-4 bg-blue-500 h-[40%]"></div>
-                    <div class="w-4 bg-blue-500 h-[60%]"></div>
-                    <div class="w-4 bg-blue-500 h-[30%]"></div>
-                    <div class="w-4 bg-blue-500 h-[80%]"></div>
-                    <div class="w-4 bg-blue-500 h-[50%]"></div>
-                    <div class="w-4 bg-blue-500 h-[70%]"></div>
-                </div>
-            </div>
-        </div>
-        <div class="glass-panel h-1/3">
-            <h2 class="text-lg font-bold mb-4 border-l-4 border-yellow-500 pl-2">系统日志</h2>
-            <ul class="text-sm space-y-2 text-gray-300">
-                <li>[12:00] 系统启动成功</li>
-                <li>[12:05] 检测到新设备接入</li>
-                <li>[12:10] 数据同步完成</li>
-                <li>[12:15] 异常数据过滤</li>
-            </ul>
+        <div class="header-title">
+            <span>应急驾驶舱</span>
         </div>
     </div>
 
-    <div class="panel-right">
-        <div class="glass-panel h-1/2">
-            <h2 class="text-lg font-bold mb-4 border-l-4 border-green-500 pl-2">区域分布</h2>
-            <div class="space-y-4">
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span>A区</span><span>85%</span></div>
-                    <div class="h-2 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-green-500 w-[85%]"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span>B区</span><span>60%</span></div>
-                    <div class="h-2 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-yellow-500 w-[60%]"></div></div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1"><span>C区</span><span>40%</span></div>
-                    <div class="h-2 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-red-500 w-[40%]"></div></div>
-                </div>
+    <div class="map-toolbar">
+        <button id="btn-reset" class="toolbar-btn">回位</button>
+        <button id="btn-fullscreen" class="toolbar-btn">全屏</button>
+        <input id="address-input" class="toolbar-input" placeholder="搜索地址，如：杭州西湖" />
+        <button id="btn-search" class="toolbar-btn">查找</button>
+    </div>
+
+    <div class="floating-toggle-group">
+        <button id="btn-toolbar-toggle" class="floating-toggle" title="工具栏" aria-label="显示/隐藏工具栏">
+            <i class="fa-solid fa-screwdriver-wrench toggle-icon"></i>
+        </button>
+        <button id="btn-view-toggle" class="floating-toggle" title="视图" aria-label="显示/隐藏视图工具栏">
+            <i class="fa-solid fa-eye toggle-icon"></i>
+        </button>
+        <button id="btn-layer-toggle" class="floating-toggle" title="图层" aria-label="显示/隐藏图层列表">
+            <i class="fa-solid fa-layer-group toggle-icon"></i>
+        </button>
+    </div>
+    <div id="view-menu" class="view-menu" aria-label="视图菜单">
+        <button id="btn-style-street" class="view-menu-item active">默认视图</button>
+        <button id="btn-style-sat" class="view-menu-item">遥感视图</button>
+        <button id="btn-toggle-3d" class="view-menu-item">三维建筑</button>
+    </div>
+
+    <div id="layer-panel" class="panel-left">
+        <div class="glass-panel">
+            <div class="panel-head">
+                <h2 class="text-lg font-bold border-l-4 border-cyan-500 pl-2">图层列表</h2>
+                <button id="btn-layer-minimize" class="panel-minimize-btn" title="最小化图层面板" aria-label="最小化图层面板">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
             </div>
-        </div>
-        <div class="glass-panel flex-1">
-            <h2 class="text-lg font-bold mb-4 border-l-4 border-purple-500 pl-2">详细信息</h2>
-            <div id="info-content" class="text-gray-400 text-sm text-center pt-10">
-                点击地图标记查看详情
+            <div class="layer-tree">
+                <div class="layer-node">
+                    <input id="layer-checkObject" type="checkbox" checked class="accent-blue-500" />
+                    <label for="layer-checkObject" class="cursor-pointer">检查对象图层</label>
+                    <span id="layer-count" class="ml-auto text-xs text-gray-400">0</span>
+                </div>
             </div>
         </div>
     </div>
+}
 
+@section script {
     <script>
-        mapboxgl.accessToken = window.MAPBOX_ACCESS_TOKEN || 'YOUR_MAPBOX_ACCESS_TOKEN';
+        mapboxgl.accessToken = "@SiteConfig.Instance.MapKey";
+
+        const state = {
+            objects: [],
+            selectedId: null,
+            markerMap: new Map(),
+            currentStyle: 'street',
+            is3D: false,
+            toolbarCollapsed: false,
+            layerCollapsed: false,
+            viewMenuOpen: false
+        };
 
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/dark-v10', // Dark theme
-            center: [120.1551, 30.2741], // Hangzhou
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [120.1551, 30.2741],
             zoom: 11,
-            pitch: 45
+            pitch: 0
         });
+
+        const navControl = new mapboxgl.NavigationControl();
+        const geolocateControl = new mapboxgl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: true,
+            showUserHeading: true
+        });
+        map.addControl(navControl, 'top-right');
+        map.addControl(geolocateControl, 'top-right');
+        map.addControl(new mapboxgl.ScaleControl({ unit: 'metric' }), 'top-right');
+
+        function applyChineseLabels() {
+            const style = map.getStyle();
+            if (!style || !Array.isArray(style.layers)) return;
+            style.layers.forEach(layer => {
+                if (layer.type !== 'symbol') return;
+                const textField = map.getLayoutProperty(layer.id, 'text-field');
+                if (!textField) return;
+                try {
+                    map.setLayoutProperty(layer.id, 'text-field', [
+                        'coalesce',
+                        ['get', 'name_zh-Hans'],
+                        ['get', 'name_zh'],
+                        ['get', 'name'],
+                        textField
+                    ]);
+                } catch {
+                    // Keep original field when style expression is incompatible.
+                }
+            });
+        }
+
+        function enable3DBuildings() {
+            const layers = map.getStyle().layers;
+            const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
+            if (!map.getLayer('3d-buildings')) {
+                map.addLayer({
+                    id: '3d-buildings',
+                    source: 'composite',
+                    'source-layer': 'building',
+                    filter: ['==', 'extrude', 'true'],
+                    type: 'fill-extrusion',
+                    minzoom: 15,
+                    paint: {
+                        'fill-extrusion-color': '#94a3b8',
+                        'fill-extrusion-height': ['get', 'height'],
+                        'fill-extrusion-base': ['get', 'min_height'],
+                        'fill-extrusion-opacity': 0.55
+                    }
+                }, labelLayerId);
+            }
+            map.easeTo({ pitch: 60, bearing: -18, duration: 600 });
+            state.is3D = true;
+            document.getElementById('btn-toggle-3d').classList.add('active');
+        }
+
+        function disable3DBuildings() {
+            if (map.getLayer('3d-buildings')) {
+                map.removeLayer('3d-buildings');
+            }
+            map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
+            state.is3D = false;
+            document.getElementById('btn-toggle-3d').classList.remove('active');
+        }
+
+        function switchStyle(type) {
+            state.currentStyle = type;
+            const styleUrl = type === 'satellite'
+                ? 'mapbox://styles/mapbox/satellite-streets-v12'
+                : 'mapbox://styles/mapbox/streets-v12';
+            map.setStyle(styleUrl);
+
+            document.getElementById('btn-style-street').classList.toggle('active', type === 'street');
+            document.getElementById('btn-style-sat').classList.toggle('active', type === 'satellite');
+            closeViewMenu();
+        }
+
+        function openCheckObjectDrawer(id) {
+            if (!id) return;
+            const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open(`/Checks/CheckObjectForm?id=${id}&md=view`, '_blank');
+                return;
+            }
+            manager.openDrawer({
+                title: '检查对象详情',
+                url: `/Checks/CheckObjectForm?id=${id}&md=view`,
+                direction: 'rtl',
+                size: window.innerWidth < 768 ? '100%' : '25%',
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true
+            });
+        }
+
+        function selectObject(item, openDrawer = true) {
+            if (!item) return;
+            state.selectedId = item.id;
+            if (openDrawer) openCheckObjectDrawer(item.id);
+        }
+
+        function buildLayerTree(items) {
+            const countEl = document.getElementById('layer-count');
+            countEl.textContent = `${items.length}个对象`;
+        }
+
+        function setLayerVisible(visible) {
+            state.markerMap.forEach(marker => {
+                const el = marker.getElement();
+                el.style.display = visible ? '' : 'none';
+            });
+        }
+
+        function buildMarkers(items) {
+            state.markerMap.forEach(marker => marker.remove());
+            state.markerMap.clear();
+
+            items.forEach(item => {
+                const el = document.createElement('div');
+                el.style.width = '26px';
+                el.style.height = '26px';
+                el.style.borderRadius = '999px';
+                el.style.background = 'linear-gradient(135deg,#60a5fa,#1d4ed8)';
+                el.style.border = '2px solid rgba(255,255,255,0.85)';
+                el.style.boxShadow = '0 0 12px rgba(96,165,250,0.7)';
+                el.style.cursor = 'pointer';
+                el.title = item.name || '检查对象';
+
+                el.addEventListener('click', () => selectObject(item, true));
+
+                const marker = new mapboxgl.Marker(el).setLngLat([item.lng, item.lat]).addTo(map);
+                state.markerMap.set(item.id, marker);
+            });
+        }
+
+        async function loadObjects() {
+            const resp = await fetch('?handler=LayerData');
+            const res = await resp.json();
+            if (res.code !== 0 || !Array.isArray(res.data)) return;
+
+            state.objects = res.data;
+            buildLayerTree(state.objects);
+            buildMarkers(state.objects);
+            if (state.objects.length > 0) {
+                selectObject(state.objects[0], false);
+            }
+        }
+
+        async function searchAddress() {
+            const input = document.getElementById('address-input');
+            const keyword = (input?.value || '').trim();
+            if (!keyword) return;
+            const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(keyword)}.json?access_token=${encodeURIComponent(mapboxgl.accessToken)}&language=zh-Hans&limit=1`;
+            try {
+                const resp = await fetch(endpoint);
+                const data = await resp.json();
+                const feature = data?.features?.[0];
+                if (!feature) {
+                    EleManager.showWarning('未找到该地址');
+                    return;
+                }
+                const [lng, lat] = feature.center;
+                map.flyTo({ center: [lng, lat], zoom: 15, speed: 0.9 });
+            } catch {
+                EleManager.showError('地址搜索失败');
+            }
+        }
+
+        function resetView() {
+            if (state.is3D) {
+                disable3DBuildings();
+            }
+            switchStyle('street');
+            map.flyTo({ center: [120.1551, 30.2741], zoom: 11, speed: 0.9, curve: 1.2 });
+        }
+
+        async function toggleFullscreen() {
+            const btn = document.getElementById('btn-fullscreen');
+            try {
+                if (!document.fullscreenElement) {
+                    await document.documentElement.requestFullscreen();
+                } else {
+                    await document.exitFullscreen();
+                }
+            } catch {
+                EleManager.showWarning('当前环境不支持全屏切换');
+            }
+            const isFull = !!document.fullscreenElement;
+            if (btn) {
+                btn.classList.toggle('active', isFull);
+                btn.textContent = isFull ? '退出全屏' : '全屏';
+            }
+        }
+
+        function toggleToolbar() {
+            state.toolbarCollapsed = !state.toolbarCollapsed;
+            syncToolbarUI();
+        }
+
+        function syncToolbarUI() {
+            const toolbar = document.querySelector('.map-toolbar');
+            const toggleBtn = document.getElementById('btn-toolbar-toggle');
+            toolbar.classList.toggle('toolbar-collapsed', state.toolbarCollapsed);
+            if (toggleBtn) {
+                toggleBtn.classList.toggle('active', !state.toolbarCollapsed);
+                toggleBtn.title = state.toolbarCollapsed ? '展开工具栏' : '收起工具栏';
+            }
+        }
+
+        function toggleLayerPanel() {
+            state.layerCollapsed = !state.layerCollapsed;
+            syncLayerPanelUI();
+        }
+
+        function syncLayerPanelUI() {
+            const panel = document.getElementById('layer-panel');
+            const toggleBtn = document.getElementById('btn-layer-toggle');
+            panel.classList.toggle('panel-hidden', state.layerCollapsed);
+            if (toggleBtn) {
+                toggleBtn.classList.toggle('active', !state.layerCollapsed);
+                toggleBtn.title = state.layerCollapsed ? '展开图层列表' : '收起图层列表';
+            }
+        }
+
+        function toggleViewMenu() {
+            state.viewMenuOpen = !state.viewMenuOpen;
+            syncViewMenuUI();
+        }
+
+        function closeViewMenu() {
+            state.viewMenuOpen = false;
+            syncViewMenuUI();
+        }
+
+        function syncViewMenuUI() {
+            const menu = document.getElementById('view-menu');
+            const toggleBtn = document.getElementById('btn-view-toggle');
+            if (menu) {
+                menu.classList.toggle('menu-visible', state.viewMenuOpen);
+            }
+            if (toggleBtn) {
+                toggleBtn.classList.toggle('active', state.viewMenuOpen);
+                toggleBtn.title = state.viewMenuOpen ? '收起视图菜单' : '展开视图菜单';
+            }
+        }
 
         map.on('load', () => {
-            // Fetch markers
-            fetch('?handler=Markers')
-                .then(response => response.json())
-                .then(res => {
-                    if (res.code === 0) {
-                        res.data.forEach(marker => {
-                            // Create a DOM element for the marker
-                            const el = document.createElement('div');
-                            el.className = 'marker';
-                            el.style.backgroundImage = 'url(https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png)';
-                            el.style.width = '32px';
-                            el.style.height = '32px';
-                            el.style.backgroundSize = '100%';
-                            el.style.cursor = 'pointer';
+            loadObjects();
+            applyChineseLabels();
 
-                            el.addEventListener('click', () => {
-                                document.getElementById('info-content').innerHTML = `
-                                    <div class="text-left">
-                                        <h3 class="text-white text-lg font-bold">${marker.title}</h3>
-                                        <p class="mt-2">${marker.description}</p>
-                                        <p class="mt-1 text-gray-500">Lat: ${marker.lat.toFixed(4)}</p>
-                                        <p class="text-gray-500">Lng: ${marker.lng.toFixed(4)}</p>
-                                    </div>
-                                `;
-                            });
+            const layerCheck = document.getElementById('layer-checkObject');
+            layerCheck.addEventListener('change', (e) => setLayerVisible(!!e.target.checked));
 
-                            new mapboxgl.Marker(el)
-                                .setLngLat([marker.lng, marker.lat])
-                                .addTo(map);
-                        });
-                    }
-                });
+            document.getElementById('btn-reset').addEventListener('click', resetView);
+            document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+            document.getElementById('btn-search').addEventListener('click', searchAddress);
+            document.getElementById('btn-view-toggle').addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleViewMenu();
+            });
+            document.getElementById('btn-toolbar-toggle').addEventListener('click', toggleToolbar);
+            document.getElementById('btn-layer-toggle').addEventListener('click', toggleLayerPanel);
+            document.getElementById('btn-layer-minimize').addEventListener('click', () => {
+                if (!state.layerCollapsed) {
+                    state.layerCollapsed = true;
+                    syncLayerPanelUI();
+                }
+            });
+            document.getElementById('address-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') searchAddress();
+            });
+            document.getElementById('btn-style-street').addEventListener('click', () => switchStyle('street'));
+            document.getElementById('btn-style-sat').addEventListener('click', () => switchStyle('satellite'));
+            document.getElementById('btn-toggle-3d').addEventListener('click', () => {
+                if (state.is3D) disable3DBuildings();
+                else enable3DBuildings();
+                closeViewMenu();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!state.viewMenuOpen) return;
+                const menu = document.getElementById('view-menu');
+                const trigger = document.getElementById('btn-view-toggle');
+                const target = e.target;
+                if (menu && menu.contains(target)) return;
+                if (trigger && trigger.contains(target)) return;
+                closeViewMenu();
+            });
+
+            document.addEventListener('fullscreenchange', () => {
+                const btn = document.getElementById('btn-fullscreen');
+                if (!btn) return;
+                const isFull = !!document.fullscreenElement;
+                btn.classList.toggle('active', isFull);
+                btn.textContent = isFull ? '退出全屏' : '全屏';
+            });
+
+            syncToolbarUI();
+            syncLayerPanelUI();
+            syncViewMenuUI();
+        });
+
+        map.on('style.load', () => {
+            applyChineseLabels();
+            buildMarkers(state.objects);
+            if (state.is3D) {
+                enable3DBuildings();
+            }
+            const layerCheck = document.getElementById('layer-checkObject');
+            setLayerVisible(layerCheck ? !!layerCheck.checked : true);
         });
     </script>
-</body>
-</html>
+}

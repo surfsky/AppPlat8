@@ -376,6 +376,25 @@ export class EleForm {
         this.showViewer.value = this.previewList.value.length > 0;
     }
 
+    openImageViewerTop(url, urlList = null, startIndex = 0) {
+        const list = Array.isArray(urlList) && urlList.length > 0
+            ? urlList
+            : (Array.isArray(url) ? url : [url]);
+        const cleanedList = list.filter(x => !!x);
+        if (cleanedList.length === 0) return;
+
+        const manager = (window.top && window.top.EleManager)
+            ? window.top.EleManager
+            : window.EleManager;
+
+        if (manager && typeof manager.openImageViewer === 'function') {
+            manager.openImageViewer(cleanedList, startIndex || 0);
+            return;
+        }
+
+        this.handlePreview(url, urlList, startIndex);
+    }
+
     getImageList(value) {
         if (Array.isArray(value)) return value.filter(x => !!x);
         if (value) return [value];

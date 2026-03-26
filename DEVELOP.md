@@ -51,7 +51,7 @@
 - 实现实体:
   1. 在 `App.BLL/DAL/DAL` 文件夹中添加实体类，继承 `EntityBase<T>`，树结构实体类可继承自 `TreeEntityBase<T>`。
   2. 在 `App.BLL/DAL/AppPlatContext.cs` 文件中添加实体集。
-  3. 运行 `dotnet ef migrations add UpdateCheckTag --project App/App.csproj --startup-project App/App.csproj` 创建数据库迁移。
+  3. 运行 `dotnet ef migrations add AddGPS --project App/App.csproj --startup-project App/App.csproj` 创建数据库迁移。
 - 添加权限: 在 `App.BLL/Base/Power` 文件中添加权限常量。
 - 添加页面: 在 `App/Pages` 文件夹中添加, 并应用权限控制。可参照 /pages/admins/users 和 userform 页面。
 - 配置菜单: 运行项目后，在 `Pages/Maintains/Menus` 页面，把页面添加到菜单中，并设置访问权限。

@@ -41,21 +41,17 @@ namespace App.EleUI
                 }
             }
 
-            // Override content with Image template
-            // We use el-image with preview-src-list
-            // Thumbnail URL: add ?w={ThumbnailWidth}
+            // Override content with image template.
+            // Click invokes EleManager.openImageViewer for centralized preview behavior.
             
             output.Content.SetHtmlContent($@"
                 <template #default=""scope"">
                     <el-image
                         v-if=""scope.row.{propName}""
-                        style=""width: {ThumbnailWidth}px; height: {ThumbnailHeight}px; border-radius: 4px;""
+                        style=""width: {ThumbnailWidth}px; height: {ThumbnailHeight}px; border-radius: 4px; cursor: pointer;""
                         :src=""scope.row.{propName} + '?w={ThumbnailWidth}'""
-                        :preview-src-list=""[scope.row.{propName}]""
-                        :initial-index=""0""
                         fit=""cover""
-                        preview-teleported
-                        hide-on-click-modal
+                        @click=""openImagePreview(scope.row.{propName}, 0)""
                     />
                 </template>
             ");

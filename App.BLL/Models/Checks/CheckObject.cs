@@ -28,6 +28,7 @@ namespace App.DAL
         [UI("基础", "地块号")]       public string AreaCode { get; set; }
         [UI("基础", "社会信用代码")]  public string SocialCreditCode { get; set;}
         [UI("基础", "地址")]        public string Address { get; set; }
+        [UI("基础", "GPS")]        public string Gps { get; set; }
         [UI("基础", "建档日期")]     public DateTime? ArchieveDt { get; set; }
         [UI("基础", "领域")]        public string Field { get; set; }  // 需枚举
 
@@ -102,6 +103,7 @@ namespace App.DAL
                 Code,
                 SocialCreditCode,
                 Address,
+                Gps,
                 AreaCode,
                 ArchieveDt,
                 Field,

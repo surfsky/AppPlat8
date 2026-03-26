@@ -22,6 +22,9 @@ namespace App.DAL
         [UI("UI", "网站图标")]             public string Icon { get; set; }
         [UI("UI", "登陆页背景图片")]        public string LoginBg { get; set; }
 
+        // 地图
+        [UI("地图", "MapKey")]            public string MapKey { get; set; }
+
         // 数据
         [UI("数据", "分页大小")]            public int    PageSize              { get; set; } = 50;
         [UI("数据", "默认密码")]            public string DefaultPassword       { get; set; } = "Abc@123";

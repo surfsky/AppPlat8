@@ -14,6 +14,8 @@
         <EleInput For="Item.Code" Label="对象编码"></EleInput>
         <EleInput For="Item.AreaCode" Label="地块号"></EleInput>
         <EleInput For="Item.Address" Label="地址"></EleInput>
+        <EleInput For="Item.Gps" Label="GPS" Placeholder="例如 120.155100, 30.274100"></EleInput>
+        <EleSelector For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/Shared/MapLocator" Icon="Location"></EleSelector>
         <EleSwitch For="Item.InUsed" Label="是否有效"></EleSwitch>
 
         <EleLabel Label="责任信息" FillRow="true"></EleLabel>
@@ -67,7 +69,8 @@
         <EleSwitch For="Item.IsInOnlinePlatform" Label="录入工业在线"></EleSwitch>
         <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
 
-        <EleLabel Label="联系人" FillRow="true"></EleLabel>
+        <EleLabel Label="更多" FillRow="true"></EleLabel>
         <EleButton Type="Primary" Icon="User" Handler="ShowContacts" DisabledFor="Item.Id">联系人</EleButton>
+        <EleButton Type="Primary" Icon="Document" Handler="ShowFiles" DisabledFor="Item.Id">文件</EleButton>
     </EleForm>
 }

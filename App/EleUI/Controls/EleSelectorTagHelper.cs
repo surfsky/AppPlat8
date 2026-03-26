@@ -21,6 +21,9 @@ namespace App.EleUI
         [HtmlAttributeName("TextFor")]
         public ModelExpression TextFor { get; set; }
 
+        [HtmlAttributeName("Icon")]
+        public EleIconName Icon { get; set; } = EleIconName.Search;
+
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -54,6 +57,7 @@ namespace App.EleUI
             var popupUrl = this.PopupUrl;
             var title = Label ?? "选择";
             var multiStr = Multi.ToString().ToLower();
+            var iconName = Icon == EleIconName.None ? EleIconName.Search : Icon;
 
             // 禁用状态
             var disabledForPath = GetBindPath(DisabledFor);
@@ -95,7 +99,7 @@ namespace App.EleUI
                     </div>
                     <span class=""el-input__suffix"">
                         <span class=""el-input__suffix-inner"">
-                            <el-icon><component :is=""({vDisabledExpr}) ? 'Lock' : 'Search'""></component></el-icon>
+                            <el-icon><component :is=""({vDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                         </span>
                     </span>
                 </div>

@@ -1,0 +1,73 @@
+@page
+@model App.Pages.EleUISamples.ImageViewerModel
+
+@section body {
+    <div id="app" class="p-4">
+        <EleCard Title="EleManager.openImageViewer 测试" class="box-card">
+            <Column Gap="4">
+                <EleLabel Label="操作" FillRow="true" />
+                <Row>
+                    <EleButton Type="Primary" Click="window.imageViewerDemo.openSingle()">打开单图</EleButton>
+                    <EleButton Type="Success" Click="window.imageViewerDemo.openGroup(0)">打开多图(第1张)</EleButton>
+                    <EleButton Type="Warning" Click="window.imageViewerDemo.openGroup(2)">打开多图(第3张)</EleButton>
+                    <EleButton Click="window.imageViewerDemo.closeViewer()">关闭预览</EleButton>
+                </Row>
+
+                <EleLabel Label="缩略图点击测试" FillRow="true" />
+                <div class="flex gap-3 flex-wrap">
+                    <img
+                        v-for="(url, idx) in imageUrls"
+                        :key="url"
+                        :src="url + '?w=140'"
+                        style="width: 140px; height: 90px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #e5e7eb;"
+                        @@click="openGroup(idx)"
+                    />
+                </div>
+            </Column>
+        </EleCard>
+    </div>
+}
+
+@section script {
+    <script>
+        const imageUrls = [
+            'https://picsum.photos/id/1015/1200/800',
+            'https://picsum.photos/id/1016/1200/800',
+            'https://picsum.photos/id/1025/1200/800'
+        ];
+
+        const getManager = () =>
+            globalThis?.window?.top?.EleManager ||
+            globalThis?.window?.EleManager ||
+            globalThis?.EleManager ||
+            null;
+
+        window.imageViewerDemo = {
+            imageUrls,
+            openSingle() {
+                const manager = getManager();
+                if (!manager?.openImageViewer) {
+                    EleManager.showError('EleManager.openImageViewer 不可用');
+                    return;
+                }
+                manager.openImageViewer([imageUrls[0]], 0);
+            },
+            openGroup(index) {
+                const manager = getManager();
+                if (!manager?.openImageViewer) {
+                    EleManager.showError('EleManager.openImageViewer 不可用');
+                    return;
+                }
+                manager.openImageViewer(imageUrls, index);
+            },
+            closeViewer() {
+                const manager = getManager();
+                if (manager?.closeImageViewer) {
+                    manager.closeImageViewer();
+                }
+            }
+        };
+    </script>
+
+    <EleApp Expose="imageViewerDemo" />
+}

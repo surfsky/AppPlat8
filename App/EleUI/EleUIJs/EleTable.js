@@ -143,6 +143,23 @@ export class EleTable {
         this.loadData();
     }
 
+    // Open image preview via EleManager from table context.
+    openImagePreview(url, initialIndex = 0) {
+        const imageUrl = typeof url === 'string' ? url.trim() : '';
+        if (!imageUrl) return;
+
+        const manager = (window.top && window.top.EleManager)
+            ? window.top.EleManager
+            : window.EleManager;
+
+        if (manager && typeof manager.openImageViewer === 'function') {
+            manager.openImageViewer([imageUrl], initialIndex);
+            return;
+        }
+
+        window.open(imageUrl, '_blank', 'noopener');
+    }
+
     // 动态获取选项数据（用于树形选择等）
     async fetchOptions(key, url) {
         if (this.options.value[key]) return;

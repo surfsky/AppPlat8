@@ -127,28 +127,19 @@
                     <i class="fas fa-chevron-left text-lg"></i>
                 </button>
                 <!-- Logo - only show on desktop -->
-                <div class="hidden md:flex items-center gap-2 flex-shrink-0" id="logoContainer">
-                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                        <i class="fas fa-rocket text-primary-600 text-base"></i>
-                    </div>
-                    <div class="text-white text-lg font-bold">@Model.SiteTitle</div>
+                <div id="logoContainer" class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                    <i class="fas fa-rocket text-primary-600 text-base"></i>
                 </div>
+                <!-- Title -->
+                <div id="headerTitle" class="text-white text-lg font-bold">@Model.SiteTitle</div>
             </div>
 
-            <!-- Center Title - Always visible and horizontally centered -->
-            <div class="flex-1 text-center px-2 md:px-4 md:hidden ">
-                <h2 id="headerTitle" class="text-white font-semibold truncate text-md md:text-base">仪表板</h2>
-            </div>
 
             <!-- Right Section: Toolbar Icons -->
             <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <!-- AI Chat Button -->
                 <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="AI Chat">
                     <i class="fas fa-comments text-lg"></i>
-                </button>
-                <!-- Refresh Button -->
-                <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="刷新" @@click="refreshMainContent">
-                    <i class="fas fa-rotate-right text-lg"></i>
                 </button>
                 <!-- Message Button -->
                 <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="Settings" @@click="navigateTo('setting-general', '设置 - 常规')">
@@ -157,6 +148,10 @@
                 <!-- Menu Button - only show on mobile -->
                 <button id="menuBtn" class="md:hidden w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" @@click="openSidebar" title="Menu">
                     <i class="fas fa-bars text-lg"></i>
+                </button>
+                <!-- Refresh Button -->
+                <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="刷新" @@click="refreshMainContent">
+                    <i class="fas fa-rotate-right text-lg"></i>
                 </button>
             </div>
         </div>
@@ -339,12 +334,14 @@
                             backBtn.classList.add('flex');
                             backBtn.style.opacity = '1';
                             backBtn.style.pointerEvents = 'auto';
+                            logoContainer.classList.add('hidden');
                         } else {
                             // Hide back button on first page
                             backBtn.classList.add('hidden');
                             backBtn.classList.remove('flex');
                             backBtn.style.opacity = '0.3';
                             backBtn.style.pointerEvents = 'none';
+                            logoContainer.classList.remove('hidden');
                         }
                     }
                 };
@@ -384,7 +381,8 @@
                         // Update title in unified header
                         const headerTitle = document.getElementById('headerTitle');
                         if (headerTitle) {
-                            headerTitle.innerHTML = `<h2 class="text-white font-semibold truncate text-xs sm:text-sm md:text-base">${currentTitle.value}</h2>`;
+                            //headerTitle.innerHTML = `<h2 class="text-white font-semibold truncate text-xs sm:text-sm md:text-base">${currentTitle.value}</h2>`;
+                            headerTitle.innerText = `${currentTitle.value}`;
                         }
 
                         // Update back button visibility
