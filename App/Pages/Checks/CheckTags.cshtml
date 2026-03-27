@@ -7,7 +7,9 @@
 @section body {
     <EleTable Title="检查项标签管理" FormPage="CheckTagForm" EnableBatch="false"  RowKey="id" >
         <Toolbar>
+            <Filters>
             <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+            </Filters>
             <EleButton Type="Primary" Command="Add" Icon="Plus" Width="120px">新增</EleButton>
         </Toolbar>
         <Columns>

@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="检查任务" FormPage="CheckTaskForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Width="250px" Label="名称" ></EleInput>
             <EleDatePicker For="Item.ExpireDt" Width="250px"Label="截止时间" ></EleDatePicker>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

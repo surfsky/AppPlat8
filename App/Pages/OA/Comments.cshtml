@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="评论" FormPage="CommentForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Content" Width="200px" Label="内容" LabelWidth="60px"></EleInput>
             <EleInput For="Item.Author"  Width="200px" Label="评论人" LabelWidth="80px"></EleInput>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

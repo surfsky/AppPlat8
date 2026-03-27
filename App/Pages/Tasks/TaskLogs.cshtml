@@ -7,7 +7,9 @@
 @section body {
     <EleTable Title="任务处理历史" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Status" ></EleInput>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>

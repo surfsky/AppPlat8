@@ -7,9 +7,11 @@
 @section body {
     <EleTable Title="检查记录" FormPage="CheckLogForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.CheckObject.Name" Width="250px" Label="对象名称" ></EleInput>
             <EleInput For="Item.Checker.Name" Width="250px" Label="检查人" ></EleInput>
             <EleDatePicker For="Item.CheckDt" Label="检查时间" Width="250px"></EleDatePicker>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

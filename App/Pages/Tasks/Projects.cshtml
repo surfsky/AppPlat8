@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="项目" FormPage="ProjectForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Width="200px" Label="名称" LabelWidth="60px"></EleInput>
             <EleInput For="Item.PersonInCharge" Width="200px" Label="责任人" LabelWidth="80px"></EleInput>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

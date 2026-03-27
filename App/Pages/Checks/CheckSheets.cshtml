@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="检查表" FormPage="CheckSheetForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Width="250px" Label="名称" ></EleInput>
             <EleSelect For="Item.Scope" Width="250px" Label="领域"  Clearable="true" ></EleSelect>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

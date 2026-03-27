@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="事件" FormPage="EventForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Title" Width="200px" Label="标题" LabelWidth="60px"></EleInput>
             <EleSelect For="Item.TypeId" Width="150px" Label="类别" LabelWidth="60px" Items="Model.EventTypes" Clearable="true"></EleSelect>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

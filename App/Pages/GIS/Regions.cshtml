@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="GIS区域" FormPage="RegionForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Width="200px" Label="名称" ></EleInput>
             <EleInput For="Item.RegionType" Width="150px" Label="类型" ></EleInput>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

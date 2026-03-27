@@ -7,9 +7,11 @@
 @section body {
     <EleTable Title="公告" FormPage="AnnounceForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleSelect For="Item.Status" Width="200px" Label="状态" ></EleSelect>
             <EleDatePicker For="Item.CreateTime" Type="DateRange" StartPlaceholder="开始日期" EndPlaceholder="结束日期" Width="600px" Label="创建时间" ></EleDatePicker>
             <EleInput For="Item.Title" Width="200px" Label="标题" ></EleInput>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

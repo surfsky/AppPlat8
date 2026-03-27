@@ -7,9 +7,11 @@
 @section body {
     <EleTable Title="预算" FormPage="BudgetForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Width="200px" Label="名称" LabelWidth="60px"></EleInput>
             <EleNumber For="Item.Year" Width="120px" Label="年份" LabelWidth="60px"></EleNumber>
             <EleSelect For="Item.TypeId" Width="150px" Label="分类" LabelWidth="60px" Items="Model.BudgetTypes" Clearable="true"></EleSelect>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

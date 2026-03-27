@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="固定资产" FormPage="AssetForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Label="名称" Width="200px"></EleInput>
             <EleSelect For="Item.Category" Label="类别" Width="200px" Clearable="true"></EleSelect>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

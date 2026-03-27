@@ -8,8 +8,10 @@
 @section body {
     <EleTable Title="对象联系人" FormPage="ObjectContactForm?objectId=@Model.ObjectId&objectName=@objectNameEncoded" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId" DeleteHandler="?handler=Delete&objectId=@Model.ObjectId">
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Width="220px" Label="姓名"></EleInput>
             <EleInput For="Item.Phone" Width="220px" Label="联系方式"></EleInput>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" PopupUrl="ObjectContactForm?objectId=@Model.ObjectId&objectName=@objectNameEncoded" Icon="Plus">新增</EleButton>

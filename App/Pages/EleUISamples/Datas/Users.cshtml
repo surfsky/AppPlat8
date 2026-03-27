@@ -8,9 +8,11 @@
 @section body {
     <EleTable Title="用户列表" FormPage="UserForm" EnableBatch="true">
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Label="账号" Width="200px"></EleInput>
             <EleInput For="Item.ChineseName" Label="中文名" Width="200px"></EleInput>
             <EleSelect For="Item.RoleName" Label="角色" Items="Model.RoleList" Clearable="true" Width="200px"></EleSelect>
+            </Filters>
             <div class="flex-1 w-200">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>

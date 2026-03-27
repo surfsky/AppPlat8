@@ -7,7 +7,9 @@
 @section body {
     <EleTable Title="项目进度历史" FormPage="ProjectLogForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Project.Name" Width="250px" Label="项目" ></EleInput>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>

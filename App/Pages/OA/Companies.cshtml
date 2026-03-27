@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="厂商" FormPage="CompanyForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Width="250px" Label="名称" LabelWidth="70px"></EleInput>
             <EleInput For="Item.UnifiedSocialCreditCode" Width="500px" Label="统一社会信用代码" ></EleInput>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus" VPower="CompanyNew">新增</EleButton>

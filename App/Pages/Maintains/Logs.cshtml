@@ -8,11 +8,13 @@
 @section body {
     <EleTable Title="日志管理" FormPage="/Maintains/LogForm" EnableBatch="false" >
         <Toolbar>
+            <Filters>
              <EleInput For="Item.Operator" Label="操作者"></EleInput>
              <EleInput For="Item.Message" Label="内容"></EleInput>
              <EleInput For="Item.IP" Label="IP"></EleInput>
              <EleSelect For="Item.Level" Label="级别" Clearable="true"></EleSelect>
              <EleDatePicker For="Item.CreateDt" Label="起始时间"></EleDatePicker>
+            </Filters>
              <div class="flex-1 w-200">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete"  Icon="Delete">批量删除</EleButton>

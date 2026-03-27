@@ -7,8 +7,10 @@
 @section body {
     <EleTable Title="文档" FormPage="ArticleForm" EnableBatch="true" >
         <Toolbar>
+            <Filters>
             <EleInput For="Item.Name" Label="名称" Width="400px"></EleInput>
             <EleTreeSelect For="Item.CategoryId" Label="目录" Items="Model.Categories" Clearable="true" Width="400px"></EleTreeSelect>
+            </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
