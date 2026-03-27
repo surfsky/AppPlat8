@@ -1,4 +1,4 @@
-const CACHE_NAME = 'appplat-cache-v2';
+const CACHE_NAME = 'appplat-cache-v3';
 const APP_SHELL = [
   '/',
   '/Login',
@@ -38,6 +38,15 @@ self.addEventListener('fetch', (event) => {
 
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  // Avoid stale framework modules and dynamic Razor handlers.
+  // Always use network for /res/* and requests with ?handler=...
+  const hasHandler = requestUrl.searchParams.has('handler');
+  const isRuntimeModule = requestUrl.pathname.startsWith('/res/');
+  if (hasHandler || isRuntimeModule) {
+    event.respondWith(fetch(event.request));
     return;
   }
 

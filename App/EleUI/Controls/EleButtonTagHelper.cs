@@ -117,7 +117,12 @@ namespace App.EleUI
             // 4) Click -> native onclick
             // 5) VClick -> v-on:click
             if (!string.IsNullOrEmpty(Handler))     output.Attributes.SetAttribute("v-on:click", $"postHandler('{Handler}')");
-            else if (Command != Command.None)       output.Attributes.SetAttribute("v-on:click", $"invokeCommand('{Command.ToString()}')");
+            else if (Command != Command.None)
+            {
+                // 统一把 Search 路由到 Data，确保查询走 OnGetData。
+                var commandName = Command == Command.Search ? "Data" : Command.ToString();
+                output.Attributes.SetAttribute("v-on:click", $"invokeCommand('{commandName}')");
+            }
             else if (!string.IsNullOrEmpty(PopupUrl))
             {
                 var popupUrlExpr = PopupUrl.Replace("'", "\\'");

@@ -17,6 +17,7 @@ export class EleTable {
         this.pageSize = ref(options.pageSize || 10);
         this.sortField = ref(options.defaultSortField || 'Id');
         this.sortDirection = ref(options.defaultSortDirection || 'DESC');
+        this.filtersDrawerVisible = ref(false);
         this.dataHandler   = options.dataHandler   || '?handler=Data';
         this.deleteHandler = options.deleteHandler || '?handler=Delete';
         this.exportHandler = options.exportHandler || '?handler=Export';
@@ -312,7 +313,11 @@ export class EleTable {
         const key = ('' + name).trim().toLowerCase();
 
         // Handle special cases
-        if (name === 'Data' || key === 'search') {
+        if (name === 'Data') {
+            return this.loadData();
+        }
+        if (key === 'search') {
+            this.pageIndex.value = 0;
             return this.loadData();
         }
         if (name === 'Export') {
@@ -352,6 +357,20 @@ export class EleTable {
             EleManager.showError('请求失败');
             console.error(e);
         }
+    }
+
+    openFiltersDrawer() {
+        this.filtersDrawerVisible.value = true;
+    }
+
+    closeFiltersDrawer() {
+        this.filtersDrawerVisible.value = false;
+    }
+
+    async applyFiltersAndSearch() {
+        this.filtersDrawerVisible.value = false;
+        this.pageIndex.value = 0;
+        return this.invokeCommand('Data');
     }
 
     // Resize Logic

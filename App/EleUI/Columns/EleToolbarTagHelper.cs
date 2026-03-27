@@ -22,7 +22,7 @@ namespace App.EleUI
             var childContent = await output.GetChildContentAsync();
             var content = childContent.GetContent();
             var wrapper = $@"
-        <div class=""w-full bg-white px-5 pt-5 pb-0 grid gap-x-4 gap-y-0 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ele-table-toolbar ele-table-toolbar-compact-label"">
+        <div class=""w-full bg-white px-5 pt-5 pb-0 flex flex-wrap items-start gap-2 md:grid md:gap-x-4 md:gap-y-0 md:grid-cols-2 lg:grid-cols-4 ele-table-toolbar ele-table-toolbar-compact-label"">
             {content}
         </div>
             ";
