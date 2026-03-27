@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="App icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f6af0"/>
+      <stop offset="100%" stop-color="#0a58ca"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="28" y="28" width="456" height="456" rx="118" fill="url(#bg)"/>
+
+  <!-- Simplified rocket mark with thicker shapes for small-size clarity -->
+  <g transform="translate(256 256) rotate(-28) translate(-256 -256)">
+    <ellipse cx="256" cy="216" rx="76" ry="120" fill="#ffffff"/>
+    <circle cx="256" cy="200" r="30" fill="#0b5ed7"/>
+
+    <path d="M180 240 L130 282 L170 300 Z" fill="#dbeafe"/>
+    <path d="M332 240 L382 282 L342 300 Z" fill="#dbeafe"/>
+    <path d="M220 328 L256 310 L292 328 L256 420 Z" fill="#bfdbfe"/>
+  </g>
+</svg>

@@ -77,7 +77,7 @@
     - 数据访问权限：用户表有一个授权组织ID（User.AuthOrgId）, 其他数据表若有 OrgId 的参数，根据用户AuthOrgId来进行过滤。对应的组织树可用
         <EleTreeSelect For="Item.DutyOrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
         该API在 /app/apis/orgs/GetAuthOrgTree 中实现。
-
+- Tailwind 色彩在 `/wwwroot/tailwindConfig.js` 中配置。
 
 ## 菜单
 

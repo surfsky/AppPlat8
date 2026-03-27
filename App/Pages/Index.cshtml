@@ -9,6 +9,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- 启用全屏模式（仅iOS Safari生效） -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- 核心：沉浸式状态栏配置（iOS/Android通用） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- 状态栏样式（仅iOS生效） -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- Android 沉浸式状态栏 -->
+    <meta name="theme-color" content="#0b5ed7">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0b5ed7">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b5ed7">
+    <meta name="apple-mobile-web-app-title" content="@Model.SiteTitle">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+
     <title>@Model.SiteTitle - Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
@@ -141,10 +159,6 @@
                 <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="AI Chat">
                     <i class="fas fa-comments text-lg"></i>
                 </button>
-                <!-- Message Button -->
-                <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="Settings" @@click="navigateTo('setting-general', '设置 - 常规')">
-                    <i class="fas fa-envelope text-lg"></i>
-                </button>
                 <!-- Menu Button - only show on mobile -->
                 <button id="menuBtn" class="md:hidden w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" @@click="openSidebar" title="Menu">
                     <i class="fas fa-bars text-lg"></i>
@@ -197,6 +211,14 @@
     </div>
 
     <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/service-worker.js').catch(function (error) {
+                    console.warn('Service Worker register failed:', error);
+                });
+            });
+        }
+
         const { createApp, ref, computed, onMounted } = Vue;
 
         createApp({

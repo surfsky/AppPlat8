@@ -10,6 +10,23 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- 核心：沉浸式状态栏配置（iOS/Android通用） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- 状态栏样式（仅iOS生效） -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- 启用全屏模式（仅iOS Safari生效） -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- Android 沉浸式状态栏 -->
+    <meta name="theme-color" content="#0b5ed7">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0b5ed7">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b5ed7">
+    <meta name="apple-mobile-web-app-title" content="@Model.WinTitle">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    
+
     <title>@Model.WinTitle</title>
     <!-- Element Plus & Vue -->
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
@@ -420,6 +437,14 @@
         
         app.use(ElementPlus);
         app.mount('#app');
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/service-worker.js').catch(function (error) {
+                    console.warn('Service Worker register failed:', error);
+                });
+            });
+        }
     </script>
 </body>
 </html>
