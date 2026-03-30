@@ -7,7 +7,7 @@
 
 @section body {
     <EleForm Model="form" LabelWidth="120px">
-        <EleNumber For="Item.ProjectId" Label="项目Id" Disabled="true"></EleNumber>
+        <EleNumber For="Item.ProjectId" Label="项目Id" Enabled="false"></EleNumber>
         <EleDatePicker For="Item.LogDt" Label="时间" Type="@EleDatePickerType.DateTime" Required="true"></EleDatePicker>
         <EleInput For="Item.Person" Label="人员" Required="true"></EleInput>
         <EleInput For="Item.Status" Label="状态"></EleInput>

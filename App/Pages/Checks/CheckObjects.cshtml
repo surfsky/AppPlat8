@@ -25,7 +25,10 @@
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
-            <EleOpColumn UPower="CheckObjectEdit" DPower="CheckObjectDelete" Width="100" Fixed="right"></EleOpColumn>
+            <EleOpColumn Width="100" Fixed="right">
+                <Op Handler="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.CheckObjectEdit)"></Op>
+                <Op Handler="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckObjectDelete)"></Op>
+            </EleOpColumn>
             <EleColumn For="Item.Id" Label="Id" Link="true" Width="60" Sortable="true"></EleColumn>
             <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="150" Sortable="true"></EleColumn>
             <EleColumn For="Item.ObjectType" Label="类型" Width="100" Format="Enum"></EleColumn>

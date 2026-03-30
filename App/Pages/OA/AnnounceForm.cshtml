@@ -9,10 +9,10 @@
 @section body {
 <EleForm Model="form" LabelWidth="120px">
     <EleInput For="Item.Title" Label="标题" Required="true"></EleInput>
-    <EleInput For="Item.Author" Label="作者" Disabled="true"></EleInput>
+    <EleInput For="Item.Author" Label="作者" Enabled="false"></EleInput>
     <EleSelect For="Item.Status" Label="状态"></EleSelect>
-    <EleDatePicker For="Item.CreateTime" Label="创建时间" Type="@EleDatePickerType.DateTime" Disabled="true"></EleDatePicker>
-    <EleDatePicker For="Item.PublishTime" Label="发布时间" Type="@EleDatePickerType.DateTime" Disabled="true"></EleDatePicker>
+    <EleDatePicker For="Item.CreateTime" Label="创建时间" Type="@EleDatePickerType.DateTime" Enabled="false"></EleDatePicker>
+    <EleDatePicker For="Item.PublishTime" Label="发布时间" Type="@EleDatePickerType.DateTime" Enabled="false"></EleDatePicker>
     <EleNumber For="Item.Priority" Label="优先级"></EleNumber>
     <EleNumber For="Item.ViewCount" Label="浏览次数" Enabled="false"></EleNumber>
     <EleSwitch For="Item.IsTop" Label="是否置顶"></EleSwitch>

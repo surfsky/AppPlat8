@@ -15,12 +15,15 @@
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" VPower="AnnounceDelete">批量删除</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="@Auth.CheckPower(Power.AnnounceDelete)">批量删除</EleButton>
             </div>
         </Toolbar>
         <Columns>
             <EleNumColumn ></EleNumColumn>
-            <EleOpColumn UPower="AnnounceEdit" DPower="AnnounceDelete" Width="80" Fixed="right"></EleOpColumn>
+            <EleOpColumn Width="80" Fixed="right">
+                <Op Handler="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.AnnounceEdit)"></Op>
+                <Op Handler="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.AnnounceDelete)"></Op>
+            </EleOpColumn>
             <EleColumn For="Item.Title" Label="标题" Link="true" MinWidth="200" Sortable="true"></EleColumn>
             <EleColumn For="Item.Author" Label="作者" Width="120" Sortable="true"></EleColumn>
             <EleColumn For="Item.StatusName" Label="状态" Width="100"></EleColumn>

@@ -125,10 +125,10 @@ namespace App.DAL
         {
             // List<long> -> string 转换
             var converter = new ValueConverter<List<long>, string>(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => string.IsNullOrWhiteSpace(v)
                     ? new List<long>()
-                    : JsonSerializer.Deserialize<List<long>>(v, (JsonSerializerOptions?)null) ?? new List<long>());
+                    : JsonSerializer.Deserialize<List<long>>(v, (JsonSerializerOptions)null) ?? new List<long>());
 
             // List<long> 比较器
             var comparer = new ValueComparer<List<long>>(

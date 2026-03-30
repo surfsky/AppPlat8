@@ -131,7 +131,7 @@ namespace App.EleUI
 
         protected override void AddCommonAttributes(TagHelperContext context, TagHelperOutput output)
         {
-            // Call base to handle VModel, explicit Width/Height/Disabled
+            // Call base to handle VModel, explicit Width/Height/Enabled
             base.AddCommonAttributes(context, output);
             if (!string.IsNullOrEmpty(Placeholder))      
                 output.Attributes.SetAttribute("placeholder", Placeholder);
@@ -155,7 +155,7 @@ namespace App.EleUI
             }
 
             // Enable/Disable
-            if (!Disabled.HasValue && DisabledFor == null)
+            if (!context.AllAttributes.ContainsName("Enabled") && EnabledFor == null)
                 output.Attributes.SetAttribute(":disabled", "readOnly");
 
             // Clearable default logic

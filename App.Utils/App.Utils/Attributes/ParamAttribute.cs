@@ -23,12 +23,11 @@ namespace App.Utils
     [Flags, UI("页面访问模式")]
     public enum PageMode : int
     {
+        [UI("无")]   None = 0,
         [UI("查看")] View = 1,
         [UI("新建")] New = 2,
         [UI("编辑")] Edit = 4,
         [UI("选择")] Select = 8,
-
-        [UI("无")]   None = 0,
         [UI("全部")] All = View | New | Edit | Select,
     }
 

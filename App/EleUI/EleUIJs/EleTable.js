@@ -175,13 +175,13 @@ export class EleTable {
     }
 
     // 打开表单
-    openForm(id, urlBase) { this.openDataDrawer(id, urlBase, 'edit'); }
+    openForm(id, urlBase, drawerTitle = null) { this.openDataDrawer(id, urlBase, 'edit', drawerTitle); }
 
     // 打开详情
-    openView(id, urlBase) { this.openDataDrawer(id, urlBase, 'view'); }
+    openView(id, urlBase, drawerTitle = null) { this.openDataDrawer(id, urlBase, 'view', drawerTitle); }
 
     // 打开表单
-    openDataDrawer(id, urlBase, modeParam) {
+    openDataDrawer(id, urlBase, modeParam, drawerTitle = null) {
         const resolvedBase = this.resolveDrawerUrlBase(urlBase);
 
         // id, mode, selectId
@@ -195,7 +195,7 @@ export class EleTable {
 
         const separator = resolvedBase.includes('?') ? '&' : '?';
         var url = `${resolvedBase}${separator}${query.toString()}`;
-        this.openDrawer(url);
+        this.openDrawer(url, null, 'rtl', drawerTitle);
     }
 
     // Resolve relative FormPage against current page URL before handing it to top-level drawer host.
@@ -210,9 +210,9 @@ export class EleTable {
     }
 
     // 打开抽屉式表单
-    openDrawer(url, width=null, position = 'rtl') {
+    openDrawer(url, width=null, position = 'rtl', titleOverride = null) {
         const size = width || (window.innerWidth < 768 ? '100%' : '50%');
-        const title = this.config?.drawerTitle || this.config?.title || '编辑';
+        const title = titleOverride || this.config?.drawerTitle || this.config?.title || '编辑';
         this.drawerSize.value = size;
         this.drawerPosition.value = position || 'rtl';
         EleManager.openDrawer({

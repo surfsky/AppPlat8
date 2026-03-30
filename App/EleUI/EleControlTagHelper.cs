@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using App.DAL;
-using App.Components;
 using System;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -41,16 +39,15 @@ namespace App.EleUI
         [HtmlAttributeName("Shadow")]
         public string Shadow { get; set; }
 
-        [HtmlAttributeName("Disabled")]
-        public bool? Disabled { get; set; } // Static disabled state (true/false)
+        [HtmlAttributeName("Enabled")]
+        public bool Enabled { get; set; } = true; // Static enabled state (true/false)
 
-        //
-        // 权限控制相关属性
-        //
-        /// <summary>该控件可见需要的权限</summary>
-        [HtmlAttributeName("VPower")]
-        public Power VPower { get; set; } = Power.Web;
+        [HtmlAttributeName("EnabledFor")]
+        public ModelExpression EnabledFor { get; set; } // Strongly typed sugar for enabled binding
 
+        /// <summary>控件是否可见。默认 true</summary>
+        [HtmlAttributeName("Visible")]
+        public bool Visible { get; set; } = true;
 
         //
         // vue 相关属性
@@ -59,19 +56,16 @@ namespace App.EleUI
         [HtmlAttributeName("VModel")]
         public string VModel { get; set; }
 
-        [HtmlAttributeName("DisabledFor")]
-        public ModelExpression DisabledFor { get; set; } // Strongly typed sugar for disabled binding
 
-
-
-        /// <summary>检查权限</summary>
+        /// <summary>检查可见性</summary>
         protected bool CheckPower(TagHelperOutput output)
         {
-            if (!Auth.CheckPower(ViewContext.HttpContext, VPower))
+            if (!Visible)
             {
                 output.SuppressOutput();
                 return false;
             }
+
             return true;
         }
 
@@ -129,18 +123,17 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("style", style);
 
             // Enable/Disable
-            var disabledForPath = GetBindPath(DisabledFor);
-            if (!string.IsNullOrWhiteSpace(disabledForPath))
+            var enabledForPath = GetBindPath(EnabledFor);
+            if (!string.IsNullOrWhiteSpace(enabledForPath))
             {
-                var clientPath = ToClientFormPath(disabledForPath);
-                var modelType = Nullable.GetUnderlyingType(DisabledFor.ModelExplorer.ModelType) ?? DisabledFor.ModelExplorer.ModelType;
-                var disabledExpr = modelType == typeof(bool) ? clientPath : $"!({clientPath})";
+                var clientPath = ToClientFormPath(enabledForPath);
+                var disabledExpr = $"!({clientPath})";
                 output.Attributes.SetAttribute(":disabled", disabledExpr);
             }
             else
             {
-                if (Disabled.HasValue)
-                    output.Attributes.SetAttribute(":disabled", Disabled.Value.ToString().ToLower());
+                if (context.AllAttributes.ContainsName("Enabled"))
+                    output.Attributes.SetAttribute(":disabled", (!Enabled).ToString().ToLower());
             }
         }
 

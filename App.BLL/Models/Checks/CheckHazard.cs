@@ -69,9 +69,10 @@ namespace App.DAL
                 IsIn141
             };
         }
-        public static IQueryable<CheckHazard> Search(string objectName, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
+        public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
         {
             IQueryable<CheckHazard> q = CheckHazard.IncludeSet;
+            if (objectId.IsNotEmpty())     q = q.Where(o => o.ObjectId == objectId.Value);
             if (checkerId.IsNotEmpty())    q = q.Where(o => o.Check.CheckerId == checkerId.Value);
             if (objectName.IsNotEmpty())   q = q.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));
             if (checkerName.IsNotEmpty())  q = q.Where(o => o.Checker.Name.Contains(checkerName.Trim()));

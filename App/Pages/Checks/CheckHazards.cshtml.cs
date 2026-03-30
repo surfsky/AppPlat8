@@ -16,15 +16,28 @@ namespace App.Pages.Checks
     [CheckPower(Power.CheckHazardView)]
     public class CheckHazardsModel : AdminModel
     {
+        [BindProperty(SupportsGet = true)]
+        public long? ObjectId { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string ObjectName { get; set; }
+
         public CheckHazard Item { get; set; }
 
-        public void OnGet()
+        public void OnGet(long? objectId, string objectName)
         {
+            ObjectId = objectId;
+            ObjectName = objectName;
+
+            if (ObjectId.GetValueOrDefault() > 0 && string.IsNullOrWhiteSpace(ObjectName))
+            {
+                ObjectName = CheckObject.Get(ObjectId.Value)?.Name ?? string.Empty;
+            }
         }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string objectName, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
+        public async Task<IActionResult> OnGetData(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
         {
-            var list = CheckHazard.Search(objectName, checkerName, checkerId, status, createStartDt).SortPageExport(pi);
+            var list = CheckHazard.Search(objectName, objectId, checkerName, checkerId, status, createStartDt).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

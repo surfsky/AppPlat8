@@ -18,6 +18,7 @@ namespace App
     {
         public string JsonData { get; set; } = "{}";
 
+        /// <summary>页面模式，Add/Edit/View/Select</summary>
         public PageMode Mode
         {
             get

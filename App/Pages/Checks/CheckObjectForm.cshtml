@@ -70,7 +70,9 @@
         <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
 
         <EleLabel Label="更多" FillRow="true"></EleLabel>
-        <EleButton Type="Primary" Icon="User" Handler="ShowContacts" DisabledFor="Item.Id">联系人</EleButton>
-        <EleButton Type="Primary" Icon="Document" Handler="ShowFiles" DisabledFor="Item.Id">文件</EleButton>
+        <EleButton Type="Primary" Look="Text" Icon="User" Handler="ShowContacts" EnabledFor="Item.Id">联系人</EleButton>
+        <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">文件</EleButton>
+        <EleButton Type="Primary" Look="Text" Icon="Histogram" Handler="ShowCheckLogs" EnabledFor="Item.Id">检查历史</EleButton>
+        <EleButton Type="Primary" Look="Text" Icon="Warning" Handler="ShowHazards" EnabledFor="Item.Id">隐患清单</EleButton>
     </EleForm>
 }

@@ -7,7 +7,7 @@
 
 @section body {
     <EleForm LabelWidth="120px">
-        <EleInput For="Item.Name" Label="账号" Required="true" Disabled="@Model.IsNameEditable"></EleInput>
+        <EleInput For="Item.Name" Label="账号" Required="true" Enabled="@(!Model.IsNameEditable)"></EleInput>
         <EleInput For="Item.RealName" Label="姓名" Required="true"></EleInput>
         <EleTreeSelect For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" IdField="id" NameField="name" Required="true" CheckStrictly="true"></EleTreeSelect>
         <EleSelect For="Item.RoleIds" Label="角色" Items="Model.RoleList" Multiple="true" ></EleSelect>

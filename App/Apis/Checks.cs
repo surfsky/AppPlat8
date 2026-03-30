@@ -164,9 +164,9 @@ namespace App.API
         // 隐患
         //--------------------------------------------
         [HttpApi("隐患列表", AuthLogin = true)]
-        public static APIResult GetCheckHazards(Paging pi, string objectName, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
+        public static APIResult GetCheckHazards(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
         {
-            return CheckHazard.Search(objectName, checkerName, checkerId, status, createStartDt).SortPageExport(pi).ToResult();
+            return CheckHazard.Search(objectName, objectId, checkerName, checkerId, status, createStartDt).SortPageExport(pi).ToResult();
         }
 
         [HttpApi("隐患详情", AuthLogin = true)]

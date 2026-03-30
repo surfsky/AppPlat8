@@ -6,7 +6,7 @@
 
 @section body {
     <EleForm Model="form" LabelWidth="120px" SaveHandler="?handler=Save&uniId=@Model.UniId">
-        <EleInput For="Item.Key" Label="关联键" Disabled="true"></EleInput>
+        <EleInput For="Item.Key" Label="关联键" Enabled="false"></EleInput>
         <EleSelect For="Item.Type" Label="类型" Required="true"></EleSelect>
         <EleImageUpload For="Item.Content" Label="上传图片" FillRow="true"></EleImageUpload>
         <EleInput For="Item.Content" Label="附件地址" FillRow="true" Required="true"></EleInput>

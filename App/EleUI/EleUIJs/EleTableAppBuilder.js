@@ -49,8 +49,8 @@ export class EleTableAppBuilder extends EleAppBuilder {
 
                 // Form page URL configuration
                 const editPage = config.editPage || 'Form';
-                const openForm = (id) => table.openForm(id, editPage);
-                const openView = (id) => table.openView(id, editPage);
+                const openForm = (id, urlBase, drawerTitle) => table.openForm(id, urlBase || editPage, drawerTitle);
+                const openView = (id, urlBase, drawerTitle) => table.openView(id, urlBase || editPage, drawerTitle);
 
                 // Permissions
                 const hasEditPower = ref(false);

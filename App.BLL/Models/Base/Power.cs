@@ -167,7 +167,7 @@ namespace App.DAL
         [UI("文档", "文档查看")]               ArticleView = 251,
         [UI("文档", "文档修改")]               ArticleEdit = 252,
         [UI("文档", "文档删除")]               ArticleDelete = 253,
-        [UI("文档", "文档目录管理")]           ArticleCategoryEdit = 255,
+        [UI("文档", "文档目录管理")]           ArticleDirEdit = 255,
 
         [UI("任务", "任务新增")]               TaskNew = 260,
         [UI("任务", "任务查看")]               TaskView = 261,

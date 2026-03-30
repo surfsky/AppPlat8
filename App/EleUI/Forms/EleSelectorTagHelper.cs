@@ -60,17 +60,18 @@ namespace App.EleUI
             var iconName = Icon == EleIconName.None ? EleIconName.Search : Icon;
 
             // 禁用状态
-            var disabledForPath = GetBindPath(DisabledFor);
+            var enabledForPath = GetBindPath(EnabledFor);
             string vDisabledExpr;
-            if (!string.IsNullOrWhiteSpace(disabledForPath))
+            if (!string.IsNullOrWhiteSpace(enabledForPath))
             {
-                var clientPath = ToClientFormPath(disabledForPath);
-                var modelType = Nullable.GetUnderlyingType(DisabledFor.ModelExplorer.ModelType) ?? DisabledFor.ModelExplorer.ModelType;
-                vDisabledExpr = modelType == typeof(bool) ? clientPath : $"!({clientPath})";
+                var clientPath = ToClientFormPath(enabledForPath);
+                vDisabledExpr = $"!({clientPath})";
             }
             else
             {
-                vDisabledExpr = Disabled.HasValue ? Disabled.Value.ToString().ToLower() : "readOnly";
+                vDisabledExpr = context.AllAttributes.ContainsName("Enabled")
+                    ? (!Enabled).ToString().ToLower()
+                    : "readOnly";
             }
 
             //

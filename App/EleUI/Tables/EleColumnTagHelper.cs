@@ -27,42 +27,17 @@ namespace App.EleUI
         Enum, // 枚举
         Custom // 自定义格式化字符串
     }
-    
-    /// <summary>表格列定义标签助手。</summary>
-    [HtmlTargetElement("Columns", ParentTag = "EleTable")]
-    public class EleColumnsTagHelper : TagHelper
-    {
-        public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
-        {
-            var childContent = await output.GetChildContentAsync();
-            var tableContext = (TableContext)context.Items[typeof(TableContext)];
-            tableContext.ColumnsHtml.Append(childContent.GetContent());
-            output.SuppressOutput();
-        }
-    }
 
 
-    /// <summary>表格列定义标签助手。</summary> 
+    /// <summary>文本列</summary> 
     [HtmlTargetElement("EleColumn", ParentTag = "Columns")] 
-    public class EleColumnTagHelper : TagHelper
+    public class EleColumnTagHelper : EleColumnBaseTagHelper
     {
         [HtmlAttributeName("For")]
         public ModelExpression For { get; set; }
 
-        [HtmlAttributeName("Label")]
-        public string Label { get; set; }
-
         [HtmlAttributeName("Prop")]
         public string Prop { get; set; }
-
-        [HtmlAttributeName("Width")]
-        public int? Width { get; set; }
-
-        [HtmlAttributeName("MinWidth")]
-        public int? MinWidth { get; set; }
-
-        [HtmlAttributeName("Sortable")]
-        public bool Sortable { get; set; } = true;
 
         [HtmlAttributeName("Format")]
         public ColumnFormat Format { get; set; } = ColumnFormat.Auto;
@@ -73,10 +48,17 @@ namespace App.EleUI
         [HtmlAttributeName("Link")]
         public bool Link { get; set; }
 
+        public EleColumnTagHelper()
+        {
+            Sortable = true;
+        }
+
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
-            output.TagName = "el-table-column";
-            output.TagMode = TagMode.StartTagAndEndTag; // Force full closing tag
+            if (!CheckVisible(output))
+                return;
+
+            SetupColumnShell(output);
 
             string propName = Prop;
             string labelText = Label;
@@ -117,11 +99,9 @@ namespace App.EleUI
                 }
             }
 
-            if (!string.IsNullOrEmpty(propName))   output.Attributes.SetAttribute("prop", propName);
-            if (!string.IsNullOrEmpty(labelText))  output.Attributes.SetAttribute("label", labelText);
-            if (Width.HasValue)                    output.Attributes.SetAttribute("width", Width.Value);
-            if (MinWidth.HasValue)                 output.Attributes.SetAttribute("min-width", MinWidth.Value);
-            if (Sortable)                          output.Attributes.SetAttribute("sortable", "custom");
+            if (!string.IsNullOrEmpty(propName))
+                output.Attributes.SetAttribute("prop", propName);
+            ApplyBaseColumnAttributes(output, labelText);
 
             // 2. Handle Template Content
             var childContent = await output.GetChildContentAsync();

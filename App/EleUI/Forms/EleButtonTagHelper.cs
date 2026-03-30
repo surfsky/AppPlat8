@@ -81,6 +81,10 @@ namespace App.EleUI
         [HtmlAttributeName("PopupUrl")]
         public string PopupUrl { get; set; }
 
+        /// <summary>弹出页面标题。与 PopupUrl 配合使用。</summary>
+        [HtmlAttributeName("PopupTitle")]
+        public string PopupTitle { get; set; }
+
         /// <summary>命令类型。如果设置了命令类型，点击事件将自动绑定为 invokeCommand('{Command.ToString()}')</summary>
         [HtmlAttributeName("Command")]
         public Command Command { get; set; } // Default is None (0)
@@ -126,7 +130,15 @@ namespace App.EleUI
             else if (!string.IsNullOrEmpty(PopupUrl))
             {
                 var popupUrlExpr = PopupUrl.Replace("'", "\\'");
-                output.Attributes.SetAttribute("v-on:click", $"openForm(0, '{popupUrlExpr}')");
+                if (!string.IsNullOrEmpty(PopupTitle))
+                {
+                    var popupTitleExpr = PopupTitle.Replace("'", "\\'");
+                    output.Attributes.SetAttribute("v-on:click", $"openForm(0, '{popupUrlExpr}', '{popupTitleExpr}')");
+                }
+                else
+                {
+                    output.Attributes.SetAttribute("v-on:click", $"openForm(0, '{popupUrlExpr}')");
+                }
             }
             else if (!string.IsNullOrEmpty(Click))  output.Attributes.SetAttribute("onclick", Click);
             else if (!string.IsNullOrEmpty(VClick)) output.Attributes.SetAttribute("v-on:click", VClick);

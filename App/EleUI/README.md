@@ -18,7 +18,7 @@
 ## 关键基类职责
 
 - `EleControlTagHelper`: 所有可视控件基础能力
-  - 公共属性：`Width`、`Height`、`Radius`、`Border`、`BorderColor`、`Rounded`、`Shadow`、`Disabled`
+  - 公共属性：`Width`、`Height`、`Radius`、`Border`、`BorderColor`、`Rounded`、`Shadow`、`Enabled`
   - 通用能力：权限检查、`v-model`/`:disabled` 注入、基础 style 组装
 - `EleFormControlTagHelper`: 表单字段基础能力
   - `For`、`Label`、`FillRow`、`Required`、自动从模型推导标签和字段绑定

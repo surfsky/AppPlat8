@@ -15,12 +15,15 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
-                <EleButton Type="Info" Click="navigateTo('/OA/AssetCategories')" Icon="Setting" VPower="AssetCategoryEdit">类别管理</EleButton>
+                <EleButton Type="Info" Click="navigateTo('/OA/AssetCategories')" Icon="Setting" Visible="@Auth.CheckPower(Power.AssetCategoryEdit)">类别管理</EleButton>
             </div>
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
-            <EleOpColumn UPower="AssetEdit" DPower="AssetDelete" Width="100" Fixed="right"></EleOpColumn>
+            <EleOpColumn Width="100" Fixed="right">
+                <Op Handler="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.AssetEdit)"></Op>
+                <Op Handler="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.AssetDelete)"></Op>
+            </EleOpColumn>
             <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="150" Sortable="true"></EleColumn>
             <EleColumn For="Item.Category" Label="类别" Width="100" Prop="categoryName"></EleColumn>
             <EleImageColumn For="Item.Image" Label="图片" Width="60"></EleImageColumn>

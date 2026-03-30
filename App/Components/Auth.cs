@@ -193,6 +193,11 @@ namespace App.Components
             return false;
         }
 
+        public static bool CheckPower(Power power)
+        {
+            return CheckPower(Asp.Current, power);
+        }
+
         /// <summary>检查权限失败（页面回发）
         /// This used to use FineUI's Alert/PageContext. Now we emit a simple script that
         /// shows a browser alert so the client still sees a message when a POST fails.

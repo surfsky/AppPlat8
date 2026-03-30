@@ -2,10 +2,12 @@
 @model App.Pages.Checks.CheckLogsModel
 @{
     ViewData["Title"] = "检查记录管理";
+    var objectNameEncoded = System.Net.WebUtility.UrlEncode(Model.ObjectName ?? string.Empty);
+    var titleSuffix = string.IsNullOrWhiteSpace(Model.ObjectName) ? string.Empty : $" - {Model.ObjectName}";
 }
 
 @section body {
-    <EleTable Title="检查记录" FormPage="CheckLogForm" EnableBatch="true" >
+    <EleTable Title="检查记录@titleSuffix" FormPage="CheckLogForm" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId&objectName=@objectNameEncoded" >
         <Toolbar>
             <Filters>
             <EleInput For="Item.CheckObject.Name" Width="250px" Label="对象名称" ></EleInput>
@@ -20,7 +22,9 @@
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
-            <EleOpColumn DPower="CheckLogDelete" Width="60" Fixed="right"></EleOpColumn>
+            <EleOpColumn Width="60" Fixed="right">
+                <Op Handler="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckLogDelete)"></Op>
+            </EleOpColumn>
             <EleColumn For="Item.CheckObject.Name" Label="检查对象" MinWidth="150"></EleColumn>
             <EleColumn For="Item.Task.Name" Label="关联任务" Width="150"></EleColumn>
             <EleColumn For="Item.Checker.Name" Label="检查人" Width="100"></EleColumn>
