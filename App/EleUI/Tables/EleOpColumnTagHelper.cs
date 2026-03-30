@@ -152,13 +152,15 @@ namespace App.EleUI
                 if (string.IsNullOrWhiteSpace(handlerExpr))
                     continue;
 
+                var icon = string.IsNullOrWhiteSpace(op.Icon) ? GuessIcon(op.Handler) : op.Icon.Trim();
+
                 var text = string.IsNullOrWhiteSpace(op.Text)
                     ? (string.IsNullOrWhiteSpace(op.Tooltip) ? GuessTooltip(op.Handler) : op.Tooltip)
                     : op.Text;
                 if (string.IsNullOrWhiteSpace(text))
                     text = op.Handler;
 
-                items.Append($"<el-dropdown-item v-on:click=\"{handlerExpr}\">{WebUtility.HtmlEncode(text)}</el-dropdown-item>");
+                items.Append($"<el-dropdown-item v-on:click=\"{handlerExpr}\"><span class='inline-flex items-center'><el-icon class='mr-1'><component :is=\"'{icon}'\"></component></el-icon>{WebUtility.HtmlEncode(text)}</span></el-dropdown-item>");
             }
 
             if (items.Length == 0)
@@ -166,9 +168,8 @@ namespace App.EleUI
 
             return $@"
                 <el-dropdown trigger='click'>
-                    <span class='inline-flex items-center cursor-pointer text-blue-600 hover:text-blue-700'>
-                        更多
-                        <el-icon class='ml-1'><ArrowDown /></el-icon>
+                    <span class='inline-flex items-center cursor-pointer text-gray-500 hover:text-gray-600' title='更多操作'>
+                        <span class='text-lg leading-none select-none'>⋮</span>
                     </span>
                     <template #dropdown>
                         <el-dropdown-menu>
