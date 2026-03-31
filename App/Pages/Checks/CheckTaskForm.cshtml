@@ -13,5 +13,10 @@
         <EleLabel Label="承接组织" FillRow="true"></EleLabel>
         <EleLabel Label="检查企业" FillRow="true"></EleLabel>
         <EleLabel Label="检查表单" FillRow="true"></EleLabel>        
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

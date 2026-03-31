@@ -9,5 +9,10 @@
     <EleForm LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleInput For="Item.Remark" Label="备注" Type="@EleInputType.TextArea"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

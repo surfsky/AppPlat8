@@ -11,8 +11,8 @@
     <EleTable Title="附件管理@titleSuffix" EnableBatch="true" DataHandler="?handler=Data&uniId=@uniIdEncoded" DeleteHandler="?handler=Delete&uniId=@uniIdEncoded">
         <Toolbar>
             <Filters>
-            <EleInput For="Item.FileName" Width="240px" Label="文件名"></EleInput>
-            <EleSelect For="Item.Type" Width="140px" Label="类型" Clearable="true"></EleSelect>
+                <EleInput For="Item.FileName" Width="240px" Label="文件名"></EleInput>
+                <EleSelect For="Item.Type" Width="140px" Label="类型" Clearable="true"></EleSelect>
             </Filters>
             <input id="attUploadInput" type="file" style="display:none" multiple @@change="onAttFileSelected" />
             <div class="flex w-80">

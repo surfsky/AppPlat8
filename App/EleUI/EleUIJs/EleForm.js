@@ -111,15 +111,16 @@ export class EleForm {
         return this.close();
     }
 
-    async save() {
-        if (this.readOnly.value) return;
+    async save(options = {}) {
+        if (this.readOnly.value) return false;
+        const { closeAfterSave = true, newAfterSave = false } = options || {};
         
         // Client-side validation
         if (this.formRef.value) {
             try {
                 await this.formRef.value.validate();
             } catch (e) {
-                return;
+                return false;
             }
         }
 
@@ -134,13 +135,26 @@ export class EleForm {
                 this.success.value = '保存成功';
                 EleManager.showSuccess(res.data.msg || '保存成功');
                 this.originalForm.value = JSON.parse(JSON.stringify(this.form.value));
-                await this.close({ saved: true });
+                if (newAfterSave) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('id', '0');
+                    url.searchParams.set('md', 'new');
+                    window.location.href = url.toString();
+                    return true;
+                }
+
+                if (closeAfterSave) {
+                    await this.close({ saved: true });
+                }
+                return true;
             } else {
                 this.error.value = res.data.msg || '保存失败';
                 EleManager.showError(res.data.msg || '保存失败');
+                return false;
             }
         } catch (e) {
             this.error.value = '请求失败';
+            return false;
         } finally {
             this.saving.value = false;
         }
@@ -151,8 +165,10 @@ export class EleForm {
         if (!commandName) return;
         const name = commandName;
         
-        // Special case: Save is handled differently (client-side validation + form submission)
+        // Special case: Save family is handled client-side (validation + form submission)
         if (name === 'Save') return this.save();
+        if (name === 'SaveClose') return this.save({ closeAfterSave: true });
+        if (name === 'SaveNew') return this.save({ closeAfterSave: false, newAfterSave: true });
         
         // Special case: Close/Cancel should just close without confirmation in this context
         if (name === 'Close' || name === 'Cancel') return this.close();

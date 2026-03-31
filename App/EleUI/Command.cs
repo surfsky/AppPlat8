@@ -13,6 +13,8 @@ namespace App.EleUI
         BatchUpdate,
         Search,
         Save,
+        SaveClose,
+        SaveNew,
         Cancel,
         Close,
         Export,

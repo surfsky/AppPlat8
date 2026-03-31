@@ -18,5 +18,10 @@
         <EleSwitch For="Item.InUsed" Label="启用"></EleSwitch>
         <EleImageUpload For="Item.Photo" Label="头像"></EleImageUpload>
         <EleInput For="Item.Remark" Label="备注" Rows="4" FillRow="true"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

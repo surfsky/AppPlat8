@@ -11,5 +11,10 @@
         <EleTreeSelect For="Item.ParentId" Label="上级组织" Api="/httpapi/orgs/GetAuthOrgTree"  Clearable="true" CheckStrictly="true"></EleTreeSelect>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
         <EleInput For="Item.Remark" Label="备注" Rows="3"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

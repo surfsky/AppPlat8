@@ -43,15 +43,14 @@ namespace App.DAL
                 this.OrgId,
                 this.OrgName,
                 this.SheetIds,
+                this.SortId,
+                this.Children // Add this line to include children in JSON output
             };
         }
 
         //
         public new static CheckTag GetDetail(long id)
         {
-            //return TreeEntity<CheckTag>.GetDetail(id).Let(t => {
-            //    t.SheetIds = t.Sheets.Select(s => s.Id).ToList();
-            //});
             return IncludeSet.FirstOrDefault(t => t.Id == id).Let(t => {
                 t.SheetIds = t.Sheets.Select(s => s.Id).ToList();
             });

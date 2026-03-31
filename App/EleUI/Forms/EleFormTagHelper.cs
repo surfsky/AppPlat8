@@ -58,19 +58,16 @@ namespace App.EleUI
             var childContent = await output.GetChildContentAsync();
             var innerHtml = childContent.GetContent();
 
-            // 提取工具栏
-            var toolbarInfo = ExtractToolbar(innerHtml);
-            innerHtml = toolbarInfo.CleanInnerHtml;
-            var toolbarHtml = toolbarInfo.ToolbarHtml;
-            var toolbarPosition = toolbarInfo.ToolbarPosition;
-            context.Items["HasToolbar"] = toolbarHtml != null;
-            var hasToolbar = context.Items.ContainsKey("HasToolbar") && (bool)context.Items["HasToolbar"];  //？？？
+            // 提取 Bottom 固底容器
+            var bottomInfo = ExtractBottom(innerHtml);
+            innerHtml = bottomInfo.CleanInnerHtml;
+            var bottomHtml = bottomInfo.BottomHtml;
+            var hasBottom = bottomHtml != null;
 
             // 组装最终HTML
-            var wrapperClass = GetWrapperClass(hasToolbar, toolbarPosition);
-            var formHtml = CreateToolbar(toolbarHtml, toolbarPosition, hasToolbar)
-                + CreateForm(innerHtml)
-                + CreateFooter(toolbarHtml, toolbarPosition, hasToolbar)
+            var wrapperClass = GetWrapperClass(hasBottom);
+            var formHtml = CreateForm(innerHtml)
+                + CreateFooter(bottomHtml, hasBottom)
                 ;
             var wrapperHtml = $"<div class=\"{wrapperClass}\">{formHtml}</div>";
             var scriptHtml = CreateScript();
@@ -78,48 +75,39 @@ namespace App.EleUI
         }
 
 
-        /// <summary>提取工具栏HTML和位置</summary>
+        /// <summary>提取 Bottom 固底容器 HTML</summary>
         /// <param name="innerHtml">原始HTML内容</param>
-        /// <returns>返回清理后的HTML、工具栏HTML和工具栏位置</returns>
-        private (string CleanInnerHtml, string ToolbarHtml, string ToolbarPosition) ExtractToolbar(string innerHtml)
+        /// <returns>返回清理后的HTML和BottomHTML</returns>
+        private (string CleanInnerHtml, string BottomHtml) ExtractBottom(string innerHtml)
         {
-            string toolbarHtml = null;
-            var toolbarPosition = "top";
+            string bottomHtml = null;
 
-            var legacyToolbar = ExtractLegacyToolbar(innerHtml);
-            if (legacyToolbar.ToolbarHtml != null)
+            var legacyBottom = ExtractLegacyBottom(innerHtml);
+            if (legacyBottom.BottomHtml != null)
             {
-                toolbarHtml = legacyToolbar.ToolbarHtml;
-                innerHtml = legacyToolbar.CleanInnerHtml;
+                bottomHtml = legacyBottom.BottomHtml;
+                innerHtml = legacyBottom.CleanInnerHtml;
             }
 
-            if (toolbarHtml == null)
+            if (bottomHtml == null)
             {
-                var markerToolbar = ExtractToolbarByMarker(innerHtml);
-                if (markerToolbar.ToolbarHtml != null)
+                var markerBottom = ExtractBottomByMarker(innerHtml);
+                if (markerBottom.BottomHtml != null)
                 {
-                    toolbarHtml = markerToolbar.ToolbarHtml;
-                    innerHtml = markerToolbar.CleanInnerHtml;
-                    toolbarPosition = markerToolbar.ToolbarPosition;
+                    bottomHtml = markerBottom.BottomHtml;
+                    innerHtml = markerBottom.CleanInnerHtml;
                 }
             }
 
-            if (toolbarHtml != null && toolbarPosition == "top")
-            {
-                var posMatchLegacy = Regex.Match(toolbarHtml, @"\bposition\s*=\s*\""(?<p>top|bottom)\""", RegexOptions.IgnoreCase);
-                if (posMatchLegacy.Success)
-                    toolbarPosition = posMatchLegacy.Groups["p"].Value.ToLower();
-            }
-
-            return (innerHtml, toolbarHtml, toolbarPosition);
+            return (innerHtml, bottomHtml);
         }
 
-        /// <summary>提取传统工具栏HTML</summary>
-        private (string CleanInnerHtml, string ToolbarHtml) ExtractLegacyToolbar(string innerHtml)
+        /// <summary>提取传统 Bottom HTML</summary>
+        private (string CleanInnerHtml, string BottomHtml) ExtractLegacyBottom(string innerHtml)
         {
             var lowerInner = innerHtml.ToLower();
-            var startTag = "<toolbar";
-            var endTag = "</toolbar>";
+            var startTag = "<bottom";
+            var endTag = "</bottom>";
             var startIdx = lowerInner.IndexOf(startTag);
             if (startIdx < 0)
                 return (innerHtml, null);
@@ -129,37 +117,23 @@ namespace App.EleUI
                 return (innerHtml, null);
 
             var len = endIdx + endTag.Length - startIdx;
-            var toolbarHtml = innerHtml.Substring(startIdx, len);
+            var bottomHtml = innerHtml.Substring(startIdx, len);
             var cleanInnerHtml = innerHtml.Remove(startIdx, len);
-            return (cleanInnerHtml, toolbarHtml);
+            return (cleanInnerHtml, bottomHtml);
         }
 
-        /// <summary>提取标记工具栏HTML和位置</summary>
-        private (string CleanInnerHtml, string ToolbarHtml, string ToolbarPosition) ExtractToolbarByMarker(string innerHtml)
+        /// <summary>提取标记 Bottom HTML</summary>
+        private (string CleanInnerHtml, string BottomHtml) ExtractBottomByMarker(string innerHtml)
         {
-            var markerPattern = new Regex(@"<div[^>]*data-ele-toolbar\s*=\s*\""true\""[^>]*>.*?</div>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            var markerPattern = new Regex(@"<div[^>]*data-ele-bottom\s*=\s*\""true\""[^>]*>.*?</div>", RegexOptions.IgnoreCase | RegexOptions.Singleline);
             var markerMatch = markerPattern.Match(innerHtml);
             if (!markerMatch.Success)
-                return (innerHtml, null, "top");
+                return (innerHtml, null);
 
-            var toolbarHtml = markerMatch.Value;
+            var bottomHtml = markerMatch.Value;
             var cleanInnerHtml = innerHtml.Remove(markerMatch.Index, markerMatch.Length);
-            var toolbarPosition = "top";
 
-            var posMatch = Regex.Match(toolbarHtml, @"data-toolbar-position\s*=\s*\""(?<p>top|bottom)\""", RegexOptions.IgnoreCase);
-            if (posMatch.Success)
-                toolbarPosition = posMatch.Groups["p"].Value.ToLower();
-
-            return (cleanInnerHtml, toolbarHtml, toolbarPosition);
-        }
-
-        /// <summary>创建工具栏HTML</summary>
-        private string CreateToolbar(string toolbarHtml, string toolbarPosition, bool hasToolbar)
-        {
-            if (!hasToolbar || toolbarPosition != "top")
-                return string.Empty;
-
-            return $"<div class=\"fixed top-0 left-0 bg-white w-full border-b border-gray-100 py-2 px-4 z-10 shadow-sm\">{toolbarHtml}</div>\n";
+            return (cleanInnerHtml, bottomHtml);
         }
 
         /// <summary>创建表单HTML</summary>
@@ -177,41 +151,21 @@ namespace App.EleUI
         }
 
         /// <summary>创建表单页脚HTML</summary>
-        private string CreateFooter(string toolbarHtml, string toolbarPosition, bool hasToolbar)
+        private string CreateFooter(string bottomHtml, bool hasBottom)
         {
-            if (!hasToolbar)
-            {
-                var footerHtml = "<div class=\"px-4 pb-3 fixed bottom-0 left-0 bg-white w-full border-t border-gray-100 py-2 z-10 flex justify-center shadow-sm\">";
-                footerHtml += "<div class=\"flex items-center space-x-2\">";
-                footerHtml += "<el-button type=\"primary\" v-on:click=\"save\" :loading=\"saving\" v-if=\"!readOnly\">保存</el-button>";
-                footerHtml += "<el-button v-on:click=\"onCloseClick\">关闭</el-button>";
-                footerHtml += "<span class=\"text-red-500 text-sm ml-4\" v-if=\"error\">{{ error }}</span>";
-                footerHtml += "<span class=\"text-green-600 text-sm ml-2\" v-if=\"success\">{{ success }}</span>";
-                footerHtml += "</div></div>\n";
-                return footerHtml;
-            }
+            if (!hasBottom)
+                return string.Empty;
 
-            if (toolbarPosition == "bottom")
-            {
-                var footerToolbarHtml = "<div class=\"px-4 pb-3 fixed bottom-0 left-0 bg-white w-full border-t border-gray-100 py-2 z-10 flex justify-center shadow-sm\">";
-                footerToolbarHtml += toolbarHtml;
-                footerToolbarHtml += "</div>\n";
-                return footerToolbarHtml;
-            }
-
-            return string.Empty;
+            var customFooterHtml = "<div class=\"px-4 pb-3 fixed bottom-0 left-0 bg-white w-full border-t border-gray-100 py-2 z-10 flex justify-center shadow-sm\">";
+            customFooterHtml += bottomHtml;
+            customFooterHtml += "</div>\n";
+            return customFooterHtml;
         }
 
         /// <summary>获取包装器的CSS类</summary>
-        private string GetWrapperClass(bool hasToolbar, string toolbarPosition)
+        private string GetWrapperClass(bool hasBottom)
         {
-            if (!hasToolbar)
-                return "pb-[60px]";
-
-            if (toolbarPosition == "top")
-                return "pt-[60px]";
-
-            return "pb-[60px]";
+            return hasBottom ? "pb-[60px]" : string.Empty;
         }
 
         /// <summary>创建脚本HTML</summary>

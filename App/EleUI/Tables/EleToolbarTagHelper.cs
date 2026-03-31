@@ -1,19 +1,11 @@
-using App.DAL;
-using App.Components;
-using System;
-using System.Reflection;
-using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using App.Utils; 
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace App.EleUI
 {
-    //-----------------------------------------------------------------
-    // Toolbar
-    //-----------------------------------------------------------------
+    /// <summary>
+    /// EleTable 专用工具栏容器。
+    /// </summary>
     [HtmlTargetElement("Toolbar", ParentTag = "EleTable")]
     public class EleToolbarTagHelper : TagHelper
     {
@@ -21,13 +13,11 @@ namespace App.EleUI
         {
             var childContent = await output.GetChildContentAsync();
             var content = childContent.GetContent();
-            var wrapper = $@"
-        <div class=""w-full bg-white px-5 pt-5 pb-0 flex flex-wrap items-start gap-2 md:grid md:gap-x-4 md:gap-y-0 md:grid-cols-2 lg:grid-cols-4 ele-table-toolbar ele-table-toolbar-compact-label"">
-            {content}
-        </div>
-            ";
-            
+            const string toolbarClass = "w-full min-h-[40px] flex flex-wrap items-center gap-2 bg-white px-6 py-4";
+            const string toolbarStyle = "display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;min-height:40px;";
+
             var tableContext = (TableContext)context.Items[typeof(TableContext)];
+            var wrapper = $@"<div class=""{toolbarClass}"" style=""{toolbarStyle}"" data-ele-toolbar=""true"">{content}</div>";
             tableContext.ToolbarHtml.Append(wrapper);
             output.SuppressOutput();
         }

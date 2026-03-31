@@ -10,5 +10,10 @@
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreeSelect For="Item.ParentId" Label="上级目录" Items="Model.CategoryTree" Clearable="true"></EleTreeSelect>
         <EleNumber For="Item.SortId" Label="排序"></EleNumber>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

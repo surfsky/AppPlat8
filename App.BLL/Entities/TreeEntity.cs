@@ -35,7 +35,7 @@ namespace App.Entities
         }
 
         /// <summary>获取树结构缓存</summary>
-        public static List<T> GetTree()  => Cacher.Get(TreeCacheName, () => Set.ToList().ToTree(), DateTime.Now.AddHours(1));
+        public static List<T> GetTree()  => Cacher.Get(TreeCacheName, () => IncludeSet.ToList().ToTree(), DateTime.Now.AddHours(1));
 
         /// <summary> 克隆实体 </summary>
         public virtual T Clone()

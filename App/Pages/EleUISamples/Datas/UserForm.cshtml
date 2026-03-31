@@ -7,11 +7,6 @@
 
 @section body {
     <EleForm LabelWidth="120px">
-        <Toolbar Position="Bottom">
-            <EleButton Type="Primary" Command="Save" IconCls="fas fa-floppy-disk">保存</EleButton>
-            <EleButton Type="Info" Command="Close" Icon="Close">关闭</EleButton>
-        </Toolbar>
-
         <EleInput For="Item.Name" Label="账号" Required="true"></EleInput>
         <EleInput For="Item.ChineseName" Label="中文名" Required="true"></EleInput>
         <EleSelect For="Item.RoleIds" Label="角色" Items="Model.RoleList" Multiple="true"></EleSelect>
@@ -25,5 +20,10 @@
         <EleImageUpload For="Item.Photo" Label="头像" ItemWidth="140" LimitWidth="1024"></EleImageUpload>
         <EleImageUpload For="Item.Photos" Label="相册" Multi="true" MultiLimit="5" ItemWidth="140" LimitWidth="1024"></EleImageUpload>
         <EleInput For="Item.Description" Label="备注" Type="TextArea" Rows="3" FillRow="true"></EleInput>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="Save" IconCls="fas fa-floppy-disk">保存</EleButton>
+            <EleButton Type="Info"    Command="Close" Icon="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

@@ -14,5 +14,10 @@
         <EleDatePicker For="Item.CertExpireDt" Label="过期日期"></EleDatePicker>
         <EleImageUpload For="Item.Photo" Label="照片" FillRow="true"></EleImageUpload>
         <EleImageUpload For="Item.IdCardImage" Label="证件照片" FillRow="true"></EleImageUpload>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

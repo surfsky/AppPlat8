@@ -17,5 +17,10 @@
     <EleNumber For="Item.ViewCount" Label="浏览次数" Enabled="false"></EleNumber>
     <EleSwitch For="Item.IsTop" Label="是否置顶"></EleSwitch>
     <EleInput For="Item.Content" Label="内容" Rows="12" FillRow="true"></EleInput>
-</EleForm>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
 }

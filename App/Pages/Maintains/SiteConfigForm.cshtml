@@ -20,5 +20,10 @@
         <EleNumber For="Item.PageSize" Label="分页大小" ></EleNumber>
         <EleNumber For="Item.UpFileSize" Label="上传大小限制" Append="MB"></EleNumber>
         <EleInput For="Item.UpFileTypes" Label="上传文件类型" Type="TextArea" Rows="3" FillRow="true"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

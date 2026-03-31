@@ -9,5 +9,10 @@
     <EleForm Model="form" LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleSelect For="Item.Scope" Label="领域"></EleSelect>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

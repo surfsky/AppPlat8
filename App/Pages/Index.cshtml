@@ -18,9 +18,9 @@
     <!-- 状态栏样式（仅iOS生效） -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <!-- Android 沉浸式状态栏 -->
-    <meta name="theme-color" content="#0b5ed7">
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0b5ed7">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b5ed7">
+    <meta name="theme-color" content="#3B71F8">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#3B71F8">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#3B71F8">
     <meta name="apple-mobile-web-app-title" content="@Model.SiteTitle">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -137,7 +137,7 @@
 <body class="bg-slate-100">
     <div id="app" class="flex flex-col h-screen overflow-hidden">
         <!-- Unified Top Header Bar - Fixed Position, Always Visible -->
-        <div id="topHeader" class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary-800 to-primary-700 h-16 flex items-center justify-between px-4 shadow-lg">
+        <div id="topHeader" class="fixed top-0 left-0 right-0 z-50 bg-[#3B71F8] h-16 flex items-center justify-between px-4 shadow-lg">
             <!-- Left Section: Back Button (Hidden by default) + Logo (Hidden on mobile) -->
             <div class="flex items-center gap-2 flex-shrink-0">
                 <!-- Back Button - only show when there is navigation history -->
@@ -173,7 +173,7 @@
         <!-- Main Container - Add top padding to account for fixed header -->
         <div class="flex flex-1 overflow-hidden pt-16">
             <!-- Sidebar Navigation -->
-            <div id="sidebar" class="sidebar w-60 bg-primary-800 fixed left-0 top-16 md:relative md:top-0 h-[calc(100vh-64px)] md:h-auto z-40 flex flex-col overflow-y-auto -translate-x-full md:translate-x-0 transition-transform duration-300">
+            <div id="sidebar" class="sidebar w-60 bg-[#3B71F8] fixed left-0 top-16 md:relative md:top-0 h-[calc(100vh-64px)] md:h-auto z-40 flex flex-col overflow-y-auto -translate-x-full md:translate-x-0 transition-transform duration-300">
                 <!-- Navigation Items Section -->
                 <div class="flex-1 flex flex-col gap-1 pt-4 md:pt-4 px-3">
                     <menu-tree 

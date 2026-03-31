@@ -74,5 +74,10 @@
         <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">文件</EleButton>
         <EleButton Type="Primary" Look="Text" Icon="Histogram" Handler="ShowCheckLogs" EnabledFor="Item.Id">检查历史</EleButton>
         <EleButton Type="Primary" Look="Text" Icon="Warning" Handler="ShowHazards" EnabledFor="Item.Id">隐患清单</EleButton>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

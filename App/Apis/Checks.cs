@@ -91,14 +91,51 @@ namespace App.API
         //--------------------------------------------
         // 获取检查标签树
         [HttpApi("获取检查标签树", AuthLogin=true)]
-        public static APIResult GetCheckTagTree()
+        public static APIResult GetCheckTagTree(long? excludeId = null, long? selectedId = null)
         {
+            // 获取当前用户可见的标签列表
             var user = Auth.GetUser();
+            var allTags = CheckTag.IncludeSet.ToList();
+            var allMap = allTags.ToDictionary(t => t.Id, t => t);
+            List<CheckTag> visible;
             if (user.Name == "admin")
-                return CheckTag.GetTree().ToResult();
-                
-            var authOrgId = user.AuthOrgId ?? user.OrgId;
-            return CheckTag.IncludeSet.Where(t => t.OrgId == authOrgId).ToList().ToTree().ToResult();
+            {
+                visible = allTags;
+            }
+            else
+            {
+                var authOrgId = user.AuthOrgId ?? user.OrgId;
+                visible = allTags
+                    .Where(t => t.OrgId == null || t.OrgId == authOrgId)
+                    .ToList();
+            }
+
+            // 如果当前表单已有父节点值（selectedId），即使该节点因组织过滤不在 visible 中，
+            // 也补齐该节点及其祖先，避免 TreeSelect 只能显示纯数字 ID。
+            if (selectedId != null && allMap.TryGetValue(selectedId.Value, out var selected))
+            {
+                var visibleMap = visible.ToDictionary(t => t.Id, t => t);
+                var current = selected;
+                while (current != null)
+                {
+                    visibleMap[current.Id] = current;
+                    if (current.ParentId == null)
+                        break;
+                    if (!allMap.TryGetValue(current.ParentId.Value, out current))
+                        break;
+                }
+                visible = visibleMap.Values.ToList();
+            }
+
+            // 编辑时排除“当前节点及其子孙”，避免形成环路和无效父级。
+            if (excludeId != null)
+            {
+                var blockedIds = allTags.GetDescendants(excludeId).Select(t => t.Id).ToHashSet();
+                visible = visible.Where(t => !blockedIds.Contains(t.Id)).ToList();
+            }
+
+            var tree = visible.ToTree();
+            return tree.ToResult();
         }
 
         [HttpApi("获取检查表", AuthLogin=true)]

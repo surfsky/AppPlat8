@@ -11,5 +11,10 @@
         <EleInput For="Item.Handler" Label="处理人" Required="true"></EleInput>
         <EleNumber For="Item.Progress" Label="进度(%)" Precision="2" Step="0.01"></EleNumber>
         <EleSelect For="Item.Status" Label="状态"></EleSelect>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

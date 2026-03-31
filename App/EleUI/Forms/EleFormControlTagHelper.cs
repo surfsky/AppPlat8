@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using App.DAL;
@@ -172,6 +173,7 @@ namespace App.EleUI
             if (!string.IsNullOrEmpty(Label))
             {
                 var prop = GetPropName();
+                var encodedLabel = WebUtility.HtmlEncode(Label);
                 var rulesAttr = "";
                 if (Required)
                 {
@@ -195,7 +197,10 @@ namespace App.EleUI
                      else if (ColSpan >= 6)  classAttr = @" class=""col-span-1""";
                 }
 
-                output.PreElement.SetHtmlContent($@"<el-form-item label=""{Label}"" prop=""{prop}"" {rulesAttr} {labelWidthAttr}{classAttr}>");
+                output.PreElement.SetHtmlContent($@"<el-form-item prop=""{prop}"" {rulesAttr} {labelWidthAttr}{classAttr}>
+    <template #label>
+        <span class=""block w-full overflow-hidden text-ellipsis whitespace-nowrap"" title=""{encodedLabel}"">{encodedLabel}</span>
+    </template>");
                 output.PostElement.SetHtmlContent("</el-form-item>");
 
             }

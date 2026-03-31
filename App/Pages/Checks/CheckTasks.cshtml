@@ -8,8 +8,8 @@
     <EleTable Title="检查任务" FormPage="CheckTaskForm" EnableBatch="true" >
         <Toolbar>
             <Filters>
-            <EleInput For="Item.Name" Width="250px" Label="名称" ></EleInput>
-            <EleDatePicker For="Item.ExpireDt" Width="250px"Label="截止时间" ></EleDatePicker>
+                <EleInput For="Item.Name" Width="250px" Label="名称" ></EleInput>
+                <EleDatePicker For="Item.ExpireDt" Width="250px"Label="截止时间" ></EleDatePicker>
             </Filters>
             <div class="flex w-80">
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
@@ -20,8 +20,8 @@
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="100" Fixed="right">
-                <Op Handler="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.CheckTaskEdit)"></Op>
-                <Op Handler="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckTaskDelete)"></Op>
+                <Op Command="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.CheckTaskEdit)"></Op>
+                <Op Command="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckTaskDelete)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Name" Label="任务名称" Link="true" MinWidth="150"></EleColumn>
             <EleColumn For="Item.Publisher.Name" Label="发布人" Width="120"></EleColumn>

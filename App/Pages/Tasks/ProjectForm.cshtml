@@ -14,5 +14,10 @@
         <EleInput For="Item.MaintCompany" Label="维护厂商"></EleInput>
         <EleDatePicker For="Item.ContractDt" Label="合同时间"></EleDatePicker>
         <EleNumber For="Item.Progress" Label="进度(%)" Precision="2" Step="0.01"></EleNumber>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

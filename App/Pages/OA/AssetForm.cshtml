@@ -17,5 +17,10 @@
     <EleDatePicker For="Item.ExpireDt" Label="过期时间"></EleDatePicker>
     <EleInput For="Item.Parameters" Label="设备参数" Rows="3"></EleInput>
     <EleSwitch For="Item.IsExpireAlert" Label="到期提醒"></EleSwitch>
-</EleForm>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
 }

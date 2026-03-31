@@ -14,5 +14,10 @@
         <EleNumber For="Item.SortId" Label="排序"></EleNumber>
         <EleSwitch For="Item.Protect" Label="保护"></EleSwitch>
         <EleInput For="Item.Remark" Label="备注" Rows="3" FillRow="true"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

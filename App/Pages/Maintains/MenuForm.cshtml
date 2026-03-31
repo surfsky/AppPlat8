@@ -17,6 +17,11 @@
         <EleSwitch For="Item.Visible" Label="是否可见"></EleSwitch>
         <EleSwitch For="Item.Expanded" Label="默认展开"></EleSwitch>
         <EleSwitch For="Item.Fixed" Label="固底"></EleSwitch>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 
 

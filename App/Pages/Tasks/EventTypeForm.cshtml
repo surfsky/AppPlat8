@@ -8,5 +8,10 @@
 @section body {
     <EleForm Model="form" LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

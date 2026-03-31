@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 
@@ -14,6 +15,8 @@ namespace App.EleUI
         public string Icon { get; set; }
         public string Tooltip { get; set; }
         public bool Visible { get; set; } = true;
+        public string Command { get; set; }
+        public string Popup { get; set; }
         public string Handler { get; set; }
         public string Text { get; set; }
     }
@@ -35,6 +38,12 @@ namespace App.EleUI
         [HtmlAttributeName("Visible")]
         public bool Visible { get; set; } = true;
 
+        [HtmlAttributeName("Command")]
+        public string Command { get; set; }
+
+        [HtmlAttributeName("Popup")]
+        public string Popup { get; set; }
+
         [HtmlAttributeName("Handler")]
         public string Handler { get; set; }
 
@@ -54,6 +63,8 @@ namespace App.EleUI
                 Icon = Icon,
                 Tooltip = Tooltip,
                 Visible = Visible,
+                Command = Command,
+                Popup = Popup,
                 Handler = Handler,
                 Text = Text
             });
@@ -88,7 +99,9 @@ namespace App.EleUI
             context.Items[typeof(OpColumnContext)] = new OpColumnContext();
             await output.GetChildContentAsync();
             var opCtx = context.Items[typeof(OpColumnContext)] as OpColumnContext ?? new OpColumnContext();
-            var ops = opCtx.Items.Where(c => c.Visible && !string.IsNullOrWhiteSpace(c.Handler)).ToList();
+            var ops = opCtx.Items.Where(c => c.Visible &&
+                (!string.IsNullOrWhiteSpace(c.Command) || !string.IsNullOrWhiteSpace(c.Popup) || !string.IsNullOrWhiteSpace(c.Handler)))
+                .ToList();
 
             SetupColumnShell(output);
             ApplyBaseColumnAttributes(output);
@@ -126,13 +139,13 @@ namespace App.EleUI
 
         private static string BuildInlineOpHtml(OpItem op)
         {
-            var handlerExpr = BuildHandlerExpr(op.Handler);
-            if (string.IsNullOrWhiteSpace(handlerExpr))
+            var clickExpr = BuildClickExpr(op);
+            if (string.IsNullOrWhiteSpace(clickExpr))
                 return string.Empty;
 
-            var icon = string.IsNullOrWhiteSpace(op.Icon) ? GuessIcon(op.Handler) : op.Icon.Trim();
-            var tooltip = string.IsNullOrWhiteSpace(op.Tooltip) ? GuessTooltip(op.Handler) : op.Tooltip.Trim();
-            var iconHtml = $"<el-icon class='cursor-pointer text-blue-600 hover:text-blue-700 mr-2' v-on:click=\"{handlerExpr}\"><component :is=\"'{icon}'\"></component></el-icon>";
+            var icon = string.IsNullOrWhiteSpace(op.Icon) ? GuessIcon(op) : op.Icon.Trim();
+            var tooltip = string.IsNullOrWhiteSpace(op.Tooltip) ? GuessTooltip(op) : op.Tooltip.Trim();
+            var iconHtml = $"<el-icon class='cursor-pointer text-blue-600 hover:text-blue-700 mr-2' v-on:click=\"{clickExpr}\"><component :is=\"'{icon}'\"></component></el-icon>";
 
             if (string.IsNullOrWhiteSpace(tooltip))
                 return iconHtml;
@@ -148,19 +161,19 @@ namespace App.EleUI
             var items = new StringBuilder();
             foreach (var op in ops)
             {
-                var handlerExpr = BuildHandlerExpr(op.Handler);
-                if (string.IsNullOrWhiteSpace(handlerExpr))
+                var clickExpr = BuildClickExpr(op);
+                if (string.IsNullOrWhiteSpace(clickExpr))
                     continue;
 
-                var icon = string.IsNullOrWhiteSpace(op.Icon) ? GuessIcon(op.Handler) : op.Icon.Trim();
+                var icon = string.IsNullOrWhiteSpace(op.Icon) ? GuessIcon(op) : op.Icon.Trim();
 
                 var text = string.IsNullOrWhiteSpace(op.Text)
-                    ? (string.IsNullOrWhiteSpace(op.Tooltip) ? GuessTooltip(op.Handler) : op.Tooltip)
+                    ? (string.IsNullOrWhiteSpace(op.Tooltip) ? GuessTooltip(op) : op.Tooltip)
                     : op.Text;
                 if (string.IsNullOrWhiteSpace(text))
-                    text = op.Handler;
+                    text = op.Command ?? op.Handler ?? op.Popup;
 
-                items.Append($"<el-dropdown-item v-on:click=\"{handlerExpr}\"><span class='inline-flex items-center'><el-icon class='mr-1'><component :is=\"'{icon}'\"></component></el-icon>{WebUtility.HtmlEncode(text)}</span></el-dropdown-item>");
+                items.Append($"<el-dropdown-item v-on:click=\"{clickExpr}\"><span class='inline-flex items-center'><el-icon class='mr-1'><component :is=\"'{icon}'\"></component></el-icon>{WebUtility.HtmlEncode(text)}</span></el-dropdown-item>");
             }
 
             if (items.Length == 0)
@@ -177,6 +190,96 @@ namespace App.EleUI
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>";
+        }
+
+        private static string BuildClickExpr(OpItem op)
+        {
+            if (op == null)
+                return string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(op.Popup))
+                return BuildPopupExpr(op.Popup, op.Text ?? op.Tooltip ?? "详情");
+
+            if (!string.IsNullOrWhiteSpace(op.Command))
+                return BuildCommandExpr(op.Command);
+
+            return BuildHandlerExpr(op.Handler);
+        }
+
+        private static string BuildCommandExpr(string command)
+        {
+            if (string.IsNullOrWhiteSpace(command))
+                return string.Empty;
+
+            var normalized = command.Trim();
+            var lower = normalized.ToLowerInvariant();
+            if (lower == "edit")
+                return "openForm(scope.row.id)";
+            if (lower == "delete")
+                return "deleteSingleItem(scope.row.id)";
+            if (lower == "view")
+                return "openView(scope.row.id)";
+
+            return $"invokeCommand('{EscapeSingleQuoted(normalized)}')";
+        }
+
+        private static string BuildPopupExpr(string popup, string title)
+        {
+            if (string.IsNullOrWhiteSpace(popup))
+                return string.Empty;
+
+            var p = popup.Trim();
+            var urlExpr = (p.Contains("scope.") || p.Contains("+") || p.StartsWith("`"))
+                ? p
+                : BuildPopupUrlExpr(p);
+
+            var t = EscapeSingleQuoted(title ?? "详情");
+            return $"openDrawer({urlExpr}, '50%', 'rtl', '{t}')";
+        }
+
+        private static string BuildPopupUrlExpr(string template)
+        {
+            if (string.IsNullOrEmpty(template))
+                return "''";
+
+            // 支持 Popup="'/xx?id={id}&name={name}'" 风格占位符。
+            // 所有占位符默认做 encodeURIComponent，避免 URL 参数污染。
+            var matches = Regex.Matches(template, "\\{([A-Za-z_][A-Za-z0-9_\\.]*)\\}");
+            if (matches.Count == 0)
+                return $"'{EscapeSingleQuoted(template)}'";
+
+            var sb = new StringBuilder();
+            var last = 0;
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var m = matches[i];
+                var literal = template.Substring(last, m.Index - last);
+                if (!string.IsNullOrEmpty(literal))
+                {
+                    if (sb.Length > 0) sb.Append(" + ");
+                    sb.Append("'").Append(EscapeSingleQuoted(literal)).Append("'");
+                }
+
+                var token = m.Groups[1].Value;
+                var path = token.StartsWith("scope.") ? token : $"scope.row.{token}";
+                if (sb.Length > 0) sb.Append(" + ");
+                sb.Append($"encodeURIComponent((({path}) ?? '').toString())");
+                last = m.Index + m.Length;
+            }
+
+            var tail = template.Substring(last);
+            if (!string.IsNullOrEmpty(tail))
+            {
+                if (sb.Length > 0) sb.Append(" + ");
+                sb.Append("'").Append(EscapeSingleQuoted(tail)).Append("'");
+            }
+
+            return sb.Length == 0 ? "''" : sb.ToString();
+        }
+
+        private static string EscapeSingleQuoted(string text)
+        {
+            return (text ?? string.Empty).Replace("\\", "\\\\").Replace("'", "\\'");
         }
 
         private static string BuildHandlerExpr(string handler)
@@ -199,22 +302,26 @@ namespace App.EleUI
             return $"{normalized}(scope.row)";
         }
 
-        private static string GuessIcon(string handler)
+        private static string GuessIcon(OpItem op)
         {
-            var lower = (handler ?? string.Empty).Trim().ToLowerInvariant();
+            var source = op?.Command ?? op?.Handler;
+            var lower = (source ?? string.Empty).Trim().ToLowerInvariant();
             if (lower == "edit") return "Edit";
             if (lower == "delete") return "Delete";
             if (lower == "view") return "View";
+            if (!string.IsNullOrWhiteSpace(op?.Popup)) return "Link";
             return "Operation";
         }
 
-        private static string GuessTooltip(string handler)
+        private static string GuessTooltip(OpItem op)
         {
-            var lower = (handler ?? string.Empty).Trim().ToLowerInvariant();
+            var source = op?.Command ?? op?.Handler;
+            var lower = (source ?? string.Empty).Trim().ToLowerInvariant();
             if (lower == "edit") return "编辑";
             if (lower == "delete") return "删除";
             if (lower == "view") return "详情";
-            return handler ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(op?.Text)) return op.Text;
+            return source ?? string.Empty;
         }
     }
 }

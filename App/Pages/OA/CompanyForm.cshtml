@@ -15,5 +15,10 @@
     <EleInput For="Item.Contact" Label="联系人"></EleInput>
     <EleInput For="Item.ContactPhone" Label="联系方式"></EleInput>
     <EleInput For="Item.Address" Label="地址" Type="@EleInputType.TextArea" Rows="3"></EleInput>
-</EleForm>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
 }

@@ -16,5 +16,10 @@
         <EleDatePicker For="Item.PayDt" Label="支付日期"></EleDatePicker>
         <EleSelect For="Item.PayStatus" Label="支付状态"></EleSelect>
         <EleInput For="Item.Remark" Label="备注" Rows="3" FillRow="true"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

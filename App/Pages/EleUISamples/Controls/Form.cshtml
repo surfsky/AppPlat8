@@ -7,13 +7,6 @@
 
 @section body {
     <EleForm LabelPosition="Right">
-        <!-- Toolbar 示例：若存在 Toolbar，EleFormTagHelper 会将其渲染在表单上方 -->
-        <Toolbar Position="Bottom">
-            <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
-            <EleButton Type="Primary" Command="Save" IconCls="fas fa-floppy-disk">保存</EleButton>
-            <EleButton Type="Primary" Command="Close" Icon="Close">关闭</EleButton>
-        </Toolbar>
-
         <!-- 使用 For 表达式自动提取标签（从 UIAttribute）-->
         <EleLabel For="Item.Name" Size="16px" FillRow="true"></EleLabel>
         <EleInput For="Item.Name" Append="FirstName"></EleInput>
@@ -51,5 +44,10 @@
         <!-- 弹出选择器 -->
         <EleLabel Label="弹出选择器" Size="16px" FillRow="true"></EleLabel>
         <EleSelector For="Item.UserId" TextFor="Item.UserName" Label="选择用户" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="Save" Visible="@(Request.Query["md"].ToString().ToLower() != "view")">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

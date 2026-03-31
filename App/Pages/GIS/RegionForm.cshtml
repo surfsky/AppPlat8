@@ -13,5 +13,10 @@
         <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"  ></EleTreeSelect>
         <EleInput For="Item.Creator" Label="编辑者"></EleInput>
         <EleInput For="Item.JsonData" Label="JSON数据" Rows="5"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

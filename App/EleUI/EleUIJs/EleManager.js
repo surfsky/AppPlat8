@@ -334,6 +334,35 @@ class EleManagerCore {
     openDrawer(options = {}) { return this.drawerHelper.open(options);}
     closeDrawer() { return this.drawerHelper.close();}
 
+    //--------------------------------------------------------------
+    //  页面导航
+    //--------------------------------------------------------------
+    /**
+     * 跳转到指定 URL，替换当前页面地址
+     * @param {string} url
+     */
+    goto(url) {
+        if (!url || typeof url !== 'string') {
+            console.warn('EleManager.goto: url is required');
+            return;
+        }
+        window.location.href = url;
+    }
+
+    /**
+     * 更换当前页面的 PageMode（md 参数），并刷新页面
+     * @param {string} mode  pageMode 值，如 'view' | 'edit' | 'new' | 'select'
+     */
+    changeMode(mode) {
+        if (!mode || typeof mode !== 'string') {
+            console.warn('EleManager.changeMode: mode is required');
+            return;
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set('md', mode.toLowerCase().trim());
+        window.location.href = url.toString();
+    }
+
     closePage(data = {}) {
         const result = {
             code: 0,
@@ -628,6 +657,8 @@ class EleManager {
     static request(...args) { return Utils.request(...args); }
     static invoke(...args) { return EleManager._core.invoke(...args); }
     static executeServerCommand(...args) { return EleManager._core.executeServerCommand(...args); }
+    static goto(...args) { return EleManager._core.goto(...args); }
+    static changeMode(...args) { return EleManager._core.changeMode(...args); }
 }
 
 // Bridge module scope to global scope so Razor inline scripts can call EleManager.xxx directly.

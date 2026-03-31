@@ -17,5 +17,10 @@
         
         <EleInput For="Item.Summary" Label="摘要" Type="TextArea" Rows="2" FillRow="true"></EleInput>
         <EleInput For="Item.Message" Label="详细信息" Type="TextArea" Rows="15" FillRow="true"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

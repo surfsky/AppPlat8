@@ -12,5 +12,10 @@
         <EleInput For="Item.Author" Label="评论人" Required="true"></EleInput>
         <EleNumber For="Item.Rating" Label="评分"></EleNumber>
         <EleInput For="Item.Content" Label="内容" Rows="4"></EleInput>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }

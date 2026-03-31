@@ -95,7 +95,7 @@ namespace App
             app.UseRouting();                               // 路由
             app.UseAuthentication();                        // 认证
             app.UseAuthorization();                         // 授权
-
+ 
             // 自定义中间件
             app.UserAppWeb(env.ContentRootPath);            // 注册后，可用 Asp.Current, Asp.User, Asp.Response 等静态属性获取当前请求的上下文信息
             app.UseMonitor(o => Console.WriteLine("{0} {1} {2}", o.Url, o.Seconds, o.ClientIP));  // 监控网页访问情况，输出访问的 URL、耗时和客户端 IP 地址
@@ -103,6 +103,7 @@ namespace App
             {
                 o.TypePrefix = "App.API.";
                 o.FormatEnum = EnumFomatting.Int;
+                o.OnVisit += (ctx, method, attr, inputs) => Logger.Info("{0} {1} from {2}", ctx.Request.Method, ctx.Request.GetFullUrl(), ctx.Connection.RemoteIpAddress);
             });
 
             // 终端路由配置

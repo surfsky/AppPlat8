@@ -11,6 +11,11 @@
         <EleInput For="Item.Content" Label="内容" Rows="10"></EleInput>
         <EleInput For="Item.Attachments" Label="附件" Rows="3"></EleInput>
         <EleSwitch For="Item.AllowComment" Label="允许评论"></EleSwitch>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }
 

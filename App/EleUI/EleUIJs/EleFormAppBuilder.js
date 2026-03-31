@@ -79,8 +79,9 @@ export class EleFormAppBuilder extends EleAppBuilder {
                     const data = payload || (form.form ? form.form.value : {});
                     return builder.postHandler(name, data, form.form ? form.form.value : null);
                 };
+                form.postHandler = inheritedPostHandler;
                 bindings.postHandler = inheritedPostHandler;
-                bindings.invokeCommand = async (name, payload) => inheritedPostHandler(name, payload);
+                bindings.invokeCommand = async (name, payload) => form.invokeCommand(name, payload);
 
                 return { ...bindings };
             }

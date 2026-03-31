@@ -15,6 +15,11 @@
         <EleNumber For="Item.HazardCount" Label="隐患数量"></EleNumber>
         <EleNumber For="Item.RemainHazardCount" Label="未处理隐患"></EleNumber>
         <EleSwitch For="Item.IsClosed" Label="是否闭环"></EleSwitch>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
     </EleForm>
 }
 
