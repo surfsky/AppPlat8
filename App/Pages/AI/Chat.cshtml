@@ -1,0 +1,203 @@
+@page
+@model App.Pages.AI.ChatModel
+@{
+    Layout = null;
+    ViewData["Title"] = "AI Chat";
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Chat</title>
+    <style>
+        :root {
+            --bg: #f4f6fb;
+            --card: #ffffff;
+            --line: #d9e0ec;
+            --text: #1c2333;
+            --sub: #6a7280;
+            --primary: #0b5fff;
+            --user: #e6f0ff;
+            --ai: #f7fafc;
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body { margin: 0; height: 100vh; overflow: hidden; font-family: "PingFang SC", "Noto Sans SC", "Microsoft Yahei", sans-serif; background: linear-gradient(140deg, #f7f9fd 0%, #eef4ff 100%); color: var(--text); }
+        .wrap { width: 100%; height: 100vh; margin: 0; padding: 10px; }
+        .card { height: 100%; display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgba(20, 40, 80, 0.06); }
+        .head { padding: 14px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
+        .row { display: grid; gap: 10px; grid-template-columns: 2fr 2fr 1fr auto; }
+        .row2 { display: grid; gap: 10px; grid-template-columns: 1fr auto; }
+        input, textarea, select, button { font: inherit; }
+        input, textarea, select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; outline: none; background: #fff; }
+        textarea { resize: vertical; min-height: 64px; }
+        button { border: 0; border-radius: 10px; padding: 10px 14px; background: var(--primary); color: #fff; cursor: pointer; }
+        button:disabled { opacity: .6; cursor: wait; }
+        .msgs { flex: 1; min-height: 0; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; white-space: pre-wrap; line-height: 1.6; }
+        .msg.user { align-self: flex-end; max-width: 82%; background: var(--user); }
+        .msg.ai { align-self: flex-start; max-width: 88%; background: var(--ai); }
+        .msg .meta { display: block; margin-bottom: 6px; font-size: 12px; color: var(--sub); }
+        .foot { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 10px; }
+        .status { font-size: 12px; color: var(--sub); }
+        @@media (max-width: 920px) {
+            .row, .row2 { grid-template-columns: 1fr; }
+            .wrap { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+            <div class="head">
+                <div class="row">
+                    <select id="configId">
+                        @foreach (var cfg in Model.Configs)
+                        {
+                            if (cfg.Id == Model.DefaultConfigId)
+                            {
+                                <option value="@cfg.Id" selected>@cfg.Name (@cfg.Model)</option>
+                            }
+                            else
+                            {
+                                <option value="@cfg.Id">@cfg.Name (@cfg.Model)</option>
+                            }
+                        }
+                    </select>
+                    <input id="systemPrompt" placeholder="系统提示词（可选）" />
+                    <input id="temperature" type="number" step="0.1" min="0" max="2" value="0.7" />
+                    <button id="clearBtn" type="button">清空</button>
+                </div>
+                <div class="status">OpenAI 兼容接口：POST /chat/completions</div>
+            </div>
+            <div id="messages" class="msgs"></div>
+            <div class="foot">
+                <div class="row2">
+                    <textarea id="input" placeholder="输入消息，按 Ctrl+Enter 发送（Mac: Cmd+Enter），Enter 换行"></textarea>
+                    <button id="sendBtn" type="button">发送</button>
+                </div>
+                <div id="status" class="status">就绪</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messagesEl = document.getElementById('messages');
+        const inputEl = document.getElementById('input');
+        const sendBtn = document.getElementById('sendBtn');
+        const statusEl = document.getElementById('status');
+        const clearBtn = document.getElementById('clearBtn');
+        let shouldAutoScroll = true;
+
+        function isNearBottom(el, threshold = 40) {
+            return (el.scrollHeight - el.scrollTop - el.clientHeight) <= threshold;
+        }
+
+        function scrollToBottomIfNeeded(force = false) {
+            if (force || shouldAutoScroll) {
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+        }
+
+        messagesEl.addEventListener('scroll', () => {
+            shouldAutoScroll = isNearBottom(messagesEl);
+        });
+
+        function addMessage(role, content) {
+            const div = document.createElement('div');
+            div.className = `msg ${role}`;
+            const who = role === 'user' ? '我' : 'AI';
+            div.innerHTML = `<span class="meta">${who} · ${new Date().toLocaleTimeString()}</span><div class="content"></div>`;
+            const contentEl = div.querySelector('.content');
+            contentEl.textContent = content || '';
+            messagesEl.appendChild(div);
+            scrollToBottomIfNeeded(true);
+            return {
+                setContent: (text) => {
+                    contentEl.textContent = text || '';
+                    scrollToBottomIfNeeded();
+                }
+            };
+        }
+
+        async function send() {
+            const msg = inputEl.value.trim();
+            if (!msg) return;
+
+            const body = {
+                configId: Number(document.getElementById('configId').value || 0),
+                systemPrompt: document.getElementById('systemPrompt').value || '',
+                temperature: Number(document.getElementById('temperature').value || 0.7),
+                message: msg
+            };
+
+            addMessage('user', msg);
+            inputEl.value = '';
+            statusEl.textContent = 'AI 流式响应中...';
+            sendBtn.disabled = true;
+            const aiBubble = addMessage('ai', '');
+
+            try {
+                const resp = await fetch('/AI/Chat?handler=SendStream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!resp.ok) {
+                    let errText = '';
+                    try {
+                        const errJson = await resp.json();
+                        const msg = errJson.message || errJson.msg || '未知错误';
+                        const detail = errJson.data?.upstreamMessage || errJson.data?.body || '';
+                        errText = detail ? `请求失败：${msg}\n${detail}` : `请求失败：${msg}`;
+                    } catch {
+                        errText = `请求失败：HTTP ${resp.status}`;
+                    }
+                    aiBubble.setContent(errText);
+                    return;
+                }
+
+                if (!resp.body || !resp.body.getReader) {
+                    aiBubble.setContent('当前浏览器不支持流式读取');
+                    return;
+                }
+
+                const reader = resp.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let finalText = '';
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    finalText += decoder.decode(value, { stream: true });
+                    aiBubble.setContent(finalText);
+                }
+
+                if (!finalText.trim()) {
+                    aiBubble.setContent('(空响应)');
+                }
+            } catch (e) {
+                aiBubble.setContent('网络错误：' + (e?.message || e));
+            } finally {
+                sendBtn.disabled = false;
+                statusEl.textContent = '就绪';
+                inputEl.focus();
+            }
+        }
+
+        sendBtn.addEventListener('click', send);
+        clearBtn.addEventListener('click', () => {
+            messagesEl.innerHTML = '';
+            shouldAutoScroll = true;
+            inputEl.focus();
+        });
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                send();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -35,6 +35,7 @@ namespace App.DAL
         public DbSet<Menu> Menus { get; set; }
         public DbSet<Sequence> Sequences { get; set; }
         public DbSet<SiteConfig> SiteConfigs { get; set; }
+        public DbSet<AIConfig> AIConfigs { get; set; }
         public DbSet<AliSmsConfig> AliSmsConfigs { get; set; }
 
         // open

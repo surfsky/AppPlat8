@@ -1,0 +1,25 @@
+@page
+@model App.Pages.AI.AIConfigFormModel
+@{
+    ViewData["Title"] = "AI配置";
+}
+
+@section body {
+    <EleForm LabelWidth="130px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.BaseUrl" Label="接口地址" Required="true" Placeholder="如: https://api.openai.com/v1"></EleInput>
+        <EleInput For="Item.Model" Label="模型" Required="true" Placeholder="如: gpt-4o-mini"></EleInput>
+        <EleInput For="Item.ApiKey" Label="API Key" Type="Password" Required="true"></EleInput>
+        <EleInput For="Item.Services" Label="支持服务" Placeholder="chat,image,audio"></EleInput>
+        <EleNumber For="Item.TimeoutSeconds" Label="超时(秒)" Min="10" Max="600"></EleNumber>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="10000"></EleNumber>
+        <EleSwitch For="Item.IsDefault" Label="默认配置"></EleSwitch>
+        <EleSwitch For="Item.InUsed" Label="启用"></EleSwitch>
+        <EleInput For="Item.Remark" Label="备注" Type="TextArea" Rows="3" FillRow="true"></EleInput>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

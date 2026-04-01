@@ -58,6 +58,7 @@ namespace App.DAL
         [UI("配置", "菜单管理")]            ConfigMenu = 22,
         [UI("配置", "序列号维护")]          ConfigSequence = 23,
         [UI("配置", "AI配置")]              ConfigAI = 24,
+        [UI("AI", "AI聊天")]                AIChat = 25,
 
 
         //---------------------------------------------

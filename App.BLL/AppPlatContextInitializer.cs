@@ -132,6 +132,24 @@ namespace App.DAL
                         },
                         new Menu
                         {
+                            Name = "AI配置",
+                            SortId = 910,
+                            Remark = "二级菜单",
+                            NavigateUrl = "~/AI/AIConfigs",
+                            ImageUrl = "~/res/icon/page.png",
+                            Power = Power.ConfigAI
+                        },
+                        new Menu
+                        {
+                            Name = "AI聊天",
+                            SortId = 920,
+                            Remark = "二级菜单",
+                            NavigateUrl = "~/AI/Chat",
+                            ImageUrl = "~/res/icon/page.png",
+                            Power = Power.AIChat
+                        },
+                        new Menu
+                        {
                             Name = "日志",
                             SortId = 200,
                             Remark = "二级菜单",
