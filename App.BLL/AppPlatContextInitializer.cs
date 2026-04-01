@@ -38,12 +38,15 @@ namespace App.DAL
             return new List<SiteConfig>() {
                 new SiteConfig
                 {
-                    Icon = "",
-                    LoginBg = "/res/themes/image_blue_moon/moon.jpg",
-                    BeiAnNo = "浙ICP备案XXXXX",
-                    Title = "AppPlat",
-                    PageSize = 20,
-                    Theme = "Cupertino",
+                    Title = "AppPlat8",
+                    BeiAnNo = "浙ICP备XXX号",
+                    Icon = "/Files/SiteConfig/2139794460303691776.png",
+                    LoginBg = "/Files/SiteConfig/2139794464653185024.png",
+                    PageSize = 50,
+                    DefaultPassword = "abc@123",
+                    UpFileTypes = ".gif, .png, .jpg, .jpeg, .bmp, .mp3, .mp4, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .pdf, .cdr",
+                    UpFileSize = 50,
+                    MapKey = "pk.xxx"
                 }
             };
 
@@ -53,195 +56,365 @@ namespace App.DAL
             var menus = new List<Menu> {
                 new Menu
                 {
-                    Name = "系统管理",
-                    SortId = 20,
+                    Name = "仪表盘",
+                    SortId = 0,
+                    NavigateUrl = "Me/Dashboard",
+                    ImageUrl = "fas fa-chart-line",
+                    Power = (Power?)0,
+                },
+                new Menu
+                {
+                    Name = "排查",
+                    SortId = 10,
                     Remark = "顶级菜单",
-                    ImageUrl = "~/res/icon/folder.png",
+                    ImageUrl = "fas fa-folder",
+                    Power = (Power?)0,
+                    Expanded = true,
                     Children = new List<Menu> {
+                        new Menu
+                        {
+                            Name = "对象",
+                            SortId = 10,
+                            NavigateUrl = "Checks/CheckObjects",
+                            ImageUrl = "fas fa-university",
+                            Power = (Power?)0,
+                        },
+                        new Menu
+                        {
+                            Name = "排查",
+                            SortId = 20,
+                            NavigateUrl = "Checks/CheckLogs",
+                            ImageUrl = "fas fa-search",
+                            Power = (Power?)321,
+                        },
+                        new Menu
+                        {
+                            Name = "标签",
+                            SortId = 25,
+                            NavigateUrl = "Checks/CheckTags",
+                            ImageUrl = "fas fa-flag",
+                            Power = (Power?)341,
+                            Fixed = false,
+                        },
+                        new Menu
+                        {
+                            Name = "检查表",
+                            SortId = 30,
+                            NavigateUrl = "Checks/CheckSheets",
+                            ImageUrl = "fas fa-tachometer-alt",
+                            Power = (Power?)341,
+                        },
+                        new Menu
+                        {
+                            Name = "隐患",
+                            SortId = 40,
+                            NavigateUrl = "Checks/CheckHazards",
+                            ImageUrl = "fas fa-file-excel",
+                            Power = (Power?)331,
+                        },
+                        new Menu
+                        {
+                            Name = "任务",
+                            SortId = 50,
+                            NavigateUrl = "Checks/CheckTasks",
+                            ImageUrl = "fas fa-list",
+                            Power = (Power?)311,
+                        },
+                        new Menu
+                        {
+                            Name = "报表",
+                            SortId = 60,
+                            NavigateUrl = "Checks/CheckReports",
+                            ImageUrl = "fas fa-chart-pie",
+                            Power = (Power?)0,
+                        },
+                    }
+                },
+                new Menu
+                {
+                    Name = "OA",
+                    SortId = 20,
+                    ImageUrl = "fas fa-folder",
+                    Power = (Power?)0,
+                    Children = new List<Menu> {
+                        new Menu
+                        {
+                            Name = "公告",
+                            SortId = 0,
+                            NavigateUrl = "OA/Announces",
+                            ImageUrl = "fas fa-bullhorn",
+                            Power = (Power?)71,
+                        },
+                        new Menu
+                        {
+                            Name = "公司",
+                            SortId = 0,
+                            NavigateUrl = "OA/Companies",
+                            ImageUrl = "fas fa-university",
+                            Power = (Power?)81,
+                        },
+                        new Menu
+                        {
+                            Name = "资产",
+                            SortId = 10,
+                            NavigateUrl = "OA/Assets",
+                            ImageUrl = "fas fa-print",
+                            Power = (Power?)201,
+                        },
+                        new Menu
+                        {
+                            Name = "预算",
+                            SortId = 20,
+                            NavigateUrl = "OA/Budgets",
+                            ImageUrl = "fas fa-chart-line",
+                            Power = (Power?)241,
+                        },
+                        new Menu
+                        {
+                            Name = "交办",
+                            SortId = 30,
+                            NavigateUrl = "Tasks/Tasks",
+                            ImageUrl = "fas fa-list-ol",
+                            Power = (Power?)261,
+                        },
+                        new Menu
+                        {
+                            Name = "项目",
+                            SortId = 40,
+                            NavigateUrl = "Tasks/Projects",
+                            ImageUrl = "fas fa-cubes",
+                            Power = (Power?)231,
+                        },
+                        new Menu
+                        {
+                            Name = "事件",
+                            SortId = 50,
+                            NavigateUrl = "Tasks/Events",
+                            ImageUrl = "fas fa-edit",
+                            Power = (Power?)221,
+                        },
+                    }
+                },
+                new Menu
+                {
+                    Name = "知识库",
+                    SortId = 25,
+                    ImageUrl = "fas fa-folder",
+                    Power = (Power?)0,
+                    Fixed = false,
+                    Children = new List<Menu> {
+                        new Menu
+                        {
+                            Name = "文档",
+                            SortId = 20,
+                            NavigateUrl = "Articles/Articles",
+                            ImageUrl = "fas fa-file-alt",
+                            Power = (Power?)251,
+                        },
+                        new Menu
+                        {
+                            Name = "目录",
+                            SortId = 30,
+                            NavigateUrl = "Articles/ArticleDirs",
+                            ImageUrl = "fas fa-boxes",
+                            Fixed = false,
+                        },
+                    }
+                },
+                new Menu
+                {
+                    Name = "账户",
+                    SortId = 30,
+                    Remark = "顶级菜单",
+                    ImageUrl = "fas fa-folder",
+                    Power = (Power?)0,
+                    Children = new List<Menu> {
+                        new Menu
+                        {
+                            Name = "组织",
+                            SortId = 0,
+                            Remark = "二级菜单",
+                            NavigateUrl = "Admins/Orgs",
+                            ImageUrl = "fas fa-sitemap",
+                            Power = (Power?)61,
+                        },
                         new Menu
                         {
                             Name = "用户",
                             SortId = 10,
                             Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/Users",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.UserView
-                        },
-                        new Menu
-                        {
-                            Name = "组织",
-                            SortId = 50,
-                            Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/OrgUser",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.OrgView
-                        },
-                        new Menu
-                        {
-                            Name = "角色",
-                            SortId = 70,
-                            Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/RoleUser",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.RoleUserEdit
+                            NavigateUrl = "Admins/Users",
+                            ImageUrl = "fas fa-users",
+                            Power = (Power?)51,
                         },
                         new Menu
                         {
                             Name = "权限",
                             SortId = 90,
                             Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/RolePower",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.RolePowerEdit
+                            NavigateUrl = "Admins/RolePower",
+                            ImageUrl = "fas fa-cubes",
+                            Power = (Power?)57,
                         },
+                    }
+                },
+                new Menu
+                {
+                    Name = "运维",
+                    SortId = 40,
+                    ImageUrl = "fas fa-folder",
+                    Power = (Power?)0,
+                    Children = new List<Menu> {
                         new Menu
                         {
                             Name = "菜单",
-                            SortId = 100,
+                            SortId = 10,
                             Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/Menus",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.ConfigMenu
-                        },
-                        new Menu
-                        {
-                            Name = "在线",
-                            SortId = 110,
-                            Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/Onlines",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.MonitorOnline
-                        },
-                        new Menu
-                        {
-                            Name = "公告",
-                            SortId = 200,
-                            Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/Announcements",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.Web
-                        },
-                        new Menu
-                        {
-                            Name = "配置",
-                            SortId = 900,
-                            Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/Config",
-                            ImageUrl = "~/res/icon/cog.png",
-                            Power = Power.ConfigSite
-                        },
-                        new Menu
-                        {
-                            Name = "AI配置",
-                            SortId = 910,
-                            Remark = "二级菜单",
-                            NavigateUrl = "~/AI/AIConfigs",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.ConfigAI
-                        },
-                        new Menu
-                        {
-                            Name = "AI聊天",
-                            SortId = 920,
-                            Remark = "二级菜单",
-                            NavigateUrl = "~/AI/Chat",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.AIChat
+                            NavigateUrl = "Maintains/Menus",
+                            ImageUrl = "fas fa-list",
+                            Power = (Power?)22,
                         },
                         new Menu
                         {
                             Name = "日志",
-                            SortId = 200,
+                            SortId = 20,
                             Remark = "二级菜单",
-                            NavigateUrl = "~/Admins/Logs",
-                            ImageUrl = "~/res/icon/page.png",
-                            Power = Power.MonitorLog
+                            NavigateUrl = "Maintains/Logs",
+                            ImageUrl = "fas fa-check-double",
+                            Power = (Power?)31,
+                        },
+                        new Menu
+                        {
+                            Name = "站点配置",
+                            SortId = 30,
+                            Remark = "二级菜单",
+                            NavigateUrl = "Maintains/SiteConfigForm",
+                            ImageUrl = "fas fa-cog",
+                            Power = (Power?)21,
+                        },
+                        new Menu
+                        {
+                            Name = "AI配置",
+                            SortId = 40,
+                            NavigateUrl = "AI/AiConfigs",
+                            ImageUrl = "fas fa-rocket",
+                            Power = (Power?)24,
+                            Fixed = false,
                         },
                     }
                 },
                 new Menu
                 {
-                    Name = "测试",
-                    SortId = 30,
-                    ImageUrl = "~/res/icon/folder.png",
-                    Visible = false,
+                    Name = "开发",
+                    SortId = 50,
+                    ImageUrl = "fas fa-folder",
+                    Power = (Power?)6,
                     Children = new List<Menu> {
                         new Menu
                         {
-                            Name = "Controls",
-                            SortId = 20,
-                            ImageUrl = "~/res/icon/folder.png",
-                            Children = new List<Menu> {
-                                new Menu
-                                {
-                                    Name = "Button",
-                                    NavigateUrl = "~/Tests/Buttons",
-                                    ImageUrl = "~/res/icon/page.png",
-                                    SortId = 20,
-                                },
-                                new Menu
-                                {
-                                    Name = "Grid1",
-                                    NavigateUrl = "~/Tests/Grid",
-                                    ImageUrl = "~/res/icon/page.png",
-                                    SortId = 50,
-                                },
-                                new Menu
-                                {
-                                    Name = "Grid2",
-                                    NavigateUrl = "~/Tests/DynamicGrid",
-                                    ImageUrl = "~/res/icon/page.png",
-                                    SortId = 50,
-                                },
-                                new Menu
-                                {
-                                    Name = "Responsive",
-                                    NavigateUrl = "~/Tests/Responsive",
-                                    ImageUrl = "~/res/icon/page.png",
-                                    SortId = 40,
-                                },
-                            }
+                            Name = "API",
+                            SortId = 0,
+                            NavigateUrl = "Dev/API",
+                            ImageUrl = "fas fa-link",
+                            Power = (Power?)6,
                         },
                         new Menu
                         {
-                            Name = "Blazors",
-                            SortId = 60,
-                            ImageUrl = "~/res/icon/folder.png",
-                            Children = new List<Menu> {
-                               new Menu
-                                {
-                                    Name = "Blazor",
-                                    NavigateUrl = "~/Blazors/Index",
-                                    ImageUrl = "~/res/icon/page.png",
-                                    SortId = 60,
-                                }
-                            }
-                       },
+                            Name = "Chat",
+                            SortId = 30,
+                            NavigateUrl = "Chats/Chat",
+                            ImageUrl = "fas fa-cogs",
+                        },
                         new Menu
                         {
-                            Name = "Chat",
-                            NavigateUrl = "~/Chats/Chat",
-                            ImageUrl = "~/res/icon/page.png",
-                            SortId = 80,
+                            Name = "测试",
+                            SortId = 60,
+                            ImageUrl = "fas fa-folder",
+                            Power = (Power?)6,
+                            Children = new List<Menu> {
+                                new Menu
+                                {
+                                    Name = "图标",
+                                    SortId = 0,
+                                    NavigateUrl = "EleUISamples/Controls/Icons",
+                                    ImageUrl = "fas fa-lightbulb",
+                                    Power = (Power?)6,
+                                    Fixed = false,
+                                },
+                                new Menu
+                                {
+                                    Name = "图标2",
+                                    SortId = 20,
+                                    NavigateUrl = "Dev/IconFas",
+                                    ImageUrl = "fas fa-sliders-h",
+                                    Power = (Power?)6,
+                                },
+                                new Menu
+                                {
+                                    Name = "控件",
+                                    SortId = 30,
+                                    NavigateUrl = "EleUISamples/index",
+                                    ImageUrl = "fas fa-file",
+                                    Power = (Power?)6,
+                                    Target = "_blank",
+                                    Fixed = false,
+                                },
+                                new Menu
+                                {
+                                    Name = "Blazor",
+                                    SortId = 60,
+                                    NavigateUrl = "Blazors/Index",
+                                    ImageUrl = "fas fa-file",
+                                },
+                            }
                         },
                     }
                 },
                 new Menu
                 {
-                    Name = "修改密码",
-                    SortId = 130,
-                    Remark = "二级菜单",
-                    NavigateUrl = "~/Admin/ChangePassword",
-                    ImageUrl = "~/res/icon/tag_blue.png"
+                    Name = "驾驶舱",
+                    SortId = 70,
+                    ImageUrl = "fas fa-folder",
+                    Power = (Power?)0,
+                    Children = new List<Menu> {
+                        new Menu
+                        {
+                            Name = "驾驶舱",
+                            SortId = 0,
+                            NavigateUrl = "GIS/GisIndex",
+                            ImageUrl = "fas fa-tachometer-alt",
+                            Power = (Power?)0,
+                            Target = "_blank",
+                        },
+                        new Menu
+                        {
+                            Name = "区域",
+                            SortId = 20,
+                            NavigateUrl = "GIS/Regions",
+                            ImageUrl = "fas fa-project-diagram",
+                            Power = (Power?)0,
+                        },
+                    }
                 },
                 new Menu
                 {
-                    Name = "安全退出",
+                    Name = "账户",
+                    SortId = 130,
+                    NavigateUrl = "me/Profile",
+                    ImageUrl = "fas fa-user",
+                    Power = (Power?)0,
+                    Fixed = true,
+                },
+                new Menu
+                {
+                    Name = "退出",
                     SortId = 140,
+                    NavigateUrl = "Logout",
+                    ImageUrl = "fas fa-external-link-alt",
+                    Power = (Power?)0,
                     Remark = "二级菜单",
-                    NavigateUrl = "~/Logout",
-                    ImageUrl = "~/res/icon/door_out.png",
-                    Target="_top"
+                    Target = "_top",
+                    Fixed = true,
                 },
             };
 

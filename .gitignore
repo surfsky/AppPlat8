@@ -22,6 +22,9 @@ Thumbs.db
 *.db
 *.db-shm
 *.db-wal
+App/Db/sqlite.db
+App/Db/sqlite.db-shm
+App/Db/sqlite.db-wal
 
 # App runtime/generated content
 App/Files/
