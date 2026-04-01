@@ -11,7 +11,7 @@ using System.ComponentModel;
 //using System.Web.Script.Serialization;
 using System.Collections;
 using App.Utils;
-using System.DrawingCore;
+using SkiaSharp;
 
 namespace App
 {
@@ -64,18 +64,24 @@ namespace App
             return dict;
         }
 
-        [HttpApi("输出图像", CacheSeconds = 60)]
-        public Image GetImage(string text)
+        [HttpApi("输出图像", CacheSeconds = 60, MimeType = "image/png", FileName = "demo.png")]
+        public byte[] GetImage(string text)
         {
-            Bitmap bmp = new Bitmap(200, 200);
-            Graphics g = Graphics.FromImage(bmp);
-            g.DrawString(
-                text,
-                new Font("Arial", 16, FontStyle.Bold),
-                new SolidBrush(Color.FromArgb(255, 206, 97)),
-                new PointF(5, 5)
-                );
-            return bmp;
+            using var bitmap = new SKBitmap(200, 200);
+            using var canvas = new SKCanvas(bitmap);
+            canvas.Clear(SKColor.Parse("#1E1E1E"));
+
+            using var paint = new SKPaint
+            {
+                Color = new SKColor(255, 206, 97),
+                IsAntialias = true
+            };
+            using var font = new SKFont(SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold), 32);
+
+            canvas.DrawText(text ?? string.Empty, 8, 48, SKTextAlign.Left, font, paint);
+            using var image = SKImage.FromBitmap(bitmap);
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            return data.ToArray();
         }
 
     }

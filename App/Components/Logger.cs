@@ -31,6 +31,7 @@ namespace App.Components
         public static void Info(string format, params object[] ps) => _log.Information(format, ps);
         public static void Error(string format, params object[] ps) => _log.Error(format, ps);
         public static void Fatal(string format, params object[] ps) => _log.Fatal(format, ps);
+        public static void Warn(string format, params object[] ps) => _log.Warning(format, ps);
 
         /// <summary>保存到数据库</summary>
         /// <param name="level">等级</param>

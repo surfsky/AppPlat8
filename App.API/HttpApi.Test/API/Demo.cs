@@ -85,7 +85,7 @@ namespace App.Api
             var exts = new List<string> { ".jpg", ".png", ".gif", ".mp3", ".mp4", ".txt", ".md" };
             var ext = fileName.GetFileExtension();
             if (!exts.Contains(ext))
-                return new APIResult(false, "File deny", 13);
+                return new APIResult(13, "File deny");
 
             // 构造存储路径
             var url = GetUploadPath(folder, fileName);
@@ -97,10 +97,10 @@ namespace App.Api
             // 存储第一个文件
             var files = Asp.Request.Form.Files;
             if (files.Count == 0)
-                return new APIResult(false, "File doesn't exist", 11);
+                return new APIResult(11, "File doesn't exist");
             using (var stream = File.Create(path))
                 files[0].CopyToAsync(stream);
-            return new APIResult(true, url);
+            return new APIResult(0, "", url);
         }
 
         /// <summary>获取上传文件要保存的虚拟路径</summary>

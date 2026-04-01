@@ -13,6 +13,41 @@ using Microsoft.AspNetCore.Http;
 
 namespace App.HttpApi
 {
+        public class VisitArgs
+        {
+            public HttpContext Context { get; set; }
+            public MethodInfo Method { get; set; }
+            public HttpApiAttribute Attr { get; set; }
+            public Dictionary<string, object> Inputs { get; set; }
+        }
+
+        public class AuthArgs
+        {
+            public HttpContext Context { get; set; }
+            public MethodInfo Method { get; set; }
+            public HttpApiAttribute Attr { get; set; }
+            public string Token { get; set; }
+        }
+
+        public class EndArgs
+        {
+            public HttpContext Context { get; set; }
+        }
+
+        public class ExceptionArgs
+        {
+            public HttpContext Context { get; set; }
+            public MethodInfo Method { get; set; }
+            public Exception Ex { get; set; }
+        }
+
+        public class BanArgs
+        {
+            public HttpContext Context { get; set; }
+            public string IP { get; set; }
+            public string Url { get; set; }
+        }
+
     /*
     "httpApi" : {
         authIPs = "",
@@ -107,11 +142,12 @@ namespace App.HttpApi
         //--------------------------------------------------
         // HttpApi访问事件，请在Global中设置
         //--------------------------------------------------
-        public delegate void VisitHandler(HttpContext context, MethodInfo method, HttpApiAttribute attr, Dictionary<string, object> inputs);
-        public delegate void AuthHandler(HttpContext context, MethodInfo method, HttpApiAttribute attr, string token);
-        public delegate void EndHandler(HttpContext context);
-        public delegate void ExceptionHandler(MethodInfo method, Exception ex);
-        public delegate void BanHandler(string ip, string url);
+
+        public delegate void VisitHandler(VisitArgs args);
+        public delegate void AuthHandler(AuthArgs args);
+        public delegate void EndHandler(EndArgs args);
+        public delegate void ExceptionHandler(ExceptionArgs args);
+        public delegate void BanHandler(BanArgs args);
 
         /// <summary>访问事件（有异常请直接抛出 HttpApiException 异常）</summary>
         public event VisitHandler OnVisit;
@@ -132,34 +168,58 @@ namespace App.HttpApi
         //--------------------------------------------
         // 包裹方法
         //--------------------------------------------
+        public void DoVisit(VisitArgs args)
+        {
+            this.OnVisit?.Invoke(args);
+        }
+
         public void DoVisit(HttpContext context, MethodInfo method, HttpApiAttribute attr, Dictionary<string, object> inputs)
         {
-            this.OnVisit?.Invoke(context, method, attr, inputs);
+            DoVisit(new VisitArgs { Context = context, Method = method, Attr = attr, Inputs = inputs });
         }
 
         /// <summary>授权事件</summary>
+        public void DoAuth(AuthArgs args)
+        {
+            this.OnAuth?.Invoke(args);
+        }
+
         public void DoAuth(HttpContext context, MethodInfo method, HttpApiAttribute attr, string token)
         {
-            this.OnAuth?.Invoke(context, method, attr, token);
+            DoAuth(new AuthArgs { Context = context, Method = method, Attr = attr, Token = token });
         }
 
         /// <summary>结束</summary>
+        public void DoEnd(EndArgs args)
+        {
+            this.OnEnd?.Invoke(args);
+        }
+
         public void DoEnd(HttpContext context)
         {
-            this.OnEnd?.Invoke(context);
+            DoEnd(new EndArgs { Context = context });
         }
 
         /// <summary>异常处理</summary>
-        /// <returns>若有自定义异常处理程序，则返回true；否则返回false</returns>
-        public void DoException(MethodInfo method, Exception ex)
+        public void DoException(ExceptionArgs args)
         {
-            this.OnException?.Invoke(method, ex);
+            this.OnException?.Invoke(args);
+        }
+
+        public void DoException(HttpContext context, MethodInfo method, Exception ex)
+        {
+            DoException(new ExceptionArgs { Context = context, Method = method, Ex = ex });
         }
 
         /// <summary>禁止访问</summary>
-        public void DoBan(string ip, string url)
+        public void DoBan(BanArgs args)
         {
-            this.OnBan?.Invoke(ip, url);
+            this.OnBan?.Invoke(args);
+        }
+
+        public void DoBan(HttpContext context, string ip, string url)
+        {
+            DoBan(new BanArgs { Context = context, IP = ip, Url = url });
         }
     }
 }

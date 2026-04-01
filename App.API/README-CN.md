@@ -11,10 +11,10 @@
 ```
 http://.../HttpApi/TypeName/Method?p1=x&p2=x
 ```
-* (03) 可将页面类中的方法暴露为http接口，如：
+* (03) 可将任何类中的方法暴露为http接口，如：
 ```
-http://.../Page1.aspx/GetData?page=1&rows=2&sort=abc&order=desc
-http://.../Handler1.ashx/GetData?page=1&rows=2&sort=abc&order=desc
+http://.../Page1/GetData?page=1&rows=2&sort=abc&order=desc
+http://.../Handler1/GetData?page=1&rows=2&sort=abc&order=desc
 ```
 * (04) 自动生成客户端调用脚本
 ```
@@ -22,9 +22,9 @@ http://.../HttpApi/TypeName/js
 ```
 * (05) 自动生成API清单、API接口测试页面
 ```
-HttpApi/TypeName/api
-HttpApi/TypeName/apis
-HttpApi/TypeName/Method$
+HttpApi/TypeName/api         api清单页面
+HttpApi/TypeName/apis        api清单 json
+HttpApi/TypeName/Method$     方法测试页面
 ```
 
 * (06) 带缓存机制：可指定方法返回值的缓存时间、方式; 客户端可控强制刷新缓存。
@@ -41,27 +41,31 @@ http://github.com/surfsky
 
 ## 3.安装
 ```
-Nuget: install-package App.HttpApi
+尚未更新到Nuget，需手动引用类库
+Nuget: install-package App.HttpApi  
 ```
 
 ## 4.使用
 
 (1) 引用类库（用nuget安装的话会自动完成）
 ```
-App.Core.dll
 App.HttpApi.dll
 ```
-注：App.HttpApi 引用了 App.Core 类库，用到其：
-- ASP.NET 建权验票相关方法
-- 类型解析相关方法
        
-(2) 修改 web.config 文件（用nuget安装的话会自动修改）
+(2) 修改 startup.cs 文件，添加 HttpApiModule 模块
 ```
-<system.webServer>
-  <modules>
-    <add name="HttpApiModule" type="App.HttpApi.HttpApiModule" />
-  </modules>
-</system.webServer>
+public class Startup
+{
+    public void Configuration(IAppBuilder app)
+    {
+        // 添加 HttpApi 模块
+        app.UseHttpApi(o =>
+        {
+            o.TypePrefix = "App.API.";
+            o.FormatEnum = EnumFomatting.Int;
+        });
+    }
+}
 ```
        
 (3) 在需要导出HttpApi的方法上写上标注
@@ -104,6 +108,27 @@ Web.Config
   typePrefix="App."                      // 可省略的API类型前缀，如原始路径为 /HttpAPI/App.Base/Demo 可简化为 /HttpApi/Base/Demo
   language="en"                          // 国际化支持。现支持 en, zh-CN
   />
+```
+``` c#
+app.UseHttpApi(o =>                        // HttpApi
+{
+    o.TypePrefix = "App.API.";
+    o.FormatEnum = EnumFomatting.Int;
+    o.FormatIndented = Indented;
+    o.FormatDateTime = "yyyy-MM-dd";
+    o.FormatLowCamel = false;
+    o.FormatLongNumber = "Int64,Decimal";
+    o.ErrorResponse = "APIResult";
+    o.TypePrefix = "App.API.";
+    o.Language = "en";
+    o.OnError = (context, ex) =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "text/plain";
+        context.Response.WriteAsync(ex.Message);
+    };
+    o.On
+});
 ```
 
 ### （2）自动生成客户端调用的 javascript 脚本

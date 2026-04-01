@@ -660,17 +660,16 @@
         <member name="E:App.HttpApi.HttpApiConfig.OnBan">
             <summary>禁止事件</summary>
         </member>
-        <member name="M:App.HttpApi.HttpApiConfig.DoAuth(Microsoft.AspNetCore.Http.HttpContext,System.Reflection.MethodInfo,App.HttpApi.HttpApiAttribute,System.String)">
+        <member name="M:App.HttpApi.HttpApiConfig.DoAuth(App.HttpApi.AuthArgs)">
             <summary>授权事件</summary>
         </member>
-        <member name="M:App.HttpApi.HttpApiConfig.DoEnd(Microsoft.AspNetCore.Http.HttpContext)">
+        <member name="M:App.HttpApi.HttpApiConfig.DoEnd(App.HttpApi.EndArgs)">
             <summary>结束</summary>
         </member>
-        <member name="M:App.HttpApi.HttpApiConfig.DoException(System.Reflection.MethodInfo,System.Exception)">
+        <member name="M:App.HttpApi.HttpApiConfig.DoException(App.HttpApi.ExceptionArgs)">
             <summary>异常处理</summary>
-            <returns>若有自定义异常处理程序，则返回true；否则返回false</returns>
         </member>
-        <member name="M:App.HttpApi.HttpApiConfig.DoBan(System.String,System.String)">
+        <member name="M:App.HttpApi.HttpApiConfig.DoBan(App.HttpApi.BanArgs)">
             <summary>禁止访问</summary>
         </member>
         <member name="T:App.HttpApi.HttpApiExtension">

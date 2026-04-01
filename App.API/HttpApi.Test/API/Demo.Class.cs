@@ -70,7 +70,7 @@ namespace App
                 new Person(){ Name="Kevin", Sex=Sex.Male, Birth=new DateTime(2000, 01, 01)},
                 new Person(){ Name="Cherry", Sex=Sex.Female, Birth=new DateTime(2010, 01, 01)}
             };
-            return new APIResult(true, "", persons);
+            return new APIResult(0, "", persons);
         }
     }
 }

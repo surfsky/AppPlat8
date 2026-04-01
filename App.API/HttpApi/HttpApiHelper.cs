@@ -67,7 +67,7 @@ namespace App.HttpApi
                 if (VisitCounter.IsHeavy(ip, url, 10, attr.AuthTraffic * 10))  // 每10秒为一个周期
                 {
                     IPFilter.Ban(ip, HttpApiConfig.Instance.BanMinutes);
-                    HttpApiConfig.Instance.DoBan(ip, url);
+                    HttpApiConfig.Instance.DoBan(context, ip, url);
                     return;
                 }
             }
@@ -120,14 +120,14 @@ namespace App.HttpApi
                     // HttpApi 调用异常
                     var err = ex as HttpApiException;
                     WriteError(context, err.Code, err.Message);
-                    HttpApiConfig.Instance.DoException(method, ex);
+                    HttpApiConfig.Instance.DoException(context, method, ex);
                 }
                 else
                 {
                     // 方法内部异常
                     var ex2 = GetInnerException(ex);
                     WriteError(context, 500, ex2.Message);
-                    HttpApiConfig.Instance.DoException(method, ex2);
+                    HttpApiConfig.Instance.DoException(context, method, ex2);
                 }
             }
             finally

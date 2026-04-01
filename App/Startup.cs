@@ -15,6 +15,8 @@ using App.DAL;
 using App.Components;
 using App.Entities;
 using App.Pages.Chats;
+using Newtonsoft.Json;
+using System.Linq;
 
 namespace App
 {
@@ -98,12 +100,22 @@ namespace App
  
             // 自定义中间件
             app.UserAppWeb(env.ContentRootPath);            // 注册后，可用 Asp.Current, Asp.User, Asp.Response 等静态属性获取当前请求的上下文信息
-            app.UseMonitor(o => Console.WriteLine("{0} {1} {2}", o.Url, o.Seconds, o.ClientIP));  // 监控网页访问情况，输出访问的 URL、耗时和客户端 IP 地址
-            app.UseHttpApi(o =>                             // HttpApi 配置（见 /Apis 目录）
+            app.UseMonitor(o => Logger.Info("[VISIT] {0} from {1} use {2}s", o.Url, o.ClientIP, o.Seconds));  // 监控网页访问情况，输出访问的 URL、耗时和客户端 IP 地址
+            app.UseHttpApi(o =>                             // HttpApi 配置（代码见 /Apis 目录）
             {
                 o.TypePrefix = "App.API.";
                 o.FormatEnum = EnumFomatting.Int;
-                o.OnVisit += (ctx, method, attr, inputs) => Logger.Info("{0} {1} from {2}", ctx.Request.Method, ctx.Request.GetFullUrl(), ctx.Connection.RemoteIpAddress);
+                o.FormatIndented = Formatting.Indented;
+                o.FormatDateTime = "yyyy-MM-dd";
+                o.FormatLowCamel = true;
+                o.FormatLongNumber = "Int64,Decimal";
+                o.Language = "en";
+                o.OnVisit += args => Logger.Info("[VISIT] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
+                o.OnBan   += args => Logger.Warn("[BAN] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
+                o.OnAuth  += args => {
+                    var token = args.Context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();  // 如：Bearer token
+                    Logger.Warn("[AUTH] {0} {1} from {2} token={3}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress, token);
+                };
             });
 
             // 终端路由配置

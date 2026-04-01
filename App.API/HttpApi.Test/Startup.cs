@@ -18,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Newtonsoft.Json;
 
 namespace App.HttpApi.Test
 {
@@ -78,19 +79,19 @@ namespace App.HttpApi.Test
         {
             //var accessor = app.ApplicationServices.GetRequiredService<IHttpContextAccessor>();
 
-            // ��Map�������м��
+            // 
             //app.Map("/map1", Handler1);
             //app.Map("/map2", Handler2);
             //app.Map("/map3", Handler3);
-            //app.MapWhen(context => context.Request.Query.ContainsKey("branch"), HandleBranch);  // ����·��
+            //app.MapWhen(context => context.Request.Query.ContainsKey("branch"), HandleBranch);  // 
 
-            // Ĭ���м��
+            // 
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
             else
                 app.UseExceptionHandler("/Error");
 
-            // jiang 
+            //  
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(env.ContentRootPath + "\\Files"),
@@ -103,31 +104,48 @@ namespace App.HttpApi.Test
             app.UseCookiePolicy();         // ..
             app.UseRouting();
             //app.UseRouter();             //
-            app.UseSession();              // ����Session֧��
+            app.UseSession();              // 
 
-            // ʹ���Զ�����м��
+            // 
             //app.UseRequestCulture();
             //app.UseMiddleware<RequestCultureMiddleware>();
             //app.UseMiddleware<ValidateBrowserMiddleware>();
 
             //
             //app.UseAuthorize();
-            //HttpApiConfig.Configure(app.ApplicationServices.GetRequiredService<IHttpContextAccessor>());  // ��services�л�ȡ�������󣬲�ʹ��֮
-            app.UseHttpApi(o =>                        // ���� HttpApi
+            app.UseHttpApi(o =>                        // HttpApi
             {
                 o.TypePrefix = "App.API.";
                 o.FormatEnum = EnumFomatting.Int;
+                o.FormatIndented = Formatting.Indented;
+                o.FormatDateTime = "yyyy-MM-dd";
+                o.FormatLowCamel = false;
+                o.FormatLongNumber = "Int64,Decimal";
+                o.TypePrefix = "App.API.";
+                o.Language = "en";
+                //o.ErrorResponse
+                o.OnVisit += args => Console.WriteLine("VISIT{0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
+                o.OnAuth += args =>
+                {
+                    // 对带有[AuthToken]属性的方法认证授权逻辑, 如检查请求头中的令牌是否有效，或者检查用户是否具有访问该方法的权限
+                    var token = args.Context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                    if (token != "valid-token")
+                    {
+                        throw new HttpApiException(StatusCodes.Status401Unauthorized, "Unauthorized token");
+                    }
+                };
+                o.OnBan += args => Console.WriteLine("BAN ip={0}, url={1}", args.IP, args.Url);
+                o.OnEnd += args => Console.WriteLine("END {0} {1} => {2}", args.Context.Request.Method, args.Context.Request.Path, args.Context.Response.StatusCode);
+                o.OnException += args => Console.WriteLine("EXCEPTION method={0}, message={1}", args.Method?.Name, args.Ex.Message);
             });
 
-            //app.UseHttpApi(accessor);
-            //Asp.Configure(accessor, env.ContentRootPath);
             app.UseEndpoints(endpoints => endpoints.MapRazorPages());
         }
 
 
-        //
+        //--------------------------------------------------------
         // handler(middleware)
-        //
+        //--------------------------------------------------------
         private static void Handler1(IApplicationBuilder app)
         {
             app.Run(async context =>
