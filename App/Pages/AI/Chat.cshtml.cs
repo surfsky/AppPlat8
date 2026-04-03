@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading.Tasks;
 using App.Components;
@@ -48,6 +49,11 @@ namespace App.Pages.AI
                 return BuildResult(400, "AI配置不完整：缺少地址或模型");
 
             var endpoint = BuildChatEndpoint(cfg.BaseUrl);
+            var model = NormalizeModelName(cfg.BaseUrl, cfg.Model);
+            var messageBuild = BuildUserMessageContent(req, model);
+            if (!messageBuild.Success)
+                return BuildResult(400, messageBuild.ErrorMessage);
+
             var messages = new JArray();
             if (!string.IsNullOrWhiteSpace(req.SystemPrompt))
             {
@@ -60,10 +66,8 @@ namespace App.Pages.AI
             messages.Add(new JObject
             {
                 ["role"] = "user",
-                ["content"] = req.Message.Trim()
+                ["content"] = messageBuild.Content
             });
-
-            var model = NormalizeModelName(cfg.BaseUrl, cfg.Model);
 
             var payload = new JObject
             {
@@ -141,6 +145,11 @@ namespace App.Pages.AI
                 return BuildResult(400, "AI配置不完整：缺少地址或模型");
 
             var endpoint = BuildChatEndpoint(cfg.BaseUrl);
+            var model = NormalizeModelName(cfg.BaseUrl, cfg.Model);
+            var messageBuild = BuildUserMessageContent(req, model);
+            if (!messageBuild.Success)
+                return BuildResult(400, messageBuild.ErrorMessage);
+
             var messages = new JArray();
             if (!string.IsNullOrWhiteSpace(req.SystemPrompt))
             {
@@ -153,10 +162,8 @@ namespace App.Pages.AI
             messages.Add(new JObject
             {
                 ["role"] = "user",
-                ["content"] = req.Message.Trim()
+                ["content"] = messageBuild.Content
             });
-
-            var model = NormalizeModelName(cfg.BaseUrl, cfg.Model);
             var payload = new JObject
             {
                 ["model"] = model,
@@ -304,6 +311,137 @@ namespace App.Pages.AI
             return Math.Max(30, timeoutSeconds);
         }
 
+        private static BuiltMessageContent BuildUserMessageContent(ChatRequest req, string model)
+        {
+            var message = (req.Message ?? string.Empty).Trim();
+            var attachments = req.Attachments?.Where(t => t != null).ToList() ?? new List<ChatAttachment>();
+            if (attachments.Count == 0)
+                return BuiltMessageContent.Ok(message);
+
+            var imageAttachments = attachments.Where(IsImageAttachment).ToList();
+            if (imageAttachments.Count > 0 && IsLikelyTextOnlyModel(model))
+            {
+                return BuiltMessageContent.Fail($"当前模型 {model} 可能不支持图片输入，请切换到视觉模型（如包含 vision/vl 的模型）后重试。");
+            }
+
+            if (imageAttachments.Count > 0)
+            {
+                var blocks = new JArray
+                {
+                    new JObject
+                    {
+                        ["type"] = "text",
+                        ["text"] = message
+                    }
+                };
+
+                foreach (var item in imageAttachments)
+                {
+                    if (string.IsNullOrWhiteSpace(item.DataUrl))
+                        continue;
+
+                    blocks.Add(new JObject
+                    {
+                        ["type"] = "image_url",
+                        ["image_url"] = new JObject
+                        {
+                            ["url"] = item.DataUrl
+                        }
+                    });
+                }
+
+                foreach (var item in attachments.Where(t => !IsImageAttachment(t)))
+                {
+                    var docText = BuildDocumentText(item);
+                    if (!string.IsNullOrWhiteSpace(docText))
+                    {
+                        blocks.Add(new JObject
+                        {
+                            ["type"] = "text",
+                            ["text"] = docText
+                        });
+                    }
+                }
+
+                return BuiltMessageContent.Ok(blocks);
+            }
+
+            var builder = new StringBuilder();
+            builder.AppendLine(message);
+            foreach (var item in attachments)
+            {
+                var docText = BuildDocumentText(item);
+                if (!string.IsNullOrWhiteSpace(docText))
+                {
+                    builder.AppendLine();
+                    builder.AppendLine(docText);
+                }
+            }
+
+            return BuiltMessageContent.Ok(builder.ToString().Trim());
+        }
+
+        private static bool IsImageAttachment(ChatAttachment item)
+        {
+            if (item == null)
+                return false;
+            return (item.ContentType ?? string.Empty).StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                   && !string.IsNullOrWhiteSpace(item.DataUrl)
+                   && item.DataUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsLikelyTextOnlyModel(string model)
+        {
+            var m = (model ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(m))
+                return false;
+
+            if (m.Contains("vision") || m.Contains("vl") || m.Contains("omni") || m.Contains("gpt-4o"))
+                return false;
+
+            return m.Contains("deepseek-chat") || m.Contains("deepseek-reasoner");
+        }
+
+        private static string BuildDocumentText(ChatAttachment item)
+        {
+            if (item == null)
+                return string.Empty;
+
+            var name = (item.Name ?? "附件").Trim();
+            var safeName = Regex.Replace(name, "[\\r\\n]", " ");
+            if (!string.IsNullOrWhiteSpace(item.TextContent))
+            {
+                var text = item.TextContent.Trim();
+                if (text.Length > 12000)
+                    text = text.Substring(0, 12000) + "\n...(内容过长，已截断)";
+
+                return $"【附件: {safeName}】\n{text}";
+            }
+
+            return $"【附件: {safeName}】该文件无法直接提取文本。请上传 TXT/MD/CSV/JSON 等文本文件，或先将文档内容复制为文本后再分析。";
+        }
+
+        private sealed class BuiltMessageContent
+        {
+            public bool Success { get; private set; }
+            public JToken Content { get; private set; }
+            public string ErrorMessage { get; private set; }
+
+            public static BuiltMessageContent Ok(JToken content) => new BuiltMessageContent
+            {
+                Success = true,
+                Content = content
+            };
+
+            public static BuiltMessageContent Ok(string content) => Ok(new JValue(content ?? string.Empty));
+
+            public static BuiltMessageContent Fail(string error) => new BuiltMessageContent
+            {
+                Success = false,
+                ErrorMessage = error ?? "附件处理失败"
+            };
+        }
+
         public class AIConfigOption
         {
             public long Id { get; set; }
@@ -317,6 +455,15 @@ namespace App.Pages.AI
             public string Message { get; set; }
             public string SystemPrompt { get; set; }
             public double? Temperature { get; set; }
+            public List<ChatAttachment> Attachments { get; set; }
+        }
+
+        public class ChatAttachment
+        {
+            public string Name { get; set; }
+            public string ContentType { get; set; }
+            public string DataUrl { get; set; }
+            public string TextContent { get; set; }
         }
     }
 }

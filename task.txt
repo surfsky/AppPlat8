@@ -1,27 +1,14 @@
 --------------------------------------------------------
 Task - 业务
 --------------------------------------------------------
-tip
+业务 tip
     强化检查-督查-闭环流程
-    把 token 改为用 header authorization bareer 方式，更为现代和通用
-
-实现AI聊天功能（使用openai兼容接口）
-    /创建 AIConfig 表（App.BLL/Models/Configs/AIConfig.cs)，增加 ai 相关的配置（如模型名称、地址、Key、支持的服务等、是否是默认）
-    /迁移数据库
-    /创建 /pages/AI/AIConfigs 及 AiConfigForm，管理AI配置数据
-    /创建页面：/pages/AI/Chat 页面，先实现与AI进行基础对话能力。
-        /用独立的layout或不用layout
-        /可使用tdesign库构建聊天界面（https://tdesign.tencent.com/chat/components/chatbot）
-    /实现流式聊天
-    实现markdown渲染
-    实现与AI更多交互能力，如图片上传分析、生成图片、生成音乐、生成视频等
-    实现与数据库MCP交互的能力，要显示当前用户的数据访问权限
-
+    取消cookie，把 token 改为用 header authorization bareer 方式，更为现代和通用
 
 导入数据
     导入用户数据
     导入对象数据
-    导入检查表并实现检查表流程
+    导入检查表，实现检查表配置页面
 
 构建复杂界面
     实现对象检查流程
@@ -58,7 +45,11 @@ tip
 
 bug
     保存新标签后，并未刷新父节点下拉树
-    httpapi无法落入MonitorMiddleware进行记录日志
+
+优化AI聊天功能
+    AI 生成图片、生成音乐、生成视频等
+    实现与数据库MCP交互的能力，要显示当前用户的数据访问权限
+
 
 需补充数据模型：
     项目进度日志：ID、项目ID、操作人、说明、项目状态、进度百分比
@@ -168,6 +159,18 @@ UI优化
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+    httpapi无法落入MonitorMiddleware进行记录日志（算了）
+/AI chat
+    /创建 AIConfig 表（App.BLL/Models/Configs/AIConfig.cs)，增加 ai 相关的配置（如模型名称、地址、Key、支持的服务等、是否是默认）
+    /迁移数据库
+    /创建 /pages/AI/AIConfigs 及 AiConfigForm，管理AI配置数据
+    /创建页面：/pages/AI/Chat 页面，先实现与AI进行基础对话能力。
+        /用独立的layout或不用layout
+        /可使用tdesign库构建聊天界面（https://tdesign.tencent.com/chat/components/chatbot）
+    /实现流式聊天
+    /实现markdown渲染
+    /实现与AI更多交互能力，如图片和文件上传分析（需要切换模型）
+
         /考虑用 header bearer 方式传递token，不用cookie
             /setHeaderToken(token, type = 'Bearer') {
             /    // type 可选：Bearer（默认）、Basic 等认证类型

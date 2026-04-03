@@ -23,27 +23,77 @@
         }
         * { box-sizing: border-box; }
         html, body { height: 100%; }
-        body { margin: 0; height: 100vh; overflow: hidden; font-family: "PingFang SC", "Noto Sans SC", "Microsoft Yahei", sans-serif; background: linear-gradient(140deg, #f7f9fd 0%, #eef4ff 100%); color: var(--text); }
-        .wrap { width: 100%; height: 100vh; margin: 0; padding: 10px; }
-        .card { height: 100%; display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 24px rgba(20, 40, 80, 0.06); }
-        .head { padding: 14px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
-        .row { display: grid; gap: 10px; grid-template-columns: 2fr 2fr 1fr auto; }
-        .row2 { display: grid; gap: 10px; grid-template-columns: 1fr auto; }
+        body { margin: 0; height: 100vh; overflow: hidden; font-family: "PingFang SC", "Noto Sans SC", "Microsoft Yahei", sans-serif; background: #f7f9fc; color: var(--text); }
+        .wrap { width: 100%; height: 100vh; margin: 0; padding: 0; }
+        .card { position: relative; height: 100%; display: flex; flex-direction: column; background: var(--card); }
+        .head { padding: 10px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .head-main { min-width: 0; display: grid; gap: 2px; }
+        .head-model { font-size: 14px; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .head-status { font-size: 12px; color: var(--sub); }
+        .row2 { display: grid; gap: 10px; grid-template-columns: 1fr auto auto; }
         input, textarea, select, button { font: inherit; }
         input, textarea, select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; outline: none; background: #fff; }
         textarea { resize: vertical; min-height: 64px; }
         button { border: 0; border-radius: 10px; padding: 10px 14px; background: var(--primary); color: #fff; cursor: pointer; }
         button:disabled { opacity: .6; cursor: wait; }
         .msgs { flex: 1; min-height: 0; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; white-space: pre-wrap; line-height: 1.6; }
-        .msg.user { align-self: flex-end; max-width: 82%; background: var(--user); }
-        .msg.ai { align-self: flex-start; max-width: 88%; background: var(--ai); }
+        .msg { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; line-height: 1.45; }
+        .msg.user { align-self: flex-end; max-width: 82%; background: var(--user); border-top-right-radius: 2px; }
+        .msg.ai { align-self: flex-start; max-width: 88%; background: var(--ai); border-top-left-radius: 2px; }
+        .msg.user .content { white-space: pre-wrap; }
+        .msg.ai .content { white-space: normal; }
         .msg .meta { display: block; margin-bottom: 6px; font-size: 12px; color: var(--sub); }
+        .msg-attachments { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .msg-attachment { display: inline-flex; align-items: center; gap: 8px; max-width: 300px; padding: 6px 8px; border-radius: 8px; border: 1px solid #d7e3f5; background: #eef4ff; }
+        .msg-attachment.image { display: grid; gap: 6px; padding: 8px; }
+        .msg-attachment-thumb { width: 92px; height: 92px; border-radius: 8px; object-fit: cover; border: 1px solid #c8d7f1; background: #fff; cursor: zoom-in; }
+        .msg-attachment-name { max-width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; color: #334155; }
+        .msg .content p { margin: 0 0 4px; line-height: 1.55; }
+        .msg .content p:last-child { margin-bottom: 0; }
+        .msg .content h1, .msg .content h2, .msg .content h3, .msg .content h4, .msg .content h5, .msg .content h6 { margin: 8px 0 4px; line-height: 1.35; }
+        .msg .content pre { margin: 8px 0; padding: 10px; border-radius: 8px; background: #0f172a; color: #e2e8f0; overflow-x: auto; }
+        .msg .content code { padding: 1px 4px; border-radius: 4px; background: #eef2ff; font-family: "SFMono-Regular", Consolas, Monaco, Menlo, monospace; font-size: 0.92em; }
+        .msg .content pre code { padding: 0; background: transparent; color: inherit; }
+        .msg .content blockquote { margin: 8px 0; padding: 0 10px; border-left: 3px solid #cbd5e1; color: #475569; }
+        .msg .content ul, .msg .content ol { margin: 4px 0 6px 20px; padding: 0; }
+        .msg .content li { margin: 2px 0; }
+        .msg .content table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; }
+        .msg .content th, .msg .content td { border: 1px solid #dbe2ef; padding: 6px 8px; text-align: left; }
+        .msg .content th { background: #f8fafc; }
+        .msg .content a { color: #0b5fff; text-decoration: underline; word-break: break-all; }
+        .icon-btn { width: 38px; height: 38px; border-radius: 10px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #fff; color: #334155; border: 1px solid var(--line); }
+        .icon-btn:hover { background: #f8fafc; }
+        .attach-btn { width: 48px; }
+        .attachments { display: flex; flex-wrap: wrap; gap: 8px; }
+        .attachment-item { display: inline-flex; align-items: center; max-width: 100%; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: #f8fafc; font-size: 12px; color: #334155; }
+        .attachment-thumb { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; border: 1px solid #d8e1ef; background: #fff; }
+        .attachment-meta { min-width: 0; display: grid; gap: 2px; }
+        .attachment-name { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+        .attachment-sub { color: #64748b; font-size: 11px; }
+        .attachment-remove { border: 0; background: transparent; color: #64748b; cursor: pointer; padding: 0; width: 18px; height: 18px; line-height: 1; }
+        .preview-overlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 40; background: rgba(2, 6, 23, 0.68); }
+        .preview-overlay.open { display: flex; }
+        .preview-dialog { position: relative; width: min(92vw, 960px); max-height: 88vh; padding: 10px 10px 14px; border-radius: 12px; background: #fff; }
+        .preview-close { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.45); background: rgba(15, 23, 42, 0.72); color: #f8fafc; cursor: pointer; font-size: 24px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.28); backdrop-filter: blur(2px); }
+        .preview-close:hover { background: rgba(15, 23, 42, 0.86); transform: scale(1.03); }
+        .preview-close:active { transform: scale(0.98); }
+        .preview-image { width: 100%; max-height: 78vh; object-fit: contain; border-radius: 8px; background: #f8fafc; }
+        .preview-name { margin-top: 8px; font-size: 12px; color: #64748b; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .settings-backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.28); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+        .settings-backdrop.open { opacity: 1; pointer-events: auto; }
+        .settings-drawer { position: absolute; left: 0; right: 0; bottom: 0; max-height: 82%; background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(15, 23, 42, .12); border-top-left-radius: 14px; border-top-right-radius: 14px; transform: translateY(100%); transition: transform .2s ease; display: grid; grid-template-rows: auto 1fr auto; z-index: 20; }
+        .settings-drawer.open { transform: translateY(0); }
+        .settings-title { padding: 14px 16px 10px; font-weight: 600; border-bottom: 1px solid var(--line); }
+        .settings-body { padding: 14px 16px; display: grid; gap: 14px; overflow: auto; }
+        .settings-actions { padding: 12px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+        .field-label { font-size: 12px; color: var(--sub); margin-bottom: 4px; display: block; }
+        .temp-row { display: grid; gap: 10px; grid-template-columns: 1fr 76px; align-items: center; }
+        .temp-value { text-align: center; }
+        input[type="range"] { padding: 0; height: 6px; border: 0; border-radius: 999px; background: linear-gradient(90deg, #9ec5ff, #0b5fff); appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0b5fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); cursor: pointer; }
         .foot { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 10px; }
-        .status { font-size: 12px; color: var(--sub); }
         @@media (max-width: 920px) {
-            .row, .row2 { grid-template-columns: 1fr; }
-            .wrap { padding: 8px; }
+            .row2 { grid-template-columns: 1fr auto auto; }
         }
     </style>
 </head>
@@ -51,44 +101,344 @@
     <div class="wrap">
         <div class="card">
             <div class="head">
-                <div class="row">
-                    <select id="configId">
-                        @foreach (var cfg in Model.Configs)
-                        {
-                            if (cfg.Id == Model.DefaultConfigId)
-                            {
-                                <option value="@cfg.Id" selected>@cfg.Name (@cfg.Model)</option>
-                            }
-                            else
-                            {
-                                <option value="@cfg.Id">@cfg.Name (@cfg.Model)</option>
-                            }
-                        }
-                    </select>
-                    <input id="systemPrompt" placeholder="系统提示词（可选）" />
-                    <input id="temperature" type="number" step="0.1" min="0" max="2" value="0.7" />
-                    <button id="clearBtn" type="button">清空</button>
+                <div class="head-main">
+                    <div id="modelName" class="head-model">AI 对话助手</div>
+                    <div id="status" class="head-status">就绪</div>
                 </div>
-                <div class="status">OpenAI 兼容接口：POST /chat/completions</div>
+                <button id="settingsBtn" class="icon-btn" type="button" title="设置" aria-label="打开设置">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 5 15.4a1.65 1.65 0 0 0-1.51-1H3.4a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 5 8.89a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9.11 5c.63-.26 1-.88 1-1.55V3.4a2 2 0 1 1 4 0v.09c0 .67.37 1.29 1 1.55a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.16-.33 1.82.26.63.88 1 1.55 1h.09a2 2 0 1 1 0 4h-.09c-.67 0-1.29.37-1.55 1Z"></path>
+                    </svg>
+                </button>
             </div>
             <div id="messages" class="msgs"></div>
             <div class="foot">
+                <div id="attachments" class="attachments" hidden></div>
                 <div class="row2">
                     <textarea id="input" placeholder="输入消息，按 Ctrl+Enter 发送（Mac: Cmd+Enter），Enter 换行"></textarea>
+                    <button id="attachBtn" class="icon-btn attach-btn" type="button" title="上传附件" aria-label="上传附件">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21.44 11.05l-8.49 8.49a5.5 5.5 0 0 1-7.78-7.78l8.49-8.49a3.5 3.5 0 0 1 4.95 4.95l-8.49 8.49a1.5 1.5 0 0 1-2.12-2.12l7.78-7.78"></path>
+                        </svg>
+                    </button>
                     <button id="sendBtn" type="button">发送</button>
                 </div>
-                <div id="status" class="status">就绪</div>
+                <input id="attachInput" type="file" multiple accept="image/*,.txt,.md,.csv,.json,.xml,.html,.htm,.log,.pdf,.doc,.docx" hidden />
+            </div>
+
+            <div id="settingsBackdrop" class="settings-backdrop" aria-hidden="true"></div>
+            <aside id="settingsDrawer" class="settings-drawer" aria-hidden="true">
+                <div class="settings-title">聊天设置</div>
+                <div class="settings-body">
+                    <div>
+                        <label class="field-label" for="configId">模型配置</label>
+                        <select id="configId">
+                            @foreach (var cfg in Model.Configs)
+                            {
+                                if (cfg.Id == Model.DefaultConfigId)
+                                {
+                                    <option value="@cfg.Id" selected>@cfg.Name (@cfg.Model)</option>
+                                }
+                                else
+                                {
+                                    <option value="@cfg.Id">@cfg.Name (@cfg.Model)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label" for="systemPrompt">系统提示词</label>
+                        <textarea id="systemPrompt" placeholder="系统提示词（可选）" rows="4"></textarea>
+                    </div>
+                    <div>
+                        <label class="field-label" for="temperature">温度（0-2）</label>
+                        <div class="temp-row">
+                            <input id="temperatureRange" type="range" step="0.1" min="0" max="2" value="0.7" />
+                            <input id="temperature" class="temp-value" type="number" step="0.1" min="0" max="2" value="0.7" />
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-actions">
+                    <button id="saveSettingsBtn" type="button">保存</button>
+                </div>
+            </aside>
+
+            <div id="previewOverlay" class="preview-overlay" aria-hidden="true">
+                <div class="preview-dialog" role="dialog" aria-label="图片预览">
+                    <button id="previewCloseBtn" class="preview-close" type="button" aria-label="关闭预览">×</button>
+                    <img id="previewImage" class="preview-image" alt="附件预览" />
+                    <div id="previewName" class="preview-name"></div>
+                </div>
             </div>
         </div>
     </div>
 
+    <script src="~/js/editor.md/lib/marked.min.js"></script>
     <script>
         const messagesEl = document.getElementById('messages');
         const inputEl = document.getElementById('input');
         const sendBtn = document.getElementById('sendBtn');
+        const attachBtn = document.getElementById('attachBtn');
+        const attachInputEl = document.getElementById('attachInput');
+        const attachmentsEl = document.getElementById('attachments');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsDrawer = document.getElementById('settingsDrawer');
+        const settingsBackdrop = document.getElementById('settingsBackdrop');
+        const previewOverlayEl = document.getElementById('previewOverlay');
+        const previewImageEl = document.getElementById('previewImage');
+        const previewNameEl = document.getElementById('previewName');
+        const previewCloseBtnEl = document.getElementById('previewCloseBtn');
+        const modelNameEl = document.getElementById('modelName');
+        const configIdEl = document.getElementById('configId');
+        const systemPromptEl = document.getElementById('systemPrompt');
+        const temperatureEl = document.getElementById('temperature');
+        const temperatureRangeEl = document.getElementById('temperatureRange');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         const statusEl = document.getElementById('status');
-        const clearBtn = document.getElementById('clearBtn');
         let shouldAutoScroll = true;
+        let settingsOpen = false;
+        let pendingAttachments = [];
+        const textDocExtensions = new Set(['txt', 'md', 'csv', 'json', 'xml', 'html', 'htm', 'log']);
+        const maxAttachmentSize = 8 * 1024 * 1024;
+
+        function updateModelName() {
+            const text = configIdEl.options[configIdEl.selectedIndex]?.text || 'AI 对话助手';
+            modelNameEl.textContent = text;
+        }
+
+        function syncTemperatureFromRange() {
+            temperatureEl.value = Number(temperatureRangeEl.value).toFixed(1);
+        }
+
+        function syncTemperatureFromInput() {
+            const value = Math.max(0, Math.min(2, Number(temperatureEl.value || 0.7)));
+            temperatureEl.value = Number.isFinite(value) ? value.toFixed(1) : '0.7';
+            temperatureRangeEl.value = temperatureEl.value;
+        }
+
+        function loadSavedSettings() {
+            try {
+                const raw = localStorage.getItem('ai.chat.settings.v1');
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                if (data.configId) configIdEl.value = String(data.configId);
+                if (typeof data.systemPrompt === 'string') systemPromptEl.value = data.systemPrompt;
+                if (data.temperature != null) {
+                    temperatureEl.value = String(data.temperature);
+                    syncTemperatureFromInput();
+                }
+            } catch {
+                // Ignore invalid local settings.
+            }
+            updateModelName();
+        }
+
+        function saveSettings() {
+            syncTemperatureFromInput();
+            const payload = {
+                configId: Number(configIdEl.value || 0),
+                systemPrompt: systemPromptEl.value || '',
+                temperature: Number(temperatureEl.value || 0.7)
+            };
+            localStorage.setItem('ai.chat.settings.v1', JSON.stringify(payload));
+            updateModelName();
+            toggleSettings(false);
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('读取文件失败'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function getExtension(name) {
+            const idx = (name || '').lastIndexOf('.');
+            if (idx < 0) return '';
+            return name.slice(idx + 1).toLowerCase();
+        }
+
+        function isTextDocument(file) {
+            return (file.type || '').startsWith('text/') || textDocExtensions.has(getExtension(file.name));
+        }
+
+        function renderAttachments() {
+            attachmentsEl.innerHTML = '';
+            attachmentsEl.hidden = pendingAttachments.length === 0;
+            for (const item of pendingAttachments) {
+                const chip = document.createElement('div');
+                chip.className = 'attachment-item';
+
+                const isImage = (item.contentType || '').startsWith('image/') && !!item.dataUrl;
+                if (isImage) {
+                    const thumb = document.createElement('img');
+                    thumb.className = 'attachment-thumb';
+                    thumb.src = item.dataUrl;
+                    thumb.alt = item.name;
+                    chip.appendChild(thumb);
+                }
+
+                const nameEl = document.createElement('span');
+                nameEl.className = 'attachment-name';
+                nameEl.title = item.name;
+                nameEl.textContent = item.name;
+
+                const subEl = document.createElement('span');
+                subEl.className = 'attachment-sub';
+                const typeText = isImage ? '图片' : '文档';
+                const sizeKb = Math.max(1, Math.round((item.size || 0) / 1024));
+                subEl.textContent = `${typeText} · ${sizeKb}KB`;
+
+                const metaEl = document.createElement('div');
+                metaEl.className = 'attachment-meta';
+                metaEl.appendChild(nameEl);
+                metaEl.appendChild(subEl);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'attachment-remove';
+                removeBtn.setAttribute('aria-label', '移除附件');
+                removeBtn.textContent = '×';
+                removeBtn.addEventListener('click', () => {
+                    pendingAttachments = pendingAttachments.filter(t => t.id !== item.id);
+                    renderAttachments();
+                });
+
+                chip.appendChild(metaEl);
+                chip.appendChild(removeBtn);
+                attachmentsEl.appendChild(chip);
+            }
+        }
+
+        function openImagePreview(src, name) {
+            if (!src) return;
+            previewImageEl.src = src;
+            previewNameEl.textContent = name || '';
+            previewOverlayEl.classList.add('open');
+            previewOverlayEl.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeImagePreview() {
+            previewOverlayEl.classList.remove('open');
+            previewOverlayEl.setAttribute('aria-hidden', 'true');
+            previewImageEl.src = '';
+            previewNameEl.textContent = '';
+        }
+
+        async function addFiles(files) {
+            if (!files || files.length === 0) return;
+
+            for (const file of files) {
+                if (file.size > maxAttachmentSize) {
+                    statusEl.textContent = `文件过大：${file.name}（限制 8MB）`;
+                    continue;
+                }
+
+                const item = {
+                    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                    name: file.name,
+                    size: file.size,
+                    contentType: file.type || 'application/octet-stream',
+                    dataUrl: '',
+                    textContent: ''
+                };
+
+                try {
+                    if ((file.type || '').startsWith('image/')) {
+                        item.dataUrl = await readFileAsDataUrl(file);
+                    } else if (isTextDocument(file)) {
+                        const txt = await file.text();
+                        item.textContent = txt.length > 30000 ? `${txt.slice(0, 30000)}\n...(前端已截断)` : txt;
+                    }
+                    pendingAttachments.push(item);
+                } catch {
+                    statusEl.textContent = `读取附件失败：${file.name}`;
+                }
+            }
+
+            renderAttachments();
+            if (pendingAttachments.length > 0) {
+                statusEl.textContent = `已添加 ${pendingAttachments.length} 个附件`;
+            }
+        }
+
+        function toggleSettings(open) {
+            settingsOpen = open;
+            settingsDrawer.classList.toggle('open', open);
+            settingsBackdrop.classList.toggle('open', open);
+            settingsDrawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+            settingsBackdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
+        }
+
+        function sanitizeRenderedHtml(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html || '', 'text/html');
+            const allowedTags = new Set([
+                'A', 'P', 'BR', 'STRONG', 'EM', 'UL', 'OL', 'LI', 'BLOCKQUOTE',
+                'CODE', 'PRE', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD',
+                'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR'
+            ]);
+
+            const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT);
+            const toReplace = [];
+            while (walker.nextNode()) {
+                const el = walker.currentNode;
+                if (!allowedTags.has(el.tagName)) {
+                    toReplace.push(el);
+                    continue;
+                }
+
+                for (const attr of [...el.attributes]) {
+                    const name = attr.name.toLowerCase();
+                    if (name.startsWith('on') || name === 'style') {
+                        el.removeAttribute(attr.name);
+                        continue;
+                    }
+
+                    if (name === 'href') {
+                        const href = (attr.value || '').trim();
+                        if (!/^(https?:|mailto:|#|\/)/i.test(href)) {
+                            el.removeAttribute(attr.name);
+                        }
+                    } else if (name !== 'target' && name !== 'rel') {
+                        el.removeAttribute(attr.name);
+                    }
+                }
+
+                if (el.tagName === 'A') {
+                    el.setAttribute('target', '_blank');
+                    el.setAttribute('rel', 'noopener noreferrer nofollow');
+                }
+            }
+
+            for (const el of toReplace) {
+                const text = doc.createTextNode(el.textContent || '');
+                el.replaceWith(text);
+            }
+
+            return doc.body.innerHTML;
+        }
+
+        function renderMarkdown(text) {
+            const raw = text || '';
+            if (!window.marked) {
+                return raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+            }
+
+            const html = window.marked(raw, {
+                gfm: true,
+                tables: true,
+                breaks: true,
+                smartLists: true,
+                sanitize: true,
+                smartypants: true
+            });
+
+            return sanitizeRenderedHtml(html);
+        }
 
         function isNearBottom(el, threshold = 40) {
             return (el.scrollHeight - el.scrollTop - el.clientHeight) <= threshold;
@@ -104,18 +454,55 @@
             shouldAutoScroll = isNearBottom(messagesEl);
         });
 
-        function addMessage(role, content) {
+        function addMessage(role, content, attachments = []) {
             const div = document.createElement('div');
             div.className = `msg ${role}`;
             const who = role === 'user' ? '我' : 'AI';
             div.innerHTML = `<span class="meta">${who} · ${new Date().toLocaleTimeString()}</span><div class="content"></div>`;
             const contentEl = div.querySelector('.content');
-            contentEl.textContent = content || '';
+            if (role === 'ai') {
+                contentEl.innerHTML = renderMarkdown(content || '');
+            } else {
+                contentEl.textContent = content || '';
+            }
+
+            if (attachments && attachments.length > 0) {
+                const attachmentWrap = document.createElement('div');
+                attachmentWrap.className = 'msg-attachments';
+                for (const item of attachments) {
+                    const node = document.createElement('div');
+                    node.className = 'msg-attachment';
+
+                    const isImage = (item.contentType || '').startsWith('image/') && !!item.dataUrl;
+                    if (isImage) {
+                        node.classList.add('image');
+                        const thumb = document.createElement('img');
+                        thumb.className = 'msg-attachment-thumb';
+                        thumb.src = item.dataUrl;
+                        thumb.alt = item.name || '附件';
+                        thumb.addEventListener('click', () => openImagePreview(item.dataUrl, item.name || '图片附件'));
+                        node.appendChild(thumb);
+                    }
+
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'msg-attachment-name';
+                    nameEl.textContent = item.name || '附件';
+                    nameEl.title = item.name || '附件';
+                    node.appendChild(nameEl);
+                    attachmentWrap.appendChild(node);
+                }
+                contentEl.appendChild(attachmentWrap);
+            }
+
             messagesEl.appendChild(div);
             scrollToBottomIfNeeded(true);
             return {
                 setContent: (text) => {
-                    contentEl.textContent = text || '';
+                    if (role === 'ai') {
+                        contentEl.innerHTML = renderMarkdown(text || '');
+                    } else {
+                        contentEl.textContent = text || '';
+                    }
                     scrollToBottomIfNeeded();
                 }
             };
@@ -123,17 +510,31 @@
 
         async function send() {
             const msg = inputEl.value.trim();
-            if (!msg) return;
+            if (!msg && pendingAttachments.length === 0) return;
 
             const body = {
-                configId: Number(document.getElementById('configId').value || 0),
-                systemPrompt: document.getElementById('systemPrompt').value || '',
-                temperature: Number(document.getElementById('temperature').value || 0.7),
-                message: msg
+                configId: Number(configIdEl.value || 0),
+                systemPrompt: systemPromptEl.value || '',
+                temperature: Number(temperatureEl.value || 0.7),
+                message: msg || '请结合附件进行分析。',
+                attachments: pendingAttachments.map(t => ({
+                    name: t.name,
+                    contentType: t.contentType,
+                    dataUrl: t.dataUrl,
+                    textContent: t.textContent
+                }))
             };
 
-            addMessage('user', msg);
+            const messageText = msg || '请结合附件进行分析。';
+            const messageAttachments = pendingAttachments.map(t => ({
+                name: t.name,
+                contentType: t.contentType,
+                dataUrl: t.dataUrl
+            }));
+            addMessage('user', messageText, messageAttachments);
             inputEl.value = '';
+            pendingAttachments = [];
+            renderAttachments();
             statusEl.textContent = 'AI 流式响应中...';
             sendBtn.disabled = true;
             const aiBubble = addMessage('ai', '');
@@ -187,17 +588,45 @@
         }
 
         sendBtn.addEventListener('click', send);
-        clearBtn.addEventListener('click', () => {
-            messagesEl.innerHTML = '';
-            shouldAutoScroll = true;
-            inputEl.focus();
+        attachBtn.addEventListener('click', () => {
+            attachInputEl.value = '';
+            attachInputEl.click();
         });
+        attachInputEl.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            await addFiles(files);
+        });
+        settingsBtn.addEventListener('click', () => {
+            toggleSettings(!settingsOpen);
+        });
+        settingsBackdrop.addEventListener('click', () => toggleSettings(false));
+        previewOverlayEl.addEventListener('click', (e) => {
+            if (e.target === previewOverlayEl) {
+                closeImagePreview();
+            }
+        });
+        previewCloseBtnEl.addEventListener('click', closeImagePreview);
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        configIdEl.addEventListener('change', updateModelName);
+        temperatureRangeEl.addEventListener('input', syncTemperatureFromRange);
+        temperatureEl.addEventListener('input', syncTemperatureFromInput);
         inputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
                 send();
             }
         });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && settingsOpen) {
+                toggleSettings(false);
+                return;
+            }
+            if (e.key === 'Escape' && previewOverlayEl.classList.contains('open')) {
+                closeImagePreview();
+            }
+        });
+        syncTemperatureFromInput();
+        loadSavedSettings();
     </script>
 </body>
 </html>
