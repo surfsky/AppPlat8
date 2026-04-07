@@ -130,7 +130,9 @@ export class DrawerHelper {
         if (viewportWidth <= 768) {
             return '100%';
         }
-        return '33.3333%';
+        const minDrawerWidth = 420;
+        const drawerWidth = Math.max(Math.round(viewportWidth * 0.5), minDrawerWidth);
+        return `${drawerWidth}px`;
     }
 
     normalizeClosePayload(payload) {

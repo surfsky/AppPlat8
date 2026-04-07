@@ -37,6 +37,9 @@ namespace App.EleUI
         [HtmlAttributeName("FormPage")]
         public string FormPage { get; set; }
 
+        [HtmlAttributeName("FormDrawerSize")]
+        public string FormDrawerSize { get; set; }
+
         [HtmlAttributeName("DataHandler")]
         public string DataHandler { get; set; } = "?handler=Data";
 
@@ -142,6 +145,7 @@ namespace App.EleUI
         // 3. Script
         private string CreateScript()
         {
+            var formDrawerSize = string.IsNullOrWhiteSpace(FormDrawerSize) ? "" : FormDrawerSize.Trim();
             return $@"
 <script>
     document.addEventListener('DOMContentLoaded', function() {{
@@ -150,6 +154,7 @@ namespace App.EleUI
             dataHandler: '{DataHandler}',
             deleteHandler: '{DeleteHandler}',
             editPage: '{FormPage}',
+            formDrawerSize: '{formDrawerSize}',
             pageSize: 10
         }});
     }});

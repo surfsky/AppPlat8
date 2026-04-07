@@ -195,7 +195,8 @@ export class EleTable {
 
         const separator = resolvedBase.includes('?') ? '&' : '?';
         var url = `${resolvedBase}${separator}${query.toString()}`;
-        this.openDrawer(url, null, 'rtl', drawerTitle);
+        const configuredSize = this.config?.formDrawerSize || null;
+        this.openDrawer(url, configuredSize, 'rtl', drawerTitle);
     }
 
     // Resolve relative FormPage against current page URL before handing it to top-level drawer host.
@@ -211,7 +212,7 @@ export class EleTable {
 
     // 打开抽屉式表单
     openDrawer(url, width=null, position = 'rtl', titleOverride = null) {
-        const size = width || (window.innerWidth < 768 ? '100%' : '50%');
+        const size = (typeof width === 'string' && width.trim()) ? width.trim() : null;
         const title = titleOverride || this.config?.drawerTitle || this.config?.title || '编辑';
         this.drawerSize.value = size;
         this.drawerPosition.value = position || 'rtl';

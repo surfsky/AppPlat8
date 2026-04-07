@@ -6,6 +6,8 @@ using App.Utils;
 using Z.EntityFramework.Plus;
 using App.Components;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 
 /**
@@ -18,6 +20,7 @@ namespace App.DAL
     {
         [UI("名称")] public string Name { get; set; }
         [UI("领域")] public CheckScope Scope { get; set; }
+        [UI("匹配标签"), NotMapped] public List<long> TagIds { get; set; } = new List<long>();
 
         [UI("匹配的标签")] public virtual List<CheckTag> Tags { get; set; } = new List<CheckTag>(); // n:n关系
 
@@ -28,8 +31,21 @@ namespace App.DAL
             {
                 Id,
                 Name,
-                Scope
+                Scope,
+                TagIds
             };
+        }
+
+        public new static CheckSheet GetDetail(long id)
+        {
+            return Set
+                .Include(o => o.Tags)
+                .FirstOrDefault(o => o.Id == id)
+                .Let(o =>
+                {
+                    if (o != null)
+                        o.TagIds = o.Tags?.Select(t => t.Id).ToList() ?? new List<long>();
+                });
         }
 
         //

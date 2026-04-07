@@ -34,6 +34,12 @@ namespace App.EleUI
         [HtmlAttributeName("CheckStrictly")]
         public bool CheckStrictly { get; set; } = true;
 
+        [HtmlAttributeName("Multiple")]
+        public bool Multiple { get; set; } = false;
+
+        [HtmlAttributeName("CollapseTags")]
+        public bool? CollapseTags { get; set; }
+
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             if (!CheckPower(output)) return;
@@ -49,6 +55,18 @@ namespace App.EleUI
             // check-strictly
             if (CheckStrictly)
                 output.Attributes.SetAttribute("check-strictly", "true");
+
+            if (Multiple)
+            {
+                output.Attributes.SetAttribute("multiple", "true");
+                output.Attributes.SetAttribute("show-checkbox", "true");
+                if (CollapseTags.HasValue)
+                {
+                    output.Attributes.SetAttribute(":collapse-tags", CollapseTags.Value ? "true" : "false");
+                    if (CollapseTags.Value)
+                        output.Attributes.SetAttribute(":collapse-tags-tooltip", "true");
+                }
+            }
         
             // fields
             var idField = NormalizeFieldForVue(IdField ?? ValueField ?? "id");

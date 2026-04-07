@@ -3,12 +3,17 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "检查表信息";
+    var sheetId = Request.Query["id"].ToString();
 }
 
 @section body {
     <EleForm Model="form" LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleSelect For="Item.Scope" Label="领域"></EleSelect>
+        <EleTreeSelect For="Item.TagIds" Label="匹配标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?sheetId=@sheetId" Multiple="true" CollapseTags="false" FillRow="true"></EleTreeSelect>
+
+        <EleLabel Label="更多" FillRow="true"></EleLabel>
+        <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowItems" EnabledFor="Item.Id">检查项</EleButton>
     
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

@@ -102,7 +102,7 @@
         <div class="card">
             <div class="head">
                 <div class="head-main">
-                    <div id="modelName" class="head-model">AI 对话助手</div>
+                    <div id="modelName" class="head-model">AI 助手</div>
                     <div id="status" class="head-status">就绪</div>
                 </div>
                 <button id="settingsBtn" class="icon-btn" type="button" title="设置" aria-label="打开设置">
@@ -203,7 +203,7 @@
         const maxAttachmentSize = 8 * 1024 * 1024;
 
         function updateModelName() {
-            const text = configIdEl.options[configIdEl.selectedIndex]?.text || 'AI 对话助手';
+            const text = configIdEl.options[configIdEl.selectedIndex]?.text || 'AI 助手';
             modelNameEl.textContent = text;
         }
 

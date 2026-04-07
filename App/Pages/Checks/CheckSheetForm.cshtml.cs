@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
+using App.EleUI;
 using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -30,8 +31,14 @@ namespace App.Pages.Checks
             if (req == null)
                 return BuildResult(400, "参数错误");
 
-            var item = CheckSheet.Get(req.Id);
-            if (item == null)
+            CheckSheet item;
+            if (req.Id > 0)
+            {
+                item = CheckSheet.Set.Include(o => o.Tags).FirstOrDefault(o => o.Id == req.Id);
+                if (item == null)
+                    return BuildResult(404, "检查表不存在");
+            }
+            else
             {
                 item = new CheckSheet();
                 item.CreateDt = DateTime.Now;
@@ -39,8 +46,35 @@ namespace App.Pages.Checks
 
             item.Name = req.Name;
             item.Scope = req.Scope;
+
+            var tagIds = (req.TagIds ?? new List<long>()).Distinct().ToList();
+            var tags = tagIds.Count == 0
+                ? new List<CheckTag>()
+                : CheckTag.Set.Where(t => tagIds.Contains(t.Id)).ToList();
+
+            item.Tags.Clear();
+            foreach (var tag in tags)
+                item.Tags.Add(tag);
+
             item.Save();
             return BuildResult(0, "保存成功");
+        }
+
+        /// <summary>显示检查项</summary>
+        public IActionResult OnPostShowItems([FromBody] CheckSheet req)
+        {
+            var sheetId = req?.Id ?? 0;
+            if (sheetId <= 0)
+            {
+                return EleManager.ShowClientNotify("请先保存检查表，再维护检查项", NotifyType.Warning, "提示");
+            }
+
+            var sheetName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Checks/CheckSheetItems?sheetId={sheetId}&sheetName={sheetName}&md={this.Mode}";
+            return EleManager.OpenClientDrawer(
+                title: "检查项",
+                url: url
+                );
         }
     }
 }

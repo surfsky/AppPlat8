@@ -187,7 +187,11 @@ export class EleForm {
         this.success.value = '';
         this.saving.value = true;
         try {
-            const res = await axios.post('?handler=' + name, this.form.value, {
+            const url = new URL(window.location.href);
+            url.searchParams.set('handler', name);
+            const postUrl = `${url.pathname}${url.search}`;
+
+            const res = await axios.post(postUrl, this.form.value, {
                 headers: { 'RequestVerificationToken': EleManager.getCsrfToken() }
             });
             if (res && (res.data && (res.data.code === 0 || res.data.code === '0'))) {
@@ -219,12 +223,10 @@ export class EleForm {
         this.selectorTitle.value = title || '选择';
         this.selectorVisible.value = true;
 
-        const width = '50%';
         EleManager.openDrawer({
             title: this.selectorTitle.value,
             url: this.selectorUrl.value,
             direction: 'rtl',
-            size: width,
             resizable: true,
             closeOnClickModal: false,
             destroyOnClose: true,
@@ -335,9 +337,22 @@ export class EleForm {
         const current = this.form.value[modelKey];
         if (current === null || current === undefined || current === '') return;
 
+        if (Array.isArray(current)) {
+            const normalized = current
+                .map(v => (v === null || v === undefined ? '' : v.toString()))
+                .filter(v => !!v)
+                .filter(v => this.hasTreeValue(treeData, v, idField, childrenField));
+            this.form.value[modelKey] = normalized;
+            return;
+        }
+
         if (!this.hasTreeValue(treeData, current, idField, childrenField)) {
             this.form.value[modelKey] = null;
+            return;
         }
+
+        // Keep scalar tree value type aligned with normalized tree node ids (string)
+        this.form.value[modelKey] = current.toString();
     }
 
     sanitizeAllStaticTreeSelectValues() {

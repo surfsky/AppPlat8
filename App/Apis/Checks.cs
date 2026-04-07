@@ -93,6 +93,25 @@ namespace App.API
         [HttpApi("获取检查标签树", AuthLogin=true)]
         public static APIResult GetCheckTagTree(long? excludeId = null, long? selectedId = null)
         {
+            var selectedIds = selectedId.HasValue ? new List<long> { selectedId.Value } : new List<long>();
+            return BuildCheckTagTreeResult(excludeId, selectedIds);
+        }
+
+        [HttpApi("获取检查表标签树", AuthLogin=true)]
+        public static APIResult GetCheckTagTreeForSheet(long? sheetId = null)
+        {
+            var selectedIds = new List<long>();
+            if (sheetId.GetValueOrDefault() > 0)
+            {
+                var sheet = CheckSheet.GetDetail(sheetId.Value);
+                selectedIds = sheet?.TagIds ?? new List<long>();
+            }
+
+            return BuildCheckTagTreeResult(null, selectedIds);
+        }
+
+        private static APIResult BuildCheckTagTreeResult(long? excludeId, List<long> selectedIds)
+        {
             // 获取当前用户可见的标签列表
             var user = Auth.GetUser();
             var allTags = CheckTag.IncludeSet.ToList();
@@ -110,11 +129,27 @@ namespace App.API
                     .ToList();
             }
 
-            // 如果当前表单已有父节点值（selectedId），即使该节点因组织过滤不在 visible 中，
-            // 也补齐该节点及其祖先，避免 TreeSelect 只能显示纯数字 ID。
-            if (selectedId != null && allMap.TryGetValue(selectedId.Value, out var selected))
+            // 补齐可见节点的祖先，保证树结构完整（避免“子节点可见但父节点缺失”导致树断层）。
+            var visibleMap = visible.ToDictionary(t => t.Id, t => t);
+            foreach (var node in visible.ToList())
             {
-                var visibleMap = visible.ToDictionary(t => t.Id, t => t);
+                var current = node;
+                while (current != null)
+                {
+                    visibleMap[current.Id] = current;
+                    if (current.ParentId == null)
+                        break;
+                    if (!allMap.TryGetValue(current.ParentId.Value, out current))
+                        break;
+                }
+            }
+
+            // 补齐已选中节点及其祖先，避免表单回显成纯 ID。
+            foreach (var selectedId in (selectedIds ?? new List<long>()).Distinct())
+            {
+                if (!allMap.TryGetValue(selectedId, out var selected))
+                    continue;
+
                 var current = selected;
                 while (current != null)
                 {
@@ -124,8 +159,9 @@ namespace App.API
                     if (!allMap.TryGetValue(current.ParentId.Value, out current))
                         break;
                 }
-                visible = visibleMap.Values.ToList();
             }
+
+            visible = visibleMap.Values.ToList();
 
             // 编辑时排除“当前节点及其子孙”，避免形成环路和无效父级。
             if (excludeId != null)

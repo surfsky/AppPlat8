@@ -49,7 +49,11 @@ export class EleAppBuilder {
     async postHandler(name, payload, state = null) {
         if (!name) return null;
         try {
-            const res = await axios.post('?handler=' + encodeURIComponent(name), payload, {
+            const url = new URL(window.location.href);
+            url.searchParams.set('handler', name);
+            const postUrl = `${url.pathname}${url.search}`;
+
+            const res = await axios.post(postUrl, payload, {
                 headers: { 'RequestVerificationToken': Utils.getCsrfToken() }
             });
             const body = res ? res.data : null;

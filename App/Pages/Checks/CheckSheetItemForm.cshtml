@@ -1,0 +1,19 @@
+@page
+@model App.Pages.Checks.CheckSheetItemFormModel
+@{
+    ViewData["Title"] = "检查项信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px" SaveHandler="?handler=Save&sheetId=@Model.SheetId">
+        <EleInput For="SheetDisplay" Label="所属检查表" Enabled="false" FillRow="true"></EleInput>
+        <EleSelect For="Item.RiskLevel" Label="层级" Required="true"></EleSelect>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="10000"></EleNumber>
+        <EleInput For="Item.Name" Label="名称" Required="true" Rows="3" FillRow="true"></EleInput>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

@@ -14,8 +14,8 @@ namespace App.DAL
     [UI("检查", "标签")]
     public class CheckTag : TreeEntity<CheckTag>
     {
-        [UI("组织")]        public long? OrgId { get; set; }
-        [UI("组织")]        public virtual Org Org { get; set; }
+        [UI("组织")]                    public long? OrgId { get; set; }
+        [UI("组织")]                    public virtual Org Org { get; set; }
         [UI("组织名称"), NotMapped]      public string OrgName => Org?.Name;
 
         // 检查表Id列表
