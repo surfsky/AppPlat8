@@ -57,7 +57,8 @@ namespace App.DAL
         [UI("建设施工")] Construction = 4,
         [UI("旅游")] Tourism = 5,
         [UI("危险化学品")] HazardousChemicals = 6,
-        [UI("其他")] Other = 7,
+        [UI("涉海涉渔")] Maritime = 7,
+        [UI("其他")] Other = 8,
     }
 
     //-------------------------------------------------------
@@ -161,10 +162,18 @@ namespace App.DAL
     [UI("检查", "危化品使用量")]
     public enum CheckHazardousChemicalsUsage
     {
+        [UI("无")] None = 0,
         [UI("少量")] Minor = 1,
         [UI("一般")] Average = 2,
         [UI("大量")] Major = 3,
     }
 
+    [UI("检查", "隐患等级")]
+    public enum CheckHazardLevel
+    {
+        [UI("一般隐患")] NormalHazard = 1,
+        [UI("重大隐患")] HighHazard = 2,
+        [UI("重点问题")] HighProblem = 3
+    }
 
 }

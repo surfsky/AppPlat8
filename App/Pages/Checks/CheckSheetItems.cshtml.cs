@@ -2,6 +2,7 @@ using System.Linq;
 using App.Components;
 using App.DAL;
 using App.Entities;
+using App.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Checks
@@ -26,12 +27,11 @@ namespace App.Pages.Checks
             }
         }
 
-        public IActionResult OnGetData(Paging pi, long sheetId, CheckRiskLevel? riskLevel, string name)
+        public IActionResult OnGetData(Paging pi, long sheetId, CheckHazardLevel? hazardLevel, string name)
         {
             if (sheetId <= 0)
                 return BuildResult(400, "参数错误：缺少检查表ID");
-
-            var list = CheckSheetItem.Search(sheetId, riskLevel, name).SortPageExport(pi);
+            var list = CheckSheetItem.Search(sheetId, hazardLevel, name).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

@@ -1,6 +1,7 @@
 using App.DAL;
 using App.Components;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -114,8 +115,10 @@ namespace App.EleUI
         }
 
         // 2. Footer (Pagination) -> el-footer
-        private static string CreateFooter()
+        private string CreateFooter()
         {
+            var defaultPageSize = ResolveDefaultPageSize();
+            var pageSizeOptions = BuildPageSizeOptions(defaultPageSize);
             return $@"
         <el-footer class=""h-auto flex-none p-0 bg-white"">
             <div class=""py-3 px-4 flex items-center justify-between"">
@@ -123,9 +126,7 @@ namespace App.EleUI
                 <div class=""flex items-center space-x-2"">
                     <span class=""text-gray-500 whitespace-nowrap"">每页记录数</span>
                     <el-select v-model=""pageSize"" class=""min-w-[80px] w-auto"" v-on:change=""handlePageSizeChange"" style=""max-width:120px;"">
-                        <el-option :label=""10"" :value=""10""></el-option>
-                        <el-option :label=""20"" :value=""20""></el-option>
-                        <el-option :label=""50"" :value=""50""></el-option>
+                        {pageSizeOptions}
                     </el-select>
                     <el-pagination
                         background
@@ -146,6 +147,7 @@ namespace App.EleUI
         private string CreateScript()
         {
             var formDrawerSize = string.IsNullOrWhiteSpace(FormDrawerSize) ? "" : FormDrawerSize.Trim();
+            var defaultPageSize = ResolveDefaultPageSize();
             return $@"
 <script>
     document.addEventListener('DOMContentLoaded', function() {{
@@ -155,11 +157,34 @@ namespace App.EleUI
             deleteHandler: '{DeleteHandler}',
             editPage: '{FormPage}',
             formDrawerSize: '{formDrawerSize}',
-            pageSize: 10
+            pageSize: {defaultPageSize}
         }});
     }});
 </script>
 ";
+        }
+
+        private static int ResolveDefaultPageSize()
+        {
+            var size = SiteConfig.Instance?.PageSize ?? 10;
+            return size > 0 ? size : 10;
+        }
+
+        private static string BuildPageSizeOptions(int defaultPageSize)
+        {
+            var values = new List<int> { defaultPageSize, 10, 20, 50 };
+            var seen = new HashSet<int>();
+            var sb = new StringBuilder();
+
+            foreach (var size in values)
+            {
+                if (size <= 0 || !seen.Add(size))
+                    continue;
+
+                sb.Append($@"<el-option :label=""{size}"" :value=""{size}""></el-option>");
+            }
+
+            return sb.ToString();
         }
 
     }

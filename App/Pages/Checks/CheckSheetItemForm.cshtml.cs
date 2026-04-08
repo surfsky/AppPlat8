@@ -40,7 +40,7 @@ namespace App.Pages.Checks
                 sheetName = sheetName,
                 sheetDisplay = display,
                 name = item.Name,
-                riskLevel = item.RiskLevel,
+                hazardLevel = item.HazardLevel,
                 sortId = item.SortId
             };
         }
@@ -95,7 +95,7 @@ namespace App.Pages.Checks
 
             item.SheetId = sheetId;
             item.Name = req.Name;
-            item.RiskLevel = req.RiskLevel;
+            item.HazardLevel = req.HazardLevel;
             item.SortId = req.SortId;
             item.Save();
 

@@ -32,7 +32,8 @@ namespace App.DAL
                 Id,
                 Name,
                 Scope,
-                TagIds
+                TagIds,
+                CreateDt
             };
         }
 

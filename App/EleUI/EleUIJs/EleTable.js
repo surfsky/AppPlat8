@@ -14,9 +14,9 @@ export class EleTable {
         this.pageIndex = ref(0);
         this.filters = ref({});
         this.selectedIds = ref([]);
-        this.pageSize = ref(options.pageSize || 10);
+        this.pageSize = ref(options.pageSize || 20);
         this.sortField = ref(options.defaultSortField || 'Id');
-        this.sortDirection = ref(options.defaultSortDirection || 'DESC');
+        this.sortDirection = ref(options.defaultSortDirection || 'ASC');
         this.filtersDrawerVisible = ref(false);
         this.dataHandler   = options.dataHandler   || '?handler=Data';
         this.deleteHandler = options.deleteHandler || '?handler=Delete';
@@ -48,11 +48,22 @@ export class EleTable {
             
             // 设置数据和总数，兼容不同接口返回结构
             if (res.data.code === 0 || res.data.code === '0') {
-                this.items.value = res.data.data.items || res.data.data;
-                if (res.data.data.total !== undefined) {
+                this.items.value = res.data.data?.items || res.data.data || [];
+
+                // 优先读取后端 BuildResult(..., pager) 返回的 pager 信息。
+                const pager = res.data.pager || res.data.extra || null;
+                if (pager && pager.total !== undefined) {
+                    this.total.value = pager.total;
+                    if (pager.pageIndex !== undefined && pager.pageIndex !== null) {
+                        this.pageIndex.value = Number(pager.pageIndex) || 0;
+                    }
+                    if (pager.pageSize !== undefined && pager.pageSize !== null) {
+                        this.pageSize.value = Number(pager.pageSize) || this.pageSize.value;
+                    }
+                } else if (res.data.data && res.data.data.total !== undefined) {
                     this.total.value = res.data.data.total;
-                } else if (res.data.extra && res.data.extra.total !== undefined) {
-                    this.total.value = res.data.extra.total;
+                } else {
+                    this.total.value = Array.isArray(this.items.value) ? this.items.value.length : 0;
                 }
             } else {
                 EleManager.showError(res.data.info || res.data.msg || '加载失败');

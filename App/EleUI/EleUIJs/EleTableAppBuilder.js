@@ -20,7 +20,7 @@ export class EleTableAppBuilder extends EleAppBuilder {
                 const table = new EleTable({
                     dataHandler: config.dataHandler,
                     deleteHandler: config.deleteHandler,
-                    pageSize: config.pageSize || 10,
+                    pageSize: config.pageSize,
                     ...config
                 });
 

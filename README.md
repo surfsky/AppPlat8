@@ -45,12 +45,18 @@
     Ctrl+C
    ```
 4.打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
-5.若端口被占用，查找占用 6060 的进程，然后kill
+
+
+其它
+
+1.运行 `dotnet ef migrations add CheckHazardLevel --project App/App.csproj --startup-project App/App.csproj` 创建数据库迁移。
+
+2.若端口被占用，查找占用 6060 的进程，然后kill
   ```bash
     lsof -iTCP:6060 -sTCP:LISTEN
     kill -9 <pid>
   ```
-6. 测试项目
+3. 测试项目
   ```bash
   dotnet test App.UtilsTests/App.UtilsTests.csproj
   ```

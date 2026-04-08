@@ -77,6 +77,7 @@ export class EleForm {
                 // Handle isTop boolean conversion if needed
                 if (typeof d.isTop !== 'undefined') this.form.value.isTop = !!d.isTop;
                 this.sanitizeAllStaticTreeSelectValues();
+                this.sanitizeAllRemoteTreeSelectValues();
                 this.originalForm.value = JSON.parse(JSON.stringify(this.form.value));
             } else {
                 console.error('Load failed:', res.data);
@@ -369,6 +370,22 @@ export class EleForm {
             } catch (e) {
                 console.warn('parse static tree items failed', e);
             }
+        });
+    }
+
+    sanitizeAllRemoteTreeSelectValues() {
+        const nodes = document.querySelectorAll('[data-tree-model][data-source]');
+        nodes.forEach(el => {
+            const modelKey = el.getAttribute('data-tree-model') || el.getAttribute('data-key');
+            const key = el.getAttribute('data-key');
+            const idField = el.getAttribute('data-tree-id-field') || 'id';
+            const childrenField = el.getAttribute('data-tree-children-field') || 'children';
+            if (!modelKey || !key) return;
+
+            const treeData = this.options.value[key];
+            if (!Array.isArray(treeData) || treeData.length === 0) return;
+
+            this.sanitizeTreeModelValue(modelKey, treeData, idField, childrenField);
         });
     }
 

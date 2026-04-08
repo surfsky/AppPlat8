@@ -145,9 +145,19 @@ export class EleAppBuilder {
     //--------------------------------------------------------------
     createConfiguredApp(config = {}, rootOptions = {}) {
         const app = this.Vue.createApp(rootOptions);
+        const useLocale = config.useLocale !== false;
+
+        if (useLocale) {
+            if (window.dayjs && typeof window.dayjs.locale === 'function') {
+                window.dayjs.locale('zh-cn');
+            }
+            if (window.ElementPlus && window.ElementPlus.dayjs && typeof window.ElementPlus.dayjs.locale === 'function') {
+                window.ElementPlus.dayjs.locale('zh-cn');
+            }
+        }
 
         if (window.ElementPlus) {
-            if (config.useLocale && window.ElementPlusLocaleZhCn) {
+            if (useLocale && window.ElementPlusLocaleZhCn) {
                 app.use(window.ElementPlus, { locale: window.ElementPlusLocaleZhCn });
             } else {
                 app.use(window.ElementPlus);

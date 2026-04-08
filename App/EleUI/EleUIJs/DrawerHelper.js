@@ -334,7 +334,18 @@ export class DrawerHelper {
 </el-drawer>`
             });
 
-            app.use(hostWindow.ElementPlus);
+            if (hostWindow.dayjs && typeof hostWindow.dayjs.locale === 'function') {
+                hostWindow.dayjs.locale('zh-cn');
+            }
+            if (hostWindow.ElementPlus && hostWindow.ElementPlus.dayjs && typeof hostWindow.ElementPlus.dayjs.locale === 'function') {
+                hostWindow.ElementPlus.dayjs.locale('zh-cn');
+            }
+
+            if (hostWindow.ElementPlusLocaleZhCn) {
+                app.use(hostWindow.ElementPlus, { locale: hostWindow.ElementPlusLocaleZhCn });
+            } else {
+                app.use(hostWindow.ElementPlus);
+            }
             if (hostWindow.ElementPlusIconsVue) {
                 for (const [key, component] of Object.entries(hostWindow.ElementPlusIconsVue)) {
                     app.component(key, component);

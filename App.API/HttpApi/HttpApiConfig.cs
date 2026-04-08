@@ -168,58 +168,58 @@ namespace App.HttpApi
         //--------------------------------------------
         // 包裹方法
         //--------------------------------------------
+        public void DoVisit(HttpContext context, MethodInfo method, HttpApiAttribute attr, Dictionary<string, object> inputs)
+        {
+            DoVisit(new VisitArgs { Context = context, Method = method, Attr = attr, Inputs = inputs });
+        }
         public void DoVisit(VisitArgs args)
         {
             this.OnVisit?.Invoke(args);
         }
 
-        public void DoVisit(HttpContext context, MethodInfo method, HttpApiAttribute attr, Dictionary<string, object> inputs)
-        {
-            DoVisit(new VisitArgs { Context = context, Method = method, Attr = attr, Inputs = inputs });
-        }
 
+
+        public void DoAuth(HttpContext context, MethodInfo method, HttpApiAttribute attr, string token)
+        {
+            DoAuth(new AuthArgs { Context = context, Method = method, Attr = attr, Token = token });
+        }
         /// <summary>授权事件</summary>
         public void DoAuth(AuthArgs args)
         {
             this.OnAuth?.Invoke(args);
         }
 
-        public void DoAuth(HttpContext context, MethodInfo method, HttpApiAttribute attr, string token)
-        {
-            DoAuth(new AuthArgs { Context = context, Method = method, Attr = attr, Token = token });
-        }
 
+        public void DoEnd(HttpContext context)
+        {
+            DoEnd(new EndArgs { Context = context });
+        }
         /// <summary>结束</summary>
         public void DoEnd(EndArgs args)
         {
             this.OnEnd?.Invoke(args);
         }
 
-        public void DoEnd(HttpContext context)
-        {
-            DoEnd(new EndArgs { Context = context });
-        }
 
+        public void DoException(HttpContext context, MethodInfo method, Exception ex)
+        {
+            DoException(new ExceptionArgs { Context = context, Method = method, Ex = ex });
+        }
         /// <summary>异常处理</summary>
         public void DoException(ExceptionArgs args)
         {
             this.OnException?.Invoke(args);
         }
 
-        public void DoException(HttpContext context, MethodInfo method, Exception ex)
-        {
-            DoException(new ExceptionArgs { Context = context, Method = method, Ex = ex });
-        }
-
-        /// <summary>禁止访问</summary>
-        public void DoBan(BanArgs args)
-        {
-            this.OnBan?.Invoke(args);
-        }
 
         public void DoBan(HttpContext context, string ip, string url)
         {
             DoBan(new BanArgs { Context = context, IP = ip, Url = url });
+        }
+        /// <summary>禁止访问</summary>
+        public void DoBan(BanArgs args)
+        {
+            this.OnBan?.Invoke(args);
         }
     }
 }

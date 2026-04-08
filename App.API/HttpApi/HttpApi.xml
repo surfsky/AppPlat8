@@ -22,7 +22,7 @@
             <summary>详细数据（自定义类型，可为数组、对象）</summary>
         </member>
         <member name="P:App.HttpApi.APIResult.Pager">
-            <summary>附加数据（自定义类型，如分页信息DataPager）</summary>
+            <summary>附加数据（分页信息Pager）</summary>
         </member>
         <member name="T:App.HttpApi.Asp">
             <summary>

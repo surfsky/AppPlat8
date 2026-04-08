@@ -19,7 +19,7 @@ namespace App.HttpApi
         /// <summary>详细数据（自定义类型，可为数组、对象）</summary>
         public object Data { get; set; }
 
-        /// <summary>附加数据（自定义类型，如分页信息DataPager）</summary>
+        /// <summary>附加数据（分页信息Pager）</summary>
         public object Pager { get; set; }
 
         public APIResult(int code=0, string message="", object data=null, object pager=null)

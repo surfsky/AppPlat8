@@ -9,9 +9,17 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://unpkg.com/element-plus"></script>
     <script src="https://unpkg.com/element-plus/dist/locale/zh-cn.min.js"></script>
+    <script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
+    <script src="https://unpkg.com/dayjs/locale/zh-cn.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/@@element-plus/icons-vue"></script>
     <script src="https://unpkg.com/@@tailwindcss/browser@4"></script>
+
+    <script>
+        if (window.dayjs && typeof window.dayjs.locale === 'function') {
+            window.dayjs.locale('zh-cn');
+        }
+    </script>
 
     <!-- element plus razor -->
     <script src="/res/App.EleUI.EleUIJs.EleUI.js" type="module"></script>

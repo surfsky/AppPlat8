@@ -26,7 +26,7 @@ export class EleFormAppBuilder extends EleAppBuilder {
                 // Register message handlers for cross-origin communication
                 const msgHandler = (e) => form.messageHandler(e);
                 const selHandler = (e) => form.handleSelectorMessage(e);
-                onMounted(() => {
+                onMounted(async () => {
                     if (config.autoLoad === false) {
                         const url = new URL(window.location.href);
                         if (typeof config.readOnly !== 'undefined') {
@@ -36,30 +36,31 @@ export class EleFormAppBuilder extends EleAppBuilder {
                         }
                         form.originalForm.value = JSON.parse(JSON.stringify(form.form.value || {}));
                     } else {
-                        form.load();
+                        await form.load();
                     }
-                    window.addEventListener('message', msgHandler);
-                    window.addEventListener('message', selHandler);
-                });
-                onUnmounted(() => {
-                    window.removeEventListener('message', msgHandler);
-                    window.removeEventListener('message', selHandler);
-                });
 
-                // Add tree select options fetching on mount
-                onMounted(async () => {
                     await nextTick();
                     const treeSelects = document.querySelectorAll('[data-source]');
+                    const jobs = [];
                     treeSelects.forEach(el => {
                         const src = el.getAttribute('data-source');
                         const key = el.getAttribute('data-key');
                         const idField = el.getAttribute('data-tree-id-field') || 'id';
                         const childrenField = el.getAttribute('data-tree-children-field') || 'children';
                         if (key && src) {
-                            form.fetchOptions(key, src, idField, childrenField);
+                            jobs.push(form.fetchOptions(key, src, idField, childrenField));
                         }
                     });
+                    await Promise.all(jobs);
                     form.sanitizeAllStaticTreeSelectValues();
+                    form.sanitizeAllRemoteTreeSelectValues();
+
+                    window.addEventListener('message', msgHandler);
+                    window.addEventListener('message', selHandler);
+                });
+                onUnmounted(() => {
+                    window.removeEventListener('message', msgHandler);
+                    window.removeEventListener('message', selHandler);
                 });
 
                 // Expose EleForm members to template
