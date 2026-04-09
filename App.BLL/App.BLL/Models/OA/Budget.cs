@@ -69,12 +69,23 @@ namespace App.DAL.OA
             };
         }
 
-        public static IQueryable<Budget> Search(string name,int? year, long? orgId, long? typeId, BudgetPayStatus? payStatus)
+        public static IQueryable<Budget> Search(string name, int? year, long? orgId, long? typeId, BudgetPayStatus? payStatus, bool includeChildOrgs = false)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty())     q = q.Where(o => o.Name.Contains(name.Trim()));
             if (year.IsNotEmpty())      q = q.Where(o => o.Year == year.Value);
-            if (orgId.IsNotEmpty())    q = q.Where(o => o.OrgId == orgId.Value);
+            if (orgId.IsNotEmpty())
+            {
+                if (includeChildOrgs)
+                {
+                    var orgIds = Org.All.GetDescendants(orgId).Select(t => t.Id).Distinct().ToList();
+                    q = q.Where(o => o.OrgId != null && orgIds.Contains(o.OrgId.Value));
+                }
+                else
+                {
+                    q = q.Where(o => o.OrgId == orgId.Value);
+                }
+            }
             if (typeId.IsNotEmpty())   q = q.Where(o => o.TypeId == typeId.Value);
             if (payStatus.IsNotEmpty()) q = q.Where(o => o.PayStatus == payStatus.Value);
             return q;

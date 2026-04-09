@@ -78,3 +78,17 @@
             }
 
             return tree.ToResult();
+
+
+        public IActionResult OnPost([FromBody] User req) => OnPostSave(req);
+        public IActionResult OnPost()
+        {
+            var req = new SavePasswordRequest
+            {
+                Id = Id,
+                Password = Password,
+            };
+            return OnPostSave(req);
+        }
+
+        public IActionResult OnPost([FromBody] Role req) => OnPostSave(req);

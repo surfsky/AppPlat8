@@ -23,6 +23,7 @@ namespace App.DAL
     public class Announce : EntityBase<Announce>
     {
         [UI("标题")]                                   public string Title { get; set; }
+        [UI("组织")]                                   public long? OrgId { get; set; }
         [UI("创建时间")]                               public DateTime? CreateTime { get; set; }
         [UI("发布时间")]                               public DateTime? PublishTime { get; set; }
         [UI("作者")]                                   public string Author { get; set; }
@@ -45,6 +46,7 @@ namespace App.DAL
             {
                 this.Id,
                 this.Title,
+                this.OrgId,
                 this.Author,
                 this.Status,
                 this.StatusName,
@@ -59,14 +61,15 @@ namespace App.DAL
         }
 
         /// <summary>查找已发布的公告</summary>
-        public static IQueryable<Announce> Search(string title = "", AnnounceStatus? status = null, string author = "", DateTime? fromDt = null, DateTime? toDt = null)
+        public static IQueryable<Announce> Search(string title = "", AnnounceStatus? status = null, string author = "", DateTime? fromDt = null, DateTime? toDt = null, long? orgId = null)
         {
-            IQueryable<Announce> q = Set;
+            IQueryable<Announce> q = IncludeSet;
             if (status != null)       q = q.Where(a => a.Status == status);
             if (title.IsNotEmpty())   q = q.Where(a => a.Title.Contains(title));
             if (author.IsNotEmpty())  q = q.Where(a => a.Author.Contains(author));
             if (fromDt != null)       q = q.Where(a => a.PublishTime >= fromDt);
             if (toDt != null)         q = q.Where(a => a.PublishTime <= toDt);
+            if (orgId != null)        q = q.Where(a => a.OrgId == orgId);
             return q;
         }        
 

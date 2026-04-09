@@ -12,12 +12,12 @@
                 <EleNumber For="Item.Year" Width="120px" Label="年份" LabelWidth="60px"></EleNumber>
                 <EleSelect For="Item.TypeId" Width="150px" Label="分类" LabelWidth="60px" Items="Model.BudgetTypes" Clearable="true"></EleSelect>
             </Filters>
-            <div class="flex w-80">
+            <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Info" Click="navigateTo('/OA/BudgetTypes')" Icon="Setting" Visible="@Auth.CheckPower(HttpContext, Power.BudgetTypeEdit)">类别管理</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
-            </div>
+            </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>

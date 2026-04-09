@@ -382,7 +382,7 @@
     <ProjectReference Include="..\App.API\HttpApi\HttpApi.csproj" />
     <ProjectReference Include="..\App.Utils\App.Utils\App.Utils.csproj" />
     <ProjectReference Include="..\App.Web\App.Web.csproj" />
-    <ProjectReference Include="..\App.BLL\App.BLL.csproj" />
+    <ProjectReference Include="..\App.BLL\App.BLL\App.BLL.csproj" />
   </ItemGroup>
   <ItemGroup>
 

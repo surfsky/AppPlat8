@@ -10,17 +10,17 @@
     <EleTable Title="用户" FormPage="UserForm" EnableBatch="false" >
         <Toolbar>
             <Filters>
-                <EleInput For="Item.Name" Label="账号" Width="200px"></EleInput>
-                <EleInput For="Item.RealName" Label="姓名" Width="200px"></EleInput>
-                <EleTreeSelect For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" Width="200px"></EleTreeSelect>
+                <EleInput For="Item.Name" Label="账号" Width="260px"></EleInput>
+                <EleInput For="Item.RealName" Label="姓名" Width="260px"></EleInput>
+                <EleTreeSelect For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" Width="280px"></EleTreeSelect>
             </Filters>
-            <div class="flex-1 w-200">
+            <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
                 <EleButton Type="Info" Click="navigateTo('/Admins/Orgs')" IconCls="fas fa-sitemap">组织管理</EleButton>
                 <EleButton Type="Success" Command="Export" Icon="Download">导出</EleButton>
-            </div>
+            </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>

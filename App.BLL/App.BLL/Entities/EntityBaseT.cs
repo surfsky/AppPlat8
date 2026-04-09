@@ -70,12 +70,15 @@ namespace App.Entities
         /// <summary>数据集</summary>
         public static DbSet<T> Set => Db.Set<T>();
 
+        /// <summary>按当前用户数据权限过滤后的数据集</summary>
+        public static IQueryable<T> DataSet => DataAccessFilter.Apply(Set, EntityConfig.DataAccessScope);
+
         /// <summary>有效数据集（若为逻辑删除，返回 Set.Where(t => t.InUsed != false)）</summary>
         public static IQueryable<T> ValidSet
         {
             get
             {
-                IQueryable<T> set = Set;
+                IQueryable<T> set = DataSet;
                 if (typeof(T).IsInterface(typeof(IDeleteLogic)))
                     set = set.WhereNotEqual(nameof(IDeleteLogic.InUsed), false, true);
                 return set;
@@ -203,7 +206,7 @@ namespace App.Entities
         public static T Get(long? id, bool physical = true)
         {
             if (id == null) return null;
-            var o = Set.Find(id);
+            var o = DataSet.FirstOrDefault(t => t.Id == id.Value);
             if (o == null)
                 return null;
             else
@@ -221,20 +224,20 @@ namespace App.Entities
         /// <summary>找到首个实体</summary>
         public static T Get(Expression<Func<T, bool>> condition)
         {
-            return Set.Where(condition).FirstOrDefault();
+            return DataSet.Where(condition).FirstOrDefault();
         }
 
 
         /// <summary>查找指定Id的数据列表</summary>
         public static IQueryable<T> Search(List<long> ids)
         {
-            return Set.Where(t => ids.Contains(t.Id));
+            return DataSet.Where(t => ids.Contains(t.Id));
         }
 
         /// <summary>查找</summary>
         public static IQueryable<T> Search(Expression<Func<T, bool>> condition)
         {
-            return condition == null ? Set : Set.Where(condition);
+            return condition == null ? DataSet : DataSet.Where(condition);
         }
 
 

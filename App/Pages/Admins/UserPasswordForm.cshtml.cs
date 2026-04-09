@@ -9,6 +9,12 @@ namespace App.Pages.Admins
     [CheckPower(Power.UserEdit)]
     public class UserPasswordFormModel : AdminModel
     {
+        public class SavePasswordRequest
+        {
+            public long Id { get; set; }
+            public string Password { get; set; }
+        }
+
         [BindProperty]
         public long Id { get; set; }
 
@@ -28,9 +34,12 @@ namespace App.Pages.Admins
             }
         }
 
-        public IActionResult OnPost()
+        public IActionResult OnPostSave([FromBody] SavePasswordRequest req)
         {
-            var user = App.DAL.User.Get(Id);
+            if (req == null)
+                return BuildResult(400, "参数错误");
+
+            var user = App.DAL.User.Get(req.Id);
             if (user == null)
             {
                 return BuildResult(404, "用户不存在");
@@ -41,15 +50,16 @@ namespace App.Pages.Admins
                 return BuildResult(403, "你无权修改超级管理员的密码！");
             }
 
-            if (string.IsNullOrWhiteSpace(Password))
+            if (string.IsNullOrWhiteSpace(req.Password))
             {
                 return BuildResult(400, "密码不能为空");
             }
 
-            user.Password = PasswordUtil.CreateDbPassword(Password.Trim());
+            user.Password = PasswordUtil.CreateDbPassword(req.Password.Trim());
             user.Save();
 
             return BuildResult(0, "密码修改成功");
         }
+
     }
 }

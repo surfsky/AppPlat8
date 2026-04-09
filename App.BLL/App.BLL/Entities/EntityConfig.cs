@@ -23,5 +23,17 @@ namespace App.Entities
         /// <summary>获取数据库事件</summary>
         public event Func<DbContext> OnGetDb;
 
+        /// <summary>获取当前请求的数据访问作用域事件</summary>
+        public event Func<DataAccessScope> OnGetDataAccessScope;
+
+        /// <summary>获取当前请求的数据录入审计上下文事件</summary>
+        public event Func<DataAuditScope> OnGetDataAuditScope;
+
+        /// <summary>当前请求的数据访问作用域</summary>
+        public static DataAccessScope DataAccessScope => Instance.OnGetDataAccessScope?.Invoke();
+
+        /// <summary>当前请求的数据录入审计上下文</summary>
+        public static DataAuditScope DataAuditScope => Instance.OnGetDataAuditScope?.Invoke();
+
     }
 }

@@ -11,12 +11,12 @@
                 <EleInput For="Item.Name" Label="名称" Width="400px"></EleInput>
                 <EleTreeSelect For="Item.CategoryId" Label="目录" Items="Model.Categories" Clearable="true" Width="400px"></EleTreeSelect>
             </Filters>
-            <div class="flex w-80">
+            <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
                 <EleButton Type="Info" PopupUrl="/Articles/ArticleDirs" PopupTitle="目录管理" Icon="Setting" Visible="@Auth.CheckPower(Power.ArticleDirEdit)">目录管理</EleButton>
-            </div>
+            </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>

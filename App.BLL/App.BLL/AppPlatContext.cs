@@ -11,6 +11,8 @@ using System.Text.Json;
 using App.DAL.OA;
 using System.Reflection;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace App.DAL
 {
@@ -119,6 +121,83 @@ namespace App.DAL
                 ;
 
             MapListIds(modelBuilder);
+        }
+
+        public override int SaveChanges()
+        {
+            ApplyAuditValues();
+            return base.SaveChanges();
+        }
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            ApplyAuditValues();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            ApplyAuditValues();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            ApplyAuditValues();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        private void ApplyAuditValues()
+        {
+            var now = DateTime.Now;
+            var scope = EntityConfig.DataAuditScope;
+            var hasScope = scope != null && scope.Enabled;
+
+            foreach (var entry in ChangeTracker.Entries<EntityBase>())
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    if (!entry.Entity.CreateDt.HasValue)
+                        entry.Entity.CreateDt = now;
+
+                    if (hasScope)
+                    {
+                        // 新增数据默认记录创建人/责任人/组织/作者，若业务已显式赋值则不覆盖。
+                        SetNullableLongIfEmpty(entry, nameof(EntityBase.CreatorId), scope.UserId);
+                        SetNullableLongIfEmpty(entry, nameof(EntityBase.OwnerId), scope.UserId);
+                        SetNullableLongIfEmpty(entry, "OrgId", scope.OrgId);
+                        SetNullableLongIfEmpty(entry, "AuthorId", scope.UserId);
+                    }
+                }
+
+                if (entry.State == EntityState.Modified)
+                {
+                    entry.Entity.UpdateDt = now;
+                }
+            }
+        }
+
+        private static void SetNullableLongIfEmpty(EntityEntry entry, string propertyName, long? value)
+        {
+            if (!value.HasValue)
+                return;
+
+            var prop = entry.Properties.FirstOrDefault(t => t.Metadata.Name == propertyName);
+            if (prop == null)
+                return;
+
+            var clrType = prop.Metadata.ClrType;
+            if (clrType != typeof(long) && clrType != typeof(long?))
+                return;
+
+            if (prop.CurrentValue == null)
+            {
+                prop.CurrentValue = value.Value;
+                return;
+            }
+
+            if (prop.CurrentValue is long longValue && longValue == 0)
+                prop.CurrentValue = value.Value;
         }
 
         /// <summary>将 List<long> 或 List<int> 类型的属性映射为字符串存储</summary>

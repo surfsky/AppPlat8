@@ -18,6 +18,7 @@ namespace App.DAL.OA
     [UI("OA", "评论")]
     public class Comment : EntityBase<Comment>
     {
+        [UI("组织")]        public long? OrgId { get; set; }
         [UI("评论内容Id")]   public long? TargetId { get; set; }
         [UI("类别")]        public CommentType? Type { get; set; }
         [UI("评论人")]      public string Author { get; set; }
@@ -29,6 +30,7 @@ namespace App.DAL.OA
             return new
             {
                 Id,
+                OrgId,
                 TargetId,
                 Type,
                 Author,
@@ -38,12 +40,13 @@ namespace App.DAL.OA
             };
         }
 
-        public static IQueryable<Comment> Search(long? targetId, CommentType? type, string author)
+        public static IQueryable<Comment> Search(long? targetId, CommentType? type, string author, long? orgId = null)
         {
             var q = IncludeSet.AsQueryable();
             if (targetId.IsNotEmpty())  q = q.Where(o => o.TargetId == targetId.Value);
             if (type.IsNotEmpty())      q = q.Where(o => o.Type == type.Value);
             if (author.IsNotEmpty())    q = q.Where(o => o.Author.Contains(author.Trim()));
+            if (orgId.IsNotEmpty())     q = q.Where(o => o.OrgId == orgId.Value);
             return q;
          }
     }

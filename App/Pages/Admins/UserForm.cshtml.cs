@@ -43,10 +43,13 @@ namespace App.Pages.Admins
         }
 
 
-        public IActionResult OnPost([FromBody] User req)
+        public IActionResult OnPostSave([FromBody] User req)
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
+
+            if (string.IsNullOrWhiteSpace(req.Name))
+                return BuildResult(400, "账号不能为空");
 
             User user;
             if (req.Id == 0)

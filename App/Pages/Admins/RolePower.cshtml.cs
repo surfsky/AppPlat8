@@ -28,7 +28,7 @@ namespace App.Pages.Admin
         public IActionResult OnGetGroupPowers()
         {
             var groupNames = typeof(Power).GetEnumGroups();
-            groupNames.Sort(); // 默认排序
+            //groupNames.Sort(); // 默认排序
 
             var infos = typeof(Power).GetEnumInfos();
             var result = new List<object>();

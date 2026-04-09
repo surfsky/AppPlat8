@@ -11,11 +11,11 @@
                 <EleInput For="Item.Name" Width="250px" Label="名称" LabelWidth="70px"></EleInput>
                 <EleInput For="Item.UnifiedSocialCreditCode" Width="500px" Label="统一社会信用代码" ></EleInput>
             </Filters>
-            <div class="flex w-80">
+            <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.CompanyNew)">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="@Auth.CheckPower(Power.CompanyDelete)">批量删除</EleButton>
-            </div>
+            </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>

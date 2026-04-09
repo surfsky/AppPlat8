@@ -12,6 +12,7 @@ namespace App.DAL
     public class Company : EntityBase<Company>
     {
         [UI("名称")]             public string Name { get; set; }
+        [UI("组织")]             public long? OrgId { get; set; }
         [UI("简称")]             public string AbbrName { get; set; }
         [UI("统一社会信用代码")]   public string UnifiedSocialCreditCode { get; set; }
         [UI("地址")]             public string Address { get; set; }
@@ -27,6 +28,7 @@ namespace App.DAL
             {
                 Id,
                 Name,
+                OrgId,
                 AbbrName,
                 UnifiedSocialCreditCode,
                 Address,
@@ -39,12 +41,13 @@ namespace App.DAL
             };
         }
 
-        public static IQueryable<Company> Search(string name, string abbrName, string legalPerson)
+        public static IQueryable<Company> Search(string name, string abbrName, string legalPerson, long? orgId = null)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty())          q = q.Where(o => o.Name.Contains(name.Trim()));
             if (abbrName.IsNotEmpty())     q = q.Where(o => o.AbbrName.Contains(abbrName.Trim()));
             if (legalPerson.IsNotEmpty())  q = q.Where(o => o.LegalPerson.Contains(legalPerson.Trim()));
+            if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value);
             return q;
          }
     }

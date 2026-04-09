@@ -12,11 +12,11 @@
                 <EleDatePicker For="Item.CreateTime" Type="DateRange" StartPlaceholder="开始日期" EndPlaceholder="结束日期" Width="600px" Label="创建时间" ></EleDatePicker>
                 <EleInput For="Item.Title" Width="200px" Label="标题" ></EleInput>
             </Filters>
-            <div class="flex w-80">
+            <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="@Auth.CheckPower(Power.AnnounceDelete)">批量删除</EleButton>
-            </div>
+            </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn ></EleNumColumn>

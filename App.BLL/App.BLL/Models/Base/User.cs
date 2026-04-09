@@ -118,7 +118,9 @@ namespace App.DAL
         /// <summary>获取用户详情（包含关联数据）</summary>
         public static User GetDetail(Func<User, bool> predicate)
         {
-            var user = Set.Include(u => u.Org).Include(u => u.AuthOrg).Include(u => u.Roles).FirstOrDefault(predicate);
+            var user = DataSet.Include(u => u.Org).Include(u => u.AuthOrg).Include(u => u.Roles).FirstOrDefault(predicate);
+            if (user == null)
+                return null;
             user.RoleIds = user.Roles.Select(r => r.Id).ToList();
             return user;
         }
@@ -126,7 +128,7 @@ namespace App.DAL
         /// <summary>搜索用户列表</summary>
         public static IQueryable<User> Search(string name, string realName, long? deptId=null, long? roleId=null)
         {
-            var q = Set.Include(u => u.Org).Include(u => u.AuthOrg).Include(u => u.Roles).AsQueryable();
+            var q = DataSet.Include(u => u.Org).Include(u => u.AuthOrg).Include(u => u.Roles).AsQueryable();
             if (name.IsNotEmpty())     q = q.Where(t => t.Name.Contains(name));
             if (realName.IsNotEmpty()) q = q.Where(t => t.RealName.Contains(realName));
             if (deptId != null)        q = q.Where(t => t.OrgId == deptId);

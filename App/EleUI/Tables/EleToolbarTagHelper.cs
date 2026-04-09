@@ -13,8 +13,8 @@ namespace App.EleUI
         {
             var childContent = await output.GetChildContentAsync();
             var content = childContent.GetContent();
-            const string toolbarClass = "w-full min-h-[40px] flex flex-wrap items-center gap-2 bg-white px-6 py-4";
-            const string toolbarStyle = "display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;min-height:40px;";
+                const string toolbarClass = "ele-table-toolbar w-full flex-none shrink-0 min-h-[40px] flex flex-wrap items-center gap-2 bg-white px-6 py-4 overflow-visible relative z-10";
+                const string toolbarStyle = "display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;min-height:40px;flex-shrink:0;overflow:visible;position:relative;z-index:10;";
 
             var tableContext = (TableContext)context.Items[typeof(TableContext)];
             var wrapper = $@"<div class=""{toolbarClass}"" style=""{toolbarStyle}"" data-ele-toolbar=""true"">{content}</div>";

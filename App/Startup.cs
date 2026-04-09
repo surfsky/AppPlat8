@@ -71,6 +71,79 @@ namespace App
 
             // EntityBase
             EntityConfig.Instance.OnGetDb += () => Common.GetDbConnection();
+            EntityConfig.Instance.OnGetDataAccessScope += () =>
+            {
+                var db = Common.GetDbConnection();
+                var userId = Auth.GetUserId();
+                if (db == null || !userId.HasValue)
+                    return new DataAccessScope { Enabled = false, AllowAll = true };
+
+                var user = db.Users.FirstOrDefault(t => t.Id == userId.Value);
+                if (user == null)
+                    return new DataAccessScope { Enabled = false, AllowAll = true };
+
+                var hasAll = false;
+                var hasOrg = false;
+                var hasOwn = false;
+
+                if (string.Equals(user.Name, "admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasAll = true;
+                    hasOrg = true;
+                    hasOwn = true;
+                }
+                else
+                {
+                    var roleIds = db.Users
+                        .Where(t => t.Id == user.Id)
+                        .SelectMany(t => t.Roles)
+                        .Select(t => t.Id)
+                        .ToList();
+
+                    var powerIds = db.RolePowers
+                        .Where(t => roleIds.Contains(t.RoleId))
+                        .Select(t => t.PowerId)
+                        .ToList();
+
+                    hasAll = powerIds.Contains(Power.DataAccessAll);
+                    hasOrg = powerIds.Contains(Power.DataAccessOrg);
+                    hasOwn = powerIds.Contains(Power.DataAccessOwn);
+                }
+
+                // 无数据权限标识时默认按责任数据收敛，避免越权。
+                if (!hasAll && !hasOrg && !hasOwn)
+                    hasOwn = true;
+
+                return new DataAccessScope
+                {
+                    Enabled = true,
+                    AllowAll = hasAll,
+                    AllowOrg = hasOrg,
+                    AllowOwn = hasOwn,
+                    UserId = user.Id,
+                    OrgId = user.AuthOrgId ?? user.OrgId,
+                    IncludeSubOrgs = true,
+                };
+            };
+
+            EntityConfig.Instance.OnGetDataAuditScope += () =>
+            {
+                var db = Common.GetDbConnection();
+                var userId = Auth.GetUserId();
+                if (db == null || !userId.HasValue)
+                    return new DataAuditScope { Enabled = false };
+
+                var user = db.Users.FirstOrDefault(t => t.Id == userId.Value);
+                if (user == null)
+                    return new DataAuditScope { Enabled = false };
+
+                return new DataAuditScope
+                {
+                    Enabled = true,
+                    UserId = user.Id,
+                    OrgId = user.AuthOrgId ?? user.OrgId,
+                };
+            };
         }
 
         /// <summary>

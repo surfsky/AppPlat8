@@ -53,11 +53,15 @@ namespace App.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public virtual long Id { get; set; }
         
-        [UI("创建时间", Mode=PageMode.Edit, ReadOnly=true)]    
+        [UI("创建时间", Mode=PageMode.Edit, ReadOnly=true)]
         public virtual DateTime? CreateDt { get; set; }  // 在保存时会自动设置
         
         [UI("更改时间", Mode=PageMode.Edit, ReadOnly = true)]  
         public virtual DateTime? UpdateDt { get; set; }  // 在更新时会自动设置
+
+        [UI("创建人")]  public virtual long? CreatorId { get; set; }
+        [UI("责任人")]  public virtual long? OwnerId { get; set; }
+
 
         //---------------------------------------------
         // 虚拟方法

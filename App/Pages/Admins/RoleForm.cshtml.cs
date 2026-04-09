@@ -11,7 +11,6 @@ namespace App.Pages.Admins
     [CheckPower(Power.RoleEdit)]
     public class RoleFormModel : AdminModel
     {
-        [BindProperty]
         public Role Item { get; set; }
 
         public void OnGet(long id)
@@ -32,20 +31,34 @@ namespace App.Pages.Admins
             return new JsonResult(new { code = 0, msg = "success", data = item });
         }
 
-        public IActionResult OnPost()
+        public IActionResult OnPostSave([FromBody] Role req)
         {
-            if (Item.Id == 0)
+            if (req == null)
+                return BuildResult(400, "参数错误");
+
+            if (string.IsNullOrWhiteSpace(req.Name))
+                return BuildResult(400, "角色名称不能为空");
+
+            if (req.Id == 0)
             {
-                if (Role.Set.Any(r => r.Name == Item.Name))
+                if (Role.Set.Any(r => r.Name == req.Name))
                     return BuildResult(400, "角色名已存在");
-                
-                Item.Save();
+
+                var item = new Role
+                {
+                    Name = req.Name.Trim(),
+                    Remark = req.Remark,
+                };
+                item.Save();
             }
             else
             {
-                var existing = Role.Get(Item.Id);
-                existing.Name = Item.Name;
-                existing.Remark = Item.Remark;
+                var existing = Role.Get(req.Id);
+                if (existing == null)
+                    return BuildResult(404, "角色不存在");
+
+                existing.Name = req.Name.Trim();
+                existing.Remark = req.Remark;
                 existing.Save();
             }
             return BuildResult(0, "保存成功");

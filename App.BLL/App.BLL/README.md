@@ -28,6 +28,19 @@
 - SQLite 对某些架构更改（如重命名列、修改列类型）的支持有限。EF Core 可能会通过“重建表”的方式来处理这些更改，这可能会导致数据丢失或性能问题。在生产环境中请务必先备份数据。
 
 
+## 审计字段自动填充与数据过滤
+
+- 在 `AppPlatContext.SaveChanges` 中，新增实体会自动填充审计字段（仅在字段为空时填充，不会覆盖业务显式赋值）：
+    - `CreatorId <- scope.UserId`
+    - `OwnerId <- scope.UserId`
+    - `OrgId <- scope.OrgId`
+    - `AuthorId <- scope.UserId`
+- 统一数据访问过滤由 `DataAccessFilter` 注入，按 `OrgId` 与 `OwnerId` 进行匹配：
+    - 组织范围命中：实体 `OrgId` 在当前授权组织集合内
+    - 个人范围命中：实体 `OwnerId == 当前用户Id`
+- 说明：`CreatorId` 主要用于审计追踪；后续“我的数据/数据权限”过滤默认基于 `OwnerId`（以及可选的 `OrgId`），而不是 `CreatorId`。
+
+
 
 ## 表关联的方法
 

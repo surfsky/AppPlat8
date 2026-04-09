@@ -31,12 +31,12 @@ namespace App.EleUI
 
             output.TagName = null;
             output.Content.SetHtmlContent($@"
-<div class='col-span-full ele-table-filters-block'>
-    <div class='hidden md:grid gap-x-4 gap-y-0 grid-cols-1 md:grid-cols-2 lg:grid-cols-4'>
+<div class='col-span-full ele-table-filters-block w-auto md:w-full shrink-0 flex items-center'>
+    <div class='hidden md:flex md:flex-wrap md:items-start md:gap-4 w-full'>
         {content}
     </div>
 
-    <div class='md:hidden pb-4'>
+    <div class='md:hidden flex items-center mr-2'>
         <el-button type='primary' v-on:click='openFiltersDrawer' title='{title}'>
             <el-icon><component :is='""{icon}""'></component></el-icon>
         </el-button>
