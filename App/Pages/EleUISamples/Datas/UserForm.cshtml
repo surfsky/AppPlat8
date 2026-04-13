@@ -21,24 +21,21 @@
         <EleImageUpload For="Item.Photo" Label="头像" ItemWidth="140" LimitWidth="1024"></EleImageUpload>
         <EleImageUpload For="Item.Photos" Label="相册" Multi="true" MultiLimit="5" ItemWidth="140" LimitWidth="1024"></EleImageUpload>
         <EleInput For="Item.Description" Label="备注" Type="TextArea" Rows="3" FillRow="true"></EleInput>
+        <EleList Label="附件列表" FillRow="true" DataHandler="?handler=AttData&id=@userId" PageSize="5" SortField="Id" SortDirection="DESC" Height="300px" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-2" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <Text For="Item.Name" class="text-sm font-medium text-gray-800" />
+                        <div class="text-xs text-gray-500 mt-1">大小：<Text For="Item.SizeText" Wrapper="" /> | 上传时间：<Text For="Item.CreateDtText" Wrapper="" /></div>
+                    </div>
+                    <Link For="Item.Url" Display="Drawer" Icon="View" class="text-xs text-blue-600" />
+                </div>
+            </ItemTemplate>
+        </EleList>
 
         <Bottom>
             <EleButton Type="Primary" Command="Save" IconCls="fas fa-floppy-disk">保存</EleButton>
             <EleButton Type="Info"    Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
-
-    <div class="mt-4 h-72 border border-gray-100 rounded-lg p-3 bg-white">
-        <EleList Title="附件列表" DataHandler="?handler=AttData&id=@userId" PageSize="5" SortField="Id" SortDirection="DESC">
-            <ItemTemplate>
-                <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <div class="text-sm font-medium text-gray-800">{{ item.name }}</div>
-                        <div class="text-xs text-gray-500 mt-1">大小：{{ item.sizeText }} | 上传时间：{{ Utils.formatDate(item.createDt, 'Date') }}</div>
-                    </div>
-                    <a :href="item.url" target="_blank" class="text-xs text-blue-600">查看</a>
-                </div>
-            </ItemTemplate>
-        </EleList>
-    </div>
 }

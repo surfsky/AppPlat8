@@ -83,6 +83,31 @@ export class EleList {
         }
     }
 
+    onWindowScroll() {
+        if (this.loading.value || this.finished.value) return;
+
+        const doc = document.documentElement;
+        const nearBottom = doc.scrollHeight - (doc.scrollTop + window.innerHeight) <= 60;
+        if (nearBottom) {
+            this.loadData(false);
+        }
+    }
+
+    async ensureScrollable(containerEl) {
+        if (!containerEl) return;
+
+        // 当首屏内容不足以形成滚动条时，自动继续拉下一页直到可滚动或没有更多数据。
+        for (let i = 0; i < 8; i++) {
+            if (this.finished.value || this.loading.value) break;
+
+            const canScroll = containerEl.scrollHeight > containerEl.clientHeight + 4;
+            if (canScroll) break;
+
+            await this.loadData(false);
+            await Vue.nextTick();
+        }
+    }
+
     async invokeCommand(commandName) {
         const key = (commandName || '').trim().toLowerCase();
         if (!key) return;
@@ -90,5 +115,20 @@ export class EleList {
         if (key === 'search' || key === 'data' || key === 'refresh') {
             return this.loadData(true);
         }
+    }
+
+    openLinkInDrawer(url, title = '查看', size = null) {
+        if (!url) return;
+
+        const drawerSize = (typeof size === 'string' && size.trim()) ? size.trim() : null;
+        EleManager.openDrawer({
+            title: title || '查看',
+            url,
+            direction: 'rtl',
+            size: drawerSize,
+            resizable: true,
+            closeOnClickModal: false,
+            destroyOnClose: true
+        });
     }
 }

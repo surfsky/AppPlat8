@@ -49,7 +49,7 @@
 
 其它
 
-1.运行 `dotnet ef migrations add CheckHazardLevel --project App/App.csproj --startup-project App/App.csproj` 创建数据库迁移。
+1.运行 `dotnet ef migrations add CheckObjectEvent --project App/App.csproj --startup-project App/App.csproj` 创建数据库迁移。
 
 2.若端口被占用，查找占用 6060 的进程，然后kill
   ```bash

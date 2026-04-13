@@ -8,8 +8,6 @@ Task - 业务
     用笔记本？局内政务网，可使用公网，需部署防火墙只运行局内网段访问
     用服务器？现在只开公网，以后迁移到内网，需部署防火墙
 
-实现对象检查流程
-
 驾驶舱
     详见 《260402-龙港市应急驾驶舱规划方案v3》
     图层数据均来自统一接口，可扩展字段并展示
@@ -23,16 +21,11 @@ Task - 业务
     导入对象数据
     导入检查表
 
-构建复杂界面
-    实现列表控件，用于展示列表，如附件列表
-    针对隐患排查页面
-        给定UI界面，和AI讨论这种父子表结构的页面该如何操作
-        把隐患排查的数据接口写好
-    让AI自动实现前端页面，再啰嗦都行
-
 
 技术思路
+    将EleTable中的Toolbar剥离出来，可和 EleTable、EleList 搭配使用
     完全的接口、前端、测试的剥离
+    取消cookie，把 token 改为用 header authorization bareer 方式，更为现代和通用
     系统易用性和扩展性
         - Excel 表格编辑及分享
         - 云文档
@@ -42,48 +35,20 @@ Task - 业务
         RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
         前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
 
-
-实现列表控件 EleList
-    可用于显示数据列表（可参考考虑用infinite-scroll实现：https://element-plus.org/en-US/component/infinite-scroll，或其它什么方式）
-    参数参考 EleTable，可实现下拉分页拉数据并展示的能力，以下是参考伪代码
-        <EleList DataUrl="onGetData" SortField="Id" ...>
-            <ItemTemplate>
-                <div><Num/></div>
-                <div><Text For="Item.Name"/></div>
-                <div><Text For="Item.Age" /></div>
-                ....
-            </ItemTemplate>
-        </EleList>
-    修改测试页面：/EleUISamples/Datas/UserForm，用EleList显示附件列表 Att, 可预先插入几条附件数据。
-    创建测试页面：/EleUISamples/Datas/UserList，用EleList展示用户清单，用下拉滚动加载分页数据；
-    在 /Articles/ArticleForm 中显示附件列表
-
-将EleTable中的Toolbar剥离出来，和 DataTable
-
 核心业务
-    实现检查对象事件管理页面  
-        实体类见 CheckObjectEvent
-        实现 /pages/checks/CheckObjectEvents     检查对象事件列表
-        实现 /pages/checks/CheckObjectEventForm  检查对象事件表单
-        在 /pages/checks/CheckObjectForm 页面底部加上“对象事件”按钮，点击可显示检查对象事件列表
-
-    bug：保存新标签后，并未刷新父节点下拉树
+    实现隐患排查页面
+        给定UI界面，和AI讨论这种父子表结构的页面该如何操作
+        把隐患排查的数据接口写好
     实现检查任务流程
         检查任务：包括检查人、检查组织、检查表单的选择
+    bug：标签表单，保存新标签后，并未刷新父节点下拉树
     实现项目管理的附件功能
     实现项目管理的历史功能
-    /处理子表的展示问题（都用滑屏显示吧，手机端全屏，电脑端半屏）
-        检查表/检查项
-        检查任务/检查表/检查项/检查企业
-        /对象的联系人子表
-        文档附件
 
 
-优化
-    取消cookie，把 token 改为用 header authorization bareer 方式，更为现代和通用
-    优化AI聊天功能
-        AI 生成图片、生成音乐、生成视频等
-        实现与数据库MCP交互的能力，要显示当前用户的数据访问权限
+优化AI聊天功能
+    AI 生成图片、生成音乐、生成视频等
+    实现与数据库MCP交互的能力，要显示当前用户的数据访问权限
 
 
 需补充数据模型：
@@ -162,6 +127,32 @@ UI优化
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+    /实现检查对象事件管理页面  
+        实体类见 CheckObjectEvent
+        实现 /pages/checks/CheckObjectEvents     检查对象事件列表
+        实现 /pages/checks/CheckObjectEventForm  检查对象事件表单
+        在 /pages/checks/CheckObjectForm 页面底部加上“对象事件”按钮，点击可显示检查对象事件列表
+
+    /实现列表控件，用于展示列表，如附件列表
+    /在 /Articles/ArticleForm 中显示附件列表
+    /处理子表的展示问题（都用滑屏显示吧，手机端全屏，电脑端半屏）
+        /检查表/检查项
+        /检查任务/检查表/检查项/检查企业
+        /对象的联系人子表
+        /文档附件
+/实现列表控件 EleList
+    /可用于显示数据列表（可参考考虑用infinite-scroll实现：https://element-plus.org/en-US/component/infinite-scroll，或其它什么方式）
+    /参数参考 EleTable，可实现下拉分页拉数据并展示的能力，以下是参考伪代码
+        <EleList DataUrl="onGetData" SortField="Id" ...>
+            <ItemTemplate>
+                <div><Num/></div>
+                <Text For="Item.Name"/>
+                <Text For="Item.Age" />
+                ....
+            </ItemTemplate>
+        </EleList>
+    /修改测试页面：/EleUISamples/Datas/UserForm，用EleList显示附件列表 Att, 可预先插入几条附件数据。
+    /创建测试页面：/EleUISamples/Datas/UserList，用EleList展示用户清单，用下拉滚动加载分页数据；
     /对象表单，显示用户检查记录、隐患清单
     /隐患无法录入（要求有对象id、隐患记录id、检查项id）
     /融合展示检查对象、检查、隐患、培训信息、联系人信息

@@ -26,6 +26,7 @@ export class EleFormAppBuilder extends EleAppBuilder {
                 // Register message handlers for cross-origin communication
                 const msgHandler = (e) => form.messageHandler(e);
                 const selHandler = (e) => form.handleSelectorMessage(e);
+                let listWindowScrollHandler = null;
                 onMounted(async () => {
                     if (config.autoLoad === false) {
                         const url = new URL(window.location.href);
@@ -55,10 +56,41 @@ export class EleFormAppBuilder extends EleAppBuilder {
                     form.sanitizeAllStaticTreeSelectValues();
                     form.sanitizeAllRemoteTreeSelectValues();
 
+                    const listHosts = document.querySelectorAll('[data-ele-list-key]');
+                    for (const host of listHosts) {
+                        const key = host.getAttribute('data-ele-list-key');
+                        if (!key) continue;
+
+                        const dataHandler = host.getAttribute('data-ele-list-handler') || '?handler=Data';
+                        const pageSize = Number(host.getAttribute('data-ele-list-page-size') || '10');
+                        const sortField = host.getAttribute('data-ele-list-sort-field') || 'Id';
+                        const sortDirection = host.getAttribute('data-ele-list-sort-direction') || 'DESC';
+                        const scrollEl = host.querySelector('[data-ele-list-scroll]');
+
+                        await form.initEleList(key, {
+                            dataHandler,
+                            pageSize,
+                            sortField,
+                            sortDirection
+                        }, scrollEl);
+                    }
+
+                    listWindowScrollHandler = () => {
+                        for (const host of listHosts) {
+                            const key = host.getAttribute('data-ele-list-key');
+                            if (!key) continue;
+                            const scrollEl = host.querySelector('[data-ele-list-scroll]');
+                            form.onEleListWindowScroll(key, scrollEl);
+                        }
+                    };
+                    window.addEventListener('scroll', listWindowScrollHandler, { passive: true });
+
                     window.addEventListener('message', msgHandler);
                     window.addEventListener('message', selHandler);
                 });
                 onUnmounted(() => {
+                    if (listWindowScrollHandler)
+                        window.removeEventListener('scroll', listWindowScrollHandler);
                     window.removeEventListener('message', msgHandler);
                     window.removeEventListener('message', selHandler);
                 });

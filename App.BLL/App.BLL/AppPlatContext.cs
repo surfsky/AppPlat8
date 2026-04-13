@@ -59,6 +59,7 @@ namespace App.DAL
         // Check 隐患排查
         public DbSet<CheckObject> CheckObjects { get; set; }
         public DbSet<CheckObjectContact> CheckObjectContacts { get; set; }
+        public DbSet<CheckObjectEvent> CheckObjectEvents { get; set; }
         public DbSet<CheckObjectTag> ObjectTags { get; set; }
         public DbSet<Check> Checks { get; set; }
         public DbSet<CheckHazard> CheckHazards { get; set; }

@@ -56,6 +56,16 @@ namespace App.Pages.EleUISamples
             return BuildResult(0, "success", user);
         }
 
+        public IActionResult OnGetAttData(Paging pi, long id)
+        {
+            var result = Data.QueryUserAtts(id, pi.PageIndex, pi.PageSize);
+            return BuildResult(0, "success", new
+            {
+                items = result.Items,
+                total = result.Total
+            });
+        }
+
         public IActionResult OnPostSave([FromBody] User req)
         {
             if (req == null || string.IsNullOrWhiteSpace(req.Name))

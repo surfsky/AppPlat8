@@ -1,0 +1,21 @@
+@page
+@model App.Pages.Checks.CheckObjectEventFormModel
+@{
+    ViewData["Title"] = "对象事件";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px" SaveHandler="?handler=Save&objectId=@Model.ObjectId">
+        <EleInput For="ObjectDisplay" Label="所属对象" Enabled="false" FillRow="true"></EleInput>
+        <EleSelect For="Item.Type" Label="事件类别" Required="true"></EleSelect>
+        <EleDatePicker For="Item.TriggleDt" Label="发生时间"></EleDatePicker>
+        <EleInput For="Item.Title" Label="标题" Required="true" FillRow="true"></EleInput>
+        <EleInput For="Item.Content" Label="内容" Rows="6" FillRow="true"></EleInput>
+        <EleImageUpload For="Item.MainImage" Label="主图" FillRow="true"></EleImageUpload>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

@@ -1,0 +1,22 @@
+@page
+@model App.Pages.EleUISamples.UserListModel
+
+@{
+    ViewData["Title"] = "EleList用户清单";
+}
+
+@section body {
+    <div class="h-full p-4 bg-gray-50">
+            <EleList Title="用户清单" DataHandler="?handler=Data" PageSize="8" SortField="Id" SortDirection="ASC" class="h-full">
+                <ItemTemplate>
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="font-medium text-gray-900"><Text For="Item.ChineseName" /></div>
+                            <div class="text-xs text-gray-500 mt-1">账号：<Text For="Item.Name" /> | 角色：<Text For="Item.RoleName" /></div>
+                        </div>
+                        <div class="text-xs text-gray-400">ID: <Text For="Item.Id" /></div>
+                    </div>
+                </ItemTemplate>
+            </EleList>
+    </div>
+}

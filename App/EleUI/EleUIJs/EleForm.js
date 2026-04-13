@@ -40,6 +40,154 @@ export class EleForm {
         this.previewUrl = ref(''); // For single image preview
         this.previewList = ref([]); // For multi-image preview
         this.previewIndex = ref(0); // start index when previewing list
+
+        // Embedded EleList controls in form context
+        this.eleLists = ref({});
+    }
+
+    eleListState(key) {
+        if (!key) return { items: [], total: 0, loading: false, finished: true };
+
+        const map = this.eleLists.value;
+        if (!map[key]) {
+            map[key] = {
+                items: [],
+                total: 0,
+                pageIndex: 0,
+                pageSize: 10,
+                sortField: 'Id',
+                sortDirection: 'DESC',
+                dataHandler: '?handler=Data',
+                loading: false,
+                finished: false
+            };
+        }
+
+        return map[key];
+    }
+
+    async initEleList(key, config = {}, scrollEl = null) {
+        const state = this.eleListState(key);
+        state.dataHandler = config.dataHandler || state.dataHandler;
+        state.pageSize = Number(config.pageSize) > 0 ? Number(config.pageSize) : state.pageSize;
+        state.sortField = config.sortField || state.sortField;
+        state.sortDirection = config.sortDirection || state.sortDirection;
+        state.scrollEl = scrollEl || null;
+
+        await this.loadEleList(key, true);
+        await Vue.nextTick();
+        await this.ensureEleListScrollable(key, scrollEl);
+    }
+
+    async loadEleList(key, reset = false) {
+        const state = this.eleListState(key);
+        if (state.loading) return;
+
+        if (reset) {
+            state.pageIndex = 0;
+            state.items = [];
+            state.finished = false;
+        }
+
+        if (state.finished) return;
+
+        state.loading = true;
+        try {
+            const res = await axios.get(state.dataHandler, {
+                params: {
+                    pageIndex: state.pageIndex,
+                    pageSize: state.pageSize,
+                    sortField: state.sortField,
+                    sortDirection: state.sortDirection
+                }
+            });
+
+            if (res.data.code !== 0 && res.data.code !== '0') {
+                EleManager.showError(res.data.msg || res.data.info || '加载失败');
+                return;
+            }
+
+            const payload = res.data.data;
+            const pageItems = payload?.items || payload || [];
+            const list = Array.isArray(pageItems) ? pageItems : [];
+
+            const pager = res.data.pager || res.data.extra || null;
+            const total = pager?.total ?? payload?.total ?? 0;
+            state.total = Number(total) || 0;
+
+            if (reset) {
+                state.items = list;
+            } else {
+                state.items = [...state.items, ...list];
+            }
+
+            state.pageIndex += 1;
+            if (list.length < state.pageSize || state.items.length >= state.total) {
+                state.finished = true;
+            }
+        } catch (e) {
+            console.error(e);
+            EleManager.showError('请求异常');
+        } finally {
+            state.loading = false;
+        }
+    }
+
+    onEleListScroll(key, e) {
+        const state = this.eleListState(key);
+        if (state.loading || state.finished) return;
+
+        const el = e?.target;
+        if (!el) return;
+
+        const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 40;
+        if (nearBottom) {
+            this.loadEleList(key, false);
+        }
+    }
+
+    onEleListWindowScroll(key, scrollEl) {
+        const state = this.eleListState(key);
+        if (state.loading || state.finished) return;
+
+        const el = scrollEl || state.scrollEl;
+        if (!el) return;
+
+        const rect = el.getBoundingClientRect();
+        const nearBottom = rect.bottom - window.innerHeight <= 60;
+        if (nearBottom) {
+            this.loadEleList(key, false);
+        }
+    }
+
+    openLinkInDrawer(url, title = '查看', size = null) {
+        if (!url) return;
+
+        const drawerSize = (typeof size === 'string' && size.trim()) ? size.trim() : null;
+        EleManager.openDrawer({
+            title: title || '查看',
+            url,
+            direction: 'rtl',
+            size: drawerSize,
+            resizable: true,
+            closeOnClickModal: false,
+            destroyOnClose: true
+        });
+    }
+
+    async ensureEleListScrollable(key, containerEl) {
+        if (!containerEl) return;
+
+        for (let i = 0; i < 8; i++) {
+            const state = this.eleListState(key);
+            if (state.finished || state.loading) break;
+
+            const canScroll = containerEl.scrollHeight > containerEl.clientHeight + 4;
+            if (canScroll) break;
+
+            await this.loadEleList(key, false);
+            await Vue.nextTick();
+        }
     }
 
     // 加载表单数据

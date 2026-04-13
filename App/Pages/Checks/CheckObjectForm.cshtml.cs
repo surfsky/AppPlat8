@@ -113,6 +113,24 @@ namespace App.Pages.Checks
                 );
         }
 
+        /// <summary>显示对象事件</summary>
+        public IActionResult OnPostShowObjectEvents([FromBody] CheckObject req)
+        {
+            var objectId = req?.Id ?? 0;
+            if (objectId <= 0)
+            {
+                return EleManager.ShowClientNotify("请先保存检查对象，再维护对象事件", NotifyType.Warning, "提示");
+            }
+
+            var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Checks/CheckObjectEvents?objectId={objectId}&objectName={objectName}&md={this.Mode}";
+            return EleManager.OpenClientDrawer(
+                title: "对象事件",
+                url: url,
+                size: "70%"
+                );
+        }
+
         /// <summary>显示文件</summary>
         public IActionResult OnPostShowFiles([FromBody] CheckObject req)
         {

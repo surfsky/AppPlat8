@@ -48,7 +48,7 @@ namespace App.DAL.OA
         public static IQueryable<CheckObjectEvent> Search(long? checkObjectId, string title, CheckObjectEventType? type)
         {
             var q = IncludeSet.AsQueryable();
-            if (checkObjectId.IsNotEmpty()) q = q.Where(o => o.CheckObjectId == checkObjectId.Value));
+            if (checkObjectId.IsNotEmpty()) q = q.Where(o => o.CheckObjectId == checkObjectId.Value);
             if (title.IsNotEmpty())         q = q.Where(o => o.Title.Contains(title.Trim()));
             if (type.IsNotEmpty())          q = q.Where(o => o.Type == type.Value);
             return q;

@@ -7,10 +7,11 @@ export class EleListAppBuilder extends EleAppBuilder {
     }
 
     mount(selector, config = {}) {
-        const { onMounted } = this.Vue;
+        const { ref, onMounted, onUnmounted, nextTick } = this.Vue;
 
         const app = this.createConfiguredApp(config, {
             setup() {
+                const listScrollEl = ref(null);
                 const list = new EleList({
                     dataHandler: config.dataHandler,
                     pageSize: config.pageSize,
@@ -19,8 +20,17 @@ export class EleListAppBuilder extends EleAppBuilder {
                     ...config
                 });
 
-                onMounted(() => {
-                    list.loadData(true);
+                const onWindowScroll = () => list.onWindowScroll();
+
+                onMounted(async () => {
+                    await list.loadData(true);
+                    await nextTick();
+                    await list.ensureScrollable(listScrollEl.value);
+                    window.addEventListener('scroll', onWindowScroll, { passive: true });
+                });
+
+                onUnmounted(() => {
+                    window.removeEventListener('scroll', onWindowScroll);
                 });
 
                 const bindings = {};
@@ -37,6 +47,7 @@ export class EleListAppBuilder extends EleAppBuilder {
 
                 return {
                     ...bindings,
+                    listScrollEl,
                     Utils: window.Utils
                 };
             }

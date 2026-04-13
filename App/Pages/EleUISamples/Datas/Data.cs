@@ -48,6 +48,11 @@ namespace App.Pages.EleUISamples
         [Display(Name = "部门")]             public long? DeptId { get; set; } 
         [Display(Name = "角色")]             public List<long> RoleIds { get; set; }
         [Display(Name = "附件列表")]         public List<UserAtt> Atts { get; set; }
+
+        // 用于列表模板中的强类型 Text.For 映射占位（运行时由 item.sizeText / item.createDtText 提供值）。
+        public string SizeText { get; set; }
+        public string CreateDtText { get; set; }
+        public string Url { get; set; }
     }
 
     /// <summary>用户附件</summary>
@@ -58,6 +63,7 @@ namespace App.Pages.EleUISamples
         public string Url { get; set; }
         public string SizeText { get; set; }
         public DateTime CreateDt { get; set; }
+        public string CreateDtText => CreateDt.ToString("yyyy-MM-dd");
     }
 
     /// <summary>
@@ -80,7 +86,39 @@ namespace App.Pages.EleUISamples
             new User { Id = 2, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
             new User { Id = 3, Name = "lisi", ChineseName = "李四", RoleName = "User" },
             new User { Id = 4, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
-            new User { Id = 5, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" }
+            new User { Id = 5, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
+            new User { Id = 6, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
+            new User { Id = 7, Name = "lisi", ChineseName = "李四", RoleName = "User" },
+            new User { Id = 8, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
+            new User { Id = 9, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
+            new User { Id = 10, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
+            new User { Id = 11, Name = "lisi", ChineseName = "李四", RoleName = "User" },
+            new User { Id = 12, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
+            new User { Id = 13, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
+            new User { Id = 14, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
+            new User { Id = 15, Name = "lisi", ChineseName = "李四", RoleName = "User" },
+            new User { Id = 16, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
+            new User { Id = 17, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
+            new User { Id = 18, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
+            new User { Id = 19, Name = "lisi", ChineseName = "李四", RoleName = "User" },
+            new User { Id = 20, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
+            new User { Id = 21, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
+            new User { Id = 22, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
+            new User { Id = 23, Name = "lisi", ChineseName = "李四", RoleName = "User" },
+            new User { Id = 24, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
+            new User { Id = 25, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
+            new User { Id = 26, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
+            new User { Id = 27, Name = "lisi", ChineseName = "李四", RoleName = "User" },
+            new User { Id = 28, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
+            new User { Id = 29, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
+            new User { Id = 30, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
+            new User { Id = 31, Name = "lisi", ChineseName = "李四", RoleName = "User" },
+            new User { Id = 32, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
+            new User { Id = 33, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
+            new User { Id = 34, Name = "zhangsan", ChineseName = "张三", RoleName = "Manager" },
+            new User { Id = 35, Name = "lisi", ChineseName = "李四", RoleName = "User" },
+            new User { Id = 36, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
+            new User { Id = 37, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
         };
 
         public static List<Role> GetRoles() => _roles;

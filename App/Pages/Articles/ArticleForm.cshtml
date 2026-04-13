@@ -2,6 +2,7 @@
 @model App.Pages.OA.ArticleFormModel
 @{
     ViewData["Title"] = "文档信息";
+    var articleId = Request.Query["id"].ToString();
 }
 
 @section body {
@@ -9,8 +10,20 @@
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreeSelect For="Item.CategoryId" Label="目录" Items="Model.Categories" ></EleTreeSelect>
         <EleInput For="Item.Content" Label="内容" Rows="10"></EleInput>
-        <EleInput For="Item.Attachments" Label="附件" Rows="3"></EleInput>
         <EleSwitch For="Item.AllowComment" Label="允许评论"></EleSwitch>
+        <EleList Label="附件" FillRow="true" DataHandler="?handler=AttData&id=@articleId" PageSize="10" SortField="Id" SortDirection="DESC" Height="260px" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-2" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="text-sm font-medium text-gray-800 truncate">{{ item.name }}</div>
+                        <div class="text-xs text-gray-500 mt-1">{{ item.url }}</div>
+                    </div>
+                    <a href="javascript:void(0)" class="text-xs text-blue-600" v-on:click.prevent="openLinkInDrawer(item.url, '附件预览', null)">
+                        <el-icon><component :is="'View'"></component></el-icon>
+                    </a>
+                </div>
+            </ItemTemplate>
+        </EleList>
     
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
