@@ -21,6 +21,8 @@ namespace App.DAL
         [UI("名称")] public string Name { get; set; }
         [UI("领域")] public CheckScope Scope { get; set; }
         [UI("匹配标签"), NotMapped] public List<long> TagIds { get; set; } = new List<long>();
+        [UI("标签列表"), NotMapped] public string TagNames { get; set; } = string.Empty;
+        [UI("检查项数目"), NotMapped] public int ItemCount { get; set; }
 
         [UI("匹配的标签")] public virtual List<CheckTag> Tags { get; set; } = new List<CheckTag>(); // n:n关系
 

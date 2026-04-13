@@ -1,26 +1,22 @@
---------------------------------------------------------
-【141驾驶舱】
---------------------------------------------------------
-2、图层可自由编辑（如水源、区域、…），可展示三维、vr、监控、物联设备。内容可自由编辑。
-3、所有数据点击后可以跳到原系统对应窗口
-详见 《260402-龙港市应急驾驶舱规划方案v3》
-
+业务 tip
+    强化检查-督查-闭环流程
 
 --------------------------------------------------------
 Task - 业务
 --------------------------------------------------------
-找个地方部署
+部署
+    用笔记本？局内政务网，可使用公网，需部署防火墙只运行局内网段访问
+    用服务器？现在只开公网，以后迁移到内网，需部署防火墙
+
 实现对象检查流程
 
-系统易用性和扩展性
-    - 表格编辑及分享
-    - 列表和表单自动生成
-    - 云文档
-
-
-
-业务 tip
-    强化检查-督查-闭环流程
+驾驶舱
+    详见 《260402-龙港市应急驾驶舱规划方案v3》
+    图层数据均来自统一接口，可扩展字段并展示
+    支持暗黑模式的UI、用theme=dark/light切换
+    驾驶舱业务
+        图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
+        点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
 
 导入数据
     导入用户数据
@@ -28,36 +24,56 @@ Task - 业务
     导入检查表
 
 构建复杂界面
-    将eleuijs输出到layout，供公共使用
+    实现列表控件，用于展示列表，如附件列表
     针对隐患排查页面
         给定UI界面，和AI讨论这种父子表结构的页面该如何操作
         把隐患排查的数据接口写好
     让AI自动实现前端页面，再啰嗦都行
 
-几个技术点尚未跑通
-    数据访问权限控制
-        默认情况，只有自己才能删除和修改自己添加的数据
-        流程流转场合，会限制某些字段数据只读、某些字段数据可编辑
-        特殊管理权限，才能修改别人的数据
-        修改和删除数据均会做日志
+
+技术思路
     完全的接口、前端、测试的剥离
+    系统易用性和扩展性
+        - Excel 表格编辑及分享
+        - 云文档
+        - 列表和表单自动生成
+    系统做得很艰难
+        建设方案文档写得不够（可以让AI辅助编写），返工很多。
+        RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
+        前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
 
 
+实现列表控件 EleList
+    可用于显示数据列表（可参考考虑用infinite-scroll实现：https://element-plus.org/en-US/component/infinite-scroll，或其它什么方式）
+    参数参考 EleTable，可实现下拉分页拉数据并展示的能力，以下是参考伪代码
+        <EleList DataUrl="onGetData" SortField="Id" ...>
+            <ItemTemplate>
+                <div><Num/></div>
+                <div><Text For="Item.Name"/></div>
+                <div><Text For="Item.Age" /></div>
+                ....
+            </ItemTemplate>
+        </EleList>
+    修改测试页面：/EleUISamples/Datas/UserForm，用EleList显示附件列表 Att, 可预先插入几条附件数据。
+    创建测试页面：/EleUISamples/Datas/UserList，用EleList展示用户清单，用下拉滚动加载分页数据；
+    在 /Articles/ArticleForm 中显示附件列表
 
 核心业务
+    实现检查对象事件管理页面  
+        实体类见 CheckObjectEvent
+        实现 /pages/checks/CheckObjectEvents     检查对象事件列表
+        实现 /pages/checks/CheckObjectEventForm  检查对象事件表单
+        在 /pages/checks/CheckObjectForm 页面底部加上“对象事件”按钮，点击可显示检查对象事件列表
+
     bug：保存新标签后，并未刷新父节点下拉树
-    对象表单，显示用户检查记录、隐患清单
-    隐患无法录入（要求有对象id、隐患记录id、检查项id）
-    融合展示检查对象、检查、隐患、培训信息、联系人信息
-    实现检查表细项（主表、子表）
     实现检查任务流程
         检查任务：包括检查人、检查组织、检查表单的选择
     实现项目管理的附件功能
     实现项目管理的历史功能
-    处理子表的展示问题（都用滑屏显示吧，手机端全屏，电脑端半屏）
+    /处理子表的展示问题（都用滑屏显示吧，手机端全屏，电脑端半屏）
         检查表/检查项
         检查任务/检查表/检查项/检查企业
-        对象的联系人子表
+        /对象的联系人子表
         文档附件
 
 
@@ -70,15 +86,8 @@ Task - 业务
 
 需补充数据模型：
     项目进度日志：ID、项目ID、操作人、说明、项目状态、进度百分比
-    资产变更日志：ID、资产ID、执有人、说明
-    企业培训Train：ID、对象ID、培训日期TrainDt、主题、内容、图片列表（和事件非常相似，看能否复用，事件类别=培训）
+    资产变更日志：ID、资产ID、执有人、说明（算了）
     隐患复查记录：隐患ID、记录人ID、日志时间、说明、图片列表、整改状态
-    驾驶舱业务
-        图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
-        点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
-
-
-
 
 统计
 	对象类报表
@@ -105,77 +114,84 @@ Task - 业务
 
 
 
-系统做得很艰难
-    建设方案文档写得不够（可以让AI辅助编写），返工很多。
-    RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
-    前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
 
-
---------------------------------------------------------
-Task - 框架
---------------------------------------------------------
-EleUI 优化
-    考虑合并 EleItem, EleControl
-    将 EleUI 迁移为一个单独项目，js也可以正常显示编程提示，可编译合并
-    优化通用drawer弹窗
-        实现右滑关闭逻辑（含提示）
-        检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
-    改造<EleTable>
-        数据分页支持下拉刷新模式
-        用 inline form 设置 EleTable 的 Toolbar 部分：https://element-plus.org/en-US/component/form
-    改造<EleForm>
-        手工写工具栏
-           <Bottom>
-               <EleButton ...>保存</EleButton>
-               <EleButton ...>关闭</EleButton>
-           </Bottom>
-        剥离 <EleFormApp>，修改所有相关页面
-        增加 CloseButtonVisible
-    Controls
-        实现Panel控件及测试，一个页面可以展示多个panel，可联动
-        实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
-    其他
-        创建：角色、用户双列表混合视图测试页面
-        实现 Theme 逻辑：dark/light（容后）
-    支持复杂页面结构
-        剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
-        剥离 EleTableTagHelper 中的App创建部分，拆分出 EleTableAppTagHelper，只管网格页面渲染
-
-重构
+重构数据库
     Entity
         Online 逻辑有点啰嗦，可参考 appplat4实现（容后）
     other
         删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
+    改用 postgresql, 可实现全文检索
 
+AI 优化
+    可上传图片分析
+    MCP 可访问数据库（看如何限制权限）
+
+工作流
+    配置工作流程图
+    用于oa文档流转
+
+调度引擎
+    可用于后台自动调度生成统计报表
 
 UI优化
-    导入导出
-        实现导出excel逻辑：根据Export() 方法和 UIAttribute 可以自动输出列
-        实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
-    网页自动化
+    测试并改造UI，现在页面手机端操作感觉太飘，动不动就会滑屏返回的样子
+    实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
+    数据模型的UI自动化展示和编辑（*）
         创建自动展示列表的页面 UISetting
-        创建自动展示表单编辑的页面，实现 IDataForm
-    集成工作流引擎，增加工作流程图
-        用于oa文档流转
-        用于后台自动调度生成统计报表
-    改用 postgresql, 可实现全文检索
-    集成ai
-        AI 对话
-        AI MCP 可访问数据库（看如何限制权限）
-
-参考
-    恢复使用 IForm 接口
-        应用于窗体编辑页面，定义其 view、new、edit、select 四种模式的行为。但感觉和现有的pagemodel方式匹配不起来
-        实现Select模式
-    尝试使用 TDesign UI、Uniapp、vant 框架编写前端手机端页面：或混合使用。
-        tencent出品，风格为移动端，含chat组件
-        https://tdesign.tencent.com/uniapp/live#/pages-more/swipe-cell/swipe-cell
-
+        创建自动展示表单编辑的页面
+    EleUI 优化
+        考虑合并 EleItem, EleControl
+        将 EleUI 迁移为一个单独项目，js也可以正常显示编程提示，可编译合并
+        优化通用drawer弹窗
+            实现右滑关闭逻辑（含提示）
+            检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
+            实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
+        Controls
+            实现Panel控件及测试，一个页面可以展示多个panel，可联动
+            创建：角色、用户双列表混合视图测试页面
+        样式
+            实现 Theme 逻辑：dark/light（容后）
+        支持复杂页面结构
+            剥离 <EleFormApp>，修改所有相关页面
+            剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
+            剥离 EleTableTagHelper 中的App创建部分，拆分出 EleTableAppTagHelper，只管网格页面渲染
 
 
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+    /对象表单，显示用户检查记录、隐患清单
+    /隐患无法录入（要求有对象id、隐患记录id、检查项id）
+    /融合展示检查对象、检查、隐患、培训信息、联系人信息
+    /实现检查表细项（主表、子表）
+        /实现导出excel逻辑：根据Export() 方法和 UIAttribute 可以自动输出列
+    /集成ai：AI 对话
+/参考
+    /恢复使用 IForm 接口（算了）
+        /应用于窗体编辑页面，定义其 view、new、edit、select 四种模式的行为。但感觉和现有的pagemodel方式匹配不起来
+        /实现Select模式
+    /尝试使用 TDesign UI、Uniapp、vant 框架编写前端手机端页面：或混合使用。
+        tencent出品，风格为移动端，含chat组件
+        https://tdesign.tencent.com/uniapp/live#/pages-more/swipe-cell/swipe-cell
+        刷了，成本改造太高，尝试用element plus 框架改造
+
+
+    /改造<EleTable>
+        /数据分页支持下拉刷新模式
+        /用 inline form 设置 EleTable 的 Toolbar 部分：https://element-plus.org/en-US/component/form
+        /手工写工具栏
+           <Bottom>
+               <EleButton ...>保存</EleButton>
+               <EleButton ...>关闭</EleButton>
+           </Bottom>
+        /增加 CloseButtonVisible（没必要了）
+    /数据访问权限控制
+        /默认情况，只有自己才能删除和修改自己添加的数据
+        /流程流转场合，会限制某些字段数据只读、某些字段数据可编辑
+        /特殊管理权限，才能修改别人的数据
+        /修改和删除数据均会做日志
+    /将eleuijs输出到layout，供公共使用
+/给检查表列表页面(pages/Checks/CheckSheets)增加两列“标签列表”，“检查项数目”
 /统一 EleTable/Toolbar/Filters+Buttons 结构
 /数据访问权限控制
     - 就先有的基于角色权限的架构还不能做到对数据的访问颗粒度控制，有些人可以访问所有数据，有些人只能访问属于某个组织的数据，有些人只能访问自己新增的数据.问问ai有什么解决方案
