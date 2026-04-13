@@ -47,6 +47,17 @@ namespace App.Pages.EleUISamples
         [Display(Name = "组织")]             public string OrgId { get; set; }
         [Display(Name = "部门")]             public long? DeptId { get; set; } 
         [Display(Name = "角色")]             public List<long> RoleIds { get; set; }
+        [Display(Name = "附件列表")]         public List<UserAtt> Atts { get; set; }
+    }
+
+    /// <summary>用户附件</summary>
+    public class UserAtt
+    {
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public string Url { get; set; }
+        public string SizeText { get; set; }
+        public DateTime CreateDt { get; set; }
     }
 
     /// <summary>
@@ -182,6 +193,22 @@ namespace App.Pages.EleUISamples
             return _users.Where(u => u.RoleName == roleName).ToList();
         }
 
+        public static (List<UserAtt> Items, int Total) QueryUserAtts(long userId, int pageIndex, int pageSize)
+        {
+            if (pageSize <= 0)
+                pageSize = 10;
+            if (pageIndex < 0)
+                pageIndex = 0;
+
+            var all = BuildDemoAtts(userId);
+            var total = all.Count;
+            var items = all
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToList();
+            return (items, total);
+        }
+
         private static User NormalizeUser(User src)
         {
             var roleIds = src.RoleIds?.Where(t => t > 0).Distinct().ToList() ?? new List<long>();
@@ -216,11 +243,39 @@ namespace App.Pages.EleUISamples
                 UserId = src.UserId,
                 OrgId = src.OrgId,
                 DeptId = src.DeptId,
-                RoleIds = roleIds
+                RoleIds = roleIds,
+                Atts = src.Atts?.Select(CloneAtt).ToList() ?? BuildDemoAtts(src.Id)
             };
         }
 
         private static User CloneUser(User src) => NormalizeUser(src);
+
+        private static UserAtt CloneAtt(UserAtt src)
+        {
+            if (src == null)
+                return null;
+
+            return new UserAtt
+            {
+                Id = src.Id,
+                Name = src.Name,
+                Url = src.Url,
+                SizeText = src.SizeText,
+                CreateDt = src.CreateDt
+            };
+        }
+
+        private static List<UserAtt> BuildDemoAtts(long userId)
+        {
+            var seed = userId > 0 ? userId : 1;
+            return new List<UserAtt>
+            {
+                new UserAtt { Id = seed * 100 + 1, Name = "营业执照.jpg", Url = "/Files/Images/default.png", SizeText = "126KB", CreateDt = DateTime.Today.AddDays(-3) },
+                new UserAtt { Id = seed * 100 + 2, Name = "现场照片-1.png", Url = "/Files/Images/default.png", SizeText = "245KB", CreateDt = DateTime.Today.AddDays(-2) },
+                new UserAtt { Id = seed * 100 + 3, Name = "现场照片-2.png", Url = "/Files/Images/default.png", SizeText = "318KB", CreateDt = DateTime.Today.AddDays(-1) },
+                new UserAtt { Id = seed * 100 + 4, Name = "培训记录.pdf", Url = "/Files/Images/default.png", SizeText = "512KB", CreateDt = DateTime.Today }
+            };
+        }
     }
 
 }

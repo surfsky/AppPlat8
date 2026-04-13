@@ -33,7 +33,6 @@ namespace App.DAL.OA
             return new
             {
                 Id,
-                TriggleDt,
                 Type,
                 TypeName = Type?.GetTitle(),
                 Title,

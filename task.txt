@@ -58,6 +58,8 @@ Task - 业务
     创建测试页面：/EleUISamples/Datas/UserList，用EleList展示用户清单，用下拉滚动加载分页数据；
     在 /Articles/ArticleForm 中显示附件列表
 
+将EleTable中的Toolbar剥离出来，和 DataTable
+
 核心业务
     实现检查对象事件管理页面  
         实体类见 CheckObjectEvent
