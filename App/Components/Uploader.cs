@@ -40,29 +40,29 @@ namespace App.Components
         // 获取上传后的图片文件URL
         //-----------------------------------------------------------
         /// <summary>获取附件URL列表（并处理Base64图片上传）</summary>
-        /// <param name="saveFolder">要保存的目录，如“User”</param>
+        /// <param name="folderName">要保存的目录名，如“User”</param>
         /// <param name="urlOrDatas">URL或Base64编码的图片数据列表</param>
-        public static List<string> SaveFiles(string saveFolder, List<string> urlOrDatas)
+        public static List<string> SaveFiles(string folderName, List<string> urlOrDatas)
         {
             var urls = new List<string>();
             if (urlOrDatas != null)
             {
                 foreach (var urlOrData in urlOrDatas)
-                    urls.Add(SaveFile(saveFolder, urlOrData));
+                    urls.Add(SaveFile(folderName, urlOrData));
             }
             return urls;
         }
 
         /// <summary>获取附件URL（并处理Base64图片上传）</summary>
-        /// <param name="saveFolder">要保存的目录，如“User”</param>
+        /// <param name="folderName">要保存的目录名，如“User”</param>
         /// <param name="urlOrdata">URL或Base64编码的图片数据</param>
         /// <returns>返回URL</returns>
-        public static string SaveFile(string saveFolder, string urlOrdata)
+        public static string SaveFile(string folderName, string urlOrdata)
         {
             if (urlOrdata.IsEmpty())
                 return "";
             if (urlOrdata.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
-                return Uploader.SaveBase64Image(saveFolder, urlOrdata);
+                return Uploader.SaveBase64Image(folderName, urlOrdata);
             return urlOrdata;
         }
 
@@ -70,9 +70,9 @@ namespace App.Components
         // Base64 图像文件上传
         //-----------------------------------------------------------
         /// <summary>上传多张图片（Base64编码）</summary>
-        /// <param name="folder">保存目录。如：Products</param>
+        /// <param name="folderName">保存目录名。如：Products</param>
         /// <param name="urlOrData">Base64 编码的图片字符串或Url数组</param>
-        public static List<string> SaveBase64Images(string folder, params string[] urlOrData)
+        public static List<string> SaveBase64Images(string folderName, params string[] urlOrData)
         {
             var urls = new List<string>();
             foreach (var text in urlOrData)
@@ -83,7 +83,7 @@ namespace App.Components
                 // 如果是base64图片文本，则上传后记录url
                 if (text.IsBase64Image())
                 {
-                    var url = Uploader.SaveBase64Image(folder, text);
+                    var url = Uploader.SaveBase64Image(folderName, text);
                     if (!url.IsEmpty())
                         urls.Add(url);
                 }
@@ -97,13 +97,13 @@ namespace App.Components
         }
 
         /// <summary>上传 base64 编码的图像</summary>
-        public static string SaveBase64Image(string folder, string imageData)
+        public static string SaveBase64Image(string folderName, string imageData)
         {
             using (var image = Painter.ParseImage(imageData))
             {
                 if (image != null)
                 {
-                    var url = GetSavePath(folder);
+                    var url = GetSavePath(folderName);
                     var path = Asp.MapPath(url);
                     IO.PrepareDirectory(path);
                     using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
@@ -121,9 +121,9 @@ namespace App.Components
         // IFormFile 文件上传
         //-----------------------------------------------------------
         /// <summary>上传文件</summary>
-        /// <param name="folder">上传目录</param>
+        /// <param name="folderName">上传目录名</param>
         /// <param name="fileName">文件名。若为空，则自动生成文件名。</param>
-        public static string SaveFile(IFormFile file, string folder, string fileName = "", bool checkExtension = true)
+        public static string SaveFile(IFormFile file, string folderName, string fileName = "", bool checkExtension = true)
         {
             // 扩展名及校验
             string ext;
@@ -141,7 +141,7 @@ namespace App.Components
             // 文件名和路径
             if (fileName.IsEmpty())
                 fileName = string.Format("{0}{1}", SnowflakeId.Instance.NewId(), ext);
-            var dir = folder.IsEmpty() ? "/Files/" : string.Format("/Files/{0}/", folder);
+            var dir = folderName.IsEmpty() ? "/Files/" : string.Format("/Files/{0}/", folderName);
 
             // 保存
             var url = string.Format("{0}{1}", dir, fileName);

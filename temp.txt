@@ -92,3 +92,12 @@
         }
 
         public IActionResult OnPost([FromBody] Role req) => OnPostSave(req);
+
+        [BindProperty(SupportsGet = true)]
+        public string ObjectDisplay { get; set; }
+
+
+            var q = CheckObjectContact.IncludeSet.Where(o => o.CheckObject.Id == objectId);
+            if (!string.IsNullOrWhiteSpace(name))     q = q.Where(o => o.Name.Contains(name.Trim()));
+            if (!string.IsNullOrWhiteSpace(phone))    q = q.Where(o => o.Phone.Contains(phone.Trim()));
+            var list = q.SortPageExport(pi);

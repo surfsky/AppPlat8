@@ -47,26 +47,38 @@ namespace App.DAL
         public virtual CheckSheetItem CheckItem { get; set; }
         public virtual List<CheckHazardLog> Reviews { get; set; }
 
+        //
+        public string StatusName => Status.GetTitle();
+        public string ObjectName => CheckObject?.Name ?? string.Empty;
+        public string CheckerName => Checker?.Name ?? string.Empty;
+        public string CheckSheetName => CheckSheet?.Name ?? string.Empty;
+        public string CheckItemName => CheckItem?.Name ?? string.Empty;
+
+
+        //
         public override object Export(ExportMode mode)
         {
             return new
             {
                 Id,
                 ObjectId,
-                ObjectName = CheckObject?.Name,
                 CheckerId,
-                CheckerName = Checker?.Name,
                 CheckLogId,
                 CheckItemId,
                 CheckItemText,
                 Description,
                 Images,
                 Status,
-                StatusName = Status.GetTitle(),
                 CreateDt,
                 ExpireDt,
                 RectifyDt,
-                IsIn141
+                IsIn141,
+
+                StatusName,
+                ObjectName,
+                CheckerName,
+                CheckSheetName,
+                CheckItemName,
             };
         }
         public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)

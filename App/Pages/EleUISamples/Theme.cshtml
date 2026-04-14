@@ -1,0 +1,157 @@
+@page
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Element Plus 暗黑模式示例";
+}
+
+@section head {
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/theme-chalk/dark/css-vars.css" />
+    <style>
+        .theme-demo-wrap {
+            max-width: 960px;
+            margin: 24px auto;
+            padding: 0 16px;
+        }
+
+        .theme-demo-note {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        html.dark .theme-demo-note {
+            color: #9ca3af;
+        }
+    </style>
+}
+
+@section body {
+    <div id="app" class="theme-demo-wrap">
+        <EleCard Title="Element Plus 暗黑模式切换测试">
+            <Column Gap="4">
+                <Row Items="center" Gap="3">
+                    <EleLabel Label="主题模式" Width="20" />
+                    <el-radio-group v-model="mode">
+                        <el-radio-button value="system">跟随系统</el-radio-button>
+                        <el-radio-button value="light">浅色</el-radio-button>
+                        <el-radio-button value="dark">深色</el-radio-button>
+                    </el-radio-group>
+                </Row>
+
+                <Row Gap="3" Items="center">
+                    <EleButton Type="Primary">主要按钮</EleButton>
+                    <EleButton Type="Success">成功按钮</EleButton>
+                    <EleButton Type="Warning">警告按钮</EleButton>
+                    <EleButton Type="Danger">危险按钮</EleButton>
+                </Row>
+
+                <el-alert
+                    title="切换后可观察按钮、输入框、卡片和背景对比度变化"
+                    type="info"
+                    :closable="false" />
+
+                <el-input v-model="keyword" placeholder="输入一些文本测试控件样式" clearable />
+
+                <div class="theme-demo-note">
+                    当前模式：{{ currentModeText }}。
+                    <br />
+                    实现方式：给 html 节点切换 dark class，并引入 Element Plus 的暗黑变量文件。
+                </div>
+            </Column>
+        </EleCard>
+    </div>
+}
+
+@section script {
+    <script>
+        const { ref, computed, watch } = Vue;
+
+        const getEleManager = () => {
+            if (typeof globalThis !== 'undefined' && globalThis.EleManager) {
+                return globalThis.EleManager;
+            }
+
+            try {
+                if (window.top && window.top !== window && window.top.EleManager) {
+                    return window.top.EleManager;
+                }
+            } catch {
+                // Ignore cross-origin access errors.
+            }
+
+            return null;
+        };
+
+        const normalizeTheme = (themeName) => {
+            const val = String(themeName || '').toLowerCase();
+            return (val === 'light' || val === 'dark' || val === 'system') ? val : 'system';
+        };
+
+        const getThemeFromStorage = () => {
+            try {
+                return normalizeTheme(localStorage.getItem('eleui-theme-mode'));
+            } catch {
+                return 'system';
+            }
+        };
+
+        const getTheme = () => {
+            const manager = getEleManager();
+            if (manager && typeof manager.getTheme === 'function') {
+                return normalizeTheme(manager.getTheme());
+            }
+            return getThemeFromStorage();
+        };
+
+        const setTheme = (themeName) => {
+            const manager = getEleManager();
+            if (manager && typeof manager.setTheme === 'function') {
+                return normalizeTheme(manager.setTheme(themeName));
+            }
+
+            const normalized = normalizeTheme(themeName);
+            const isDark = normalized === 'dark' ||
+                (normalized === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.toggle('dark', isDark);
+            try {
+                localStorage.setItem('eleui-theme-mode', normalized);
+            } catch {
+                // Ignore storage write errors.
+            }
+            return normalized;
+        };
+
+        const mode = ref(getTheme());
+        const keyword = ref('');
+
+        const currentModeText = computed(() => {
+            const current = mode.value;
+            if (current === 'system') return '跟随系统';
+            if (current === 'dark') return '深色';
+            return '浅色';
+        });
+
+        watch(mode, (val) => {
+            setTheme(val);
+        });
+
+        window.themeDemo = {
+            mode,
+            keyword,
+            currentModeText,
+            setTheme,
+            getTheme,
+            syncTheme: () => {
+                mode.value = getTheme();
+            }
+        };
+
+        setTheme(mode.value);
+
+        window.addEventListener('load', () => {
+            mode.value = getTheme();
+        }, { once: true });
+    </script>
+
+    <EleApp Expose="themeDemo" />
+}

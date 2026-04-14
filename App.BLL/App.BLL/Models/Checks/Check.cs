@@ -18,7 +18,6 @@ namespace App.DAL
         [UI("任务")]    public long? TaskId { get; set; }
         [UI("检查科室")] public long? OrgId { get; set; }
         [UI("检查人员")] public long? CheckerId { get; set; }
-        [NotMapped]      public string CheckerName { get; set; }
         [UI("检查对象")] public long? CheckObjectId { get; set; }
         [UI("检查表")]   public long? CheckSheetId { get; set; }
         [UI("检查项Id")] public long? CheckItemId { get; set; }
@@ -28,6 +27,8 @@ namespace App.DAL
         [UI("隐患数")]    public int? HazardCount { get; set; } = 0;
         [UI("剩余隐患数")] public int? RemainHazardCount { get; set; } = 0;
 
+
+
         // Relations
         public virtual CheckObject CheckObject { get; set; }
         public virtual CheckTask Task { get; set; }
@@ -35,8 +36,17 @@ namespace App.DAL
         public virtual CheckSheetItem CheckItem { get; set; }
         public virtual Org Org { get; set; }
         public virtual User Checker { get; set; }
-        [NotMapped]
+        //[NotMapped]
         public virtual List<CheckHazard> Hazards { get; set; }
+
+
+        //
+        public string OrgName => Org?.Name ?? string.Empty;
+        public string CheckerName => Checker?.Name ?? string.Empty;
+        public string CheckObjectName => CheckObject?.Name ?? string.Empty;
+        public string CheckTaskName => Task?.Name ?? string.Empty;
+        public string CheckSheetName => CheckSheet?.Name ?? string.Empty;
+        public string CheckItemName => CheckItem?.Name ?? string.Empty;
 
 
         public override object Export(ExportMode type = ExportMode.Normal)
@@ -46,21 +56,24 @@ namespace App.DAL
                 Id,
                 CheckDt,
                 CheckObjectId,
-                CheckObjectName = CheckObject?.Name,
                 TaskId,
-                TaskName = Task?.Name,
                 OrgId,
-                OrgName = Org?.Name,
                 CheckerId,
-                CheckerName = Checker?.Name,
                 CheckSheetId,
-                CheckSheetName = CheckSheet?.Name,
                 CheckItemId,
-                CheckItemName = CheckItem?.Name,
                 Result,
                 IsClosed,
                 HazardCount,
-                RemainHazardCount
+                RemainHazardCount,
+                CreateDt,
+                CreatorId,
+
+                OrgName,
+                CheckerName,
+                CheckObjectName,
+                CheckTaskName,
+                CheckSheetName,
+                CheckItemName,
             };
         }
 

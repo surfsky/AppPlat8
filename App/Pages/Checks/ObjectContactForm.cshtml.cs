@@ -10,17 +10,11 @@ namespace App.Pages.Checks
     [CheckPower(Power.CheckObjectEdit)]
     public class ObjectContactFormModel : AdminModel
     {
-        [BindProperty(SupportsGet = true)]
-        public long ObjectId { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public string ObjectName { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public string ObjectDisplay { get; set; }
-
+        [BindProperty(SupportsGet = true)]  public long ObjectId { get; set; }
+        [BindProperty(SupportsGet = true)]  public string ObjectName { get; set; }
         public CheckObjectContact Item { get; set; }
 
+        //
         public void OnGet(long objectId, string objectName)
         {
             ObjectId = objectId;
@@ -31,6 +25,7 @@ namespace App.Pages.Checks
             }
         }
 
+        //
         private object BuildFormData(CheckObjectContact item, long objectId, string objectName)
         {
             var display = string.IsNullOrWhiteSpace(objectName) ? $"ID:{objectId}" : $"{objectName} (ID:{objectId})";
@@ -87,8 +82,7 @@ namespace App.Pages.Checks
             {
                 var exists = CheckObjectContact.IncludeSet.Any(o => o.Id == req.Id && o.CheckObject.Id == objectId);
                 if (!exists)
-                    return BuildResult(403, "无权操作该联系人");
-
+                    return BuildResult(403, "无权操作");
                 item = CheckObjectContact.Get(req.Id);
             }
             else

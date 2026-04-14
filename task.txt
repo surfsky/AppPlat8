@@ -22,10 +22,15 @@ Task - 业务
     导入检查表
 
 
+    实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
+    数据模型的UI自动化展示和编辑（*）
+        创建自动展示列表的页面 UISetting
+        创建自动展示表单编辑的页面
+
+
 技术思路
-    将EleTable中的Toolbar剥离出来，可和 EleTable、EleList 搭配使用
     完全的接口、前端、测试的剥离
-    取消cookie，把 token 改为用 header authorization bareer 方式，更为现代和通用
+    取消cookie，把 token 改为用 header authorization bearer 方式，更为现代和通用
     系统易用性和扩展性
         - Excel 表格编辑及分享
         - 云文档
@@ -100,33 +105,38 @@ AI 优化
 调度引擎
     可用于后台自动调度生成统计报表
 
-UI优化
+EleUI 优化
     测试并改造UI，现在页面手机端操作感觉太飘，动不动就会滑屏返回的样子
-    实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
-    数据模型的UI自动化展示和编辑（*）
-        创建自动展示列表的页面 UISetting
-        创建自动展示表单编辑的页面
-    EleUI 优化
-        考虑合并 EleItem, EleControl
-        将 EleUI 迁移为一个单独项目，js也可以正常显示编程提示，可编译合并
-        优化通用drawer弹窗
-            实现右滑关闭逻辑（含提示）
-            检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
-            实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
-        Controls
-            实现Panel控件及测试，一个页面可以展示多个panel，可联动
-            创建：角色、用户双列表混合视图测试页面
-        样式
-            实现 Theme 逻辑：dark/light（容后）
-        支持复杂页面结构
-            剥离 <EleFormApp>，修改所有相关页面
-            剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
-            剥离 EleTableTagHelper 中的App创建部分，拆分出 EleTableAppTagHelper，只管网格页面渲染
+    将EleTable中的Toolbar剥离出来，可和 EleTable、EleList 搭配使用
+    考虑合并 EleItem, EleControl
+    将 EleUI 迁移为一个单独项目，js也可以正常显示编程提示，可编译合并
+    优化通用drawer弹窗
+        实现右滑关闭逻辑（含提示）
+        检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
+        实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
+    Controls
+        实现Panel控件及测试，一个页面可以展示多个panel，可联动
+        创建：角色、用户双列表混合视图测试页面
+    样式
+        实现 Theme 逻辑：dark/light（容后）
+    剥离App
+        剥离 <EleFormApp>，修改所有相关页面
+        剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
+        剥离 EleTableTagHelper 中的App创建部分，拆分出 EleTableAppTagHelper，只管网格页面渲染
 
 
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+实现列表页面的select模式：
+    - 页面参数为：md=select，同view，只读查询；
+    - 隐藏所有Command=Add/Delete/BatchDelete/Edit 的<EleButton> 及<Op> 元素；
+    - 工具栏按钮区（toolbar/buttons)类新增一个“选择"按钮, command="Select"，点击后关闭窗口，并将当前选择项的信息（id,name)封装后传递给 EleSelector 控件。
+    - 经过这样改造后，所有的列表页面都可以复用为选择页面。如隐患表单中的检查对象选择控件点击后可弹出检查对象供选择：
+    <EleSelector For="Item.ObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="false" FillRow="true" PopupUrl="CheckObjects?md=select"></EleSelector>
+
+
+
     /实现检查对象事件管理页面  
         实体类见 CheckObjectEvent
         实现 /pages/checks/CheckObjectEvents     检查对象事件列表
