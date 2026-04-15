@@ -17,6 +17,7 @@ namespace App.EleUI
         SaveNew,
         Cancel,
         Close,
+        Select,
         Export,
     }
 }

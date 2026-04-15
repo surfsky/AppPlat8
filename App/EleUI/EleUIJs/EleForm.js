@@ -175,6 +175,16 @@ export class EleForm {
         });
     }
 
+    resolveDrawerUrlBase(urlBase) {
+        if (!urlBase) return '';
+        try {
+            const absolute = new URL(urlBase, window.location.href);
+            return `${absolute.pathname}${absolute.search}${absolute.hash}`;
+        } catch (e) {
+            return urlBase;
+        }
+    }
+
     async ensureEleListScrollable(key, containerEl) {
         if (!containerEl) return;
 
@@ -260,6 +270,19 @@ export class EleForm {
         return this.close();
     }
 
+    formatServerError(actionText, responseData, fallbackText) {
+        const action = actionText || '操作失败';
+        const fallback = fallbackText || action;
+        const data = responseData && typeof responseData === 'object' ? responseData : {};
+        const msg = (data.msg || data.info || data.message || data.error || '').toString().trim();
+        const code = (data.code === 0 || data.code) ? `${data.code}` : '';
+
+        if (msg && code) return `${action}：${msg}（${code}）`;
+        if (msg) return `${action}：${msg}`;
+        if (code) return `${action}（${code}）`;
+        return fallback;
+    }
+
     async save(options = {}) {
         if (this.readOnly.value) return false;
         const { closeAfterSave = true, newAfterSave = false } = options || {};
@@ -297,12 +320,17 @@ export class EleForm {
                 }
                 return true;
             } else {
-                this.error.value = res.data.msg || '保存失败';
-                EleManager.showError(res.data.msg || '保存失败');
+                const failMsg = this.formatServerError('保存失败', res.data, '保存失败');
+                this.error.value = failMsg;
+                EleManager.showError(failMsg);
                 return false;
             }
         } catch (e) {
-            this.error.value = '请求失败';
+            const status = e?.response?.status;
+            const fallback = status ? `保存失败（HTTP ${status}）` : '保存失败，请稍后重试';
+            const failMsg = this.formatServerError('保存失败', e?.response?.data, fallback);
+            this.error.value = failMsg;
+            EleManager.showError(failMsg);
             return false;
         } finally {
             this.saving.value = false;
@@ -347,11 +375,14 @@ export class EleForm {
                 this.success.value = res.data.msg || '操作成功';
                 EleManager.showSuccess(res.data.msg || '操作成功');
             } else {
-                this.error.value = (res && res.data && res.data.msg) || '操作失败';
+                this.error.value = this.formatServerError('操作失败', res?.data, '操作失败');
                 EleManager.showError(this.error.value);
             }
         } catch (e) {
-            this.error.value = '请求失败';
+            const status = e?.response?.status;
+            const fallback = status ? `操作失败（HTTP ${status}）` : '操作失败，请稍后重试';
+            this.error.value = this.formatServerError('操作失败', e?.response?.data, fallback);
+            EleManager.showError(this.error.value);
         } finally {
             this.saving.value = false;
         }
@@ -367,7 +398,7 @@ export class EleForm {
     openSelector(propId, propText, url, multi, title) {
         this.selectorTargetId.value = propId;
         this.selectorTargetText.value = propText;
-        this.selectorUrl.value = url;
+        this.selectorUrl.value = this.resolveDrawerUrlBase(url);
         this.selectorMulti.value = multi;
         this.selectorTitle.value = title || '选择';
         this.selectorVisible.value = true;

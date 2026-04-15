@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using App.Utils;
 using System;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -67,6 +68,21 @@ namespace App.EleUI
             }
 
             return true;
+        }
+
+        protected bool IsSelectMode()
+        {
+            var md = ViewContext?.HttpContext?.Request?.Query["md"].ToString();
+            if (string.IsNullOrWhiteSpace(md))
+                return false;
+
+            if (Enum.TryParse<PageMode>(md, true, out var mode))
+                return mode == PageMode.Select;
+
+            if (int.TryParse(md, out var modeValue))
+                return ((PageMode)modeValue) == PageMode.Select;
+
+            return string.Equals(md, "select", StringComparison.OrdinalIgnoreCase);
         }
 
 

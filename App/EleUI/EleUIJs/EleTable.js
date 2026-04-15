@@ -14,6 +14,8 @@ export class EleTable {
         this.pageIndex = ref(0);
         this.filters = ref({});
         this.selectedIds = ref([]);
+        this.selectedRows = ref([]);
+        this.currentRow = ref(null);
         this.pageSize = ref(options.pageSize || 20);
         this.sortField = ref(options.defaultSortField || 'Id');
         this.sortDirection = ref(options.defaultSortDirection || 'ASC');
@@ -123,6 +125,7 @@ export class EleTable {
 
     // 选择行变化事件
     onSelectionChange(rows) {
+        this.selectedRows.value = Array.isArray(rows) ? rows : [];
         this.selectedIds.value = rows.map(r => r.id);
     }
 
@@ -130,11 +133,43 @@ export class EleTable {
     // Pager 数据变更事件
     //
     onCurrentChange(currentRow, oldRow) {
+        this.currentRow.value = currentRow || null;
         if (currentRow) {
+            this.selectedRows.value = [currentRow];
             this.selectedIds.value = [currentRow.id];
         } else {
+            this.selectedRows.value = [];
             this.selectedIds.value = [];
         }
+    }
+
+    selectCurrentItem() {
+        const selectedRow = (Array.isArray(this.selectedRows.value) && this.selectedRows.value.length > 0)
+            ? this.selectedRows.value[0]
+            : this.currentRow.value;
+
+        if (!selectedRow) {
+            EleManager.showWarning('请先选择一条记录');
+            return;
+        }
+
+        const id = selectedRow.id ?? selectedRow.Id;
+        const name = selectedRow.name ?? selectedRow.Name ?? selectedRow.title ?? selectedRow.Title;
+
+        if (id === null || typeof id === 'undefined') {
+            EleManager.showError('当前记录缺少 id，无法回传');
+            return;
+        }
+
+        const payload = {
+            type: 'EleSelector',
+            data: [{
+                id,
+                name: (name === null || typeof name === 'undefined') ? `${id}` : `${name}`
+            }]
+        };
+
+        EleManager.closePage(payload);
     }
 
     onSortChange({ prop, order }) {
@@ -338,6 +373,9 @@ export class EleTable {
         if (key === 'add') {
             const editPage = this.config?.editPage || 'Form';
             return this.openForm(0, editPage);
+        }
+        if (key === 'select') {
+            return this.selectCurrentItem();
         }
         if (name === 'Delete' || name === 'BatchDelete') {
             return this.deleteItems();

@@ -5,6 +5,9 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using App.Utils;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace App.EleUI
@@ -29,6 +32,10 @@ namespace App.EleUI
     [HtmlTargetElement("Op", ParentTag = "EleOpColumn")]
     public class EleOpTagHelper : TagHelper
     {
+        [HtmlAttributeNotBound]
+        [ViewContext]
+        public ViewContext ViewContext { get; set; }
+
         [HtmlAttributeName("Icon")]
         public string Icon { get; set; }
 
@@ -52,6 +59,12 @@ namespace App.EleUI
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
+            if (IsSelectMode() && ShouldHideInSelectMode())
+            {
+                output.SuppressOutput();
+                return;
+            }
+
             if (!context.Items.TryGetValue(typeof(OpColumnContext), out var val) || !(val is OpColumnContext opCtx))
             {
                 opCtx = new OpColumnContext();
@@ -70,6 +83,30 @@ namespace App.EleUI
             });
 
             output.SuppressOutput();
+        }
+
+        private bool IsSelectMode()
+        {
+            var md = ViewContext?.HttpContext?.Request?.Query["md"].ToString();
+            if (string.IsNullOrWhiteSpace(md))
+                return false;
+
+            if (Enum.TryParse<PageMode>(md, true, out var mode))
+                return mode == PageMode.Select;
+
+            if (int.TryParse(md, out var modeValue))
+                return ((PageMode)modeValue) == PageMode.Select;
+
+            return string.Equals(md, "select", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool ShouldHideInSelectMode()
+        {
+            var cmd = (Command ?? string.Empty).Trim();
+            return string.Equals(cmd, "Add", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(cmd, "Edit", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(cmd, "Delete", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(cmd, "BatchDelete", StringComparison.OrdinalIgnoreCase);
         }
     }
 

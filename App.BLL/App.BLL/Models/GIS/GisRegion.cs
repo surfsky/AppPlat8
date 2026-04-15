@@ -24,12 +24,15 @@ namespace App.DAL.GIS
         [UI("区域类别")]     public RegionType RegionType { get; set; }
         [UI("简称")]        public string Alias { get; set; }
         [UI("责任组织")]     public long? OrgId { get; set; }
-        [UI("编辑者")]       public long? CreatorId { get; set; }
         [UI("Json数据")]     public string JsonData { get; set; }
 
         //
         public virtual Org Org { get; set; }
         public virtual User Creator { get; set; }
+
+        //
+        public string CreatorName => Creator?.Name;
+        public string OrgName => Org?.Name;
 
         // ITree 接口
         public override GisRegion Clone()
@@ -54,11 +57,12 @@ namespace App.DAL.GIS
                 Alias,
                 SortId,
                 OrgId,
-                OrgName = Org?.Name,
                 CreatorId,
-                CreatorName = Creator?.Name,
                 JsonData,
-                Children
+                Children,
+
+                OrgName,
+                CreatorName,
             };
         }
 

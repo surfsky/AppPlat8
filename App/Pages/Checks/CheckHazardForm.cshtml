@@ -7,7 +7,9 @@
 
 @section body {
     <EleForm Model="form" LabelWidth="120px">
-        <EleSelector For="Item.ObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="false" FillRow="true" PopupUrl="CheckObjects?md=select"></EleSelector>
+        <EleSelector For="Item.ObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckObjects?md=select"></EleSelector>
+        <EleSelector For="Item.CheckSheetId" TextFor="Item.CheckSheetName" Label="检查单" Visible="false"  Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheets?md=select"></EleSelector>
+        <EleSelector For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheetItems?md=select"></EleSelector>
 
         <EleInput For="Item.CheckItemText" Label="检查项内容" Enabled="false" FillRow="true"></EleInput>
         <EleInput For="Item.Description" Label="隐患描述" Rows="1" FillRow="true"></EleInput>
@@ -15,7 +17,7 @@
         
         <EleSelect For="Item.Status" Label="状态"></EleSelect>
         <EleDatePicker For="Item.ExpireDt" Label="整改期限"></EleDatePicker>
-        <EleDatePicker For="Item.RectifyDt" Label="整改日期"></EleDatePicker>
+        <EleDatePicker For="Item.RectifyDt" Label="整改日期" Enabled="false"></EleDatePicker>
         
         <EleSwitch For="Item.IsIn141" Label="录入141"></EleSwitch>
     

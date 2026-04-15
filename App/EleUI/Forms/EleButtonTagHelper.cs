@@ -106,6 +106,13 @@ namespace App.EleUI
         {
             if (!CheckPower(output)) 
                 return;
+
+            if (IsSelectMode() && ShouldHideInSelectMode())
+            {
+                output.SuppressOutput();
+                return;
+            }
+
             output.TagName = "el-button";
             AddCommonAttributes(context, output);
             
@@ -170,6 +177,21 @@ namespace App.EleUI
                 output.Content.SetHtmlContent(buttonText);
              else
                 output.Content.SetHtmlContent(""); // 保持 <el-button></el-button>，不输出空格或换行
+        }
+
+        private bool ShouldHideInSelectMode()
+        {
+            if (Command == Command.Add || Command == Command.Edit || Command == Command.Delete || Command == Command.BatchDelete)
+                return true;
+
+            var handler = (Handler ?? string.Empty).Trim();
+            if (string.Equals(handler, "Add", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handler, "Edit", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handler, "Delete", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(handler, "BatchDelete", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            return false;
         }
     }
 }

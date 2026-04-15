@@ -38,7 +38,11 @@ namespace App.Pages.Checks
             {
                 // Typically hazards are created via API from mobile app or check process, not manually created here from scratch usually.
                 // But for admin purpose, let's allow basic edit.
-                return BuildResult(404, "隐患不存在");
+                //return BuildResult(404, "隐患不存在");
+                item = new CheckHazard();
+                item.ObjectId = req.ObjectId;
+                item.CheckItemId = req.CheckItemId;
+                item.CheckSheetId = req.CheckSheetId;
             }
 
             item.Description = req.Description;

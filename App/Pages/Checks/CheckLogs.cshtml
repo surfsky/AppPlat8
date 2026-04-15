@@ -7,7 +7,7 @@
 }
 
 @section body {
-    <EleTable Title="检查记录@titleSuffix" FormPage="CheckLogForm" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId&objectName=@objectNameEncoded" >
+    <EleTable Title="检查记录" FormPage="CheckLogForm" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId&objectName=@objectNameEncoded" >
         <Toolbar>
             <Filters>
                 <EleInput For="Item.CheckObject.Name" Width="250px" Label="对象名称" ></EleInput>

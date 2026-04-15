@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using App.Entities;
 using App.Utils;
+using Microsoft.EntityFrameworkCore;
 
 /**
 检查记录表CheckLog --(1:n)-- CheckHazard 隐患表 --(1:n)--CheckHazardReview 隐患复查记录表
@@ -83,7 +84,7 @@ namespace App.DAL
         }
         public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
         {
-            IQueryable<CheckHazard> q = CheckHazard.IncludeSet;
+            IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.CheckObject).Include(t => t.Checker);
             if (objectId.IsNotEmpty())     q = q.Where(o => o.ObjectId == objectId.Value);
             if (checkerId.IsNotEmpty())    q = q.Where(o => o.Check.CheckerId == checkerId.Value);
             if (objectName.IsNotEmpty())   q = q.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));

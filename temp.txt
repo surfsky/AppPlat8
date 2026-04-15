@@ -101,3 +101,20 @@
             if (!string.IsNullOrWhiteSpace(name))     q = q.Where(o => o.Name.Contains(name.Trim()));
             if (!string.IsNullOrWhiteSpace(phone))    q = q.Where(o => o.Phone.Contains(phone.Trim()));
             var list = q.SortPageExport(pi);
+
+                item = new CheckHazard();
+                item.ObjectId = req.ObjectId;
+                item.CheckItemId = req.CheckItemId;
+                item.CheckSheetId = req.CheckSheetId;
+
+            <EleColumn For="Item.Status" Label="状态" Width="100">
+                <template #default="{ row }">
+                    <el-tag :type="row.status === '已整改' ? 'success' : 'danger'">{{ row.status }}</el-tag>
+                </template>
+            </EleColumn>
+
+            <EleColumn For="Item.IsIn141" Label="141" Width="80">
+                <template #default="{ row }">
+                    <el-tag :type="row.isIn141 ? 'success' : 'info'">{{ row.isIn141 ? '是' : '否' }}</el-tag>
+                </template>
+            </EleColumn>
