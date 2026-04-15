@@ -73,12 +73,16 @@
     - 其中 Power 是权限常量，在 `App.BLL/Base/Power` 文件中添加权限常量。
     - 所有操作授权都只基于用户拥有的 Power 来确定，可调用 User.HasPower(Power.XXXView) 来判断用户是否有访问权限。
     - 页面模型中可设置访问权限：CheckPower(Power.XXXView)，参考 /admins/Users 页面。
-    - 控件、按钮等可设置可见性、可操作权限：VPower, UPower, APower 等，参考 /admins/Users 页面。
+    - 控件、按钮等可设置可见性、可操作权限：参考 /admins/Users 页面。
     - 数据访问权限：用户表有一个授权组织ID（User.AuthOrgId）, 其他数据表若有 OrgId 的参数，根据用户AuthOrgId来进行过滤。对应的组织树可用
         <EleTreeSelect For="Item.DutyOrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
         该API在 /app/apis/orgs/GetAuthOrgTree 中实现。
 - Tailwind 色彩在 `/wwwroot/tailwindConfig.js` 中配置。
-
+- PageMode:
+    - Edit: 编辑模式
+    - View: 查看模式
+    - Add: 添加模式
+    - Select: 选择模式，用于选择多个数据
 
 
 

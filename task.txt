@@ -1,31 +1,16 @@
 --------------------------------------------------------
-技术思路
---------------------------------------------------------
-    完全的接口、前端、测试的剥离
-    取消cookie，把 token 改为用 header authorization bearer 方式，更为现代和通用
-    系统易用性和扩展性
-        - Excel 表格编辑及分享
-        - 云文档
-        - 列表和表单自动生成
-    系统做得很艰难
-        建设方案文档写得不够（可以让AI辅助编写），返工很多。
-        RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
-        前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
-
---------------------------------------------------------
 - 框架
 --------------------------------------------------------
-工作流
-    配置工作流程图
-    用于oa文档流转
-
 调度引擎
     可用于后台自动调度生成统计报表
-
 
 数据模型的UI自动化展示和编辑（*）
     创建自动展示列表的页面 UISetting
     创建自动展示表单编辑的页面
+
+工作流
+    配置工作流程图
+    用于oa文档流转
 
 
 EleUI 优化
@@ -65,6 +50,19 @@ AI 优化
     优化AI聊天功能
         AI 生成图片、生成音乐、生成视频等
         实现与数据库MCP交互的能力，要显示当前用户的数据访问权限
+
+
+技术思路
+    完全的接口、前端、测试的剥离
+    取消cookie，把 token 改为用 header authorization bearer 方式，更为现代和通用
+    系统易用性和扩展性
+        - Excel 表格编辑及分享
+        - 云文档
+        - 列表和表单自动生成
+    系统做得很艰难
+        建设方案文档写得不够（可以让AI辅助编写），返工很多。
+        RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
+        前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
 
 
 --------------------------------------------------------
@@ -131,7 +129,6 @@ Task - 业务
 
 
 
-
 --------------------------------------------------------
 Done
 --------------------------------------------------------
@@ -143,12 +140,11 @@ Done
     <EleSelector For="Item.ObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="false" FillRow="true" PopupUrl="CheckObjects?md=select"></EleSelector>
 
 
-
-    /实现检查对象事件管理页面  
-        实体类见 CheckObjectEvent
-        实现 /pages/checks/CheckObjectEvents     检查对象事件列表
-        实现 /pages/checks/CheckObjectEventForm  检查对象事件表单
-        在 /pages/checks/CheckObjectForm 页面底部加上“对象事件”按钮，点击可显示检查对象事件列表
+/实现检查对象事件管理页面  
+    实体类见 CheckObjectEvent
+    实现 /pages/checks/CheckObjectEvents     检查对象事件列表
+    实现 /pages/checks/CheckObjectEventForm  检查对象事件表单
+    在 /pages/checks/CheckObjectForm 页面底部加上“对象事件”按钮，点击可显示检查对象事件列表
 
     /实现列表控件，用于展示列表，如附件列表
     /在 /Articles/ArticleForm 中显示附件列表
