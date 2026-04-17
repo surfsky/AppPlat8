@@ -384,15 +384,15 @@ namespace App.Utils
 
         /// <summary>获取遮罩文本（XXXXXXXXXX****XXXX）</summary>
         /// <param name="n">文本最终长度</param>
-        /// <param name="mask">遮罩字符（默认为.）</param>
-        public static string Mask(this string text, int n, string mask="*")
+        /// <param name="maskChar">遮罩字符（默认为.）</param>
+        public static string Mask(this string text, int n, string maskChar="*")
         {
             if (text.IsEmpty() || text.Length < n)
                 return text;
             else
             {
                 int len = text.Length;
-                string masks = mask.Repeat(4);
+                string masks = maskChar.Repeat(4);
                 return text.Substring(0, len - 8) + masks + text.Substring(n - 4, 4);
             }
         }

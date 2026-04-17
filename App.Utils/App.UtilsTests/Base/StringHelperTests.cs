@@ -45,6 +45,27 @@ namespace App.Utils.Tests
 
             var t7 = t1.RemoveHtml().Slim().RemoveBlankTranslator().Summary(20);
             var t10 = t1.RemoveTag().RemoveBlankTranslator().Slim().Summary(20);
+
+            Assert.IsFalse(t2.Contains("<script", true));
+            Assert.IsFalse(t2.Contains("<!-", true));
+            Assert.IsTrue(t2.Contains("Text", true));
+
+            Assert.IsFalse(t3.Any(char.IsWhiteSpace));
+
+            Assert.IsFalse(t4.Contains("\\r", false));
+            Assert.IsFalse(t4.Contains("\\n", false));
+            Assert.IsFalse(t4.Contains("\\v", false));
+            Assert.IsFalse(t4.Contains("\\f", false));
+
+            Assert.IsFalse(t5.StartsWith(" "));
+            Assert.IsFalse(t5.EndsWith(" "));
+            Assert.IsFalse(t5.Contains("  ", false));
+
+            Assert.IsFalse(t6.Contains("<", false));
+            Assert.IsFalse(t6.Contains(">", false));
+
+            Assert.AreEqual(24, t7.Length);
+            Assert.AreEqual(24, t10.Length);
         }
 
         [TestMethod()]
@@ -77,8 +98,12 @@ function do() {
 ";
             var t2 = t1.RemoveHtml();
             var t3 = t1.RemoveStyleBlock();
-            var t4 = t1.RemoveStyleBlock();
+            var t4 = t1.RemoveScriptBlock();
             Assert.AreEqual(t2, "hello world");
+            Assert.IsFalse(t3.Contains("<style", true));
+            Assert.IsTrue(t3.Contains("<script", true));
+            Assert.IsFalse(t4.Contains("<script", true));
+            Assert.IsTrue(t4.Contains("<style", true));
         }
 
 
@@ -89,6 +114,13 @@ function do() {
             var t2 = "1 2 3 4 5";
             var a1 = t1.SplitLong();
             var a2 = t2.SplitString();
+
+            CollectionAssert.AreEqual(new List<long> { 1, 2, 3, 4, 5 }, a1);
+            CollectionAssert.AreEqual(new List<string> { "1", "2", "3", "4", "5" }, a2);
+
+            var t3 = "1; 2\t3,4 5";
+            var a3 = t3.SplitLong();
+            CollectionAssert.AreEqual(new List<long> { 1, 2, 3, 4, 5 }, a3);
         }
 
         [TestMethod()]
@@ -195,6 +227,71 @@ function do() {
                 <head>
                 ";
             t = t.TrimLines();
+
+            var expected = string.Join(Environment.NewLine, new[]
+            {
+                "<head>",
+                "<meta charset=\"utf-8\">",
+                "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+                "<script src=\"{JqueryJs}\"></script>",
+                "<script src=\"{PopperJs}\"></script>",
+                "<script src=\"{BootStrapJs}\"></script>",
+                "<head>",
+                ""
+            }) + Environment.NewLine;
+
+            Assert.AreEqual(expected, t);
         }
+
+        [TestMethod()]
+        public void BuildRandomTextTest()
+        {
+            var text1 = StringHelper.BuildRandomText("ABC", 12);
+            Assert.AreEqual(12, text1.Length);
+            Assert.IsTrue(text1.All(c => "ABC".Contains(c.ToString())));
+
+            var text2 = StringHelper.BuildRandomText();
+            Assert.AreEqual(6, text2.Length);
+            Assert.IsTrue(text2.All(char.IsDigit));
+
+            Assert.AreEqual("", StringHelper.BuildRandomText("XYZ", 0));
+        }
+
+        [TestMethod()]
+        public void RepeatTest()
+        {
+            Assert.AreEqual("ababab", "ab".Repeat(3));
+            Assert.AreEqual("", "ab".Repeat(0));
+            Assert.AreEqual("", "".Repeat(5));
+        }
+
+        [TestMethod()]
+        public void MaskTest()
+        {
+            Assert.AreEqual("1530****121", "15305770121".Mask(11));
+            Assert.AreEqual("12345678....3456", "1234567890123456".Mask(16, "."));
+            Assert.AreEqual("12345", "12345".Mask(6));
+            Assert.AreEqual("", "".Mask(6));
+        }
+
+        [TestMethod()]
+        public void SummaryTest()
+        {
+            Assert.AreEqual("abcdef....", "abcdef".Summary(6));
+            Assert.AreEqual("abcde....", "abcdef".Summary(5));
+            Assert.AreEqual("abc", "abc".Summary(5));
+            Assert.AreEqual("", "".Summary(5));
+        }
+
+        [TestMethod()]
+        public void ToLowCamelTest()
+        {
+            Assert.AreEqual("helloworld", "HelloWorld".ToLowCamel());
+            Assert.AreEqual("helloworld", "HELLOWORLD".ToLowCamel());
+            Assert.AreEqual("a", "A".ToLowCamel());
+            Assert.AreEqual("", "".ToLowCamel());
+        }
+
+        
     }
 }

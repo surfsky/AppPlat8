@@ -1,8 +1,34 @@
 --------------------------------------------------------
 - 框架
 --------------------------------------------------------
-调度引擎
-    可用于后台自动调度生成统计报表
+其它
+    调度引擎：可用于后台自动调度生成统计报表
+    实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
+        Install-Package Ganss.Excel
+        public classProduct
+        {    
+            publicint id { get; set; }          // 产品编号    
+            publicstring Name { get; set; }          // 产品名称    
+            publicstring category { get; set; }    // 类型     
+            publicint qty { get; set; }  // 数量    
+            publicdecimal Price { get; set; }        // 价格    
+            [Column("创建日期")]    
+            public DateTime createdate { get; set; }  // 创建日期    
+            public override string ToString()    
+            {        
+                return$"{Name},{category},{Price},{qty},{createdate}";    
+            }
+        }
+        // 设置无表头模式
+        var products = new ExcelMapper("products.xlsx").Fetch<Product>();
+        var products = new ExcelMapper("products.xlsx") 
+        {    
+            HeaderRow = false
+        }.Fetch<Product>();
+
+    优化element网页，在手机端不易那么被拖动；现在页面手机端操作感觉太飘，动不动就会滑屏返回的样子
+    对于日期类型，一定在 Excel 中设置为 datetime 格式，否则可能解析失败。
+
 
 数据模型的UI自动化展示和编辑（*）
     创建自动展示列表的页面 UISetting
@@ -12,19 +38,18 @@
     配置工作流程图
     用于oa文档流转
 
-
 EleUI 优化
-    测试并改造UI，现在页面手机端操作感觉太飘，动不动就会滑屏返回的样子
-    将EleTable中的Toolbar剥离出来，可和 EleTable、EleList 搭配使用
+    复杂页面
+        实现Panel控件及测试，一个页面可以展示多个panel，可联动
+        创建：角色、用户双列表混合视图测试页面
+
+
     考虑合并 EleItem, EleControl
     将 EleUI 迁移为一个单独项目，js也可以正常显示编程提示，可编译合并
     优化通用drawer弹窗
         实现右滑关闭逻辑（含提示）
         检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
         实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
-    Controls
-        实现Panel控件及测试，一个页面可以展示多个panel，可联动
-        创建：角色、用户双列表混合视图测试页面
     样式
         实现 Theme 逻辑：dark/light（容后）
     剥离App
@@ -32,9 +57,6 @@ EleUI 优化
         剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
         剥离 EleTableTagHelper 中的App创建部分，拆分出 EleTableAppTagHelper，只管网格页面渲染
 
-
-其它
-    实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
 
 
 重构数据库
@@ -132,6 +154,8 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+    /实现脱敏处理（绝对不能在客户端处理，清单接口中不允许暴露）ExportMode = Detail时才返回原始数据（表单场合），需校验
+    /将EleTable中的Toolbar剥离出来，可和 EleTable、EleList 搭配使用（算了，elelist当作form控件使用）
 /实现列表页面的select模式：
     - 页面参数为：md=select，同view，只读查询；
     - 隐藏所有Command=Add/Delete/BatchDelete/Edit 的<EleButton> 及<Op> 元素；

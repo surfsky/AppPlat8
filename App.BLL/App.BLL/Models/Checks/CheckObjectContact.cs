@@ -25,18 +25,19 @@ namespace App.DAL
 
         public virtual CheckObject CheckObject { get; set; }
 
+        //
         public override object Export(ExportMode mode)
         {
             return new
             {
-                id = Id,
-                name = Name,
-                photo = Photo,
-                idCard = IdCard,
-                idCardImage = IdCardImage,
-                phone = Phone,
-                certDt = CertDt,
-                certExpireDt = CertExpireDt,
+                Id,
+                Name,
+                Photo,
+                IdCard,
+                IdCardImage,
+                Phone = (mode == ExportMode.Detail) ? this.Phone : this.Phone?.Mask(11),
+                CertDt,
+                CertExpireDt,
             };
         }
 

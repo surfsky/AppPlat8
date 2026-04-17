@@ -56,6 +56,10 @@ namespace App.DAL
         [UI("用户角色")]        public virtual List<Role> Roles { get; set; } = new List<Role>();
         [UI("角色IDs"), NotMapped]  public virtual List<long> RoleIds {get; set;}   // 冗余设计用于前端绑定
 
+        // extend
+        public string MobileMasked => this.Mobile?.Mask(11);
+        public string OfficePhoneMasked => this.OfficePhone?.Mask(11);
+
 
         //------------------------------------------------------
         // 权限
@@ -103,7 +107,7 @@ namespace App.DAL
                 this.TakeOfficeDt,
                 this.LastLoginDt,
                 this.Title,
-                this.OfficePhone,
+                OfficePhone = (type == ExportMode.Detail) ? this.OfficePhone : this.OfficePhone?.Mask(11),
                 Mobile = (type == ExportMode.Detail) ? this.Mobile : this.Mobile?.Mask(11),
                 this.Address,
                 this.Remark,
