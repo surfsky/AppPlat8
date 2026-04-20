@@ -1,0 +1,170 @@
+@page
+@model App.Pages.Shared.ImportorModel
+@{
+    ViewData["Title"] = "Excel导入";
+    var typeName = Model.Type ?? string.Empty;
+    var columnMode = Model.ColumnMode ?? "Title";
+    var templateId = Model.TemplateId?.ToString() ?? string.Empty;
+    var typeTitle = string.IsNullOrWhiteSpace(Model.TypeTitle) ? typeName : Model.TypeTitle;
+}
+
+@section body {
+    <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
+        <div class="mb-4 rounded border border-slate-200 p-3 bg-slate-50 text-slate-700 text-sm">
+            <div>导入类型: <span class="font-semibold">@typeTitle</span></div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-3">
+            <el-button type="primary" @@click="downloadTemplate" :loading="downloading">下载模板</el-button>
+            <el-button @@click="chooseFile">选择Excel文件</el-button>
+            <el-button type="success" @@click="startImport" :loading="importing" :disabled="!file">开始导入</el-button>
+            <input id="excelFileInput" type="file" accept=".xls,.xlsx" style="display:none" @@change="onFileChange" />
+        </div>
+
+        <div class="mb-3 text-sm text-slate-600">
+            已选文件: <span class="font-medium">{{ fileName || '未选择文件' }}</span>
+        </div>
+
+        <div class="mb-3">
+            <el-progress :percentage="progress" :status="progressStatus"></el-progress>
+        </div>
+
+        <div class="flex-1 overflow-hidden">
+            <el-input type="textarea" :rows="16" resize="none" readonly v-model="logsText" class="h-full"></el-input>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref } = Vue;
+
+        createApp({
+            setup() {
+                const typeName = '@typeName';
+                const columnMode = '@columnMode';
+                const templateId = '@templateId';
+                const file = ref(null);
+                const fileName = ref('');
+                const importing = ref(false);
+                const downloading = ref(false);
+                const progress = ref(0);
+                const progressStatus = ref('');
+                const logsText = ref('');
+
+                const appendServerLogs = (body) => {
+                    const logs = body && body.data && Array.isArray(body.data.logs) ? body.data.logs : [];
+                    logs.forEach(appendLog);
+                };
+
+                const appendLog = (text) => {
+                    if (!text) return;
+                    const line = `[${new Date().toLocaleTimeString()}] ${text}`;
+                    logsText.value = logsText.value ? `${logsText.value}\n${line}` : line;
+                };
+
+                const chooseFile = () => {
+                    const input = document.getElementById('excelFileInput');
+                    if (input) input.click();
+                };
+
+                const onFileChange = (evt) => {
+                    const input = evt.target;
+                    const f = input && input.files && input.files.length > 0 ? input.files[0] : null;
+                    file.value = f;
+                    fileName.value = f ? f.name : '';
+                    if (f) appendLog(`已选择文件: ${f.name}`);
+                };
+
+                const downloadTemplate = () => {
+                    downloading.value = true;
+                    try {
+                        appendLog('开始下载模板...');
+                        const tid = templateId ? `&templateId=${encodeURIComponent(templateId)}` : '';
+                        const url = `?handler=Template&type=${encodeURIComponent(typeName)}&columnMode=${encodeURIComponent(columnMode)}${tid}`;
+                        const a = document.createElement('a');
+                        a.href = url;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        appendLog('模板下载请求已发送');
+                    } finally {
+                        downloading.value = false;
+                    }
+                };
+
+                const startImport = async () => {
+                    if (!file.value) {
+                        EleManager.showWarning('请先选择Excel文件');
+                        return;
+                    }
+
+                    importing.value = true;
+                    progress.value = 8;
+                    progressStatus.value = '';
+                    appendLog('开始上传并导入...');
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', file.value);
+
+                        const res = await axios.post(`?handler=Import&type=${encodeURIComponent(typeName)}`, formData, {
+                            headers: {
+                                'RequestVerificationToken': (window.Utils && Utils.getCsrfToken) ? Utils.getCsrfToken() : ''
+                            }
+                        });
+
+                        progress.value = 85;
+                        const body = res && res.data ? res.data : null;
+                        if (!body || (body.code !== 0 && body.code !== '0')) {
+                            progress.value = 100;
+                            progressStatus.value = 'exception';
+                            appendServerLogs(body);
+                            appendLog((body && (body.msg || body.info)) || '导入失败');
+                            EleManager.showError((body && (body.msg || body.info)) || '导入失败');
+                            return;
+                        }
+
+                        const data = body.data || {};
+                        const logs = Array.isArray(data.logs) ? data.logs : [];
+                        logs.forEach(appendLog);
+
+                        progress.value = 100;
+                        progressStatus.value = data.fail > 0 ? 'warning' : 'success';
+                        EleManager.showSuccess(body.msg || '导入完成');
+
+                        // 成功后关闭抽屉，触发表格刷新。
+                        if (window.EleManager && typeof window.EleManager.closePage === 'function') {
+                            window.EleManager.closePage({ imported: true, success: data.success || 0, fail: data.fail || 0 });
+                        }
+                    } catch (e) {
+                        progress.value = 100;
+                        progressStatus.value = 'exception';
+                        appendServerLogs(e?.response?.data);
+                        const msg = e?.response?.data?.msg || e?.response?.data?.info || e?.message || '导入失败';
+                        appendLog(msg);
+                        EleManager.showError(msg);
+                    } finally {
+                        importing.value = false;
+                    }
+                };
+
+                return {
+                    file,
+                    fileName,
+                    importing,
+                    downloading,
+                    progress,
+                    progressStatus,
+                    logsText,
+                    chooseFile,
+                    onFileChange,
+                    downloadTemplate,
+                    startImport
+                };
+            }
+        })
+        .use(ElementPlus, { locale: ElementPlusLocaleZhCn })
+        .mount('#app');
+    </script>
+}

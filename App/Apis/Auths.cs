@@ -120,13 +120,13 @@ namespace App.API
         [HttpApi("获取所有组织", AuthLogin=true)]
         public static APIResult GetOrgs()
         {
-            return Org.Set.OrderBy(o => o.SortId).ToList().ToResult();
+            return App.DAL.Org.Set.OrderBy(o => o.SortId).ToList().ToResult();
         }
 
         [HttpApi("获取组织树形结构", AuthLogin=true)]
         public static APIResult GetOrgTree()
         {
-            return Org.GetTree().ToResult();
+            return App.DAL.Org.GetTree().ToResult();
         }
 
         [HttpApi("获取菜单树形结构", AuthLogin=true)]

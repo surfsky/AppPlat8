@@ -15,14 +15,14 @@ namespace App.Pages.Admins
     [CheckPower(Power.OrgView)]
     public class OrgsModel : AdminModel
     {
-        public Org Item { get; set; }
+        public App.DAL.Org Item { get; set; }
 
         public void OnGet(){}
 
         /// <summary>获取清单</summary>
         public async Task<IActionResult> OnGetData(string name)
         {
-            var allOrgs = await Org.Set.OrderBy(o => o.SortId).ToListAsync();
+            var allOrgs = await App.DAL.Org.Set.OrderBy(o => o.SortId).ToListAsync();
             if (!string.IsNullOrEmpty(name))
                 allOrgs = allOrgs.Where(o => o.Name.Contains(name)).ToList();
             
@@ -46,16 +46,16 @@ namespace App.Pages.Admins
                 if (userCount > 0) return BuildResult(400, $"删除失败！组织[{id}]下还有用户");
 
                 // Check children
-                int childCount = await Org.Set.Where(d => d.ParentId == id).CountAsync();
+                int childCount = await App.DAL.Org.Set.Where(d => d.ParentId == id).CountAsync();
                 if (childCount > 0) return BuildResult(400, $"删除失败！组织[{id}]下还有子组织");
 
-                var item = Org.Get(id);
+                var item = App.DAL.Org.Get(id);
                 if (item != null)
                 {
                     item.Delete();
                 }
             }
-            Org.ClearCache();
+            App.DAL.Org.ClearCache();
             return BuildResult(0, "删除成功");
         }
     }

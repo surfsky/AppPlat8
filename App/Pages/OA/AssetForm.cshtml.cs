@@ -21,11 +21,11 @@ namespace App.Pages.OA
     {
         [BindProperty]
         public Asset Item { get; set; }
-        public List<Org> OrgTree { get; set; }
+        public List<App.DAL.Org> OrgTree { get; set; }
         
         public void OnGet()
         {
-            OrgTree = Org.GetTree();
+            OrgTree = App.DAL.Org.GetTree();
         }
 
         /// <summary>获取用户列表</summary>

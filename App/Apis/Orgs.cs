@@ -22,13 +22,13 @@ namespace App.API
         [HttpApi("获取所有组织", AuthLogin=true)]
         public static APIResult GetOrgs()
         {
-            return Org.Set.OrderBy(o => o.SortId).ToList().ToResult();
+            return App.DAL.Org.Set.OrderBy(o => o.SortId).ToList().ToResult();
         }
 
         [HttpApi("获取组织树形结构", AuthLogin=true)]
         public static APIResult GetOrgTree()
         {
-            return Org.GetTree().ToResult();
+            return App.DAL.Org.GetTree().ToResult();
         }
 
         [HttpApi("获取授权组织树", AuthLogin=true)]
@@ -36,9 +36,9 @@ namespace App.API
         {
             var user = Auth.GetUser();
             if (user.Name == "admin")
-                return Org.GetTree().ToResult();
+                return App.DAL.Org.GetTree().ToResult();
             var authOrgId = user.AuthOrgId ?? user.OrgId;
-            var items = EntityHelper.GetDescendants(Org.All, authOrgId);
+            var items = EntityHelper.GetDescendants(App.DAL.Org.All, authOrgId);
             return items.ToTree().ToResult();
         }
     }

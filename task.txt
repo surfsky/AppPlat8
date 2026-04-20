@@ -2,32 +2,59 @@
 - 框架
 --------------------------------------------------------
 其它
-    调度引擎：可用于后台自动调度生成统计报表
     实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
-        Install-Package Ganss.Excel
-        public classProduct
-        {    
-            publicint id { get; set; }          // 产品编号    
-            publicstring Name { get; set; }          // 产品名称    
-            publicstring category { get; set; }    // 类型     
-            publicint qty { get; set; }  // 数量    
-            publicdecimal Price { get; set; }        // 价格    
-            [Column("创建日期")]    
-            public DateTime createdate { get; set; }  // 创建日期    
-            public override string ToString()    
-            {        
-                return$"{Name},{category},{Price},{qty},{createdate}";    
-            }
-        }
-        // 设置无表头模式
-        var products = new ExcelMapper("products.xlsx").Fetch<Product>();
-        var products = new ExcelMapper("products.xlsx") 
-        {    
-            HeaderRow = false
-        }.Fetch<Product>();
+    Id、Code，导入数据
+
+    实现导入Excel逻辑，并实现CheckObject数据表数据的导入
+        创建Excel数据导入和解析类：
+            文件位置：/App/Components/ExcelParser.cs
+            使用 NPOI 包读写 Excel 文件
+                可将excel表格数据，匹配到类中的读写字段，匹配为类对象
+                支持 [UI] 标签及属性名匹配
+                支持枚举文本和值解析
+            可根据类定义读取excel文件并解析为对象列表，代码如
+                var objects = new ExcelParser<CheckObject>().Fetch("xxx.xlsx");
+            可根据类定义（或对象列表）生成 excel 文件，代码如：
+                new ExcelParser<CheckObject>().Save(stream, checkObjects);
+                new ExcelParser<CheckObject>().Save("xxx.xlsx", checkObjects);
+                new ExcelParser<CheckObject>().Save("xxx.xlsx");
+        完善/Pages/Checks/CheckObjects，增加导入Excel 文件功能：
+            创建通用的导入网页（参数为类名，如 /Pages/Shared/Importor?type=App.DAL.CheckObject）
+            页面显示：
+                “下载模版”链接或按钮: 点击后下载模版文件
+                Excel文件上传按钮：点击后选择excel文件，并找个地方显示文件名
+                开始导入按钮：开始导入excel到数据库，并显示导入进度
+                日志文本区：显示导入进度，以及错误信息
+            用elemanger.openDrawer显示导入网页
+
+
+
+        代码如
+            Install-Package Ganss.Excel
+            public classProduct
+            {    
+                public int id { get; set; }               // 产品编号
+                public string Name { get; set; }          // 产品名称    
+                public string category { get; set; }      // 类型     
+                public int qty { get; set; }              // 数量    
+                public decimal Price { get; set; }        // 价格    
+                [Column("创建日期")]
+                public DateTime createdate { get; set; }  // 创建日期
+                public override string ToString()
+                {        
+                    return$"{Name},{category},{Price},{qty},{createdate}";    
+                }
+            }
+        解析excel为对象
+            var products = new ExcelMapper("products.xlsx").Fetch<Product>();
+            var products = new ExcelMapper("products.xlsx"){HeaderRow = false}.Fetch<Product>();
+        备注
+            对于日期类型，一定在 Excel 中设置为 datetime 格式，否则可能解析失败。
+            该库使用 NPOI 类库
 
     优化element网页，在手机端不易那么被拖动；现在页面手机端操作感觉太飘，动不动就会滑屏返回的样子
-    对于日期类型，一定在 Excel 中设置为 datetime 格式，否则可能解析失败。
+    other
+        删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
 
 
 数据模型的UI自动化展示和编辑（*）
@@ -62,12 +89,10 @@ EleUI 优化
 重构数据库
     Entity
         Online 逻辑有点啰嗦，可参考 appplat4实现（容后）
-    other
-        删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
     改用 postgresql, 可实现全文检索
 
 AI 优化
-    可上传图片分析
+    可上传图片分析（用deepseek 新版接口、vlc）
     MCP 可访问数据库（看如何限制权限）
     优化AI聊天功能
         AI 生成图片、生成音乐、生成视频等
@@ -115,18 +140,9 @@ Task - 业务
         资产变更日志：ID、资产ID、执有人、说明（算了）
         隐患复查记录：隐患ID、记录人ID、日志时间、说明、图片列表、整改状态
 
-驾驶舱
-    详见 《260402-龙港市应急驾驶舱规划方案v3》
-    图层数据均来自统一接口，可扩展字段并展示
-    支持暗黑模式的UI、用theme=dark/light切换
-    驾驶舱业务
-        图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
-        点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
-
-知识库及授权规划
-    详讲《政务内部私有化知识库项目》
 
 统计
+    调度引擎：可用于后台自动调度生成统计报表
 	对象类报表
 		企业分类统计表（表四）
 		工矿企业备查点汇总表（六）
@@ -148,6 +164,27 @@ Task - 业务
             表头分组（https://visactor.com/vtable/demo/basic-functionality/list-table-header-group-collapse）
         甘特图可做任务进度（交办）管理、日历图
             表格直接编辑：https://visactor.com/vtable/demo/edit/add-delete-records
+
+
+驾驶舱
+    详见 《260402-龙港市应急驾驶舱规划方案v3》
+    图层数据均来自统一接口，可扩展字段并展示
+    支持暗黑模式的UI、用theme=dark/light切换
+    驾驶舱业务
+        图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
+        点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
+
+
+知识库及授权规划
+    详讲《政务内部私有化知识库项目》
+    在线预览及编辑
+    全文检索、AI矢量检索
+    授权
+        复杂的授权：公开，本组织内，指定科室等（不推荐）
+        简单的授权：默认只能查看自己及下属科室的文档（推荐）
+        文档级别限制：用户查阅等级 >= 文档等级
+        文档分享：分享给用户、限制查看编辑权限
+
 
 
 

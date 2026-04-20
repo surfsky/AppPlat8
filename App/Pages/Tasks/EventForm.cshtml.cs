@@ -23,12 +23,12 @@ namespace App.Pages.OA
     {
         public Event Item { get; set; }
         public List<SelectListItem> EventTypes { get; set; }
-        public List<Org> OrgTree { get; set; }
+        public List<App.DAL.Org> OrgTree { get; set; }
 
         public void OnGet()
         {
             EventTypes = EventType.Set.Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToList();
-            OrgTree = Org.GetTree();
+            OrgTree = App.DAL.Org.GetTree();
         }
 
         public IActionResult OnGetData(long id)

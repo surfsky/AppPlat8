@@ -115,6 +115,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.ML.Vision" Version="3.0.0-preview.23511.1" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
+    <PackageReference Include="NPOI" Version="2.7.2" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0" />
     <PackageReference Include="Radzen.Blazor" Version="2.8.0" />
     <PackageReference Include="SciSharp.TensorFlow.Redist" Version="2.3.1" />

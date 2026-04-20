@@ -63,6 +63,11 @@ namespace App.Entities
         [UI("责任人")]  public virtual long? OwnerId { get; set; }
 
 
+        public void SetOwner(long ownerId)
+        {
+            OwnerId = ownerId;
+        }
+
         //---------------------------------------------
         // 虚拟方法
         //---------------------------------------------

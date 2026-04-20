@@ -20,6 +20,7 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
+                <EleButton Type="Warning" Icon="Upload" VClick="openCheckObjectImport" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">导入Excel</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
             </Buttons>
         </Toolbar>
@@ -51,4 +52,27 @@
             <EleColumn For="Item.CreateDt" Label="建档日期" Width="110" FormatString="yyyy-MM-dd"></EleColumn>
         </Columns>
     </EleTable>
+}
+
+@section script {
+    <script>
+        const userMixin = {
+            methods: {
+                openCheckObjectImport() {
+                    const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                    if (!manager || typeof manager.openDrawer !== 'function') {
+                        EleManager.showError('未找到抽屉管理器');
+                        return;
+                    }
+
+                    manager.openDrawer({
+                        url: '/Shared/Importor?type=' + encodeURIComponent('App.DAL.CheckObject'),
+                        title: '导入检查对象',
+                        size: '980px',
+                        direction: 'rtl'
+                    });
+                }
+            }
+        };
+    </script>
 }

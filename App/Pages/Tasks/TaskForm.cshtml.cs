@@ -17,11 +17,11 @@ namespace App.Pages.OA
     public class TaskFormModel : AdminModel
     {
         public AssignTask Item { get; set; }
-        public List<Org> OrgTree { get; set; }
+        public List<App.DAL.Org> OrgTree { get; set; }
 
         public void OnGet()
         {
-            OrgTree = Org.GetTree();
+            OrgTree = App.DAL.Org.GetTree();
         }
 
         public IActionResult OnGetData(long id)
