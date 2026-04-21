@@ -2,60 +2,8 @@
 - 框架
 --------------------------------------------------------
 其它
-    实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行
-    Id、Code，导入数据
-
-    实现导入Excel逻辑，并实现CheckObject数据表数据的导入
-        创建Excel数据导入和解析类：
-            文件位置：/App/Components/ExcelParser.cs
-            使用 NPOI 包读写 Excel 文件
-                可将excel表格数据，匹配到类中的读写字段，匹配为类对象
-                支持 [UI] 标签及属性名匹配
-                支持枚举文本和值解析
-            可根据类定义读取excel文件并解析为对象列表，代码如
-                var objects = new ExcelParser<CheckObject>().Fetch("xxx.xlsx");
-            可根据类定义（或对象列表）生成 excel 文件，代码如：
-                new ExcelParser<CheckObject>().Save(stream, checkObjects);
-                new ExcelParser<CheckObject>().Save("xxx.xlsx", checkObjects);
-                new ExcelParser<CheckObject>().Save("xxx.xlsx");
-        完善/Pages/Checks/CheckObjects，增加导入Excel 文件功能：
-            创建通用的导入网页（参数为类名，如 /Pages/Shared/Importor?type=App.DAL.CheckObject）
-            页面显示：
-                “下载模版”链接或按钮: 点击后下载模版文件
-                Excel文件上传按钮：点击后选择excel文件，并找个地方显示文件名
-                开始导入按钮：开始导入excel到数据库，并显示导入进度
-                日志文本区：显示导入进度，以及错误信息
-            用elemanger.openDrawer显示导入网页
-
-
-
-        代码如
-            Install-Package Ganss.Excel
-            public classProduct
-            {    
-                public int id { get; set; }               // 产品编号
-                public string Name { get; set; }          // 产品名称    
-                public string category { get; set; }      // 类型     
-                public int qty { get; set; }              // 数量    
-                public decimal Price { get; set; }        // 价格    
-                [Column("创建日期")]
-                public DateTime createdate { get; set; }  // 创建日期
-                public override string ToString()
-                {        
-                    return$"{Name},{category},{Price},{qty},{createdate}";    
-                }
-            }
-        解析excel为对象
-            var products = new ExcelMapper("products.xlsx").Fetch<Product>();
-            var products = new ExcelMapper("products.xlsx"){HeaderRow = false}.Fetch<Product>();
-        备注
-            对于日期类型，一定在 Excel 中设置为 datetime 格式，否则可能解析失败。
-            该库使用 NPOI 类库
-
-    优化element网页，在手机端不易那么被拖动；现在页面手机端操作感觉太飘，动不动就会滑屏返回的样子
-    other
-        删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
-
+    实现网页水印（可找WebConfig 进行配置），参考https://element-plus.org/en-US/component/watermark
+    删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
 
 数据模型的UI自动化展示和编辑（*）
     创建自动展示列表的页面 UISetting
@@ -66,13 +14,15 @@
     用于oa文档流转
 
 EleUI 优化
-    复杂页面
+    复杂页面*******
         实现Panel控件及测试，一个页面可以展示多个panel，可联动
         创建：角色、用户双列表混合视图测试页面
-
-
     考虑合并 EleItem, EleControl
-    将 EleUI 迁移为一个单独项目，js也可以正常显示编程提示，可编译合并
+    将 EleUI 迁移为一个单独项目
+        js也可以正常显示编程提示
+        Doc：markdown文件，自动生成帮助网页
+        编译时会自动将多个js合并成eleui.js和eleui.css
+        <script src=eleui.js> 会自动引用eleui.css
     优化通用drawer弹窗
         实现右滑关闭逻辑（含提示）
         检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
@@ -106,10 +56,15 @@ AI 优化
         - Excel 表格编辑及分享
         - 云文档
         - 列表和表单自动生成
-    系统做得很艰难
-        建设方案文档写得不够（可以让AI辅助编写），返工很多。
-        RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
-        前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
+        导入excel让ai生成管理页面
+        可ai对话的数据库管理工具/网站
+
+
+系统做得很艰难
+    建设方案文档写得不够（可以让AI辅助编写），返工很多。
+    RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
+    前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
+
 
 
 --------------------------------------------------------
@@ -118,15 +73,18 @@ Task - 业务
 部署
     用笔记本？局内政务网，可使用公网，需部署防火墙只运行局内网段访问
     用服务器？现在只开公网，以后迁移到内网，需部署防火墙
+    部署：waf 参考“雷池”，或部署三方防火墙，仅授权网段访问：10.36.247.1-240
 
 
-导入数据
+导入数据****
     导入用户数据
     导入对象数据
     导入检查表
 
 核心业务
     实现隐患排查页面***
+        控件如何联动？如省市县，想在服务器端处理。
+        实现复杂页面，能用EleControl就用，不能用就用原生Elementplus网页控件
         给定UI界面，和AI讨论这种父子表结构的页面该如何操作
         把隐患排查的数据接口写好
     实现检查任务流程
@@ -173,6 +131,12 @@ Task - 业务
     驾驶舱业务
         图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
         点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
+    图层数据查询
+        图层参数dataUrl，dataSchemaUrl：自动构建查询窗口。或者合并结构为：{code:0, data: {schema:{….}, data:[….]}}
+        图层参数再增加一个statUrl，直接给个地址自由发挥，用面板或drawer展示
+        实现通用StatPanel，使用json配置数据来源、图表展示方式、点击元素后的跳转url等
+        实现一个统计报表页面：查询条件+结果表格或图表
+        实现暗黑模式及url参数（在驾驶舱使用时可以切换为暗黑模式）
 
 
 知识库及授权规划
@@ -191,6 +155,63 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2026/04/21
+    /新增 CheckObject.IsUsing 在用字段
+    /EleSelect 支持bool
+    /数据导入（主要是对象表）
+        从141下载对象表，导入系统，枚举字段会自动匹配值
+        ID字段要重写考虑了，看是否开启snowflakeId
+        方案一：用python脚本手动导入
+        方案二：导入mysql临时表，用sql进行导入
+        测试Excel导入功能，各种Id字段无需导入
+        实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行，可考虑增加UIAttribute，增加Ignore
+        代码如
+            Install-Package Ganss.Excel
+            public classProduct
+            {    
+                public int id { get; set; }               // 产品编号
+                public string Name { get; set; }          // 产品名称    
+                public string category { get; set; }      // 类型     
+                public int qty { get; set; }              // 数量    
+                public decimal Price { get; set; }        // 价格    
+                [Column("创建日期")]
+                public DateTime createdate { get; set; }  // 创建日期
+                public override string ToString()
+                {        
+                    return$"{Name},{category},{Price},{qty},{createdate}";    
+                }
+            }
+        解析excel为对象
+            var products = new ExcelMapper("products.xlsx").Fetch<Product>();
+            var products = new ExcelMapper("products.xlsx"){HeaderRow = false}.Fetch<Product>();
+        备注
+            对于日期类型，一定在 Excel 中设置为 datetime 格式，否则可能解析失败。
+            该库使用 NPOI 类库
+
+2026/04/20
+    /优化element网页，在手机端不易那么被拖动；现在页面手机端操作感觉太飘，动不动就会滑屏返回的样子
+    /实现导入Excel逻辑，并实现CheckObject数据表数据的导入
+        创建Excel数据导入和解析类：
+            文件位置：/App/Components/ExcelParser.cs
+            使用 NPOI 包读写 Excel 文件
+                可将excel表格数据，匹配到类中的读写字段，匹配为类对象
+                支持 [UI] 标签及属性名匹配
+                支持枚举文本和值解析
+            可根据类定义读取excel文件并解析为对象列表，代码如
+                var objects = new ExcelParser<CheckObject>().Fetch("xxx.xlsx");
+            可根据类定义（或对象列表）生成 excel 文件，代码如：
+                new ExcelParser<CheckObject>().Save(stream, checkObjects);
+                new ExcelParser<CheckObject>().Save("xxx.xlsx", checkObjects);
+                new ExcelParser<CheckObject>().Save("xxx.xlsx");
+        完善/Pages/Checks/CheckObjects，增加导入Excel 文件功能：
+            创建通用的导入网页（参数为类名，如 /Pages/Shared/Importor?type=App.DAL.CheckObject）
+            页面显示：
+                “下载模版”链接或按钮: 点击后下载模版文件
+                Excel文件上传按钮：点击后选择excel文件，并找个地方显示文件名
+                开始导入按钮：开始导入excel到数据库，并显示导入进度
+                日志文本区：显示导入进度，以及错误信息
+            用elemanger.openDrawer显示导入网页
+
     /实现脱敏处理（绝对不能在客户端处理，清单接口中不允许暴露）ExportMode = Detail时才返回原始数据（表单场合），需校验
     /将EleTable中的Toolbar剥离出来，可和 EleTable、EleList 搭配使用（算了，elelist当作form控件使用）
 /实现列表页面的select模式：

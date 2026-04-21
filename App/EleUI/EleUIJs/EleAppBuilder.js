@@ -40,6 +40,53 @@ export class EleAppBuilder {
         return payload;
     }
 
+    collectFilterDefaults(rootSelector = '#app') {
+        const defaults = {};
+        const root = document.querySelector(rootSelector) || document.getElementById('app');
+        if (!root) return defaults;
+
+        const nodes = root.querySelectorAll('[data-filter-default][data-filter-model], [data-filter-default][v-model^="filters."]');
+        nodes.forEach((el) => {
+            let key = (el.getAttribute('data-filter-model') || '').trim();
+            if (!key) {
+                const model = (el.getAttribute('v-model') || '').trim();
+                if (!model.startsWith('filters.')) return;
+                key = model.substring('filters.'.length).trim();
+            }
+
+            if (!key) return;
+
+            const raw = (el.getAttribute('data-filter-default') || '').trim();
+            if (raw === 'true' || raw === 'false') {
+                defaults[key] = raw === 'true';
+                return;
+            }
+
+            if (raw !== '' && !Number.isNaN(Number(raw))) {
+                defaults[key] = Number(raw);
+                return;
+            }
+
+            defaults[key] = raw;
+        });
+
+        return defaults;
+    }
+
+    applyFilterDefaults(filterRef, defaults = {}) {
+        if (!filterRef) return;
+
+        if (!filterRef.value || typeof filterRef.value !== 'object') {
+            filterRef.value = {};
+        }
+
+        for (const [key, value] of Object.entries(defaults || {})) {
+            // Apply defaults deterministically during first mount.
+            // Some controls (e.g. switch) may emit an initial false before we seed defaults.
+            filterRef.value[key] = value;
+        }
+    }
+
 
 
     //--------------------------------------------------------------

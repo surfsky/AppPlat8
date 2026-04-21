@@ -10,6 +10,7 @@ using App.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using App.EleUI;
 
 namespace App.Pages.Checks
 {
@@ -20,9 +21,34 @@ namespace App.Pages.Checks
 
         public void OnGet() { }
 
-        public IActionResult OnGetData(Paging pi, string name, string socialCreditCode, long? orgId, long? checkerId, CheckObjectType? objectType, CheckObjectScale? scale)
+        public IActionResult OnGetData(
+            Paging pi, 
+            string name="", 
+            string socialCreditCode="", 
+            long? orgId=null, 
+            long? checkerId=null, 
+            CheckObjectType? objectType=null, 
+            CheckObjectScale? scale=null, 
+            bool? isUsing=null,
+            bool? isDemonstration=null,
+            bool? isKeySupervision=null,
+            bool? isProductInNight=null,
+            bool? isThreePlacesThreeEnterprises=null
+            )
         {
-            var list = CheckObject.Search(name, socialCreditCode, orgId, checkerId, objectType, scale).SortPageExport(pi);
+            var list = CheckObject.Search(
+                name, 
+                socialCreditCode, 
+                orgId, 
+                checkerId, 
+                objectType, 
+                scale,
+                isUsing,
+                isDemonstration,
+                isKeySupervision,
+                isProductInNight,
+                isThreePlacesThreeEnterprises
+                ).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
@@ -41,6 +67,20 @@ namespace App.Pages.Checks
                     item.Delete();
             }
             return BuildResult(0, "删除成功");
+        }
+
+        public IActionResult OnPostOpenCheckObjectImport()
+        {
+            if (!CheckPower(Power.CheckObjectEdit))
+                return BuildResult(403, "无权操作");
+
+            var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckObject");
+            return EleManager.OpenClientDrawer(
+                title: "导入检查对象",
+                url: url,
+                //size: "980px",
+                direction: "rtl",
+                closeAction: DrawerCloseAction.RefreshData);
         }
     }
 }

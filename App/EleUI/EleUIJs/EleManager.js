@@ -92,7 +92,8 @@ class EleManagerCore {
                     footerButtons: Array.isArray(args?.footerButtons) ? args.footerButtons : undefined,
                     footerAlign: Utils.safeText(args?.footerAlign, 20),
                     closeHandler: Utils.safeText(args?.closeHandler, 120),
-                    serverCloseHandler: Utils.safeText(args?.serverCloseHandler, 80)
+                    serverCloseHandler: Utils.safeText(args?.serverCloseHandler, 80),
+                    closeAction: Utils.safeText(args?.closeAction, 20)
                 });
             },
             closedrawer: () => {
@@ -470,6 +471,41 @@ class EleManagerCore {
         }
 
         return true;
+    }
+
+    handleDrawerCloseAction(closeAction, payload = null) {
+        const action = Utils.safeText(closeAction, 30).toLowerCase();
+        if (!action || action === 'none') {
+            return;
+        }
+
+        if (action === 'refreshpage') {
+            try {
+                window.location.reload();
+            } catch (e) {
+                console.error('refresh page failed:', e);
+            }
+            return;
+        }
+
+        if (action === 'refreshdata') {
+            const msg = {
+                __eleRefreshData: true,
+                payload: payload && typeof payload === 'object' ? payload : null
+            };
+
+            try { window.postMessage(msg, '*'); } catch {}
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage(msg, '*');
+                }
+            } catch {}
+            try {
+                if (window.top && window.top !== window) {
+                    window.top.postMessage(msg, '*');
+                }
+            } catch {}
+        }
     }
 
     //--------------------------------------------------------------

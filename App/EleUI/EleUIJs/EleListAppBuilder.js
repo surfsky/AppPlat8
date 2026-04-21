@@ -8,6 +8,7 @@ export class EleListAppBuilder extends EleAppBuilder {
 
     mount(selector, config = {}) {
         const { ref, onMounted, onUnmounted, nextTick } = this.Vue;
+        const builder = this;
 
         const app = this.createConfiguredApp(config, {
             setup() {
@@ -23,6 +24,9 @@ export class EleListAppBuilder extends EleAppBuilder {
                 const onWindowScroll = () => list.onWindowScroll();
 
                 onMounted(async () => {
+                    await nextTick();
+                    const filterDefaults = builder.collectFilterDefaults(selector || '#app');
+                    builder.applyFilterDefaults(list.filters, filterDefaults);
                     await list.loadData(true);
                     await nextTick();
                     await list.ensureScrollable(listScrollEl.value);

@@ -5,6 +5,7 @@
     var typeName = Model.Type ?? string.Empty;
     var columnMode = Model.ColumnMode ?? "Title";
     var templateId = Model.TemplateId?.ToString() ?? string.Empty;
+    var ignoreId = Model.IgnoreId ? "true" : "false";
     var typeTitle = string.IsNullOrWhiteSpace(Model.TypeTitle) ? typeName : Model.TypeTitle;
 }
 
@@ -44,6 +45,7 @@
                 const typeName = '@typeName';
                 const columnMode = '@columnMode';
                 const templateId = '@templateId';
+                const ignoreId = '@ignoreId';
                 const file = ref(null);
                 const fileName = ref('');
                 const importing = ref(false);
@@ -81,7 +83,7 @@
                     try {
                         appendLog('开始下载模板...');
                         const tid = templateId ? `&templateId=${encodeURIComponent(templateId)}` : '';
-                        const url = `?handler=Template&type=${encodeURIComponent(typeName)}&columnMode=${encodeURIComponent(columnMode)}${tid}`;
+                        const url = `?handler=Template&type=${encodeURIComponent(typeName)}&columnMode=${encodeURIComponent(columnMode)}&ignoreId=${encodeURIComponent(ignoreId)}${tid}`;
                         const a = document.createElement('a');
                         a.href = url;
                         document.body.appendChild(a);
@@ -132,11 +134,6 @@
                         progress.value = 100;
                         progressStatus.value = data.fail > 0 ? 'warning' : 'success';
                         EleManager.showSuccess(body.msg || '导入完成');
-
-                        // 成功后关闭抽屉，触发表格刷新。
-                        if (window.EleManager && typeof window.EleManager.closePage === 'function') {
-                            window.EleManager.closePage({ imported: true, success: data.success || 0, fail: data.fail || 0 });
-                        }
                     } catch (e) {
                         progress.value = 100;
                         progressStatus.value = 'exception';

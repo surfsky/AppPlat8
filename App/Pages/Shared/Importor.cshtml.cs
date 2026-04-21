@@ -25,6 +25,9 @@ namespace App.Pages.Shared
         [BindProperty(SupportsGet = true)]
         public string ColumnMode { get; set; } = nameof(ExcelColumnMode.Title);
 
+        [BindProperty(SupportsGet = true)]
+        public bool IgnoreId { get; set; }
+
         public string TypeTitle { get; set; } = string.Empty;
         public List<string> ColumnHeaders { get; set; } = new List<string>();
 
@@ -35,11 +38,11 @@ namespace App.Pages.Shared
             if (TryResolveType(Type, out var entityType, out _))
             {
                 TypeTitle = entityType.GetTitle();
-                ColumnHeaders = BuildColumnHeaders(entityType);
+                ColumnHeaders = BuildColumnHeaders(entityType, IgnoreId);
             }
         }
 
-        public IActionResult OnGetTemplate(string type, string columnMode, long? templateId)
+        public IActionResult OnGetTemplate(string type, string columnMode, long? templateId, bool ignoreId = false)
         {
             if (templateId != null && templateId > 0)
             {
@@ -56,7 +59,7 @@ namespace App.Pages.Shared
             {
                 var mode = ParseColumnMode(columnMode);
                 using var stream = new MemoryStream();
-                var parser = CreateParser(entityType);
+                var parser = CreateParser(entityType, ignoreId);
                 var saveMethod = parser.GetType().GetMethod("Save", new[] { typeof(Stream), typeof(ExcelColumnMode) });
                 if (saveMethod != null)
                     saveMethod.Invoke(parser, new object[] { stream, mode });
@@ -64,7 +67,10 @@ namespace App.Pages.Shared
                     parser.GetType().GetMethod("Save", new[] { typeof(Stream) })?.Invoke(parser, new object[] { stream });
                 stream.Position = 0;
 
-                var fileName = $"{entityType.Name}_模板.xlsx";
+                var typeTitle = entityType.GetTitle();
+                if (string.IsNullOrWhiteSpace(typeTitle))
+                    typeTitle = entityType.Name;
+                var fileName = $"{typeTitle}_模版.xlsx";
                 return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
@@ -178,10 +184,14 @@ namespace App.Pages.Shared
             });
         }
 
-        private static object CreateParser(Type entityType)
+        private static object CreateParser(Type entityType, bool ignoreId = false)
         {
             var parserType = typeof(ExcelParser<>).MakeGenericType(entityType);
-            return Activator.CreateInstance(parserType);
+            if (!ignoreId)
+                return Activator.CreateInstance(parserType);
+
+            Func<PropertyInfo, bool> filter = p => !IsIdLikeProperty(p?.Name);
+            return Activator.CreateInstance(parserType, new object[] { filter });
         }
 
         private static ExcelColumnMode ParseColumnMode(string value)
@@ -236,7 +246,7 @@ namespace App.Pages.Shared
             return true;
         }
 
-        private static List<string> BuildColumnHeaders(Type entityType)
+        private static List<string> BuildColumnHeaders(Type entityType, bool ignoreId)
         {
             var headers = new List<string>();
             var props = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -244,6 +254,7 @@ namespace App.Pages.Shared
                 .Where(p => p.GetIndexParameters().Length == 0)
                 .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null)
                 .Where(p => (Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType).IsBasicType())
+            .Where(p => !ignoreId || !IsIdLikeProperty(p.Name))
                 .ToList();
 
             foreach (var p in props)
@@ -257,6 +268,14 @@ namespace App.Pages.Shared
             }
 
             return headers;
+        }
+
+        private static bool IsIdLikeProperty(string propertyName)
+        {
+            if (string.IsNullOrWhiteSpace(propertyName))
+                return false;
+
+            return propertyName.EndsWith("Id", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void PrepareForInsert(Type entityType, object item, long? userId)

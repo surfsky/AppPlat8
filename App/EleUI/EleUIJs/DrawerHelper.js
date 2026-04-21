@@ -29,7 +29,8 @@ export class DrawerHelper {
             closeConfirm: '',
             closeHandler: null,
             beforeCloseHandler: null,
-            serverCloseHandler: ''
+            serverCloseHandler: '',
+            closeAction: 'none'
         };
     }
 
@@ -199,7 +200,8 @@ export class DrawerHelper {
                 beforeCloseHandler: typeof merged.beforeCloseHandler === 'function'
                     ? merged.beforeCloseHandler
                     : (merged.beforeCloseHandler ? Utils.safeText(merged.beforeCloseHandler, 120) : null),
-                serverCloseHandler: Utils.safeText(merged.serverCloseHandler, 80)
+                serverCloseHandler: Utils.safeText(merged.serverCloseHandler, 80),
+                closeAction: Utils.safeText(merged.closeAction, 20)
             });
 
             const instance = {
@@ -246,6 +248,10 @@ export class DrawerHelper {
                             } catch (error) {
                                 console.error('drawer server close callback failed:', error);
                             }
+                        }
+
+                        if (manager && typeof manager.handleDrawerCloseAction === 'function') {
+                            manager.handleDrawerCloseAction(state.closeAction, payload);
                         }
 
                         helper.disposeInstance(instance);

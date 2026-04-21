@@ -64,9 +64,32 @@ namespace App.EleUI
             }
 
             // 3. Append child content (manual options)
-            contentHtml += childContent.GetContent();
+            var manualOptions = childContent.GetContent();
+            contentHtml += manualOptions;
+
+            // 4. Built-in options for bool/bool? when no Items and no manual options provided
+            if (Items == null && string.IsNullOrWhiteSpace(manualOptions) && IsBooleanSelectTarget())
+            {
+                contentHtml = AppendFromBool(contentHtml);
+            }
+
             output.Content.SetHtmlContent(contentHtml);
             await RenderWrapper(output);
+        }
+
+        private bool IsBooleanSelectTarget()
+        {
+            var type = For?.ModelExplorer?.ModelType;
+            if (type == null) return false;
+            type = Nullable.GetUnderlyingType(type) ?? type;
+            return type == typeof(bool);
+        }
+
+        private string AppendFromBool(string contentHtml)
+        {
+            contentHtml += @"<el-option label=""是"" :value=""true""></el-option>";
+            contentHtml += @"<el-option label=""否"" :value=""false""></el-option>";
+            return contentHtml;
         }
 
         /// <summary>根据For属性生成选项</summary>

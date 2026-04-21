@@ -346,6 +346,11 @@ export class EleTable {
 
         // New unified protocol: close payload from EleManager.closePage(...)
         const payload = e.data;
+        if (payload && typeof payload === 'object' && payload.__eleRefreshData === true) {
+            this.loadData();
+            return;
+        }
+
         if (payload && typeof payload === 'object' && payload.__elePageClose === true) {
             EleManager.closeDrawer();
             return;

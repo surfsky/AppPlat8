@@ -22,7 +22,8 @@ namespace App.DAL
     [UI("检查", "检查对象")]
     public class CheckObject : EntityBase<CheckObject>, IDeleteLogic
     {
-        [UI("基础", "是否有效")]    public bool? InUsed { get; set; } = true;
+        [UI("基础", "在用状态")]    public bool? IsUsing { get; set; } = true;
+        [UI("基础", "逻辑删除标记")] public bool? InUsed { get; set; } = true;
         [UI("基础", "名称")]        public string Name { get; set;}
         [UI("基础", "编码")]        public string Code { get; set;}  // XC（中心编号）-01（网格员编号）-001（网格企业编号）
         [UI("基础", "地块号")]       public string AreaCode { get; set; }
@@ -99,6 +100,8 @@ namespace App.DAL
             return new
             {
                 Id,
+                IsUsing,
+                InUsed,
                 Name,
                 Code,
                 SocialCreditCode,
@@ -149,15 +152,33 @@ namespace App.DAL
             };
         }
 
-        public static IQueryable<CheckObject> Search(string name, string socialCreditCode, long? orgId, long? checkerId, CheckObjectType? objectType, CheckObjectScale? scale)
+        public static IQueryable<CheckObject> Search(
+            string name="", 
+            string socialCreditCode="", 
+            long? orgId=null, 
+            long? checkerId=null, 
+            CheckObjectType? objectType=null, 
+            CheckObjectScale? scale=null, 
+            bool? isUsing=null,
+            bool? isDemonstration=null,
+            bool? isKeySupervision=null,
+            bool? isProductInNight=null,
+            bool? isThreePlacesThreeEnterprises=null
+            )
         {
-            IQueryable<CheckObject>            q = CheckObject.IncludeSet;
+            IQueryable<CheckObject> q = CheckObject.IncludeSet;
+
             if (orgId.IsNotEmpty())            q = q.Where(o => o.DutyOrgId == orgId.Value);
             if (checkerId.IsNotEmpty())        q = q.Where(o => o.CheckerId == checkerId.Value);
             if (name.IsNotEmpty())             q = q.Where(o => o.Name.Contains(name.Trim()));
             if (objectType.IsNotEmpty())       q = q.Where(o => o.ObjectType == objectType.Value);
             if (scale.IsNotEmpty())            q = q.Where(o => o.Scale == scale.Value);
             if (socialCreditCode.IsNotEmpty()) q = q.Where(o => o.SocialCreditCode.Contains(socialCreditCode.Trim()));
+            if (isUsing.IsNotEmpty())          q = q.Where(o => o.IsUsing == isUsing.Value);
+            if (isDemonstration.IsNotEmpty())  q = q.Where(o => o.IsDemonstration == isDemonstration.Value);
+            if (isKeySupervision.IsNotEmpty()) q = q.Where(o => o.IsKeySupervision == isKeySupervision.Value);
+            if (isProductInNight.IsNotEmpty()) q = q.Where(o => o.IsProductInNight == isProductInNight.Value);
+            if (isThreePlacesThreeEnterprises.IsNotEmpty()) q = q.Where(o => o.IsThreePlacesThreeEnterprises == isThreePlacesThreeEnterprises.Value);
 
             return q;
         }

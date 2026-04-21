@@ -28,9 +28,15 @@ namespace App.Components
     public class ExcelParser<T> where T : class, new()
     {
         private readonly List<ExcelColumn> _columns;
+        private readonly Func<PropertyInfo, bool> _propertyFilter;
 
-        public ExcelParser()
+        public ExcelParser() : this(null)
         {
+        }
+
+        public ExcelParser(Func<PropertyInfo, bool> propertyFilter)
+        {
+            _propertyFilter = propertyFilter;
             _columns = BuildColumns();
         }
 
@@ -166,6 +172,23 @@ namespace App.Components
                 }
             }
 
+            // For template downloads, provide one editable sample row to reduce user setup steps.
+            if (data.Count == 0)
+            {
+                var row = sheet.CreateRow(1);
+                for (var c = 0; c < _columns.Count; c++)
+                {
+                    var cell = row.CreateCell(c);
+                    var options = GetValidationOptionTitles(_columns[c].Property.PropertyType);
+                    if (options.Count > 0)
+                        cell.SetCellValue(options[0]);
+                    else
+                        cell.SetCellValue(string.Empty);
+                }
+            }
+
+            ApplyEnumDropDownValidation(workbook, sheet, dataStartRowIndex: 1, dataEndRowIndex: 1000);
+
             for (var i = 0; i < _columns.Count; i++)
             {
                 sheet.AutoSizeColumn(i);
@@ -180,6 +203,75 @@ namespace App.Components
             stream.Flush();
         }
 
+        private void ApplyEnumDropDownValidation(IWorkbook workbook, ISheet sheet, int dataStartRowIndex, int dataEndRowIndex)
+        {
+            if (workbook == null || sheet == null || dataStartRowIndex > dataEndRowIndex)
+                return;
+
+            const string dictSheetName = "_dropdown_options";
+            var dictSheet = workbook.GetSheet(dictSheetName) ?? workbook.CreateSheet(dictSheetName);
+            var helper = sheet.GetDataValidationHelper();
+            var dictColIndex = 0;
+
+            for (var i = 0; i < _columns.Count; i++)
+            {
+                var options = GetValidationOptionTitles(_columns[i].Property.PropertyType);
+                if (options.Count == 0)
+                    continue;
+
+                for (var r = 0; r < options.Count; r++)
+                {
+                    var row = dictSheet.GetRow(r) ?? dictSheet.CreateRow(r);
+                    var cell = row.GetCell(dictColIndex) ?? row.CreateCell(dictColIndex);
+                    cell.SetCellValue(options[r]);
+                }
+
+                var colRef = CellReference.ConvertNumToColString(dictColIndex);
+                var rangeName = $"_enum_{typeof(T).Name}_{i}";
+                var name = workbook.GetName(rangeName) ?? workbook.CreateName();
+                name.NameName = rangeName;
+                name.RefersToFormula = $"'{dictSheetName}'!${colRef}$1:${colRef}${options.Count}";
+
+                var address = new CellRangeAddressList(dataStartRowIndex, dataEndRowIndex, i, i);
+                var constraint = helper.CreateFormulaListConstraint(rangeName);
+                var validation = helper.CreateValidation(constraint, address);
+                if (validation is XSSFDataValidation)
+                    validation.SuppressDropDownArrow = true;
+                else
+                    validation.SuppressDropDownArrow = false;
+                validation.ShowErrorBox = true;
+                validation.CreateErrorBox("输入不合法", "请从下拉列表中选择有效枚举值");
+                sheet.AddValidationData(validation);
+
+                dictColIndex++;
+            }
+
+            if (dictColIndex > 0)
+            {
+                var dictSheetIndex = workbook.GetSheetIndex(dictSheet);
+                if (dictSheetIndex >= 0)
+                    workbook.SetSheetHidden(dictSheetIndex, SheetState.Hidden);
+            }
+        }
+
+        private static List<string> GetValidationOptionTitles(Type propType)
+        {
+            var realType = Nullable.GetUnderlyingType(propType) ?? propType;
+
+            if (realType == typeof(bool))
+                return new List<string> { "是", "否" };
+
+            if (!realType.IsEnum)
+                return new List<string>();
+
+            return Enum.GetValues(realType)
+                .Cast<object>()
+                .Select(v => v.GetTitle())
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Distinct()
+                .ToList();
+        }
+
         private static string GetHeaderText(ExcelColumn col, ExcelColumnMode columnMode)
         {
             if (columnMode == ExcelColumnMode.Property)
@@ -189,13 +281,14 @@ namespace App.Components
             return col.Title;
         }
 
-        private static List<ExcelColumn> BuildColumns()
+        private List<ExcelColumn> BuildColumns()
         {
             var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(p => p.CanRead && p.CanWrite)
                 .Where(p => p.GetIndexParameters().Length == 0)
                 .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null)
                 .Where(p => IsSupportedType(p.PropertyType))
+            .Where(p => _propertyFilter == null || _propertyFilter(p))
                 .ToList();
 
             var list = new List<ExcelColumn>();

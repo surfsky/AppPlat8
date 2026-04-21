@@ -26,7 +26,10 @@ export class EleTableAppBuilder extends EleAppBuilder {
 
                 // Register message handler for cross-origin communication
                 const msgHandler = (e) => table.messageHandler(e);
-                onMounted(() => {
+                onMounted(async () => {
+                    await nextTick();
+                    const filterDefaults = builder.collectFilterDefaults(selector || '#app');
+                    builder.applyFilterDefaults(table.filters, filterDefaults);
                     table.loadData();
                     window.addEventListener('message', msgHandler);
                 });

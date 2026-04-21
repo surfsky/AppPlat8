@@ -1,0 +1,24 @@
+@page
+@model App.Pages.EleUISamples.ServerDrawerModel
+@{
+    ViewData["Title"] = "ServerDrawer 测试";
+}
+
+@section body {
+    <EleTable Title="ServerDrawer CloseAction 测试" DataHandler="?handler=Data">
+        <Toolbar>
+            <Buttons>
+                <EleButton Type="Primary" Handler="OpenRefreshData" Icon="Refresh">打开抽屉（RefreshData）</EleButton>
+                <EleButton Type="Warning" Handler="OpenRefreshPage" Icon="RefreshRight">打开抽屉（RefreshPage）</EleButton>
+                <EleButton Type="Info" Handler="OpenNone" Icon="Minus">打开抽屉（None）</EleButton>
+            </Buttons>
+        </Toolbar>
+
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleColumn For="Item.Name" Label="测试项" Width="240"></EleColumn>
+            <EleColumn For="Item.ServerTime" Label="服务端时间" Width="240"></EleColumn>
+            <EleColumn For="Item.TraceId" Label="随机标识" Width="140"></EleColumn>
+        </Columns>
+    </EleTable>
+}

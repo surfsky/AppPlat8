@@ -56,7 +56,7 @@ namespace App.Pages.Checks
             item.EmployeeCount = req.EmployeeCount;
             item.Scale = req.Scale;
             item.ProductContent = req.ProductContent;
-            item.InUsed = req.InUsed;
+            item.IsUsing = req.IsUsing;
             item.LandArea = req.LandArea;
             item.BuildingArea = req.BuildingArea;
             item.IsInOnlinePlatform = req.IsInOnlinePlatform;

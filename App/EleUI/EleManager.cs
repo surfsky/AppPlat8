@@ -47,6 +47,17 @@ namespace App.EleUI
     }
 
     /// <summary>
+    /// 抽屉关闭后的客户端动作
+    /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum DrawerCloseAction
+    {
+        RefreshPage,
+        RefreshData,
+        None
+    }
+
+    /// <summary>
     /// 客户端命令
     /// </summary>
     public record ClientCommand(ClientCommandType Command, object Args, string RequestId, DateTime Utc);
@@ -91,6 +102,7 @@ namespace App.EleUI
         List<DrawerFooterButtonArgs> FooterButtons = null,
         string CloseHandler = null,
         string ServerCloseHandler = null,
+        DrawerCloseAction CloseAction = DrawerCloseAction.RefreshData,
         bool? Html = null);
 
     /// <summary>
@@ -206,6 +218,7 @@ namespace App.EleUI
             List<DrawerFooterButtonArgs> footerButtons = null,
             string closeHandler = null,
             string serverCloseHandler = null,
+            DrawerCloseAction closeAction = DrawerCloseAction.RefreshData,
             bool? html = null)
         {
             return BuildClientCommandResult(
@@ -227,6 +240,7 @@ namespace App.EleUI
                     FooterButtons: footerButtons,
                     CloseHandler: closeHandler,
                     ServerCloseHandler: serverCloseHandler,
+                    CloseAction: closeAction,
                     Html: html)
             );
         }
