@@ -1,0 +1,29 @@
+@page
+@model App.Pages.EleUISamples.RoleUsersUsersModel
+
+@{
+    ViewData["Title"] = "角色用户列表";
+    var title = string.IsNullOrWhiteSpace(Model.RoleName) ? "全部角色用户" : $"角色用户 - {Model.RoleName}";
+}
+
+@section body {
+    <EleTable Title="@title" DataHandler="?handler=Data&roleName=@Model.RoleName">
+        <Toolbar>
+            <Filters>
+                <EleInput For="Item.Name" Label="账号" Width="220px"></EleInput>
+                <EleInput For="Item.ChineseName" Label="中文名" Width="220px"></EleInput>
+            </Filters>
+            <Buttons>
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+            </Buttons>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleColumn For="Item.Name" Label="账号" MinWidth="150"></EleColumn>
+            <EleColumn For="Item.ChineseName" Label="中文名" MinWidth="150"></EleColumn>
+            <EleColumn For="Item.RoleName" Label="角色" Width="120"></EleColumn>
+            <EleColumn For="Item.Age" Label="年龄" Width="90"></EleColumn>
+            <EleColumn For="Item.IsEnabled" Label="启用" Width="90"></EleColumn>
+        </Columns>
+    </EleTable>
+}

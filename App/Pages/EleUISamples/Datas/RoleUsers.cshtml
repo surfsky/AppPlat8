@@ -1,0 +1,36 @@
+@page
+@model App.Pages.EleUISamples.RoleUsersModel
+
+@{
+    ViewData["Title"] = "角色-用户联动";
+}
+
+@section body {
+    <div class="h-full p-4 bg-gray-50">
+        <EleSplitPanel Height="98vh" Radius="8px" Border="1px solid #e5e7eb">
+            <PanelItem Size="30%" Collapsible="true">
+                <div class="h-full bg-white border-r border-gray-100 p-3 overflow-auto">
+                    <div class="text-base font-semibold text-gray-800 mb-3">角色列表</div>
+
+                    <a href="@Model.AllUsersUrl" target="roleUsersFrame"
+                       class="flex items-center justify-between px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                        <span>全部角色</span>
+                        <span class="text-xs text-gray-400">@Model.AllUsersCount</span>
+                    </a>
+
+                    @foreach (var role in Model.Roles)
+                    {
+                        <a href="@role.UsersUrl" target="roleUsersFrame"
+                           class="flex items-center justify-between px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition mt-1">
+                            <span>@role.Name</span>
+                            <span class="text-xs text-gray-400">@role.UserCount</span>
+                        </a>
+                    }
+                </div>
+            </PanelItem>
+
+            <PanelItem IframeName="roleUsersFrame" IframeUrl="@Model.DefaultUsersUrl"></PanelItem>
+        </EleSplitPanel>
+    </div>
+    <EleApp />
+}
