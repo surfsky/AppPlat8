@@ -46,6 +46,7 @@ class EleManagerCore {
         this._themeMediaQuery = null;
         this._themeListenerBound = false;
         this.drawerHelper = new DrawerHelper(this);
+        this._controlState = {};
 
         // Server command whitelist, keys are allowed command names.
         this._serverCommandHandlers = {
@@ -98,6 +99,9 @@ class EleManagerCore {
             },
             closedrawer: () => {
                 return this.closeDrawer();
+            },
+            setcontrol: (args) => {
+                return this.setControl(args || {});
             }
         };
 
@@ -717,6 +721,63 @@ class EleManagerCore {
             return false;
         }
     }
+
+    normalizeControlTarget(target) {
+        const value = Utils.safeText(target, 120);
+        if (!value) return '';
+        const lower = value.toLowerCase();
+        if (lower.startsWith('field:') || lower.startsWith('controlid:')) {
+            return value;
+        }
+        return `field:${value}`;
+    }
+
+    getControlState(target) {
+        const key = this.normalizeControlTarget(target);
+        if (!key) return null;
+        return this._controlState[key] || null;
+    }
+
+    setControl(args = {}) {
+        const items = Array.isArray(args?.items) ? args.items : [];
+        if (!items.length) return false;
+
+        const patchedTargets = [];
+
+        for (const patch of items) {
+            const key = this.normalizeControlTarget(patch?.target);
+            if (!key) continue;
+            patchedTargets.push(key);
+
+            const current = this._controlState[key] || {};
+            const merged = { ...current };
+
+            if (typeof patch.enabled === 'boolean') merged.enabled = patch.enabled;
+            if (typeof patch.visible === 'boolean') merged.visible = patch.visible;
+            if (Object.prototype.hasOwnProperty.call(patch, 'data')) merged.data = patch.data;
+            if (Object.prototype.hasOwnProperty.call(patch, 'value')) merged.value = patch.value;
+
+            this._controlState[key] = merged;
+
+            if (Object.prototype.hasOwnProperty.call(patch, 'value')) {
+                const msg = {
+                    __eleSetControlValue: true,
+                    target: key,
+                    value: patch.value
+                };
+                try { window.postMessage(msg, '*'); } catch {}
+            }
+        }
+
+        try {
+            window.postMessage({
+                __eleControlPatched: true,
+                targets: patchedTargets
+            }, '*');
+        } catch {}
+
+        return true;
+    }
 }
 
 /***********************************************************************
@@ -762,6 +823,8 @@ class EleManager {
     static request(...args) { return Utils.request(...args); }
     static invoke(...args) { return EleManager._core.invoke(...args); }
     static executeServerCommand(...args) { return EleManager._core.executeServerCommand(...args); }
+    static setControl(...args) { return EleManager._core.setControl(...args); }
+    static getControlState(...args) { return EleManager._core.getControlState(...args); }
     static goto(...args) { return EleManager._core.goto(...args); }
     static changeMode(...args) { return EleManager._core.changeMode(...args); }
     static setTheme(...args) { return EleManager._core.setTheme(...args); }

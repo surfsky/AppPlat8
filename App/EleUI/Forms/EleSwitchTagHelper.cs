@@ -31,7 +31,17 @@ namespace App.EleUI
                     output.Attributes.SetAttribute("data-filter-model", GetPropName());
             }
 
+            var onChangeExpr = BuildOnChangePostExpression(context, "$event", "change");
+            if (!string.IsNullOrWhiteSpace(onChangeExpr))
+                output.Attributes.SetAttribute("v-on:change", onChangeExpr);
+
             await RenderWrapper(output);
+        }
+
+        protected override string BuildOnChangePayloadExpression(TagHelperContext context, string valueExpression, string eventName = "change")
+        {
+            var basePayload = base.BuildOnChangePayloadExpression(context, valueExpression, eventName);
+            return basePayload.TrimEnd('}') + ", controlType: 'EleSwitch' }";
         }
     }
 }

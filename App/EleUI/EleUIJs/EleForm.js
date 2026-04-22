@@ -5,7 +5,7 @@
  **********************************************************************/
 export class EleForm {
     constructor(defaultForm = {}, config = {}) {
-        const { ref, computed } = Vue;
+        const { ref, computed, reactive } = Vue;
         this.config = config;
         
         this.form = ref({ ...defaultForm });
@@ -31,6 +31,9 @@ export class EleForm {
         this.selectorTargetId = ref('');
         this.selectorTargetText = ref('');
         this.selectorMulti = ref(false);
+
+        // Per-target reactive version map. Only patched targets trigger recompute.
+        this.controlStateVersions = reactive({});
 
         // Dynamic Options (for TreeSelect etc)
         this.options = ref({}); // Stores options data by key
@@ -389,8 +392,104 @@ export class EleForm {
     }
 
     messageHandler(e) {
+        if (e?.data?.__eleControlPatched) {
+            const targets = Array.isArray(e.data.targets) ? e.data.targets : [];
+            for (const raw of targets) {
+                const key = this.normalizeControlTarget(raw);
+                if (!key) continue;
+                this.controlStateVersions[key] = (this.controlStateVersions[key] || 0) + 1;
+            }
+            return;
+        }
+
+        if (e?.data?.__eleSetControlValue) {
+            const target = (e.data.target || '').toString();
+            const value = e.data.value;
+            this.setControlValue(target, value);
+            return;
+        }
+
         if (e && e.data === 'RequestSave') {
             this.save();
+        }
+    }
+
+    normalizeControlTarget(target) {
+        const raw = (target || '').toString().trim();
+        if (!raw) return '';
+        const lower = raw.toLowerCase();
+        if (lower.startsWith('field:') || lower.startsWith('controlid:')) {
+            return raw;
+        }
+        return `field:${raw}`;
+    }
+
+    getControlPatch(target) {
+        const key = this.normalizeControlTarget(target);
+        if (!key || !EleManager || typeof EleManager.getControlState !== 'function') {
+            return null;
+        }
+
+        // Establish per-target reactive dependency.
+        void this.controlStateVersions[key];
+
+        return EleManager.getControlState(key);
+    }
+
+    resolveControlDisabled(target, baseDisabled = false) {
+        const patch = this.getControlPatch(target);
+        if (patch && typeof patch.enabled === 'boolean') {
+            return !patch.enabled;
+        }
+        return !!baseDisabled;
+    }
+
+    resolveControlVisible(target, baseVisible = true) {
+        const patch = this.getControlPatch(target);
+        if (patch && typeof patch.visible === 'boolean') {
+            return !!patch.visible;
+        }
+        return !!baseVisible;
+    }
+
+    normalizeSelectOptions(options) {
+        if (!Array.isArray(options)) return [];
+        return options.map(item => {
+            if (item && typeof item === 'object' && Object.prototype.hasOwnProperty.call(item, 'label') && Object.prototype.hasOwnProperty.call(item, 'value')) {
+                return { label: item.label, value: item.value };
+            }
+
+            if (item && typeof item === 'object') {
+                const label = item.label ?? item.text ?? item.name ?? item.title ?? item.value ?? '';
+                const value = item.value ?? item.id ?? item.key ?? item.code ?? label;
+                return { label, value };
+            }
+
+            return { label: item, value: item };
+        });
+    }
+
+    getControlOptions(target, fallback = []) {
+        const patch = this.getControlPatch(target);
+        const data = patch && Object.prototype.hasOwnProperty.call(patch, 'data') ? patch.data : fallback;
+        return this.normalizeSelectOptions(data);
+    }
+
+    getControlTreeData(target, fallback = []) {
+        const patch = this.getControlPatch(target);
+        const data = patch && Object.prototype.hasOwnProperty.call(patch, 'data') ? patch.data : fallback;
+        const list = Array.isArray(data) ? data : [];
+        return this.normalizeIds(list);
+    }
+
+    setControlValue(target, value) {
+        const normalized = this.normalizeControlTarget(target);
+        if (!normalized) return;
+
+        if (normalized.toLowerCase().startsWith('field:')) {
+            const field = normalized.substring('field:'.length);
+            if (!field) return;
+            this.form.value[field] = value;
         }
     }
 

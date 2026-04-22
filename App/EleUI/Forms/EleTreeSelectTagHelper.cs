@@ -74,18 +74,19 @@ namespace App.EleUI
             var childrenField = NormalizeFieldForVue(ChildrenField ?? "children");
 
             // Remote data source via API
+            var target = ResolveControlTarget(context) ?? "field:unknown";
             if (!string.IsNullOrEmpty(Api))
             {
                 var url = Api;
-                output.Attributes.SetAttribute(":data", $"options['{propName}']");                
+                output.Attributes.SetAttribute(":data", ToVueExpression($"getControlTreeData('{EscapeJs(target)}', options['{propName}'])"));
                 output.Attributes.SetAttribute("data-source", url);
                 output.Attributes.SetAttribute("data-key", propName);
                 output.Attributes.SetAttribute("data-tree-id-field", idField);
                 output.Attributes.SetAttribute("data-tree-children-field", childrenField);
                 output.Attributes.SetAttribute("node-key", idField);
-                output.Attributes.SetAttribute(":props", $"{{ label: '{nameField}', children: '{childrenField}', value: '{idField}' }}");
+                output.Attributes.SetAttribute(":props", ToVueExpression($"{{ label: '{nameField}', children: '{childrenField}', value: '{idField}' }}"));
                 output.Attributes.SetAttribute("default-expand-all", "true");
-                output.Attributes.SetAttribute(":key", $"options['{propName}'] ? options['{propName}'].length : 0");
+                output.Attributes.SetAttribute(":key", ToVueExpression($"options['{propName}'] ? options['{propName}'].length : 0"));
             }
 
             // Use items
@@ -95,18 +96,28 @@ namespace App.EleUI
                 {
                     var (sourceIdField, sourceNameField, sourceChildrenField) = ResolveItemsFieldNames(enumerable);
                     var jsonItems = Items.ToJson();
-                    output.Attributes.SetAttribute(":data", $"normalizeIds({jsonItems})");
+                    output.Attributes.SetAttribute(":data", ToVueExpression($"getControlTreeData('{EscapeJs(target)}', normalizeIds({jsonItems}))"));
                     output.Attributes.SetAttribute("data-static-items", jsonItems);
                     output.Attributes.SetAttribute("data-tree-id-field", sourceIdField);
                     output.Attributes.SetAttribute("data-tree-children-field", sourceChildrenField);
                     output.Attributes.SetAttribute("node-key", sourceIdField);
-                    output.Attributes.SetAttribute(":props", $"{{ label: '{sourceNameField}', children: '{sourceChildrenField}', value: '{sourceIdField}' }}");
+                    output.Attributes.SetAttribute(":props", ToVueExpression($"{{ label: '{sourceNameField}', children: '{sourceChildrenField}', value: '{sourceIdField}' }}"));
                     output.Attributes.SetAttribute("default-expand-all", "true");
-                    output.Attributes.SetAttribute(":key", $"({jsonItems} || []).length");
+                    output.Attributes.SetAttribute(":key", ToVueExpression($"({jsonItems} || []).length"));
                 }
             }
 
+            var onChangeExpr = BuildOnChangePostExpression(context, "$event", "change");
+            if (!string.IsNullOrWhiteSpace(onChangeExpr))
+                output.Attributes.SetAttribute("v-on:change", onChangeExpr);
+
             await RenderWrapper(output);
+        }
+
+        protected override string BuildOnChangePayloadExpression(TagHelperContext context, string valueExpression, string eventName = "change")
+        {
+            var basePayload = base.BuildOnChangePayloadExpression(context, valueExpression, eventName);
+            return basePayload.TrimEnd('}') + $", controlType: 'EleTreeSelect', multiple: {(Multiple ? "true" : "false")} }}";
         }
 
         // Get object field value by trying multiple possible field names

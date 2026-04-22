@@ -12,6 +12,7 @@ using App.HttpApi;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Converters;
+using System.Linq.Expressions;
 using App.EleUI;
 
 
@@ -31,7 +32,8 @@ namespace App.EleUI
         ShowLoading,
         CloseLoading,
         OpenDrawer,
-        CloseDrawer
+        CloseDrawer,
+        SetControl
     }
 
     /// <summary>
@@ -133,6 +135,111 @@ namespace App.EleUI
         string ServerHandler = null,
         string InputPattern = null,
         string InputErrorMessage = null);
+
+    /// <summary>
+    /// 控件目标类型
+    /// </summary>
+    public enum ControlTargetType
+    {
+        Field,
+        ControlId
+    }
+
+    /// <summary>
+    /// 强类型控件目标
+    /// </summary>
+    public readonly record struct ControlTarget(ControlTargetType Type, string Name)
+    {
+        public static ControlTarget Field(string fieldExpress) => new(ControlTargetType.Field, fieldExpress);
+        public static ControlTarget ControlId(string controlId) => new(ControlTargetType.ControlId, controlId);
+
+        public override string ToString()
+        {
+            var name = (Name ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(name))
+                return string.Empty;
+
+            var prefix = Type == ControlTargetType.ControlId ? "controlId" : "field";
+            return $"{prefix}:{name}";
+        }
+    }
+
+    /// <summary>
+    /// 控件变更事件请求（通用）
+    /// </summary>
+    public class ControlChangeRequest
+    {
+        public string EventName { get; set; }
+        public string ControlId { get; set; }
+        public string FieldExpress { get; set; }
+        public object Value { get; set; }
+        public Newtonsoft.Json.Linq.JObject Form { get; set; }
+    }
+
+    /// <summary>
+    /// 控件命令链式构建器
+    /// </summary>
+    public sealed class ControlCommandBuilder
+    {
+        private readonly List<ControlPatchArgs> _items = new();
+
+        public ControlCommandBuilder SetControl(
+            ControlTarget target,
+            bool? Enabled = null,
+            bool? Visible = null,
+            object Data = null,
+            object Value = null)
+        {
+            _items.Add(new ControlPatchArgs(target.ToString(), Enabled, Visible, Data, Value));
+            return this;
+        }
+
+        public ControlCommandBuilder SetControl<T>(
+            Expression<Func<T, object>> fieldExpress,
+            bool? Enabled = null,
+            bool? Visible = null,
+            object Data = null,
+            object Value = null)
+        {
+            var fieldName = EleManager.ResolveFieldExpress(fieldExpress);
+            return SetControl(ControlTarget.Field(fieldName), Enabled, Visible, Data, Value);
+        }
+
+        public ControlCommandBuilder SetControlEnable<T>(Expression<Func<T, object>> fieldExpress, bool enabled)
+        {
+            return SetControl(fieldExpress, Enabled: enabled);
+        }
+
+        public ControlCommandBuilder SetControlVisible<T>(Expression<Func<T, object>> fieldExpress, bool visible)
+        {
+            return SetControl(fieldExpress, Visible: visible);
+        }
+
+        public ControlCommandBuilder SetControlData<T>(Expression<Func<T, object>> fieldExpress, object data, object value = null)
+        {
+            return SetControl(fieldExpress, Data: data, Value: value);
+        }
+
+        public IActionResult ToActionResult()
+        {
+            return EleManager.SetControl(_items);
+        }
+    }
+
+    /// <summary>
+    /// 控件状态变更项
+    /// </summary>
+    public record ControlPatchArgs(
+        string Target,
+        bool? Enabled = null,
+        bool? Visible = null,
+        object Data = null,
+        object Value = null);
+
+    /// <summary>
+    /// 控件状态变更参数
+    /// </summary>
+    public record SetControlArgs(List<ControlPatchArgs> Items);
 
 
     /// <summary>
@@ -316,6 +423,92 @@ namespace App.EleUI
                     ServerHandler: serverHandler,
                     InputPattern: inputPattern,
                     InputErrorMessage: inputErrorMessage));
+        }
+
+        /// <summary>链式起点：强类型字段表达式</summary>
+        public static ControlCommandBuilder SetControl<T>(
+            Expression<Func<T, object>> fieldExpress,
+            bool? Enabled = null,
+            bool? Visible = null,
+            object Data = null,
+            object Value = null)
+        {
+            return new ControlCommandBuilder().SetControl(fieldExpress, Enabled, Visible, Data, Value);
+        }
+
+        /// <summary>链式起点：强类型目标</summary>
+        public static ControlCommandBuilder SetControl(
+            ControlTarget target,
+            bool? Enabled = null,
+            bool? Visible = null,
+            object Data = null,
+            object Value = null)
+        {
+            return new ControlCommandBuilder().SetControl(target, Enabled, Visible, Data, Value);
+        }
+
+        /// <summary>批量设置控件状态（底层入口）</summary>
+        public static IActionResult SetControl(IEnumerable<ControlPatchArgs> items)
+        {
+            var list = (items ?? Enumerable.Empty<ControlPatchArgs>())
+                .Select(i => new ControlPatchArgs(
+                    Target: NormalizeControlTarget(i.Target),
+                    Enabled: i.Enabled,
+                    Visible: i.Visible,
+                    Data: i.Data,
+                    Value: i.Value))
+                .ToList();
+
+            return BuildClientCommandResult(
+                ClientCommandType.SetControl,
+                new SetControlArgs(list));
+        }
+
+        private static string NormalizeControlTarget(string target)
+        {
+            var normalized = (target ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+                return normalized;
+
+            if (normalized.StartsWith("field:", StringComparison.OrdinalIgnoreCase)
+                || normalized.StartsWith("controlId:", StringComparison.OrdinalIgnoreCase))
+                return normalized;
+
+            return $"field:{normalized}";
+        }
+
+        private static string NormalizeControlTarget(ControlTarget target)
+        {
+            return NormalizeControlTarget(target.ToString());
+        }
+
+        public static ControlTarget FieldTarget(string fieldExpress)
+        {
+            return ControlTarget.Field(fieldExpress);
+        }
+
+        public static ControlTarget ControlIdTarget(string controlId)
+        {
+            return ControlTarget.ControlId(controlId);
+        }
+
+        internal static string ResolveFieldExpress<T>(Expression<Func<T, object>> expr)
+        {
+            if (expr == null)
+                throw new ArgumentNullException(nameof(expr));
+
+            MemberExpression memberExpr = expr.Body as MemberExpression;
+            if (memberExpr == null && expr.Body is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
+                memberExpr = unary.Operand as MemberExpression;
+
+            if (memberExpr == null)
+                throw new ArgumentException("字段表达式必须是属性访问，如 t => t.CountyId", nameof(expr));
+
+            var name = memberExpr.Member?.Name;
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("无法解析字段名称", nameof(expr));
+
+            return char.ToLowerInvariant(name[0]) + name.Substring(1);
         }
     }
 }

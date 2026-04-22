@@ -48,6 +48,46 @@ namespace App.EleUI
     /// </summary>
     public static class EleHelper
     {
+        /// <summary>字符串序列转为选项列表（Value=Label）</summary>
+        public static List<ListItem> ToOptions(IEnumerable<string> items)
+        {
+            if (items == null) return new List<ListItem>();
+            return items
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => new ListItem(x, x))
+                .ToList();
+        }
+
+        /// <summary>对象序列按选择器转为选项列表</summary>
+        public static List<ListItem> ToOptions<T>(
+            IEnumerable<T> items,
+            Func<T, object> valueSelector,
+            Func<T, string> labelSelector)
+        {
+            if (items == null) return new List<ListItem>();
+            if (valueSelector == null) throw new ArgumentNullException(nameof(valueSelector));
+            if (labelSelector == null) throw new ArgumentNullException(nameof(labelSelector));
+
+            return items
+                .Select(x => new ListItem(valueSelector(x), labelSelector(x)))
+                .ToList();
+        }
+
+        /// <summary>对象序列按同一字段转为选项列表（Value=Label）</summary>
+        public static List<ListItem> ToOptions<T>(
+            IEnumerable<T> items,
+            Func<T, string> textSelector)
+        {
+            if (items == null) return new List<ListItem>();
+            if (textSelector == null) throw new ArgumentNullException(nameof(textSelector));
+
+            return items
+                .Select(x => textSelector(x))
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => new ListItem(x, x))
+                .ToList();
+        }
+
         /// <summary>将枚举转换为选项列表</summary>
         public static List<ListItem> ToListItems(Type enumType)
         {

@@ -1,0 +1,24 @@
+@page
+@model App.Pages.EleUISamples.CitySelectModel
+
+@{
+    ViewData["Title"] = "省市县联动示例";
+}
+
+@section body {
+    <EleForm LabelPosition="Right">
+        <EleLabel Label="省市县联动（服务端OnChange + SetControl）" FillRow="true" Size="16px"></EleLabel>
+
+        <EleSelect For="Item.ProvinceId" Items="Model.ProvinceOptions" OnChange="ProvinceChanged"></EleSelect>
+        <EleSelect For="Item.CityId" Items="Model.CityOptions" OnChange="CityChanged" Enabled="false"></EleSelect>
+        <EleSelect For="Item.CountyId" Items="Model.CountyOptions" Enabled="false"></EleSelect>
+
+        <EleLabel Label="其它控件 OnChange 示例" FillRow="true" Size="16px"></EleLabel>
+        <EleSwitch For="Item.CountyEnabled" OnChange="CountyEnabledChanged"></EleSwitch>
+        <EleTreeSelect For="Item.RegionNodeId" Items="Model.RegionTree" OnChange="RegionChanged"></EleTreeSelect>
+
+        <Bottom>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

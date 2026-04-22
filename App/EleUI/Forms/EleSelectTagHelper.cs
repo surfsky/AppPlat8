@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using App.Utils;
 
 namespace App.EleUI
@@ -46,34 +47,38 @@ namespace App.EleUI
             if (AllowCreate)                        output.Attributes.SetAttribute("allow-create", "true");
             if (Filterable)                         output.Attributes.SetAttribute("filterable", "true");
 
-            // child content
+            // Build unified options list for runtime override (SetControlData)
             var childContent = await output.GetChildContentAsync();
-            var contentHtml = "";
-
-            // 1. Generate options from Enum if For is Enum
-            if (For != null)
-            {
-                contentHtml = AppendFromEnum(contentHtml);
-            }
-
-            // 2. Generate options from Items
-            if (Items != null)
-            {
-                List<SelectListItem> list = ParseItems();
-                contentHtml = AppendFromItems(contentHtml, list);
-            }
-
-            // 3. Append child content (manual options)
             var manualOptions = childContent.GetContent();
-            contentHtml += manualOptions;
 
-            // 4. Built-in options for bool/bool? when no Items and no manual options provided
+            var options = new List<SelectListItem>();
+            if (For != null)
+                options = AppendFromEnum(options);
+
+            if (Items != null)
+                options.AddRange(ParseItems());
+
             if (Items == null && string.IsNullOrWhiteSpace(manualOptions) && IsBooleanSelectTarget())
+                options = AppendFromBool(options);
+
+            // Keep manual options mode unchanged.
+            if (!string.IsNullOrWhiteSpace(manualOptions))
             {
-                contentHtml = AppendFromBool(contentHtml);
+                var contentHtml = AppendFromItems(string.Empty, options) + manualOptions;
+                output.Content.SetHtmlContent(contentHtml);
+            }
+            else
+            {
+                var target = ResolveControlTarget(context) ?? "field:unknown";
+                var defaultOptionsJson = BuildDefaultOptionsJson(options);
+                var contentHtml = BuildDynamicSelectOptionsHtml(target, defaultOptionsJson);
+                output.Content.SetHtmlContent(contentHtml);
             }
 
-            output.Content.SetHtmlContent(contentHtml);
+            var onChangeExpr = BuildOnChangePostExpression(context, "$event", "change");
+            if (!string.IsNullOrWhiteSpace(onChangeExpr))
+                output.Attributes.SetAttribute("v-on:change", onChangeExpr);
+
             await RenderWrapper(output);
         }
 
@@ -85,15 +90,15 @@ namespace App.EleUI
             return type == typeof(bool);
         }
 
-        private string AppendFromBool(string contentHtml)
+        private List<SelectListItem> AppendFromBool(List<SelectListItem> list)
         {
-            contentHtml += @"<el-option label=""是"" :value=""true""></el-option>";
-            contentHtml += @"<el-option label=""否"" :value=""false""></el-option>";
-            return contentHtml;
+            list.Add(new SelectListItem("是", "true"));
+            list.Add(new SelectListItem("否", "false"));
+            return list;
         }
 
         /// <summary>根据For属性生成选项</summary>
-        private string AppendFromEnum(string contentHtml)
+        private List<SelectListItem> AppendFromEnum(List<SelectListItem> list)
         {
             // Handle List<Enum> or Enum[] for multiple select
             var type = For.ModelExplorer.ModelType;
@@ -113,11 +118,71 @@ namespace App.EleUI
                 foreach (var value in Enum.GetValues(type))
                 {
                     var info = App.Utils.EnumHelper.GetEnumInfo(value);
-                    contentHtml += $@"<el-option label=""{info.Title}"" :value=""{(int)info.Value}""></el-option>";
+                    list.Add(new SelectListItem(info.Title, ((int)info.Value).ToString()));
                 }
             }
 
-            return contentHtml;
+            return list;
+        }
+
+        protected override string BuildOnChangePayloadExpression(TagHelperContext context, string valueExpression, string eventName = "change")
+        {
+            var basePayload = base.BuildOnChangePayloadExpression(context, valueExpression, eventName);
+            return basePayload.TrimEnd('}') + $", controlType: 'EleSelect', multiple: {(Multiple ? "true" : "false")} }}";
+        }
+
+        private string BuildDefaultOptionsJson(List<SelectListItem> list)
+        {
+            var targetType = GetSelectTargetType();
+            var defaults = list.Select(i => new
+            {
+                label = i.Text,
+                value = ConvertToTargetType(i.Value, targetType)
+            }).ToList();
+            return JsonConvert.SerializeObject(defaults);
+        }
+
+        private Type GetSelectTargetType()
+        {
+            var targetType = For?.ModelExplorer.ModelType;
+            if (targetType == null)
+                return typeof(string);
+
+            targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+            if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                targetType = targetType.GetGenericArguments()[0];
+                targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+            }
+            else if (targetType.IsArray)
+            {
+                targetType = targetType.GetElementType();
+                targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+            }
+
+            return targetType;
+        }
+
+        private object ConvertToTargetType(string raw, Type targetType)
+        {
+            if (targetType == typeof(bool) && bool.TryParse(raw, out var boolValue))
+                return boolValue;
+
+            if ((targetType == typeof(int) || targetType == typeof(long) || targetType == typeof(short)) && long.TryParse(raw, out var longValue))
+            {
+                if (targetType == typeof(int)) return (int)longValue;
+                if (targetType == typeof(short)) return (short)longValue;
+                return longValue;
+            }
+
+            if ((targetType == typeof(double) || targetType == typeof(decimal) || targetType == typeof(float)) && decimal.TryParse(raw, out var decimalValue))
+            {
+                if (targetType == typeof(double)) return (double)decimalValue;
+                if (targetType == typeof(float)) return (float)decimalValue;
+                return decimalValue;
+            }
+
+            return raw;
         }
 
         /// <summary>根据Items属性生成选项</summary>

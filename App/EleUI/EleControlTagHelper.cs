@@ -5,6 +5,7 @@ using App.Utils;
 using System;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Net;
 
 namespace App.EleUI
 {
@@ -49,6 +50,18 @@ namespace App.EleUI
         /// <summary>控件是否可见。默认 true</summary>
         [HtmlAttributeName("Visible")]
         public bool Visible { get; set; } = true;
+
+        /// <summary>控件标识。用于服务端精确控制。</summary>
+        [HtmlAttributeName("ControlId")]
+        public string ControlId { get; set; }
+
+        /// <summary>字段表达式。默认会由子类推导，例如 For="Item.Name" -> name。</summary>
+        [HtmlAttributeName("FieldExpress")]
+        public string FieldExpress { get; set; }
+
+        /// <summary>服务端 OnChange 处理器名称。设置后将触发 postHandler。</summary>
+        [HtmlAttributeName("OnChange")]
+        public string OnChange { get; set; }
 
         //
         // vue 相关属性
@@ -138,6 +151,13 @@ namespace App.EleUI
             if (!string.IsNullOrEmpty(style))
                 output.Attributes.SetAttribute("style", style);
 
+            var controlId = ResolveControlId(context);
+            var fieldExpress = ResolveFieldExpress(context);
+            if (!string.IsNullOrWhiteSpace(controlId))
+                output.Attributes.SetAttribute("data-ele-control-id", controlId);
+            if (!string.IsNullOrWhiteSpace(fieldExpress))
+                output.Attributes.SetAttribute("data-ele-field", fieldExpress);
+
             // Enable/Disable
             var enabledForPath = GetBindPath(EnabledFor);
             if (!string.IsNullOrWhiteSpace(enabledForPath))
@@ -151,6 +171,100 @@ namespace App.EleUI
                 if (context.AllAttributes.ContainsName("Enabled"))
                     output.Attributes.SetAttribute(":disabled", (!Enabled).ToString().ToLower());
             }
+        }
+
+        /// <summary>解析控件标识。可由子类重载。</summary>
+        protected virtual string ResolveControlId(TagHelperContext context)
+        {
+            return string.IsNullOrWhiteSpace(ControlId) ? null : ControlId.Trim();
+        }
+
+        /// <summary>解析字段表达式。可由子类重载。</summary>
+        protected virtual string ResolveFieldExpress(TagHelperContext context)
+        {
+            return string.IsNullOrWhiteSpace(FieldExpress) ? null : FieldExpress.Trim();
+        }
+
+        /// <summary>构造 OnChange payload 表达式。子类可重写扩展字段。</summary>
+        protected virtual string BuildOnChangePayloadExpression(TagHelperContext context, string valueExpression, string eventName = "change")
+        {
+            var controlIdLiteral = ToJsStringOrNull(ResolveControlId(context));
+            var fieldExpressLiteral = ToJsStringOrNull(ResolveFieldExpress(context));
+            var formModel = ResolveFormModelName(context);
+
+            return $"{{ eventName: '{EscapeJs(eventName)}', controlId: {controlIdLiteral}, fieldExpress: {fieldExpressLiteral}, value: {valueExpression}, form: {formModel} }}";
+        }
+
+        /// <summary>构造 OnChange 触发脚本表达式。子类可重写。</summary>
+        protected virtual string BuildOnChangePostExpression(TagHelperContext context, string valueExpression, string eventName = "change")
+        {
+            if (string.IsNullOrWhiteSpace(OnChange))
+                return null;
+
+            var payloadExpr = BuildOnChangePayloadExpression(context, valueExpression, eventName);
+            return $"postHandler('{EscapeJs(OnChange)}', {payloadExpr})";
+        }
+
+        protected string ResolveFormModelName(TagHelperContext context)
+        {
+            if (context.Items.ContainsKey("EleFormModel") && context.Items["EleFormModel"] is string model && !string.IsNullOrWhiteSpace(model))
+                return model;
+            return "form";
+        }
+
+        protected string ToJsStringOrNull(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "null";
+            return $"'{EscapeJs(value)}'";
+        }
+
+        protected string EscapeJs(string value)
+        {
+            return (value ?? string.Empty)
+                .Replace("\\", "\\\\")
+                .Replace("'", "\\'")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n");
+        }
+
+        protected string EscapeJsDoubleQuoted(string value)
+        {
+            return (value ?? string.Empty)
+                .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n");
+        }
+
+        /// <summary>
+        /// 生成 EleSelect 动态选项模板（用于 SetHtmlContent 场景）。
+        /// 使用单引号 HTML 属性包裹 Vue 表达式，避免 JSON 双引号破坏属性边界。
+        /// </summary>
+        protected string BuildDynamicSelectOptionsHtml(string target, string defaultOptionsJson)
+        {
+            var targetLiteral = $"\"{EscapeJsDoubleQuoted(target)}\"";
+            var expr = $"opt in getControlOptions({targetLiteral}, {defaultOptionsJson})";
+            return $"<el-option v-for='{expr}' :key='\"\" + opt.value' :label='opt.label' :value='opt.value'></el-option>";
+        }
+
+        /// <summary>
+        /// 统一处理 HTML 属性值字面量（会进行 HTML 编码）。
+        /// 适用于 data-*、title、class 等普通属性。
+        /// </summary>
+        protected string ToHtmlAttributeLiteral(string value)
+        {
+            return WebUtility.HtmlEncode(value ?? string.Empty);
+        }
+
+        /// <summary>
+        /// 统一处理 Vue 表达式片段（不做 HTML 编码）。
+        /// 适用于 :data、:props、v-on:change 等属性值。
+        /// 注意：调用 SetAttribute 时框架会在最终 HTML 输出阶段进行必要转义。
+        /// </summary>
+        protected string ToVueExpression(string expression)
+        {
+            return string.IsNullOrWhiteSpace(expression) ? "null" : expression;
         }
 
 

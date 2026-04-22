@@ -156,13 +156,65 @@ namespace App.EleUI
             }
 
             // Enable/Disable
-            if (!context.AllAttributes.ContainsName("Enabled") && EnabledFor == null)
-                output.Attributes.SetAttribute(":disabled", "readOnly");
+            string baseDisabledExpr;
+            var enabledForPath = GetBindPath(EnabledFor);
+            if (!string.IsNullOrWhiteSpace(enabledForPath))
+            {
+                var clientPath = ToClientFormPath(enabledForPath);
+                baseDisabledExpr = $"!({clientPath})";
+            }
+            else if (context.AllAttributes.ContainsName("Enabled"))
+            {
+                baseDisabledExpr = (!Enabled).ToString().ToLower();
+            }
+            else
+            {
+                baseDisabledExpr = "readOnly";
+            }
+
+            var target = ResolveControlTarget(context);
+            if (!string.IsNullOrWhiteSpace(target))
+            {
+                var safeTarget = EscapeJs(target);
+                output.Attributes.SetAttribute(":disabled", $"(typeof resolveControlDisabled === 'function' ? resolveControlDisabled('{safeTarget}', {baseDisabledExpr}) : ({baseDisabledExpr}))");
+                output.Attributes.SetAttribute("v-show", $"(typeof resolveControlVisible === 'function' ? resolveControlVisible('{safeTarget}', true) : true)");
+            }
+            else
+            {
+                output.Attributes.SetAttribute(":disabled", baseDisabledExpr);
+            }
 
             // Clearable default logic
             bool isClearable = this.Clearable ?? (!context.Items.ContainsKey("IsEleForm"));  //???
             if (isClearable)
                  output.Attributes.SetAttribute("clearable", "true");
+        }
+
+        protected override string ResolveControlId(TagHelperContext context)
+        {
+            if (!string.IsNullOrWhiteSpace(ControlId))
+                return ControlId.Trim();
+            return ResolveControlTarget(context);
+        }
+
+        protected override string ResolveFieldExpress(TagHelperContext context)
+        {
+            if (!string.IsNullOrWhiteSpace(FieldExpress))
+                return FieldExpress.Trim();
+            return GetPropName();
+        }
+
+        protected string ResolveControlTarget(TagHelperContext context)
+        {
+            var field = ResolveFieldExpress(context);
+            if (!string.IsNullOrWhiteSpace(field))
+                return $"field:{field}";
+
+            var controlId = !string.IsNullOrWhiteSpace(ControlId) ? ControlId.Trim() : null;
+            if (!string.IsNullOrWhiteSpace(controlId))
+                return $"controlId:{controlId}";
+
+            return null;
         }
 
         protected async Task RenderWrapper(TagHelperOutput output)

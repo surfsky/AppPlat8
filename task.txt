@@ -17,18 +17,19 @@ EleUI 优化
     复杂页面*******
         实现Panel控件及测试，一个页面可以展示多个panel，可联动
         创建：角色、用户双列表混合视图测试页面
+
     考虑合并 EleItem, EleControl
     将 EleUI 迁移为一个单独项目
         js也可以正常显示编程提示
         Doc：markdown文件，自动生成帮助网页
         编译时会自动将多个js合并成eleui.js和eleui.css
         <script src=eleui.js> 会自动引用eleui.css
-    优化通用drawer弹窗
-        实现右滑关闭逻辑（含提示）
-        检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
-        实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
-    样式
-        实现 Theme 逻辑：dark/light（容后）
+    /优化通用drawer弹窗
+        /实现右滑关闭逻辑（含提示）
+        /检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
+        /实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
+    /样式
+        /实现 Theme 逻辑：dark/light（容后）
     剥离App
         剥离 <EleFormApp>，修改所有相关页面
         剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
@@ -155,6 +156,19 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2026.04.22
+    /实现服务器端对控件的控制逻辑
+        现在这种vue 方式，控件都是没有ID的，如何实现服务器端动态控制客户端控件的可用性、可见性、数据？
+        考虑实现
+            实现 EleControl.OnChange 服务器端事件
+            实现 EleManager.SetControlEnable(fieldExpress/controlId, true/false) 
+            实现 EleManager.SetControlVisible(.....)
+            实现 EleManager.SetControlData(...)
+            实现相关的 EleManager.js 相关方法
+            EleManager.SetControl<T>(t=>t.filed, Enabled:true, Visible:true, ....)
+        写一个省市县联动下拉框示例：/pages/EleUISamples/Controls/CitySelect
+        请先做规划，我确定后再开发
+
 2026/04/21
     /新增 CheckObject.IsUsing 在用字段
     /EleSelect 支持bool
