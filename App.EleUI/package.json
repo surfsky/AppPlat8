@@ -1,0 +1,13 @@
+{
+  "name": "app-eleui",
+  "private": true,
+  "version": "8.0.0",
+  "description": "Build assets for App.EleUI",
+  "scripts": {
+    "build": "node ./build.mjs",
+    "build:watch": "node ./build.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}

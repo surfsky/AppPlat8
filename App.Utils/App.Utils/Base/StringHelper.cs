@@ -382,19 +382,29 @@ namespace App.Utils
         }
 
 
-        /// <summary>获取遮罩文本（XXXXXXXXXX****XXXX）</summary>
-        /// <param name="n">文本最终长度</param>
-        /// <param name="maskChar">遮罩字符（默认为.）</param>
-        public static string Mask(this string text, int n, string maskChar="*")
+        /// <summary>按“从右向左（base-0）”定位并遮罩文本。</summary>
+        /// <param name="lastIndex">从右往左数的索引（base-0，0表示最后一个字符）。</param>
+        /// <param name="length">需要连续遮罩的字符个数（向左延展）。</param>
+        /// <param name="maskChar">遮罩字符。</param>
+        public static string Mask(this string text, int lastIndex = 3, int length = 4, char maskChar = '*')
         {
-            if (text.IsEmpty() || text.Length < n)
+            if (text.IsEmpty())
                 return text;
-            else
-            {
-                int len = text.Length;
-                string masks = maskChar.Repeat(4);
-                return text.Substring(0, len - 8) + masks + text.Substring(n - 4, 4);
-            }
+            if (lastIndex < 0 || length <= 0)
+                return text;
+            if (lastIndex >= text.Length)
+                return text;
+
+            var rightPos = text.Length - 1 - lastIndex;
+            var start = rightPos - length + 1;
+            if (start < 0)
+                start = 0;
+
+            var chars = text.ToCharArray();
+            for (int i = start; i <= rightPos; i++)
+                chars[i] = maskChar;
+
+            return new string(chars);
         }
 
         /// <summary>获取摘要。格式如 xxxxxx... </summary>

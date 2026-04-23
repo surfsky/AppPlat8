@@ -5,13 +5,6 @@
     实现网页水印（可找WebConfig 进行配置），参考https://element-plus.org/en-US/component/watermark
     删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
 
-EleUI 优化
-    将 EleUI 迁移为一个单独项目
-        js也可以正常显示编程提示
-        Doc：markdown文件，自动生成帮助网页
-        编译时会自动将多个js合并成eleui.js和eleui.css
-        <script src=eleui.js> 会自动引用eleui.css
-
 数据模型的UI自动化展示和编辑（*）
     创建自动展示列表的页面 UISetting
     创建自动展示表单编辑的页面
@@ -21,8 +14,7 @@ EleUI 优化
     用于oa文档流转
 
 重构数据库
-    Entity
-        Online 逻辑有点啰嗦，可参考 appplat4实现（容后）
+    Entity：Online 逻辑有点啰嗦，可参考 appplat4实现（容后）
     改用 postgresql, 可实现全文检索
 
 AI 优化
@@ -43,18 +35,12 @@ AI 优化
         可ai对话的数据库管理工具/网站
 
 
-系统做得很艰难
-    /建设方案文档写得不够（可以让AI辅助编写），返工很多。
-    /RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
-    前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
-
-
 
 --------------------------------------------------------
 Task - 业务
 --------------------------------------------------------
 驾驶舱***
-    UI
+    UI 设计
     详见 《260402-龙港市应急驾驶舱规划方案v3》
     图层数据均来自统一接口，可扩展字段并展示
     支持暗黑模式的UI、用theme=dark/light切换
@@ -68,6 +54,13 @@ Task - 业务
         实现一个统计报表页面：查询条件+结果表格或图表
         实现暗黑模式及url参数（在驾驶舱使用时可以切换为暗黑模式）
 
+实现隐患排查页面***
+    控件如何联动？如省市县，想在服务器端处理。
+    实现复杂页面，能用EleControl就用，不能用就用原生Elementplus网页控件
+    给定UI界面，和AI讨论这种父子表结构的页面该如何操作
+    把隐患排查的数据接口写好
+
+
 部署
     用笔记本？局内政务网，可使用公网，需部署防火墙只运行局内网段访问
     用服务器？现在只开公网，以后迁移到内网，需部署防火墙
@@ -80,11 +73,6 @@ Task - 业务
     导入检查表
 
 核心业务
-    实现隐患排查页面***
-        控件如何联动？如省市县，想在服务器端处理。
-        实现复杂页面，能用EleControl就用，不能用就用原生Elementplus网页控件
-        给定UI界面，和AI讨论这种父子表结构的页面该如何操作
-        把隐患排查的数据接口写好
     实现检查任务流程
         检查任务：包括检查人、检查组织、检查表单的选择
         bug：标签表单，保存新标签后，并未刷新父节点下拉树。可以用新增的 OnChange 方法了
@@ -141,6 +129,30 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2026.04.23
+    /将 EleUI 迁移为一个单独项目
+        目录迁移为
+            控件项目迁移：   App/EleUI  -> App.EleUI/EleUI
+            控件测试项目迁移：App/Pages/EleUISamples -> App.EleUI/EleUISamples
+        原先的内嵌资源方式如：<script src="/res/App.EleUI.EleUIJs.EleUI.js" type="module"></script> 方式虽然很方便，但是各js之间互相引用相当麻烦，且无法智能提示，如
+            import { EleTableAppBuilder } from "./App.EleUI.EleUIJs.EleTableAppBuilder.js";
+            import { EleFormAppBuilder } from "./App.EleUI.EleUIJs.EleFormAppBuilder.js";
+            相互之间的代码无法智能提示
+        现在想弄个合适的方式
+            js可以正常互相引用，正常智能编程提示
+            编译时会自动将多个js 和 css 合并成 eleui.js
+            使用时如：<script src="xxx/eleui.js"> 会自动引用相关js/css，且可以智能提示
+        做合理的重构，减小单一文件的大小，，做好必要的英文注释
+        将 EleUI 控件项目发布为 nuget 包
+    /系统做得很艰难
+        /建设方案文档写得不够（可以让AI辅助编写），返工很多。
+        /RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
+        /前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
+
+
+    
+
+
 2026.04.22
     /考虑合并 EleItem, EleControl （没必要，有些容器继承自EleItem）
     /剥离App

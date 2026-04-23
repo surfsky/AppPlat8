@@ -37,6 +37,7 @@
 
     # 运行项目
     dotnet run --project App
+    dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
 
     # 或直接运行bin目录下的 dll 文件
     dotnet app.dll --urls=http://localhost:6060;http://abc.org

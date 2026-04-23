@@ -97,10 +97,6 @@
     <None Remove="Thumbs.db" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="EleUI\EleUIJs\*.js" />
-    <EmbeddedResource Include="EleUI\EleUIJs\*.css" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="BootstrapBlazor" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.0" />
@@ -384,13 +380,9 @@
     <ProjectReference Include="..\App.Utils\App.Utils\App.Utils.csproj" />
     <ProjectReference Include="..\App.Web\App.Web.csproj" />
     <ProjectReference Include="..\App.BLL\App.BLL\App.BLL.csproj" />
+    <ProjectReference Include="..\App.EleUI\App.EleUI.csproj" />
   </ItemGroup>
   <ItemGroup>
 
-  </ItemGroup>
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="wwwroot\js\EleUIJs\EleForm.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\js\EleUIJs\EleManager.js" />
-    <_ContentIncludedByDefault Remove="wwwroot\js\EleUIJs\EleTable.js" />
   </ItemGroup>
 </Project>

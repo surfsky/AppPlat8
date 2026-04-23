@@ -1,4 +1,4 @@
-const CACHE_NAME = 'appplat-cache-v3';
+const CACHE_NAME = 'appplat-cache-v4';
 const APP_SHELL = [
   '/',
   '/Login',
@@ -42,10 +42,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Avoid stale framework modules and dynamic Razor handlers.
-  // Always use network for /res/* and requests with ?handler=...
+  // Always use network for /res/*, App.EleUI static assets and requests with ?handler=...
   const hasHandler = requestUrl.searchParams.has('handler');
   const isRuntimeModule = requestUrl.pathname.startsWith('/res/');
-  if (hasHandler || isRuntimeModule) {
+  const isEleUiStaticAsset = requestUrl.pathname.startsWith('/_content/App.EleUI/');
+  if (hasHandler || isRuntimeModule || isEleUiStaticAsset) {
     event.respondWith(fetch(event.request));
     return;
   }

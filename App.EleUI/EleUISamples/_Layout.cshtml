@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(ViewData["Title"] ?? "EleUI Samples")</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=rocket2" />
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=rocket2" />
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/element-plus/dist/locale/zh-cn.min.js"></script>
+    <script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
+    <script src="https://unpkg.com/dayjs/locale/zh-cn.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/@@element-plus/icons-vue"></script>
+    <script src="https://unpkg.com/@@tailwindcss/browser@4"></script>
+
+    <script>
+        if (window.dayjs && typeof window.dayjs.locale === 'function') {
+            window.dayjs.locale('zh-cn');
+        }
+    </script>
+
+    <script src="/_content/App.EleUI/eleui/eleui.js" type="module"></script>
+
+    @RenderSection("head", false)
+</head>
+<body>
+    @Html.AntiForgeryToken()
+    @RenderSection("body", true)
+    @RenderSection("script", false)
+</body>
+</html>

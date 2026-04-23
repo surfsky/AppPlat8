@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+    <PackageId>App.EleUI</PackageId>
+    <Version>8.0.0</Version>
+    <Authors>AppPlat Team</Authors>
+    <Company>AppPlat</Company>
+    <Description>Razor TagHelpers + Vue3/ElementPlus runtime for AppPlat EleUI.</Description>
+    <PackageTags>razor;taghelper;vue;element-plus;ui</PackageTags>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\App.API\HttpApi\HttpApi.csproj" />
+    <ProjectReference Include="..\App.Utils\App.Utils\App.Utils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Fully split sample host from control library: App.EleUI does not compile or pack EleUISamples files. -->
+    <Compile Remove="EleUISamples\**\*.cs" />
+    <Content Remove="EleUISamples\**\*" />
+    <EmbeddedResource Remove="EleUISamples\**\*" />
+    <None Remove="EleUISamples\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <Target Name="BuildEleUiAssets" BeforeTargets="Build">
+    <!-- Build EleUI static assets once per build so consumers can load one module entry. -->
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+</Project>

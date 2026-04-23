@@ -1,0 +1,73 @@
+name: pack-eleui
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "NuGet package version (optional, e.g. 1.2.3)"
+        required: false
+        type: string
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: App.EleUI/package-lock.json
+
+      - name: Resolve package version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.1.${GITHUB_RUN_NUMBER}"
+          fi
+
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved package version: $VERSION"
+
+      - name: Restore
+        run: dotnet restore App.EleUI/App.EleUI.csproj
+
+      - name: Build
+        run: dotnet build App.EleUI/App.EleUI.csproj -c Release --no-restore
+
+      - name: Pack
+        run: dotnet pack App.EleUI/App.EleUI.csproj -c Release --no-build -p:Version=${{ env.VERSION }} -o artifacts
+
+      - name: Upload nupkg artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: App.EleUI.${{ steps.version.outputs.version }}
+          path: artifacts/*.{nupkg,snupkg}
+          if-no-files-found: error
+
+      - name: Push to NuGet (optional)
+        if: ${{ secrets.NUGET_API_KEY != '' }}
+        shell: bash
+        run: |
+          dotnet nuget push artifacts/*.nupkg \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --skip-duplicate

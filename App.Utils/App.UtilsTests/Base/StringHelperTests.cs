@@ -268,10 +268,18 @@ function do() {
         [TestMethod()]
         public void MaskTest()
         {
-            Assert.AreEqual("1530****121", "15305770121".Mask(11));
-            Assert.AreEqual("12345678....3456", "1234567890123456".Mask(16, "."));
-            Assert.AreEqual("12345", "12345".Mask(6));
-            Assert.AreEqual("", "".Mask(6));
+            Assert.AreEqual("123****890", "1234567890".Mask(3, 4, '*'));
+            Assert.AreEqual("123....890", "1234567890".Mask(3, 4, '.'));
+
+            // 边界：遮罩范围超出左边界时，从首字符开始遮罩。
+            Assert.AreEqual("**345", "12345".Mask(3, 4, '*'));
+
+            // 边界：lastIndex 越界/非法参数时返回原文。
+            Assert.AreEqual("12345", "12345".Mask(6, 4, '*'));
+            Assert.AreEqual("1****", "12345".Mask(0, 4, '*'));
+            Assert.AreEqual("12345", "12345".Mask(-1, 4, '*'));
+            Assert.AreEqual("12345", "12345".Mask(3, 0, '*'));
+            Assert.AreEqual("", "".Mask(3, 4, '*'));
         }
 
         [TestMethod()]

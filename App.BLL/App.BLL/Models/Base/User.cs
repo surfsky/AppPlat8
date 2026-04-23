@@ -57,8 +57,8 @@ namespace App.DAL
         [UI("角色IDs"), NotMapped]  public virtual List<long> RoleIds {get; set;}   // 冗余设计用于前端绑定
 
         // extend
-        public string MobileMasked => this.Mobile?.Mask(11);
-        public string OfficePhoneMasked => this.OfficePhone?.Mask(11);
+        public string MobileMasked => this.Mobile?.Mask(3, 4);
+        public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
 
 
         //------------------------------------------------------
@@ -107,8 +107,8 @@ namespace App.DAL
                 this.TakeOfficeDt,
                 this.LastLoginDt,
                 this.Title,
-                OfficePhone = (type == ExportMode.Detail) ? this.OfficePhone : this.OfficePhone?.Mask(11),
-                Mobile = (type == ExportMode.Detail) ? this.Mobile : this.Mobile?.Mask(11),
+                OfficePhone = (type == ExportMode.Detail) ? this.OfficePhone : this.OfficePhone?.Mask(),
+                Mobile = (type == ExportMode.Detail) ? this.Mobile : this.Mobile?.Mask(),
                 this.Address,
                 this.Remark,
                 this.IdCard,

@@ -35,7 +35,7 @@ namespace App.DAL
                 Photo,
                 IdCard,
                 IdCardImage,
-                Phone = (mode == ExportMode.Detail) ? this.Phone : this.Phone?.Mask(11),
+                Phone = (mode == ExportMode.Detail) ? this.Phone : this.Phone?.Mask(),
                 CertDt,
                 CertExpireDt,
             };
