@@ -18,16 +18,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\App.API\HttpApi\HttpApi.csproj" />
-    <ProjectReference Include="..\App.Utils\App.Utils\App.Utils.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Fully split sample host from control library: App.EleUI does not compile or pack EleUISamples files. -->
-    <Compile Remove="EleUISamples\**\*.cs" />
-    <Content Remove="EleUISamples\**\*" />
-    <EmbeddedResource Remove="EleUISamples\**\*" />
-    <None Remove="EleUISamples\**\*" />
+    <ProjectReference Include="..\..\App.API\HttpApi\HttpApi.csproj" />
+    <ProjectReference Include="..\..\App.Utils\App.Utils\App.Utils.csproj" />
   </ItemGroup>
 
   <ItemGroup>

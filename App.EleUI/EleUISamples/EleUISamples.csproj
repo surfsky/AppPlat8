@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\App.EleUI.csproj" />
+    <ProjectReference Include="..\EleUI\App.EleUI.csproj" />
   </ItemGroup>
 
 </Project>

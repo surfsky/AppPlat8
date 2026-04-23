@@ -13,7 +13,7 @@ const staleFiles = [
 ];
 
 const buildOptions = {
-  entryPoints: [path.resolve(rootDir, "EleUI/EleUIJs/EleUI.js")],
+  entryPoints: [path.resolve(rootDir, "EleUIJs/EleUI.js")],
   bundle: true,
   format: "esm",
   platform: "browser",
