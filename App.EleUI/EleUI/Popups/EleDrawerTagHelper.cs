@@ -23,7 +23,7 @@ namespace App.EleUI
         public StringBuilder ContentHtml { get; set; } = new StringBuilder();
         public StringBuilder FooterHtml { get; set; } = new StringBuilder();
         public DrawerFooterAlign FooterAlign { get; set; } = DrawerFooterAlign.Center;
-        public string FooterHeight { get; set; }
+        public string FooterHeight { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ namespace App.EleUI
     public class EleDrawerTagHelper : EleControlTagHelper
     {
         [HtmlAttributeName("Title")]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
         /// <summary>抽屉方向</summary>
         [HtmlAttributeName("Direction")]
@@ -65,15 +65,15 @@ namespace App.EleUI
 
         /// <summary>当不为空时，内容区域显示 iframe 并填满</summary>
         [HtmlAttributeName("IFrameUrl")]
-        public string IFrameUrl { get; set; }
+        public string IFrameUrl { get; set; } = string.Empty;
 
         /// <summary>客户端关闭回调函数名（支持 window 上的路径，如 managerClientHandler）</summary>
         [HtmlAttributeName("CloseHandler")]
-        public string CloseHandler { get; set; }
+        public string CloseHandler { get; set; } = string.Empty;
 
         /// <summary>服务端关闭回调处理器名（会 POST 到 ?handler={name}）</summary>
         [HtmlAttributeName("ServerCloseHandler")]
-        public string ServerCloseHandler { get; set; }
+        public string ServerCloseHandler { get; set; } = string.Empty;
         
 
         public override void Init(TagHelperContext context)
@@ -197,10 +197,6 @@ namespace App.EleUI
             }}";
         }
 
-        private static string EscapeJs(string value)
-        {
-            return (value ?? string.Empty).Replace("\\", "\\\\").Replace("'", "\\'");
-        }
     }
 
     /// <summary>
@@ -229,7 +225,7 @@ namespace App.EleUI
         public DrawerFooterAlign Align { get; set; } = DrawerFooterAlign.Center;
 
         [HtmlAttributeName("Height")]
-        public string Height { get; set; }
+        public string Height { get; set; } = string.Empty;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

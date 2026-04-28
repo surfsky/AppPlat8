@@ -94,19 +94,11 @@ namespace App.EleUI
         [HtmlAttributeName("Name")]
         public EleIconName Name { get; set; } = EleIconName.None;
 
-        /// <summary>
-        /// 图标尺寸（像素数字或 CSS 字符串），例如 "24" 或 "1.5em"。
-        /// 对应 el-icon 的 size 属性。
-        /// </summary>
-        [HtmlAttributeName("Size")]
-        public string Size { get; set; }
+        /// <summary>图标尺寸（像素数字或 CSS 字符串），例如 "24" 或 "1.5em"。对应 el-icon 的 size 属性。</summary>
+        [HtmlAttributeName("Size")]        public string Size { get; set; }
 
-        /// <summary>
-        /// 图标颜色（CSS 颜色值），例如 "#409EFF"、"red"、"var(--el-color-primary)"。
-        /// 对应 el-icon 的 color 属性。
-        /// </summary>
-        [HtmlAttributeName("Color")]
-        public string Color { get; set; }
+        /// <summary>图标颜色（CSS 颜色值），例如 "#409EFF"、"red"、"var(--el-color-primary)"。对应 el-icon 的 color 属性。</summary>
+        [HtmlAttributeName("Color")]        public string Color { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

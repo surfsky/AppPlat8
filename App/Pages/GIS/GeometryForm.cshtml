@@ -1,0 +1,35 @@
+@page
+@model App.Pages.GIS.GeometryFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "GIS几何图形信息";
+    var currentId = Request.Query["id"].ToString();
+    var selectedId = Request.Query["parentId"].ToString();
+}
+
+@section head {
+    <style>
+        /* GeoJSON 文本可能很长，保持单行省略，避免撑出输入框 */
+        .geojson-selector .el-input__inner {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.Alias" Label="简称"></EleInput>
+        <EleTreeSelect For="Item.ParentId" Label="父节点" Api="/httpapi/gis/GetGeometryTree?excludeId=@currentId&selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"  ></EleTreeSelect>
+        <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
+        <EleSelector For="Item.JsonData" TextFor="Item.JsonData" Label="GeoJSON数据" Class="geojson-selector" PopupUrl="/Shared/MapGeometry" KeyMode="Storage" Icon="Location"></EleSelector>
+    
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

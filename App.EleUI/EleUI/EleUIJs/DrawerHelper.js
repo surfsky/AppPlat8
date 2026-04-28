@@ -19,6 +19,7 @@ export class DrawerHelper {
             direction: 'rtl',
             withHeader: true,
             showClose: true,
+            showMaximize: true,
             resizable: true,
             modal: true,
             closeOnClickModal: true,
@@ -110,6 +111,31 @@ export class DrawerHelper {
 .ele-manager-drawer-close-btn:hover {
     color: #303133;
 }
+
+.ele-manager-drawer-max-btn {
+    border: 0;
+    background: transparent;
+    color: #606266;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ele-manager-drawer-max-btn:hover {
+    color: #303133;
+}
+
+.ele-manager-drawer-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
 `;
         hostWindow.document.head.appendChild(style);
     }
@@ -184,6 +210,7 @@ export class DrawerHelper {
                 direction: Utils.safeType(merged.direction, ['ltr', 'rtl', 'ttb', 'btt'], 'rtl'),
                 withHeader: Utils.toBool(merged.withHeader, true),
                 showClose: Utils.toBool(merged.showClose, true),
+                showMaximize: Utils.toBool(merged.showMaximize, true),
                 resizable: Utils.toBool(merged.resizable, true),
                 modal: this._instances.length === 0 ? Utils.toBool(merged.modal, true) : false,
                 closeOnClickModal: Utils.toBool(merged.closeOnClickModal, true),
@@ -201,7 +228,9 @@ export class DrawerHelper {
                     ? merged.beforeCloseHandler
                     : (merged.beforeCloseHandler ? Utils.safeText(merged.beforeCloseHandler, 120) : null),
                 serverCloseHandler: Utils.safeText(merged.serverCloseHandler, 80),
-                closeAction: Utils.safeText(merged.closeAction, 20)
+                closeAction: Utils.safeText(merged.closeAction, 20),
+                isMaximized: false,
+                normalSize: this.normalizeSize(merged.size, hostWindow)
             });
 
             const instance = {
@@ -280,6 +309,16 @@ export class DrawerHelper {
                         if (!btn || !btn.action || btn.action === 'close') {
                             state.visible = false;
                         }
+                    },
+                    toggleMaximize() {
+                        if (state.isMaximized) {
+                            state.size = state.normalSize || helper.getDefaultSize(hostWindow);
+                            state.isMaximized = false;
+                            return;
+                        }
+                        state.normalSize = state.size || helper.getDefaultSize(hostWindow);
+                        state.size = '100%';
+                        state.isMaximized = true;
                     }
                 },
 
@@ -308,9 +347,14 @@ export class DrawerHelper {
         </div>
         <div v-else class="ele-manager-drawer-header">
             <span class="ele-manager-drawer-title">{{ state.title }}</span>
-            <button v-if="state.showClose" class="ele-manager-drawer-close-btn" type="button" @click="handleCloseClick()" aria-label="Close">
-                <span>×</span>
-            </button>
+            <span class="ele-manager-drawer-actions">
+                <button v-if="state.showMaximize" class="ele-manager-drawer-max-btn" type="button" @click="toggleMaximize()" :aria-label="state.isMaximized ? 'Restore' : 'Maximize'">
+                    <span>{{ state.isMaximized ? '❐' : '□' }}</span>
+                </button>
+                <button v-if="state.showClose" class="ele-manager-drawer-close-btn" type="button" @click="handleCloseClick()" aria-label="Close">
+                    <span>×</span>
+                </button>
+            </span>
         </div>
     </template>
 

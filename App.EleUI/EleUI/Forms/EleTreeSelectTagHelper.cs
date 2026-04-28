@@ -12,33 +12,15 @@ namespace App.EleUI
     [HtmlTargetElement("EleTreeSelect")]
     public class EleTreeSelectTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Api")]
-        public string Api { get; set; }      // Bind from API endpoint data
-
-        [HtmlAttributeName("Items")]
-        public object Items { get; set; }    // Bind items to tree select
-
-
-        [HtmlAttributeName("IdField")]
-        public string IdField { get; set; }
-
-        [HtmlAttributeName("ValueField")]
-        public string ValueField { get; set; }
-
-        [HtmlAttributeName("NameField")]
-        public string NameField { get; set; }
-
-        [HtmlAttributeName("ChildrenField")]
-        public string ChildrenField { get; set; }
-
-        [HtmlAttributeName("CheckStrictly")]
-        public bool CheckStrictly { get; set; } = true;
-
-        [HtmlAttributeName("Multiple")]
-        public bool Multiple { get; set; } = false;
-
-        [HtmlAttributeName("CollapseTags")]
-        public bool? CollapseTags { get; set; }
+        [HtmlAttributeName("Api")]              public string Api { get; set; }      // Bind from API endpoint data
+        [HtmlAttributeName("Items")]            public object Items { get; set; }    // Bind items to tree select
+        [HtmlAttributeName("IdField")]          public string IdField { get; set; }
+        [HtmlAttributeName("ValueField")]       public string ValueField { get; set; }
+        [HtmlAttributeName("NameField")]        public string NameField { get; set; }
+        [HtmlAttributeName("ChildrenField")]    public string ChildrenField { get; set; }
+        [HtmlAttributeName("CheckStrictly")]    public bool CheckStrictly { get; set; } = true;
+        [HtmlAttributeName("Multiple")]         public bool Multiple { get; set; } = false;
+        [HtmlAttributeName("CollapseTags")]     public bool? CollapseTags { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

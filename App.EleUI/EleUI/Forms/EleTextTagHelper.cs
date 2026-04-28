@@ -11,11 +11,8 @@ namespace App.EleUI
     [HtmlTargetElement("Text")]
     public class EleTextTagHelper : TagHelper
     {
-        [HtmlAttributeName("For")]
-        public ModelExpression For { get; set; }
-
-        [HtmlAttributeName("Wrapper")]
-        public string Wrapper { get; set; } = "div";
+        [HtmlAttributeName("For")]        public ModelExpression For { get; set; }
+        [HtmlAttributeName("Wrapper")]    public string Wrapper { get; set; } = "div";
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

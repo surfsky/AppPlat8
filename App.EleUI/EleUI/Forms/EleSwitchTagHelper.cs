@@ -6,8 +6,8 @@ namespace App.EleUI
     [HtmlTargetElement("EleSwitch")]
     public class EleSwitchTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Checked")]
-        public bool? Checked { get; set; }
+        [HtmlAttributeName("Checked")]   public bool? Checked { get; set; }
+
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

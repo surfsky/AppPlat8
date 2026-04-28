@@ -10,17 +10,10 @@ namespace App.EleUI
     [HtmlTargetElement("EleIconSelector")]
     public class EleIconSelectorTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Popup")]
-        public string Popup { get; set; }
-
-        [HtmlAttributeName("Multi")]
-        public bool Multi { get; set; } = false;
-
-        [HtmlAttributeName("TextProp")]
-        public string TextProp { get; set; }
-
-        [HtmlAttributeName("ItemWidth")]
-        public int ItemWidth { get; set; } = 100;
+        [HtmlAttributeName("Popup")]        public string Popup { get; set; }
+        [HtmlAttributeName("Multi")]        public bool Multi { get; set; } = false;
+        [HtmlAttributeName("TextProp")]     public string TextProp { get; set; }
+        [HtmlAttributeName("ItemWidth")]    public int ItemWidth { get; set; } = 100;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

@@ -53,7 +53,12 @@ namespace App
                 options.ValueCountLimit = 1024;                 // 1024
                 options.ValueLengthLimit = 4194304;             // 4194304 = 1024 * 1024 * 4
             });
-            services.AddRazorPages().AddNewtonsoftJson();       // JSON settings for Razor Pages.TODO: 如何设置序列化的一些规则，如日期格式、枚举格式、CamelCase等？
+            services.AddRazorPages(options =>
+            {
+                // GIS: 新路由语义化，同时兼容旧页面路径
+                options.Conventions.AddPageRoute("/GIS/Regions", "GIS/Geometries");
+                options.Conventions.AddPageRoute("/GIS/RegionForm", "GIS/GeometryForm");
+            }).AddNewtonsoftJson();       // JSON settings for Razor Pages.TODO: 如何设置序列化的一些规则，如日期格式、枚举格式、CamelCase等？
             services.AddServerSideBlazor();                     // Blazor
             services.AddBootstrapBlazor();                      // BootstrapBlazor
             services.AddSignalR(op =>

@@ -53,7 +53,7 @@ namespace App.DAL
 
 
         // GIS 和 驾驶舱
-        public DbSet<App.DAL.GIS.GisRegion> GisRegions { get; set; }
+        public DbSet<App.DAL.GIS.GisGeometry> GisGeometries { get; set; }
 
 
         // Check 隐患排查

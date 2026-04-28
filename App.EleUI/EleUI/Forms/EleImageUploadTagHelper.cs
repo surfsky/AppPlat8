@@ -7,28 +7,15 @@ namespace App.EleUI
     [HtmlTargetElement("EleImageUpload")]
     public class EleImageUploadTagHelper : EleFormControlTagHelper
     {
+        [HtmlAttributeName("Action")]          public string Action { get; set; }
+        [HtmlAttributeName("ShowViewer")]      public bool ShowViewer { get; set; } = true;
+        [HtmlAttributeName("MaxWidth")]        public int MaxWidth { get; set; } = 1024;
+        [HtmlAttributeName("Multi")]           public bool Multi { get; set; } = false;
+        [HtmlAttributeName("MultiLimit")]      public int MultiLimit { get; set; } = 0; // 0 means unlimited
+        [HtmlAttributeName("ItemWidth")]       public int ItemWidth { get; set; } = 200;
+        [HtmlAttributeName("LimitWidth")]      public int LimitWidth { get; set; } = 1024;
+
         public EleImageUploadTagHelper() {}
-
-        [HtmlAttributeName("Action")]
-        public string Action { get; set; }
-
-        [HtmlAttributeName("ShowViewer")]
-        public bool ShowViewer { get; set; } = true;
-
-        [HtmlAttributeName("MaxWidth")]
-        public int MaxWidth { get; set; } = 1024;
-
-        [HtmlAttributeName("Multi")]
-        public bool Multi { get; set; } = false;
-
-        [HtmlAttributeName("MultiLimit")]
-        public int MultiLimit { get; set; } = 0; // 0 means unlimited
-
-        [HtmlAttributeName("ItemWidth")]
-        public int ItemWidth { get; set; } = 200;
-
-        [HtmlAttributeName("LimitWidth")]
-        public int LimitWidth { get; set; } = 1024;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

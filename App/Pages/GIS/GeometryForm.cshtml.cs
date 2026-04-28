@@ -13,10 +13,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.GIS
 {
-    [CheckPower(Power.GisRegionEdit)]
-    public class RegionFormModel : AdminModel
+    [CheckPower(Power.GisGeometryEdit)]
+    public class GeometryFormModel : AdminModel
     {
-        public GisRegion Item { get; set; }
+        public GisGeometry Item { get; set; }
         public List<App.DAL.Org> OrgTree { get; set; }
 
         public void OnGet()
@@ -26,27 +26,27 @@ namespace App.Pages.GIS
 
         public IActionResult OnGetData(long id)
         {
-            var item = GisRegion.GetDetail(id) ?? new GisRegion();
+            var item = GisGeometry.GetDetail(id) ?? new GisGeometry();
             return BuildResult(0, "success", item);
         }
 
-        public IActionResult OnPostSave([FromBody] GisRegion req)
+        public IActionResult OnPostSave([FromBody] GisGeometry req)
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
 
-            var item = GisRegion.Get(req.Id);
+            var item = GisGeometry.Get(req.Id);
             if (item == null)
             {
-                item = new GisRegion();
+                item = new GisGeometry();
                 item.CreateDt = DateTime.Now;
+                item.CreatorId = GetUserId();
             }
 
             item.Name = req.Name;
             item.Alias = req.Alias;
-            item.RegionType = req.RegionType;
+            item.ParentId = req.ParentId;
             item.OrgId = req.OrgId;
-            item.Creator = req.Creator;
             item.JsonData = req.JsonData;
 
             item.Save();

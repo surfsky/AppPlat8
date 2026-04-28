@@ -326,6 +326,10 @@
                     <label for="layer-checkObject" class="cursor-pointer">检查对象图层</label>
                     <span id="layer-count" class="ml-auto text-xs text-gray-400">0</span>
                 </div>
+                <div class="layer-node">
+                    <input id="layer-roads" type="checkbox" checked class="accent-orange-500" />
+                    <label for="layer-roads" class="cursor-pointer">道路图层</label>
+                </div>
             </div>
         </div>
     </div>
@@ -339,12 +343,19 @@
             objects: [],
             selectedId: null,
             markerMap: new Map(),
+            roadLineGeoJson: null,
+            roadPointGeoJson: null,
             currentStyle: 'street',
             is3D: false,
             toolbarCollapsed: false,
             layerCollapsed: false,
             viewMenuOpen: false
         };
+
+        const ROAD_LINE_SOURCE_ID = 'roads-line-source';
+        const ROAD_POINT_SOURCE_ID = 'roads-point-source';
+        const ROAD_LINE_LAYER_ID = 'roads-line-layer';
+        const ROAD_POINT_LAYER_ID = 'roads-point-layer';
 
         const map = new mapboxgl.Map({
             container: 'map',
@@ -466,6 +477,15 @@
             });
         }
 
+        function setRoadLayerVisible(visible) {
+            if (map.getLayer(ROAD_LINE_LAYER_ID)) {
+                map.setLayoutProperty(ROAD_LINE_LAYER_ID, 'visibility', visible ? 'visible' : 'none');
+            }
+            if (map.getLayer(ROAD_POINT_LAYER_ID)) {
+                map.setLayoutProperty(ROAD_POINT_LAYER_ID, 'visibility', visible ? 'visible' : 'none');
+            }
+        }
+
         function buildMarkers(items) {
             state.markerMap.forEach(marker => marker.remove());
             state.markerMap.clear();
@@ -486,6 +506,133 @@
                 const marker = new mapboxgl.Marker(el).setLngLat([item.lng, item.lat]).addTo(map);
                 state.markerMap.set(item.id, marker);
             });
+        }
+
+        function mercatorToLngLat(point) {
+            if (!Array.isArray(point) || point.length < 2) return null;
+            const [x, y] = point;
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+
+            const lng = (x / 20037508.34) * 180;
+            const lat = (y / 20037508.34) * 180;
+            const latRad = (lat * Math.PI) / 180;
+            const normalizedLat = (180 / Math.PI) * (2 * Math.atan(Math.exp(latRad)) - Math.PI / 2);
+            return [lng, normalizedLat];
+        }
+
+        function renderRoadLayers() {
+            if (!state.roadLineGeoJson || !state.roadPointGeoJson) return;
+
+            const existingLineSource = map.getSource(ROAD_LINE_SOURCE_ID);
+            if (existingLineSource) {
+                existingLineSource.setData(state.roadLineGeoJson);
+            } else {
+                map.addSource(ROAD_LINE_SOURCE_ID, {
+                    type: 'geojson',
+                    data: state.roadLineGeoJson
+                });
+            }
+
+            const existingPointSource = map.getSource(ROAD_POINT_SOURCE_ID);
+            if (existingPointSource) {
+                existingPointSource.setData(state.roadPointGeoJson);
+            } else {
+                map.addSource(ROAD_POINT_SOURCE_ID, {
+                    type: 'geojson',
+                    data: state.roadPointGeoJson
+                });
+            }
+
+            if (!map.getLayer(ROAD_LINE_LAYER_ID)) {
+                map.addLayer({
+                    id: ROAD_LINE_LAYER_ID,
+                    type: 'line',
+                    source: ROAD_LINE_SOURCE_ID,
+                    paint: {
+                        'line-color': '#f97316',
+                        'line-width': 3,
+                        'line-opacity': 0.9
+                    }
+                });
+            }
+
+            if (!map.getLayer(ROAD_POINT_LAYER_ID)) {
+                map.addLayer({
+                    id: ROAD_POINT_LAYER_ID,
+                    type: 'circle',
+                    source: ROAD_POINT_SOURCE_ID,
+                    paint: {
+                        'circle-color': '#ef4444',
+                        'circle-radius': 3,
+                        'circle-stroke-color': '#ffffff',
+                        'circle-stroke-width': 1,
+                        'circle-opacity': 0.95
+                    }
+                });
+            }
+
+            const roadLayerCheck = document.getElementById('layer-roads');
+            setRoadLayerVisible(roadLayerCheck ? !!roadLayerCheck.checked : true);
+        }
+
+        async function loadRoads() {
+            try {
+                const resp = await fetch('/gis/roads.json');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!Array.isArray(data)) return;
+
+                const lineFeatures = [];
+                const pointFeatures = [];
+
+                data.forEach((road, roadIndex) => {
+                    if (!Array.isArray(road)) return;
+
+                    const lineCoordinates = road
+                        .map(mercatorToLngLat)
+                        .filter(p => Array.isArray(p) && p.length === 2);
+
+                    if (lineCoordinates.length < 2) return;
+
+                    lineFeatures.push({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: lineCoordinates
+                        },
+                        properties: {
+                            roadIndex
+                        }
+                    });
+
+                    lineCoordinates.forEach((coord, pointIndex) => {
+                        pointFeatures.push({
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: coord
+                            },
+                            properties: {
+                                roadIndex,
+                                pointIndex
+                            }
+                        });
+                    });
+                });
+
+                state.roadLineGeoJson = {
+                    type: 'FeatureCollection',
+                    features: lineFeatures
+                };
+                state.roadPointGeoJson = {
+                    type: 'FeatureCollection',
+                    features: pointFeatures
+                };
+
+                renderRoadLayers();
+            } catch {
+                // Ignore parsing or request failures to avoid blocking primary GIS functions.
+            }
         }
 
         async function loadObjects() {
@@ -601,10 +748,13 @@
 
         map.on('load', () => {
             loadObjects();
+            loadRoads();
             applyChineseLabels();
 
             const layerCheck = document.getElementById('layer-checkObject');
             layerCheck.addEventListener('change', (e) => setLayerVisible(!!e.target.checked));
+            const roadLayerCheck = document.getElementById('layer-roads');
+            roadLayerCheck.addEventListener('change', (e) => setRoadLayerVisible(!!e.target.checked));
 
             document.getElementById('btn-reset').addEventListener('click', resetView);
             document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
@@ -658,11 +808,14 @@
         map.on('style.load', () => {
             applyChineseLabels();
             buildMarkers(state.objects);
+            renderRoadLayers();
             if (state.is3D) {
                 enable3DBuildings();
             }
             const layerCheck = document.getElementById('layer-checkObject');
             setLayerVisible(layerCheck ? !!layerCheck.checked : true);
+            const roadLayerCheck = document.getElementById('layer-roads');
+            setRoadLayerVisible(roadLayerCheck ? !!roadLayerCheck.checked : true);
         });
     </script>
 }

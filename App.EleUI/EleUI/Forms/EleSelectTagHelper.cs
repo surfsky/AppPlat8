@@ -16,23 +16,12 @@ namespace App.EleUI
     [HtmlTargetElement("EleSelect")]
     public class EleSelectTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Items")]
-        public object Items { get; set; }
-
-        [HtmlAttributeName("Multiple")]
-        public bool Multiple { get; set; }
-
-        [HtmlAttributeName("AllowCreate")]
-        public bool AllowCreate { get; set; }
-
-        [HtmlAttributeName("Filterable")]
-        public bool Filterable { get; set; }
-
-        [HtmlAttributeName("KeyField")]
-        public string KeyField { get; set; }
-
-        [HtmlAttributeName("TextField")]
-        public string TextField { get; set; }
+        [HtmlAttributeName("Items")]        public object Items { get; set; }
+        [HtmlAttributeName("Multiple")]     public bool Multiple { get; set; }
+        [HtmlAttributeName("AllowCreate")]  public bool AllowCreate { get; set; }
+        [HtmlAttributeName("Filterable")]   public bool Filterable { get; set; }
+        [HtmlAttributeName("KeyField")]     public string KeyField { get; set; }
+        [HtmlAttributeName("TextField")]    public string TextField { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

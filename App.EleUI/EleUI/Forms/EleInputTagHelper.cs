@@ -17,20 +17,11 @@ namespace App.EleUI
     [HtmlTargetElement("EleInput")]
     public class EleInputTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Type")]
-        public EleInputType Type { get; set; } = EleInputType.Text;
-
-        [HtmlAttributeName("Value")]
-        public string Value { get; set; } // Manual v-model override
-
-        [HtmlAttributeName("Rows")]
-        public int Rows { get; set; }
-
-        [HtmlAttributeName("Prepend")]
-        public string Prepend { get; set; }
-
-        [HtmlAttributeName("Append")]
-        public string Append { get; set; }
+        [HtmlAttributeName("Type")]         public EleInputType Type { get; set; } = EleInputType.Text;
+        [HtmlAttributeName("Value")]        public string Value { get; set; } // Manual v-model override
+        [HtmlAttributeName("Rows")]         public int Rows { get; set; }
+        [HtmlAttributeName("Prepend")]      public string Prepend { get; set; }
+        [HtmlAttributeName("Append")]       public string Append { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

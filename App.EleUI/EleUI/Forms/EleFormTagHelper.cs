@@ -21,30 +21,14 @@ namespace App.EleUI
     [HtmlTargetElement("EleForm")]
     public class EleFormTagHelper : TagHelper
     {
-        [HtmlAttributeNotBound]
-        [ViewContext]
-        public ViewContext ViewContext { get; set; }
-
-        [HtmlAttributeName("Model")]
-        public string Model { get; set; } = "form";
-
-        [HtmlAttributeName("LabelWidth")]
-        public string LabelWidth { get; set; } = "120px";
-
-        [HtmlAttributeName("LabelPosition")]
-        public EleFormLabelPosition LabelPosition { get; set; } = EleFormLabelPosition.Right;
-
-        [HtmlAttributeName("DataHandler")]
-        public string DataHandler { get; set; } = "?handler=Data";
-
-        [HtmlAttributeName("SaveHandler")]
-        public string SaveHandler { get; set; } = "?handler=Save";
-
-        [HtmlAttributeName("BuildMode")]
-        public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;
-
-        [HtmlAttributeName("DataFor")]
-        public ModelExpression DataFor { get; set; }
+        [HtmlAttributeNotBound, ViewContext]  public ViewContext ViewContext { get; set; }
+        [HtmlAttributeName("Model")]          public string Model { get; set; } = "form";
+        [HtmlAttributeName("LabelWidth")]     public string LabelWidth { get; set; } = "120px";
+        [HtmlAttributeName("LabelPosition")]  public EleFormLabelPosition LabelPosition { get; set; } = EleFormLabelPosition.Right;
+        [HtmlAttributeName("DataHandler")]    public string DataHandler { get; set; } = "?handler=Data";
+        [HtmlAttributeName("SaveHandler")]    public string SaveHandler { get; set; } = "?handler=Save";
+        [HtmlAttributeName("BuildMode")]      public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;
+        [HtmlAttributeName("DataFor")]        public ModelExpression DataFor { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

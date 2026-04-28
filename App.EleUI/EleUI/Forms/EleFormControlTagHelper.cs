@@ -16,34 +16,15 @@ namespace App.EleUI
     /// </summary>
     public abstract class EleFormControlTagHelper : EleControlTagHelper
     {
-        [HtmlAttributeName("For")]
-        public ModelExpression For { get; set; }
-
-        [HtmlAttributeName("Label")]
-        public string Label { get; set; }
-
-        [HtmlAttributeName("Required")]
-        public bool Required { get; set; }
-
-        [HtmlAttributeName("LabelWidth")]
-        public string LabelWidth { get; set; } = "100px";
-
-        [HtmlAttributeName("Clearable")]
-        public bool? Clearable { get; set; } = true;
-
-        [HtmlAttributeName("Placeholder")]
-        public string Placeholder { get; set; } = "";
-
-        /// <summary>Column span for form item？？？</summary>
-        [HtmlAttributeName("ColSpan")]
-        public int? ColSpan { get; set; }
-
-        [HtmlAttributeName("FillRow")]
-        public bool FillRow { get; set; }
-
-        /// <summary>Manual prop path (e.g. form.title)???</summary>
-        [HtmlAttributeName("Prop")]
-        public string Prop { get; set; } // Manual prop path
+        [HtmlAttributeName("For")]           public ModelExpression For { get; set; }
+        [HtmlAttributeName("Label")]         public string Label { get; set; }
+        [HtmlAttributeName("Required")]      public bool Required { get; set; }
+        [HtmlAttributeName("LabelWidth")]    public string LabelWidth { get; set; } = "100px";
+        [HtmlAttributeName("Clearable")]     public bool? Clearable { get; set; } = true;
+        [HtmlAttributeName("Placeholder")]   public string Placeholder { get; set; } = "";
+        [HtmlAttributeName("ColSpan")]       public int? ColSpan { get; set; }
+        [HtmlAttributeName("FillRow")]       public bool FillRow { get; set; }
+        [HtmlAttributeName("Prop")]          public string Prop { get; set; } // Manual prop path,(e.g. form.title)???
 
         // Get Vue Model Path (e.g. form.title)
         protected string GetVModel(TagHelperContext context)

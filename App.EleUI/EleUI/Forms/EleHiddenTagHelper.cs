@@ -8,14 +8,9 @@ namespace App.EleUI
     [HtmlTargetElement("EleHidden")]
     public class EleHiddenTagHelper : EleControlTagHelper
     {
-        [HtmlAttributeName("For")]
-        public ModelExpression For { get; set; }
-
-        [HtmlAttributeName("Prop")]
-        public string Prop { get; set; }
-
-        [HtmlAttributeName("Value")]
-        public string Value { get; set; }
+        [HtmlAttributeName("For")]          public ModelExpression For { get; set; }
+        [HtmlAttributeName("Prop")]         public string Prop { get; set; }
+        [HtmlAttributeName("Value")]        public string Value { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

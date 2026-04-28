@@ -11,20 +11,15 @@ namespace App.EleUI
     [HtmlTargetElement("EleLabel")]
     public class EleLabelTagHelper : EleFormControlTagHelper
     {
+        [HtmlAttributeName("Color")]           public string Color { get; set; }
+        [HtmlAttributeName("Size")]            public string Size { get; set; } = "16px";
+        [HtmlAttributeName("Bold")]            public bool Bold { get; set; } = true;
+
         // FillRow is now in base class
         public EleLabelTagHelper()
         {
             FillRow = true; // Default true for Label
         }
-
-        [HtmlAttributeName("Color")]
-        public string Color { get; set; }
-
-        [HtmlAttributeName("Size")]
-        public string Size { get; set; } = "16px";
-
-        [HtmlAttributeName("Bold")]
-        public bool Bold { get; set; } = true;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

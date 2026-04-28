@@ -12,26 +12,13 @@ namespace App.EleUI
     [HtmlTargetElement("EleNumber")]
     public class EleNumberTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Precision")]
-        public int Precision { get; set; } = 0;
-
-        [HtmlAttributeName("Step")]
-        public double Step { get; set; } = 0;
-
-        [HtmlAttributeName("Prefix")]
-        public string Prefix { get; set; }
-
-        [HtmlAttributeName("Suffix")]
-        public string Suffix { get; set; }
-
-        [HtmlAttributeName("Prepend")]
-        public string Prepend { get; set; }
-
-        [HtmlAttributeName("Append")]
-        public string Append { get; set; }
-
-        [HtmlAttributeName("ControlPosition")]
-        public string ControlPosition { get; set; }
+        [HtmlAttributeName("Precision")]         public int Precision { get; set; } = 0;
+        [HtmlAttributeName("Step")]              public double Step { get; set; } = 0;
+        [HtmlAttributeName("Prefix")]            public string Prefix { get; set; }
+        [HtmlAttributeName("Suffix")]            public string Suffix { get; set; }
+        [HtmlAttributeName("Prepend")]           public string Prepend { get; set; }
+        [HtmlAttributeName("Append")]            public string Append { get; set; }
+        [HtmlAttributeName("ControlPosition")]   public string ControlPosition { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

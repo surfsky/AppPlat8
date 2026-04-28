@@ -14,16 +14,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.GIS
 {
-    [CheckPower(Power.GisRegionView)]
-    public class RegionsModel : AdminModel
+    [CheckPower(Power.GisGeometryView)]
+    public class GeometriesModel : AdminModel
     {
-        public GisRegion Item { get; set; }
+        public GisGeometry Item { get; set; }
 
         public void OnGet() { }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name, RegionType? regionType)
+        public async Task<IActionResult> OnGetData(Paging pi, string name, long? parentId)
         {
-            var list = GisRegion.Search(name, regionType, null, null).SortPageExport(pi);
+            var list = GisGeometry.Search(name, null, null, parentId).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
@@ -31,11 +31,11 @@ namespace App.Pages.GIS
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.GisRegionDelete))
+            if (!CheckPower(Power.GisGeometryDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
-                GisRegion.Delete(id);
+                GisGeometry.Delete(id);
             return BuildResult(0, "删除成功");
         }
     }

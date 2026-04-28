@@ -185,10 +185,10 @@ namespace App.DAL
         //---------------------------------------------
         // GIS (270)
         //---------------------------------------------
-        [UI("GIS", "GIS新增")]               GisRegionNew = 270,
-        [UI("GIS", "GIS查看")]               GisRegionView = 271,
-        [UI("GIS", "GIS修改")]               GisRegionEdit = 272,
-        [UI("GIS", "GIS删除")]               GisRegionDelete = 273,
+        [UI("GIS", "几何图形新增")]             GisGeometryNew = 270,
+        [UI("GIS", "几何图形查看")]             GisGeometryView = 271,
+        [UI("GIS", "几何图形修改")]             GisGeometryEdit = 272,
+        [UI("GIS", "几何图形删除")]             GisGeometryDelete = 273,
         [UI("检查", "检查对象新增")]           CheckObjectNew = 300,
         [UI("检查", "检查对象查看")]           CheckObjectView = 301,
         [UI("检查", "检查对象修改")]           CheckObjectEdit = 302,

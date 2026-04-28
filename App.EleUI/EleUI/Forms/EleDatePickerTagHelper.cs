@@ -18,20 +18,11 @@ namespace App.EleUI
     [HtmlTargetElement("EleDatePicker")]
     public class EleDatePickerTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Type")]
-        public EleDatePickerType Type { get; set; } = EleDatePickerType.Date;
-
-        [HtmlAttributeName("Format")]
-        public string Format { get; set; } = "YYYY-MM-DD";
-
-        [HtmlAttributeName("ValueFormat")]
-        public string ValueFormat { get; set; }
-
-        [HtmlAttributeName("StartPlaceholder")]
-        public string StartPlaceholder { get; set; }
-
-        [HtmlAttributeName("EndPlaceholder")]
-        public string EndPlaceholder { get; set; }
+        [HtmlAttributeName("Type")]               public EleDatePickerType Type { get; set; } = EleDatePickerType.Date;
+        [HtmlAttributeName("Format")]             public string Format { get; set; } = "YYYY-MM-DD";
+        [HtmlAttributeName("ValueFormat")]        public string ValueFormat { get; set; }
+        [HtmlAttributeName("StartPlaceholder")]   public string StartPlaceholder { get; set; }
+        [HtmlAttributeName("EndPlaceholder")]     public string EndPlaceholder { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

@@ -50,55 +50,32 @@ namespace App.EleUI
     [HtmlTargetElement("EleButton")]
     public class EleButtonTagHelper : EleControlTagHelper
     {
-        /// <summary>按钮类型</summary>
-        [HtmlAttributeName("Type")]
-        public EleButtonType Type { get; set; } = EleButtonType.Default;
+        [HtmlAttributeName("Type")]            public EleButtonType Type { get; set; } = EleButtonType.Default;
+        [HtmlAttributeName("Look")]            public EleButtonLook Look { get; set; } = EleButtonLook.Fill;
+        [HtmlAttributeName("Icon")]            public EleIconName Icon { get; set; } = EleIconName.None;
+        [HtmlAttributeName("IconCls")]         public string IconCls { get; set;}  // 图标 CSS 类，如："fas fa-edit"
+        [HtmlAttributeName("TextFor")]         public ModelExpression TextFor { get; set; }
+        [HtmlAttributeName("Loading")]         public string Loading { get; set; } // v-bind:loading
 
-        [HtmlAttributeName("Look")]
-        public EleButtonLook Look { get; set; } = EleButtonLook.Fill;
-
-        /// <summary>图标名称</summary>
-        [HtmlAttributeName("Icon")]
-        public EleIconName Icon { get; set; } = EleIconName.None;
-
-        /// <summary>图标 CSS 类，如："fas fa-edit"</summary>
-        [HtmlAttributeName("IconCls")]
-        public string IconCls { get; set;}
 
         /// <summary>点击事件（原生 onclick）。作用域是当前 DOM 元素，不能直接访问 Vue 实例的 data、methods、props 等</summary>
-        [HtmlAttributeName("Click")]
-        public string Click { get; set; } 
+        [HtmlAttributeName("Click")]           public string Click { get; set; }   // 点击事件（原生 onclick）。作用域是当前 DOM 元素，不能直接访问 Vue 实例的 data、methods、props 等
 
         /// <summary>点击事件（Vue 表达式，输出 v-on:click）。作用域是当前 Vue 实例（组件实例），可以直接访问实例的 data、methods、props 等</summary>
-        [HtmlAttributeName("VClick")]
-        public string VClick { get; set; }
-
-        /// <summary>
-        /// 弹窗URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。
-        /// 会生成：v-on:click="openForm(0, '...')"。
-        /// </summary>
-        [HtmlAttributeName("PopupUrl")]
-        public string PopupUrl { get; set; }
-
-        /// <summary>弹出页面标题。与 PopupUrl 配合使用。</summary>
-        [HtmlAttributeName("PopupTitle")]
-        public string PopupTitle { get; set; }
+        [HtmlAttributeName("VClick")]          public string VClick { get; set; }
 
         /// <summary>命令类型。如果设置了命令类型，点击事件将自动绑定为 invokeCommand('{Command.ToString()}')</summary>
-        [HtmlAttributeName("Command")]
-        public Command Command { get; set; } // Default is None (0)
+        [HtmlAttributeName("Command")]         public Command Command { get; set; } // Default is None (0)
 
         /// <summary>命令名称。优先级高于 Command 属性，直接使用该字符串作为 v-on:click 的值</summary>
-        [HtmlAttributeName("Handler")]
-        public string Handler { get; set; }
+        [HtmlAttributeName("Handler")]         public string Handler { get; set; }
 
-        /// <summary>强类型文本绑定，输出 {{ path }}。</summary>
-        [HtmlAttributeName("TextFor")]
-        public ModelExpression TextFor { get; set; }
+        /// <summary>弹窗URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。会生成：v-on:click="openForm(0, '...')"。</summary>
+        [HtmlAttributeName("PopupUrl")]        public string PopupUrl { get; set; }
 
-        /// <summary>加载中状态</summary>
-        [HtmlAttributeName("Loading")]
-        public string Loading { get; set; } // v-bind:loading
+        /// <summary>弹出页面标题。与 PopupUrl 配合使用。</summary>
+        [HtmlAttributeName("PopupTitle")]      public string PopupTitle { get; set; }
+
 
         /// <summary>处理标签</summary>
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)

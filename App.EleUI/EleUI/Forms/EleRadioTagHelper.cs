@@ -12,14 +12,9 @@ namespace App.EleUI
     [HtmlTargetElement("EleRadio")]
     public class EleRadioTagHelper : EleFormControlTagHelper
     {
-        [HtmlAttributeName("Items")]
-        public string Items { get; set; }
-
-        [HtmlAttributeName("Data")]
-        public object Data { get; set; }
-
-        [HtmlAttributeName("IsButton")]
-        public bool IsButton { get; set; } = false;
+        [HtmlAttributeName("Items")]        public string Items { get; set; }
+        [HtmlAttributeName("Data")]         public object Data { get; set; }
+        [HtmlAttributeName("IsButton")]     public bool IsButton { get; set; } = false;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

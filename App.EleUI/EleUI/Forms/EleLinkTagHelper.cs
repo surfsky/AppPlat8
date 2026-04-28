@@ -22,26 +22,13 @@ namespace App.EleUI
     [HtmlTargetElement("EleLink")]
     public class EleLinkTagHelper : TagHelper
     {
-        [HtmlAttributeName("For")]
-        public ModelExpression For { get; set; }
-
-        [HtmlAttributeName("Href")]
-        public string Href { get; set; }
-
-        [HtmlAttributeName("Display")]
-        public EleLinkDisplay Display { get; set; } = EleLinkDisplay.Blank;
-
-        [HtmlAttributeName("Text")]
-        public string Text { get; set; } = "";
-
-        [HtmlAttributeName("Icon")]
-        public EleIconName Icon { get; set; } = EleIconName.None;
-
-        [HtmlAttributeName("DrawerTitle")]
-        public string DrawerTitle { get; set; }
-
-        [HtmlAttributeName("DrawerSize")]
-        public string DrawerSize { get; set; }
+        [HtmlAttributeName("For")]           public ModelExpression For { get; set; }
+        [HtmlAttributeName("Href")]          public string Href { get; set; }
+        [HtmlAttributeName("Display")]       public EleLinkDisplay Display { get; set; } = EleLinkDisplay.Blank;
+        [HtmlAttributeName("Text")]          public string Text { get; set; } = "";
+        [HtmlAttributeName("Icon")]          public EleIconName Icon { get; set; } = EleIconName.None;
+        [HtmlAttributeName("DrawerTitle")]   public string DrawerTitle { get; set; }
+        [HtmlAttributeName("DrawerSize")]    public string DrawerSize { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

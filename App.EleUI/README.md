@@ -1,26 +1,73 @@
 # App.EleUI 组件说明
 
-## 仓库结构（迁移后）
+`App.EleUI` 是一套基于 Razor TagHelper + Vue3 + Element Plus 的页面UI框架，目标是：
 
-- `App.EleUI/EleUI`：控件库项目根目录（含 `App.EleUI.csproj`、`build.mjs`、`package.json`、`wwwroot/eleui`）。
-- `App.EleUI/EleUISamples`：示例站项目。
+- 在 Razor 页面里用声明式标签，强类型绑定，快速搭建表单、表格、布局与弹窗等。
+- 服务器端事件处理，支持异步更新页面状态。
 
-`App.EleUI` 根目录只保留上述两个业务目录和本说明文件。
+## 参考
 
-`App.EleUI/EleUI` 是一套基于 Razor TagHelper + Vue3 + Element Plus 的页面构建层，目标是：
+- Element Plus: https://element-plus.org/zh-CN
+- Vue 3: https://cn.vuejs.org/
 
-- 在 Razor 页面里用声明式标签快速搭建表单、表格、布局与弹窗。
-- 通过统一 JavaScript 运行时（`EleUIJs`）处理挂载、弹窗通信、表单提交等逻辑。
-- 保持服务端 PageModel 与前端交互约定一致。
+
+## 控件使用示例
+
+``` html
+<script src="~/eleui/eleui.js"></script>
+<EleButton Handler="OnClick">默认按钮</EleButton>
+```        
+
+``` cs
+public void OnClick([FromForm] req)
+{
+    // 处理点击事件
+}
+```
+
+
+## 运行
+
+```bash
+# 编译整解决方案
+dotnet build AppPlat.sln
+
+# 编译 App.EleUI 控件库
+#`App.EleUI/EleUI/App.EleUI.csproj` 在 `BuildEleUiAssets` 目标里会自动执行 `npm install` 与 `npm run build`。
+# 前端打包产物输出到：`App.EleUI/EleUI/wwwroot/eleui/eleui.js`。
+dotnet build App.EleUI/EleUI/App.EleUI.csproj
+
+# 运行 EleUI 示例站：
+dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
+
+
+# 若端口被占用，查找占用 6070 的进程，然后kill
+lsof -iTCP:6070 -sTCP:LISTEN
+kill -9 <pid>
+```
+
+
+## 发布 NuGet
+
+```bash
+# 打包
+dotnet pack App.EleUI/EleUI/App.EleUI.csproj -c Release -o ./nupkgs`
+
+# 推送到 NuGet.org
+dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/index.json --api-key <YOUR_API_KEY> --skip-duplicate
+```
 
 ## 目录结构
 
-- `Columns/`: 表格列扩展（操作列、图标列、序号列、图片列等）
-- `Containers/`: 容器类组件（`EleContainer`、`EleCard`、`EleSplitPanel`）
-- `Controls/`: 表单与基础控件（`EleInput`、`EleSelect`、`EleLabel` 等）
-- `Layouts/`: 纯布局组件（`Row`/`Column`/`Grid`）
-- `Popups/`: 弹层组件（`EleDialog`、`EleDrawer`、`ElePopover`）
-- `EleUIJs/`: 前端运行时与构建器（`EleForm`、`EleTable`、`EleManager`）
+- `App.EleUI/EleUI`：控件库项目根目录
+  - `Columns/`: 表格列扩展（操作列、图标列、序号列、图片列等）
+  - `Containers/`: 容器类组件（`EleContainer`、`EleCard`、`EleSplitPanel`）
+  - `Controls/`: 表单与基础控件（`EleInput`、`EleSelect`、`EleLabel` 等）
+  - `Layouts/`: 纯布局组件（`Row`/`Column`/`Grid`）
+  - `Popups/`: 弹层组件（`EleDialog`、`EleDrawer`、`ElePopover`）
+  - `EleUIJs/`: 前端运行时与构建器（`EleForm`、`EleTable`、`EleManager`）
+- `App.EleUI/EleUISamples`：示例网站项目。
+
 
 ## 关键基类职责
 
@@ -29,9 +76,8 @@
   - 通用能力：权限检查、`v-model`/`:disabled` 注入、基础 style 组装
 - `EleFormControlTagHelper`: 表单字段基础能力
   - `For`、`Label`、`FillRow`、`Required`、自动从模型推导标签和字段绑定
-- `EleItemTagHelper`: 面向布局容器的 Tailwind 工具类封装
+- `EleItemTagHelper`: 面向布局容器的 Tailwind 工具类基础
   - `W/H/MinW/MaxW/MinH/MaxH`、`P/Px/Py`、`M/Mx/My`、`Bg`、`Overflow`
-  - 通过 `ComposeClass(...)` 统一拼装 class
 
 ## 控件清单
 
@@ -90,16 +136,6 @@
 - `Utils.js`: 通用工具
 - `EleFixes.css`: 一些运行时样式修正
 
-## 命名与约定
-
-- 带弹窗选择语义的控件统一使用 `XXXSelector` 后缀。
-  - 例如：`EleSelector`、`EleIconSelector`
-- 抽屉/iframe 关闭统一走 `EleManager.closePage(...)` 协议。
-- `EleLabel` 支持 `Bold`（bool，默认 `true`）。
-- `Border` 统一为字符串属性：
-  - `"true" | "1" | "yes" | "on" | "border"` => `border`
-  - `"false" | "0" | "no" | "off" | "none"` => 不加边框
-  - 其他值 => 自动映射为 `border-xxx`
 
 ## 类继承关系图
 
@@ -157,50 +193,8 @@ TagHelper <|-- EleDrawerContentTagHelper
 TagHelper <|-- EleDrawerFooterTagHelper
 ```
 
-## 参考
+## 命名与约定
 
-- Element Plus: https://element-plus.org/zh-CN
-- Vue 3: https://cn.vuejs.org/
-
-## 编译
-
-### 仅编译 App.EleUI 控件库
-
-在仓库根目录执行：
-
-- `dotnet build App.EleUI/EleUI/App.EleUI.csproj`
-
-说明：
-
-- `App.EleUI/EleUI/App.EleUI.csproj` 在 `BuildEleUiAssets` 目标里会自动执行 `npm install` 与 `npm run build`。
-- 前端打包产物输出到：`App.EleUI/EleUI/wwwroot/eleui/eleui.js`。
-
-### 编译整解决方案
-
-- `dotnet build AppPlat.sln`
-
-## 运行测试项目
-
-如需运行 EleUI 示例站（非测试项目）：
-
-- `dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj`
-
-若端口被占用，查找占用 6060 的进程，然后kill
-  ```bash
-    lsof -iTCP:6070 -sTCP:LISTEN
-    kill -9 <pid>
-  ```
-
-## 发布 NuGet
-
-### 1) 打包
-
-- `dotnet pack App.EleUI/EleUI/App.EleUI.csproj -c Release -o ./nupkgs`
-
-### 2) 推送到 NuGet.org
-
-- `dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/index.json --api-key <YOUR_API_KEY> --skip-duplicate`
-
-建议将 API Key 通过环境变量传入，不要写进脚本。
-
+- 带弹窗选择语义的控件统一使用 `XXXSelector` 后缀。如：`EleSelector`、`EleIconSelector`
+- 抽屉/iframe 关闭统一走 `EleManager.closePage(...)` 协议。
 

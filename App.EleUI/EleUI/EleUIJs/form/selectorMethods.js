@@ -9,6 +9,11 @@ export function initSelectorState(form, vueApi) {
 }
 
 export const selectorMethods = {
+    normalizeSelectorField(field) {
+        if (!field) return '';
+        return field.charAt(0).toLowerCase() + field.slice(1);
+    },
+
     resolveDrawerUrlBase(urlBase) {
         if (!urlBase) return '';
         try {
@@ -19,10 +24,39 @@ export const selectorMethods = {
         }
     },
 
-    openSelector(propId, propText, url, multi, title) {
+    appendQuery(url, key, value) {
+        const joinChar = url.includes('?') ? '&' : '?';
+        return `${url}${joinChar}${encodeURIComponent(key)}=${encodeURIComponent(value ?? '')}`;
+    },
+
+    buildSelectorUrl(urlBase, propId, keyMode) {
+        let url = this.resolveDrawerUrlBase(urlBase);
+        const modeRaw = (keyMode || 'Url').toString().trim().toLowerCase();
+        const mode = modeRaw === 'url/storage' ? 'auto' : modeRaw;
+
+        const keyId = this.normalizeSelectorField(propId);
+        const rawValue = this.form?.value ? (this.form.value[keyId] ?? '') : '';
+        const value = rawValue == null ? '' : String(rawValue);
+
+        const useStorage = mode === 'storage' || (mode === 'auto' && value.length > 1200);
+        if (useStorage && typeof window !== 'undefined' && window.localStorage) {
+            const k = `ele_selector_${keyId}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            window.localStorage.setItem(k, value);
+            url = this.appendQuery(url, 'selectorKey', k);
+            url = this.appendQuery(url, 'geojsonKey', k);
+            return url;
+        }
+
+        url = this.appendQuery(url, 'selectorValue', value);
+        url = this.appendQuery(url, keyId, value);
+        url = this.appendQuery(url, 'geojson', value);
+        return url;
+    },
+
+    openSelector(propId, propText, url, multi, title, keyMode = 'Url') {
         this.selectorTargetId.value = propId;
         this.selectorTargetText.value = propText;
-        this.selectorUrl.value = this.resolveDrawerUrlBase(url);
+        this.selectorUrl.value = this.buildSelectorUrl(url, propId, keyMode);
         this.selectorMulti.value = multi;
         this.selectorTitle.value = title || '选择';
         this.selectorVisible.value = true;
@@ -58,8 +92,9 @@ export const selectorMethods = {
         else if (data.data && data.data.id) rows = [data.data];
 
         if (!this.selectorVisible.value) return;
-        const keyId = this.selectorTargetId.value.charAt(0).toLowerCase() + this.selectorTargetId.value.slice(1);
-        const keyText = this.selectorTargetText.value.charAt(0).toLowerCase() + this.selectorTargetText.value.slice(1);
+        const keyId = this.normalizeSelectorField(this.selectorTargetId.value);
+        let keyText = this.normalizeSelectorField(this.selectorTargetText.value);
+        if (!keyText) keyText = keyId;
 
         if (this.selectorMulti.value) {
             this.form.value[keyId] = rows.map(r => r.id).join(',');
@@ -74,8 +109,9 @@ export const selectorMethods = {
     },
 
     clearSelector(propId, propText) {
-        const keyId = propId.charAt(0).toLowerCase() + propId.slice(1);
-        const keyText = propText.charAt(0).toLowerCase() + propText.slice(1);
+        const keyId = this.normalizeSelectorField(propId);
+        let keyText = this.normalizeSelectorField(propText);
+        if (!keyText) keyText = keyId;
         this.form.value[keyId] = null;
         this.form.value[keyText] = null;
     }
