@@ -9,6 +9,7 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
+    <script src="/js/maphelper.js"></script>
     <style>
         html, body, #app { height: 100%; margin: 0; }
         #map { width: 100%; height: 100%; }
@@ -53,32 +54,69 @@
             white-space: pre-wrap;
             word-break: break-all;
         }
+        .style-color-picker .el-color-picker__trigger {
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            border: 1px solid #ececed;
+            padding: 0;
+        }
+        .style-color-picker .el-color-picker__icon {
+            display: none;
+        }
+        .style-label {
+            font-size: 12px;
+            color: #334155;
+        }
+        .opacity-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 4px;
+        }
+        .opacity-value {
+            min-width: 36px;
+            font-size: 12px;
+            color: #475569;
+        }
     </style>
 }
 
 @section body {
     <div id="app">
         <div class="panel">
-            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-                <el-button type="primary" plain @@click="drawPoint">点</el-button>
-                <el-button type="primary" plain @@click="drawLine">线</el-button>
-                <el-button type="primary" plain @@click="drawPolygon">面</el-button>
-                <el-button type="warning" plain @@click="removeSelected">删除选中</el-button>
-                <el-button type="danger" plain @@click="clearAll">清空</el-button>
-                <el-select v-model="exportMode" style="width: 210px" size="default">
-                    <el-option label="FeatureCollection" value="featureCollection"></el-option>
-                    <el-option label="Point" value="point"></el-option>
-                    <el-option label="LineString" value="lineString"></el-option>
-                    <el-option label="Polygon" value="polygon"></el-option>
-                    <el-option label="MultiPoint" value="multiPoint"></el-option>
-                    <el-option label="MultiLineString" value="multiLineString"></el-option>
-                    <el-option label="MultiPolygon" value="multiPolygon"></el-option>
-                    <el-option label="GeometryCollection" value="geometryCollection"></el-option>
-                </el-select>
-                <el-button @@click="closeOnly">取消</el-button>
-                <el-button type="primary" @@click="confirmGeometry">确定</el-button>
+            <div style="display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                <el-button type="primary" plain title="绘制点" @@click="drawPoint">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="10" r="5"></circle>
+                        <path d="M12 15v6"></path>
+                    </svg>
+                </el-button>
+                <el-button type="primary" plain title="绘制线" @@click="drawLine">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 19L21 5"></path>
+                    </svg>
+                </el-button>
+                <el-button type="primary" plain title="绘制面" @@click="drawPolygon">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 7l7-4 9 7-6 10H6z"></path>
+                    </svg>
+                </el-button>
+                <span class="style-label">点色</span>
+                <el-color-picker class="style-color-picker" v-model="pointColor" @@change="onPointColorChange" size="small" :show-alpha="false"></el-color-picker>
+                <span class="style-label">线色</span>
+                <el-color-picker class="style-color-picker" v-model="lineColor" @@change="onLineColorChange" size="small" :show-alpha="false"></el-color-picker>
+                <span class="style-label">面色</span>
+                <el-color-picker class="style-color-picker" v-model="fillColor" @@change="onFillColorChange" size="small" :show-alpha="false"></el-color-picker>
+                <span class="opacity-wrap">
+                    <span class="style-label">透明</span>
+                    <el-slider style="width:80px" v-model="fillOpacityPercent" :min="0" :max="100" :step="5" @@change="onFillOpacityChange"></el-slider>
+                    <span class="opacity-value">{{ fillOpacityPercent }}%</span>
+                </span>
+                <el-button type="warning" @@click="removeSelected">删除</el-button>
+                <el-button type="danger" @@click="clearAll">清空</el-button>
+                <el-button type="primary" @@click="confirmGeometry">保存</el-button>
             </div>
-            <div class="json-preview" v-if="geoJsonPreview">{{ geoJsonPreview }}</div>
         </div>
 
         <div id="map"></div>
@@ -95,11 +133,12 @@
                 const accessToken = "@SiteConfig.Instance.MapKey";
                 const initGeoJson = `@Html.Raw((Model.GeoJson ?? string.Empty).Replace("\\", "\\\\").Replace("`", "\\`").Replace("$", "\\$"))`;
 
-                const exportMode = ref('featureCollection');
-                const geoJsonPreview = ref('');
+                const pointColor = ref('#dc2626');
+                const lineColor = ref('#1e3a8a');
+                const fillColor = ref('#1d4ed8');
+                const fillOpacityPercent = ref(35);
 
-                let map = null;
-                let draw = null;
+                let editor = null;
 
                 const showError = (msg) => {
                     if (window.EleManager && typeof window.EleManager.showError === 'function') {
@@ -116,122 +155,16 @@
                         alert(msg);
                     }
                 };
+                const drawPoint = () => editor?.drawPoint();
+                const drawLine = () => editor?.drawLine();
+                const drawPolygon = () => editor?.drawPolygon();
+                const onPointColorChange = (color) => editor?.setPointColor(color || pointColor.value);
+                const onLineColorChange = (color) => editor?.setLineColor(color || lineColor.value);
+                const onFillColorChange = (color) => editor?.setFillColor(color || fillColor.value);
+                const onFillOpacityChange = (value) => editor?.setFillOpacityPercent(value ?? fillOpacityPercent.value);
 
-                const getAllFeatures = () => {
-                    const fc = draw?.getAll?.() || { type: 'FeatureCollection', features: [] };
-                    return Array.isArray(fc.features) ? fc.features : [];
-                };
-
-                const sanitizeFeature = (f) => {
-                    if (!f || !f.geometry) return null;
-                    return {
-                        type: 'Feature',
-                        properties: f.properties && typeof f.properties === 'object' ? f.properties : {},
-                        geometry: f.geometry
-                    };
-                };
-
-                const featuresByGeometryType = (type) => {
-                    return getAllFeatures().filter(f => f?.geometry?.type === type).map(sanitizeFeature).filter(Boolean);
-                };
-
-                const singleGeometryPayload = (geometryType) => {
-                    const mapType = {
-                        point: 'Point',
-                        lineString: 'LineString',
-                        polygon: 'Polygon'
-                    };
-                    const target = mapType[geometryType];
-                    const list = featuresByGeometryType(target);
-                    if (list.length !== 1) {
-                        throw new Error(`导出为 ${target} 时，必须且只能存在 1 个 ${target} 图形`);
-                    }
-                    return list[0].geometry;
-                };
-
-                const multiGeometryPayload = (mode) => {
-                    if (mode === 'multiPoint') {
-                        const list = featuresByGeometryType('Point');
-                        if (list.length === 0) throw new Error('请至少绘制 1 个 Point 图形');
-                        return {
-                            type: 'MultiPoint',
-                            coordinates: list.map(f => f.geometry.coordinates)
-                        };
-                    }
-                    if (mode === 'multiLineString') {
-                        const list = featuresByGeometryType('LineString');
-                        if (list.length === 0) throw new Error('请至少绘制 1 个 LineString 图形');
-                        return {
-                            type: 'MultiLineString',
-                            coordinates: list.map(f => f.geometry.coordinates)
-                        };
-                    }
-
-                    const list = featuresByGeometryType('Polygon');
-                    if (list.length === 0) throw new Error('请至少绘制 1 个 Polygon 图形');
-                    return {
-                        type: 'MultiPolygon',
-                        coordinates: list.map(f => f.geometry.coordinates)
-                    };
-                };
-
-                const geometryCollectionPayload = () => {
-                    const features = getAllFeatures().map(sanitizeFeature).filter(Boolean);
-                    if (features.length === 0) throw new Error('请至少绘制 1 个图形');
-                    return {
-                        type: 'GeometryCollection',
-                        geometries: features.map(f => f.geometry)
-                    };
-                };
-
-                const buildExportObject = () => {
-                    const features = getAllFeatures().map(sanitizeFeature).filter(Boolean);
-                    if (features.length === 0) {
-                        throw new Error('请先绘制图形');
-                    }
-
-                    switch (exportMode.value) {
-                        case 'featureCollection':
-                            return { type: 'FeatureCollection', features };
-                        case 'point':
-                        case 'lineString':
-                        case 'polygon':
-                            return singleGeometryPayload(exportMode.value);
-                        case 'multiPoint':
-                        case 'multiLineString':
-                        case 'multiPolygon':
-                            return multiGeometryPayload(exportMode.value);
-                        case 'geometryCollection':
-                            return geometryCollectionPayload();
-                        default:
-                            return { type: 'FeatureCollection', features };
-                    }
-                };
-
-                const refreshPreview = () => {
-                    try {
-                        const obj = buildExportObject();
-                        geoJsonPreview.value = JSON.stringify(obj);
-                    } catch {
-                        geoJsonPreview.value = '';
-                    }
-                };
-
-                const drawPoint = () => draw?.changeMode('draw_point');
-                const drawLine = () => draw?.changeMode('draw_line_string');
-                const drawPolygon = () => draw?.changeMode('draw_polygon');
-
-                const removeSelected = () => {
-                    if (!draw) return;
-                    draw.trash();
-                    refreshPreview();
-                };
-
-                const clearAll = () => {
-                    const all = getAllFeatures();
-                    all.forEach(f => draw.delete(f.id));
-                    refreshPreview();
-                };
+                const removeSelected = () => editor?.removeSelected();
+                const clearAll = () => editor?.clearAll();
 
                 const closeOnly = () => {
                     if (window.EleManager && typeof window.EleManager.closePage === 'function') {
@@ -247,272 +180,58 @@
                 };
 
                 const confirmGeometry = () => {
-                    let geoObj;
                     try {
-                        geoObj = buildExportObject();
-                    } catch (e) {
-                        showWarning(e?.message || '当前图形不满足导出条件');
-                        return;
-                    }
+                        const geojson = editor?.getExportGeoJson?.();
+                        if (!geojson) throw new Error('请先绘制图形');
 
-                    const geojson = JSON.stringify(geoObj);
-                    const payload = {
-                        type: 'EleSelector',
-                        data: [{ id: geojson, name: geojson }]
-                    };
-
-                    if (window.EleManager && typeof window.EleManager.closePage === 'function') {
-                        window.EleManager.closePage(payload);
-                        return;
-                    }
-                    if (window.parent) {
-                        window.parent.postMessage(payload, '*');
-                    }
-                    if (window.top && window.top !== window.parent) {
-                        window.top.postMessage(payload, '*');
-                    }
-                };
-
-                const explodeGeometryToFeatures = (geometry) => {
-                    if (!geometry || !geometry.type) return [];
-                    switch (geometry.type) {
-                        case 'Point':
-                        case 'LineString':
-                        case 'Polygon':
-                            return [{ type: 'Feature', properties: {}, geometry }];
-                        case 'MultiPoint':
-                            return (geometry.coordinates || []).map(c => ({
-                                type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: c }
-                            }));
-                        case 'MultiLineString':
-                            return (geometry.coordinates || []).map(c => ({
-                                type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c }
-                            }));
-                        case 'MultiPolygon':
-                            return (geometry.coordinates || []).map(c => ({
-                                type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: c }
-                            }));
-                        case 'GeometryCollection':
-                            return (geometry.geometries || []).flatMap(g => explodeGeometryToFeatures(g));
-                        default:
-                            return [];
-                    }
-                };
-
-                const readInitialRaw = () => {
-                    const params = new URLSearchParams(window.location.search || '');
-                    const key = (params.get('geojsonKey') || '').trim();
-                    const selectorKey = (params.get('selectorKey') || '').trim();
-                    const direct = (params.get('geojson') || '').trim();
-                    const selectorValue = (params.get('selectorValue') || '').trim();
-
-                    if (key && window.sessionStorage) {
-                        const cache = (sessionStorage.getItem(key) || '').trim();
-                        sessionStorage.removeItem(key);
-                        if (cache) return cache;
-                    }
-
-                    if (key && window.localStorage) {
-                        const cache = (localStorage.getItem(key) || '').trim();
-                        localStorage.removeItem(key);
-                        if (cache) return cache;
-                    }
-
-                    if (selectorKey && window.localStorage) {
-                        const cache = (localStorage.getItem(selectorKey) || '').trim();
-                        localStorage.removeItem(selectorKey);
-                        if (cache) return cache;
-                    }
-
-                    if (direct) return direct;
-                    if (selectorValue) return selectorValue;
-                    return (initGeoJson || '').trim();
-                };
-
-                const normalizeRawGeoJson = (raw) => {
-                    if (!raw) return '';
-
-                    let text = raw.trim();
-                    if (!text) return '';
-
-                    // 兼容被外层单引号或双引号包裹的输入
-                    if ((text.startsWith("'") && text.endsWith("'")) || (text.startsWith('"') && text.endsWith('"'))) {
-                        text = text.substring(1, text.length - 1).trim();
-                    }
-
-                    // 兼容仍是 URL 编码的文本
-                    if (text.includes('%7B') || text.includes('%7D') || text.includes('%22')) {
-                        try {
-                            text = decodeURIComponent(text);
-                        } catch {
-                            // ignore
-                        }
-                    }
-
-                    return text;
-                };
-
-                const parseInitial = (raw) => {
-                    if (!raw) return { mode: 'featureCollection', features: [] };
-                    try {
-                        const obj = JSON.parse(normalizeRawGeoJson(raw));
-                        if (!obj || !obj.type) return { mode: 'featureCollection', features: [] };
-
-                        if (obj.type === 'FeatureCollection') {
-                            const feats = (obj.features || []).flatMap(f => explodeGeometryToFeatures(f.geometry));
-                            return { mode: 'featureCollection', features: feats };
-                        }
-
-                        if (obj.type === 'Feature') {
-                            return {
-                                mode: 'featureCollection',
-                                features: explodeGeometryToFeatures(obj.geometry)
-                            };
-                        }
-
-                        if (obj.type === 'GeometryCollection') {
-                            return {
-                                mode: 'geometryCollection',
-                                features: explodeGeometryToFeatures(obj)
-                            };
-                        }
-
-                        const modeMap = {
-                            Point: 'point',
-                            LineString: 'lineString',
-                            Polygon: 'polygon',
-                            MultiPoint: 'multiPoint',
-                            MultiLineString: 'multiLineString',
-                            MultiPolygon: 'multiPolygon'
+                        const payload = {
+                            type: 'EleSelector',
+                            data: [{ id: geojson, name: geojson }]
                         };
 
-                        return {
-                            mode: modeMap[obj.type] || 'featureCollection',
-                            features: explodeGeometryToFeatures(obj)
-                        };
-                    } catch {
-                        return { mode: 'featureCollection', features: [] };
-                    }
-                };
-
-                const fitToFeatures = (features) => {
-                    if (!map || !features || features.length === 0) return;
-                    const points = [];
-                    const collect = (coords) => {
-                        if (!Array.isArray(coords)) return;
-                        if (coords.length === 0) return;
-                        if (typeof coords[0] === 'number' && typeof coords[1] === 'number') {
-                            points.push(coords);
+                        if (window.EleManager && typeof window.EleManager.closePage === 'function') {
+                            window.EleManager.closePage(payload);
                             return;
                         }
-                        coords.forEach(collect);
-                    };
-
-                    features.forEach(f => collect(f.geometry?.coordinates));
-                    if (points.length === 0) return;
-
-                    let minLng = points[0][0], maxLng = points[0][0], minLat = points[0][1], maxLat = points[0][1];
-                    points.forEach(p => {
-                        minLng = Math.min(minLng, p[0]);
-                        maxLng = Math.max(maxLng, p[0]);
-                        minLat = Math.min(minLat, p[1]);
-                        maxLat = Math.max(maxLat, p[1]);
-                    });
-                    map.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 60, duration: 0 });
-                };
-
-                const enhanceDrawLayerColors = () => {
-                    if (!map) return;
-                    const style = map.getStyle();
-                    const layers = style && Array.isArray(style.layers) ? style.layers : [];
-
-                    layers.forEach(layer => {
-                        const id = layer.id || '';
-                        try {
-                            if (id.includes('gl-draw-line')) {
-                                map.setPaintProperty(id, 'line-color', '#1e3a8a');
-                                map.setPaintProperty(id, 'line-width', 3);
-                            }
-                            if (id.includes('gl-draw-polygon-fill')) {
-                                map.setPaintProperty(id, 'fill-color', '#1d4ed8');
-                                map.setPaintProperty(id, 'fill-opacity', 0.35);
-                            }
-                            if (id.includes('gl-draw-polygon-stroke')) {
-                                map.setPaintProperty(id, 'line-color', '#1e40af');
-                                map.setPaintProperty(id, 'line-width', 3);
-                            }
-                            if (id.includes('gl-draw-point') && layer.type === 'circle') {
-                                map.setPaintProperty(id, 'circle-color', '#dc2626');
-                                map.setPaintProperty(id, 'circle-radius', 5);
-                                map.setPaintProperty(id, 'circle-stroke-color', '#ffffff');
-                                map.setPaintProperty(id, 'circle-stroke-width', 1.5);
-                            }
-                        } catch {
-                            // Ignore layer paint changes that are not supported by current layer type.
+                        if (window.parent) {
+                            window.parent.postMessage(payload, '*');
                         }
-                    });
-                };
-
-                const initMap = () => {
-                    if (!accessToken) {
-                        showError('缺少 Mapbox Token，请检查系统配置');
-                        return;
+                        if (window.top && window.top !== window.parent) {
+                            window.top.postMessage(payload, '*');
+                        }
+                    } catch (e) {
+                        showWarning(e?.message || '当前图形不满足导出条件');
                     }
-
-                    mapboxgl.accessToken = accessToken;
-                    if (typeof mapboxgl.setTelemetryEnabled === 'function') {
-                        mapboxgl.setTelemetryEnabled(false);
-                    }
-                    map = new mapboxgl.Map({
-                        container: 'map',
-                        style: 'mapbox://styles/mapbox/streets-v11',
-                        center: [120.1551, 30.2741],
-                        zoom: 11
-                    });
-
-                    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-
-                    draw = new MapboxDraw({
-                        displayControlsDefault: false,
-                        defaultMode: 'simple_select',
-                        controls: {
-                            point: false,
-                            line_string: false,
-                            polygon: false,
-                            trash: false
-                        }
-                    });
-                    map.addControl(draw, 'top-left');
-
-                    map.on('draw.create', refreshPreview);
-                    map.on('draw.update', refreshPreview);
-                    map.on('draw.delete', refreshPreview);
-
-                    map.on('load', () => {
-                        enhanceDrawLayerColors();
-                        const raw = readInitialRaw();
-                        const parsed = parseInitial(raw);
-                        exportMode.value = parsed.mode;
-
-                        if (parsed.features.length > 0) {
-                            draw.add({ type: 'FeatureCollection', features: parsed.features });
-                            fitToFeatures(parsed.features);
-                        }
-
-                        refreshPreview();
-                    });
                 };
 
                 onMounted(() => {
-                    initMap();
+                    editor = window.MapGeometryHelper.createEditor({
+                        accessToken,
+                        initGeoJson,
+                        mapContainerId: 'map',
+                        onError: showError,
+                        onPaletteChange: (v) => {
+                            pointColor.value = v.pointColor;
+                            lineColor.value = v.lineColor;
+                            fillColor.value = v.fillColor;
+                            fillOpacityPercent.value = v.fillOpacityPercent;
+                        }
+                    });
+                    editor.init();
                 });
 
                 return {
-                    exportMode,
-                    geoJsonPreview,
+                    pointColor,
+                    lineColor,
+                    fillColor,
+                    fillOpacityPercent,
                     drawPoint,
                     drawLine,
                     drawPolygon,
+                    onPointColorChange,
+                    onLineColorChange,
+                    onFillColorChange,
+                    onFillOpacityChange,
                     removeSelected,
                     clearAll,
                     closeOnly,

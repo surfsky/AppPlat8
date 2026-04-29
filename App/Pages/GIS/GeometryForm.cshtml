@@ -26,7 +26,9 @@
         <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"  ></EleTreeSelect>
         <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
         <EleSelector For="Item.JsonData" TextFor="Item.JsonData" Label="GeoJSON数据" Class="geojson-selector" PopupUrl="/Shared/MapGeometry" KeyMode="Storage" Icon="Location"></EleSelector>
-    
+        <EleInput For="Item.JsonData" Label="GeoJSON数据" Enabled="true" Rows="20" FillRow="true"></EleInput>
+
+
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Command="Close">关闭</EleButton>

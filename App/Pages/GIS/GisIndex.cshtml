@@ -8,6 +8,7 @@
 @section head {
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
+    <script src="/js/maphelper.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
@@ -203,6 +204,12 @@
             gap: 8px;
             margin-bottom: 8px;
         }
+        .geometry-tree {
+            margin-left: 18px;
+            border-left: 1px dashed rgba(148, 163, 184, 0.5);
+            padding-left: 10px;
+            margin-top: 6px;
+        }
         .tag-chip {
             display: inline-block;
             padding: 3px 8px;
@@ -247,6 +254,19 @@
             background: #2563eb;
             color: #fff;
             border-color: #2563eb;
+        }
+        .map-center-ctrl {
+            min-width: 170px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14);
+            color: #0f172a;
+            font-size: 12px;
+            line-height: 1.2;
+            user-select: none;
+            white-space: nowrap;
         }
         @@media (max-width: 768px) {
             .header-bar { height: 76px; }
@@ -323,13 +343,15 @@
             <div class="layer-tree">
                 <div class="layer-node">
                     <input id="layer-checkObject" type="checkbox" checked class="accent-blue-500" />
-                    <label for="layer-checkObject" class="cursor-pointer">检查对象图层</label>
+                    <label for="layer-checkObject" class="cursor-pointer">检查对象</label>
                     <span id="layer-count" class="ml-auto text-xs text-gray-400">0</span>
                 </div>
                 <div class="layer-node">
-                    <input id="layer-roads" type="checkbox" checked class="accent-orange-500" />
-                    <label for="layer-roads" class="cursor-pointer">道路图层</label>
+                    <input id="layer-geometries" type="checkbox" checked class="accent-green-500" />
+                    <label for="layer-geometries" class="cursor-pointer">图形</label>
+                    <span id="layer-geometry-count" class="ml-auto text-xs text-gray-400">0</span>
                 </div>
+                <div id="geometry-tree" class="geometry-tree"></div>
             </div>
         </div>
     </div>
@@ -343,8 +365,9 @@
             objects: [],
             selectedId: null,
             markerMap: new Map(),
-            roadLineGeoJson: null,
-            roadPointGeoJson: null,
+            geometries: [],
+            geometryVisibleMap: new Map(),
+            geometryFeatureCount: 0,
             currentStyle: 'street',
             is3D: false,
             toolbarCollapsed: false,
@@ -352,27 +375,22 @@
             viewMenuOpen: false
         };
 
-        const ROAD_LINE_SOURCE_ID = 'roads-line-source';
-        const ROAD_POINT_SOURCE_ID = 'roads-point-source';
-        const ROAD_LINE_LAYER_ID = 'roads-line-layer';
-        const ROAD_POINT_LAYER_ID = 'roads-point-layer';
+        let geometryLayerManager = null;
 
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v12',
-            center: [120.1551, 30.2741],
+            center: [120.6034, 27.5686],
             zoom: 11,
             pitch: 0
         });
 
-        const navControl = new mapboxgl.NavigationControl();
-        const geolocateControl = new mapboxgl.GeolocateControl({
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        map.addControl(new mapboxgl.GeolocateControl({
             positionOptions: { enableHighAccuracy: true },
             trackUserLocation: true,
             showUserHeading: true
-        });
-        map.addControl(navControl, 'top-right');
-        map.addControl(geolocateControl, 'top-right');
+        }), 'top-right');
         map.addControl(new mapboxgl.ScaleControl({ unit: 'metric' }), 'top-right');
 
         function applyChineseLabels() {
@@ -382,18 +400,45 @@
                 if (layer.type !== 'symbol') return;
                 const textField = map.getLayoutProperty(layer.id, 'text-field');
                 if (!textField) return;
+                if (typeof textField !== 'string') return;
                 try {
                     map.setLayoutProperty(layer.id, 'text-field', [
                         'coalesce',
                         ['get', 'name_zh-Hans'],
                         ['get', 'name_zh'],
                         ['get', 'name'],
-                        textField
+                        ''
                     ]);
                 } catch {
-                    // Keep original field when style expression is incompatible.
+                    // ignore incompatible text-field expression
                 }
             });
+        }
+
+        function createCenterCoordControl() {
+            let container = null;
+
+            const setText = () => {
+                if (!container) return;
+                const center = map.getCenter();
+                container.textContent = `中心: ${center.lng.toFixed(6)}, ${center.lat.toFixed(6)}`;
+            };
+
+            return {
+                onAdd() {
+                    container = document.createElement('div');
+                    container.className = 'mapboxgl-ctrl map-center-ctrl';
+                    setText();
+                    return container;
+                },
+                onRemove() {
+                    if (container && container.parentNode) {
+                        container.parentNode.removeChild(container);
+                    }
+                    container = null;
+                },
+                update: setText
+            };
         }
 
         function enable3DBuildings() {
@@ -431,11 +476,7 @@
 
         function switchStyle(type) {
             state.currentStyle = type;
-            const styleUrl = type === 'satellite'
-                ? 'mapbox://styles/mapbox/satellite-streets-v12'
-                : 'mapbox://styles/mapbox/streets-v12';
-            map.setStyle(styleUrl);
-
+            map.setStyle(type === 'satellite' ? 'mapbox://styles/mapbox/satellite-streets-v12' : 'mapbox://styles/mapbox/streets-v12');
             document.getElementById('btn-style-street').classList.toggle('active', type === 'street');
             document.getElementById('btn-style-sat').classList.toggle('active', type === 'satellite');
             closeViewMenu();
@@ -465,25 +506,40 @@
             if (openDrawer) openCheckObjectDrawer(item.id);
         }
 
-        function buildLayerTree(items) {
+        function buildLayerTree() {
             const countEl = document.getElementById('layer-count');
-            countEl.textContent = `${items.length}个对象`;
+            if (countEl) countEl.textContent = `${state.objects.length}个对象`;
+            const geometryCountEl = document.getElementById('layer-geometry-count');
+            if (geometryCountEl) geometryCountEl.textContent = `${state.geometryFeatureCount}个图形`;
         }
 
         function setLayerVisible(visible) {
             state.markerMap.forEach(marker => {
-                const el = marker.getElement();
-                el.style.display = visible ? '' : 'none';
+                marker.getElement().style.display = visible ? '' : 'none';
             });
         }
 
-        function setRoadLayerVisible(visible) {
-            if (map.getLayer(ROAD_LINE_LAYER_ID)) {
-                map.setLayoutProperty(ROAD_LINE_LAYER_ID, 'visibility', visible ? 'visible' : 'none');
-            }
-            if (map.getLayer(ROAD_POINT_LAYER_ID)) {
-                map.setLayoutProperty(ROAD_POINT_LAYER_ID, 'visibility', visible ? 'visible' : 'none');
-            }
+        function isGeometryMasterVisible() {
+            const checkbox = document.getElementById('layer-geometries');
+            return checkbox ? !!checkbox.checked : true;
+        }
+
+        function applyGeometryVisibility() {
+            if (!geometryLayerManager) return;
+            const masterVisible = isGeometryMasterVisible();
+            geometryLayerManager.setVisible(masterVisible);
+            if (!masterVisible) return;
+
+            const visibleIds = state.geometries
+                .filter(g => state.geometryVisibleMap.get(g.id) !== false)
+                .map(g => g.id);
+            geometryLayerManager.setVisibleIds(visibleIds);
+        }
+
+        function setGeometryLayerVisible(visible) {
+            if (!geometryLayerManager) return;
+            geometryLayerManager.setVisible(visible);
+            if (visible) applyGeometryVisibility();
         }
 
         function buildMarkers(items) {
@@ -500,7 +556,6 @@
                 el.style.boxShadow = '0 0 12px rgba(96,165,250,0.7)';
                 el.style.cursor = 'pointer';
                 el.title = item.name || '检查对象';
-
                 el.addEventListener('click', () => selectObject(item, true));
 
                 const marker = new mapboxgl.Marker(el).setLngLat([item.lng, item.lat]).addTo(map);
@@ -508,131 +563,87 @@
             });
         }
 
-        function mercatorToLngLat(point) {
-            if (!Array.isArray(point) || point.length < 2) return null;
-            const [x, y] = point;
-            if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+        function buildGeometryTreeNodes() {
+            const nodes = state.geometries.map(item => ({ ...item, children: [] }));
+            const byId = new Map(nodes.map(n => [n.id, n]));
+            const roots = [];
 
-            const lng = (x / 20037508.34) * 180;
-            const lat = (y / 20037508.34) * 180;
-            const latRad = (lat * Math.PI) / 180;
-            const normalizedLat = (180 / Math.PI) * (2 * Math.atan(Math.exp(latRad)) - Math.PI / 2);
-            return [lng, normalizedLat];
+            nodes.forEach(node => {
+                if (node.parentId && byId.has(node.parentId)) {
+                    byId.get(node.parentId).children.push(node);
+                } else {
+                    roots.push(node);
+                }
+            });
+
+            const sortFn = (a, b) => (a.sortId || 0) - (b.sortId || 0) || a.id - b.id;
+            const sortTree = list => {
+                list.sort(sortFn);
+                list.forEach(node => sortTree(node.children));
+            };
+            sortTree(roots);
+            return roots;
         }
 
-        function renderRoadLayers() {
-            if (!state.roadLineGeoJson || !state.roadPointGeoJson) return;
-
-            const existingLineSource = map.getSource(ROAD_LINE_SOURCE_ID);
-            if (existingLineSource) {
-                existingLineSource.setData(state.roadLineGeoJson);
-            } else {
-                map.addSource(ROAD_LINE_SOURCE_ID, {
-                    type: 'geojson',
-                    data: state.roadLineGeoJson
-                });
-            }
-
-            const existingPointSource = map.getSource(ROAD_POINT_SOURCE_ID);
-            if (existingPointSource) {
-                existingPointSource.setData(state.roadPointGeoJson);
-            } else {
-                map.addSource(ROAD_POINT_SOURCE_ID, {
-                    type: 'geojson',
-                    data: state.roadPointGeoJson
-                });
-            }
-
-            if (!map.getLayer(ROAD_LINE_LAYER_ID)) {
-                map.addLayer({
-                    id: ROAD_LINE_LAYER_ID,
-                    type: 'line',
-                    source: ROAD_LINE_SOURCE_ID,
-                    paint: {
-                        'line-color': '#f97316',
-                        'line-width': 3,
-                        'line-opacity': 0.9
-                    }
-                });
-            }
-
-            if (!map.getLayer(ROAD_POINT_LAYER_ID)) {
-                map.addLayer({
-                    id: ROAD_POINT_LAYER_ID,
-                    type: 'circle',
-                    source: ROAD_POINT_SOURCE_ID,
-                    paint: {
-                        'circle-color': '#ef4444',
-                        'circle-radius': 3,
-                        'circle-stroke-color': '#ffffff',
-                        'circle-stroke-width': 1,
-                        'circle-opacity': 0.95
-                    }
-                });
-            }
-
-            const roadLayerCheck = document.getElementById('layer-roads');
-            setRoadLayerVisible(roadLayerCheck ? !!roadLayerCheck.checked : true);
+        function setNodeVisibilityRecursive(node, visible) {
+            state.geometryVisibleMap.set(node.id, visible);
+            (node.children || []).forEach(child => setNodeVisibilityRecursive(child, visible));
         }
 
-        async function loadRoads() {
-            try {
-                const resp = await fetch('/gis/roads.json');
-                if (!resp.ok) return;
-                const data = await resp.json();
-                if (!Array.isArray(data)) return;
+        function getNodeCheckState(node) {
+            const children = node.children || [];
+            if (children.length === 0) {
+                const checked = state.geometryVisibleMap.get(node.id) !== false;
+                return { checked, indeterminate: false };
+            }
 
-                const lineFeatures = [];
-                const pointFeatures = [];
+            const childStates = children.map(getNodeCheckState);
+            const allChecked = childStates.every(s => s.checked && !s.indeterminate);
+            const noneChecked = childStates.every(s => !s.checked && !s.indeterminate);
 
-                data.forEach((road, roadIndex) => {
-                    if (!Array.isArray(road)) return;
+            if (allChecked) return { checked: true, indeterminate: false };
+            if (noneChecked) return { checked: false, indeterminate: false };
+            return { checked: false, indeterminate: true };
+        }
 
-                    const lineCoordinates = road
-                        .map(mercatorToLngLat)
-                        .filter(p => Array.isArray(p) && p.length === 2);
+        function renderGeometryTree() {
+            const container = document.getElementById('geometry-tree');
+            if (!container) return;
+            container.innerHTML = '';
 
-                    if (lineCoordinates.length < 2) return;
+            const roots = buildGeometryTreeNodes();
+            const masterVisible = isGeometryMasterVisible();
 
-                    lineFeatures.push({
-                        type: 'Feature',
-                        geometry: {
-                            type: 'LineString',
-                            coordinates: lineCoordinates
-                        },
-                        properties: {
-                            roadIndex
-                        }
-                    });
+            const renderNode = (node, depth) => {
+                const row = document.createElement('div');
+                row.className = 'layer-node';
+                row.style.marginLeft = `${depth * 14}px`;
 
-                    lineCoordinates.forEach((coord, pointIndex) => {
-                        pointFeatures.push({
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Point',
-                                coordinates: coord
-                            },
-                            properties: {
-                                roadIndex,
-                                pointIndex
-                            }
-                        });
-                    });
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'accent-green-500';
+                checkbox.disabled = !masterVisible;
+                const checkState = getNodeCheckState(node);
+                checkbox.checked = checkState.checked;
+                checkbox.indeterminate = checkState.indeterminate;
+                checkbox.addEventListener('change', () => {
+                    setNodeVisibilityRecursive(node, !!checkbox.checked);
+                    renderGeometryTree();
+                    applyGeometryVisibility();
                 });
 
-                state.roadLineGeoJson = {
-                    type: 'FeatureCollection',
-                    features: lineFeatures
-                };
-                state.roadPointGeoJson = {
-                    type: 'FeatureCollection',
-                    features: pointFeatures
-                };
+                const label = document.createElement('label');
+                label.className = 'cursor-pointer';
+                label.textContent = node.alias || node.name || `图形${node.id}`;
 
-                renderRoadLayers();
-            } catch {
-                // Ignore parsing or request failures to avoid blocking primary GIS functions.
-            }
+                row.appendChild(checkbox);
+                row.appendChild(label);
+                container.appendChild(row);
+
+                (node.children || []).forEach(child => renderNode(child, depth + 1));
+            };
+
+            roots.forEach(node => renderNode(node, 0));
         }
 
         async function loadObjects() {
@@ -641,10 +652,33 @@
             if (res.code !== 0 || !Array.isArray(res.data)) return;
 
             state.objects = res.data;
-            buildLayerTree(state.objects);
+            buildLayerTree();
             buildMarkers(state.objects);
-            if (state.objects.length > 0) {
-                selectObject(state.objects[0], false);
+            if (state.objects.length > 0) selectObject(state.objects[0], false);
+        }
+
+        async function loadGeometries() {
+            try {
+                const resp = await fetch('?handler=GeometryLayerData');
+                const res = await resp.json();
+                if (res.code !== 0 || !Array.isArray(res.data)) return;
+
+                state.geometries = res.data;
+                state.geometries.forEach(item => {
+                    if (!state.geometryVisibleMap.has(item.id)) {
+                        state.geometryVisibleMap.set(item.id, true);
+                    }
+                });
+
+                geometryLayerManager.setDataFromRows(state.geometries);
+                state.geometryFeatureCount = geometryLayerManager.getFeatureCount();
+                buildLayerTree();
+                renderGeometryTree();
+
+                geometryLayerManager.render();
+                applyGeometryVisibility();
+            } catch {
+                // ignore geometry loading failures
             }
         }
 
@@ -669,9 +703,7 @@
         }
 
         function resetView() {
-            if (state.is3D) {
-                disable3DBuildings();
-            }
+            if (state.is3D) disable3DBuildings();
             switchStyle('street');
             map.flyTo({ center: [120.1551, 30.2741], zoom: 11, speed: 0.9, curve: 1.2 });
         }
@@ -679,11 +711,8 @@
         async function toggleFullscreen() {
             const btn = document.getElementById('btn-fullscreen');
             try {
-                if (!document.fullscreenElement) {
-                    await document.documentElement.requestFullscreen();
-                } else {
-                    await document.exitFullscreen();
-                }
+                if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+                else await document.exitFullscreen();
             } catch {
                 EleManager.showWarning('当前环境不支持全屏切换');
             }
@@ -737,24 +766,38 @@
         function syncViewMenuUI() {
             const menu = document.getElementById('view-menu');
             const toggleBtn = document.getElementById('btn-view-toggle');
-            if (menu) {
-                menu.classList.toggle('menu-visible', state.viewMenuOpen);
-            }
+            if (menu) menu.classList.toggle('menu-visible', state.viewMenuOpen);
             if (toggleBtn) {
                 toggleBtn.classList.toggle('active', state.viewMenuOpen);
                 toggleBtn.title = state.viewMenuOpen ? '收起视图菜单' : '展开视图菜单';
             }
         }
 
+        const centerCoordControl = createCenterCoordControl();
+        map.addControl(centerCoordControl, 'bottom-right');
+        map.on('move', () => centerCoordControl.update());
+
         map.on('load', () => {
+            if (!window.MapGeometryHelper || typeof window.MapGeometryHelper.createDisplayLayerManager !== 'function') {
+                EleManager.showError('地图图形组件加载失败');
+                return;
+            }
+
+            geometryLayerManager = window.MapGeometryHelper.createDisplayLayerManager({
+                map,
+                sourceId: 'gis-geometry-source',
+                layerPrefix: 'gis-geometry'
+            });
+
             loadObjects();
-            loadRoads();
+            loadGeometries();
             applyChineseLabels();
 
-            const layerCheck = document.getElementById('layer-checkObject');
-            layerCheck.addEventListener('change', (e) => setLayerVisible(!!e.target.checked));
-            const roadLayerCheck = document.getElementById('layer-roads');
-            roadLayerCheck.addEventListener('change', (e) => setRoadLayerVisible(!!e.target.checked));
+            document.getElementById('layer-checkObject').addEventListener('change', (e) => setLayerVisible(!!e.target.checked));
+            document.getElementById('layer-geometries').addEventListener('change', (e) => {
+                setGeometryLayerVisible(!!e.target.checked);
+                renderGeometryTree();
+            });
 
             document.getElementById('btn-reset').addEventListener('click', resetView);
             document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
@@ -808,14 +851,18 @@
         map.on('style.load', () => {
             applyChineseLabels();
             buildMarkers(state.objects);
-            renderRoadLayers();
-            if (state.is3D) {
-                enable3DBuildings();
+            if (geometryLayerManager) {
+                geometryLayerManager.render();
+                applyGeometryVisibility();
             }
+            if (state.is3D) enable3DBuildings();
+
             const layerCheck = document.getElementById('layer-checkObject');
             setLayerVisible(layerCheck ? !!layerCheck.checked : true);
-            const roadLayerCheck = document.getElementById('layer-roads');
-            setRoadLayerVisible(roadLayerCheck ? !!roadLayerCheck.checked : true);
+
+            const geometryLayerCheck = document.getElementById('layer-geometries');
+            setGeometryLayerVisible(geometryLayerCheck ? !!geometryLayerCheck.checked : true);
+            renderGeometryTree();
         });
     </script>
 }

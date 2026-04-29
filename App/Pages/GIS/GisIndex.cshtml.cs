@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using App.DAL;
+using App.DAL.GIS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -60,6 +61,26 @@ namespace App.Pages.Gis
                     tags = tags ?? new List<string>()
                 });
             }
+
+            return new JsonResult(new { code = 0, data = list });
+        }
+
+        public JsonResult OnGetGeometryLayerData()
+        {
+            var list = GisGeometry.Set
+                .Where(g => !string.IsNullOrWhiteSpace(g.JsonData))
+                .OrderBy(g => g.SortId)
+                .ThenBy(g => g.Id)
+                .Select(g => new
+                {
+                    id = g.Id,
+                    parentId = g.ParentId,
+                    name = g.Name,
+                    alias = g.Alias,
+                    sortId = g.SortId,
+                    jsonData = g.JsonData
+                })
+                .ToList();
 
             return new JsonResult(new { code = 0, data = list });
         }
