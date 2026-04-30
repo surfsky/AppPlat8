@@ -60,7 +60,7 @@ namespace App.EleUI
             if (!string.IsNullOrEmpty(Api))
             {
                 var url = Api;
-                output.Attributes.SetAttribute(":data", ToVueExpression($"getControlTreeData('{EscapeJs(target)}', options['{propName}'])"));
+                output.Attributes.SetAttribute(":data", ToVueExpression($"(typeof getControlTreeData === 'function' ? getControlTreeData('{EscapeJs(target)}', options['{propName}']) : ((options && options['{propName}']) || []))"));
                 output.Attributes.SetAttribute("data-source", url);
                 output.Attributes.SetAttribute("data-key", propName);
                 output.Attributes.SetAttribute("data-tree-id-field", idField);
@@ -78,7 +78,7 @@ namespace App.EleUI
                 {
                     var (sourceIdField, sourceNameField, sourceChildrenField) = ResolveItemsFieldNames(enumerable);
                     var jsonItems = Items.ToJson();
-                    output.Attributes.SetAttribute(":data", ToVueExpression($"getControlTreeData('{EscapeJs(target)}', normalizeIds({jsonItems}))"));
+                    output.Attributes.SetAttribute(":data", ToVueExpression($"(typeof getControlTreeData === 'function' ? getControlTreeData('{EscapeJs(target)}', (typeof normalizeIds === 'function' ? normalizeIds({jsonItems}) : {jsonItems})) : (typeof normalizeIds === 'function' ? normalizeIds({jsonItems}) : {jsonItems}))"));
                     output.Attributes.SetAttribute("data-static-items", jsonItems);
                     output.Attributes.SetAttribute("data-tree-id-field", sourceIdField);
                     output.Attributes.SetAttribute("data-tree-children-field", sourceChildrenField);

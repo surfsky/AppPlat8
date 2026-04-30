@@ -24,9 +24,11 @@ namespace App.Pages.GIS
             OrgTree = App.DAL.Org.GetTree();
         }
 
-        public IActionResult OnGetData(long id)
+        public IActionResult OnGetData(long id, long? menuId)
         {
             var item = GisGeometry.GetDetail(id) ?? new GisGeometry();
+            if (id == 0)
+                item.MenuId = menuId;
             return BuildResult(0, "success", item);
         }
 
@@ -35,8 +37,14 @@ namespace App.Pages.GIS
             if (req == null)
                 return BuildResult(400, "参数错误");
 
-            var item = GisGeometry.Get(req.Id);
-            if (item == null)
+            GisGeometry item;
+            if (req.Id > 0)
+            {
+                item = GisGeometry.Get(req.Id);
+                if (item == null)
+                    return BuildResult(403, "无权编辑或数据不存在");
+            }
+            else
             {
                 item = new GisGeometry();
                 item.CreateDt = DateTime.Now;
@@ -45,9 +53,12 @@ namespace App.Pages.GIS
 
             item.Name = req.Name;
             item.Alias = req.Alias;
-            item.ParentId = req.ParentId;
+            item.SortId = req.SortId;
+            item.MenuId = req.MenuId;
             item.OrgId = req.OrgId;
-            item.JsonData = req.JsonData;
+            item.GPS = req.GPS;
+            item.GeoJson = req.GeoJson;
+            item.DataJson = req.DataJson;
 
             item.Save();
             return BuildResult(0, "保存成功");

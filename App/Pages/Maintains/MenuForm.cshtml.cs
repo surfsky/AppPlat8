@@ -20,7 +20,10 @@ namespace App.Pages.Maintains
         public void OnGet(long? id)
         {
             MenuTree     = EleHelper.ToTreeItems(Menu.All, null);
-            PowerOptions = EleHelper.ToListItems(typeof(Power));
+            PowerOptions = typeof(Power)
+                .GetEnumInfos()
+                .Select(e => new ListItem(e.Value.ToString(), e.ToString()))
+                .ToList();
         }
 
         public IActionResult OnGetData(long id, long? selectId)
@@ -28,7 +31,22 @@ namespace App.Pages.Maintains
             var item = Menu.Get(id) ?? new Menu();
             if (id == 0)
                 item.ParentId = selectId;
-            return BuildResult(0, "success", item.Export());
+
+            return BuildResult(0, "success", new
+            {
+                id = item.Id,
+                parentId = item.ParentId,
+                name = item.Name,
+                sortId = item.SortId,
+                imageUrl = item.ImageUrl,
+                navigateUrl = item.NavigateUrl,
+                remark = item.Remark,
+                target = item.Target,
+                expanded = item.Expanded,
+                visible = item.Visible,
+                @fixed = item.Fixed,
+                power = item.Power?.ToString()
+            });
         }
 
         public IActionResult OnPostSave([FromBody] Menu req)

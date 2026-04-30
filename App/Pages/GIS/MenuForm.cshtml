@@ -1,0 +1,24 @@
+@page
+@model App.Pages.GIS.MenuFormModel
+@{
+    ViewData["Title"] = "GIS菜单表单";
+    var currentId = Request.Query["id"].ToString();
+    var selectedId = Request.Query["selectId"].ToString();
+}
+
+@section body {
+    <EleForm LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleTreeSelect For="Item.ParentId" Label="上级菜单" Api="/httpapi/gis/GetMenuTree?excludeId=@currentId&selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"></EleTreeSelect>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
+        <EleNumber For="Item.DataCount" Label="点位数" Min="0" Max="10000000"></EleNumber>
+        <EleDatePicker For="Item.DataDt" Label="最后数据时间" Type="DateTime"></EleDatePicker>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Type="Primary" Command="SaveNew" Visible="@(Model.Mode != PageMode.View)">保存并新增</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

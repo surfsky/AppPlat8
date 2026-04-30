@@ -1,0 +1,454 @@
+@page
+@model App.Pages.Shared.MapGeometryModel
+@{
+    Layout = "_Layout";
+}
+
+@section head {
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
+    <script src="/js/maphelper.js"></script>
+    <style>
+        html, body, #app { height: 100%; margin: 0; }
+        #map { width: 100%; height: 100%; }
+        .panel {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+        }
+        .footer {
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+        }
+        .hint {
+            font-size: 12px;
+            color: #475569;
+            margin-top: 8px;
+            line-height: 1.45;
+        }
+        .json-preview {
+            margin-top: 8px;
+            max-height: 98px;
+            overflow: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #f8fafc;
+            padding: 6px 8px;
+            color: #334155;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .style-color-picker .el-color-picker__trigger {
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            border: 1px solid #ececed;
+            padding: 0;
+        }
+        .style-color-picker .el-color-picker__icon {
+            display: none;
+        }
+        .style-label {
+            font-size: 12px;
+            color: #334155;
+        }
+        .opacity-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 4px;
+        }
+        .opacity-value {
+            min-width: 36px;
+            font-size: 12px;
+            color: #475569;
+        }
+        .map-context-menu {
+            position: fixed;
+            min-width: 132px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            border-radius: 8px;
+            z-index: 30;
+            overflow: hidden;
+        }
+        .map-context-menu .menu-item {
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #1f2937;
+            cursor: pointer;
+            user-select: none;
+            line-height: 1.2;
+        }
+        .map-context-menu .menu-item:hover {
+            background: #f1f5f9;
+        }
+        .map-context-menu .menu-item.danger {
+            color: #dc2626;
+        }
+    </style>
+}
+
+@section body {
+    <div id="app">
+        <div class="panel">
+            <div style="display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                <el-button type="primary" plain title="绘制点" @@click="drawPoint">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="10" r="5"></circle>
+                        <path d="M12 15v6"></path>
+                    </svg>
+                </el-button>
+                <el-button type="primary" plain title="绘制线" @@click="drawLine">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 19L21 5"></path>
+                    </svg>
+                </el-button>
+                <el-button type="primary" plain title="绘制面" @@click="drawPolygon">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 7l7-4 9 7-6 10H6z"></path>
+                    </svg>
+                </el-button>
+                <span class="style-label">点色</span>
+                <el-color-picker class="style-color-picker" v-model="pointColor" @@change="onPointColorChange" size="small" :show-alpha="false"></el-color-picker>
+                <span class="style-label">线色</span>
+                <el-color-picker class="style-color-picker" v-model="lineColor" @@change="onLineColorChange" size="small" :show-alpha="false"></el-color-picker>
+                <span class="style-label">面色</span>
+                <el-color-picker class="style-color-picker" v-model="fillColor" @@change="onFillColorChange" size="small" :show-alpha="false"></el-color-picker>
+                <span class="opacity-wrap">
+                    <span class="style-label">透明</span>
+                    <el-slider style="width:80px" v-model="fillOpacityPercent" :min="0" :max="100" :step="5" @@change="onFillOpacityChange"></el-slider>
+                    <span class="opacity-value">{{ fillOpacityPercent }}%</span>
+                </span>
+                <el-button type="warning" @@click="removeSelected">删除</el-button>
+                <el-button type="danger" @@click="clearAll">清空</el-button>
+                <el-button type="primary" @@click="confirmGeometry">保存</el-button>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div v-show="menuVisible" class="map-context-menu" :style="{ left: menuX + 'px', top: menuY + 'px' }" @@click.stop>
+            <div class="menu-item" @@click="setLabelFromMenu">设置标签</div>
+            <div class="menu-item danger" @@click="removeSelectedFromMenu">删除</div>
+        </div>
+
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, onMounted, onBeforeUnmount } = Vue;
+
+        createApp({
+            setup() {
+                const accessToken = "@SiteConfig.Instance.MapKey";
+                const initGeoJson = `@Html.Raw((Model.GeoJson ?? string.Empty).Replace("\\", "\\\\").Replace("`", "\\`").Replace("$", "\\$"))`;
+
+                const pointColor = ref('#dc2626');
+                const lineColor = ref('#1e3a8a');
+                const fillColor = ref('#1d4ed8');
+                const fillOpacityPercent = ref(35);
+                const menuVisible = ref(false);
+                const menuX = ref(0);
+                const menuY = ref(0);
+
+                let editor = null;
+                let keydownHandler = null;
+                let mapContextMenuHandler = null;
+                let mapDblClickHandler = null;
+                let hideMenuHandler = null;
+
+                const getManager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+
+                const showError = (msg) => {
+                    const manager = getManager();
+                    if (manager && typeof manager.showError === 'function') {
+                        manager.showError(msg);
+                    } else {
+                        alert(msg);
+                    }
+                };
+
+                const showWarning = (msg) => {
+                    const manager = getManager();
+                    if (manager && typeof manager.showWarning === 'function') {
+                        manager.showWarning(msg);
+                    } else {
+                        alert(msg);
+                    }
+                };
+                const drawPoint = () => editor?.drawPoint();
+                const drawLine = () => editor?.drawLine();
+                const drawPolygon = () => editor?.drawPolygon();
+                const onPointColorChange = (color) => editor?.setPointColor(color || pointColor.value);
+                const onLineColorChange = (color) => editor?.setLineColor(color || lineColor.value);
+                const onFillColorChange = (color) => editor?.setFillColor(color || fillColor.value);
+                const onFillOpacityChange = (value) => editor?.setFillOpacityPercent(value ?? fillOpacityPercent.value);
+
+                const removeSelected = () => editor?.removeSelected();
+                const clearAll = () => editor?.clearAll();
+                const hideMenu = () => {
+                    menuVisible.value = false;
+                };
+
+                const isTypingTarget = (el) => {
+                    if (!el) return false;
+                    const tag = (el.tagName || '').toLowerCase();
+                    if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+                    if (el.isContentEditable) return true;
+                    return typeof el.closest === 'function' && !!el.closest('.el-input,.el-textarea,.el-message-box');
+                };
+
+                const askLabelText = async (initialValue) => {
+                    const manager = getManager();
+                    if (manager && typeof manager.prompt === 'function') {
+                        const result = await manager.prompt('请输入标签文本', '设置标签', {
+                            inputValue: initialValue || '',
+                            inputPlaceholder: '例如: 龙港大道',
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消'
+                        });
+                        return (result && typeof result.value === 'string') ? result.value : '';
+                    }
+                    const value = window.prompt('请输入标签文本', initialValue || '');
+                    if (value === null || value === undefined) throw new Error('cancel');
+                    return String(value);
+                };
+
+                const confirmClearLabel = async () => {
+                    const manager = getManager();
+                    if (manager && typeof manager.confirm === 'function') {
+                        try {
+                            await manager.confirm('标签将被清空，是否继续？', '确认清空');
+                            return true;
+                        } catch {
+                            return false;
+                        }
+                    }
+                    return window.confirm('标签将被清空，是否继续？');
+                };
+
+                const editSelectedLabel = async () => {
+                    if (!editor || editor.getSelectedCount?.() < 1) {
+                        showWarning('请先选中一个图形');
+                        return;
+                    }
+
+                    try {
+                        const oldLabel = String(editor.getSelectedLabel?.() || '').trim();
+                        const inputValue = await askLabelText(oldLabel);
+                        const nextLabel = String(inputValue || '').trim();
+                        if (nextLabel === '' && oldLabel !== '') {
+                            const ok = await confirmClearLabel();
+                            if (!ok) return;
+                        }
+                        editor.setSelectedLabel?.(nextLabel);
+                    } catch {
+                        // user canceled prompt
+                    }
+                };
+
+                const setLabelFromMenu = async () => {
+                    hideMenu();
+                    await editSelectedLabel();
+                };
+
+                const removeSelectedFromMenu = () => {
+                    hideMenu();
+                    removeSelected();
+                };
+
+                const closeOnly = () => {
+                    const manager = getManager();
+                    if (manager && typeof manager.closePage === 'function') {
+                        manager.closePage({});
+                        return;
+                    }
+                    if (window.parent) {
+                        window.parent.postMessage({ __elePageClose: true, data: {} }, '*');
+                    }
+                    if (window.top && window.top !== window.parent) {
+                        window.top.postMessage({ __elePageClose: true, data: {} }, '*');
+                    }
+                };
+
+                const confirmGeometry = () => {
+                    try {
+                        const geojson = editor?.getExportGeoJson?.();
+                        if (!geojson) throw new Error('请先绘制图形');
+
+                        const payload = {
+                            type: 'EleSelector',
+                            data: [{ id: geojson, name: geojson }]
+                        };
+
+                        const manager = getManager();
+                        if (manager && typeof manager.closePage === 'function') {
+                            manager.closePage(payload);
+                            return;
+                        }
+                        if (window.parent) {
+                            window.parent.postMessage(payload, '*');
+                        }
+                        if (window.top && window.top !== window.parent) {
+                            window.top.postMessage(payload, '*');
+                        }
+                    } catch (e) {
+                        showWarning(e?.message || '当前图形不满足导出条件');
+                    }
+                };
+
+                onMounted(() => {
+                    editor = window.MapGeometryHelper.createEditor({
+                        accessToken,
+                        initGeoJson,
+                        mapContainerId: 'map',
+                        onError: showError,
+                        onMapContextMenu: (ctx) => {
+                            const picked = ctx?.pickedId;
+                            if (!picked) {
+                                hideMenu();
+                                return;
+                            }
+                            if (ctx?.event?.originalEvent) {
+                                ctx.event.originalEvent.preventDefault();
+                            }
+                            menuX.value = ctx?.clientX ?? 0;
+                            menuY.value = ctx?.clientY ?? 0;
+                            menuVisible.value = true;
+                        },
+                        onMapDblClick: (ctx) => {
+                            const picked = ctx?.pickedId;
+                            if (!picked) return;
+                            if (ctx?.event?.originalEvent) {
+                                ctx.event.originalEvent.preventDefault();
+                            }
+                            hideMenu();
+                            editSelectedLabel();
+                        },
+                        onPaletteChange: (v) => {
+                            pointColor.value = v.pointColor;
+                            lineColor.value = v.lineColor;
+                            fillColor.value = v.fillColor;
+                            fillOpacityPercent.value = v.fillOpacityPercent;
+                        }
+                    });
+                    editor.init();
+
+                    keydownHandler = (evt) => {
+                        if (isTypingTarget(evt.target)) return;
+                        if (evt.key !== 'Delete') return;
+                        if (!editor || editor.getSelectedCount?.() < 1) return;
+                        evt.preventDefault();
+                        removeSelected();
+                        hideMenu();
+                    };
+                    window.addEventListener('keydown', keydownHandler);
+
+                    mapContextMenuHandler = (evt) => {
+                        if (!editor) return;
+                        const mapEl = document.getElementById('map');
+                        if (!mapEl) return;
+                        const rect = mapEl.getBoundingClientRect();
+                        const picked = editor.selectFeatureAt?.({
+                            x: evt.clientX - rect.left,
+                            y: evt.clientY - rect.top
+                        });
+                        if (!picked) {
+                            hideMenu();
+                            return;
+                        }
+                        evt.preventDefault();
+                        menuX.value = evt.clientX;
+                        menuY.value = evt.clientY;
+                        menuVisible.value = true;
+                    };
+
+                    mapDblClickHandler = (evt) => {
+                        if (!editor) return;
+                        const mapEl = document.getElementById('map');
+                        if (!mapEl) return;
+                        const rect = mapEl.getBoundingClientRect();
+                        const picked = editor.selectFeatureAt?.({
+                            x: evt.clientX - rect.left,
+                            y: evt.clientY - rect.top
+                        });
+                        if (!picked) return;
+                        evt.preventDefault();
+                        evt.stopPropagation();
+                        hideMenu();
+                        editSelectedLabel();
+                    };
+
+                    const mapEl = document.getElementById('map');
+                    if (mapEl) {
+                        mapEl.addEventListener('contextmenu', mapContextMenuHandler, true);
+                        mapEl.addEventListener('dblclick', mapDblClickHandler, true);
+                    }
+
+                    hideMenuHandler = () => hideMenu();
+                    document.addEventListener('click', hideMenuHandler);
+                    document.addEventListener('scroll', hideMenuHandler, true);
+                });
+
+                onBeforeUnmount(() => {
+                    if (keydownHandler) window.removeEventListener('keydown', keydownHandler);
+
+                    const mapEl = document.getElementById('map');
+                    if (mapEl && mapContextMenuHandler) {
+                        mapEl.removeEventListener('contextmenu', mapContextMenuHandler, true);
+                    }
+                    if (mapEl && mapDblClickHandler) {
+                        mapEl.removeEventListener('dblclick', mapDblClickHandler, true);
+                    }
+
+                    if (hideMenuHandler) {
+                        document.removeEventListener('click', hideMenuHandler);
+                        document.removeEventListener('scroll', hideMenuHandler, true);
+                    }
+                });
+
+                return {
+                    pointColor,
+                    lineColor,
+                    fillColor,
+                    fillOpacityPercent,
+                    menuVisible,
+                    menuX,
+                    menuY,
+                    drawPoint,
+                    drawLine,
+                    drawPolygon,
+                    onPointColorChange,
+                    onLineColorChange,
+                    onFillColorChange,
+                    onFillOpacityChange,
+                    removeSelected,
+                    removeSelectedFromMenu,
+                    setLabelFromMenu,
+                    clearAll,
+                    closeOnly,
+                    confirmGeometry
+                };
+            }
+        }).use(ElementPlus, { locale: ElementPlusLocaleZhCn }).mount('#app');
+    </script>
+}

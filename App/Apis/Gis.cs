@@ -11,10 +11,10 @@ namespace App.API
 {
     public class Gis
     {
-        [HttpApi("获取几何图形树", AuthLogin = true)]
-        public static APIResult GetGeometryTree(long? excludeId = null, long? selectedId = null)
+        [HttpApi("获取GIS菜单树", AuthLogin = true)]
+        public static APIResult GetMenuTree(long? excludeId = null, long? selectedId = null)
         {
-            var all = GisGeometry.IncludeSet.ToList();
+            var all = GisMenu.IncludeSet.ToList();
             var allMap = all.ToDictionary(t => t.Id, t => t);
             var visibleMap = all.ToDictionary(t => t.Id, t => t);
 

@@ -118,3 +118,15 @@
                     <el-tag :type="row.isIn141 ? 'success' : 'info'">{{ row.isIn141 ? '是' : '否' }}</el-tag>
                 </template>
             </EleColumn>
+
+
+        public string ToString(EnumDisplayType display)
+        {
+            switch(display)
+            {
+                case EnumDisplayType.Value:      return this.Value.ToString();
+                case EnumDisplayType.Title:      return this.Title;
+                case EnumDisplayType.GroupTitle: return string.Format("{0}/{1}", Group, Title);
+                default:                         return this.Title;
+            }
+        }

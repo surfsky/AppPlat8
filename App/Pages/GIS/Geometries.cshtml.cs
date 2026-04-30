@@ -21,9 +21,9 @@ namespace App.Pages.GIS
 
         public void OnGet() { }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name, long? parentId)
+        public async Task<IActionResult> OnGetData(Paging pi, string name, long? menuId)
         {
-            var list = GisGeometry.Search(name, null, null, parentId).SortPageExport(pi);
+            var list = GisGeometry.Search(name, null, null, menuId).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

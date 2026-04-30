@@ -1,19 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using App.DAL;
 using App.DAL.GIS;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using App.Components;
 
 namespace App.Pages.Gis
 {
-    [AllowAnonymous]
-    public class GisIndexModel : PageModel
+    [CheckPower(Power.GisGeometryView)]
+    public class IndexModel : BaseModel
     {
         public void OnGet()
         {
+        }
+
+        public JsonResult OnGetMenuData()
+        {
+            var menus = GisMenu.GetTree();
+            return BuildResult(0, "success", menus);
         }
 
         public JsonResult OnGetLayerData()
@@ -65,24 +73,88 @@ namespace App.Pages.Gis
             return new JsonResult(new { code = 0, data = list });
         }
 
-        public JsonResult OnGetGeometryLayerData()
+        public JsonResult OnGetGeometryLayerData(long? menuId)
         {
-            var list = GisGeometry.Set
-                .Where(g => !string.IsNullOrWhiteSpace(g.JsonData))
+            var query = GisGeometry.DataSet
+                .Where(g => !string.IsNullOrWhiteSpace(g.GeoJson));
+
+            if (menuId.HasValue)
+                query = query.Where(g => g.MenuId == menuId.Value);
+
+            var list = query
                 .OrderBy(g => g.SortId)
                 .ThenBy(g => g.Id)
                 .Select(g => new
                 {
                     id = g.Id,
-                    parentId = g.ParentId,
+                    menuId = g.MenuId,
                     name = g.Name,
                     alias = g.Alias,
                     sortId = g.SortId,
-                    jsonData = g.JsonData
+                    gps = g.GPS,
+                    geoJson = g.GeoJson,
+                    dataJson = g.DataJson
                 })
                 .ToList();
 
             return new JsonResult(new { code = 0, data = list });
+        }
+
+        public JsonResult OnGetGeometryDetail(long id)
+        {
+            var item = GisGeometry.DataSet
+                .Include(g => g.Menu)
+                .FirstOrDefault(g => g.Id == id);
+            if (item == null)
+                return BuildResult(404, "图形不存在或无权访问");
+
+            var canEdit = Auth.CheckPower(HttpContext, Power.GisGeometryEdit) && GisGeometry.Get(id) != null;
+
+            return BuildResult(0, "success", new
+            {
+                id = item.Id,
+                menuId = item.MenuId,
+                menuName = item.MenuName,
+                name = item.Name,
+                alias = item.Alias,
+                gps = item.GPS,
+                geoJson = item.GeoJson,
+                dataJson = item.DataJson,
+                dataRows = ParseDataRows(item.DataJson),
+                canEdit
+            });
+        }
+
+        private static List<object> ParseDataRows(string dataJson)
+        {
+            var rows = new List<object>();
+            if (string.IsNullOrWhiteSpace(dataJson))
+                return rows;
+
+            try
+            {
+                var token = JToken.Parse(dataJson);
+                if (token is JObject obj)
+                {
+                    foreach (var p in obj.Properties())
+                        rows.Add(new { key = p.Name, value = p.Value?.ToString(Newtonsoft.Json.Formatting.None) ?? "" });
+                }
+                else if (token is JArray arr)
+                {
+                    for (var i = 0; i < arr.Count; i++)
+                        rows.Add(new { key = $"[{i}]", value = arr[i]?.ToString(Newtonsoft.Json.Formatting.None) ?? "" });
+                }
+                else
+                {
+                    rows.Add(new { key = "value", value = token.ToString(Newtonsoft.Json.Formatting.None) });
+                }
+            }
+            catch
+            {
+                rows.Add(new { key = "raw", value = dataJson });
+            }
+
+            return rows;
         }
 
         private static bool TryParseGps(string gps, out double lng, out double lat)

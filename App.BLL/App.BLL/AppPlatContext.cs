@@ -53,6 +53,7 @@ namespace App.DAL
 
 
         // GIS 和 驾驶舱
+        public DbSet<App.DAL.GIS.GisMenu> GisMenus { get; set; }
         public DbSet<App.DAL.GIS.GisGeometry> GisGeometries { get; set; }
 
 

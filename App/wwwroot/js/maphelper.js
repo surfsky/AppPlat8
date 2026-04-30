@@ -18,6 +18,7 @@
         var map = null;
         var draw = null;
         var labelSyncQueued = false;
+        var interactionBound = false;
 
         function notifyPalette() {
             onPaletteChange({
@@ -445,19 +446,16 @@
 
             if (key && global.sessionStorage) {
                 var s = (sessionStorage.getItem(key) || '').trim();
-                sessionStorage.removeItem(key);
                 if (s) return s;
             }
 
             if (key && global.localStorage) {
                 var l = (localStorage.getItem(key) || '').trim();
-                localStorage.removeItem(key);
                 if (l) return l;
             }
 
             if (selectorKey && global.localStorage) {
                 var c = (localStorage.getItem(selectorKey) || '').trim();
-                localStorage.removeItem(selectorKey);
                 if (c) return c;
             }
 
@@ -578,6 +576,128 @@
             return { type: 'FeatureCollection', features: features };
         }
 
+        function getSelectableDrawLayerIds() {
+            if (!map) return [];
+            var style = map.getStyle();
+            var layers = style && Array.isArray(style.layers) ? style.layers : [];
+            return layers
+                .map(function (layer) { return layer && layer.id ? layer.id : ''; })
+                .filter(function (id) {
+                    if (!id || id.indexOf('gl-draw-') < 0) return false;
+                    if (id.indexOf('vertex') >= 0 || id.indexOf('midpoint') >= 0) return false;
+                    return true;
+                });
+        }
+
+        function pickFeatureIdAt(point) {
+            if (!map || !point) return null;
+            var layers = getSelectableDrawLayerIds();
+            var hits = [];
+            try {
+                hits = layers.length > 0
+                    ? map.queryRenderedFeatures(point, { layers: layers })
+                    : map.queryRenderedFeatures(point);
+            } catch {
+                hits = [];
+            }
+
+            var featureIdSet = new Set(getAllFeatures().map(function (f) { return String(f && f.id); }));
+
+            function collectCandidateIds(hit) {
+                var candidates = [];
+                if (!hit) return candidates;
+
+                if (hit.id !== undefined && hit.id !== null) {
+                    candidates.push(String(hit.id));
+                }
+
+                var props = hit.properties || {};
+                ['id', 'feature_id', 'user_id'].forEach(function (k) {
+                    var v = props[k];
+                    if (v === undefined || v === null) return;
+                    candidates.push(String(v));
+                });
+                return candidates;
+            }
+
+            for (var j = 0; j < hits.length; j++) {
+                var strictCandidates = collectCandidateIds(hits[j]);
+                for (var k = 0; k < strictCandidates.length; k++) {
+                    if (featureIdSet.has(strictCandidates[k])) return strictCandidates[k];
+                }
+            }
+
+            for (var i = 0; i < hits.length; i++) {
+                var h = hits[i] || {};
+                var fallbackCandidates = collectCandidateIds(h);
+                for (var n = 0; n < fallbackCandidates.length; n++) {
+                    var id = fallbackCandidates[n];
+                    if (id && id.trim() !== '') return id;
+                }
+            }
+            return null;
+        }
+
+        function bindInteractionEvents() {
+            if (!map || !draw || interactionBound) return;
+            interactionBound = true;
+
+            var onMapContextMenu = typeof options.onMapContextMenu === 'function' ? options.onMapContextMenu : null;
+            var onMapDblClick = typeof options.onMapDblClick === 'function' ? options.onMapDblClick : null;
+
+            if (onMapContextMenu) {
+                map.on('contextmenu', function (evt) {
+                    var pickedId = pickFeatureIdAt(evt.point);
+                    if (pickedId) {
+                        try {
+                            draw.changeMode('simple_select', { featureIds: [pickedId] });
+                            queueLabelSync();
+                        } catch {
+                            // ignore select failure
+                        }
+                    }
+                    onMapContextMenu({
+                        event: evt,
+                        point: evt.point,
+                        clientX: evt.originalEvent && evt.originalEvent.clientX,
+                        clientY: evt.originalEvent && evt.originalEvent.clientY,
+                        pickedId: pickedId
+                    });
+                });
+            }
+
+            if (onMapDblClick) {
+                map.doubleClickZoom.disable();
+                map.on('dblclick', function (evt) {
+                    var pickedId = pickFeatureIdAt(evt.point);
+                    if (pickedId) {
+                        try {
+                            draw.changeMode('simple_select', { featureIds: [pickedId] });
+                            queueLabelSync();
+                        } catch {
+                            // ignore select failure
+                        }
+                    }
+                    onMapDblClick({
+                        event: evt,
+                        point: evt.point,
+                        clientX: evt.originalEvent && evt.originalEvent.clientX,
+                        clientY: evt.originalEvent && evt.originalEvent.clientY,
+                        pickedId: pickedId
+                    });
+                });
+            }
+        }
+
+        function findFeatureById(featureId) {
+            if (!featureId) return null;
+            var all = getAllFeatures();
+            for (var i = 0; i < all.length; i++) {
+                if (String(all[i] && all[i].id) === String(featureId)) return all[i];
+            }
+            return null;
+        }
+
         function refresh() {
             try {
                 buildExportObject();
@@ -631,8 +751,22 @@
             map.on('draw.selectionchange', queueLabelSync);
             map.on('draw.modechange', queueLabelSync);
             map.on('draw.render', queueLabelSync);
+            map.on('click', function (evt) {
+                if (!draw || typeof draw.getMode !== 'function') return;
+                var mode = draw.getMode();
+                if (mode !== 'simple_select' && mode !== 'direct_select') return;
+                var pickedId = pickFeatureIdAt(evt.point);
+                if (!pickedId) return;
+                try {
+                    draw.changeMode('simple_select', { featureIds: [pickedId] });
+                    queueLabelSync();
+                } catch {
+                    // ignore
+                }
+            });
 
             map.on('load', function () {
+                bindInteractionEvents();
                 enhanceDrawLayerColors();
                 ensureLabelLayer();
 
@@ -657,7 +791,16 @@
             drawPoint: function () { if (draw) draw.changeMode('draw_point'); },
             drawLine: function () { if (draw) draw.changeMode('draw_line_string'); },
             drawPolygon: function () { if (draw) draw.changeMode('draw_polygon'); },
-            removeSelected: function () { if (!draw) return; draw.trash(); refresh(); },
+            removeSelected: function () {
+                if (!draw || typeof draw.getSelectedIds !== 'function') return;
+                var selectedIds = draw.getSelectedIds();
+                if (Array.isArray(selectedIds) && selectedIds.length > 0) {
+                    draw.delete(selectedIds);
+                } else {
+                    draw.trash();
+                }
+                refresh();
+            },
             clearAll: function () {
                 var all = getAllFeatures();
                 all.forEach(function (f) { draw.delete(f.id); });
@@ -673,6 +816,39 @@
                 }
                 applyStyleToTargets('fill');
                 notifyPalette();
+            },
+            getSelectedCount: function () {
+                if (!draw || typeof draw.getSelectedIds !== 'function') return 0;
+                return draw.getSelectedIds().length;
+            },
+            selectFeatureAt: function (point) {
+                if (!draw || !point || !map) return null;
+                var pickedId = pickFeatureIdAt(point);
+                if (!pickedId) return null;
+                try {
+                    draw.changeMode('simple_select', { featureIds: [pickedId] });
+                    queueLabelSync();
+                } catch {
+                    return null;
+                }
+                return pickedId;
+            },
+            getSelectedLabel: function () {
+                if (!draw || typeof draw.getSelectedIds !== 'function') return '';
+                var selected = draw.getSelectedIds();
+                if (!selected || selected.length === 0) return '';
+                var feature = findFeatureById(selected[0]);
+                return getFeatureLabel(feature);
+            },
+            setSelectedLabel: function (label) {
+                if (!draw || typeof draw.getSelectedIds !== 'function') return;
+                var selected = draw.getSelectedIds();
+                if (!selected || selected.length === 0) return;
+                var text = label === null || label === undefined ? '' : String(label).trim();
+                selected.forEach(function (id) {
+                    setFeaturePropertySafe(id, 'label', text);
+                });
+                refresh();
             },
             getExportGeoJson: function () {
                 return JSON.stringify(buildExportObject());
@@ -783,7 +959,7 @@
 
             var obj;
             try {
-                obj = JSON.parse(normalizeRawGeoJson(row.jsonData));
+                obj = JSON.parse(normalizeRawGeoJson(row.geoJson || row.jsonData));
             } catch {
                 return [];
             }

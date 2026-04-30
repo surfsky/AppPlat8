@@ -23,7 +23,7 @@ namespace App.DAL
         [UI("是否固定")]  public bool? Fixed { get; set; } = false;
         [UI("浏览权限")]  public Power? Power { get; set; }
 
-        [NotMapped]   public string PowerName => Power?.ToString();
+        [NotMapped]   public string PowerName => Power?.GetEnumInfo()?.ToString();
 
 
         //------------------------------------------------

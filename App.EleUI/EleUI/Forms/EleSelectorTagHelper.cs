@@ -16,6 +16,8 @@ namespace App.EleUI
         [HtmlAttributeName("TextFor")]       public ModelExpression TextFor { get; set; }
         [HtmlAttributeName("KeyMode")]       public string KeyMode { get; set; } = "Url";
         [HtmlAttributeName("Icon")]          public EleIconName Icon { get; set; } = EleIconName.Search;
+        [HtmlAttributeName("Rows")]          public int Rows { get; set; } = 1;
+        [HtmlAttributeName("Editable")]      public bool Editable { get; set; } = false;
 
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
@@ -56,6 +58,9 @@ namespace App.EleUI
             var multiStr = Multi.ToString().ToLower();
             var keyMode = (KeyMode ?? "Url").Replace("'", "\\'");
             var iconName = Icon == EleIconName.None ? EleIconName.Search : Icon;
+            var rowCount = Rows > 0 ? Rows : 1;
+            var isTextArea = rowCount > 1;
+            var placeHolderText = ("请选择或输入" + (Label ?? "")).Replace("'", "\\'");
 
             // 禁用状态
             var enabledForPath = GetBindPath(EnabledFor);
@@ -82,28 +87,62 @@ namespace App.EleUI
             
             // Get form model name from context (default 'form')
             var formModel = context.Items.ContainsKey("EleFormModel") ? context.Items["EleFormModel"] as string : "form";
-            var content = $@"
-            <div class=""el-input el-input--suffix"" :class=""{{ 'cursor-pointer': !({vDisabledExpr}), 'is-disabled': ({vDisabledExpr}) }}"" style=""width: 100%;"" @click=""!({vDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"">
-                <div class=""el-input__wrapper"" style=""width: 100%;"">
-                    <div class=""flex flex-wrap gap-1 items-center w-full py-1"" style=""min-height: 30px;"">
-                        <template v-if=""{formModel}.{textProp}"">
-                            <el-tag type=""info"" class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap"" disable-transitions v-if=""!({vDisabledExpr})"" closable @close.stop=""clearSelector('{propName}', '{textProp}')"">
-                                {{{{ {formModel}.{textProp} }}}}
-                            </el-tag>
-                            <el-tag type=""info"" class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap"" disable-transitions v-else>
-                                {{{{ {formModel}.{textProp} }}}}
-                            </el-tag>
-                        </template>
-                        <span v-else class=""text-gray-400 text-sm"">请选择{Label}</span>
-                    </div>
-                    <span class=""el-input__suffix"">
-                        <span class=""el-input__suffix-inner"">
+            string content;
+            if (Editable)
+            {
+                var inputTypeHtml = isTextArea ? "type=\"textarea\"" : "";
+                var rowHtml = isTextArea ? $":rows=\"{rowCount}\"" : "";
+                if (isTextArea)
+                {
+                    content = $@"
+                    <div class=""ele-selector-wrapper ele-selector-editable"" style=""width: 100%; position: relative;"">
+                        <el-input v-model=""{formModel}.{textProp}"" {inputTypeHtml} {rowHtml} clearable placeholder=""{placeHolderText}"" :disabled=""({vDisabledExpr})""></el-input>
+                        <span class=""ele-selector-icon-wrap"" :class=""{{ 'cursor-pointer': !({vDisabledExpr}), 'cursor-not-allowed': ({vDisabledExpr}) }}"" style=""position:absolute;top:8px;right:10px;z-index:2;pointer-events:auto;background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 3px;"" @click.stop=""!({vDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
                             <el-icon><component :is=""({vDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                         </span>
-                    </span>
+                    </div>
+                    ";
+                }
+                else
+                {
+                    content = $@"
+                    <div class=""ele-selector-wrapper ele-selector-editable"" style=""width: 100%;"">
+                        <el-input v-model=""{formModel}.{textProp}"" {inputTypeHtml} {rowHtml} clearable placeholder=""{placeHolderText}"" :disabled=""({vDisabledExpr})"">
+                            <template #suffix>
+                                <span class=""ele-selector-icon-wrap"" :class=""{{ 'cursor-pointer': !({vDisabledExpr}), 'cursor-not-allowed': ({vDisabledExpr}) }}"" style=""pointer-events:auto;"" @click.stop=""!({vDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
+                                    <el-icon><component :is=""({vDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
+                                </span>
+                            </template>
+                        </el-input>
+                    </div>
+                    ";
+                }
+            }
+            else
+            {
+                content = $@"
+                <div class=""el-input el-input--suffix"" :class=""{{ 'cursor-pointer': !({vDisabledExpr}), 'is-disabled': ({vDisabledExpr}) }}"" style=""width: 100%;"" @click=""!({vDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"">
+                    <div class=""el-input__wrapper"" style=""width: 100%;"">
+                        <div class=""flex flex-wrap gap-1 items-center w-full py-1"" style=""min-height: 30px;"">
+                            <template v-if=""{formModel}.{textProp}"">
+                                <el-tag type=""info"" class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap"" disable-transitions v-if=""!({vDisabledExpr})"" closable @close.stop=""clearSelector('{propName}', '{textProp}')"">
+                                    {{{{ {formModel}.{textProp} }}}}
+                                </el-tag>
+                                <el-tag type=""info"" class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap"" disable-transitions v-else>
+                                    {{{{ {formModel}.{textProp} }}}}
+                                </el-tag>
+                            </template>
+                            <span v-else class=""text-gray-400 text-sm"">请选择{Label}</span>
+                        </div>
+                        <span class=""el-input__suffix"">
+                            <span class=""el-input__suffix-inner"" :class=""{{ 'cursor-pointer': !({vDisabledExpr}), 'cursor-not-allowed': ({vDisabledExpr}) }}"" style=""pointer-events:auto;"" title=""打开选择窗口"">
+                                <el-icon><component :is=""({vDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
+                            </span>
+                        </span>
+                    </div>
                 </div>
-            </div>
-            ";
+                ";
+            }
             
             output.Content.SetHtmlContent(content);
         }

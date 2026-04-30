@@ -38,7 +38,7 @@ namespace App.Utils
         public string FullName => ToString();
 
         /// <summary>展示方式</summary>
-        public EnumDisplayType Display { get; set; } = EnumDisplayType.Title;
+        public EnumDisplayType Display { get; set; } = EnumDisplayType.GroupTitle;
 
         /// <summary>显示文本：英文（分组/名称）</summary>
         public override string ToString()
@@ -47,7 +47,7 @@ namespace App.Utils
             {
                 case EnumDisplayType.Value:      return this.Value.ToString();
                 case EnumDisplayType.Title:      return this.Title;
-                case EnumDisplayType.GroupTitle: return string.Format("{0}/{1}", Group, Title);
+                case EnumDisplayType.GroupTitle: return Group.IsNotEmpty() ? $"{Group}/{Title}" : Title;
                 default:                         return this.Title;
             }
         }

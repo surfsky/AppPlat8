@@ -1,5 +1,5 @@
 @page
-@model App.Pages.Gis.GisIndexModel
+@model App.Pages.Gis.IndexModel
 @{
     Layout = "_Layout";
     ViewData["Title"] = "GIS驾驶舱";
@@ -204,21 +204,131 @@
             gap: 8px;
             margin-bottom: 8px;
         }
-        .geometry-tree {
-            margin-left: 18px;
-            border-left: 1px dashed rgba(148, 163, 184, 0.5);
-            padding-left: 10px;
-            margin-top: 6px;
+        .menu-tree-wrap {
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 8px;
+            background: rgba(248, 250, 252, 0.8);
+            padding: 8px;
+            margin-bottom: 10px;
         }
-        .tag-chip {
-            display: inline-block;
-            padding: 3px 8px;
-            margin: 0 6px 6px 0;
-            border-radius: 999px;
+        .menu-node {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 2px;
+        }
+        .menu-node:hover {
+            background: #eff6ff;
+        }
+        .menu-node.active {
+            background: #2563eb;
+            color: #fff;
+        }
+        .geometry-list-wrap {
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 8px;
+            background: rgba(248, 250, 252, 0.8);
+            padding: 8px;
+        }
+        .geometry-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px;
+            border-radius: 6px;
+            margin-bottom: 2px;
+        }
+        .geometry-item:hover {
+            background: #eef2ff;
+        }
+        .geometry-item-link {
+            flex: 1;
+            text-align: left;
+            background: transparent;
+            border: none;
+            color: #1e293b;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 0;
+        }
+        .geometry-item-link:hover {
+            color: #1d4ed8;
+        }
+        .geo-detail-drawer {
+            position: absolute;
+            top: 0;
+            right: -460px;
+            width: 440px;
+            bottom: 0;
+            z-index: 30;
+            background: rgba(255, 255, 255, 0.98);
+            border-left: 1px solid rgba(148, 163, 184, 0.35);
+            box-shadow: -8px 0 24px rgba(15, 23, 42, 0.16);
+            transition: right .25s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .geo-detail-drawer.open {
+            right: 0;
+        }
+        .geo-drawer-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .geo-drawer-body {
+            flex: 1;
+            overflow: auto;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #1f2937;
+        }
+        .geo-drawer-foot {
+            padding: 10px 16px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .geo-kv {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .geo-kv td {
+            border: 1px solid #e2e8f0;
+            padding: 6px 8px;
+            vertical-align: top;
+            word-break: break-all;
+        }
+        .geo-kv td:first-child {
+            width: 110px;
             font-size: 12px;
-            background: rgba(99, 102, 241, 0.22);
-            border: 1px solid rgba(129, 140, 248, 0.5);
-            color: #e0e7ff;
+            color: #64748b;
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        .geo-data-table {
+            width: 100%;
+            margin-top: 8px;
+            border-collapse: collapse;
+        }
+        .geo-data-table th,
+        .geo-data-table td {
+            border: 1px solid #e2e8f0;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: top;
+            word-break: break-all;
+        }
+        .geo-data-table th {
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 12px;
         }
         .floating-toggle-group {
             position: absolute;
@@ -295,6 +405,10 @@
                 left: 10px;
                 top: 12px;
             }
+            .geo-detail-drawer {
+                width: 100%;
+                right: -100%;
+            }
         }
     </style>
 }
@@ -351,10 +465,24 @@
                     <label for="layer-geometries" class="cursor-pointer">图形</label>
                     <span id="layer-geometry-count" class="ml-auto text-xs text-gray-400">0</span>
                 </div>
-                <div id="geometry-tree" class="geometry-tree"></div>
+                <div class="text-xs text-slate-500 mb-1">GIS菜单</div>
+                <div id="menu-tree" class="menu-tree-wrap"></div>
+                <div class="text-xs text-slate-500 mb-1 mt-2">当前菜单图形</div>
+                <div id="geometry-list" class="geometry-list-wrap"></div>
             </div>
         </div>
     </div>
+
+    <aside id="geo-detail-drawer" class="geo-detail-drawer" aria-label="图形详情">
+        <div class="geo-drawer-head">
+            <strong id="geo-detail-title">图形详情</strong>
+            <button id="btn-geo-close" class="toolbar-btn">关闭</button>
+        </div>
+        <div id="geo-detail-body" class="geo-drawer-body">请选择图形</div>
+        <div class="geo-drawer-foot">
+            <button id="btn-geo-edit" class="toolbar-btn" style="display:none;">编辑</button>
+        </div>
+    </aside>
 }
 
 @section script {
@@ -365,9 +493,12 @@
             objects: [],
             selectedId: null,
             markerMap: new Map(),
+            menus: [],
+            selectedMenuId: null,
             geometries: [],
             geometryVisibleMap: new Map(),
             geometryFeatureCount: 0,
+            selectedGeometryId: null,
             currentStyle: 'street',
             is3D: false,
             toolbarCollapsed: false,
@@ -563,8 +694,8 @@
             });
         }
 
-        function buildGeometryTreeNodes() {
-            const nodes = state.geometries.map(item => ({ ...item, children: [] }));
+        function buildMenuNodes() {
+            const nodes = state.menus.map(item => ({ ...item, children: [] }));
             const byId = new Map(nodes.map(n => [n.id, n]));
             const roots = [];
 
@@ -579,71 +710,152 @@
             const sortFn = (a, b) => (a.sortId || 0) - (b.sortId || 0) || a.id - b.id;
             const sortTree = list => {
                 list.sort(sortFn);
-                list.forEach(node => sortTree(node.children));
+                list.forEach(node => sortTree(node.children || []));
             };
             sortTree(roots);
             return roots;
         }
 
-        function setNodeVisibilityRecursive(node, visible) {
-            state.geometryVisibleMap.set(node.id, visible);
-            (node.children || []).forEach(child => setNodeVisibilityRecursive(child, visible));
-        }
-
-        function getNodeCheckState(node) {
-            const children = node.children || [];
-            if (children.length === 0) {
-                const checked = state.geometryVisibleMap.get(node.id) !== false;
-                return { checked, indeterminate: false };
-            }
-
-            const childStates = children.map(getNodeCheckState);
-            const allChecked = childStates.every(s => s.checked && !s.indeterminate);
-            const noneChecked = childStates.every(s => !s.checked && !s.indeterminate);
-
-            if (allChecked) return { checked: true, indeterminate: false };
-            if (noneChecked) return { checked: false, indeterminate: false };
-            return { checked: false, indeterminate: true };
-        }
-
-        function renderGeometryTree() {
-            const container = document.getElementById('geometry-tree');
+        function renderMenuTree() {
+            const container = document.getElementById('menu-tree');
             if (!container) return;
             container.innerHTML = '';
 
-            const roots = buildGeometryTreeNodes();
-            const masterVisible = isGeometryMasterVisible();
+            const roots = buildMenuNodes();
+            if (roots.length === 0) {
+                container.innerHTML = '<div class="text-xs text-slate-400">暂无菜单</div>';
+                return;
+            }
 
             const renderNode = (node, depth) => {
                 const row = document.createElement('div');
-                row.className = 'layer-node';
+                row.className = `menu-node ${state.selectedMenuId === node.id ? 'active' : ''}`;
                 row.style.marginLeft = `${depth * 14}px`;
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'accent-green-500';
-                checkbox.disabled = !masterVisible;
-                const checkState = getNodeCheckState(node);
-                checkbox.checked = checkState.checked;
-                checkbox.indeterminate = checkState.indeterminate;
-                checkbox.addEventListener('change', () => {
-                    setNodeVisibilityRecursive(node, !!checkbox.checked);
-                    renderGeometryTree();
-                    applyGeometryVisibility();
+                row.textContent = node.name || `菜单${node.id}`;
+                row.addEventListener('click', async () => {
+                    state.selectedMenuId = node.id;
+                    await loadGeometries(node.id);
+                    renderMenuTree();
                 });
-
-                const label = document.createElement('label');
-                label.className = 'cursor-pointer';
-                label.textContent = node.alias || node.name || `图形${node.id}`;
-
-                row.appendChild(checkbox);
-                row.appendChild(label);
                 container.appendChild(row);
 
                 (node.children || []).forEach(child => renderNode(child, depth + 1));
             };
 
             roots.forEach(node => renderNode(node, 0));
+        }
+
+        function renderGeometryList() {
+            const container = document.getElementById('geometry-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const masterVisible = isGeometryMasterVisible();
+            const list = [...state.geometries].sort((a, b) => (a.sortId || 0) - (b.sortId || 0) || a.id - b.id);
+            if (list.length === 0) {
+                container.innerHTML = '<div class="text-xs text-slate-400">当前菜单暂无图形</div>';
+                return;
+            }
+
+            list.forEach(node => {
+                const row = document.createElement('div');
+                row.className = 'geometry-item';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'accent-green-500';
+                checkbox.disabled = !masterVisible;
+                checkbox.checked = state.geometryVisibleMap.get(node.id) !== false;
+                checkbox.addEventListener('change', () => {
+                    state.geometryVisibleMap.set(node.id, !!checkbox.checked);
+                    applyGeometryVisibility();
+                });
+
+                const link = document.createElement('button');
+                link.type = 'button';
+                link.className = 'geometry-item-link';
+                link.textContent = node.alias || node.name || `图形${node.id}`;
+                link.addEventListener('click', () => openGeometryDetailDrawer(node.id));
+
+                row.appendChild(checkbox);
+                row.appendChild(link);
+                container.appendChild(row);
+            });
+        }
+
+        function closeGeometryDetailDrawer() {
+            const drawer = document.getElementById('geo-detail-drawer');
+            if (!drawer) return;
+            drawer.classList.remove('open');
+        }
+
+        function renderDataRows(rows) {
+            if (!Array.isArray(rows) || rows.length === 0)
+                return '<div class="text-xs text-slate-400 mt-2">DataJson 无数据</div>';
+            const body = rows.map(r => `<tr><td>${(r.key ?? '').toString().replaceAll('<', '&lt;')}</td><td>${(r.value ?? '').toString().replaceAll('<', '&lt;')}</td></tr>`).join('');
+            return `<table class="geo-data-table"><thead><tr><th>字段</th><th>值</th></tr></thead><tbody>${body}</tbody></table>`;
+        }
+
+        async function openGeometryDetailDrawer(id) {
+            const drawer = document.getElementById('geo-detail-drawer');
+            const title = document.getElementById('geo-detail-title');
+            const body = document.getElementById('geo-detail-body');
+            const editBtn = document.getElementById('btn-geo-edit');
+            if (!drawer || !title || !body || !editBtn) return;
+
+            state.selectedGeometryId = id;
+            title.textContent = '图形详情';
+            body.innerHTML = '加载中...';
+            editBtn.style.display = 'none';
+            drawer.classList.add('open');
+
+            try {
+                const resp = await fetch(`?handler=GeometryDetail&id=${id}`);
+                const res = await resp.json();
+                if (res.code !== 0 || !res.data) {
+                    body.textContent = res.msg || '获取图形详情失败';
+                    return;
+                }
+
+                const d = res.data;
+                title.textContent = d.name || `图形${d.id}`;
+                body.innerHTML = `
+                    <table class="geo-kv">
+                        <tr><td>ID</td><td>${d.id ?? ''}</td></tr>
+                        <tr><td>菜单</td><td>${d.menuName ?? '-'}</td></tr>
+                        <tr><td>名称</td><td>${d.name ?? ''}</td></tr>
+                        <tr><td>简称</td><td>${d.alias ?? ''}</td></tr>
+                        <tr><td>经纬度</td><td>${d.gps ?? '-'}</td></tr>
+                    </table>
+                    <div class="text-xs text-slate-500 mt-2">DataJson</div>
+                    ${renderDataRows(d.dataRows)}
+                `;
+
+                if (d.canEdit) {
+                    editBtn.style.display = '';
+                    editBtn.onclick = () => {
+                        const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                        if (!manager || typeof manager.openDrawer !== 'function') {
+                            window.open(`/GIS/GeometryForm?id=${id}&md=edit`, '_blank');
+                            return;
+                        }
+                        manager.openDrawer({
+                            title: '编辑图形',
+                            url: `/GIS/GeometryForm?id=${id}&md=edit`,
+                            direction: 'rtl',
+                            size: window.innerWidth < 768 ? '100%' : '45%',
+                            resizable: true,
+                            closeOnClickModal: false,
+                            destroyOnClose: true
+                        });
+                        // 编辑抽屉保存关闭后，定时刷新地图图形。
+                        setTimeout(() => loadGeometries(state.selectedMenuId), 1200);
+                        setTimeout(() => loadGeometries(state.selectedMenuId), 4200);
+                    };
+                }
+            } catch {
+                body.textContent = '获取图形详情失败';
+            }
         }
 
         async function loadObjects() {
@@ -657,9 +869,40 @@
             if (state.objects.length > 0) selectObject(state.objects[0], false);
         }
 
-        async function loadGeometries() {
+        async function loadMenus() {
             try {
-                const resp = await fetch('?handler=GeometryLayerData');
+                const resp = await fetch('?handler=MenuData');
+                const res = await resp.json();
+                if (res.code !== 0 || !Array.isArray(res.data)) return;
+
+                const flatMenus = [];
+                const walk = (nodes) => {
+                    (nodes || []).forEach(n => {
+                        flatMenus.push({
+                            id: n.id,
+                            parentId: n.parentId,
+                            name: n.name,
+                            sortId: n.sortId
+                        });
+                        walk(n.children || []);
+                    });
+                };
+                walk(res.data);
+
+                state.menus = flatMenus;
+
+                const first = state.menus[0];
+                if (!state.selectedMenuId && first) state.selectedMenuId = first.id;
+                renderMenuTree();
+            } catch {
+                // ignore menu loading failures
+            }
+        }
+
+        async function loadGeometries(menuId) {
+            try {
+                const query = menuId ? `?handler=GeometryLayerData&menuId=${menuId}` : '?handler=GeometryLayerData';
+                const resp = await fetch(query);
                 const res = await resp.json();
                 if (res.code !== 0 || !Array.isArray(res.data)) return;
 
@@ -673,7 +916,7 @@
                 geometryLayerManager.setDataFromRows(state.geometries);
                 state.geometryFeatureCount = geometryLayerManager.getFeatureCount();
                 buildLayerTree();
-                renderGeometryTree();
+                renderGeometryList();
 
                 geometryLayerManager.render();
                 applyGeometryVisibility();
@@ -790,13 +1033,13 @@
             });
 
             loadObjects();
-            loadGeometries();
+            loadMenus().then(() => loadGeometries(state.selectedMenuId));
             applyChineseLabels();
 
             document.getElementById('layer-checkObject').addEventListener('change', (e) => setLayerVisible(!!e.target.checked));
             document.getElementById('layer-geometries').addEventListener('change', (e) => {
                 setGeometryLayerVisible(!!e.target.checked);
-                renderGeometryTree();
+                renderGeometryList();
             });
 
             document.getElementById('btn-reset').addEventListener('click', resetView);
@@ -814,6 +1057,7 @@
                     syncLayerPanelUI();
                 }
             });
+            document.getElementById('btn-geo-close').addEventListener('click', closeGeometryDetailDrawer);
             document.getElementById('address-input').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') searchAddress();
             });
@@ -862,7 +1106,8 @@
 
             const geometryLayerCheck = document.getElementById('layer-geometries');
             setGeometryLayerVisible(geometryLayerCheck ? !!geometryLayerCheck.checked : true);
-            renderGeometryTree();
+            renderMenuTree();
+            renderGeometryList();
         });
     </script>
 }
