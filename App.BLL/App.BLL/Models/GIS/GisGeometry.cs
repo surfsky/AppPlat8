@@ -7,6 +7,15 @@ using App.Utils;
 
 namespace App.DAL.GIS
 {
+    /// <summary>图层类型</summary>
+    public enum LayerType
+    {
+        [UI("点")]  Point = 1,
+        [UI("几何")] Geometry = 2,
+        [UI("图片")] Image = 3,
+    }
+
+
     /// <summary>GIS几何图形</summary>
     [UI("GIS", "GIS几何图形")]
     public class GisGeometry : EntityBase<GisGeometry>
@@ -16,8 +25,8 @@ namespace App.DAL.GIS
         [UI("简称")]        public string Alias { get; set; }
         [UI("责任组织")]     public long? OrgId { get; set; }
         [UI("GIS菜单")]     public long? MenuId { get; set; }
-        [UI("GeoJSON数据")] public string GeoJson { get; set; }
         [UI("经纬度")]      public string GPS { get; set; }
+        [UI("GeoJSON数据")] public string GeoJson { get; set; }
         [UI("扩展数据")]    public string DataJson { get; set; }
 
         //

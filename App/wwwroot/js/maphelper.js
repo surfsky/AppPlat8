@@ -7,6 +7,7 @@
         var mapContainerId = options.mapContainerId || 'map';
         var onError = typeof options.onError === 'function' ? options.onError : function () { };
         var onPaletteChange = typeof options.onPaletteChange === 'function' ? options.onPaletteChange : function () { };
+        var labelPriorityFields = normalizeLabelPriorityFields(options.labelPriorityFields);
 
         var palette = {
             pointColor: '#dc2626',
@@ -19,6 +20,7 @@
         var draw = null;
         var labelSyncQueued = false;
         var interactionBound = false;
+        var lastPickedFeatureId = null;
 
         function notifyPalette() {
             onPaletteChange({
@@ -27,6 +29,22 @@
                 fillColor: palette.fillColor,
                 fillOpacityPercent: palette.fillOpacityPercent
             });
+        }
+
+        function normalizeLabelPriorityFields(fields) {
+            var defaults = ['NAME', 'name', 'label', 'SZSQ', 'SZZ', 'SZQX', 'title', 'alias', 'text', 'Label', 'Name', 'Title', 'Alias', 'Text'];
+            if (!Array.isArray(fields) || fields.length === 0) return defaults;
+
+            var result = [];
+            var seen = new Set();
+            fields.forEach(function (f) {
+                var key = f === null || f === undefined ? '' : String(f).trim();
+                if (!key) return;
+                if (seen.has(key)) return;
+                seen.add(key);
+                result.push(key);
+            });
+            return result.length > 0 ? result : defaults;
         }
 
         function isHexColor(v) {
@@ -186,13 +204,20 @@
         }
 
         function getFeatureLabel(feature) {
-            var fields = ['label', 'name', 'title', 'text', 'alias', 'Label', 'Name', 'Title', 'Text', 'Alias'];
             var props = normalizeProperties(feature && feature.properties);
-            for (var i = 0; i < fields.length; i++) {
-                var value = props[fields[i]];
+            for (var i = 0; i < labelPriorityFields.length; i++) {
+                var value = props[labelPriorityFields[i]];
                 if (value === null || value === undefined) continue;
                 var text = String(value).trim();
                 if (text) return text;
+            }
+
+            var fallbacks = ['label', 'NAME', 'name', 'SZSQ', 'SZZ', 'SZQX', 'title', 'alias', 'text'];
+            for (var j = 0; j < fallbacks.length; j++) {
+                var v = props[fallbacks[j]];
+                if (v === null || v === undefined) continue;
+                var fallbackText = String(v).trim();
+                if (fallbackText) return fallbackText;
             }
             return '';
         }
@@ -638,6 +663,69 @@
             return null;
         }
 
+        function applyChineseLabels() {
+            if (!map) return;
+            var style = map.getStyle();
+            if (!style || !Array.isArray(style.layers)) return;
+
+            style.layers.forEach(function (layer) {
+                if (!layer || layer.type !== 'symbol') return;
+                if ((layer.id || '').startsWith('draw-label-')) return;
+                if ((layer.id || '').indexOf('gl-draw-') >= 0) return;
+                if (layer.source && layer.source !== 'composite') return;
+                var textField = map.getLayoutProperty(layer.id, 'text-field');
+                if (!textField) return;
+
+                try {
+                    map.setLayoutProperty(layer.id, 'text-field', [
+                        'coalesce',
+                        ['get', 'name_zh-Hans'],
+                        ['get', 'name_zh'],
+                        ['get', 'name'],
+                        ['get', 'NAME'],
+                        ''
+                    ]);
+                } catch {
+                    // ignore layers that don't support text-field expressions
+                }
+            });
+        }
+
+        function getFeatureCenterPoint(feature) {
+            if (!feature || !feature.geometry) return null;
+            return getLabelAnchorPoint(feature);
+        }
+
+        function findNearestFeatureId(anchor, candidates) {
+            if (!anchor || !Array.isArray(anchor) || anchor.length < 2) return null;
+            if (!Array.isArray(candidates) || candidates.length === 0) return null;
+
+            var ax = Number(anchor[0]);
+            var ay = Number(anchor[1]);
+            if (!Number.isFinite(ax) || !Number.isFinite(ay)) return null;
+
+            var points = candidates.filter(function (f) {
+                return f && f.geometry && f.geometry.type === 'Point';
+            });
+            var pool = points.length > 0 ? points : candidates;
+
+            var nearestId = null;
+            var nearestD2 = Infinity;
+            pool.forEach(function (f) {
+                var center = getFeatureCenterPoint(f);
+                if (!center || center.length < 2) return;
+                var dx = Number(center[0]) - ax;
+                var dy = Number(center[1]) - ay;
+                if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+                var d2 = dx * dx + dy * dy;
+                if (d2 < nearestD2) {
+                    nearestD2 = d2;
+                    nearestId = f.id;
+                }
+            });
+            return nearestId;
+        }
+
         function bindInteractionEvents() {
             if (!map || !draw || interactionBound) return;
             interactionBound = true;
@@ -649,6 +737,7 @@
                 map.on('contextmenu', function (evt) {
                     var pickedId = pickFeatureIdAt(evt.point);
                     if (pickedId) {
+                        lastPickedFeatureId = String(pickedId);
                         try {
                             draw.changeMode('simple_select', { featureIds: [pickedId] });
                             queueLabelSync();
@@ -671,6 +760,7 @@
                 map.on('dblclick', function (evt) {
                     var pickedId = pickFeatureIdAt(evt.point);
                     if (pickedId) {
+                        lastPickedFeatureId = String(pickedId);
                         try {
                             draw.changeMode('simple_select', { featureIds: [pickedId] });
                             queueLabelSync();
@@ -725,14 +815,13 @@
                 zoom: 11
             });
 
-            map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+            map.addControl(new mapboxgl.NavigationControl(), 'top-left');
             map.addControl(new mapboxgl.GeolocateControl({
-                positionOptions: {
-                    enableHighAccuracy: true
-                },
-                trackUserLocation: true,
+                positionOptions: { enableHighAccuracy: true },
+                trackUserLocation: false,
                 showUserHeading: true
-            }), 'bottom-right');
+            }), 'top-left');
+
 
             draw = new MapboxDraw({
                 displayControlsDefault: false,
@@ -748,7 +837,11 @@
             });
             map.on('draw.update', refresh);
             map.on('draw.delete', refresh);
-            map.on('draw.selectionchange', queueLabelSync);
+            map.on('draw.selectionchange', function (evt) {
+                var first = evt && Array.isArray(evt.features) && evt.features.length > 0 ? evt.features[0] : null;
+                lastPickedFeatureId = first && first.id !== undefined && first.id !== null ? String(first.id) : null;
+                queueLabelSync();
+            });
             map.on('draw.modechange', queueLabelSync);
             map.on('draw.render', queueLabelSync);
             map.on('click', function (evt) {
@@ -757,6 +850,7 @@
                 if (mode !== 'simple_select' && mode !== 'direct_select') return;
                 var pickedId = pickFeatureIdAt(evt.point);
                 if (!pickedId) return;
+                lastPickedFeatureId = String(pickedId);
                 try {
                     draw.changeMode('simple_select', { featureIds: [pickedId] });
                     queueLabelSync();
@@ -767,6 +861,7 @@
 
             map.on('load', function () {
                 bindInteractionEvents();
+                applyChineseLabels();
                 enhanceDrawLayerColors();
                 ensureLabelLayer();
 
@@ -784,6 +879,10 @@
                 refresh();
                 map.once('idle', syncLabelLayer);
             });
+
+            map.on('style.load', function () {
+                applyChineseLabels();
+            });
         }
 
         return {
@@ -793,9 +892,36 @@
             drawPolygon: function () { if (draw) draw.changeMode('draw_polygon'); },
             removeSelected: function () {
                 if (!draw || typeof draw.getSelectedIds !== 'function') return;
-                var selectedIds = draw.getSelectedIds();
+                var allBefore = getAllFeatures();
+                var selectedIds = draw.getSelectedIds() || [];
+                if ((!Array.isArray(selectedIds) || selectedIds.length === 0) && lastPickedFeatureId) {
+                    selectedIds = [lastPickedFeatureId];
+                }
+
+                var anchor = null;
+                if (Array.isArray(selectedIds) && selectedIds.length > 0) {
+                    var firstSelected = allBefore.find(function (f) { return String(f.id) === String(selectedIds[0]); });
+                    anchor = getFeatureCenterPoint(firstSelected);
+                }
+
                 if (Array.isArray(selectedIds) && selectedIds.length > 0) {
                     draw.delete(selectedIds);
+                    var remain = getAllFeatures();
+                    var nextId = findNearestFeatureId(anchor, remain);
+                    if (nextId !== null && nextId !== undefined) {
+                        // draw.delete may update state asynchronously; defer reselect to next frame.
+                        requestAnimationFrame(function () {
+                            try {
+                                draw.changeMode('simple_select', { featureIds: [nextId] });
+                                lastPickedFeatureId = String(nextId);
+                                queueLabelSync();
+                            } catch {
+                                lastPickedFeatureId = null;
+                            }
+                        });
+                    } else {
+                        lastPickedFeatureId = null;
+                    }
                 } else {
                     draw.trash();
                 }
@@ -819,12 +945,20 @@
             },
             getSelectedCount: function () {
                 if (!draw || typeof draw.getSelectedIds !== 'function') return 0;
-                return draw.getSelectedIds().length;
+                var selected = draw.getSelectedIds() || [];
+                if (Array.isArray(selected) && selected.length > 0) return selected.length;
+                return lastPickedFeatureId ? 1 : 0;
+            },
+            hasActiveSelection: function () {
+                if (!draw || typeof draw.getSelectedIds !== 'function') return !!lastPickedFeatureId;
+                var selected = draw.getSelectedIds() || [];
+                return (Array.isArray(selected) && selected.length > 0) || !!lastPickedFeatureId;
             },
             selectFeatureAt: function (point) {
                 if (!draw || !point || !map) return null;
                 var pickedId = pickFeatureIdAt(point);
                 if (!pickedId) return null;
+                lastPickedFeatureId = String(pickedId);
                 try {
                     draw.changeMode('simple_select', { featureIds: [pickedId] });
                     queueLabelSync();
@@ -849,6 +983,47 @@
                     setFeaturePropertySafe(id, 'label', text);
                 });
                 refresh();
+            },
+            getSelectedProperties: function () {
+                if (!draw || typeof draw.getSelectedIds !== 'function') return {};
+                var selected = draw.getSelectedIds();
+                if (!selected || selected.length === 0) {
+                    if (!lastPickedFeatureId) return {};
+                    var pickedFeature = findFeatureById(lastPickedFeatureId);
+                    return normalizeProperties(pickedFeature && pickedFeature.properties);
+                }
+                var feature = findFeatureById(selected[0]);
+                return normalizeProperties(feature && feature.properties);
+            },
+            setSelectedProperties: function (nextProps) {
+                if (!draw || typeof draw.getSelectedIds !== 'function') return;
+                var selected = draw.getSelectedIds();
+                if ((!selected || selected.length === 0) && lastPickedFeatureId) {
+                    selected = [lastPickedFeatureId];
+                }
+                if (!selected || selected.length === 0) return;
+
+                var sanitized = normalizeProperties(nextProps);
+                selected.forEach(function (id) {
+                    var feature = findFeatureById(id);
+                    var existing = normalizeProperties(feature && feature.properties);
+                    Object.keys(existing).forEach(function (k) {
+                        if (!Object.prototype.hasOwnProperty.call(sanitized, k)) {
+                            setFeaturePropertySafe(id, k, '');
+                        }
+                    });
+                    Object.keys(sanitized).forEach(function (k) {
+                        setFeaturePropertySafe(id, k, sanitized[k]);
+                    });
+                });
+                refresh();
+            },
+            getLabelPriorityFields: function () {
+                return labelPriorityFields.slice();
+            },
+            setLabelPriorityFields: function (fields) {
+                labelPriorityFields = normalizeLabelPriorityFields(fields);
+                queueLabelSync();
             },
             getExportGeoJson: function () {
                 return JSON.stringify(buildExportObject());
@@ -952,9 +1127,7 @@
             var fallbackName = row.alias || row.name || ('图形' + geometryId);
             var fallbackProperties = {
                 __geometryId: geometryId,
-                __name: fallbackName,
-                name: fallbackName,
-                label: fallbackName
+                __name: fallbackName
             };
 
             var obj;
@@ -978,6 +1151,10 @@
             return features.map(function (f) {
                 var props = normalizeProperties(f.properties);
                 props.__geometryId = geometryId;
+                var labelText = props.label || props.name || props.NAME || props.title || props.Title || props.alias || props.Alias;
+                if (labelText === undefined || labelText === null || String(labelText).trim() === '') {
+                    props.label = fallbackName;
+                }
                 return {
                     type: 'Feature',
                     properties: props,
@@ -1049,7 +1226,7 @@
                     source: sourceId,
                     filter: ['any', ['==', ['geometry-type'], 'Point'], ['==', ['geometry-type'], 'MultiPoint'], ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']],
                     layout: {
-                        'text-field': ['coalesce', ['get', 'label'], ['get', 'name'], ['get', '__name'], ''],
+                        'text-field': ['coalesce', ['get', 'label'], ['get', 'NAME'], ['get', 'name'], ['get', 'Title'], ['get', 'title'], ['get', 'Alias'], ['get', 'alias'], ['get', '__name'], ''],
                         'text-size': 14,
                         'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
                         'text-anchor': 'center',
@@ -1073,7 +1250,7 @@
                     filter: ['any', ['==', ['geometry-type'], 'LineString'], ['==', ['geometry-type'], 'MultiLineString']],
                     layout: {
                         'symbol-placement': 'line',
-                        'text-field': ['coalesce', ['get', 'label'], ['get', 'name'], ['get', '__name'], ''],
+                        'text-field': ['coalesce', ['get', 'label'], ['get', 'NAME'], ['get', 'name'], ['get', 'Title'], ['get', 'title'], ['get', 'Alias'], ['get', 'alias'], ['get', '__name'], ''],
                         'text-size': 14,
                         'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
                         'text-keep-upright': true,

@@ -9,30 +9,28 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
-    <script src="/js/maphelper.js"></script>
+    <script src="/js/maphelper.js?v=1.1"></script>
     <style>
         html, body, #app { height: 100%; margin: 0; }
-        #map { width: 100%; height: 100%; }
+        #map { width: 100%; height: calc(100vh - 24px); top:50px; position: absolute; }
         .panel {
             position: absolute;
-            top: 12px;
-            left: 12px;
-            right: 12px;
+            top: 0px;
+            left: 0px;
+            right: 0px;
             z-index: 10;
             background: rgba(255, 255, 255, 0.96);
-            border-radius: 10px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-            padding: 10px;
+            border-radius: 0px;
+            padding-bottom: 12px;
         }
         .footer {
             position: absolute;
-            left: 12px;
-            right: 12px;
-            bottom: 12px;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
             z-index: 10;
             background: rgba(255, 255, 255, 0.96);
-            border-radius: 10px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            border-radius: 0px;
             padding: 10px;
         }
         .hint {
@@ -103,13 +101,29 @@
         .map-context-menu .menu-item.danger {
             color: #dc2626;
         }
+        .props-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .props-table th,
+        .props-table td {
+            border: 1px solid #e5e7eb;
+            padding: 6px;
+            vertical-align: middle;
+        }
+        .props-table th {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 12px;
+            font-weight: 600;
+        }
     </style>
 }
 
 @section body {
     <div id="app">
         <div class="panel">
-            <div style="display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+            <div style="display:flex; flex-wrap:wrap; gap:2px; align-items:center;">
                 <el-button type="primary" plain title="绘制点" @@click="drawPoint">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="10" r="5"></circle>
@@ -137,6 +151,7 @@
                     <el-slider style="width:80px" v-model="fillOpacityPercent" :min="0" :max="100" :step="5" @@change="onFillOpacityChange"></el-slider>
                     <span class="opacity-value">{{ fillOpacityPercent }}%</span>
                 </span>
+                <el-button type="primary" plain @@click="openPropsDrawer">属性</el-button>
                 <el-button type="warning" @@click="removeSelected">删除</el-button>
                 <el-button type="danger" @@click="clearAll">清空</el-button>
                 <el-button type="primary" @@click="confirmGeometry">保存</el-button>
@@ -149,6 +164,37 @@
             <div class="menu-item" @@click="setLabelFromMenu">设置标签</div>
             <div class="menu-item danger" @@click="removeSelectedFromMenu">删除</div>
         </div>
+
+        <el-drawer v-model="propsDrawerVisible" title="属性" direction="rtl" size="38%" :append-to-body="true" :close-on-click-modal="false">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <el-button size="small" type="primary" plain @@click="addPropRow">新增属性</el-button>
+                </div>
+                <div style="max-height:60vh; overflow:auto; border:1px solid #e5e7eb; border-radius:8px;">
+                    <div v-if="propsRows.length===0" style="font-size:12px;color:#94a3b8;">当前要素无属性，可新增</div>
+                    <table v-else class="props-table">
+                        <thead>
+                            <tr>
+                                <th style="width:38%;">字段</th>
+                                <th>值</th>
+                                <th style="width:70px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(row,idx) in propsRows" :key="idx">
+                                <td><el-input size="small" v-model="row.key" placeholder="字段名"></el-input></td>
+                                <td><el-input size="small" v-model="row.value" placeholder="字段值"></el-input></td>
+                                <td style="text-align:center;"><el-button size="small" type="danger" plain @@click="removePropRow(idx)">删</el-button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px;" class="footer">
+                    <el-button @@click="propsDrawerVisible=false">取消</el-button>
+                    <el-button type="primary" @@click="saveProps">保存</el-button>
+                </div>
+            </div>
+        </el-drawer>
 
     </div>
 }
@@ -169,6 +215,8 @@
                 const menuVisible = ref(false);
                 const menuX = ref(0);
                 const menuY = ref(0);
+                const propsDrawerVisible = ref(false);
+                const propsRows = ref([]);
 
                 let editor = null;
                 let keydownHandler = null;
@@ -209,6 +257,36 @@
                     menuVisible.value = false;
                 };
 
+                const openPropsDrawer = () => {
+                    if (!editor || !editor.hasActiveSelection?.()) {
+                        showWarning('请先选中一个图形');
+                        return;
+                    }
+                    const props = editor.getSelectedProperties?.() || {};
+                    propsRows.value = Object.keys(props).map(k => ({ key: k, value: props[k] === null || props[k] === undefined ? '' : String(props[k]) }));
+                    propsDrawerVisible.value = true;
+                };
+
+                const addPropRow = () => {
+                    propsRows.value.push({ key: '', value: '' });
+                };
+
+                const removePropRow = (idx) => {
+                    propsRows.value.splice(idx, 1);
+                };
+
+                const saveProps = () => {
+                    if (!editor || typeof editor.setSelectedProperties !== 'function') return;
+                    const nextProps = {};
+                    propsRows.value.forEach((row) => {
+                        const k = String(row?.key || '').trim();
+                        if (!k) return;
+                        nextProps[k] = row?.value === null || row?.value === undefined ? '' : String(row.value);
+                    });
+                    editor.setSelectedProperties(nextProps);
+                    propsDrawerVisible.value = false;
+                };
+
                 const isTypingTarget = (el) => {
                     if (!el) return false;
                     const tag = (el.tagName || '').toLowerCase();
@@ -247,7 +325,7 @@
                 };
 
                 const editSelectedLabel = async () => {
-                    if (!editor || editor.getSelectedCount?.() < 1) {
+                    if (!editor || !editor.hasActiveSelection?.()) {
                         showWarning('请先选中一个图形');
                         return;
                     }
@@ -321,6 +399,7 @@
                         accessToken,
                         initGeoJson,
                         mapContainerId: 'map',
+                        labelPriorityFields: ['NAME', 'name', 'label', 'SZSQ', 'SZZ', 'SZQX', 'title', 'alias', 'text'],
                         onError: showError,
                         onMapContextMenu: (ctx) => {
                             const picked = ctx?.pickedId;
@@ -355,8 +434,10 @@
 
                     keydownHandler = (evt) => {
                         if (isTypingTarget(evt.target)) return;
-                        if (evt.key !== 'Delete') return;
-                        if (!editor || editor.getSelectedCount?.() < 1) return;
+                        const key = (evt.key || '').toLowerCase();
+                        const isDeleteKey = key === 'delete' || key === 'backspace' || evt.keyCode === 46 || evt.keyCode === 8;
+                        if (!isDeleteKey) return;
+                        if (!editor || !editor.hasActiveSelection?.()) return;
                         evt.preventDefault();
                         removeSelected();
                         hideMenu();
@@ -431,6 +512,8 @@
                     lineColor,
                     fillColor,
                     fillOpacityPercent,
+                    propsDrawerVisible,
+                    propsRows,
                     menuVisible,
                     menuX,
                     menuY,
@@ -444,6 +527,10 @@
                     removeSelected,
                     removeSelectedFromMenu,
                     setLabelFromMenu,
+                    openPropsDrawer,
+                    addPropRow,
+                    removePropRow,
+                    saveProps,
                     clearAll,
                     closeOnly,
                     confirmGeometry

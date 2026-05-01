@@ -46,10 +46,10 @@
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
         <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
         <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"  ></EleTreeSelect>
-        <EleSelector For="Item.GPS" TextFor="Item.GPS" Label="地图定位" PopupUrl="MapLocator" Icon="Location"></EleSelector>
+        <EleSelector For="Item.GPS" TextFor="Item.GPS" Label="定位" PopupUrl="MapLocator" Icon="Location"></EleSelector>
         <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
-        <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="GeoJSON" Class="geojson-selector" PopupUrl="MapGeometry" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
-        <EleInput For="Item.DataJson" Label="扩展数据(DataJson)" Enabled="true" Rows="12" FillRow="true"></EleInput>
+        <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="GeoJson" Class="geojson-selector" PopupUrl="MapGeometry" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
+        <EleInput For="Item.DataJson" Label="DataJson" Enabled="true" Rows="12" FillRow="true"></EleInput>
         @if (Model.Mode == PageMode.View)
         {
             <div class="el-form-item">

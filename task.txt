@@ -1,22 +1,40 @@
 --------------------------------------------------------
 - 框架
 --------------------------------------------------------
-bug：gis菜单管理/上级菜单有问题显示不全
-bug：gis菜单管理、责任组织设置出错
+*** 解析龙港区划
+    /联勤工作站
+    社区
+    /应急消防中心
+    工业园区
+
+*** 驾驶舱图层显示
+    GisMenus
+        增加IsOpen属性，是否默认显示，若为true，首页响应图层中被勾选，可显示
+        增加dataUrl参数，若设置了，则数据直接从该接口获取。
+            值如 /httpapi/checkobject/objects?type=xxx，
+            返回字段字段如 id, gps, name，icon, remark, gisType，扩展字段
+    GisGeometry
+        添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer
+        优化点的渲染方式，把文本标签上移一点，避免遮挡
+*** 驾驶舱
+    UI 设计
+    GisMenu 控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
+
+
+BUG
+    Gisindex加载总会报错：
+    图形编辑页面中的“菜单”下拉树数据不对，请修正
+    bug：gis菜单管理/上级菜单有问题显示不全 
+    bug：gis菜单管理、责任组织设置出错
+
 编写建设方案
 点位及驾驶舱
     管理
-        区块的标签
-        完善GisGeometry：可导入excel，便于快速录入数据
+        可导入excel，便于快速录入数据
         特殊图层的展示方式：增加gisType属性，可展示企业信息、全景、CAD转BIM、三维模型等
-        增加dataUrl参数：
-            如 /httpapi/checkobject/objects?type=xxx，
-            返回字段要做一个约定，必须有点字段如 id, gps, name, remark, gisType
-            其它字段作为扩展信息展示
     驾驶舱
         展示图层
         点击某个图形后，显示drawer
-        *** UI 设计
         详见 《260402-龙港市应急驾驶舱规划方案v3》
         图层数据均来自统一接口，可扩展字段并展示
         支持暗黑模式的UI、用theme=dark/light切换
