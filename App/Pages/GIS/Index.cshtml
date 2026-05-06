@@ -43,13 +43,25 @@
         .header-title {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 26px;
             padding: 10px 18px;
             color: white;
             opacity: 0.95;
             font-size: 36px;
             font-family: 'Times New Roman', Times, serif, '方正小标宋简';
             letter-spacing: .08em;
+        }
+        .header-datetime {
+            color: #f8fafc;
+            opacity: 0.96;
+            font-size: 18px;
+            font-family: 'DIN Alternate', 'Arial Narrow', Arial, sans-serif;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: pre-line;
+            text-shadow: 0 2px 10px rgba(15, 23, 42, 0.32);
+            user-select: none;
+            letter-spacing: 0.02em;
         }
         .header-dot {
             width: 10px;
@@ -380,9 +392,15 @@
             user-select: none;
             white-space: nowrap;
         }
+        .mapboxgl-ctrl-group .mapboxgl-ctrl-icon.fa-solid {
+            font-size: 14px;
+            line-height: 30px;
+            color: #1e3a8a;
+        }
         @@media (max-width: 768px) {
             .header-bar { height: 76px; }
             .header-title { font-size: 28px; padding: 8px 12px; }
+            .header-datetime { display: none; }
             .panel-left {
                 width: 260px;
                 top: 92px;
@@ -421,12 +439,11 @@
     <div class="header-bar">
         <div class="header-title">
             <span>应急驾驶舱</span>
+            <span id="header-datetime" class="header-datetime" aria-label="当前日期时间"></span>
         </div>
     </div>
 
     <div class="map-toolbar">
-        <button id="btn-reset" class="toolbar-btn">回位</button>
-        <button id="btn-fullscreen" class="toolbar-btn">全屏</button>
         <input id="address-input" class="toolbar-input" placeholder="搜索地址，如：杭州西湖" />
         <button id="btn-search" class="toolbar-btn">查找</button>
     </div>
@@ -518,10 +535,12 @@
         map.addControl(new mapboxgl.ScaleControl({ unit: 'metric' }), 'bottom-left');
         const centerCoordControl = createCenterCoordControl();
         map.addControl(centerCoordControl, 'bottom-right');
+        map.addControl(createResetControl(resetView), 'top-right');
+        map.addControl(new mapboxgl.FullscreenControl({ container: document.documentElement }), 'top-right');
         map.on('move', () => centerCoordControl.update());
-        map.on('load', () => {
-            // MapGeometryHelper
-            if (!window.MapGeometryHelper || typeof window.MapGeometryHelper.createDisplayLayerManager !== 'function') {
+        map.on('load', async () => {
+            const mapHelperReady = await ensureMapGeometryHelperReady();
+            if (!mapHelperReady) {
                 EleManager.showError('地图图形组件加载失败');
                 return;
             }
@@ -533,12 +552,12 @@
 
             // 加载数据
             // loadObjects();
-            loadMenus().then(() => loadGeometries());
+            await loadMenus();
+            await loadGeometries();
             applyChineseLabels();
 
             // 初始化按钮
-            document.getElementById('btn-reset').addEventListener('click', resetView);
-            document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+            startHeaderDatetime();
             document.getElementById('btn-search').addEventListener('click', searchAddress);
             document.getElementById('btn-view-toggle').addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -572,14 +591,6 @@
                 if (menu && menu.contains(target)) return;
                 if (trigger && trigger.contains(target)) return;
                 closeViewMenu();
-            });
-
-            document.addEventListener('fullscreenchange', () => {
-                const btn = document.getElementById('btn-fullscreen');
-                if (!btn) return;
-                const isFull = !!document.fullscreenElement;
-                btn.classList.toggle('active', isFull);
-                btn.textContent = isFull ? '退出全屏' : '全屏';
             });
 
             syncToolbarUI();
@@ -652,6 +663,78 @@
             };
         }
 
+        function createResetControl(onReset) {
+            let container = null;
+
+            return {
+                onAdd() {
+                    container = document.createElement('div');
+                    container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'mapboxgl-ctrl-icon fa-solid fa-rotate-right';
+                    button.title = '复位地图';
+                    button.setAttribute('aria-label', '复位地图');
+                    button.addEventListener('click', onReset);
+
+                    container.appendChild(button);
+                    return container;
+                },
+                onRemove() {
+                    if (container && container.parentNode) {
+                        container.parentNode.removeChild(container);
+                    }
+                    container = null;
+                }
+            };
+        }
+
+        let headerDatetimeTimer = null;
+        function startHeaderDatetime() {
+            const output = document.getElementById('header-datetime');
+            if (!output) return;
+
+            const render = () => {
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const d = String(now.getDate()).padStart(2, '0');
+                const hh = String(now.getHours()).padStart(2, '0');
+                const mm = String(now.getMinutes()).padStart(2, '0');
+                const ss = String(now.getSeconds()).padStart(2, '0');
+                output.textContent = `${y}年${m}月${d}日\n${hh}:${mm}:${ss}`;
+            };
+
+            render();
+            if (headerDatetimeTimer) clearInterval(headerDatetimeTimer);
+            headerDatetimeTimer = setInterval(render, 1000);
+        }
+
+        async function ensureMapGeometryHelperReady() {
+            if (window.MapGeometryHelper && typeof window.MapGeometryHelper.createDisplayLayerManager === 'function') {
+                return true;
+            }
+
+            const dynamicScriptKey = 'maphelper-runtime-loader';
+            if (!document.getElementById(dynamicScriptKey)) {
+                const script = document.createElement('script');
+                script.id = dynamicScriptKey;
+                script.src = `/js/maphelper.js?v=${Date.now()}`;
+                document.head.appendChild(script);
+            }
+
+            const started = Date.now();
+            while (Date.now() - started < 6000) {
+                if (window.MapGeometryHelper && typeof window.MapGeometryHelper.createDisplayLayerManager === 'function') {
+                    return true;
+                }
+                await new Promise(resolve => setTimeout(resolve, 120));
+            }
+
+            return false;
+        }
+
         /** 启用 3D 地图效果*/
         function enable3DBuildings() {
             const layers = map.getStyle().layers;
@@ -719,22 +802,6 @@
         //--------------------------------------------------------------
         // 工具栏和视图控制
         //--------------------------------------------------------------
-        /** 切换全屏模式*/
-        async function toggleFullscreen() {
-            const btn = document.getElementById('btn-fullscreen');
-            try {
-                if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-                else await document.exitFullscreen();
-            } catch {
-                EleManager.showWarning('当前环境不支持全屏切换');
-            }
-            const isFull = !!document.fullscreenElement;
-            if (btn) {
-                btn.classList.toggle('active', isFull);
-                btn.textContent = isFull ? '退出全屏' : '全屏';
-            }
-        }
-
         /** 切换工具栏显示状态*/
         function toggleToolbar() {
             state.toolbarCollapsed = !state.toolbarCollapsed;

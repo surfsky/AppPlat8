@@ -130,3 +130,15 @@
                 default:                         return this.Title;
             }
         }
+
+        @if (Model.Mode == PageMode.View)
+        {
+            <div class="el-form-item">
+                <label class="el-form-item__label" style="width: 120px;">属性表格</label>
+                <div class="el-form-item__content" style="margin-left: 120px; width: calc(100% - 120px);">
+                    <div id="datajson-table-wrap" class="w-full text-sm text-gray-500">暂无数据</div>
+                </div>
+            </div>
+        }
+
+

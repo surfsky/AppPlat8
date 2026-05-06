@@ -29,6 +29,68 @@ export const selectorMethods = {
         return `${url}${joinChar}${encodeURIComponent(key)}=${encodeURIComponent(value ?? '')}`;
     },
 
+    createStorageToken() {
+        return `sk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    },
+
+    cleanupSelectorStorage(maxKeep = 120) {
+        if (typeof window === 'undefined') return;
+        const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+        const shouldManage = (k) => typeof k === 'string' && (k.startsWith('sk_') || k.startsWith('ele_selector_'));
+
+        storages.forEach((storage) => {
+            try {
+                const keys = [];
+                for (let i = 0; i < storage.length; i += 1) {
+                    const k = storage.key(i);
+                    if (shouldManage(k)) keys.push(k);
+                }
+                if (keys.length <= maxKeep) return;
+
+                keys.sort((a, b) => {
+                    const ta = storage.getItem(`${a}__t`) || '0';
+                    const tb = storage.getItem(`${b}__t`) || '0';
+                    return Number(ta) - Number(tb);
+                });
+
+                const removeCount = keys.length - maxKeep;
+                for (let i = 0; i < removeCount; i += 1) {
+                    const k = keys[i];
+                    storage.removeItem(k);
+                    storage.removeItem(`${k}__t`);
+                }
+            } catch {
+                // ignore cleanup failures
+            }
+        });
+    },
+
+    writeSelectorPayloadToStorage(value) {
+        if (typeof window === 'undefined') return null;
+        const token = this.createStorageToken();
+        const text = value == null ? '' : String(value);
+        const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+
+        for (let i = 0; i < storages.length; i += 1) {
+            const storage = storages[i];
+            try {
+                storage.setItem(token, text);
+                storage.setItem(`${token}__t`, String(Date.now()));
+                return token;
+            } catch {
+                this.cleanupSelectorStorage(80);
+                try {
+                    storage.setItem(token, text);
+                    storage.setItem(`${token}__t`, String(Date.now()));
+                    return token;
+                } catch {
+                    // try next storage
+                }
+            }
+        }
+        return null;
+    },
+
     buildSelectorUrl(urlBase, propId, keyMode) {
         let url = this.resolveDrawerUrlBase(urlBase);
         const modeRaw = (keyMode || 'Url').toString().trim().toLowerCase();
@@ -39,16 +101,17 @@ export const selectorMethods = {
         const value = rawValue == null ? '' : String(rawValue);
 
         const useStorage = mode === 'storage' || (mode === 'auto' && value.length > 1200);
-        if (useStorage && typeof window !== 'undefined' && window.localStorage) {
-            const k = `ele_selector_${keyId}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-            window.localStorage.setItem(k, value);
-            url = this.appendQuery(url, 'selectorKey', k);
-            url = this.appendQuery(url, 'geojsonKey', k);
-            return url;
+        if (useStorage) {
+            const k = this.writeSelectorPayloadToStorage(value);
+            if (k) {
+                url = this.appendQuery(url, 'dk', k);
+                return url;
+            }
         }
 
         url = this.appendQuery(url, 'selectorValue', value);
         url = this.appendQuery(url, keyId, value);
+        url = this.appendQuery(url, 'data', value);
         url = this.appendQuery(url, 'geojson', value);
         return url;
     },
@@ -61,10 +124,15 @@ export const selectorMethods = {
         this.selectorTitle.value = title || '选择';
         this.selectorVisible.value = true;
 
+        const lowerUrl = String(this.selectorUrl.value || '').toLowerCase();
+        const isPropsEditor = lowerUrl.includes('/gis/propseditor') || lowerUrl.includes('propseditor');
+        const drawerSize = isPropsEditor ? (window.innerWidth < 768 ? '100%' : '42%') : undefined;
+
         EleManager.openDrawer({
             title: this.selectorTitle.value,
             url: this.selectorUrl.value,
             direction: 'rtl',
+            size: drawerSize,
             resizable: true,
             closeOnClickModal: false,
             destroyOnClose: true,

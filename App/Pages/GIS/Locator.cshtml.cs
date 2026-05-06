@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Shared
 {
     [CheckPower(Power.CheckObjectView)]
-    public class MapLocatorModel : AdminModel
+    public class LocatorModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]
         public string Gps { get; set; }

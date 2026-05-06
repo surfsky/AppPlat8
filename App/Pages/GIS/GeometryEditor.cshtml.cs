@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Shared
 {
-    [CheckPower(Power.GisGeometryEdit)]
-    public class MapGeometryModel : AdminModel
+    [CheckPower(Power.GisGeometryView)]
+    public class GeometryEditorModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]
         public string GeoJson { get; set; }

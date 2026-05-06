@@ -5,6 +5,9 @@
     ViewData["Title"] = "GIS几何图形信息";
     var currentId = Request.Query["id"].ToString();
     var selectedId = Request.Query["menuId"].ToString();
+    if (selectedId.IsEmpty())
+        selectedId = Request.Query["selectId"].ToString();
+    var menuTreeTs = DateTime.Now.Ticks;
     var editMode = (Model.Mode != PageMode.View).ToString().ToLower();
 }
 
@@ -44,23 +47,12 @@
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleInput For="Item.Alias" Label="简称"></EleInput>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
-        <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreeSelect>
         <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"  ></EleTreeSelect>
-        <EleSelector For="Item.GPS" TextFor="Item.GPS" Label="定位" PopupUrl="MapLocator" Icon="Location"></EleSelector>
+        <EleSelector For="Item.GPS" TextFor="Item.GPS" Label="定位" PopupUrl="Locator" Icon="Location"></EleSelector>
         <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
-        <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="GeoJson" Class="geojson-selector" PopupUrl="MapGeometry" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
-        <EleInput For="Item.DataJson" Label="DataJson" Enabled="true" Rows="12" FillRow="true"></EleInput>
-        @if (Model.Mode == PageMode.View)
-        {
-            <div class="el-form-item">
-                <label class="el-form-item__label" style="width: 120px;">DataJson表格</label>
-                <div class="el-form-item__content" style="margin-left: 120px; width: calc(100% - 120px);">
-                    <div id="datajson-table-wrap" class="w-full text-sm text-gray-500">暂无数据</div>
-                </div>
-            </div>
-        }
-
-
+        <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-selector" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
+        <EleSelector For="Item.DataJson" TextFor="Item.DataJson" Label="属性数据" Class="geojson-selector" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="12" Editable="true" FillRow="true"></EleSelector>
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Id="btn-open-edit" Type="Primary" Visible="@(Model.Mode == PageMode.View && Auth.CheckPower(Power.GisGeometryEdit))">编辑</EleButton>

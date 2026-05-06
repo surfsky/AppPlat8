@@ -6,6 +6,7 @@ using App.DAL.GIS;
 using App.Entities;
 using App.HttpApi;
 using App.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.API
 {
@@ -14,7 +15,8 @@ namespace App.API
         [HttpApi("获取GIS菜单树", AuthLogin = true)]
         public static APIResult GetMenuTree(long? excludeId = null, long? selectedId = null)
         {
-            var all = GisMenu.IncludeSet.ToList();
+            // 这里使用实时查询，避免前端在菜单调整后读取到旧缓存。
+            var all = GisMenu.Set.AsNoTracking().ToList();
             var allMap = all.ToDictionary(t => t.Id, t => t);
             var visibleMap = all.ToDictionary(t => t.Id, t => t);
 

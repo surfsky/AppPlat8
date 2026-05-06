@@ -17,7 +17,9 @@ namespace App.DAL.GIS
 
         //
         public virtual Org Org { get; set; }
+        public virtual User Creator { get; set; }
         public string OrgName => Org?.Name;
+        public string CreatorName => Creator?.Name;
 
         // ITree 接口
         public override GisMenu Clone()
@@ -45,6 +47,7 @@ namespace App.DAL.GIS
                 DataDt,
 
                 OrgName,
+                CreatorName,
             };
         }
 

@@ -1,5 +1,5 @@
 @page
-@model App.Pages.Shared.MapGeometryModel
+@model App.Pages.Shared.GeometryEditorModel
 @{
     Layout = "_Layout";
 }
@@ -9,7 +9,8 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
-    <script src="/js/maphelper.js?v=1.1"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <script src="/js/maphelper.js?v=2.2"></script>
     <style>
         html, body, #app { height: 100%; margin: 0; }
         #map { width: 100%; height: calc(100vh - 24px); top:50px; position: absolute; }
@@ -21,7 +22,7 @@
             z-index: 10;
             background: rgba(255, 255, 255, 0.96);
             border-radius: 0px;
-            padding-bottom: 12px;
+            padding: 4px 2px 4px 2px;
         }
         .footer {
             position: absolute;
@@ -31,7 +32,7 @@
             z-index: 10;
             background: rgba(255, 255, 255, 0.96);
             border-radius: 0px;
-            padding: 10px;
+            padding: 8px;
         }
         .hint {
             font-size: 12px;
@@ -88,6 +89,9 @@
             overflow: hidden;
         }
         .map-context-menu .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             padding: 8px 12px;
             font-size: 13px;
             color: #1f2937;
@@ -95,27 +99,20 @@
             user-select: none;
             line-height: 1.2;
         }
+        .map-context-menu .menu-item .menu-icon {
+            width: 14px;
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+        }
+        .map-context-menu .menu-item.danger .menu-icon {
+            color: #dc2626;
+        }
         .map-context-menu .menu-item:hover {
             background: #f1f5f9;
         }
         .map-context-menu .menu-item.danger {
             color: #dc2626;
-        }
-        .props-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .props-table th,
-        .props-table td {
-            border: 1px solid #e5e7eb;
-            padding: 6px;
-            vertical-align: middle;
-        }
-        .props-table th {
-            background: #f8fafc;
-            color: #334155;
-            font-size: 12px;
-            font-weight: 600;
         }
     </style>
 }
@@ -161,40 +158,13 @@
         <div id="map"></div>
 
         <div v-show="menuVisible" class="map-context-menu" :style="{ left: menuX + 'px', top: menuY + 'px' }" @@click.stop>
-            <div class="menu-item" @@click="setLabelFromMenu">设置标签</div>
-            <div class="menu-item danger" @@click="removeSelectedFromMenu">删除</div>
+            <div class="menu-item" @@click="undoFromMenu"><i class="fa-solid fa-rotate-left menu-icon"></i><span>撤销</span></div>
+            <div class="menu-item" @@click="redoFromMenu"><i class="fa-solid fa-rotate-right menu-icon"></i><span>恢复</span></div>
+            <div class="menu-item" @@click="openPropsDrawerFromMenu"><i class="fa-regular fa-rectangle-list menu-icon"></i><span>属性</span></div>
+            <div class="menu-item" @@click="duplicateSelectedFromMenu"><i class="fa-regular fa-copy menu-icon"></i><span>复制</span></div>
+            <div class="menu-item" @@click="setLabelFromMenu"><i class="fa-solid fa-tag menu-icon"></i><span>设置标签</span></div>
+            <div class="menu-item danger" @@click="removeSelectedFromMenu"><i class="fa-regular fa-trash-can menu-icon"></i><span>删除</span></div>
         </div>
-
-        <el-drawer v-model="propsDrawerVisible" title="属性" direction="rtl" size="38%" :append-to-body="true" :close-on-click-modal="false">
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <el-button size="small" type="primary" plain @@click="addPropRow">新增属性</el-button>
-                </div>
-                <div style="max-height:60vh; overflow:auto; border:1px solid #e5e7eb; border-radius:8px;">
-                    <div v-if="propsRows.length===0" style="font-size:12px;color:#94a3b8;">当前要素无属性，可新增</div>
-                    <table v-else class="props-table">
-                        <thead>
-                            <tr>
-                                <th style="width:38%;">字段</th>
-                                <th>值</th>
-                                <th style="width:70px;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(row,idx) in propsRows" :key="idx">
-                                <td><el-input size="small" v-model="row.key" placeholder="字段名"></el-input></td>
-                                <td><el-input size="small" v-model="row.value" placeholder="字段值"></el-input></td>
-                                <td style="text-align:center;"><el-button size="small" type="danger" plain @@click="removePropRow(idx)">删</el-button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div style="display:flex; justify-content:flex-end; gap:8px;" class="footer">
-                    <el-button @@click="propsDrawerVisible=false">取消</el-button>
-                    <el-button type="primary" @@click="saveProps">保存</el-button>
-                </div>
-            </div>
-        </el-drawer>
 
     </div>
 }
@@ -215,14 +185,27 @@
                 const menuVisible = ref(false);
                 const menuX = ref(0);
                 const menuY = ref(0);
-                const propsDrawerVisible = ref(false);
-                const propsRows = ref([]);
 
                 let editor = null;
                 let keydownHandler = null;
                 let mapContextMenuHandler = null;
                 let mapDblClickHandler = null;
                 let hideMenuHandler = null;
+                let touchStartHandler = null;
+                let touchMoveHandler = null;
+                let touchEndHandler = null;
+                let longPressTimer = null;
+                let longPressTriggered = false;
+                let touchStartPoint = null;
+                const pageMode = (() => {
+                    try {
+                        const md = new URLSearchParams(window.location.search || '').get('md') || '';
+                        return String(md).trim().toLowerCase();
+                    } catch {
+                        return '';
+                    }
+                })();
+                const isViewMode = pageMode === 'view' || pageMode === 'readonly' || pageMode === 'read';
 
                 const getManager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
 
@@ -257,34 +240,130 @@
                     menuVisible.value = false;
                 };
 
+                const showMenuAt = (clientX, clientY) => {
+                    const menuWidth = 160;
+                    const menuHeight = 240;
+                    const x = Math.max(8, Math.min((clientX || 0), window.innerWidth - menuWidth));
+                    const y = Math.max(8, Math.min((clientY || 0), window.innerHeight - menuHeight));
+                    menuX.value = x;
+                    menuY.value = y;
+                    menuVisible.value = true;
+                };
+
+                const createStorageToken = () => `sk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+                const cleanupSelectorStorage = (maxKeep = 120) => {
+                    const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+                    const shouldManage = (k) => typeof k === 'string' && (k.startsWith('sk_') || k.startsWith('ele_selector_'));
+                    storages.forEach((storage) => {
+                        try {
+                            const keys = [];
+                            for (let i = 0; i < storage.length; i += 1) {
+                                const k = storage.key(i);
+                                if (shouldManage(k)) keys.push(k);
+                            }
+                            if (keys.length <= maxKeep) return;
+                            keys.sort((a, b) => {
+                                const ta = storage.getItem(`${a}__t`) || '0';
+                                const tb = storage.getItem(`${b}__t`) || '0';
+                                return Number(ta) - Number(tb);
+                            });
+                            const removeCount = keys.length - maxKeep;
+                            for (let i = 0; i < removeCount; i += 1) {
+                                const k = keys[i];
+                                storage.removeItem(k);
+                                storage.removeItem(`${k}__t`);
+                            }
+                        } catch {
+                            // ignore
+                        }
+                    });
+                };
+
+                const writePayloadToStorage = (text) => {
+                    const token = createStorageToken();
+                    const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+                    for (let i = 0; i < storages.length; i += 1) {
+                        const storage = storages[i];
+                        try {
+                            storage.setItem(token, text);
+                            storage.setItem(`${token}__t`, String(Date.now()));
+                            return token;
+                        } catch {
+                            cleanupSelectorStorage(80);
+                            try {
+                                storage.setItem(token, text);
+                                storage.setItem(`${token}__t`, String(Date.now()));
+                                return token;
+                            } catch {
+                                // try next storage
+                            }
+                        }
+                    }
+                    return '';
+                };
+
                 const openPropsDrawer = () => {
                     if (!editor || !editor.hasActiveSelection?.()) {
                         showWarning('请先选中一个图形');
                         return;
                     }
                     const props = editor.getSelectedProperties?.() || {};
-                    propsRows.value = Object.keys(props).map(k => ({ key: k, value: props[k] === null || props[k] === undefined ? '' : String(props[k]) }));
-                    propsDrawerVisible.value = true;
-                };
+                    const manager = getManager();
+                    const md = isViewMode ? 'view' : 'edit';
+                    const serialized = JSON.stringify(props || {});
+                    let url = `/GIS/PropsEditor?md=${md}`;
+                    if (typeof window !== 'undefined') {
+                        const key = writePayloadToStorage(serialized);
+                        if (key) {
+                            url += `&dk=${encodeURIComponent(key)}`;
+                        } else {
+                            url += `&data=${encodeURIComponent(serialized)}`;
+                        }
+                    } else {
+                        url += `&data=${encodeURIComponent(serialized)}`;
+                    }
 
-                const addPropRow = () => {
-                    propsRows.value.push({ key: '', value: '' });
-                };
+                    const applySelectorPayload = (selectorData) => {
+                        if (!selectorData || selectorData.type !== 'EleSelector') return;
+                        const list = Array.isArray(selectorData.data) ? selectorData.data : [];
+                        if (list.length === 0) return;
+                        const raw = list[0] && list[0].id !== undefined ? String(list[0].id) : '';
+                        if (!raw) return;
+                        let parsed = {};
+                        try {
+                            const first = JSON.parse(raw);
+                            if (first && typeof first === 'object' && !Array.isArray(first)) parsed = first;
+                            else if (typeof first === 'string') {
+                                const second = JSON.parse(first);
+                                if (second && typeof second === 'object' && !Array.isArray(second)) parsed = second;
+                            }
+                        } catch {
+                            parsed = {};
+                        }
+                        if (typeof editor.setSelectedProperties === 'function') {
+                            editor.setSelectedProperties(parsed);
+                        }
+                    };
 
-                const removePropRow = (idx) => {
-                    propsRows.value.splice(idx, 1);
-                };
-
-                const saveProps = () => {
-                    if (!editor || typeof editor.setSelectedProperties !== 'function') return;
-                    const nextProps = {};
-                    propsRows.value.forEach((row) => {
-                        const k = String(row?.key || '').trim();
-                        if (!k) return;
-                        nextProps[k] = row?.value === null || row?.value === undefined ? '' : String(row.value);
-                    });
-                    editor.setSelectedProperties(nextProps);
-                    propsDrawerVisible.value = false;
+                    if (manager && typeof manager.openDrawer === 'function') {
+                        manager.openDrawer({
+                            title: '属性',
+                            url,
+                            direction: 'rtl',
+                            size: window.innerWidth < 768 ? '100%' : '42%',
+                            resizable: true,
+                            closeOnClickModal: false,
+                            destroyOnClose: true,
+                            closeHandler: (payload) => {
+                                if (payload && payload.data && payload.data.type === 'EleSelector') {
+                                    applySelectorPayload(payload.data);
+                                }
+                            }
+                        });
+                        return;
+                    }
+                    window.open(url, '_blank');
                 };
 
                 const isTypingTarget = (el) => {
@@ -354,6 +433,59 @@
                     removeSelected();
                 };
 
+                const openPropsDrawerFromMenu = () => {
+                    hideMenu();
+                    openPropsDrawer();
+                };
+
+                const duplicateSelected = () => {
+                    if (!editor || typeof editor.duplicateSelected !== 'function') {
+                        showWarning('复制功能暂不可用，请刷新后重试');
+                        return;
+                    }
+                    const copiedCount = editor.duplicateSelected();
+                    if (!copiedCount) {
+                        showWarning('请先选中一个图形');
+                    }
+                };
+
+                const duplicateSelectedFromMenu = () => {
+                    hideMenu();
+                    duplicateSelected();
+                };
+
+                const undoEdit = () => {
+                    if (!editor || typeof editor.undo !== 'function') {
+                        showWarning('撤销功能暂不可用');
+                        return;
+                    }
+                    const ok = editor.undo();
+                    if (!ok) {
+                        showWarning('没有可撤销的操作');
+                    }
+                };
+
+                const redoEdit = () => {
+                    if (!editor || typeof editor.redo !== 'function') {
+                        showWarning('恢复功能暂不可用');
+                        return;
+                    }
+                    const ok = editor.redo();
+                    if (!ok) {
+                        showWarning('没有可恢复的操作');
+                    }
+                };
+
+                const undoFromMenu = () => {
+                    hideMenu();
+                    undoEdit();
+                };
+
+                const redoFromMenu = () => {
+                    hideMenu();
+                    redoEdit();
+                };
+
                 const closeOnly = () => {
                     const manager = getManager();
                     if (manager && typeof manager.closePage === 'function') {
@@ -410,9 +542,7 @@
                             if (ctx?.event?.originalEvent) {
                                 ctx.event.originalEvent.preventDefault();
                             }
-                            menuX.value = ctx?.clientX ?? 0;
-                            menuY.value = ctx?.clientY ?? 0;
-                            menuVisible.value = true;
+                            showMenuAt(ctx?.clientX ?? 0, ctx?.clientY ?? 0);
                         },
                         onMapDblClick: (ctx) => {
                             const picked = ctx?.pickedId;
@@ -435,6 +565,25 @@
                     keydownHandler = (evt) => {
                         if (isTypingTarget(evt.target)) return;
                         const key = (evt.key || '').toLowerCase();
+                        const isMac = /mac|iphone|ipad|ipod/i.test(navigator.platform || '');
+                        const cmdOrCtrl = isMac ? evt.metaKey : evt.ctrlKey;
+                        const isUndoShortcut = cmdOrCtrl && !evt.shiftKey && key === 'z';
+                        const isRedoShortcut = (cmdOrCtrl && evt.shiftKey && key === 'z') || (!isMac && evt.ctrlKey && key === 'y');
+
+                        if (isUndoShortcut) {
+                            evt.preventDefault();
+                            undoEdit();
+                            hideMenu();
+                            return;
+                        }
+
+                        if (isRedoShortcut) {
+                            evt.preventDefault();
+                            redoEdit();
+                            hideMenu();
+                            return;
+                        }
+
                         const isDeleteKey = key === 'delete' || key === 'backspace' || evt.keyCode === 46 || evt.keyCode === 8;
                         if (!isDeleteKey) return;
                         if (!editor || !editor.hasActiveSelection?.()) return;
@@ -445,6 +594,12 @@
                     window.addEventListener('keydown', keydownHandler);
 
                     mapContextMenuHandler = (evt) => {
+                        if (longPressTriggered) {
+                            evt.preventDefault();
+                            evt.stopPropagation();
+                            longPressTriggered = false;
+                            return;
+                        }
                         if (!editor) return;
                         const mapEl = document.getElementById('map');
                         if (!mapEl) return;
@@ -458,9 +613,7 @@
                             return;
                         }
                         evt.preventDefault();
-                        menuX.value = evt.clientX;
-                        menuY.value = evt.clientY;
-                        menuVisible.value = true;
+                        showMenuAt(evt.clientX, evt.clientY);
                     };
 
                     mapDblClickHandler = (evt) => {
@@ -483,6 +636,56 @@
                     if (mapEl) {
                         mapEl.addEventListener('contextmenu', mapContextMenuHandler, true);
                         mapEl.addEventListener('dblclick', mapDblClickHandler, true);
+
+                        touchStartHandler = (evt) => {
+                            if (!editor) return;
+                            if (!evt.touches || evt.touches.length !== 1) return;
+                            longPressTriggered = false;
+                            const touch = evt.touches[0];
+                            touchStartPoint = { x: touch.clientX, y: touch.clientY };
+                            if (longPressTimer) clearTimeout(longPressTimer);
+                            longPressTimer = setTimeout(() => {
+                                if (!touchStartPoint || !editor) return;
+                                const rect = mapEl.getBoundingClientRect();
+                                const picked = editor.selectFeatureAt?.({
+                                    x: touchStartPoint.x - rect.left,
+                                    y: touchStartPoint.y - rect.top
+                                });
+                                if (!picked) {
+                                    hideMenu();
+                                    return;
+                                }
+                                longPressTriggered = true;
+                                showMenuAt(touchStartPoint.x, touchStartPoint.y);
+                            }, 520);
+                        };
+
+                        touchMoveHandler = (evt) => {
+                            if (!touchStartPoint || !evt.touches || evt.touches.length !== 1) return;
+                            const touch = evt.touches[0];
+                            const dx = Math.abs(touch.clientX - touchStartPoint.x);
+                            const dy = Math.abs(touch.clientY - touchStartPoint.y);
+                            if (dx > 12 || dy > 12) {
+                                if (longPressTimer) clearTimeout(longPressTimer);
+                                longPressTimer = null;
+                            }
+                        };
+
+                        touchEndHandler = () => {
+                            if (longPressTimer) clearTimeout(longPressTimer);
+                            longPressTimer = null;
+                            touchStartPoint = null;
+                            if (longPressTriggered) {
+                                setTimeout(() => {
+                                    longPressTriggered = false;
+                                }, 60);
+                            }
+                        };
+
+                        mapEl.addEventListener('touchstart', touchStartHandler, { passive: true, capture: true });
+                        mapEl.addEventListener('touchmove', touchMoveHandler, { passive: true, capture: true });
+                        mapEl.addEventListener('touchend', touchEndHandler, { passive: true, capture: true });
+                        mapEl.addEventListener('touchcancel', touchEndHandler, { passive: true, capture: true });
                     }
 
                     hideMenuHandler = () => hideMenu();
@@ -500,6 +703,17 @@
                     if (mapEl && mapDblClickHandler) {
                         mapEl.removeEventListener('dblclick', mapDblClickHandler, true);
                     }
+                    if (mapEl && touchStartHandler) {
+                        mapEl.removeEventListener('touchstart', touchStartHandler, true);
+                    }
+                    if (mapEl && touchMoveHandler) {
+                        mapEl.removeEventListener('touchmove', touchMoveHandler, true);
+                    }
+                    if (mapEl && touchEndHandler) {
+                        mapEl.removeEventListener('touchend', touchEndHandler, true);
+                        mapEl.removeEventListener('touchcancel', touchEndHandler, true);
+                    }
+                    if (longPressTimer) clearTimeout(longPressTimer);
 
                     if (hideMenuHandler) {
                         document.removeEventListener('click', hideMenuHandler);
@@ -512,8 +726,6 @@
                     lineColor,
                     fillColor,
                     fillOpacityPercent,
-                    propsDrawerVisible,
-                    propsRows,
                     menuVisible,
                     menuX,
                     menuY,
@@ -526,11 +738,12 @@
                     onFillOpacityChange,
                     removeSelected,
                     removeSelectedFromMenu,
+                    duplicateSelectedFromMenu,
+                    undoFromMenu,
+                    redoFromMenu,
                     setLabelFromMenu,
+                    openPropsDrawerFromMenu,
                     openPropsDrawer,
-                    addPropRow,
-                    removePropRow,
-                    saveProps,
                     clearAll,
                     closeOnly,
                     confirmGeometry

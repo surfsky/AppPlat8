@@ -2,37 +2,39 @@
 - 框架
 --------------------------------------------------------
 *** 解析龙港区划
-    /龙港市
-    /联勤工作站
-    /应急消防中心
-    社区
     工业园区
+    社区（解析出错，未能展示）
 
 *** 驾驶舱图层显示
-    GisMenus
-        增加IsOpen属性，是否默认显示，若为true，首页响应图层中被勾选，可显示
+    驾驶舱
+        UI 设计
+        暗黑/亮白两种模式
+    GisMenus （只负责目录展示）
+        增加 IsDefaultShow 属性(是否默认显示)，若为true，首页相应图层中被勾选默认显示
+        bug：gis菜单管理、责任组织设置出错
+        bug：gis菜单管理/上级菜单有问题显示不全 
+        bug：图形编辑页面中的“菜单”下拉树数据不对，请修正
+        控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
+    GisGeometry（只负责图层数据展示，一个目录有多个图层）
+        添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer，数据DataUrl
+        可导入excel，便于快速录入数据
+        特殊图层的展示方式：增加gisType属性，可展示企业信息、全景、CAD转BIM、三维模型等
         增加dataUrl参数，若设置了，则数据直接从该接口获取。
             值如 /httpapi/checkobject/objects?type=xxx，
             返回字段字段如 id, gps, name，icon, remark, gisType，扩展字段
-    GisGeometry
-        添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer
+        优化地图图形设置窗口
+            bug：经测试，选中点位再点“删除”时，应该删除点位，而不是多边形；另外删除操作后undo操作无效；
+            maphelper.js 过于庞大，考虑根据功能重构，拆分成多个js文件
         优化点的渲染方式，把文本标签上移一点，避免遮挡
-*** 驾驶舱
-    UI 设计
-    GisMenu 控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
+    gis 多部门协同
+        GisMenu有授权部门
+        GisGeometry也有授权部门，感觉重复了
+        增加指定OwnerId？数据管理员
 
 
-BUG
-    Gisindex加载总会报错：
-    图形编辑页面中的“菜单”下拉树数据不对，请修正
-    bug：gis菜单管理/上级菜单有问题显示不全 
-    bug：gis菜单管理、责任组织设置出错
 
 编写建设方案
 点位及驾驶舱
-    管理
-        可导入excel，便于快速录入数据
-        特殊图层的展示方式：增加gisType属性，可展示企业信息、全景、CAD转BIM、三维模型等
     驾驶舱
         展示图层
         点击某个图形后，显示drawer
@@ -168,6 +170,25 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2026.05.06
+    /解析区域
+        /龙港市
+        /联勤工作站
+        /应急消防中心
+        /优化全屏、复位按钮
+    /驾驶舱及数据优化
+        /bug：Gisindex加载总会报错：
+        /复制
+        /优化选择
+        /redo, undo 功能
+        /通用的属性编辑窗口
+        /更名：
+            /pages/gis/MapGeometry -> GeometryEditor
+            /pages/gis/MapLocator -> Locator
+            /pages/gis/PropsEditor -> PropsEditor
+        /bug：点位的责任组织设置出错
+
+
 2026.04/30
     /实现图层显示（示意）
         /各种图形：从图形对象取，如省市县、园区、管道等

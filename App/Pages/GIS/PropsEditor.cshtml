@@ -1,0 +1,305 @@
+@page
+@model App.Pages.Shared.PropsEditorModel
+@{
+    Layout = "_Layout";
+}
+
+@section head {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <style>
+        html, body, #app { height: 100%; margin: 0; background: #fff; }
+        .panel {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            box-sizing: border-box;
+            gap: 10px;
+        }
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .table-wrap {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .props-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .props-table th,
+        .props-table td {
+            border: 1px solid #e5e7eb;
+            padding: 6px;
+            vertical-align: middle;
+        }
+        .props-table th {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .props-table .el-input__wrapper {
+            box-shadow: none !important;
+            background: transparent !important;
+            border-radius: 0;
+            padding: 0 2px;
+        }
+        .props-table .el-input__inner {
+            border: none;
+            background: transparent;
+        }
+        .props-empty {
+            padding: 12px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .btn-icon {
+            margin-right: 6px;
+        }
+        .btn-delete-icon {
+            padding: 2px 4px;
+            min-height: 20px;
+        }
+    </style>
+}
+
+@section body {
+    <div id="app">
+        <div class="panel">
+            <div class="toolbar">
+                <div class="title">属性</div>
+                <el-button size="small" type="primary" plain :disabled="readOnly" @@click="addPropRow">
+                    <i class="fa-solid fa-plus btn-icon"></i>
+                    <span>新增属性</span>
+                </el-button>
+            </div>
+
+            <div class="table-wrap">
+                <table class="props-table">
+                    <thead>
+                        <tr>
+                            <th style="width:38%;">字段</th>
+                            <th>值</th>
+                            <th style="width:74px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="rows.length===0">
+                            <td colspan="3" class="props-empty">当前要素无属性</td>
+                        </tr>
+                        <tr v-for="(row, idx) in rows" :key="idx">
+                            <td><el-input size="small" v-model="row.key" placeholder="字段名" :disabled="readOnly"></el-input></td>
+                            <td><el-input size="small" v-model="row.value" placeholder="字段值" :disabled="readOnly"></el-input></td>
+                            <td style="text-align:center;">
+                                <el-button size="small" type="danger" text class="btn-delete-icon" :disabled="readOnly" @@click="removePropRow(idx)">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </el-button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="foot">
+                <el-button @@click="closeOnly">关闭</el-button>
+                <el-button type="primary" :disabled="readOnly" @@click="saveProps">保存</el-button>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const rows = ref([]);
+                const readOnly = ref(false);
+
+                const getManager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                const showWarning = (msg) => {
+                    const manager = getManager();
+                    if (manager && typeof manager.showWarning === 'function') {
+                        manager.showWarning(msg);
+                        return;
+                    }
+                    alert(msg);
+                };
+
+                const parseRawProps = (raw) => {
+                    if (!raw) return {};
+                    const text = String(raw).trim();
+                    if (!text) return {};
+
+                    const normalizeObj = (val) => {
+                        if (!val) return {};
+                        if (typeof val === 'object' && !Array.isArray(val)) return val;
+                        if (typeof val !== 'string') return {};
+                        const t = val.trim();
+                        if (!t) return {};
+                        try {
+                            const inner = JSON.parse(t);
+                            if (inner && typeof inner === 'object' && !Array.isArray(inner)) return inner;
+                            return {};
+                        } catch {
+                            return {};
+                        }
+                    };
+
+                    try {
+                        const obj = JSON.parse(text);
+                        const normalized = normalizeObj(obj);
+                        if (Object.keys(normalized).length > 0) return normalized;
+                        return normalizeObj(text);
+                    } catch {
+                        return normalizeObj(text);
+                    }
+                };
+
+                const parseQuery = () => {
+                    const search = new URLSearchParams(window.location.search || '');
+                    const md = String(search.get('md') || '').trim().toLowerCase();
+                    readOnly.value = md === 'view' || md === 'readonly' || md === 'read';
+
+                    const candidates = [];
+                    const dataKey = search.get('dk') || search.get('dataKey') || search.get('selectorKey') || search.get('geojsonKey') || '';
+                    if (dataKey && typeof window !== 'undefined') {
+                        const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+                        for (let i = 0; i < storages.length; i += 1) {
+                            const storage = storages[i];
+                            try {
+                                const storageVal = storage.getItem(dataKey);
+                                if (storageVal !== null && storageVal !== undefined && storageVal !== '') {
+                                    candidates.push(storageVal);
+                                    storage.removeItem(dataKey);
+                                    storage.removeItem(`${dataKey}__t`);
+                                    break;
+                                }
+                            } catch {
+                                // ignore storage read/remove errors
+                            }
+                        }
+                    }
+
+                    const namedKeys = ['selectorValue', 'data', 'geojson', 'props', 'dataJson', 'datajson', 'json'];
+                    namedKeys.forEach((key) => {
+                        const v = search.get(key);
+                        if (v !== null && v !== undefined) candidates.push(v);
+                    });
+                    search.forEach((v) => {
+                        if (v !== null && v !== undefined) candidates.push(v);
+                    });
+
+                    let parsed = {};
+                    for (let i = 0; i < candidates.length; i += 1) {
+                        parsed = parseRawProps(candidates[i]);
+                        if (Object.keys(parsed).length > 0) break;
+                    }
+
+                    rows.value = Object.keys(parsed || {}).map((k) => ({
+                        key: k,
+                        value: parsed[k] === null || parsed[k] === undefined ? '' : String(parsed[k])
+                    }));
+                };
+
+                const addPropRow = () => {
+                    if (readOnly.value) return;
+                    rows.value.push({ key: '', value: '' });
+                };
+
+                const removePropRow = (idx) => {
+                    if (readOnly.value) return;
+                    rows.value.splice(idx, 1);
+                };
+
+                const closeOnly = () => {
+                    const manager = getManager();
+                    if (manager && typeof manager.closePage === 'function') {
+                        manager.closePage({});
+                        return;
+                    }
+                    if (window.parent) {
+                        window.parent.postMessage({ __elePageClose: true, data: {} }, '*');
+                    }
+                    if (window.top && window.top !== window.parent) {
+                        window.top.postMessage({ __elePageClose: true, data: {} }, '*');
+                    }
+                };
+
+                const saveProps = () => {
+                    if (readOnly.value) return;
+                    const nextProps = {};
+                    const keySet = new Set();
+                    const duplicatedKeys = [];
+                    rows.value.forEach((row) => {
+                        const k = String(row?.key || '').trim();
+                        if (!k) return;
+                        if (keySet.has(k)) {
+                            duplicatedKeys.push(k);
+                            return;
+                        }
+                        keySet.add(k);
+                        nextProps[k] = row?.value === null || row?.value === undefined ? '' : String(row.value);
+                    });
+
+                    if (duplicatedKeys.length > 0) {
+                        const duplicatedText = Array.from(new Set(duplicatedKeys)).join('、');
+                        showWarning(`存在重复字段名：${duplicatedText}`);
+                        return;
+                    }
+
+                    const jsonText = JSON.stringify(nextProps);
+                    const manager = getManager();
+
+                    const selectorPayload = {
+                        type: 'EleSelector',
+                        data: [{ id: jsonText, name: jsonText }]
+                    };
+
+                    if (manager && typeof manager.closePage === 'function') {
+                        manager.closePage(selectorPayload);
+                        return;
+                    }
+
+                    if (window.parent) {
+                        window.parent.postMessage(selectorPayload, '*');
+                    }
+                    if (window.top && window.top !== window.parent) {
+                        window.top.postMessage(selectorPayload, '*');
+                    }
+                };
+
+                onMounted(() => {
+                    parseQuery();
+                });
+
+                return {
+                    rows,
+                    readOnly,
+                    addPropRow,
+                    removePropRow,
+                    closeOnly,
+                    saveProps
+                };
+            }
+        }).use(ElementPlus, { locale: ElementPlusLocaleZhCn }).mount('#app');
+    </script>
+}
