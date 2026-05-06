@@ -643,7 +643,8 @@
             const setText = () => {
                 if (!container) return;
                 const center = map.getCenter();
-                container.textContent = `中心: ${center.lng.toFixed(6)}, ${center.lat.toFixed(6)}`;
+                const zoom = map.getZoom().toFixed(0);
+                container.textContent = `${zoom}: ${center.lng.toFixed(6)}， ${center.lat.toFixed(6)}`;
             };
 
             return {
@@ -857,9 +858,14 @@
 
         /** 重置视图*/
         function resetView() {
-            if (state.is3D) disable3DBuildings();
-            switchStyle('street');
-            map.flyTo({ center: [120.1551, 30.2741], zoom: 11, speed: 0.9, curve: 1.2 });
+            // 仅复位视图参数，不切换样式与图层状态
+            map.easeTo({
+                center: [120.558642, 27.546097],
+                zoom: 11,
+                pitch: 0,
+                bearing: 0,
+                duration: 500
+            });
         }
 
         //--------------------------------------------------------------
@@ -1056,7 +1062,8 @@
                             id: n.id,
                             parentId: n.parentId,
                             name: n.name,
-                            sortId: n.sortId
+                            sortId: n.sortId,
+                            isDefaultShow: !!n.isDefaultShow
                         });
                         walk(n.children || []);
                     });
@@ -1074,6 +1081,20 @@
         //--------------------------------------------------------------
         // 图形相关
         //--------------------------------------------------------------
+        /** 根据菜单配置计算图形是否默认可见*/
+        function isGeometryDefaultVisible(menuId) {
+            if (!menuId || !state.menuNodeMap || state.menuNodeMap.size === 0) return false;
+
+            let current = state.menuNodeMap.get(menuId);
+            while (current) {
+                if (current.isDefaultShow === true) return true;
+                if (!current.parentId) break;
+                current = state.menuNodeMap.get(current.parentId);
+            }
+
+            return false;
+        }
+
         /** 图形可见性*/
         function applyGeometryVisibility() {
             if (!geometryLayerManager) return;
@@ -1175,7 +1196,7 @@
                 state.geometryByMenuId = new Map();
                 state.geometries.forEach(item => {
                     if (!state.geometryVisibleMap.has(item.id)) {
-                        state.geometryVisibleMap.set(item.id, true);
+                        state.geometryVisibleMap.set(item.id, isGeometryDefaultVisible(item.menuId));
                     }
 
                     const menuId = item.menuId;
