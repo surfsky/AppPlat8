@@ -10,7 +10,7 @@
     <EleForm LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreeSelect For="Item.ParentId" Label="上级菜单" Api="/httpapi/gis/GetMenuTree?excludeId=@currentId&selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
-        <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"></EleTreeSelect>
+        <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetOrgTree"></EleTreeSelect>
         <EleImageUpload For="Item.Icon" Label="图标" FillRow="true" ItemWidth="64"></EleImageUpload>
         <EleSwitch For="Item.IsDefaultShow" Label="默认显示"></EleSwitch>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>

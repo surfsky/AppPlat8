@@ -217,39 +217,72 @@
 
         <!-- Main Container - Add top padding to account for fixed header -->
         <div class="flex flex-1 overflow-hidden pt-16">
-            <!-- Sidebar Navigation -->
-            <div id="sidebar" class="sidebar w-60 bg-[#3B71F8] fixed left-0 top-16 md:relative md:top-0 h-[calc(100vh-64px)] md:h-auto z-40 flex flex-col overflow-y-auto -translate-x-full md:translate-x-0 transition-transform duration-300">
-                <!-- Navigation Items Section -->
-                <div class="flex-1 flex flex-col gap-1 pt-4 md:pt-4 px-3">
-                    <menu-tree 
-                        :menu-data="mainMenuItems" 
-                        default-target="contentFrame" 
-                        :text-color="menuTextColor"
-                        :active-key="currentPage"
-                        @@navigate="handleMenuNavigate"
-                    ></menu-tree>
-                </div>
+            <!-- Desktop: Element Plus Splitter -->
+            <div class="hidden md:block w-full h-full">
+                <el-splitter class="w-full h-full" lazy @@resize-end="persistSidebarSize">
+                    <el-splitter-panel v-model:size="sidebarPanelSize" min="0" max="420" collapsible>
+                        <div class="sidebar bg-[#3B71F8] h-full flex flex-col overflow-y-auto overflow-x-hidden">
+                            <div class="flex-1 flex flex-col gap-1 pt-4 px-3">
+                                <menu-tree 
+                                    :menu-data="mainMenuItems" 
+                                    default-target="contentFrameDesktop" 
+                                    :text-color="menuTextColor"
+                                    :active-key="currentPage"
+                                    @@navigate="handleMenuNavigate"
+                                ></menu-tree>
+                            </div>
+                            <div class="flex flex-col gap-2 px-3 py-3">
+                                <menu-tree 
+                                    :menu-data="bottomMenuItems" 
+                                    default-target="contentFrameDesktop" 
+                                    :text-color="menuTextColor"
+                                    :active-key="currentPage"
+                                    @@navigate="handleMenuNavigate"
+                                ></menu-tree>
+                            </div>
+                        </div>
+                    </el-splitter-panel>
 
-                <!-- Footer Navigation Section -->
-                <div class="flex flex-col gap-2 px-3 py-3">
-                    <menu-tree 
-                        :menu-data="bottomMenuItems" 
-                        default-target="contentFrame" 
-                        :text-color="menuTextColor"
-                        :active-key="currentPage"
-                        @@navigate="handleMenuNavigate"
-                    ></menu-tree>
-                </div>
+                    <el-splitter-panel>
+                        <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden h-full">
+                            <div class="flex-1 overflow-hidden">
+                                <iframe id="contentFrameDesktop" src="/me/dashboard" class="w-full h-full"></iframe>
+                            </div>
+                        </div>
+                    </el-splitter-panel>
+                </el-splitter>
             </div>
 
-            <!-- Sidebar Overlay for Mobile - Click to close -->
-            <div id="sidebarOverlay" class="sidebar-overlay" @@click="closeSidebar"></div>
+            <!-- Mobile: Overlay Sidebar -->
+            <div class="md:hidden flex w-full h-full overflow-hidden">
+                <div id="sidebarMobile" class="sidebar w-60 bg-[#3B71F8] fixed left-0 top-16 h-[calc(100vh-64px)] z-40 flex flex-col overflow-y-auto -translate-x-full transition-transform duration-300">
+                    <div class="flex-1 flex flex-col gap-1 pt-4 px-3">
+                        <menu-tree 
+                            :menu-data="mainMenuItems" 
+                            default-target="contentFrameMobile" 
+                            :text-color="menuTextColor"
+                            :active-key="currentPage"
+                            @@navigate="handleMenuNavigate"
+                        ></menu-tree>
+                    </div>
 
-            <!-- Main Content Area -->
-            <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden">
-                <!-- Content Container with iframe -->
-                <div class="flex-1 overflow-hidden">
-                    <iframe id="contentFrame" src="/me/dashboard" class="w-full h-full"></iframe>
+                    <div class="flex flex-col gap-2 px-3 py-3">
+                        <menu-tree 
+                            :menu-data="bottomMenuItems" 
+                            default-target="contentFrameMobile" 
+                            :text-color="menuTextColor"
+                            :active-key="currentPage"
+                            @@navigate="handleMenuNavigate"
+                        ></menu-tree>
+                    </div>
+                </div>
+
+                <div id="sidebarOverlay" class="sidebar-overlay" @@click="closeSidebar"></div>
+
+                <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden">
+                    <div class="flex-1 overflow-hidden">
+                        <iframe id="contentFrameMobile" src="/me/dashboard" class="w-full h-full"></iframe>
+                    </div>
                 </div>
             </div>
         </div>
@@ -280,7 +313,7 @@
             });
         }
 
-        const { createApp, ref, computed, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted, onBeforeUnmount } = Vue;
 
         const app = createApp({
             components: {
@@ -295,6 +328,17 @@
                 const aiDrawerVisible = ref(false);
                 const aiDrawerSize = ref('50%');
                 const aiChatUrl = ref('/AI/Chat');
+                const isMobile = ref(window.innerWidth < 768);
+                const sidebarPanelSize = ref(240);
+
+                try {
+                    const savedWidth = parseInt(localStorage.getItem('index.sidebar.size') || '', 10);
+                    if (!Number.isNaN(savedWidth) && savedWidth >= 0 && savedWidth <= 420) {
+                        sidebarPanelSize.value = savedWidth;
+                    }
+                } catch (e) {
+                    // ignore localStorage access errors
+                }
 
                 // Generate Menu Data from Model
                 const menuItems = ref([]);
@@ -353,6 +397,12 @@
                 // Watch menuItems changes to rebuild map
                 buildPageMap(menuItems.value);
 
+                const getActiveFrame = () => {
+                    const desktopFrame = document.getElementById('contentFrameDesktop');
+                    const mobileFrame = document.getElementById('contentFrameMobile');
+                    return isMobile.value ? (mobileFrame || desktopFrame) : (desktopFrame || mobileFrame);
+                };
+
 
                 const navigateTo = (page, title = '', pushHistory = true, loadIframe = true) => {
                     // Rebuild map if needed (lazy way)
@@ -379,7 +429,7 @@
                     currentTitle.value = title || pageConfig.text || page;
                     
                     if (loadIframe) {
-                        const iframe = document.getElementById('contentFrame');
+                        const iframe = getActiveFrame();
                         iframe.src = pageConfig.url;
                     }
 
@@ -439,8 +489,27 @@
                     const updateAiDrawerSize = () => {
                         aiDrawerSize.value = window.innerWidth <= 768 ? '100%' : '50%';
                     };
+                    const updateDeviceState = () => {
+                        const mobile = window.innerWidth < 768;
+                        isMobile.value = mobile;
+
+                        if (!mobile) {
+                            const sidebar = document.getElementById('sidebar');
+                            const overlay = document.getElementById('sidebarOverlay');
+                            if (sidebar) {
+                                sidebar.classList.remove('-translate-x-full');
+                                sidebar.classList.add('translate-x-0');
+                            }
+                            if (overlay) {
+                                overlay.classList.remove('active');
+                            }
+                            sidebarOpen.value = false;
+                        }
+                    };
                     updateAiDrawerSize();
+                    updateDeviceState();
                     window.addEventListener('resize', updateAiDrawerSize);
+                    window.addEventListener('resize', updateDeviceState);
                     
                     // Initialize back button visibility
                     updateBackButtonVisibility();
@@ -450,12 +519,17 @@
                     if (hash && pageMap[hash]) {
                         navigateTo(hash, pageMap[hash].text, false);
                     } else {
-                        const iframe = document.getElementById('contentFrame');
+                        const iframe = getActiveFrame();
                         const defaultPageConfig = pageMap['dashboard'];
-                        if (defaultPageConfig && defaultPageConfig.url) {
+                        if (iframe && defaultPageConfig && defaultPageConfig.url) {
                             iframe.src = defaultPageConfig.url;
                         }
                     }
+                });
+
+                onBeforeUnmount(() => {
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
                 });
 
                 const navigateBack = () => {
@@ -464,9 +538,9 @@
                         currentPage.value = prevPage;
                         currentTitle.value = pageMap[prevPage]?.text || prevPage;
                         
-                        const iframe = document.getElementById('contentFrame');
+                        const iframe = getActiveFrame();
                         const pageConfig = pageMap[prevPage];
-                        if (pageConfig) {
+                        if (iframe && pageConfig) {
                             iframe.src = pageConfig.url;
                         }
 
@@ -483,8 +557,9 @@
                 };
 
                 const openSidebar = () => {
+                    if (!isMobile.value) return;
                     sidebarOpen.value = true;
-                    const sidebar = document.getElementById('sidebar');
+                    const sidebar = document.getElementById('sidebarMobile');
                     const overlay = document.getElementById('sidebarOverlay');
                     
                     sidebar.classList.remove('-translate-x-full');
@@ -493,8 +568,9 @@
                 };
 
                 const closeSidebar = () => {
+                    if (!isMobile.value) return;
                     sidebarOpen.value = false;
-                    const sidebar = document.getElementById('sidebar');
+                    const sidebar = document.getElementById('sidebarMobile');
                     const overlay = document.getElementById('sidebarOverlay');
                     sidebar.classList.add('-translate-x-full');
                     sidebar.classList.remove('translate-x-0');
@@ -502,7 +578,7 @@
                 };
 
                 const refreshMainContent = () => {
-                    const iframe = document.getElementById('contentFrame');
+                    const iframe = getActiveFrame();
                     if (!iframe) return;
 
                     try {
@@ -523,6 +599,14 @@
                     aiDrawerVisible.value = true;
                 };
 
+                const persistSidebarSize = () => {
+                    try {
+                        localStorage.setItem('index.sidebar.size', String(sidebarPanelSize.value));
+                    } catch (e) {
+                        // ignore localStorage access errors
+                    }
+                };
+
                 return {
                     currentPage,
                     currentTitle,
@@ -531,6 +615,8 @@
                     mainMenuItems,
                     bottomMenuItems,
                     menuTextColor,
+                    isMobile,
+                    sidebarPanelSize,
                     aiDrawerVisible,
                     aiDrawerSize,
                     aiChatUrl,
@@ -540,7 +626,8 @@
                     openSidebar,
                     closeSidebar,
                     refreshMainContent,
-                    openAiChatDrawer
+                    openAiChatDrawer,
+                    persistSidebarSize
                 };
             }
         });

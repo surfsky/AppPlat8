@@ -1349,13 +1349,13 @@
             state.selectedGeometryId = id;
             const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
             if (!manager || typeof manager.openDrawer !== 'function') {
-                window.open(`/GIS/GeometryForm?id=${id}&md=view`, '_blank');
+                window.open(`/GIS/GeometryInfo?id=${id}`, '_blank');
                 return;
             }
 
             manager.openDrawer({
-                title: '图形详情',
-                url: `/GIS/GeometryForm?id=${id}&md=view`,
+                title: '点位信息',
+                url: `/GIS/GeometryInfo?id=${id}`,
                 direction: 'rtl',
                 size: window.innerWidth < 768 ? '100%' : '38%',
                 resizable: true,

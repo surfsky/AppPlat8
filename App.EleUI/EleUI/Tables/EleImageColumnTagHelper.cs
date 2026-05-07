@@ -45,28 +45,28 @@ namespace App.EleUI
             
             output.Content.SetHtmlContent($@"
                 <template #default=""scope"">
-                    <el-image
+                    <img
                         v-if=""scope.row.{propName}""
-                        style=""width: {ThumbnailWidth}px; height: {ThumbnailHeight}px; border-radius: 4px; cursor: pointer;""
+                        style=""width: {ThumbnailWidth}px; height: {ThumbnailHeight}px; border-radius: 4px; cursor: pointer; object-fit: contain;""
                         :src=""((raw) => {{
                             let u = (raw == null ? '' : String(raw)).trim();
                             if (!u) return '';
+                            if (/^data:/i.test(u)) return u.replace(/\s+/g, '');
+                            if (/^blob:/i.test(u)) return u;
                             if (!/^https?:\/\//i.test(u) && !/^data:/i.test(u) && !u.startsWith('/')) u = '/' + u.replace(/^\/+/, '');
                             if (/\.svg([?#].*)?$/i.test(u)) return u;
                             return u + (u.includes('?') ? '&' : '?') + 'w={ThumbnailWidth}';
                         }})(scope.row.{propName})""
-                        fit=""contain""
                         @click=""openImagePreview((((raw) => {{
                             let u = (raw == null ? '' : String(raw)).trim();
                             if (!u) return '';
+                            if (/^data:/i.test(u)) return u.replace(/\s+/g, '');
+                            if (/^blob:/i.test(u)) return u;
                             if (!/^https?:\/\//i.test(u) && !/^data:/i.test(u) && !u.startsWith('/')) u = '/' + u.replace(/^\/+/, '');
                             return u;
                         }})(scope.row.{propName})), 0)""
-                    >
-                        <template #error>
-                            <span class=""text-xs text-gray-400"">加载失败</span>
-                        </template>
-                    </el-image>
+                        @error=""(e) => {{ e.target.style.display = 'none'; }}""
+                    />
                 </template>
             ");
         }

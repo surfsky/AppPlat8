@@ -1,0 +1,59 @@
+@page
+@model App.Pages.GIS.GeometryInfoModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "点位详情";
+}
+
+@section head {
+    <style>
+        .geo-info-wrap {
+            padding: 14px 16px;
+        }
+        .json-kv-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .json-kv-table th,
+        .json-kv-table td {
+            border: 1px solid #ebeef5;
+            padding: 6px 8px;
+            vertical-align: top;
+            word-break: break-all;
+        }
+        .json-kv-table th {
+            width: 180px;
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+        }
+    </style>
+}
+
+@section body {
+    <div class="geo-info-wrap">
+        <table class="json-kv-table">
+            <tr><th>ID</th><td>@Model.Item.Id</td></tr>
+            <tr><th>名称</th><td>@Model.Item.Name</td></tr>
+            <tr><th>简称/别称</th><td>@Model.Item.Alias</td></tr>
+            <tr><th>地址</th><td>@Model.Item.Addr</td></tr>
+            <tr><th>经纬度</th><td>@Model.Item.GPS</td></tr>
+
+            @if (Model.DataRows.Count == 0)
+            {
+                <tr><th>属性数据</th><td>暂无数据</td></tr>
+            }
+            else
+            {
+                @foreach (var row in Model.DataRows)
+                {
+                    <tr>
+                        <th>@row.Key</th>
+                        <td>@row.Value</td>
+                    </tr>
+                }
+            }
+        </table>
+    </div>
+}

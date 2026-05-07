@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [CheckPower(Power.GisGeometryView)]
-    public class MenuModel : AdminModel
+    public class MenusModel : AdminModel
     {
         public GisMenu Item { get; set; }
 

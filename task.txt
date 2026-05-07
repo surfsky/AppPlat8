@@ -6,8 +6,6 @@
     驾驶舱
         暗黑/亮白两种模式
     GisMenus （只负责目录展示）
-        bug：gis菜单管理、责任组织设置出错
-        bug：gis菜单管理/上级菜单有问题显示不全 
         控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
     GisGeometry（点位。只负责图层数据展示，一个目录有多个图层）
         添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer，数据DataUrl
@@ -20,12 +18,11 @@
         优化点的渲染方式，把文本标签上移一点，避免遮挡
     gis 多部门协同
 
-    创建 /pages/gis/GeometryManager，融合菜单GisMenu 和点位（GisGemetry）页面：
-        用iframe 或 spit bar 管理页面，左侧是目录树GisMenu，右侧是点位清单页面GisGeometry（用iframe）；
+    创建 /pages/gis/GeometryManager，融合菜单页面（Menus） 和点位（Geometies）页面：
+        用 EleSplitPanel 组织页面，左侧是菜单目录树，右侧是点位清单页面 Geometries（用iframe）；
         点击左侧目录树，右侧的点位清单页面数据做相应变更（可用url参数带入）
-        点位清单页面工具栏上放一个“地图编辑”按钮，点击后切换到地图编辑模式（创建 GeometryMap 地图页面），可以在地图上增删改某种类型的点位（用elemanager drawer 打开编辑窗口 GeometryForm 进行编辑）
-    
-        鉴于页面结构变更，/pages/index 页面左侧的菜单弄成可以隐藏，以扩大主区域显示面积
+        点位清单页面工具栏上放一个“地图编辑”按钮，点击后切换到地图编辑模式
+        创建 GeometryMap 地图页面，可以在地图上增删改某种类型的点位（用elemanager drawer 打开编辑窗口 GeometryForm 进行编辑）
 
 
 
@@ -181,6 +178,12 @@ Done
         /bug：点位编辑页面中的“菜单”下拉树数据不对，请修正
         /优化地图图形设置窗口
             /bug：经测试，选中点位再点“删除”时，应该删除点位，而不是多边形；另外删除操作后undo操作无效；
+    /创建/pages/Gis/GeometryInfo 页面
+        只展示必要字段（Id、名称、简称/别称、地址、经纬度、并解析DataJson为表格）；只读；
+        点击gis/index中的点位图形时，将原来的 GeometryForm 改为该页面
+    /bug：gis菜单管理》责任组织设置出错
+    /bug：gis菜单管理》上级菜单有问题显示不全 
+    /优化/pages/index 页面，左侧的菜单栏弄成可以手动点击隐藏，以扩大主区域显示面积。看是否能用 ele split bar 改造
 
 
 
