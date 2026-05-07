@@ -10,12 +10,13 @@
         UI 设计
         暗黑/亮白两种模式
     GisMenus （只负责目录展示）
-        增加 IsDefaultShow 属性(是否默认显示)，若为true，首页相应图层中被勾选默认显示
+        /增加 IsDefaultShow 属性(是否默认显示)，若为true，首页相应图层中被勾选默认显示
+        GisMenu 增加 Icon 属性，用于展示点位时显示相应的图标
         bug：gis菜单管理、责任组织设置出错
         bug：gis菜单管理/上级菜单有问题显示不全 
         bug：图形编辑页面中的“菜单”下拉树数据不对，请修正
         控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
-    GisGeometry（只负责图层数据展示，一个目录有多个图层）
+    GisGeometry（点位。只负责图层数据展示，一个目录有多个图层）
         添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer，数据DataUrl
         可导入excel，便于快速录入数据
         特殊图层的展示方式：增加gisType属性，可展示企业信息、全景、CAD转BIM、三维模型等
@@ -27,9 +28,18 @@
             maphelper.js 过于庞大，考虑根据功能重构，拆分成多个js文件
         优化点的渲染方式，把文本标签上移一点，避免遮挡
     gis 多部门协同
-        GisMenu有授权部门
-        GisGeometry也有授权部门，感觉重复了
-        增加指定OwnerId？数据管理员
+        GisMenu有责任组织，GisGeometry也有责任组织，感觉重复了，删除GisGemetry的责任组织字段，并修改相关的页面和参数
+    创建 /pages/gis/GeometryManager，融合菜单GisMenu 和点位（GisGemetry）页面：
+        用iframe 或 spit bar 管理页面，左侧是目录树，右侧是点位清单；
+        点击左侧目录树，右侧的点位清单页面数据做相应变更（可用url参数带入）
+        点位清单页面工具栏上放一个“地图编辑”按钮，点击后切换到地图编辑模式（创建 GeometryMap 地图页面），可以在地图上增删改某种类型的点位（用elemanager drawer 打开编辑窗口 GeometryForm 进行编辑）
+    驾驶舱页面（gis/index）做优化
+        若点位的gps数据不为空，则显示单个点位（用图标+文字的方式展示），点中后显示 GeometryForm的只读模式
+        GisMenu 增加 Icon 属性，用于展示点位时显示相应的图标，图标可以上传svg或png图片
+        在 Files/Icons/ 目录下创建几个默认点位图标
+
+
+        鉴于页面结构变更，/pages/index 页面左侧的菜单弄成可以隐藏，以扩大主区域显示面积
 
 
 

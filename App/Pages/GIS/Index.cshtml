@@ -8,7 +8,7 @@
 @section head {
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
-    <script src="/js/maphelper.js"></script>
+    <script src="/js/maphelper.js?v=@DateTime.Now.Ticks"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
@@ -462,7 +462,9 @@
     <div id="view-menu" class="view-menu" aria-label="视图菜单">
         <button id="btn-style-street" class="view-menu-item active">默认视图</button>
         <button id="btn-style-sat" class="view-menu-item">遥感视图</button>
-        <button id="btn-toggle-3d" class="view-menu-item">三维建筑</button>
+        <button id="btn-style-dark" class="view-menu-item">暗黑模式</button>
+        <button id="btn-style-night" class="view-menu-item">黑蓝夜景</button>
+        <button id="btn-toggle-3d" class="view-menu-item">三维模式</button>
     </div>
 
     <div id="layer-panel" class="panel-left">
@@ -506,6 +508,8 @@
             geometryByMenuId: new Map(),
             geometryVisibleMap: new Map(),
             selectedGeometryId: null,
+            geometryInteractionBound: false,
+            preservedVisibleGeometryIds: new Set(),
             currentStyle: 'street',
             is3D: false,
             toolbarCollapsed: true,
@@ -519,6 +523,14 @@
         //--------------------------------------------------------------
         // map
         let geometryLayerManager = null;
+        const terrainSourceId = 'mapbox-dem';
+        const geometryDisplayLayerIds = [
+            'gis-geometry-fill-layer',
+            'gis-geometry-line-layer',
+            'gis-geometry-point-layer',
+            'gis-geometry-label-layer',
+            'gis-geometry-line-label-layer'
+        ];
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v12',
@@ -549,6 +561,7 @@
                 sourceId: 'gis-geometry-source',
                 layerPrefix: 'gis-geometry'
             });
+            bindGeometryMapInteractions();
 
             // 加载数据
             // loadObjects();
@@ -577,6 +590,8 @@
             });
             document.getElementById('btn-style-street').addEventListener('click', () => switchStyle('street'));
             document.getElementById('btn-style-sat').addEventListener('click', () => switchStyle('satellite'));
+            document.getElementById('btn-style-dark').addEventListener('click', () => switchStyle('dark'));
+            document.getElementById('btn-style-night').addEventListener('click', () => switchStyle('night'));
             document.getElementById('btn-toggle-3d').addEventListener('click', () => {
                 if (state.is3D) disable3DBuildings();
                 else enable3DBuildings();
@@ -598,13 +613,19 @@
             syncViewMenuUI();
         });
 
-        map.on('style.load', () => {
+        map.on('style.load', async () => {
             applyChineseLabels();
             buildMarkers(state.objects);
             if (geometryLayerManager) {
+                geometryLayerManager.setDataFromRows(state.geometries || []);
                 geometryLayerManager.render();
                 applyGeometryVisibility();
             }
+            // 首次 style.load 可能早于菜单数据加载；菜单未就绪时不要重算可见性，避免覆盖 IsDefaultShow。
+            if (state.menuNodeMap && state.menuNodeMap.size > 0) {
+                await loadGeometries();
+            }
+            map.once('idle', () => applyGeometryVisibility());
             if (state.is3D) enable3DBuildings();
 
             setLayerVisible(true);
@@ -737,7 +758,26 @@
         }
 
         /** 启用 3D 地图效果*/
+        function ensureTerrainEnabled() {
+            if (!map.getSource(terrainSourceId)) {
+                map.addSource(terrainSourceId, {
+                    type: 'raster-dem',
+                    url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                    tileSize: 512,
+                    maxzoom: 14
+                });
+            }
+
+            map.setTerrain({ source: terrainSourceId, exaggeration: 1.25 });
+            map.setFog({
+                color: 'rgb(186, 210, 235)',
+                'high-color': 'rgb(36, 92, 223)',
+                'horizon-blend': 0.08
+            });
+        }
+
         function enable3DBuildings() {
+            ensureTerrainEnabled();
             const layers = map.getStyle().layers;
             const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
             if (!map.getLayer('3d-buildings')) {
@@ -762,6 +802,7 @@
         }
 
         function disable3DBuildings() {
+            map.setTerrain(null);
             if (map.getLayer('3d-buildings')) {
                 map.removeLayer('3d-buildings');
             }
@@ -772,10 +813,23 @@
 
         /** 切换地图样式*/
         function switchStyle(type) {
+            state.preservedVisibleGeometryIds = new Set(
+                state.geometries
+                    .filter(g => state.geometryVisibleMap.get(g.id) !== false)
+                    .map(g => String(g.id))
+            );
             state.currentStyle = type;
-            map.setStyle(type === 'satellite' ? 'mapbox://styles/mapbox/satellite-streets-v12' : 'mapbox://styles/mapbox/streets-v12');
+            const styleMap = {
+                street: 'mapbox://styles/mapbox/streets-v12',
+                satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
+                dark: 'mapbox://styles/mapbox/dark-v11',
+                night: 'mapbox://styles/mapbox/navigation-night-v1'
+            };
+            map.setStyle(styleMap[type] || styleMap.street);
             document.getElementById('btn-style-street').classList.toggle('active', type === 'street');
             document.getElementById('btn-style-sat').classList.toggle('active', type === 'satellite');
+            document.getElementById('btn-style-dark').classList.toggle('active', type === 'dark');
+            document.getElementById('btn-style-night').classList.toggle('active', type === 'night');
             closeViewMenu();
         }
 
@@ -1023,9 +1077,9 @@
                 labelBtn.className = 'menu-node-label';
                 labelBtn.textContent = node.name || `菜单${node.id}`;
                 labelBtn.addEventListener('click', () => {
-                    if (ids.length > 0) {
-                        openGeometryDetailDrawer(ids[0]);
-                    }
+                    if (checkbox.disabled) return;
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
                 });
 
                 row.appendChild(checkbox);
@@ -1098,6 +1152,7 @@
         /** 图形可见性*/
         function applyGeometryVisibility() {
             if (!geometryLayerManager) return;
+            geometryLayerManager.render();
             geometryLayerManager.setVisible(true);
 
             const visibleIds = state.geometries
@@ -1107,82 +1162,63 @@
             renderMenuTree();
         }
 
-        /** 关闭图形详情抽屉*/
-        function closeGeometryDetailDrawer() {
-            const drawer = document.getElementById('geo-detail-drawer');
-            if (!drawer) return;
-            drawer.classList.remove('open');
+        function getActiveGeometryDisplayLayerIds() {
+            return geometryDisplayLayerIds.filter(id => map.getLayer(id));
         }
 
-        /** 渲染数据行*/
-        function renderDataRows(rows) {
-            if (!Array.isArray(rows) || rows.length === 0)
-                return '<div class="text-xs text-slate-400 mt-2">DataJson 无数据</div>';
-            const body = rows.map(r => `<tr><td>${(r.key ?? '').toString().replaceAll('<', '&lt;')}</td><td>${(r.value ?? '').toString().replaceAll('<', '&lt;')}</td></tr>`).join('');
-            return `<table class="geo-data-table"><thead><tr><th>字段</th><th>值</th></tr></thead><tbody>${body}</tbody></table>`;
-        }
+        function bindGeometryMapInteractions() {
+            if (state.geometryInteractionBound) return;
+            state.geometryInteractionBound = true;
 
-        /** 打开图形详情抽屉*/
-        async function openGeometryDetailDrawer(id) {
-            const drawer = document.getElementById('geo-detail-drawer');
-            const title = document.getElementById('geo-detail-title');
-            const body = document.getElementById('geo-detail-body');
-            const editBtn = document.getElementById('btn-geo-edit');
-            if (!drawer || !title || !body || !editBtn) return;
+            map.on('click', (e) => {
+                const layers = getActiveGeometryDisplayLayerIds();
+                if (!layers.length) return;
 
-            state.selectedGeometryId = id;
-            title.textContent = '图形详情';
-            body.innerHTML = '加载中...';
-            editBtn.style.display = 'none';
-            drawer.classList.add('open');
+                const hits = map.queryRenderedFeatures(e.point, { layers });
+                const feature = (hits || []).find(f => f && f.properties && f.properties.__geometryId !== undefined);
+                if (!feature) return;
 
-            try {
-                const resp = await fetch(`?handler=GeometryDetail&id=${id}`);
-                const res = await resp.json();
-                if (res.code !== 0 || !res.data) {
-                    body.textContent = res.msg || '获取图形详情失败';
+                const rawId = feature.properties.__geometryId;
+                const geometryId = Number.isNaN(Number(rawId)) ? rawId : Number(rawId);
+                openGeometryDetailDrawer(geometryId);
+            });
+
+            map.on('mousemove', (e) => {
+                const layers = getActiveGeometryDisplayLayerIds();
+                if (!layers.length) {
+                    map.getCanvas().style.cursor = '';
                     return;
                 }
 
-                const d = res.data;
-                title.textContent = d.name || `图形${d.id}`;
-                body.innerHTML = `
-                    <table class="geo-kv">
-                        <tr><td>ID</td><td>${d.id ?? ''}</td></tr>
-                        <tr><td>菜单</td><td>${d.menuName ?? '-'}</td></tr>
-                        <tr><td>名称</td><td>${d.name ?? ''}</td></tr>
-                        <tr><td>简称</td><td>${d.alias ?? ''}</td></tr>
-                        <tr><td>经纬度</td><td>${d.gps ?? '-'}</td></tr>
-                    </table>
-                    <div class="text-xs text-slate-500 mt-2">DataJson</div>
-                    ${renderDataRows(d.dataRows)}
-                `;
+                const hits = map.queryRenderedFeatures(e.point, { layers });
+                map.getCanvas().style.cursor = hits && hits.length > 0 ? 'pointer' : '';
+            });
+        }
 
-                if (d.canEdit) {
-                    editBtn.style.display = '';
-                    editBtn.onclick = () => {
-                        const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
-                        if (!manager || typeof manager.openDrawer !== 'function') {
-                            window.open(`/GIS/GeometryForm?id=${id}&md=edit`, '_blank');
-                            return;
-                        }
-                        manager.openDrawer({
-                            title: '编辑图形',
-                            url: `/GIS/GeometryForm?id=${id}&md=edit`,
-                            direction: 'rtl',
-                            size: window.innerWidth < 768 ? '100%' : '45%',
-                            resizable: true,
-                            closeOnClickModal: false,
-                            destroyOnClose: true
-                        });
-                        // 编辑抽屉保存关闭后，定时刷新地图图形。
-                        setTimeout(() => loadGeometries(), 1200);
-                        setTimeout(() => loadGeometries(), 4200);
-                    };
-                }
-            } catch {
-                body.textContent = '获取图形详情失败';
+        /** 关闭图形详情抽屉*/
+        function closeGeometryDetailDrawer() {
+            // 图形详情统一通过 EleManager 抽屉打开。
+        }
+
+        /** 打开图形详情抽屉*/
+        function openGeometryDetailDrawer(id) {
+            if (!id) return;
+            state.selectedGeometryId = id;
+            const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open(`/GIS/GeometryForm?id=${id}&md=view`, '_blank');
+                return;
             }
+
+            manager.openDrawer({
+                title: '图形详情',
+                url: `/GIS/GeometryForm?id=${id}&md=view`,
+                direction: 'rtl',
+                size: window.innerWidth < 768 ? '100%' : '38%',
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true
+            });
         }
 
         /** 加载几何图形数据*/
@@ -1195,8 +1231,17 @@
                 state.geometries = res.data;
                 state.geometryByMenuId = new Map();
                 state.geometries.forEach(item => {
-                    if (!state.geometryVisibleMap.has(item.id)) {
-                        state.geometryVisibleMap.set(item.id, isGeometryDefaultVisible(item.menuId));
+                    const itemId = item.id;
+                    const itemKey = String(itemId);
+                    const existingVisible = state.geometryVisibleMap.get(itemId);
+                    const existingVisibleByKey = state.geometryVisibleMap.get(itemKey);
+                    const hasExisting = existingVisible !== undefined || existingVisibleByKey !== undefined;
+                    const preservedVisible = state.preservedVisibleGeometryIds.has(itemKey);
+
+                    if (!hasExisting) {
+                        state.geometryVisibleMap.set(itemId, preservedVisible ? true : isGeometryDefaultVisible(item.menuId));
+                    } else if (preservedVisible) {
+                        state.geometryVisibleMap.set(itemId, true);
                     }
 
                     const menuId = item.menuId;
@@ -1210,6 +1255,7 @@
                 geometryLayerManager.render();
                 applyGeometryVisibility();
                 renderMenuTree();
+                state.preservedVisibleGeometryIds = new Set();
             } catch {
                 // ignore geometry loading failures
             }

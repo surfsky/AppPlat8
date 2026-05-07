@@ -1,6 +1,7 @@
 (function (global) {
     'use strict';
 
+    // Create a new map editor instance
     function createEditor(options) {
         var accessToken = options.accessToken || '';
         var initGeoJson = options.initGeoJson || '';
@@ -1773,6 +1774,7 @@
             });
         }
 
+        // Public API
         return {
             setDataFromRows: function (rows) {
                 var list = Array.isArray(rows) ? rows : [];

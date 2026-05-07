@@ -49,8 +49,8 @@
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
         <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreeSelect>
         <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree"  ></EleTreeSelect>
-        <EleSelector For="Item.GPS" TextFor="Item.GPS" Label="定位" PopupUrl="Locator" Icon="Location"></EleSelector>
         <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
+        <EleSelector For="Item.GPS" TextFor="Item.GPS" Label="定位" PopupUrl="Locator" Icon="Location"></EleSelector>
         <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-selector" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
         <EleSelector For="Item.DataJson" TextFor="Item.DataJson" Label="属性数据" Class="geojson-selector" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="12" Editable="true" FillRow="true"></EleSelector>
         <Bottom>
