@@ -73,6 +73,9 @@ namespace App.EleUI
         /// <summary>弹窗URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。会生成：v-on:click="openForm(0, '...')"。</summary>
         [HtmlAttributeName("PopupUrl")]        public string PopupUrl { get; set; }
 
+        /// <summary>导航URL。点击后直接跳转当前页面到该地址（window.location.href）。</summary>
+        [HtmlAttributeName("NavigateUrl")]     public string NavigateUrl { get; set; }
+
         /// <summary>弹出页面标题。与 PopupUrl 配合使用。</summary>
         [HtmlAttributeName("PopupTitle")]      public string PopupTitle { get; set; }
 
@@ -101,8 +104,9 @@ namespace App.EleUI
             // 1) Handler -> v-on:click (direct post with form data)
             // 2) Command -> v-on:click (inner command pipeline)
             // 3) PopupUrl -> v-on:click openForm(0, url)
-            // 4) Click -> native onclick
-            // 5) VClick -> v-on:click
+            // 4) NavigateUrl -> v-on:click window.location.href
+            // 5) Click -> native onclick
+            // 6) VClick -> v-on:click
             if (!string.IsNullOrEmpty(Handler))     output.Attributes.SetAttribute("v-on:click", $"postHandler('{Handler}')");
             else if (Command != Command.None)
             {
@@ -122,6 +126,15 @@ namespace App.EleUI
                 {
                     output.Attributes.SetAttribute("v-on:click", $"openForm(0, '{popupUrlExpr}')");
                 }
+            }
+            else if (!string.IsNullOrEmpty(NavigateUrl))
+            {
+                var navUrlExpr = NavigateUrl.Replace("'", "\\'");
+                // Use native onclick as the primary navigation path so this works
+                // even when the button is outside/independent of Vue method scope.
+                output.Attributes.SetAttribute("onclick", $"window.location.href='{navUrlExpr}'");
+                // Keep a Vue-side fallback for consistency in app-mounted regions.
+                output.Attributes.SetAttribute("v-on:click", $"window.location.href='{navUrlExpr}'");
             }
             else if (!string.IsNullOrEmpty(Click))  output.Attributes.SetAttribute("onclick", Click);
             else if (!string.IsNullOrEmpty(VClick)) output.Attributes.SetAttribute("v-on:click", VClick);

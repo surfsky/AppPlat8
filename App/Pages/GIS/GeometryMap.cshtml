@@ -1,0 +1,666 @@
+@page
+@model App.Pages.GIS.GeometryMapModel
+@using System.Globalization
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "点位地图编辑";
+
+    var mapCenterText = (SiteConfig.Instance.MapCenter ?? string.Empty).Replace("，", ",").Trim();
+    var mapCenterLng = 120.6034;
+    var mapCenterLat = 27.5686;
+    if (!string.IsNullOrWhiteSpace(mapCenterText))
+    {
+        var parts = mapCenterText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length >= 2
+            && double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLng)
+            && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLat))
+        {
+            mapCenterLng = parsedLng;
+            mapCenterLat = parsedLat;
+        }
+    }
+    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
+}
+
+@section head {
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+        .gm-map-root { position: relative; height: 100vh; overflow: hidden; margin: 0; }
+        #geometryMapCanvas { position: absolute; inset: 0 320px 0 0; }
+        .gm-map-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 320px;
+            background: rgba(255,255,255,0.98);
+            border-left: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            z-index: 2;
+        }
+        .gm-map-toolbar {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .gm-map-list { flex: 1; overflow: auto; padding: 10px; }
+        .gm-item {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 6px 2px;
+            margin-bottom: 0;
+            background: transparent;
+        }
+        .gm-item:last-child { border-bottom: 0; }
+        .gm-item-title { font-weight: 600; color: #0f172a; font-size: 13px; line-height: 1.25; margin-bottom: 2px; }
+        .gm-item-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .gm-item-sub { color: #64748b; font-size: 11px; line-height: 1.2; margin-bottom: 4px; }
+        .gm-item-ops { display: flex; gap: 4px; align-items: center; }
+        .gm-op-btn {
+            width: 18px;
+            height: 18px;
+            min-height: 18px;
+            min-width: 18px;
+            padding: 0;
+            font-size: 13px;
+            line-height: 1;
+            border: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+        .gm-empty { color: #94a3b8; font-size: 13px; text-align: center; margin-top: 16px; }
+        .geometry-point-marker {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transform: translateY(-6px);
+            user-select: none;
+        }
+        .geometry-point-marker .marker-icon {
+            width: 22px;
+            height: 30px;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 2px rgba(15,23,42,.35));
+        }
+        .geometry-point-marker .dot-fallback {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: #2563eb;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(15,23,42,.35);
+        }
+        .geometry-point-marker .marker-label {
+            padding: 0 4px;
+            font-size: 11px;
+            line-height: 16px;
+            color: #0f172a;
+            background: rgba(255,255,255,.92);
+            border: 1px solid #dbeafe;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .geometry-point-marker.active .marker-label {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 2px rgba(59,130,246,.18);
+        }
+        @@media (max-width: 900px) {
+            #geometryMapCanvas { inset: 0 0 42% 0; }
+            .gm-map-panel { left: 0; top: auto; width: auto; height: 42%; border-left: 0; border-top: 1px solid #e5e7eb; }
+        }
+    </style>
+}
+
+@section body {
+    <div id="app" class="gm-map-root">
+        <div id="geometryMapCanvas"></div>
+
+        <div class="gm-map-panel">
+            <div class="gm-map-toolbar">
+                <el-button type="success" size="small" @@click="startDrawPoint">新增点</el-button>
+                <el-button type="warning" size="small" @@click="startDrawPolygon">新增面</el-button>
+                <el-button v-if="drawMode === 'polygon' && draftPoints.length >= 3" type="success" size="small" @@click="finishPolygon">完成面</el-button>
+                <el-button v-if="drawMode !== 'none'" type="danger" size="small" @@click="cancelDrawing">取消面</el-button>
+                <el-button type="default" size="small" @@click="gotoList">查看清单</el-button>
+                <el-tag v-if="drawMode !== 'none'" size="small" type="warning">标注模式: {{ drawMode === 'point' ? '点位' : '多边形' }}</el-tag>
+            </div>
+            <div class="gm-map-list">
+                <div v-if="items.length === 0" class="gm-empty">暂无点位数据</div>
+                <div class="gm-item" v-for="item in items" :key="item.id">
+                    <div class="gm-item-head">
+                        <div class="gm-item-title">{{ item.name || ('点位#' + item.id) }}</div>
+                        <div class="gm-item-ops">
+                        <el-button class="gm-op-btn" type="primary" link @@click="openEdit(item.id)" title="编辑">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </el-button>
+                        <el-button class="gm-op-btn" type="danger" link @@click="removeItem(item.id)" title="删除">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </el-button>
+                        <el-button class="gm-op-btn" type="info" link @@click="focusItem(item.id)" title="定位">
+                            <i class="fa-solid fa-crosshairs"></i>
+                        </el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        const app = createApp({
+            setup() {
+                const mapToken = "@SiteConfig.Instance.MapKey";
+                const menuId = new URLSearchParams(window.location.search).get('menuId') || '';
+                const map = ref(null);
+                const items = ref([]);
+                const markerMap = new Map();
+                const geoSourceIds = [];
+                const geoLayerIds = [];
+                const geoBoundsMap = new Map();
+                const activeId = ref(null);
+                const drawMode = ref('none');
+                const draftPoints = ref([]);
+                const draftSourceId = 'gm-draft-source';
+                const draftFillLayerId = 'gm-draft-fill';
+                const draftLineLayerId = 'gm-draft-line';
+                const draftPointLayerId = 'gm-draft-point';
+                const labelSourceId = 'gm-text-label-source';
+                const labelLayerId = 'gm-text-label-layer';
+
+                const parseGps = (text) => {
+                    if (!text) return null;
+                    const normalized = String(text).replace(/，|；|;/g, ',').trim();
+                    const parts = normalized.split(',').map(x => x.trim()).filter(Boolean);
+                    if (parts.length < 2) return null;
+                    const lng = Number(parts[0]);
+                    const lat = Number(parts[1]);
+                    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+                    return { lng, lat };
+                };
+
+                const normalizeIcon = (raw) => {
+                    let u = (raw == null ? '' : String(raw)).trim();
+                    if (!u) return '';
+                    if (/^data:/i.test(u) || /^blob:/i.test(u) || /^https?:\/\//i.test(u) || u.startsWith('/')) return u;
+                    return '/' + u.replace(/^\/+/, '');
+                };
+
+                const defaultDropIcon = () => {
+                    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 44"><path fill="#2563eb" d="M16 2C8.82 2 3 7.82 3 15c0 9.79 11.28 24.89 12.56 26.58a.56.56 0 0 0 .88 0C17.72 39.89 29 24.79 29 15 29 7.82 23.18 2 16 2z"/><circle cx="16" cy="15" r="5.2" fill="#fff"/></svg>`;
+                    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+                };
+
+                const getCsrfToken = () => {
+                    const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                    return tokenInput ? tokenInput.value : '';
+                };
+
+                const manager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+
+                const openDrawer = (url, title) => {
+                    const m = manager();
+                    if (m && typeof m.openDrawer === 'function') {
+                        m.openDrawer({
+                            title,
+                            url,
+                            direction: 'rtl',
+                            size: window.innerWidth < 768 ? '100%' : '65%',
+                            resizable: true,
+                            closeOnClickModal: false,
+                            destroyOnClose: true,
+                            closeHandler: () => reload()
+                        });
+                    } else {
+                        window.open(url, '_blank');
+                    }
+                };
+
+                const openNew = () => {
+                    const q = menuId ? ('&menuId=' + encodeURIComponent(menuId)) : '';
+                    openDrawer('/GIS/GeometryForm?id=0&md=new' + q, '新增点位');
+                };
+
+                const openNewByDraft = (gps, geoJsonObj) => {
+                    const qMenu = menuId ? ('&menuId=' + encodeURIComponent(menuId)) : '';
+                    const qGps = gps ? ('&gps=' + encodeURIComponent(gps)) : '';
+                    const qGeo = geoJsonObj ? ('&geoJson=' + encodeURIComponent(JSON.stringify(geoJsonObj))) : '';
+                    openDrawer('/GIS/GeometryForm?id=0&md=new' + qMenu + qGps + qGeo, '新增点位');
+                };
+
+                const openEdit = (id) => {
+                    if (!id) return;
+                    openDrawer('/GIS/GeometryForm?id=' + encodeURIComponent(id) + '&md=edit', '编辑点位');
+                };
+
+                const gotoList = () => {
+                    const q = menuId ? ('?menuId=' + encodeURIComponent(menuId)) : '';
+                    window.location.href = '/GIS/Geometries' + q;
+                };
+
+                const clearMarkers = () => {
+                    markerMap.forEach(m => m.remove());
+                    markerMap.clear();
+                };
+
+                const clearGeoLayers = () => {
+                    if (!map.value) return;
+                    geoLayerIds.forEach(id => {
+                        if (map.value.getLayer(id)) map.value.removeLayer(id);
+                    });
+                    geoSourceIds.forEach(id => {
+                        if (map.value.getSource(id)) map.value.removeSource(id);
+                    });
+                    geoLayerIds.length = 0;
+                    geoSourceIds.length = 0;
+                    geoBoundsMap.clear();
+
+                    if (map.value.getLayer(labelLayerId)) map.value.removeLayer(labelLayerId);
+                    if (map.value.getSource(labelSourceId)) map.value.removeSource(labelSourceId);
+                };
+
+                const extendBoundsByCoords = (bounds, coords) => {
+                    if (!Array.isArray(coords) || coords.length === 0) return;
+                    if (typeof coords[0] === 'number') {
+                        if (Number.isFinite(coords[0]) && Number.isFinite(coords[1])) bounds.extend([coords[0], coords[1]]);
+                        return;
+                    }
+                    coords.forEach(c => extendBoundsByCoords(bounds, c));
+                };
+
+                const normalizeGeoJson = (raw) => {
+                    if (!raw) return null;
+                    let obj = raw;
+                    for (let i = 0; i < 3 && typeof obj === 'string'; i++) {
+                        const t = obj.trim();
+                        if (!t) return null;
+                        try { obj = JSON.parse(t); } catch { return null; }
+                    }
+                    if (!obj || typeof obj !== 'object' || !obj.type) return null;
+                    if (obj.type === 'FeatureCollection') return obj;
+                    if (obj.type === 'Feature') return { type: 'FeatureCollection', features: [obj] };
+                    return { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: obj }] };
+                };
+
+                const upsertTextLabels = (features) => {
+                    if (!map.value) return;
+                    const fc = {
+                        type: 'FeatureCollection',
+                        features: Array.isArray(features) ? features : []
+                    };
+
+                    if (map.value.getSource(labelSourceId)) {
+                        map.value.getSource(labelSourceId).setData(fc);
+                    } else {
+                        map.value.addSource(labelSourceId, { type: 'geojson', data: fc });
+                    }
+
+                    if (!map.value.getLayer(labelLayerId)) {
+                        map.value.addLayer({
+                            id: labelLayerId,
+                            type: 'symbol',
+                            source: labelSourceId,
+                            layout: {
+                                'text-field': ['coalesce', ['get', 'label'], ''],
+                                'text-size': 12,
+                                'text-offset': [0, 1.4],
+                                'text-anchor': 'top',
+                                'text-allow-overlap': false
+                            },
+                            paint: {
+                                'text-color': '#0f172a',
+                                'text-halo-color': '#ffffff',
+                                'text-halo-width': 1.2
+                            }
+                        });
+                    }
+                };
+
+                const focusItem = (id) => {
+                    const m = markerMap.get(id);
+                    if (!map.value) return;
+                    activeId.value = id;
+                    if (m) {
+                        const lngLat = m.getLngLat();
+                        map.value.easeTo({ center: [lngLat.lng, lngLat.lat] });
+                    } else {
+                        const bounds = geoBoundsMap.get(id);
+                        if (bounds) {
+                            const center = bounds.getCenter();
+                            map.value.easeTo({ center: [center.lng, center.lat] });
+                        }
+                    }
+                    markerMap.forEach((mk, key) => mk.getElement().classList.toggle('active', key === id));
+                };
+
+                const ensureDraftLayers = () => {
+                    if (!map.value || !map.value.getSource(draftSourceId)) {
+                        map.value.addSource(draftSourceId, {
+                            type: 'geojson',
+                            data: { type: 'FeatureCollection', features: [] }
+                        });
+                        map.value.addLayer({
+                            id: draftFillLayerId,
+                            type: 'fill',
+                            source: draftSourceId,
+                            filter: ['==', ['geometry-type'], 'Polygon'],
+                            paint: { 'fill-color': '#f59e0b', 'fill-opacity': 0.2 }
+                        });
+                        map.value.addLayer({
+                            id: draftLineLayerId,
+                            type: 'line',
+                            source: draftSourceId,
+                            paint: { 'line-color': '#f59e0b', 'line-width': 2 }
+                        });
+                        map.value.addLayer({
+                            id: draftPointLayerId,
+                            type: 'circle',
+                            source: draftSourceId,
+                            filter: ['==', ['geometry-type'], 'Point'],
+                            paint: { 'circle-radius': 4, 'circle-color': '#f59e0b', 'circle-stroke-width': 1, 'circle-stroke-color': '#fff' }
+                        });
+                    }
+                };
+
+                const updateDraftLayer = () => {
+                    if (!map.value) return;
+                    ensureDraftLayers();
+                    const features = draftPoints.value.map(p => ({
+                        type: 'Feature',
+                        geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+                        properties: {}
+                    }));
+                    if (drawMode.value === 'polygon' && draftPoints.value.length >= 2) {
+                        features.push({
+                            type: 'Feature',
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: draftPoints.value.map(p => [p.lng, p.lat])
+                            },
+                            properties: {}
+                        });
+                    }
+                    if (drawMode.value === 'polygon' && draftPoints.value.length >= 3) {
+                        const ring = draftPoints.value.map(p => [p.lng, p.lat]);
+                        ring.push([draftPoints.value[0].lng, draftPoints.value[0].lat]);
+                        features.push({
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Polygon',
+                                coordinates: [ring]
+                            },
+                            properties: {}
+                        });
+                    }
+                    map.value.getSource(draftSourceId).setData({ type: 'FeatureCollection', features });
+                };
+
+                const clearDraft = () => {
+                    draftPoints.value = [];
+                    if (map.value && map.value.getSource(draftSourceId)) {
+                        map.value.getSource(draftSourceId).setData({ type: 'FeatureCollection', features: [] });
+                    }
+                };
+
+                const startDrawPoint = () => {
+                    drawMode.value = 'point';
+                    clearDraft();
+                    const m = manager();
+                    if (m && typeof m.showInfo === 'function') m.showInfo('请在地图上点击一个位置标注点位');
+                };
+
+                const startDrawPolygon = () => {
+                    drawMode.value = 'polygon';
+                    clearDraft();
+                    if (map.value) map.value.doubleClickZoom.disable();
+                    const m = manager();
+                    if (m && typeof m.showInfo === 'function') m.showInfo('请在地图上连续点击绘制多边形，完成后点“完成面标注”');
+                };
+
+                const cancelDrawing = () => {
+                    drawMode.value = 'none';
+                    clearDraft();
+                    if (map.value) map.value.doubleClickZoom.enable();
+                };
+
+                const finishPolygon = () => {
+                    if (drawMode.value !== 'polygon' || draftPoints.value.length < 3) return;
+                    const ring = draftPoints.value.map(p => [p.lng, p.lat]);
+                    ring.push([draftPoints.value[0].lng, draftPoints.value[0].lat]);
+
+                    const feature = {
+                        type: 'Feature',
+                        properties: { shape: 'polygon' },
+                        geometry: { type: 'Polygon', coordinates: [ring] }
+                    };
+
+                    cancelDrawing();
+                    openNewByDraft('', feature);
+                };
+
+                const onMapClick = (evt) => {
+                    if (!evt || !evt.lngLat) return;
+                    if (drawMode.value === 'point') {
+                        const lng = Number(evt.lngLat.lng);
+                        const lat = Number(evt.lngLat.lat);
+                        const gps = `${lng.toFixed(6)},${lat.toFixed(6)}`;
+                        cancelDrawing();
+                        openNewByDraft(gps, null);
+                        return;
+                    }
+
+                    if (drawMode.value === 'polygon') {
+                        draftPoints.value.push({ lng: Number(evt.lngLat.lng), lat: Number(evt.lngLat.lat) });
+                        updateDraftLayer();
+                    }
+                };
+
+                const renderMarkers = () => {
+                    if (!map.value) return;
+                    clearMarkers();
+                    clearGeoLayers();
+                    let first = null;
+                    const polygonLabelFeatures = [];
+
+                    items.value.forEach(item => {
+                        const labelText = item.alias || item.name || (`点位${item.id}`);
+                        const gps = parseGps(item.gps);
+                        let polygonLabelLngLat = null;
+                        if (gps) {
+                            if (!first) first = gps;
+                            polygonLabelLngLat = [gps.lng, gps.lat];
+
+                            const el = document.createElement('div');
+                            el.className = 'geometry-point-marker';
+                            const icon = normalizeIcon(item.icon);
+                            const markerIcon = icon || defaultDropIcon();
+
+                            const iconEl = document.createElement('img');
+                            iconEl.className = 'marker-icon';
+                            iconEl.src = markerIcon;
+                            iconEl.alt = labelText;
+                            iconEl.onerror = () => {
+                                iconEl.remove();
+                                const fallbackDot = document.createElement('span');
+                                fallbackDot.className = 'dot-fallback';
+                                el.prepend(fallbackDot);
+                            };
+                            el.appendChild(iconEl);
+
+                            const labelEl = document.createElement('span');
+                            labelEl.className = 'marker-label';
+                            labelEl.textContent = labelText;
+                            el.appendChild(labelEl);
+
+                            el.title = item.name || ('点位#' + item.id);
+                            el.addEventListener('click', (evt) => {
+                                evt.stopPropagation();
+                                focusItem(item.id);
+                                openEdit(item.id);
+                            });
+
+                            const marker = new mapboxgl.Marker(el).setLngLat([gps.lng, gps.lat]).addTo(map.value);
+                            markerMap.set(item.id, marker);
+                        }
+
+                        const fc = normalizeGeoJson(item.geoJson);
+                        if (!fc || !Array.isArray(fc.features) || fc.features.length === 0) return;
+
+                        const sourceId = `gm-geo-source-${item.id}`;
+                        const fillId = `gm-geo-fill-${item.id}`;
+                        const lineId = `gm-geo-line-${item.id}`;
+                        const circleId = `gm-geo-circle-${item.id}`;
+
+                        map.value.addSource(sourceId, { type: 'geojson', data: fc });
+                        geoSourceIds.push(sourceId);
+
+                        map.value.addLayer({
+                            id: fillId,
+                            type: 'fill',
+                            source: sourceId,
+                            filter: ['==', ['geometry-type'], 'Polygon'],
+                            paint: { 'fill-color': '#3b82f6', 'fill-opacity': 0.16 }
+                        });
+                        map.value.addLayer({
+                            id: lineId,
+                            type: 'line',
+                            source: sourceId,
+                            paint: { 'line-color': '#2563eb', 'line-width': 2 }
+                        });
+                        map.value.addLayer({
+                            id: circleId,
+                            type: 'circle',
+                            source: sourceId,
+                            filter: ['==', ['geometry-type'], 'Point'],
+                            paint: { 'circle-radius': 5, 'circle-color': '#2563eb', 'circle-stroke-width': 1, 'circle-stroke-color': '#ffffff' }
+                        });
+                        geoLayerIds.push(fillId, lineId, circleId);
+
+                        [fillId, lineId, circleId].forEach(layerId => {
+                            map.value.on('click', layerId, () => {
+                                focusItem(item.id);
+                                openEdit(item.id);
+                            });
+                            map.value.on('mouseenter', layerId, () => {
+                                map.value.getCanvas().style.cursor = 'pointer';
+                            });
+                            map.value.on('mouseleave', layerId, () => {
+                                map.value.getCanvas().style.cursor = '';
+                            });
+                        });
+
+                        const bounds = new mapboxgl.LngLatBounds();
+                        fc.features.forEach(f => {
+                            if (f && f.geometry && f.geometry.coordinates) {
+                                extendBoundsByCoords(bounds, f.geometry.coordinates);
+                            }
+                        });
+                        if (!bounds.isEmpty()) {
+                            geoBoundsMap.set(item.id, bounds);
+                            if (!polygonLabelLngLat) {
+                                const c = bounds.getCenter();
+                                polygonLabelLngLat = [c.lng, c.lat];
+                            }
+                        }
+
+                        // Point labels are rendered by DOM markers above.
+                        // Here we only add labels for non-point geometries.
+                        if (!gps && polygonLabelLngLat) {
+                            polygonLabelFeatures.push({
+                                type: 'Feature',
+                                geometry: { type: 'Point', coordinates: polygonLabelLngLat },
+                                properties: { id: item.id, label: labelText }
+                            });
+                        }
+                    });
+
+                    upsertTextLabels(polygonLabelFeatures);
+
+                    if (first) {
+                        map.value.setCenter([first.lng, first.lat]);
+                    }
+                };
+
+                const reload = async () => {
+                    const url = '?handler=GeometryLayerData' + (menuId ? ('&menuId=' + encodeURIComponent(menuId)) : '');
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    if (data.code === 0 && Array.isArray(data.data)) {
+                        items.value = data.data;
+                        renderMarkers();
+                    }
+                };
+
+                const removeItem = async (id) => {
+                    const m = manager();
+                    if (m && typeof m.confirm === 'function') {
+                        try { await m.confirm('确定删除该点位？'); } catch { return; }
+                    } else if (!confirm('确定删除该点位？')) {
+                        return;
+                    }
+
+                    const res = await axios.post('?handler=DeleteGeometry', { id }, {
+                        headers: { 'RequestVerificationToken': getCsrfToken() }
+                    });
+
+                    if (res.data && (res.data.code === 0 || res.data.code === '0')) {
+                        if (m && typeof m.showSuccess === 'function') m.showSuccess('删除成功');
+                        reload();
+                    } else {
+                        if (m && typeof m.showError === 'function') m.showError((res.data && (res.data.msg || res.data.info)) || '删除失败');
+                    }
+                };
+
+                onMounted(async () => {
+                    mapboxgl.accessToken = mapToken;
+                    map.value = new mapboxgl.Map({
+                        container: 'geometryMapCanvas',
+                        style: 'mapbox://styles/mapbox/streets-v12',
+                        center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
+                        zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
+                    });
+
+                    map.value.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                    map.value.on('click', onMapClick);
+                    map.value.on('load', () => reload());
+                });
+
+                return {
+                    menuId,
+                    items,
+                    drawMode,
+                    draftPoints,
+                    openNew,
+                    startDrawPoint,
+                    startDrawPolygon,
+                    finishPolygon,
+                    cancelDrawing,
+                    openEdit,
+                    removeItem,
+                    reload,
+                    gotoList,
+                    focusItem
+                };
+            }
+        });
+
+        if (window.ElementPlus) {
+            if (window.ElementPlusLocaleZhCn) {
+                app.use(window.ElementPlus, { locale: window.ElementPlusLocaleZhCn });
+            } else {
+                app.use(window.ElementPlus);
+            }
+        }
+
+        app.mount('#app');
+    </script>
+}

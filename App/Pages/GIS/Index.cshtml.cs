@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using App.Components;
 using System.Text.RegularExpressions;
 
-namespace App.Pages.Gis
+namespace App.Pages.GIS
 {
     [CheckPower(Power.GisGeometryView)]
     public class IndexModel : BaseModel

@@ -19,7 +19,12 @@ namespace App.Pages.GIS
     {
         public GisGeometry Item { get; set; }
 
-        public void OnGet() { }
+        public void OnGet(long? menuId)
+        {
+            Item = new GisGeometry();
+            if (menuId.HasValue)
+                Item.MenuId = menuId.Value;
+        }
 
         public async Task<IActionResult> OnGetData(Paging pi, string name, long? menuId)
         {

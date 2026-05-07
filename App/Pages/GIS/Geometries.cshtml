@@ -2,6 +2,11 @@
 @model App.Pages.GIS.GeometriesModel
 @{
     ViewData["Title"] = "GIS几何图形管理";
+    var queryMenuId = Request.Query["menuId"].ToString();
+    var menuTreeTs = DateTime.Now.Ticks;
+    var mapUrl = string.IsNullOrWhiteSpace(queryMenuId)
+        ? "/GIS/GeometryMap"
+        : $"/GIS/GeometryMap?menuId={queryMenuId}";
 }
 
 @section body {
@@ -9,11 +14,19 @@
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Name" Width="200px" Label="名称" ></EleInput>
-                <EleTreeSelect For="Item.MenuId" Width="220px" Label="所属菜单" Api="/httpapi/gis/GetMenuTree" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+                <EleTreeSelect For="Item.MenuId"
+                               Width="220px"
+                               Label="所属菜单"
+                               Api="/httpapi/gis/GetMenuTree?selectedId=@queryMenuId&_ts=@menuTreeTs"
+                               data-filter-default="@queryMenuId"
+                               data-filter-model="menuId"
+                               Clearable="true"
+                               CheckStrictly="true"></EleTreeSelect>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
+                <EleButton Type="Info" Icon="Location" NavigateUrl="@mapUrl">地图编辑</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
             </Buttons>
         </Toolbar>
@@ -32,4 +45,10 @@
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
         </Columns>
     </EleTable>
+}
+
+@section script {
+    <script>
+        var userMixin = { methods: {} };
+    </script>
 }

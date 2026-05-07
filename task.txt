@@ -1,54 +1,33 @@
 --------------------------------------------------------
 - 框架
 --------------------------------------------------------
-
+编写建设方案
 *** 驾驶舱图层显示
-    驾驶舱
-        暗黑/亮白两种模式
-    GisMenus （只负责目录展示）
-        控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
+    GisMenus ：控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
     GisGeometry（点位。只负责图层数据展示，一个目录有多个图层）
-        添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer，数据DataUrl
-        特殊图层的展示方式：增加gisType属性，可展示企业信息、全景、CAD转BIM、三维模型等
-        可导入excel，便于快速录入数据
         *** 增加dataUrl参数，若设置了，则数据直接从该接口获取。
             值如 /httpapi/checkobject/objects?type=xxx，
             返回字段字段如 id, gps, name，icon, remark, gisType，扩展字段
             maphelper.js 过于庞大，考虑根据功能重构，拆分成多个js文件
-        优化点的渲染方式，把文本标签上移一点，避免遮挡
-    gis 多部门协同
-
-    创建 /pages/gis/GeometryManager，融合菜单页面（Menus） 和点位（Geometies）页面：
-        用 EleSplitPanel 组织页面，左侧是菜单目录树，右侧是点位清单页面 Geometries（用iframe）；
-        点击左侧目录树，右侧的点位清单页面数据做相应变更（可用url参数带入）
-        点位清单页面工具栏上放一个“地图编辑”按钮，点击后切换到地图编辑模式
-        创建 GeometryMap 地图页面，可以在地图上增删改某种类型的点位（用elemanager drawer 打开编辑窗口 GeometryForm 进行编辑）
-
-
-
-编写建设方案
-点位及驾驶舱
+        添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer，数据DataUrl
+        特殊图层的展示方式：增加gisType属性，可展示企业信息、全景、CAD转BIM、三维模型等
+        *** 可导入excel，便于快速录入数据
+    Gis数据多部门协同编辑
     驾驶舱
-        展示图层
-        点击某个图形后，显示drawer
-        详见 《260402-龙港市应急驾驶舱规划方案v3》
-        图层数据均来自统一接口，可扩展字段并展示
-        支持暗黑模式的UI、用theme=dark/light切换
-        驾驶舱业务
-            图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
-            点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
-        图层数据查询
-            图层参数dataUrl，dataSchemaUrl：自动构建查询窗口。或者合并结构为：{code:0, data: {schema:{….}, data:[….]}}
-            图层参数再增加一个statUrl，直接给个地址自由发挥，用面板或drawer展示
-            实现通用StatPanel，使用json配置数据来源、图表展示方式、点击元素后的跳转url等
-            实现一个统计报表页面：查询条件+结果表格或图表
-            实现暗黑模式及url参数（在驾驶舱使用时可以切换为暗黑模式）
+        暗黑/亮白两种模式
+        统计面板
+    剥离地图操作相关操作到 maphelper.js，如显示geojson、构建geojson等
 
-表格：多选、批量修改能力
+实现隐患排查页面***
+    控件如何联动？如省市县，想在服务器端处理。
+    实现复杂页面，能用EleControl就用，不能用就用原生Elementplus网页控件
+    给定UI界面，和AI讨论这种父子表结构的页面该如何操作
+    把隐患排查的数据接口写好
+
+
+
+表格：多选、批量修改能力（*）
 迁移数据库，并编译运行
-剥离地图操作相关操作到 maphelper.js，如显示geojson、构建geojson等
-
-
 数据模型的UI自动化展示和编辑（*）
     创建自动展示列表的页面 UISetting
     创建自动展示表单编辑的页面
@@ -86,12 +65,6 @@ AI 优化
 --------------------------------------------------------
 Task - 业务
 --------------------------------------------------------
-
-实现隐患排查页面***
-    控件如何联动？如省市县，想在服务器端处理。
-    实现复杂页面，能用EleControl就用，不能用就用原生Elementplus网页控件
-    给定UI界面，和AI讨论这种父子表结构的页面该如何操作
-    把隐患排查的数据接口写好
 
 
 部署
@@ -184,6 +157,27 @@ Done
     /bug：gis菜单管理》责任组织设置出错
     /bug：gis菜单管理》上级菜单有问题显示不全 
     /优化/pages/index 页面，左侧的菜单栏弄成可以手动点击隐藏，以扩大主区域显示面积。看是否能用 ele split bar 改造
+    /创建 /pages/gis/GeometryManager，融合菜单页面（Menus） 和点位（Geometies）页面：
+        用 EleSplitPanel 组织页面，左侧是菜单目录树，右侧是点位清单页面 Geometries（用iframe）；
+        点击左侧目录树，右侧的点位清单页面数据做相应变更（可用url参数带入）
+        点位清单页面工具栏上放一个“地图编辑”按钮，点击后切换到地图编辑模式
+        创建 GeometryMap 地图页面，可以在地图上增删改某种类型的点位（用elemanager drawer 打开编辑窗口 GeometryForm 进行编辑）
+        /优化点的渲染方式，把文本标签上移一点，避免遮挡
+    /驾驶舱
+        /展示图层
+        /点击某个图形后，显示drawer
+        /详见 《260402-龙港市应急驾驶舱规划方案v3》
+        图层数据均来自统一接口，可扩展字段并展示
+        支持暗黑模式的UI、用theme=dark/light切换
+        驾驶舱业务
+            图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
+            点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
+        图层数据查询
+            图层参数dataUrl，dataSchemaUrl：自动构建查询窗口。或者合并结构为：{code:0, data: {schema:{….}, data:[….]}}
+            图层参数再增加一个statUrl，直接给个地址自由发挥，用面板或drawer展示
+            实现通用StatPanel，使用json配置数据来源、图表展示方式、点击元素后的跳转url等
+            实现一个统计报表页面：查询条件+结果表格或图表
+            实现暗黑模式及url参数（在驾驶舱使用时可以切换为暗黑模式）
 
 
 

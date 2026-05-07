@@ -86,5 +86,9 @@
 
 
 
+## 要求vscode copilot 记忆保存
+
+提示词：请解决后把解决方案记录下来，避免再次出错
+vscode copilot 的记忆保存在如：memories/repo/ele-tree-select-defaults.md
 
 

@@ -1,0 +1,99 @@
+@page
+@model App.Pages.GIS.GeometryManagerModel
+@using Microsoft.AspNetCore.Html
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "点位管理中心";
+}
+
+@section head {
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+        .gm-wrap { height: 100vh; margin: 0; padding: 0; }
+        .gm-left { height: 100%; overflow: auto; background: #fff; border-right: 1px solid #e5e7eb; }
+        .gm-right { height: 100%; background: #fff; }
+        .gm-title { padding: 12px 14px; border-bottom: 1px solid #eef2f7; font-weight: 700; color: #1f2937; }
+        .gm-tree { padding: 10px; }
+        .gm-tree ul { list-style: none; margin: 0; padding-left: 14px; }
+        .gm-tree li { margin: 4px 0; }
+        .gm-node {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            color: #334155;
+            text-decoration: none;
+            transition: all .2s;
+        }
+        .gm-node:hover { background: #eff6ff; color: #1d4ed8; }
+        .gm-node.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+        .gm-icon { color: #64748b; width: 14px; text-align: center; }
+    </style>
+}
+
+@section body {
+    <div class="gm-wrap">
+        <EleSplitPanel Height="100%" Radius="0" Border="0">
+            <PanelItem Size="300" Min="220" Max="460" Collapsible="true">
+                <div class="gm-left" id="gmNavWrap">
+                    <div class="gm-title">GIS 菜单目录</div>
+                    <div class="gm-tree">
+                        <a class="gm-node active" href="@Model.DefaultGeometriesUrl" target="geometryManagerFrame">
+                            <i class="fa-solid fa-layer-group gm-icon"></i><span>全部点位</span>
+                        </a>
+                        @RenderMenuTree(Model.Menus)
+                    </div>
+                </div>
+            </PanelItem>
+            <PanelItem Min="360" IframeName="geometryManagerFrame" IframeUrl="@Model.DefaultGeometriesUrl"></PanelItem>
+        </EleSplitPanel>
+    </div>
+    <EleApp />
+}
+
+@functions {
+    private string BuildMenuUrl(long id)
+    {
+        return $"/GIS/Geometries?menuId={id}";
+    }
+
+    private IHtmlContent RenderMenuTree(IEnumerable<App.DAL.GIS.GisMenu> nodes)
+    {
+        var html = new System.Text.StringBuilder();
+        if (nodes == null)
+            return new HtmlString(string.Empty);
+
+        var list = nodes.OrderBy(x => x.SortId).ThenBy(x => x.Id).ToList();
+        if (!list.Any())
+            return new HtmlString(string.Empty);
+
+        html.Append("<ul>");
+        foreach (var n in list)
+        {
+            html.Append("<li>");
+            var url = BuildMenuUrl(n.Id);
+            html.Append($"<a class='gm-node' href='{url}' target='geometryManagerFrame'><i class='fa-regular fa-folder gm-icon'></i><span>{System.Net.WebUtility.HtmlEncode(n.Name)}</span></a>");
+            if (n.Children != null && n.Children.Count > 0)
+                html.Append(RenderMenuTree(n.Children).ToString());
+            html.Append("</li>");
+        }
+        html.Append("</ul>");
+        return new HtmlString(html.ToString());
+    }
+}
+
+@section script {
+    <script>
+        (function () {
+            const wrap = document.getElementById('gmNavWrap');
+            if (!wrap) return;
+            wrap.addEventListener('click', function (e) {
+                const a = e.target.closest('a.gm-node');
+                if (!a) return;
+                wrap.querySelectorAll('a.gm-node.active').forEach(x => x.classList.remove('active'));
+                a.classList.add('active');
+            });
+        })();
+    </script>
+}

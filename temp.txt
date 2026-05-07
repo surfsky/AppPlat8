@@ -219,3 +219,6 @@
         })();
     </script>
 }
+
+                <el-button type="primary" size="small" @@click="openNew">新增点位</el-button>
+                <el-button type="default" size="small" @@click="reload">刷新</el-button>

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.DAL.GIS;
+using App.Entities;
 using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -22,18 +23,27 @@ namespace App.Pages.GIS
         {
         }
 
-        public IActionResult OnGetData(long id, long? menuId)
+        public IActionResult OnGetData(long id, long? menuId, string gps, string geoJson)
         {
             var item = GisGeometry.GetDetail(id) ?? new GisGeometry();
             if (id == 0)
+            {
                 item.MenuId = menuId;
+                if (!string.IsNullOrWhiteSpace(gps))
+                    item.GPS = gps;
+                if (!string.IsNullOrWhiteSpace(geoJson))
+                    item.GeoJson = geoJson;
+            }
             return BuildResult(0, "success", item);
         }
 
-        public IActionResult OnPostSave([FromBody] GisGeometry req)
+        public IActionResult OnPostSave([FromBody] GisGeometry req, long? menuId)
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
+
+            if (req.Id == 0 && !req.MenuId.HasValue && menuId.HasValue)
+                req.MenuId = menuId;
 
             GisGeometry item;
             if (req.Id > 0)
