@@ -23,7 +23,7 @@ namespace App.Pages.GIS
 
         public async Task<IActionResult> OnGetData(Paging pi, string name, long? menuId)
         {
-            var list = GisGeometry.Search(name, null, null, menuId).SortPageExport(pi);
+            var list = GisGeometry.Search(name, null, menuId).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

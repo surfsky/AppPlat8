@@ -1,7 +1,25 @@
 @page
 @model App.Pages.Shared.LocatorModel
+@using System.Globalization
 @{
     Layout = "_Layout";
+    var mapCenterText = (SiteConfig.Instance.MapCenter ?? string.Empty).Replace("，", ",").Trim();
+    var mapCenterLng = 120.6034;
+    var mapCenterLat = 27.5686;
+    if (!string.IsNullOrWhiteSpace(mapCenterText))
+    {
+        var parts = mapCenterText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length >= 2
+            && double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLng)
+            && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLat))
+        {
+            mapCenterLng = parsedLng;
+            mapCenterLat = parsedLat;
+        }
+    }
+    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
+    var initLng = Model.Lng ?? mapCenterLng;
+    var initLat = Model.Lat ?? mapCenterLat;
 }
 
 @section head {
@@ -21,7 +39,7 @@
         }
         .footer {
             position: absolute;
-            left: auto;
+            left: 12px;
             right: auto;
             bottom: 12px;
             z-index: 10;
@@ -68,8 +86,8 @@
                 const keyword = ref('');
                 const searching = ref(false);
                 const searchResults = ref([]);
-                const lng = ref(@(Model.Lng?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "120.1551"));
-                const lat = ref(@(Model.Lat?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "30.2741"));
+                const lng = ref(@initLng.ToString(CultureInfo.InvariantCulture));
+                const lat = ref(@initLat.ToString(CultureInfo.InvariantCulture));
                 const lngText = ref(lng.value.toFixed(6));
                 const latText = ref(lat.value.toFixed(6));
 
@@ -121,7 +139,7 @@
                         container: 'map',
                         style: 'mapbox://styles/mapbox/streets-v11',
                         center: [lng.value, lat.value],
-                        zoom: 12
+                        zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
                     });
 
                     map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');

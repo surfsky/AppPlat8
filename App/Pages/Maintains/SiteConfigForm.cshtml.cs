@@ -41,6 +41,8 @@ namespace App.Pages.Maintains
             cfg.UpFileTypes = req.UpFileTypes;
             cfg.UpFileSize = req.UpFileSize;
             cfg.MapKey = req.MapKey;
+            cfg.MapCenter = string.IsNullOrWhiteSpace(req.MapCenter) ? "120.6034,27.5686" : req.MapCenter.Trim();
+            cfg.MapZoom = req.MapZoom > 0 ? req.MapZoom : 11;
 
             cfg.Save();
             SiteConfig.ClearCache();

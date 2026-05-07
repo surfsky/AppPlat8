@@ -12,6 +12,7 @@ namespace App.DAL.GIS
     public class GisMenu : TreeEntity<GisMenu>
     {
         [UI("责任组织")]     public long? OrgId { get; set; }
+        [UI("图标")]        public string Icon { get; set; }
         [UI("默认显示")]     public bool IsDefaultShow { get; set; }
         [UI("点位数")]        public int? DataCount { get; set; }
         [UI("最后数据时间")]   public DateTime? DataDt { get; set; }
@@ -27,6 +28,7 @@ namespace App.DAL.GIS
         {
             return base.Clone().Let(t => {
                 t.OrgId = this.OrgId;
+                t.Icon = this.Icon;
                 t.CreatorId = this.CreatorId;
                 t.IsDefaultShow = this.IsDefaultShow;
                 t.DataCount = this.DataCount;
@@ -43,6 +45,7 @@ namespace App.DAL.GIS
                 Name,
                 SortId,
                 OrgId,
+                Icon,
                 CreatorId,
                 IsDefaultShow,
                 Children,

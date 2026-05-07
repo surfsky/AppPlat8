@@ -9,6 +9,8 @@
         var onError = typeof options.onError === 'function' ? options.onError : function () { };
         var onPaletteChange = typeof options.onPaletteChange === 'function' ? options.onPaletteChange : function () { };
         var labelPriorityFields = normalizeLabelPriorityFields(options.labelPriorityFields);
+        var initialCenter = normalizeCenter(options.initialCenter, [120.6034, 27.5686]);
+        var initialZoom = normalizeZoom(options.initialZoom, 11);
 
         var palette = {
             pointColor: '#dc2626',
@@ -51,6 +53,22 @@
                 result.push(key);
             });
             return result.length > 0 ? result : defaults;
+        }
+
+        function normalizeCenter(center, fallback) {
+            if (!Array.isArray(center) || center.length < 2) return fallback;
+            var lng = Number(center[0]);
+            var lat = Number(center[1]);
+            if (!Number.isFinite(lng) || !Number.isFinite(lat)) return fallback;
+            if (lng < -180 || lng > 180 || lat < -90 || lat > 90) return fallback;
+            return [lng, lat];
+        }
+
+        function normalizeZoom(zoom, fallback) {
+            var value = Number(zoom);
+            if (!Number.isFinite(value)) return fallback;
+            if (value < 0 || value > 22) return fallback;
+            return value;
         }
 
         function isHexColor(v) {
@@ -1154,8 +1172,8 @@
             map = new mapboxgl.Map({
                 container: mapContainerId,
                 style: 'mapbox://styles/mapbox/streets-v11',
-                center: [120.1551, 30.2741],
-                zoom: 11
+                center: initialCenter,
+                zoom: initialZoom
             });
 
             map.addControl(new mapboxgl.NavigationControl(), 'top-left');

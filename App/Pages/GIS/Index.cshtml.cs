@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using App.Components;
+using System.Text.RegularExpressions;
 
 namespace App.Pages.Gis
 {
@@ -76,7 +77,7 @@ namespace App.Pages.Gis
         public JsonResult OnGetGeometryLayerData(long? menuId)
         {
             var query = GisGeometry.DataSet
-                .Where(g => !string.IsNullOrWhiteSpace(g.GeoJson));
+                .Where(g => !string.IsNullOrWhiteSpace(g.GeoJson) || !string.IsNullOrWhiteSpace(g.GPS));
 
             if (menuId.HasValue)
                 query = query.Where(g => g.MenuId == menuId.Value);
@@ -91,9 +92,11 @@ namespace App.Pages.Gis
                     name = g.Name,
                     alias = g.Alias,
                     sortId = g.SortId,
+                    addr = g.Addr,
                     gps = g.GPS,
                     geoJson = g.GeoJson,
-                    dataJson = g.DataJson
+                    dataJson = g.DataJson,
+                    icon = g.Menu != null ? g.Menu.Icon : null
                 })
                 .ToList();
 
@@ -117,6 +120,7 @@ namespace App.Pages.Gis
                 menuName = item.MenuName,
                 name = item.Name,
                 alias = item.Alias,
+                addr = item.Addr,
                 gps = item.GPS,
                 geoJson = item.GeoJson,
                 dataJson = item.DataJson,
@@ -164,7 +168,8 @@ namespace App.Pages.Gis
             if (string.IsNullOrWhiteSpace(gps))
                 return false;
 
-            var text = gps.Replace("，", ",").Trim();
+            var text = gps.Replace("，", ",").Replace("；", ",").Replace(";", ",").Trim();
+            text = Regex.Replace(text, "\\s+", ",");
             var parts = text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (parts.Length < 2)
                 return false;

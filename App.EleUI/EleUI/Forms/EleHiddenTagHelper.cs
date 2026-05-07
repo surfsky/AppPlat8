@@ -61,8 +61,20 @@ namespace App.EleUI
 
         private static string ToCamelCase(string s)
         {
-            if (string.IsNullOrEmpty(s) || !char.IsUpper(s[0])) return s;
-            return char.ToLowerInvariant(s[0]) + s.Substring(1);
+            if (string.IsNullOrEmpty(s) || !char.IsUpper(s[0]))
+                return s;
+
+            var i = 0;
+            while (i < s.Length && char.IsUpper(s[i]))
+                i++;
+
+            if (i == 1)
+                return char.ToLowerInvariant(s[0]) + s.Substring(1);
+
+            if (i == s.Length)
+                return s.ToLowerInvariant();
+
+            return s.Substring(0, i - 1).ToLowerInvariant() + s.Substring(i - 1);
         }
     }
 }

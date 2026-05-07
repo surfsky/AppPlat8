@@ -165,7 +165,32 @@ namespace App.EleUI
 
         private static int ResolveDefaultPageSize()
         {
-            return 10;
+            const int fallback = 10;
+            try
+            {
+                var cfgType = Type.GetType("App.DAL.SiteConfig, App.BLL", throwOnError: false);
+                if (cfgType == null)
+                    return fallback;
+
+                var instanceProp = cfgType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
+                var instance = instanceProp?.GetValue(null);
+                if (instance == null)
+                    return fallback;
+
+                var pageSizeProp = cfgType.GetProperty("PageSize", BindingFlags.Public | BindingFlags.Instance);
+                var raw = pageSizeProp?.GetValue(instance);
+                if (raw is int pageSize && pageSize > 0)
+                    return pageSize;
+
+                if (raw != null && int.TryParse(raw.ToString(), out var parsed) && parsed > 0)
+                    return parsed;
+            }
+            catch
+            {
+                // fallback to built-in page size
+            }
+
+            return fallback;
         }
 
         private static string BuildPageSizeOptions(int defaultPageSize)

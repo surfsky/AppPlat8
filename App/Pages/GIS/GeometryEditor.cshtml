@@ -1,7 +1,23 @@
 @page
 @model App.Pages.Shared.GeometryEditorModel
+@using System.Globalization
 @{
     Layout = "_Layout";
+    var mapCenterText = (SiteConfig.Instance.MapCenter ?? string.Empty).Replace("，", ",").Trim();
+    var mapCenterLng = 120.6034;
+    var mapCenterLat = 27.5686;
+    if (!string.IsNullOrWhiteSpace(mapCenterText))
+    {
+        var parts = mapCenterText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length >= 2
+            && double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLng)
+            && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLat))
+        {
+            mapCenterLng = parsedLng;
+            mapCenterLat = parsedLat;
+        }
+    }
+    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
 }
 
 @section head {
@@ -177,6 +193,8 @@
             setup() {
                 const accessToken = "@SiteConfig.Instance.MapKey";
                 const initGeoJson = `@Html.Raw((Model.GeoJson ?? string.Empty).Replace("\\", "\\\\").Replace("`", "\\`").Replace("$", "\\$"))`;
+                const initialCenter = [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)];
+                const initialZoom = @mapZoom.ToString(CultureInfo.InvariantCulture);
 
                 const pointColor = ref('#dc2626');
                 const lineColor = ref('#1e3a8a');
@@ -530,6 +548,8 @@
                     editor = window.MapGeometryHelper.createEditor({
                         accessToken,
                         initGeoJson,
+                        initialCenter,
+                        initialZoom,
                         mapContainerId: 'map',
                         labelPriorityFields: ['NAME', 'name', 'label', 'SZSQ', 'SZZ', 'SZQX', 'title', 'alias', 'text'],
                         onError: showError,

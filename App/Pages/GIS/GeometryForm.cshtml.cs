@@ -17,11 +17,9 @@ namespace App.Pages.GIS
     public class GeometryFormModel : AdminModel
     {
         public GisGeometry Item { get; set; }
-        public List<App.DAL.Org> OrgTree { get; set; }
 
         public void OnGet()
         {
-            OrgTree = App.DAL.Org.GetTree();
         }
 
         public IActionResult OnGetData(long id, long? menuId)
@@ -55,7 +53,7 @@ namespace App.Pages.GIS
             item.Alias = req.Alias;
             item.SortId = req.SortId;
             item.MenuId = req.MenuId;
-            item.OrgId = req.OrgId;
+            item.Addr = req.Addr;
             item.GPS = req.GPS;
             item.GeoJson = req.GeoJson;
             item.DataJson = req.DataJson;

@@ -142,3 +142,80 @@
         }
 
 
+
+
+            <EleColumn For="Item.Name" Label="名称" Width="220"></EleColumn>
+            <EleColumn For="Item.Icon" Label="图标" Width="70">
+                <template #default="{ row }">
+                    <img v-if="row.icon"
+                         :src="(row.icon.indexOf('http://') === 0 || row.icon.indexOf('https://') === 0 || row.icon.indexOf('data:') === 0 || row.icon.indexOf('/') === 0) ? row.icon : ('/' + row.icon)"
+                         style="width:28px;height:28px;object-fit:contain;display:block;"
+                         alt="icon" />
+                    <span v-else style="color:#9ca3af;">-</span>
+                </template>
+            </EleColumn>
+
+新城化工集中区
+{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"stroke":"#1e3a8a","lineColor":"#1e3a8a","fill":"#1d4ed8","fillColor":"#1d4ed8","fill-opacity":0.35,"fillOpacity":0.35,"label":"新城化工集中区"},"geometry":{"coordinates":[[[120.61522525691475,27.512788241327385],[120.61586685960111,27.5111145744945],[120.62126387042542,27.504218798597563],[120.62801956928848,27.49628477427447],[120.64213482836607,27.511014153675177],[120.63836069492146,27.518880173552432],[120.63100113470887,27.518746288558333],[120.61522525691475,27.512788241327385]]],"type":"Polygon"}}]}
+
+
+
+            function parseDataJsonTable() {
+                if (isEditMode) return;
+                const wrap = document.getElementById('datajson-table-wrap');
+                if (!wrap) return;
+
+                const textarea = document.querySelector('textarea[name="item.dataJson"], textarea[name="Item.DataJson"], #item_dataJson, #Item_DataJson');
+                const text = (textarea && textarea.value ? textarea.value : '').trim();
+                if (!text) {
+                    wrap.textContent = '暂无数据';
+                    return;
+                }
+
+                let obj;
+                try {
+                    obj = JSON.parse(text);
+                } catch {
+                    wrap.innerHTML = `<table class="json-kv-table"><tr><th>raw</th><td>${text.replaceAll('<', '&lt;')}</td></tr></table>`;
+                    return;
+                }
+
+                let rows = [];
+                if (Array.isArray(obj)) {
+                    rows = obj.map((v, i) => ({ key: `[${i}]`, value: typeof v === 'string' ? v : JSON.stringify(v) }));
+                } else if (obj && typeof obj === 'object') {
+                    rows = Object.keys(obj).map(k => ({ key: k, value: typeof obj[k] === 'string' ? obj[k] : JSON.stringify(obj[k]) }));
+                } else {
+                    rows = [{ key: 'value', value: String(obj) }];
+                }
+
+                const html = rows.map(r => `<tr><th>${String(r.key).replaceAll('<', '&lt;')}</th><td>${String(r.value).replaceAll('<', '&lt;')}</td></tr>`).join('');
+                wrap.innerHTML = `<table class="json-kv-table">${html}</table>`;
+            }
+            setTimeout(parseDataJsonTable, 200);
+
+            <EleButton Id="btn-open-edit" Type="Primary" Visible="@(Model.Mode == PageMode.View && Auth.CheckPower(Power.GisGeometryEdit))">编辑</EleButton>
+@section script {
+    <script>
+        (() => {
+            const isEditMode = @editMode;
+            const id = '@currentId';
+            function bindEditButton() {
+                if (isEditMode) return;
+                const btn = document.getElementById('btn-open-edit');
+                if (!btn || !id) return;
+
+                btn.addEventListener('click', () => {
+                    const nextUrl = `/GIS/GeometryForm?id=${id}&md=edit`;
+                    const manager = window.EleManager || (window.top && window.top.EleManager) || null;
+                    if (manager && typeof manager.goto === 'function') {
+                        manager.goto(nextUrl);
+                        return;
+                    }
+                    window.location.href = nextUrl;
+                });
+            }
+            bindEditButton();
+        })();
+    </script>
+}

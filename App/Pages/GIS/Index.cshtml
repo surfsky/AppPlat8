@@ -1,8 +1,24 @@
 @page
 @model App.Pages.Gis.IndexModel
+@using System.Globalization
 @{
     Layout = "_Layout";
     ViewData["Title"] = "GIS驾驶舱";
+    var mapCenterText = (SiteConfig.Instance.MapCenter ?? string.Empty).Replace("，", ",").Trim();
+    var mapCenterLng = 120.6034;
+    var mapCenterLat = 27.5686;
+    if (!string.IsNullOrWhiteSpace(mapCenterText))
+    {
+        var parts = mapCenterText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length >= 2
+            && double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLng)
+            && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLat))
+        {
+            mapCenterLng = parsedLng;
+            mapCenterLat = parsedLat;
+        }
+    }
+    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
 }
 
 @section head {
@@ -397,6 +413,48 @@
             line-height: 30px;
             color: #1e3a8a;
         }
+        .geometry-point-marker {
+            position: relative;
+            width: 0;
+            height: 0;
+            cursor: pointer;
+            user-select: none;
+            pointer-events: auto;
+        }
+        .geometry-point-marker .marker-icon {
+            position: absolute;
+            left: -12px;
+            top: -24px;
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.35));
+        }
+        .geometry-point-marker .dot-fallback {
+            position: absolute;
+            left: -6px;
+            top: -6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            background: #2563eb;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.55);
+        }
+        .geometry-point-marker .marker-label {
+            position: absolute;
+            left: 10px;
+            top: -12px;
+            color: #0f172a;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            border-radius: 10px;
+            padding: 1px 8px;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+        }
         @@media (max-width: 768px) {
             .header-bar { height: 76px; }
             .header-title { font-size: 28px; padding: 8px 12px; }
@@ -505,6 +563,7 @@
             menuRoots: [],
             menuNodeMap: new Map(),
             geometries: [],
+            geometryPointMarkerMap: new Map(),
             geometryByMenuId: new Map(),
             geometryVisibleMap: new Map(),
             selectedGeometryId: null,
@@ -534,8 +593,8 @@
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v12',
-            center: [120.6034, 27.5686],
-            zoom: 11,
+            center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
+            zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
             pitch: 0
         });
         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -914,8 +973,8 @@
         function resetView() {
             // 仅复位视图参数，不切换样式与图层状态
             map.easeTo({
-                center: [120.558642, 27.546097],
-                zoom: 11,
+                center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
+                zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
                 pitch: 0,
                 bearing: 0,
                 duration: 500
@@ -1117,6 +1176,7 @@
                             parentId: n.parentId,
                             name: n.name,
                             sortId: n.sortId,
+                            icon: n.icon,
                             isDefaultShow: !!n.isDefaultShow
                         });
                         walk(n.children || []);
@@ -1159,7 +1219,90 @@
                 .filter(g => state.geometryVisibleMap.get(g.id) !== false)
                 .map(g => g.id);
             geometryLayerManager.setVisibleIds(visibleIds);
+            syncGeometryPointMarkerVisibility();
             renderMenuTree();
+        }
+
+        function parseGpsText(gps) {
+            if (!gps || typeof gps !== 'string') return null;
+            const text = gps.replaceAll('，', ',').replaceAll('；', ',').replaceAll(';', ',').trim().replace(/\s+/g, ',');
+            const parts = text.split(',').map(x => x.trim()).filter(Boolean);
+            if (parts.length < 2) return null;
+            const lng = Number(parts[0]);
+            const lat = Number(parts[1]);
+            if (Number.isNaN(lng) || Number.isNaN(lat)) return null;
+            return { lng, lat };
+        }
+
+        function normalizeIconPath(path) {
+            if (!path || typeof path !== 'string') return '';
+            const text = path.trim();
+            if (!text) return '';
+            if (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('/')) return text;
+            return `/${text.replace(/^\/+/, '')}`;
+        }
+
+        function clearGeometryPointMarkers() {
+            state.geometryPointMarkerMap.forEach(marker => marker.remove());
+            state.geometryPointMarkerMap.clear();
+        }
+
+        function rebuildGeometryPointMarkers() {
+            clearGeometryPointMarkers();
+
+            state.geometries.forEach(item => {
+                if (!item || !item.gps) return;
+                const gps = parseGpsText(item.gps);
+                if (!gps) return;
+
+                const el = document.createElement('div');
+                el.className = 'geometry-point-marker';
+
+                const iconPath = normalizeIconPath(item.icon);
+                if (iconPath) {
+                    const iconEl = document.createElement('img');
+                    iconEl.className = 'marker-icon';
+                    iconEl.src = iconPath;
+                    iconEl.alt = item.name || item.alias || '点位图标';
+                    iconEl.onerror = () => {
+                        iconEl.remove();
+                        const fallbackDot = document.createElement('span');
+                        fallbackDot.className = 'dot-fallback';
+                        el.appendChild(fallbackDot);
+                    };
+                    el.appendChild(iconEl);
+                }
+
+                if (!iconPath) {
+                    const fallbackDot = document.createElement('span');
+                    fallbackDot.className = 'dot-fallback';
+                    el.appendChild(fallbackDot);
+                }
+
+                const label = document.createElement('span');
+                label.className = 'marker-label';
+                label.textContent = item.alias || item.name || `点位${item.id}`;
+                el.appendChild(label);
+
+                el.addEventListener('click', (evt) => {
+                    evt.stopPropagation();
+                    openGeometryDetailDrawer(item.id);
+                });
+
+                const marker = new mapboxgl.Marker(el)
+                    .setLngLat([gps.lng, gps.lat])
+                    .addTo(map);
+
+                state.geometryPointMarkerMap.set(item.id, marker);
+            });
+
+            syncGeometryPointMarkerVisibility();
+        }
+
+        function syncGeometryPointMarkerVisibility() {
+            state.geometryPointMarkerMap.forEach((marker, id) => {
+                marker.getElement().style.display = state.geometryVisibleMap.get(id) === false ? 'none' : '';
+            });
         }
 
         function getActiveGeometryDisplayLayerIds() {
@@ -1253,6 +1396,7 @@
 
                 geometryLayerManager.setDataFromRows(state.geometries);
                 geometryLayerManager.render();
+                rebuildGeometryPointMarkers();
                 applyGeometryVisibility();
                 renderMenuTree();
                 state.preservedVisibleGeometryIds = new Set();
