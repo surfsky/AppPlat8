@@ -13,6 +13,8 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Converters;
 using System.Linq.Expressions;
 using App.EleUI;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 
 namespace App.EleUI
@@ -20,7 +22,7 @@ namespace App.EleUI
     /// <summary>
     /// 客户端命令类型
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
     public enum ClientCommandType
     {
         Notify,
@@ -38,7 +40,7 @@ namespace App.EleUI
     /// <summary>
     /// 通知类型
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
     public enum NotifyType
     {
         Success,
@@ -50,7 +52,7 @@ namespace App.EleUI
     /// <summary>
     /// 抽屉关闭后的客户端动作
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
     public enum DrawerCloseAction
     {
         RefreshPage,
@@ -242,24 +244,30 @@ namespace App.EleUI
 
 
     /// <summary>
-    /// 
+    /// ElemUI 客户端命令管理器
     /// </summary>
     public class EleManager
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            ReferenceHandler = ReferenceHandler.IgnoreCycles
+        };
+
+        static EleManager()
+        {
+            _jsonOptions.Converters.Add(new JsonStringEnumConverter());
+        }
+
         //-------------------------------------------------
         // 构建API结果
         //-------------------------------------------------
         /// <summary>构建API结果</summary>
         public static JsonResult BuildResult(int code, string msg, object data = null, Paging pager = null)
         {
-            // 首字母小写驼峰命名，和JavaScript的命名习惯一致
-            // 忽略循环引用，避免序列化时出错
-            var settings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-            };
-            return new JsonResult(new APIResult(code, msg, data, pager), settings);
+            // Use ASP.NET Core default System.Text.Json pipeline for JsonResult serialization.
+            return new JsonResult(new APIResult(code, msg, data, pager), _jsonOptions);
         }
 
         private static IActionResult BuildClientCommandResult(ClientCommandType commandType, object args, string msg = "success")
@@ -273,8 +281,11 @@ namespace App.EleUI
             return BuildResult(0, msg, cmd);
         }
 
+        //--------------------------------------------------------------
+        // 传递客户端命令
+        //--------------------------------------------------------------
         /// <summary>显示客户端 Toast（就是element中的 message 走轻提示）</summary>
-        public static IActionResult ShowClientToast(string message, NotifyType type = NotifyType.Info, string title = "Title")
+        public static IActionResult ShowToast(string message, NotifyType type = NotifyType.Info, string title = "Title")
         {
             return BuildClientCommandResult(
                 ClientCommandType.Toast,
@@ -283,7 +294,7 @@ namespace App.EleUI
         }
 
         /// <summary>显示客户端提示</summary>
-        public static IActionResult ShowClientNotify(string message, NotifyType type = NotifyType.Info, string title="Title")
+        public static IActionResult ShowNotify(string message, NotifyType type = NotifyType.Info, string title="Title")
         {
             return BuildClientCommandResult(
                 ClientCommandType.Notify,
@@ -292,7 +303,7 @@ namespace App.EleUI
         }
 
         /// <summary>显示客户端 Loading</summary>
-        public static IActionResult ShowClientLoading(string text = "加载中...")
+        public static IActionResult ShowLoading(string text = "加载中...")
         {
             return BuildClientCommandResult(
                 ClientCommandType.ShowLoading,
@@ -301,13 +312,13 @@ namespace App.EleUI
         }
 
         /// <summary>关闭客户端 Loading</summary>
-        public static IActionResult CloseClientLoading()
+        public static IActionResult CloseLoading()
         {
             return BuildClientCommandResult(ClientCommandType.CloseLoading, new { });
         }
 
         /// <summary>打开客户端 Drawer</summary>
-        public static IActionResult OpenClientDrawer(
+        public static IActionResult ShowDrawer(
             string title = null,
             string content = null,
             string url = null,
@@ -352,7 +363,7 @@ namespace App.EleUI
         }
 
         /// <summary>关闭客户端 Drawer</summary>
-        public static IActionResult CloseClientDrawer()
+        public static IActionResult CloseDrawer()
         {
             return BuildClientCommandResult(ClientCommandType.CloseDrawer, new { });
         }
@@ -364,7 +375,7 @@ namespace App.EleUI
         /// <param name="isAlert">是否为 Alert 类型，若为 true，则仅显示一个确定按钮。</param>
         /// <param name="clientHandler">客户端回调处理函数名称。</param>
         /// <param name="serverHandler">服务端回调处理函数名称。</param>
-        public static IActionResult OpenClientMessageBox(
+        public static IActionResult ShowMessageBox(
             string text,
             string title = "提示",
             NotifyType type = NotifyType.Info,
@@ -395,7 +406,7 @@ namespace App.EleUI
         /// <param name="serverHandler">服务端回调处理函数名称。</param>
         /// <param name="inputPattern">输入验证正则表达式（可选）。</param>
         /// <param name="inputErrorMessage">验证失败提示信息（可选）。</param>
-        public static IActionResult OpenClientInputBox(
+        public static IActionResult ShowInputBox(
             string text,
             string title = "请输入",
             string inputPlaceholder = "请输入内容",
@@ -463,6 +474,10 @@ namespace App.EleUI
                 new SetControlArgs(list));
         }
 
+        //--------------------------------------------------------------
+        // Control
+        //--------------------------------------------------------------
+        // 规范化控件目标字符串，支持自动添加 "field:" 前缀
         private static string NormalizeControlTarget(string target)
         {
             var normalized = (target ?? string.Empty).Trim();

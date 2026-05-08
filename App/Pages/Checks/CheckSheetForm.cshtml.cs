@@ -66,12 +66,12 @@ namespace App.Pages.Checks
             var sheetId = req?.Id ?? 0;
             if (sheetId <= 0)
             {
-                return EleManager.ShowClientNotify("请先保存检查表，再维护检查项", NotifyType.Warning, "提示");
+                return EleManager.ShowNotify("请先保存检查表，再维护检查项", NotifyType.Warning, "提示");
             }
 
             var sheetName = Uri.EscapeDataString(req?.Name ?? string.Empty);
             var url = $"/Checks/CheckSheetItems?sheetId={sheetId}&sheetName={sheetName}&md={this.Mode}";
-            return EleManager.OpenClientDrawer(
+            return EleManager.ShowDrawer(
                 title: "检查项",
                 url: url
                 );

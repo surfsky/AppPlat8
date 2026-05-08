@@ -75,7 +75,7 @@ namespace App.Pages.Checks
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckObject");
-            return EleManager.OpenClientDrawer(
+            return EleManager.ShowDrawer(
                 title: "导入检查对象",
                 url: url,
                 //size: "980px",

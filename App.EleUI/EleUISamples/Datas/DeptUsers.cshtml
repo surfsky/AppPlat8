@@ -1,0 +1,55 @@
+@page
+@model App.Pages.EleUISamples.DeptUsersModel
+
+@{
+    ViewData["Title"] = "部门-用户联动";
+}
+
+@section body {
+    <div class="h-full p-4 bg-gray-50">
+        <EleSplitPanel Height="98vh" Radius="8px" Border="1px solid #e5e7eb">
+            <PanelItem Size="30%" Collapsible="true">
+                <div class="h-full bg-white border-r border-gray-100 p-3 overflow-hidden">
+                    <div class="text-base font-semibold text-gray-800 mb-3">部门树</div>
+                    <div class="h-[calc(98vh-80px)] overflow-auto">
+                        <EleTree Items="Model.DeptTree"
+                                 NodeKey="id"
+                                 NameField="name"
+                                 ChildrenField="children"
+                                 HighlightCurrent="true"
+                                 DefaultExpandAll="true"
+                                 ExpandOnClickNode="false"
+                                 NodeClick="onDeptNodeClick">
+                        </EleTree>
+                    </div>
+                </div>
+            </PanelItem>
+
+            <PanelItem IframeName="deptUsersFrame" IframeUrl="@Model.DefaultUsersUrl"></PanelItem>
+        </EleSplitPanel>
+    </div>
+}
+
+@section script {
+    <script>
+        window.deptUsersModel = {
+            allUsersUrl: '@Model.AllUsersUrl',
+            onDeptNodeClick: function (data) {
+                if (!data) return;
+                const deptId = data.id || data.value || 0;
+                const target = document.querySelector('iframe[name="deptUsersFrame"]')
+                    || document.querySelector('iframe[src*="/EleUISamples/Datas/DeptUsersUsers"]');
+                if (!target) return;
+
+                if (!deptId || Number(deptId) <= 0) {
+                    target.src = window.deptUsersModel.allUsersUrl;
+                    return;
+                }
+
+                target.src = '/EleUISamples/Datas/DeptUsersUsers?deptId=' + encodeURIComponent(deptId);
+            }
+        };
+    </script>
+
+    <EleApp Expose="deptUsersModel" />
+}

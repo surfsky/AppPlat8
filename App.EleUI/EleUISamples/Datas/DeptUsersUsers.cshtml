@@ -1,0 +1,28 @@
+@page
+@model App.Pages.EleUISamples.DeptUsersUsersModel
+
+@{
+    ViewData["Title"] = "部门用户列表";
+    var title = string.IsNullOrWhiteSpace(Model.DeptName) ? "全部部门用户" : $"部门用户 - {Model.DeptName}";
+}
+
+@section body {
+    <EleTable Title="@title" DataHandler="?handler=Data&deptId=@Model.DeptId">
+        <Toolbar>
+            <Filters>
+                <EleInput For="Item.Name" Label="账号" Width="220px"></EleInput>
+                <EleInput For="Item.ChineseName" Label="中文名" Width="220px"></EleInput>
+            </Filters>
+            <Buttons>
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+            </Buttons>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleColumn For="Item.Name" Label="账号" MinWidth="150"></EleColumn>
+            <EleColumn For="Item.ChineseName" Label="中文名" MinWidth="150"></EleColumn>
+            <EleColumn For="Item.RoleName" Label="角色" Width="120"></EleColumn>
+            <EleColumn For="Item.DeptName" Label="部门" MinWidth="160"></EleColumn>
+        </Columns>
+    </EleTable>
+}

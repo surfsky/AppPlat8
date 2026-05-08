@@ -31,16 +31,17 @@
 2. 在 `appsettings.json` 中配置数据库连接。
 3. 运行应用程序:
    ```bash
-    # 编译
+    # 编译并运行主项目
     cd AppPlat
     dotnet build
-
-    # 运行项目
     dotnet run --project App
-    dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
-
-    # 或直接运行bin目录下的 dll 文件
     dotnet app.dll --urls=http://localhost:6060;http://abc.org
+
+    # 编译EleUI示例项目
+    dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
+    dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
+    Debug EleUISamples
+    dotnet debug --project App.EleUI/EleUISamples/EleUISamples.csproj
 
     # 关闭
     Ctrl+C
@@ -130,6 +131,7 @@ Docker 部署方式
       - [x] Form
       - [x] Table
       - [x] Control
+      - [x] Tree
       - [x] IconSelect
       - [x] UserSelect
       - [x] TreeSelect
@@ -186,14 +188,15 @@ Docker 部署方式
     - [x] 区域图形
       - [x] 区域图形编辑
       - [x] 区域图形展示，及详情面板
-    - [ ] 点位：清单、详情、在地图上定位（尚未实现）
-      - [ ] 点位
-      - [ ] 点位数据详情
+    - [x] 点位：清单、详情、在地图上定位
+      - [x] 点位：包括点、线、面等，支持geojson数据格式
+      - [x] 点位数据详情展示，扩展datajson字段可展示为表格格式
       - [ ] 扩展展示方式：点、图片、监控、全景、三维等
-    - [ ] 通用面板
-      - [ ] 基础信息：位置、顺序、尺寸、样式、最后数据更新时间等
+    - [ ] 面板
+      - [ ] 基础信息：位置、尺寸、最后数据更新时间等
+      - [ ] 数据源配置：从数据库、文件、接口等获取数据
       - [ ] 展示方式：简单文本、html片段、表格、图表等
-      - [ ] 数据源
+      - [ ] 统计图表：折线图、柱状图、饼图等
 - [ ] 工作流
     - [x] 工作流引擎(App.LiteFlow)：或基于 Activiti 的低代码工作流管理系统
     - [ ] 工作流定义：流程设计器、流程列表、流程详情
@@ -206,6 +209,8 @@ Docker 部署方式
     - [ ] 更换 PostgreSql
     - [ ] 服务器配置
     - [ ] Docker 部署
+    - [ ] 网络安全防护：防火墙、VPN、DDoS防护等
+    - [ ] 数据库自动备份
 
 
 

@@ -1,0 +1,41 @@
+@page
+@model App.Pages.EleUISamples.TreeModel
+
+@{
+    ViewData["Title"] = "树控件示例";
+}
+
+@section body {
+    <div class="p-4 space-y-4">
+        <EleCard Title="EleTree 基础能力演示" Border="1px solid #e5e7eb" Radius="8px">
+            <Column Gap="8">
+                <EleTree Items="Model.BasicTree"
+                    NodeKey="id"
+                    NameField="name"
+                    ChildrenField="children"
+                    HighlightCurrent="true"
+                    DefaultExpandAll="true"
+                    ExpandOnClickNode="false"
+                    Width="300px"
+                    Height="360px"
+                    Border="1px solid #e5e7eb"
+                    OnNodeClick="NodeClick">
+                </EleTree>
+                <EleTree Items="Model.BasicTree"
+                    NodeKey="id"
+                    NameField="name"
+                    ChildrenField="children"
+                    ShowCheckbox="true"
+                    CheckStrictly="false"
+                    DefaultExpandAll="true"
+                    DefaultCheckedKeys="Model.DefaultCheckedKeys"
+                    Width="300px"
+                    Height="360px"
+                    Border="1px solid #e5e7eb"
+                    OnCheckChange="CheckedChanged">
+                </EleTree>
+            </Column>
+        </EleCard>
+    </div>
+    <EleApp />
+}

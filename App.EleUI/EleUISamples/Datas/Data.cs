@@ -71,6 +71,7 @@ namespace App.Pages.EleUISamples
     public class Data
     {
         private static readonly object _syncRoot = new object();
+        private static readonly long[] _demoDeptIds = { 110, 120, 210, 220, 310, 320 };
 
         private static List<Role> _roles = new List<Role>
         {
@@ -119,6 +120,11 @@ namespace App.Pages.EleUISamples
             new User { Id = 36, Name = "wangwu", ChineseName = "王五", RoleName = "User" },
             new User { Id = 37, Name = "zhaoliu", ChineseName = "赵六", RoleName = "Manager" },
         };
+
+        static Data()
+        {
+            AssignDemoDeptIds(_users);
+        }
 
         public static List<Role> GetRoles() => _roles;
 
@@ -228,6 +234,26 @@ namespace App.Pages.EleUISamples
         {
             if (string.IsNullOrEmpty(roleName)) return _users;
             return _users.Where(u => u.RoleName == roleName).ToList();
+        }
+
+        private static void AssignDemoDeptIds(List<User> users)
+        {
+            if (users == null || users.Count == 0)
+                return;
+
+            foreach (var user in users)
+            {
+                if (user == null)
+                    continue;
+
+                if (user.DeptId.HasValue && user.DeptId.Value > 0)
+                    continue;
+
+                if (user.Id <= 0)
+                    user.DeptId = _demoDeptIds[0];
+                else
+                    user.DeptId = _demoDeptIds[(int)((user.Id - 1) % _demoDeptIds.Length)];
+            }
         }
 
         public static (List<UserAtt> Items, int Total) QueryUserAtts(long userId, int pageIndex, int pageSize)
