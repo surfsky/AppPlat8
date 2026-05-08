@@ -8,7 +8,7 @@ using System.Text;
 //using System.Web;
 //using System.Web.UI;
 //using EntityFramework.Extensions;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using App.Utils;
 using Z.EntityFramework.Plus;
 //using App.Components;

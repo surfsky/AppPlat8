@@ -6,11 +6,12 @@ using System.Dynamic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using App.DAL;
 using App.Components;
 using App.HttpApi;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using App.EleUI;
 
 namespace App
@@ -20,6 +21,143 @@ namespace App
     /// </summary>
     public partial class BaseModel : PageModel
     {
+        private static readonly JsonSerializerOptions _jsonOptions = CreateJsonOptions();
+
+        private static JsonSerializerOptions CreateJsonOptions()
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            };
+
+            options.Converters.Add(new JsonStringEnumConverter());
+            options.Converters.Add(new Int64ToStringJsonConverter());
+            options.Converters.Add(new NullableInt64ToStringJsonConverter());
+            options.Converters.Add(new UInt64ToStringJsonConverter());
+            options.Converters.Add(new NullableUInt64ToStringJsonConverter());
+            return options;
+        }
+
+        private sealed class Int64ToStringJsonConverter : JsonConverter<long>
+        {
+            public override long Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new JsonException($"Invalid Int64 string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetInt64();
+
+                throw new JsonException($"Unexpected token parsing Int64: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, long value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class NullableInt64ToStringJsonConverter : JsonConverter<long?>
+        {
+            public override long? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.Null)
+                    return null;
+
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (string.IsNullOrWhiteSpace(text))
+                        return null;
+                    if (long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new JsonException($"Invalid nullable Int64 string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetInt64();
+
+                throw new JsonException($"Unexpected token parsing nullable Int64: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, long? value, JsonSerializerOptions options)
+            {
+                if (!value.HasValue)
+                {
+                    writer.WriteNullValue();
+                    return;
+                }
+
+                writer.WriteStringValue(value.Value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class UInt64ToStringJsonConverter : JsonConverter<ulong>
+        {
+            public override ulong Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new JsonException($"Invalid UInt64 string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetUInt64();
+
+                throw new JsonException($"Unexpected token parsing UInt64: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, ulong value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class NullableUInt64ToStringJsonConverter : JsonConverter<ulong?>
+        {
+            public override ulong? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.Null)
+                    return null;
+
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (string.IsNullOrWhiteSpace(text))
+                        return null;
+                    if (ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new JsonException($"Invalid nullable UInt64 string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetUInt64();
+
+                throw new JsonException($"Unexpected token parsing nullable UInt64: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, ulong? value, JsonSerializerOptions options)
+            {
+                if (!value.HasValue)
+                {
+                    writer.WriteNullValue();
+                    return;
+                }
+
+                writer.WriteStringValue(value.Value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
         /// <summary>
         /// 导出当前模型上标记了 [BindProperty] 的属性，供前端初始化/回传使用。
         /// </summary>
@@ -47,14 +185,7 @@ namespace App
         /// <summary>构建API结果</summary>
         public static JsonResult BuildResult(int code, string msg, object data = null, Paging pager = null)
         {
-            // 首字母小写驼峰命名，和JavaScript的命名习惯一致
-            // 忽略循环引用，避免序列化时出错
-            var settings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-            };
-            return new JsonResult(new APIResult(code, msg, data, pager), settings);
+            return new JsonResult(new APIResult(code, msg, data, pager), _jsonOptions);
         }
 
 

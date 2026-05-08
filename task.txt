@@ -1,7 +1,6 @@
 --------------------------------------------------------
 - 框架
 --------------------------------------------------------
- Newtonsoft.Json  -> System.Text.Json 
 
 
 编写建设方案
@@ -139,10 +138,11 @@ Task - 业务
 Done
 --------------------------------------------------------
 2026.05.08
-    实现 EleTree
+    /实现 EleTree
         1、实现App.EleUI/EleUI/Forms/EleTreeTagHelper 控件（参考 https://element-plus.org/en-US/component/tree）
         2、写测试网页 App.EleUI/EleUISamples/Controls/Tree.cshtml，测试EleTree 控件的各种功能；
         3、写测试网页 App.EleUI/EleUISamples/Datas/DeptUsers，用EleSplitPanel，左侧放置 EleTree 显示部门树，右侧显示用户清单（可用iframe），点击左侧部门树节点，右侧用户清单页面做相应的刷新；
+    /Newtonsoft.Json  -> System.Text.Json 
 
 
 2026.05.07

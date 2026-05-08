@@ -8,8 +8,6 @@ using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 namespace App.Pages.Base
 {

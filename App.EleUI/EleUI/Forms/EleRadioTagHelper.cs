@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using App.Utils;
 
@@ -57,11 +57,14 @@ namespace App.EleUI
                         try 
                         {
                             var json = strItems.Replace("'", "\"");
-                            var jArray = JArray.Parse(json); 
-                            foreach (var item in jArray)
+                            using var doc = JsonDocument.Parse(json);
+                            if (doc.RootElement.ValueKind == JsonValueKind.Array)
                             {
-                                var val = item.ToString();
-                                list.Add(new SelectListItem(val, val));
+                                foreach (var item in doc.RootElement.EnumerateArray())
+                                {
+                                    var val = item.ToString();
+                                    list.Add(new SelectListItem(val, val));
+                                }
                             }
                         }
                         catch {}
@@ -72,10 +75,13 @@ namespace App.EleUI
                          try 
                         {
                             var json = strItems.Replace("'", "\"");
-                            var jObject = JObject.Parse(json);
-                            foreach (var item in jObject)
+                            using var doc = JsonDocument.Parse(json);
+                            if (doc.RootElement.ValueKind == JsonValueKind.Object)
                             {
-                                list.Add(new SelectListItem(item.Key, item.Value.ToString()));
+                                foreach (var item in doc.RootElement.EnumerateObject())
+                                {
+                                    list.Add(new SelectListItem(item.Name, item.Value.ToString()));
+                                }
                             }
                         }
                         catch {}

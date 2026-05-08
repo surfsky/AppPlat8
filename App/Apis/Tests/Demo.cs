@@ -7,7 +7,7 @@ using App.Components;
 using App.HttpApi;
 using App.Utils;
 using App.Web;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace App.Api
 {

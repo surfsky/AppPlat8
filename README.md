@@ -43,24 +43,23 @@
     Debug EleUISamples
     dotnet debug --project App.EleUI/EleUISamples/EleUISamples.csproj
 
-    # 关闭
-    Ctrl+C
+    # 测试项目
+    dotnet test App.Utils/App.UtilsTests/App.UtilsTests.csproj
    ```
 4.打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
 
 
 其它
 
-1.运行 `dotnet ef migrations add CheckObjectEvent --project App/App.csproj --startup-project App/App.csproj` 创建数据库迁移。
+1.运行 `dotnet ef migrations add XXXX --project App/App.csproj --startup-project App/App.csproj` 创建数据库迁移。
 
 2.若端口被占用，查找占用 6060 的进程，然后kill
   ```bash
     lsof -iTCP:6060 -sTCP:LISTEN
     kill -9 <pid>
-  ```
-3. 测试项目
-  ```bash
-  dotnet test App.UtilsTests/App.UtilsTests.csproj
+
+    # 关闭
+    Ctrl+C
   ```
 
 
@@ -284,3 +283,5 @@ AI 负责：
     样板配置
     快速初稿
     搜索 & 查 API
+
+

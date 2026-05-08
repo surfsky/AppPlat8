@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace App.Utils
 {
@@ -14,80 +14,77 @@ namespace App.Utils
     /// <summary>
     /// 简单的日期时间格式化
     /// </summary>
-    public class DateTimeConverter : IsoDateTimeConverter
+    public class DateTimeConverter : JsonConverter<DateTime>
     {
-        public DateTimeConverter() : base()
+        private const string DateFormat = "yyyy/MM/dd HH:mm";
+
+        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            base.DateTimeFormat = "yyyy/MM/dd HH:mm";
+            if (reader.TokenType == JsonTokenType.String && reader.GetString() is string s)
+            {
+                if (DateTime.TryParseExact(s, DateFormat, null, System.Globalization.DateTimeStyles.None, out var dt))
+                    return dt;
+                if (DateTime.TryParse(s, out dt))
+                    return dt;
+            }
+            return reader.GetDateTime();
+        }
+
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString(DateFormat));
         }
     }
 
     /// <summary>  
     /// DateTime序列化为时间戳  
     /// </summary>  
-    public class TimestampConverter : JsonConverter
+    public class TimestampConverter : JsonConverter<DateTime>
     {
-        public override bool CanConvert(Type objectType)
+        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return objectType == typeof(DateTime);
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            int seconds = int.Parse(reader.Value.ToString());
+            var seconds = reader.TokenType == JsonTokenType.String
+                ? long.Parse(reader.GetString() ?? "0")
+                : reader.GetInt64();
             return new DateTime(1970, 1, 1).AddSeconds(seconds);
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
         {
-            var dt = (DateTime)value;
-            int n = (int)(dt - new DateTime(1970, 1, 1)).TotalSeconds;
-            writer.WriteValue(n);
+            var n = (int)(value - new DateTime(1970, 1, 1)).TotalSeconds;
+            writer.WriteNumberValue(n);
         }
     }
 
     /// <summary>
     /// Type 名称 Json 转化器，只保留类名和数据集名，不记录数据集版本号
     /// </summary>
-    public class TypeNameConverter : JsonConverter
+    public class TypeNameConverter : JsonConverter<Type>
     {
-        public override bool CanConvert(Type objectType)
+        public override Type Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            //IO.Trace("[TypeConvert] {0}", objectType.FullName);
-            return objectType.FullName == "System.RuntimeType" || objectType.FullName == "System.Type";
+            return Type.GetType(reader.GetString() ?? string.Empty) ?? typeof(object);
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override void Write(Utf8JsonWriter writer, Type value, JsonSerializerOptions options)
         {
-            var name = reader.Value.ToString();
-            return Type.GetType(name);
-        }
-
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            Type type = (Type)value;
-            writer.WriteValue(type.GetShortName());
+            writer.WriteStringValue(value.GetShortName());
         }
     }
 
     /// <summary>  
     /// String Unicode 序列化, 输出为Unicode编码字符）
     /// </summary>  
-    public class UnicodeConverter : JsonConverter
+    public class UnicodeConverter : JsonConverter<string>
     {
-        public override bool CanConvert(Type objectType)
+        public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return objectType == typeof(string);
+            return reader.GetString() ?? string.Empty;
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
         {
-            return reader.Value;
-        }
-
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            writer.WriteValue(ToUnicode(value.ToString()));
+            writer.WriteStringValue(ToUnicode(value));
         }
 
         public static string ToUnicode(string str)

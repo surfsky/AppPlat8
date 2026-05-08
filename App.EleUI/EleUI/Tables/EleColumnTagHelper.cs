@@ -2,6 +2,7 @@ using App.Components;
 using System;
 using System.Reflection;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Threading.Tasks;
 using App.Utils; 
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -192,7 +193,7 @@ namespace App.EleUI
                     {
                         // TODO：这段代码展示有问题，请修正
                         var options = App.Utils.EnumHelper.GetEnumInfos(enumType);
-                        var json = Newtonsoft.Json.JsonConvert.SerializeObject(options);                        
+                        var json = JsonSerializer.Serialize(options);
                         output.Content.SetHtmlContent($@"
                             <template #default=""scope"">
                                 <span>{{{{ Utils.formatEnum(scope.row.{propName}, {json}) }}}}</span>

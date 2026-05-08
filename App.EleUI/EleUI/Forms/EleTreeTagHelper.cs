@@ -39,9 +39,12 @@ namespace App.EleUI
         [HtmlAttributeName("FilterNodeMethod")] public string FilterNodeMethod { get; set; }
 
         [HtmlAttributeName("NodeClick")] public string NodeClick { get; set; }
+        [HtmlAttributeName("CurrentChange")] public string CurrentChange { get; set; }
         [HtmlAttributeName("CheckChange")] public string CheckChange { get; set; }
         [HtmlAttributeName("OnNodeClick")] public string OnNodeClick { get; set; }
         [HtmlAttributeName("OnCheckChange")] public string OnCheckChange { get; set; }
+        [HtmlAttributeName("Target")] public string Target { get; set; }
+        [HtmlAttributeName("UrlTemplate")] public string UrlTemplate { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -119,6 +122,15 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("v-on:node-click", ToVueExpression(NodeClick.Trim()));
             else if (!string.IsNullOrWhiteSpace(OnNodeClick))
                 output.Attributes.SetAttribute("v-on:node-click", BuildNodeClickPostExpression(context, OnNodeClick));
+            else if (!string.IsNullOrWhiteSpace(UrlTemplate))
+            {
+                var navigateExpr = BuildNodeNavigateExpression();
+                output.Attributes.SetAttribute("v-on:node-click", navigateExpr);
+                output.Attributes.SetAttribute("v-on:current-change", navigateExpr);
+            }
+
+            if (!string.IsNullOrWhiteSpace(CurrentChange))
+                output.Attributes.SetAttribute("v-on:current-change", ToVueExpression(CurrentChange.Trim()));
 
             if (!string.IsNullOrWhiteSpace(CheckChange))
                 output.Attributes.SetAttribute("v-on:check-change", ToVueExpression(CheckChange.Trim()));
@@ -138,6 +150,13 @@ namespace App.EleUI
         private string BuildCheckChangePostExpression(TagHelperContext context, string handlerName)
         {
             return $"(data, checked, indeterminate) => postHandler('{EscapeJs(handlerName)}', {{ eventName: 'check-change', controlId: {ToJsStringOrNull(ResolveControlId(context))}, fieldExpress: {ToJsStringOrNull(ResolveFieldExpress(context))}, value: {{ data: data, checked: checked, indeterminate: indeterminate }}, form: (typeof form !== 'undefined' ? form : null) }})";
+        }
+
+        private string BuildNodeNavigateExpression()
+        {
+            var targetLiteral = ToJsStringOrNull(Target);
+            var template = EscapeJs(UrlTemplate ?? string.Empty);
+            return $"((d) => {{ d = d || {{}}; const toText = (v) => v == null ? '' : String(v); let url = '{template}'; url = url.split('{{id}}').join(encodeURIComponent(toText(d.id))); url = url.split('{{name}}').join(encodeURIComponent(toText(d.name))); url = url.split('{{label}}').join(encodeURIComponent(toText(d.label))); url = url.split('{{url}}').join(toText(d.url)); if (!url) return; const target = {targetLiteral}; const g = (typeof window !== 'undefined' && window) ? window : ((typeof globalThis !== 'undefined') ? globalThis : null); if (!g) return; if (target) {{ const doc = g.document || null; let iframe = null; if (doc && typeof doc.getElementsByName === 'function') {{ const framesByName = doc.getElementsByName(target); if (framesByName && framesByName.length > 0) iframe = framesByName[0]; }} if (!iframe && doc && typeof doc.querySelector === 'function') {{ iframe = doc.querySelector('iframe[name=\"' + target + '\"]'); }} if (iframe) {{ try {{ iframe.src = url; if (iframe.contentWindow && iframe.contentWindow.location) iframe.contentWindow.location.href = url; return; }} catch (e) {{ }} }} const frame = (g.frames && g.frames[target]) ? g.frames[target] : null; if (frame && frame.location) {{ frame.location.href = url; return; }} if (typeof g.open === 'function') {{ g.open(url, target); return; }} }} if (g.location) g.location.href = url; }})($event)";
         }
 
         private static void SetBooleanBinding(TagHelperOutput output, string attrName, bool? value)

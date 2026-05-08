@@ -136,10 +136,10 @@ namespace App.Utils.Tests
             var nameObject = o["name"];
             var ageObject = o["age"];
 
-            var nameString = (string)o["name"];
-            var ageInt = (int)o["age"];
+            var nameString = o["name"]?.GetValue<string>();
+            var ageInt = o["age"]?.GetValue<int>();
 
-            string name = o["name"].ToText();
+            string name = o["name"]?.ToJsonString();
             int? age = o["age"].ToString().ParseInt();  //.ToInt();
         }
 

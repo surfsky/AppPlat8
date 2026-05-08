@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Text.Json.Nodes;
 using System.Text;
 
 namespace App.Utils
@@ -61,7 +61,7 @@ namespace App.Utils
         private static void ConfigFinder(string Path)
         {
             _configPath = Path;
-            JObject config_json = new JObject();
+            JsonObject config_json = new JsonObject();
             while (config_json != null)
             {
                 config_json = null;
@@ -87,14 +87,18 @@ namespace App.Utils
         {
             FileInfo config = new FileInfo(_configPath);
             var configColltion = new NameValueCollection();
-            JObject config_object = LoadJsonFile(_configPath);
-            if (config_object == null || !(config_object is JObject)) return;
+            JsonObject config_object = LoadJsonFile(_configPath);
+            if (config_object == null) return;
 
             if (config_object[_configSection] != null)
             {
-                foreach (JProperty prop in config_object[_configSection])
+                var section = config_object[_configSection] as JsonObject;
+                if (section != null)
                 {
-                    configColltion[prop.Name] = prop.Value.ToString();
+                    foreach (var prop in section)
+                    {
+                        configColltion[prop.Key] = prop.Value?.ToString();
+                    }
                 }
             }
 
@@ -106,13 +110,13 @@ namespace App.Utils
         /// </summary>
         /// <param name="FilePath">文件路径</param>
         /// <returns></returns>
-        private static JObject LoadJsonFile(string FilePath)
+        private static JsonObject LoadJsonFile(string FilePath)
         {
-            JObject config_object = null;
+            JsonObject config_object = null;
             try
             {
                 StreamReader sr = new StreamReader(FilePath, Encoding.Default);
-                config_object = JObject.Parse(sr.ReadToEnd());
+                config_object = JsonNode.Parse(sr.ReadToEnd()) as JsonObject;
                 sr.Close();
             }
             catch { }

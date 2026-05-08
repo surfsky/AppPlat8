@@ -1,18 +1,24 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Reflection;
 using System.Web;
 //using AppPlat.HttpApi.Properties;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
 using HttpApi.Properties;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace App.HttpApi
 {
+        public enum Formatting
+        {
+            None = 0,
+            Indented = 1,
+        }
+
         public class VisitArgs
         {
             public HttpContext Context { get; set; }
@@ -75,8 +81,8 @@ namespace App.HttpApi
         public int? MaxDepth                { get; set; } = null;
         public int? BanMinutes              { get; set; } = null;
 
-        /// <summary>Json Serializer Settings</summary>
-        public JsonSerializerSettings JsonSetting { get; set; }
+        /// <summary>System.Text.Json Serializer Options</summary>
+        public JsonSerializerOptions JsonOptions { get; set; }
 
 
         //public static void Configure(IHttpContextAccessor contextAccessor)
@@ -97,7 +103,7 @@ namespace App.HttpApi
                     // 尝试从配置节中恢复配置。若未找到配置节，则赋予默认值。
                     //var cfg = Configuration.GetSection<HttpApiConfig>("httpApi");
                     _instance = new HttpApiConfig();
-                    _instance.JsonSetting = _instance.GetJsonSetting();
+                    _instance.JsonOptions = _instance.GetJsonOptions();
 
                     // 设置国际化支持
                     Resources.Culture = new System.Globalization.CultureInfo(_instance.Language);
@@ -106,36 +112,294 @@ namespace App.HttpApi
             }
         }
 
-
-        /// <summary>从配置中获取 Json 序列化信息</summary>
-        public JsonSerializerSettings GetJsonSetting()
+        /// <summary>从配置中获取 System.Text.Json 序列化选项</summary>
+        public JsonSerializerOptions GetJsonOptions()
         {
-            var settings = new JsonSerializerSettings();
-            settings.MissingMemberHandling = MissingMemberHandling.Ignore;
-            settings.NullValueHandling = NullValueHandling.Ignore;
-            settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-            settings.MaxDepth = this.MaxDepth;  // 没什么用，不是用于控制输出的json层次的，而是读取层次的
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = this.FormatLowCamel ? JsonNamingPolicy.CamelCase : null,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                WriteIndented = this.FormatIndented == Formatting.Indented
+            };
 
-            // 小驼峰命名法
-            if (this.FormatLowCamel)
-                settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            if (this.MaxDepth.HasValue && this.MaxDepth.Value > 0)
+                options.MaxDepth = this.MaxDepth.Value;
 
-            // 递进格式
-            settings.Formatting = this.FormatIndented;
+            options.Converters.Add(new FormattedDateTimeJsonConverter(this.FormatDateTime));
+            options.Converters.Add(new NullableFormattedDateTimeJsonConverter(this.FormatDateTime));
 
-            // 时间格式
-            var datetimeConverter = new IsoDateTimeConverter();
-            datetimeConverter.DateTimeFormat = this.FormatDateTime;
-            settings.Converters.Add(datetimeConverter);
-
-            // 枚举格式
             if (this.FormatEnum == EnumFomatting.Text)
-                settings.Converters.Add(new StringEnumConverter());
+                options.Converters.Add(new JsonStringEnumConverter());
 
-            // 长数字格式化（转化为字符串）
             var types = this.FormatLongNumber.ParseEnums<TypeCode>();
-            settings.Converters.Add(new LongNumberToStringConverter(types));
-            return settings;
+            if (types.Contains(TypeCode.Int64))
+            {
+                options.Converters.Add(new Int64ToStringJsonConverter());
+                options.Converters.Add(new NullableInt64ToStringJsonConverter());
+            }
+
+            if (types.Contains(TypeCode.UInt64))
+            {
+                options.Converters.Add(new UInt64ToStringJsonConverter());
+                options.Converters.Add(new NullableUInt64ToStringJsonConverter());
+            }
+
+            if (types.Contains(TypeCode.Decimal))
+            {
+                options.Converters.Add(new DecimalToStringJsonConverter());
+                options.Converters.Add(new NullableDecimalToStringJsonConverter());
+            }
+
+            return options;
+        }
+
+        private sealed class FormattedDateTimeJsonConverter : System.Text.Json.Serialization.JsonConverter<DateTime>
+        {
+            private readonly string _format;
+
+            public FormattedDateTimeJsonConverter(string format)
+            {
+                _format = string.IsNullOrWhiteSpace(format) ? "yyyy-MM-dd HH:mm:ss" : format;
+            }
+
+            public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (DateTime.TryParseExact(text, _format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                        return dt;
+                    if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+                        return dt;
+                    throw new System.Text.Json.JsonException($"Invalid DateTime value: {text}");
+                }
+
+                throw new System.Text.Json.JsonException($"Unexpected token parsing DateTime: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString(_format, CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class NullableFormattedDateTimeJsonConverter : System.Text.Json.Serialization.JsonConverter<DateTime?>
+        {
+            private readonly string _format;
+
+            public NullableFormattedDateTimeJsonConverter(string format)
+            {
+                _format = string.IsNullOrWhiteSpace(format) ? "yyyy-MM-dd HH:mm:ss" : format;
+            }
+
+            public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.Null)
+                    return null;
+
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (string.IsNullOrWhiteSpace(text))
+                        return null;
+                    if (DateTime.TryParseExact(text, _format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                        return dt;
+                    if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+                        return dt;
+                    throw new System.Text.Json.JsonException($"Invalid nullable DateTime value: {text}");
+                }
+
+                throw new System.Text.Json.JsonException($"Unexpected token parsing nullable DateTime: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+            {
+                if (!value.HasValue)
+                {
+                    writer.WriteNullValue();
+                    return;
+                }
+
+                writer.WriteStringValue(value.Value.ToString(_format, CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class Int64ToStringJsonConverter : System.Text.Json.Serialization.JsonConverter<long>
+        {
+            public override long Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new System.Text.Json.JsonException($"Invalid Int64 string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetInt64();
+
+                throw new System.Text.Json.JsonException($"Unexpected token parsing Int64: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, long value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class NullableInt64ToStringJsonConverter : System.Text.Json.Serialization.JsonConverter<long?>
+        {
+            public override long? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.Null)
+                    return null;
+
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (string.IsNullOrWhiteSpace(text))
+                        return null;
+                    if (long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new System.Text.Json.JsonException($"Invalid nullable Int64 string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetInt64();
+
+                throw new System.Text.Json.JsonException($"Unexpected token parsing nullable Int64: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, long? value, JsonSerializerOptions options)
+            {
+                if (!value.HasValue)
+                {
+                    writer.WriteNullValue();
+                    return;
+                }
+
+                writer.WriteStringValue(value.Value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class UInt64ToStringJsonConverter : System.Text.Json.Serialization.JsonConverter<ulong>
+        {
+            public override ulong Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new System.Text.Json.JsonException($"Invalid UInt64 string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetUInt64();
+
+                throw new System.Text.Json.JsonException($"Unexpected token parsing UInt64: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, ulong value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class NullableUInt64ToStringJsonConverter : System.Text.Json.Serialization.JsonConverter<ulong?>
+        {
+            public override ulong? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.Null)
+                    return null;
+
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (string.IsNullOrWhiteSpace(text))
+                        return null;
+                    if (ulong.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new System.Text.Json.JsonException($"Invalid nullable UInt64 string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetUInt64();
+
+                throw new System.Text.Json.JsonException($"Unexpected token parsing nullable UInt64: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, ulong? value, JsonSerializerOptions options)
+            {
+                if (!value.HasValue)
+                {
+                    writer.WriteNullValue();
+                    return;
+                }
+
+                writer.WriteStringValue(value.Value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class DecimalToStringJsonConverter : System.Text.Json.Serialization.JsonConverter<decimal>
+        {
+            public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new System.Text.Json.JsonException($"Invalid Decimal string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetDecimal();
+
+                throw new System.Text.Json.JsonException($"Unexpected token parsing Decimal: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, decimal value, JsonSerializerOptions options)
+            {
+                writer.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        private sealed class NullableDecimalToStringJsonConverter : System.Text.Json.Serialization.JsonConverter<decimal?>
+        {
+            public override decimal? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {
+                if (reader.TokenType == JsonTokenType.Null)
+                    return null;
+
+                if (reader.TokenType == JsonTokenType.String)
+                {
+                    var text = reader.GetString();
+                    if (string.IsNullOrWhiteSpace(text))
+                        return null;
+                    if (decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+                        return value;
+                    throw new System.Text.Json.JsonException($"Invalid nullable Decimal string value: {text}");
+                }
+
+                if (reader.TokenType == JsonTokenType.Number)
+                    return reader.GetDecimal();
+
+                throw new System.Text.Json.JsonException($"Unexpected token parsing nullable Decimal: {reader.TokenType}");
+            }
+
+            public override void Write(Utf8JsonWriter writer, decimal? value, JsonSerializerOptions options)
+            {
+                if (!value.HasValue)
+                {
+                    writer.WriteNullValue();
+                    return;
+                }
+
+                writer.WriteStringValue(value.Value.ToString(CultureInfo.InvariantCulture));
+            }
         }
 
 

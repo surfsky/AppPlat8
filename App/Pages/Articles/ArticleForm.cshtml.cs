@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
@@ -13,8 +14,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace App.Pages.OA
 {
@@ -156,12 +155,15 @@ namespace App.Pages.OA
                 if (!text.StartsWith("["))
                     return new List<object>();
 
-                var arr = JArray.Parse(text);
+                using var doc = JsonDocument.Parse(text);
+                if (doc.RootElement.ValueKind != JsonValueKind.Array)
+                    return new List<object>();
+
                 var rows = new List<object>();
                 var idx = 1;
-                foreach (var token in arr)
+                foreach (var token in doc.RootElement.EnumerateArray())
                 {
-                    if (token.Type == JTokenType.String)
+                    if (token.ValueKind == JsonValueKind.String)
                     {
                         var url = token.ToString();
                         if (string.IsNullOrWhiteSpace(url))
@@ -178,21 +180,20 @@ namespace App.Pages.OA
                         continue;
                     }
 
-                    if (token.Type != JTokenType.Object)
+                    if (token.ValueKind != JsonValueKind.Object)
                         continue;
 
-                    var obj = (JObject)token;
-                    var urlValue = (obj["url"] ?? obj["content"] ?? obj["path"] ?? obj["value"])?.ToString();
+                    var urlValue = GetString(token, "url", "content", "path", "value");
                     if (string.IsNullOrWhiteSpace(urlValue))
                         continue;
 
                     rows.Add(new
                     {
-                        id = (long?)obj["id"] ?? idx,
-                        name = (obj["name"] ?? obj["fileName"])?.ToString() ?? Path.GetFileName(urlValue),
+                        id = GetInt64(token, "id") ?? idx,
+                        name = GetString(token, "name", "fileName") ?? Path.GetFileName(urlValue),
                         url = urlValue,
-                        sizeText = (obj["sizeText"] ?? obj["fileSizeText"])?.ToString() ?? string.Empty,
-                        createDtText = (obj["createDtText"] ?? obj["createDt"])?.ToString() ?? string.Empty
+                        sizeText = GetString(token, "sizeText", "fileSizeText") ?? string.Empty,
+                        createDtText = GetString(token, "createDtText", "createDt") ?? string.Empty
                     });
                     idx++;
                 }
@@ -203,6 +204,38 @@ namespace App.Pages.OA
             {
                 return new List<object>();
             }
+        }
+
+        private static string GetString(JsonElement obj, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (obj.TryGetProperty(key, out var value))
+                {
+                    if (value.ValueKind == JsonValueKind.Null || value.ValueKind == JsonValueKind.Undefined)
+                        continue;
+                    return value.ToString();
+                }
+            }
+
+            return null;
+        }
+
+        private static long? GetInt64(JsonElement obj, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (!obj.TryGetProperty(key, out var value))
+                    continue;
+
+                if (value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var n))
+                    return n;
+
+                if (value.ValueKind == JsonValueKind.String && long.TryParse(value.GetString(), out n))
+                    return n;
+            }
+
+            return null;
         }
 
         private static List<string> SplitUrls(string text)

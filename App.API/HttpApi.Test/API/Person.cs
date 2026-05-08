@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 //using System.Web.Script.Serialization;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 //using App.Core;
 using System.ComponentModel;

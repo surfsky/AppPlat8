@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using App.EleUI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -84,8 +85,9 @@ namespace App.Pages.EleUISamples
 
         public IActionResult OnPostCityChanged([FromBody] ControlChangeRequest req)
         {
-            var form = req?.Form ?? new Newtonsoft.Json.Linq.JObject();
-            var province = (form["provinceId"]?.ToString()) ?? string.Empty;
+            var province = string.Empty;
+            if (req != null && req.Form.ValueKind == JsonValueKind.Object && req.Form.TryGetProperty("provinceId", out var provinceElement))
+                province = provinceElement.ToString();
             var city = req?.Value?.ToString() ?? string.Empty;
 
             var counties = ProvinceData.TryGetValue(province, out var cityMap) && cityMap.TryGetValue(city, out var countyList)

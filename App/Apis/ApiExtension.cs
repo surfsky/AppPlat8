@@ -1,7 +1,7 @@
 ﻿using App.Entities;
 using App.HttpApi;
 using App.Utils;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -49,9 +49,9 @@ namespace App.API
         }
 
         /// <summary>增加属性（将忽略空值）</summary>
-        public static JObject AddJProperty(this object o, string name, object value)
+        public static JsonObject AddJProperty(this object o, string name, object value)
         {
-            return o.AsJObject(HttpApiConfig.Instance.JsonSetting).AddProperty(name, value);
+            return o.AsJObject(HttpApiConfig.Instance.JsonOptions).AddProperty(name, value);
         }
     }
 }

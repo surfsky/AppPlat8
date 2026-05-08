@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using App.DAL;
 using App.DAL.GIS;
 using Microsoft.AspNetCore.Authorization;
@@ -137,20 +137,25 @@ namespace App.Pages.GIS
 
             try
             {
-                var token = JToken.Parse(dataJson);
-                if (token is JObject obj)
+                using var doc = JsonDocument.Parse(dataJson);
+                var root = doc.RootElement;
+                if (root.ValueKind == JsonValueKind.Object)
                 {
-                    foreach (var p in obj.Properties())
-                        rows.Add(new { key = p.Name, value = p.Value?.ToString(Newtonsoft.Json.Formatting.None) ?? "" });
+                    foreach (var p in root.EnumerateObject())
+                        rows.Add(new { key = p.Name, value = FormatElement(p.Value) });
                 }
-                else if (token is JArray arr)
+                else if (root.ValueKind == JsonValueKind.Array)
                 {
-                    for (var i = 0; i < arr.Count; i++)
-                        rows.Add(new { key = $"[{i}]", value = arr[i]?.ToString(Newtonsoft.Json.Formatting.None) ?? "" });
+                    var i = 0;
+                    foreach (var item in root.EnumerateArray())
+                    {
+                        rows.Add(new { key = $"[{i}]", value = FormatElement(item) });
+                        i++;
+                    }
                 }
                 else
                 {
-                    rows.Add(new { key = "value", value = token.ToString(Newtonsoft.Json.Formatting.None) });
+                    rows.Add(new { key = "value", value = FormatElement(root) });
                 }
             }
             catch
@@ -159,6 +164,17 @@ namespace App.Pages.GIS
             }
 
             return rows;
+        }
+
+        private static string FormatElement(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString() ?? string.Empty,
+                JsonValueKind.Null => string.Empty,
+                JsonValueKind.Undefined => string.Empty,
+                _ => JsonSerializer.Serialize(element)
+            };
         }
 
         private static bool TryParseGps(string gps, out double lng, out double lat)

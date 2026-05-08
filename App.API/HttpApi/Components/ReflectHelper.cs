@@ -9,7 +9,7 @@ using System.Drawing.Imaging;
 using System.Reflection;
 using System.Web;
 using System.ComponentModel;
-using Newtonsoft.Json.Converters;
+using System.Text.Json;
 //using AppPlat.Core;
 
 namespace App.HttpApi
@@ -374,7 +374,7 @@ namespace App.HttpApi
                 else if (type.IsValueType)                          // 处理简单值类型(fail)
                     return Convert.ChangeType(o, type);
                 else
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject(o.ToString(), type);  // 处理对象类型。该方法可以解析可空类型，但无法解析简单数据类型
+                    return JsonSerializer.Deserialize(o.ToString(), type, HttpApiConfig.Instance.JsonOptions);  // 处理对象类型
             }
 
             return o;

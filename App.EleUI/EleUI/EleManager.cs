@@ -8,9 +8,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Filters;
 using App.Components;
 using App.HttpApi;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using Newtonsoft.Json.Converters;
 using System.Linq.Expressions;
 using App.EleUI;
 using System.Text.Json;
@@ -22,7 +19,6 @@ namespace App.EleUI
     /// <summary>
     /// 客户端命令类型
     /// </summary>
-    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
     public enum ClientCommandType
     {
         Notify,
@@ -40,7 +36,6 @@ namespace App.EleUI
     /// <summary>
     /// 通知类型
     /// </summary>
-    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
     public enum NotifyType
     {
         Success,
@@ -52,7 +47,6 @@ namespace App.EleUI
     /// <summary>
     /// 抽屉关闭后的客户端动作
     /// </summary>
-    [Newtonsoft.Json.JsonConverter(typeof(StringEnumConverter))]
     public enum DrawerCloseAction
     {
         RefreshPage,
@@ -60,24 +54,16 @@ namespace App.EleUI
         None
     }
 
-    /// <summary>
-    /// 客户端命令
-    /// </summary>
+    /// <summary>客户端命令</summary>
     public record ClientCommand(ClientCommandType Command, object Args, string RequestId, DateTime Utc);
 
-    /// <summary>
-    /// 通知参数
-    /// </summary>
+    /// <summary>通知参数</summary>
     public record NotifyArgs(NotifyType Type, string Message, string Title = null);
 
-    /// <summary>
-    /// 加载参数
-    /// </summary>
+    /// <summary>加载参数</summary>
     public record LoadingArgs(string Text = "加载中...");
 
-    /// <summary>
-    /// 抽屉参数
-    /// </summary>
+    /// <summary>抽屉参数</summary>
     public record DrawerFooterButtonArgs(
         string Text,
         string Type = null,
@@ -85,9 +71,7 @@ namespace App.EleUI
         string Action = "close",
         string Handler = null);
 
-    /// <summary>
-    /// 抽屉参数
-    /// </summary>
+    /// <summary>抽屉参数</summary>
     public record DrawerArgs(
         string Title = null,
         string Content = null,
@@ -108,9 +92,7 @@ namespace App.EleUI
         DrawerCloseAction CloseAction = DrawerCloseAction.RefreshData,
         bool? Html = null);
 
-    /// <summary>
-    /// MessageBox 参数
-    /// </summary>
+    /// <summary>MessageBox 参数</summary>
     public record MessageBoxArgs(
         string Text,
         string Title = "提示",
@@ -121,9 +103,7 @@ namespace App.EleUI
         string ClientHandler = null,
         string ServerHandler = null);
 
-    /// <summary>
-    /// InputBox 参数
-    /// </summary>
+    /// <summary>InputBox 参数</summary>
     public record InputBoxArgs(
         string Text,
         string Title = "请输入",
@@ -137,9 +117,7 @@ namespace App.EleUI
         string InputPattern = null,
         string InputErrorMessage = null);
 
-    /// <summary>
-    /// 控件目标类型
-    /// </summary>
+    /// <summary>控件目标类型</summary>
     public enum ControlTargetType
     {
         Field,
@@ -174,7 +152,7 @@ namespace App.EleUI
         public string ControlId { get; set; }
         public string FieldExpress { get; set; }
         public object Value { get; set; }
-        public Newtonsoft.Json.Linq.JObject Form { get; set; }
+        public JsonElement Form { get; set; }
     }
 
     /// <summary>

@@ -26,7 +26,7 @@ namespace App.Pages.EleUISamples
             var nodeName = e?.Value?.Name;
             var nodeId = e?.Value?.Id;
             //return BuildResult(0, $"节点点击成功：{nodeName} (ID={nodeId})");
-            return EleManager.ShowClientNotify($"节点点击成功：您点击了节点 {nodeName} (ID={nodeId})", NotifyType.Info,  "success");
+            return EleManager.ShowNotify($"节点点击成功：您点击了节点 {nodeName} (ID={nodeId})", NotifyType.Info,  "success");
         }
 
         public IActionResult OnPostCheckedChanged([FromBody] JsonElement body)
@@ -34,8 +34,9 @@ namespace App.Pages.EleUISamples
             var e = TreeNodeChangedEvent.Parse(body);
             var nodeName = e?.Value?.Data?.Name;
             var isChecked = e?.Value?.Checked == true;
-            var stateText = isChecked ? "已勾选" : "已取消勾选";
-            return EleManager.ShowClientNotify($"节点勾选状态变化：{nodeName} {stateText}", NotifyType.Info, "info");
+            var isIndeterminate = e?.Value?.Indeterminate == true;
+            var stateText = isChecked ? "已勾选" : (isIndeterminate ? "半选" : "已取消勾选");
+            return EleManager.ShowNotify($"节点勾选状态变化：{nodeName} {stateText}", NotifyType.Info, "info");
         }
 
         private static List<Dept> BuildDeptTree()

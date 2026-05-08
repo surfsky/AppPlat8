@@ -6,7 +6,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using App.Utils;
 //using EntityFramework.Extensions;
-using Newtonsoft.Json;
 
 namespace App.Entities
 {

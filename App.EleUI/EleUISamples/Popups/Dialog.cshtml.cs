@@ -12,7 +12,7 @@ namespace App.Pages.EleUISamples
         public IActionResult OnPostDialogClosed([FromBody] DialogClosedCallbackRequest req)
         {
             var action = (req?.Action ?? string.Empty).Trim().ToLowerInvariant();
-            return EleManager.ShowClientNotify($"服务端回调：Dialog 已关闭（action={action}）", NotifyType.Info, "Dialog Closed");
+            return EleManager.ShowNotify($"服务端回调：Dialog 已关闭（action={action}）", NotifyType.Info, "Dialog Closed");
         }
 
         public class DialogClosedCallbackRequest

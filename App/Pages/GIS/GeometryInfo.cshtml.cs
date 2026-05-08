@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using App.Components;
 using App.DAL;
 using App.DAL.GIS;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
 
 namespace App.Pages.GIS
 {
@@ -40,20 +40,25 @@ namespace App.Pages.GIS
 
             try
             {
-                var token = JToken.Parse(dataJson);
-                if (token is JObject obj)
+                using var doc = JsonDocument.Parse(dataJson);
+                var root = doc.RootElement;
+                if (root.ValueKind == JsonValueKind.Object)
                 {
-                    foreach (var p in obj.Properties())
+                    foreach (var p in root.EnumerateObject())
                         rows.Add((p.Name, FormatToken(p.Value)));
                 }
-                else if (token is JArray arr)
+                else if (root.ValueKind == JsonValueKind.Array)
                 {
-                    for (var i = 0; i < arr.Count; i++)
-                        rows.Add(($"[{i}]", FormatToken(arr[i])));
+                    var i = 0;
+                    foreach (var item in root.EnumerateArray())
+                    {
+                        rows.Add(($"[{i}]", FormatToken(item)));
+                        i++;
+                    }
                 }
                 else
                 {
-                    rows.Add(("value", FormatToken(token)));
+                    rows.Add(("value", FormatToken(root)));
                 }
             }
             catch
@@ -64,16 +69,15 @@ namespace App.Pages.GIS
             return rows;
         }
 
-        private static string FormatToken(JToken token)
+        private static string FormatToken(JsonElement token)
         {
-            if (token == null)
-                return "";
-
             string text;
-            if (token.Type == JTokenType.String)
-                text = token.Value<string>() ?? "";
+            if (token.ValueKind == JsonValueKind.String)
+                text = token.GetString() ?? "";
+            else if (token.ValueKind == JsonValueKind.Null || token.ValueKind == JsonValueKind.Undefined)
+                text = "";
             else
-                text = token.ToString(Newtonsoft.Json.Formatting.None);
+                text = JsonSerializer.Serialize(token);
 
             return NormalizeQuotedText(text);
         }

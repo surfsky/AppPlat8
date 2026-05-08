@@ -478,13 +478,6 @@
             <param name="resourceName">��Դ���ơ���Kingsow.Web.Handlers.WebHandlers.Help.txt</param>
             <param name="type"></param>
         </member>
-        <member name="T:App.HttpApi.LongNumberToStringConverter">
-            <summary>
-            长数字（如long、decimal）字符串序列化。
-            Javascript 的整数是32位的，number类型的安全整数是53位，如果超过53位会被截断。
-            可统一将数据（Int64, UInt64, Decimal）转化为字符串传递给客户端。
-            </summary>
-        </member>
         <member name="T:App.HttpApi.SerializeHelper">
             <summary>
             序列化方法类
@@ -639,11 +632,11 @@
             HttpApi 配置
             </summary>
         </member>
-        <member name="P:App.HttpApi.HttpApiConfig.JsonSetting">
-            <summary>Json Serializer Settings</summary>
+        <member name="P:App.HttpApi.HttpApiConfig.JsonOptions">
+            <summary>System.Text.Json Serializer Options</summary>
         </member>
-        <member name="M:App.HttpApi.HttpApiConfig.GetJsonSetting">
-            <summary>从配置中获取 Json 序列化信息</summary>
+        <member name="M:App.HttpApi.HttpApiConfig.GetJsonOptions">
+            <summary>从配置中获取 System.Text.Json 序列化选项</summary>
         </member>
         <member name="E:App.HttpApi.HttpApiConfig.OnVisit">
             <summary>访问事件（有异常请直接抛出 HttpApiException 异常）</summary>

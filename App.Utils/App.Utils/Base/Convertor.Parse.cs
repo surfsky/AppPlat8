@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml;
@@ -296,7 +296,7 @@ namespace App.Utils
         /// <summary>Parse json to dict</summary>
         public static Dictionary<string, string> ParseJsonDict(string jsonStr)
         {
-            return JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonStr);
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(jsonStr);
         }
 
     }

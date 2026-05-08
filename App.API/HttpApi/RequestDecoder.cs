@@ -1,7 +1,6 @@
 ﻿//using System.Web.Script.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -136,9 +135,6 @@ namespace App.HttpApi
             var str = enc.GetString(buffer);
 
             // 将字符串解析为字典（不知道能否解析复杂类，可能要根据方法的参数类型来强制转换）
-            //object obj = Newtonsoft.Json.JsonConvert.DeserializeObject(str);  // 该方法会将字符串解析成 匿名对象
-            //object obj = new JavaScriptSerializer().DeserializeObject(str); // 该方法会将字符串解析成 Dictionary
-            object obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(str);
             var dict = obj as Dictionary<string, object>;
             */
 

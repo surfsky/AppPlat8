@@ -5,14 +5,13 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace App.Pages.AI
 {
@@ -54,22 +53,14 @@ namespace App.Pages.AI
             if (!messageBuild.Success)
                 return BuildResult(400, messageBuild.ErrorMessage);
 
-            var messages = new JArray();
+            var messages = new List<object>();
             if (!string.IsNullOrWhiteSpace(req.SystemPrompt))
             {
-                messages.Add(new JObject
-                {
-                    ["role"] = "system",
-                    ["content"] = req.SystemPrompt.Trim()
-                });
+                messages.Add(new { role = "system", content = req.SystemPrompt.Trim() });
             }
-            messages.Add(new JObject
-            {
-                ["role"] = "user",
-                ["content"] = messageBuild.Content
-            });
+            messages.Add(new { role = "user", content = messageBuild.Content });
 
-            var payload = new JObject
+            var payload = new Dictionary<string, object>
             {
                 ["model"] = model,
                 ["messages"] = messages,
@@ -83,7 +74,7 @@ namespace App.Pages.AI
 
             using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
-                Content = new StringContent(payload.ToString(Formatting.None), Encoding.UTF8, "application/json")
+                Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
             };
             if (!string.IsNullOrWhiteSpace(cfg.ApiKey))
                 request.Headers.Add("Authorization", $"Bearer {cfg.ApiKey}");
@@ -113,16 +104,42 @@ namespace App.Pages.AI
 
             try
             {
-                var json = JObject.Parse(body);
-                var reply = json["choices"]?[0]?["message"]?["content"]?.ToString();
-                if (string.IsNullOrWhiteSpace(reply))
-                    reply = json["choices"]?[0]?["text"]?.ToString();
+                using var doc = JsonDocument.Parse(body);
+                var root = doc.RootElement;
+
+                string reply = null;
+                if (root.TryGetProperty("choices", out var choices)
+                    && choices.ValueKind == JsonValueKind.Array
+                    && choices.GetArrayLength() > 0)
+                {
+                    var firstChoice = choices[0];
+                    if (firstChoice.TryGetProperty("message", out var message)
+                        && message.ValueKind == JsonValueKind.Object
+                        && message.TryGetProperty("content", out var content))
+                    {
+                        reply = content.ToString();
+                    }
+
+                    if (string.IsNullOrWhiteSpace(reply)
+                        && firstChoice.TryGetProperty("text", out var text))
+                    {
+                        reply = text.ToString();
+                    }
+                }
+
+                var modelName = root.TryGetProperty("model", out var modelNode)
+                    ? modelNode.ToString()
+                    : model;
+
+                object usage = null;
+                if (root.TryGetProperty("usage", out var usageNode))
+                    usage = usageNode.Clone();
 
                 return BuildResult(0, "success", new
                 {
                     reply = reply ?? string.Empty,
-                    model = json["model"]?.ToString() ?? model,
-                    usage = json["usage"]
+                    model = modelName,
+                    usage
                 });
             }
             catch (Exception ex)
@@ -150,21 +167,13 @@ namespace App.Pages.AI
             if (!messageBuild.Success)
                 return BuildResult(400, messageBuild.ErrorMessage);
 
-            var messages = new JArray();
+            var messages = new List<object>();
             if (!string.IsNullOrWhiteSpace(req.SystemPrompt))
             {
-                messages.Add(new JObject
-                {
-                    ["role"] = "system",
-                    ["content"] = req.SystemPrompt.Trim()
-                });
+                messages.Add(new { role = "system", content = req.SystemPrompt.Trim() });
             }
-            messages.Add(new JObject
-            {
-                ["role"] = "user",
-                ["content"] = messageBuild.Content
-            });
-            var payload = new JObject
+            messages.Add(new { role = "user", content = messageBuild.Content });
+            var payload = new Dictionary<string, object>
             {
                 ["model"] = model,
                 ["messages"] = messages,
@@ -178,7 +187,7 @@ namespace App.Pages.AI
 
             using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
-                Content = new StringContent(payload.ToString(Formatting.None), Encoding.UTF8, "application/json")
+                Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
             };
             if (!string.IsNullOrWhiteSpace(cfg.ApiKey))
                 request.Headers.Add("Authorization", $"Bearer {cfg.ApiKey}");
@@ -227,10 +236,26 @@ namespace App.Pages.AI
 
                 try
                 {
-                    var json = JObject.Parse(data);
-                    var delta = json["choices"]?[0]?["delta"]?["content"]?.ToString();
-                    if (string.IsNullOrEmpty(delta))
-                        delta = json["choices"]?[0]?["delta"]?["reasoning_content"]?.ToString();
+                    using var doc = JsonDocument.Parse(data);
+                    var root = doc.RootElement;
+
+                    string delta = null;
+                    if (root.TryGetProperty("choices", out var choices)
+                        && choices.ValueKind == JsonValueKind.Array
+                        && choices.GetArrayLength() > 0)
+                    {
+                        var firstChoice = choices[0];
+                        if (firstChoice.TryGetProperty("delta", out var deltaNode)
+                            && deltaNode.ValueKind == JsonValueKind.Object)
+                        {
+                            if (deltaNode.TryGetProperty("content", out var contentNode))
+                                delta = contentNode.ToString();
+
+                            if (string.IsNullOrEmpty(delta)
+                                && deltaNode.TryGetProperty("reasoning_content", out var reasonNode))
+                                delta = reasonNode.ToString();
+                        }
+                    }
 
                     if (!string.IsNullOrEmpty(delta))
                     {
@@ -293,10 +318,20 @@ namespace App.Pages.AI
 
             try
             {
-                var json = JObject.Parse(body);
-                return json["error"]?["message"]?.ToString()
-                       ?? json["message"]?.ToString()
-                       ?? string.Empty;
+                using var doc = JsonDocument.Parse(body);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("error", out var errorNode)
+                    && errorNode.ValueKind == JsonValueKind.Object
+                    && errorNode.TryGetProperty("message", out var errorMessage))
+                {
+                    return errorMessage.ToString();
+                }
+
+                if (root.TryGetProperty("message", out var messageNode))
+                    return messageNode.ToString();
+
+                return string.Empty;
             }
             catch
             {
@@ -326,9 +361,9 @@ namespace App.Pages.AI
 
             if (imageAttachments.Count > 0)
             {
-                var blocks = new JArray
+                var blocks = new List<object>
                 {
-                    new JObject
+                    new Dictionary<string, object>
                     {
                         ["type"] = "text",
                         ["text"] = message
@@ -340,10 +375,10 @@ namespace App.Pages.AI
                     if (string.IsNullOrWhiteSpace(item.DataUrl))
                         continue;
 
-                    blocks.Add(new JObject
+                    blocks.Add(new Dictionary<string, object>
                     {
                         ["type"] = "image_url",
-                        ["image_url"] = new JObject
+                        ["image_url"] = new Dictionary<string, object>
                         {
                             ["url"] = item.DataUrl
                         }
@@ -355,7 +390,7 @@ namespace App.Pages.AI
                     var docText = BuildDocumentText(item);
                     if (!string.IsNullOrWhiteSpace(docText))
                     {
-                        blocks.Add(new JObject
+                        blocks.Add(new Dictionary<string, object>
                         {
                             ["type"] = "text",
                             ["text"] = docText
@@ -424,16 +459,16 @@ namespace App.Pages.AI
         private sealed class BuiltMessageContent
         {
             public bool Success { get; private set; }
-            public JToken Content { get; private set; }
+            public object Content { get; private set; }
             public string ErrorMessage { get; private set; }
 
-            public static BuiltMessageContent Ok(JToken content) => new BuiltMessageContent
+            public static BuiltMessageContent Ok(object content) => new BuiltMessageContent
             {
                 Success = true,
                 Content = content
             };
 
-            public static BuiltMessageContent Ok(string content) => Ok(new JValue(content ?? string.Empty));
+            public static BuiltMessageContent Ok(string content) => Ok(content ?? string.Empty);
 
             public static BuiltMessageContent Fail(string error) => new BuiltMessageContent
             {

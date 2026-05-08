@@ -4,7 +4,6 @@ using System.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
 using App.Entities;
 using App.Utils;
-using Newtonsoft.Json;
 
 namespace App.DAL
 {

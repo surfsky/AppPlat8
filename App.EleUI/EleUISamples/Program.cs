@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // running outside Development (current run mode is often Production).
 builder.WebHost.UseStaticWebAssets();
 
-builder.Services
+var razorPages = builder.Services
     .AddRazorPages()
     .AddRazorPagesOptions(options =>
     {
@@ -28,6 +28,11 @@ builder.Services
         });
     })
     .AddApplicationPart(typeof(EleAppTagHelper).Assembly);
+
+if (builder.Environment.IsDevelopment())
+{
+    razorPages.AddRazorRuntimeCompilation();
+}
 
 var app = builder.Build();
 

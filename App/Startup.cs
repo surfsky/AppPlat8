@@ -15,7 +15,6 @@ using App.DAL;
 using App.Components;
 using App.Entities;
 using App.Pages.Chats;
-using Newtonsoft.Json;
 using System.Linq;
 
 namespace App
@@ -58,7 +57,7 @@ namespace App
                 // GIS: 新路由语义化，同时兼容旧页面路径
                 options.Conventions.AddPageRoute("/GIS/Regions", "GIS/Geometries");
                 options.Conventions.AddPageRoute("/GIS/RegionForm", "GIS/GeometryForm");
-            }).AddNewtonsoftJson();       // JSON settings for Razor Pages.TODO: 如何设置序列化的一些规则，如日期格式、枚举格式、CamelCase等？
+            });
             services.AddServerSideBlazor();                     // Blazor
             services.AddBootstrapBlazor();                      // BootstrapBlazor
             services.AddSignalR(op =>

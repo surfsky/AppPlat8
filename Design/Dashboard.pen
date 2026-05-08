@@ -1,5 +1,5 @@
 {
-  "version": "2.7",
+  "version": "2.11",
   "children": [
     {
       "type": "frame",
@@ -890,6 +890,92 @@
               "fontWeight": "normal"
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "ylXZn",
+      "x": -6,
+      "y": 992,
+      "name": "Frame 1",
+      "clip": true,
+      "width": 772,
+      "height": 1414,
+      "fill": "#FFFFFF",
+      "layout": "none",
+      "children": [
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "WoHrV",
+          "x": 48,
+          "y": 86,
+          "width": 422,
+          "height": 181,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#000000ff"
+          }
+        },
+        {
+          "type": "text",
+          "id": "g8SuJq",
+          "x": 221,
+          "y": 38,
+          "fill": "#000000",
+          "content": "Manager",
+          "fontFamily": "Inter",
+          "fontSize": 18,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "bXqRx",
+          "x": 90,
+          "y": 121,
+          "fill": "#000000",
+          "content": "管理器（Manager）\n\n管理器（ManagerServerHandler）\n\n主题切换（Theme/DarkMode）",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "rectangle",
+          "cornerRadius": 8,
+          "id": "e8aszZ",
+          "x": 50,
+          "y": 337,
+          "width": 422,
+          "height": 181,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#000000ff"
+          }
+        },
+        {
+          "type": "text",
+          "id": "i4NUQ",
+          "x": 223,
+          "y": 289,
+          "fill": "#000000",
+          "content": "Layout",
+          "fontFamily": "Inter",
+          "fontSize": 18,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "V5CChJ",
+          "x": 92,
+          "y": 372,
+          "fill": "#000000",
+          "content": "Row\n\nColumn\n\nGrid",
+          "fontFamily": "Inter",
+          "fontSize": 16,
+          "fontWeight": "normal"
         }
       ]
     }
