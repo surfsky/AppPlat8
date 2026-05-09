@@ -4,6 +4,9 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "GIS驾驶舱";
+
+    // 地图中心和缩放级别
+    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
     var mapCenterText = (SiteConfig.Instance.MapCenter ?? string.Empty).Replace("，", ",").Trim();
     var mapCenterLng = 120.6034;
     var mapCenterLat = 27.5686;
@@ -18,477 +21,22 @@
             mapCenterLat = parsedLat;
         }
     }
-    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
 }
 
 @section head {
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
+    <link rel="stylesheet" href="/css/gis-index.css?v=@DateTime.Now.Ticks" />
     <script src="/js/maphelper.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/js/gis-index-data.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/js/gis-index-action.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/js/gis-index-map.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/js/gis-index-object.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/js/gis-index-detail.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/js/gis-panel-element.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/js/gis-index-ui.js?v=@DateTime.Now.Ticks"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111827; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(148, 163, 184, 0.24);
-            border-radius: 8px;
-            padding: 16px;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-        }
-        .header-bar {
-            position: absolute;
-            top: -10px;
-            left: 0;
-            width: 100%;
-            height: 96px;
-            /*background: linear-gradient(to bottom, rgba(255,255,255,0.92), rgba(255,255,255,0));*/
-            background-image: url("/gis/head.png");
-            background-size: cover;
-            background-position: center;
-            opacity: 0.95;
-
-
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .header-title {
-            display: inline-flex;
-            align-items: center;
-            gap: 26px;
-            padding: 10px 18px;
-            color: white;
-            opacity: 0.95;
-            font-size: 36px;
-            font-family: 'Times New Roman', Times, serif, '方正小标宋简';
-            letter-spacing: .08em;
-        }
-        .header-datetime {
-            color: #f8fafc;
-            opacity: 0.96;
-            font-size: 18px;
-            font-family: 'DIN Alternate', 'Arial Narrow', Arial, sans-serif;
-            font-weight: 700;
-            line-height: 1.2;
-            white-space: pre-line;
-            text-shadow: 0 2px 10px rgba(15, 23, 42, 0.32);
-            user-select: none;
-            letter-spacing: 0.02em;
-        }
-        .header-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: #2563eb;
-            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.16);
-        }
-        .map-toolbar {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 11;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(148, 163, 184, 0.28);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
-            transition: all .25s ease;
-        }
-        .map-toolbar.toolbar-collapsed {
-            opacity: 0;
-            pointer-events: none;
-            transform: translateX(-50%) translateY(20px);
-        }
-        .view-menu {
-            position: absolute;
-            top: 68px;
-            left: 70px;
-            z-index: 12;
-            min-width: 156px;
-            padding: 8px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid rgba(148, 163, 184, 0.32);
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-6px);
-            transition: all .2s ease;
-        }
-        .view-menu.menu-visible {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-        }
-        .view-menu-item {
-            width: 100%;
-            text-align: left;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            background: transparent;
-            color: #0f172a;
-            font-size: 13px;
-            padding: 7px 9px;
-            cursor: pointer;
-            margin: 2px 0;
-        }
-        .view-menu-item:hover {
-            background: #eff6ff;
-            border-color: #bfdbfe;
-        }
-        .view-menu-item.active {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: #fff;
-        }
-        .toolbar-btn {
-            border: 1px solid #cbd5e1;
-            background: #fff;
-            color: #0f172a;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 12px;
-            line-height: 1;
-            cursor: pointer;
-        }
-        .toolbar-btn:hover { background: #f8fafc; }
-        .toolbar-btn.active {
-            border-color: #2563eb;
-            color: #fff;
-            background: #2563eb;
-        }
-        .toolbar-input {
-            width: 220px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 12px;
-            color: #111827;
-            outline: none;
-            background: #fff;
-        }
-        .panel-left {
-            position: absolute;
-            top: 80px;
-            left: 20px;
-            bottom: 20px;
-            width: 320px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            transition: transform .25s ease, opacity .25s ease;
-        }
-        .panel-left .glass-panel {
-            height: 100%;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        .panel-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .panel-head h2 {
-            margin: 0;
-        }
-        .panel-minimize-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.45);
-            background: #ffffff;
-            color: #334155;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all .2s ease;
-        }
-        .panel-minimize-btn:hover {
-            color: #1d4ed8;
-            border-color: #93c5fd;
-            background: #eff6ff;
-        }
-        .panel-left.panel-hidden {
-            transform: translateX(-125%);
-            opacity: 0;
-            pointer-events: none;
-        }
-        .layer-tree {
-            flex: 1;
-            overflow: auto;
-            font-size: 13px;
-        }
-        .menu-tree-wrap {
-            border: 1px solid rgba(148, 163, 184, 0.25);
-            border-radius: 8px;
-            background: rgba(248, 250, 252, 0.8);
-            padding: 8px;
-            margin-bottom: 10px;
-        }
-        .menu-node {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 6px;
-            border-radius: 6px;
-            margin-bottom: 2px;
-        }
-        .menu-node:hover {
-            background: #eff6ff;
-        }
-        .menu-node-check {
-            width: 15px;
-            height: 15px;
-            accent-color: #2563eb;
-            cursor: pointer;
-        }
-        .menu-node-label {
-            flex: 1;
-            text-align: left;
-            border: none;
-            background: transparent;
-            color: #0f172a;
-            font-size: 13px;
-            padding: 0;
-            cursor: pointer;
-        }
-        .menu-node-label:hover {
-            color: #1d4ed8;
-        }
-        .menu-node-count {
-            min-width: 18px;
-            height: 18px;
-            padding: 0 6px;
-            border-radius: 999px;
-            background: #e2e8f0;
-            color: #334155;
-            font-size: 11px;
-            line-height: 18px;
-            text-align: center;
-        }
-        .menu-node-count.empty {
-            background: #f1f5f9;
-            color: #94a3b8;
-        }
-        .menu-empty {
-            font-size: 12px;
-            color: #94a3b8;
-            padding: 6px;
-        }
-        .geo-detail-drawer {
-            position: absolute;
-            top: 0;
-            right: -460px;
-            width: 440px;
-            bottom: 0;
-            z-index: 30;
-            background: rgba(255, 255, 255, 0.98);
-            border-left: 1px solid rgba(148, 163, 184, 0.35);
-            box-shadow: -8px 0 24px rgba(15, 23, 42, 0.16);
-            transition: right .25s ease;
-            display: flex;
-            flex-direction: column;
-        }
-        .geo-detail-drawer.open {
-            right: 0;
-        }
-        .geo-drawer-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .geo-drawer-body {
-            flex: 1;
-            overflow: auto;
-            padding: 12px 16px;
-            font-size: 13px;
-            color: #1f2937;
-        }
-        .geo-drawer-foot {
-            padding: 10px 16px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-        .geo-kv {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .geo-kv td {
-            border: 1px solid #e2e8f0;
-            padding: 6px 8px;
-            vertical-align: top;
-            word-break: break-all;
-        }
-        .geo-kv td:first-child {
-            width: 110px;
-            font-size: 12px;
-            color: #64748b;
-            background: #f8fafc;
-            font-weight: 600;
-        }
-        .geo-data-table {
-            width: 100%;
-            margin-top: 8px;
-            border-collapse: collapse;
-        }
-        .geo-data-table th,
-        .geo-data-table td {
-            border: 1px solid #e2e8f0;
-            padding: 6px 8px;
-            text-align: left;
-            vertical-align: top;
-            word-break: break-all;
-        }
-        .geo-data-table th {
-            background: #f8fafc;
-            color: #64748b;
-            font-size: 12px;
-        }
-        .floating-toggle-group {
-            position: absolute;
-            top: 18px;
-            left: 20px;
-            z-index: 12;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .floating-toggle {
-            width: 42px;
-            height: 42px;
-            border: 1px solid rgba(148, 163, 184, 0.4);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.95);
-            color: #1e3a8a;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .floating-toggle .toggle-icon {
-            font-size: 18px;
-            line-height: 1;
-            width: 1em;
-            text-align: center;
-        }
-        .floating-toggle.active {
-            background: #2563eb;
-            color: #fff;
-            border-color: #2563eb;
-        }
-        .map-center-ctrl {
-            min-width: 170px;
-            padding: 6px 10px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.94);
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14);
-            color: #0f172a;
-            font-size: 12px;
-            line-height: 1.2;
-            user-select: none;
-            white-space: nowrap;
-        }
-        .mapboxgl-ctrl-group .mapboxgl-ctrl-icon.fa-solid {
-            font-size: 14px;
-            line-height: 30px;
-            color: #1e3a8a;
-        }
-        .geometry-point-marker {
-            position: relative;
-            width: 0;
-            height: 0;
-            cursor: pointer;
-            user-select: none;
-            pointer-events: auto;
-        }
-        .geometry-point-marker .marker-icon {
-            position: absolute;
-            left: -12px;
-            top: -24px;
-            width: 24px;
-            height: 24px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.35));
-        }
-        .geometry-point-marker .dot-fallback {
-            position: absolute;
-            left: -6px;
-            top: -6px;
-            width: 12px;
-            height: 12px;
-            border-radius: 999px;
-            background: #2563eb;
-            border: 2px solid #fff;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.55);
-        }
-        .geometry-point-marker .marker-label {
-            position: absolute;
-            left: 10px;
-            top: -12px;
-            color: #0f172a;
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(148, 163, 184, 0.45);
-            border-radius: 10px;
-            padding: 1px 8px;
-            font-size: 12px;
-            line-height: 1.4;
-            white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
-        }
-        @@media (max-width: 768px) {
-            .header-bar { height: 76px; }
-            .header-title { font-size: 28px; padding: 8px 12px; }
-            .header-datetime { display: none; }
-            .panel-left {
-                width: 260px;
-                top: 92px;
-                bottom: 20px;
-                left: 10px;
-            }
-            .map-toolbar {
-                width: calc(100% - 20px);
-                left: 10px;
-                transform: none;
-                justify-content: flex-start;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-            .view-menu {
-                left: 56px;
-                top: 58px;
-                min-width: 140px;
-            }
-            .toolbar-input { width: 180px; }
-            .floating-toggle-group {
-                left: 10px;
-                top: 12px;
-            }
-            .geo-detail-drawer {
-                width: 100%;
-                right: -100%;
-            }
-        }
-    </style>
 }
 
 @section body {
@@ -516,6 +64,9 @@
         <button id="btn-toolbar-toggle" class="floating-toggle" title="工具栏" aria-label="显示/隐藏工具栏">
             <i class="fa-solid fa-screwdriver-wrench toggle-icon"></i>
         </button>
+        <button id="btn-stats-toggle" class="floating-toggle" title="统计" aria-label="显示/隐藏统计面板">
+            <i class="fa-solid fa-chart-column toggle-icon"></i>
+        </button>
     </div>
     <div id="view-menu" class="view-menu" aria-label="视图菜单">
         <button id="btn-style-street" class="view-menu-item active">默认视图</button>
@@ -526,29 +77,31 @@
     </div>
 
     <div id="layer-panel" class="panel-left">
-        <div class="glass-panel">
-            <div class="panel-head">
-                <h2 class="text-lg font-bold border-l-4 border-cyan-500 pl-2">图层</h2>
-                <button id="btn-layer-minimize" class="panel-minimize-btn" title="最小化图层面板" aria-label="最小化图层面板">
-                    <i class="fa-solid fa-minus"></i>
-                </button>
-            </div>
+        <gis-panel class="layer-gis-panel" title="图层" width="100%" height="100%">
             <div class="layer-tree">
                 <div id="menu-tree" class="menu-tree-wrap"></div>
             </div>
+        </gis-panel>
+    </div>
+
+    <div id="stats-overlay" class="stats-overlay" aria-label="统计面板">
+        <div class="stats-column stats-column-left">
+            <gis-panel class="stats-gis-panel" title="应急资源" info="应急资源信息" content="接入应急队伍、物资仓库、避难场所等关键资源统计信息。" width="100%" height="100%"></gis-panel>
+            <gis-panel class="stats-gis-panel" title="风险监测" info="风险监测信息" content="展示灾害风险点、重点防御单元和当前监测预警态势。" width="100%" height="100%"></gis-panel>
+            <gis-panel class="stats-gis-panel" title="处置效率" info="处置效率信息" content="汇总事件响应时长、处置进度和闭环率等核心效率指标。" width="100%" height="100%"></gis-panel>
+        </div>
+        <div class="stats-column stats-column-right">
+            <gis-panel class="stats-gis-panel" title="事件总览" info="事件总览信息" content="按类型、区域、时间维度展示事件总量与趋势变化。" width="100%" height="100%"></gis-panel>
+            <gis-panel class="stats-gis-panel" title="联动单位" info="联动单位信息" content="统计部门协同、任务下发与跨单位联动执行情况。" width="100%" height="100%"></gis-panel>
+            <gis-panel class="stats-gis-panel" title="值守状态" info="值守状态信息" content="显示当班力量、值守在线状态和关键岗位覆盖情况。" width="100%" height="100%"></gis-panel>
         </div>
     </div>
 
-    <aside id="geo-detail-drawer" class="geo-detail-drawer" aria-label="图形详情">
-        <div class="geo-drawer-head">
-            <strong id="geo-detail-title">图形详情</strong>
-            <button id="btn-geo-close" class="toolbar-btn">关闭</button>
-        </div>
-        <div id="geo-detail-body" class="geo-drawer-body">请选择图形</div>
-        <div class="geo-drawer-foot">
-            <button id="btn-geo-edit" class="toolbar-btn" style="display:none;">编辑</button>
-        </div>
-    </aside>
+    <div id="geo-detail-panel" class="geo-detail-panel" aria-label="图形详情">
+        <gis-panel id="geo-detail-gis-panel" class="geo-detail-gis-panel" title="点位信息" width="100%" height="100%" closable="true" close-label="关闭">
+            <div id="geo-detail-body" class="geo-detail-body">请选择图形</div>
+        </gis-panel>
+    </div>
 }
 
 @section script {
@@ -573,8 +126,15 @@
             is3D: false,
             toolbarCollapsed: true,
             layerCollapsed: false,
-            viewMenuOpen: false
+            viewMenuOpen: false,
+            statsMode: false
         };
+        const GisIndexUI = window.GisIndexUI;
+        const GisIndexData = window.GisIndexData;
+        const GisIndexAction = window.GisIndexAction;
+        const GisIndexMap = window.GisIndexMap;
+        const GisIndexObject = window.GisIndexObject;
+        const GisIndexDetail = window.GisIndexDetail;
 
 
         //--------------------------------------------------------------
@@ -595,7 +155,39 @@
             style: 'mapbox://styles/mapbox/streets-v12',
             center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
             zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
-            pitch: 0
+            pitch: 0,
+            attributionControl: false
+        });
+        const dataApi = GisIndexData.create({
+            state,
+            map,
+            getGeometryLayerManager: () => geometryLayerManager,
+            onGeometryMarkerClick: (id) => openGeometryDetailDrawer(id)
+        });
+        const actionApi = GisIndexAction.create({
+            map,
+            state,
+            geometryDisplayLayerIds,
+            onOpenGeometryDetail: (id) => openGeometryDetailPanel(id),
+            onCloseGeometryDetail: () => closeGeometryDetailPanel()
+        });
+        const mapApi = GisIndexMap.create({
+            map,
+            state,
+            terrainSourceId,
+            center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
+            zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
+            closeViewMenu: () => closeViewMenu()
+        });
+        const objectApi = GisIndexObject.create({
+            map,
+            state,
+            onOpenDetail: (id) => openCheckObjectDrawer(id)
+        });
+        const detailApi = GisIndexDetail.create({
+            panelId: 'geo-detail-panel',
+            bodyId: 'geo-detail-body',
+            endpointBuilder: (id) => `?handler=GeometryDetail&id=${encodeURIComponent(id)}`
         });
         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
         map.addControl(new mapboxgl.GeolocateControl({
@@ -604,13 +196,14 @@
             showUserHeading: true
         }), 'top-right');
         map.addControl(new mapboxgl.ScaleControl({ unit: 'metric' }), 'bottom-left');
-        const centerCoordControl = createCenterCoordControl();
+        map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
+        const centerCoordControl = mapApi.createCenterCoordControl();
         map.addControl(centerCoordControl, 'bottom-right');
-        map.addControl(createResetControl(resetView), 'top-right');
+        map.addControl(mapApi.createResetControl(resetView), 'top-right');
         map.addControl(new mapboxgl.FullscreenControl({ container: document.documentElement }), 'top-right');
         map.on('move', () => centerCoordControl.update());
         map.on('load', async () => {
-            const mapHelperReady = await ensureMapGeometryHelperReady();
+            const mapHelperReady = await mapApi.ensureMapGeometryHelperReady();
             if (!mapHelperReady) {
                 EleManager.showError('地图图形组件加载失败');
                 return;
@@ -626,7 +219,7 @@
             // loadObjects();
             await loadMenus();
             await loadGeometries();
-            applyChineseLabels();
+            mapApi.applyChineseLabels();
 
             // 初始化按钮
             startHeaderDatetime();
@@ -637,13 +230,8 @@
             });
             document.getElementById('btn-toolbar-toggle').addEventListener('click', toggleToolbar);
             document.getElementById('btn-layer-toggle').addEventListener('click', toggleLayerPanel);
-            document.getElementById('btn-layer-minimize').addEventListener('click', () => {
-                if (!state.layerCollapsed) {
-                    state.layerCollapsed = true;
-                    syncLayerPanelUI();
-                }
-            });
-            document.getElementById('btn-geo-close').addEventListener('click', closeGeometryDetailDrawer);
+            document.getElementById('btn-stats-toggle').addEventListener('click', toggleStatsMode);
+            document.getElementById('geo-detail-gis-panel').addEventListener('panel-close', closeGeometryDetailDrawer);
             document.getElementById('address-input').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') searchAddress();
             });
@@ -652,8 +240,8 @@
             document.getElementById('btn-style-dark').addEventListener('click', () => switchStyle('dark'));
             document.getElementById('btn-style-night').addEventListener('click', () => switchStyle('night'));
             document.getElementById('btn-toggle-3d').addEventListener('click', () => {
-                if (state.is3D) disable3DBuildings();
-                else enable3DBuildings();
+                if (state.is3D) mapApi.disable3DBuildings();
+                else mapApi.enable3DBuildings();
                 closeViewMenu();
             });
 
@@ -670,11 +258,12 @@
             syncToolbarUI();
             syncLayerPanelUI();
             syncViewMenuUI();
+            syncStatsModeUI();
         });
 
         map.on('style.load', async () => {
-            applyChineseLabels();
-            buildMarkers(state.objects);
+            mapApi.applyChineseLabels();
+            objectApi.buildMarkers(state.objects);
             if (geometryLayerManager) {
                 geometryLayerManager.setDataFromRows(state.geometries || []);
                 geometryLayerManager.render();
@@ -685,730 +274,64 @@
                 await loadGeometries();
             }
             map.once('idle', () => applyGeometryVisibility());
-            if (state.is3D) enable3DBuildings();
+            if (state.is3D) mapApi.enable3DBuildings();
 
-            setLayerVisible(true);
+            objectApi.setLayerVisible(true);
             renderMenuTree();
         });
 
         //--------------------------------------------------------------
         // 地图控制和交互
         //--------------------------------------------------------------
-        // apply chinese labels
-        function applyChineseLabels() {
-            const style = map.getStyle();
-            if (!style || !Array.isArray(style.layers)) return;
-            style.layers.forEach(layer => {
-                if (layer.type !== 'symbol') return;
-                const textField = map.getLayoutProperty(layer.id, 'text-field');
-                if (!textField) return;
-                if (typeof textField !== 'string') return;
-                try {
-                    map.setLayoutProperty(layer.id, 'text-field', [
-                        'coalesce',
-                        ['get', 'name_zh-Hans'],
-                        ['get', 'name_zh'],
-                        ['get', 'name'],
-                        ''
-                    ]);
-                } catch {
-                    // ignore incompatible text-field expression
-                }
-            });
-        }
-
-        // Create a custom control to display the current center coordinates of the map
-        function createCenterCoordControl() {
-            let container = null;
-            const setText = () => {
-                if (!container) return;
-                const center = map.getCenter();
-                const zoom = map.getZoom().toFixed(0);
-                container.textContent = `${zoom}: ${center.lng.toFixed(6)}， ${center.lat.toFixed(6)}`;
-            };
-
-            return {
-                onAdd() {
-                    container = document.createElement('div');
-                    container.className = 'mapboxgl-ctrl map-center-ctrl';
-                    setText();
-                    return container;
-                },
-                onRemove() {
-                    if (container && container.parentNode) {
-                        container.parentNode.removeChild(container);
-                    }
-                    container = null;
-                },
-                update: setText
-            };
-        }
-
-        function createResetControl(onReset) {
-            let container = null;
-
-            return {
-                onAdd() {
-                    container = document.createElement('div');
-                    container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
-
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'mapboxgl-ctrl-icon fa-solid fa-rotate-right';
-                    button.title = '复位地图';
-                    button.setAttribute('aria-label', '复位地图');
-                    button.addEventListener('click', onReset);
-
-                    container.appendChild(button);
-                    return container;
-                },
-                onRemove() {
-                    if (container && container.parentNode) {
-                        container.parentNode.removeChild(container);
-                    }
-                    container = null;
-                }
-            };
-        }
-
-        let headerDatetimeTimer = null;
-        function startHeaderDatetime() {
-            const output = document.getElementById('header-datetime');
-            if (!output) return;
-
-            const render = () => {
-                const now = new Date();
-                const y = now.getFullYear();
-                const m = String(now.getMonth() + 1).padStart(2, '0');
-                const d = String(now.getDate()).padStart(2, '0');
-                const hh = String(now.getHours()).padStart(2, '0');
-                const mm = String(now.getMinutes()).padStart(2, '0');
-                const ss = String(now.getSeconds()).padStart(2, '0');
-                output.textContent = `${y}年${m}月${d}日\n${hh}:${mm}:${ss}`;
-            };
-
-            render();
-            if (headerDatetimeTimer) clearInterval(headerDatetimeTimer);
-            headerDatetimeTimer = setInterval(render, 1000);
-        }
-
-        async function ensureMapGeometryHelperReady() {
-            if (window.MapGeometryHelper && typeof window.MapGeometryHelper.createDisplayLayerManager === 'function') {
-                return true;
-            }
-
-            const dynamicScriptKey = 'maphelper-runtime-loader';
-            if (!document.getElementById(dynamicScriptKey)) {
-                const script = document.createElement('script');
-                script.id = dynamicScriptKey;
-                script.src = `/js/maphelper.js?v=${Date.now()}`;
-                document.head.appendChild(script);
-            }
-
-            const started = Date.now();
-            while (Date.now() - started < 6000) {
-                if (window.MapGeometryHelper && typeof window.MapGeometryHelper.createDisplayLayerManager === 'function') {
-                    return true;
-                }
-                await new Promise(resolve => setTimeout(resolve, 120));
-            }
-
-            return false;
-        }
-
-        /** 启用 3D 地图效果*/
-        function ensureTerrainEnabled() {
-            if (!map.getSource(terrainSourceId)) {
-                map.addSource(terrainSourceId, {
-                    type: 'raster-dem',
-                    url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-                    tileSize: 512,
-                    maxzoom: 14
-                });
-            }
-
-            map.setTerrain({ source: terrainSourceId, exaggeration: 1.25 });
-            map.setFog({
-                color: 'rgb(186, 210, 235)',
-                'high-color': 'rgb(36, 92, 223)',
-                'horizon-blend': 0.08
-            });
-        }
-
-        function enable3DBuildings() {
-            ensureTerrainEnabled();
-            const layers = map.getStyle().layers;
-            const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
-            if (!map.getLayer('3d-buildings')) {
-                map.addLayer({
-                    id: '3d-buildings',
-                    source: 'composite',
-                    'source-layer': 'building',
-                    filter: ['==', 'extrude', 'true'],
-                    type: 'fill-extrusion',
-                    minzoom: 15,
-                    paint: {
-                        'fill-extrusion-color': '#94a3b8',
-                        'fill-extrusion-height': ['get', 'height'],
-                        'fill-extrusion-base': ['get', 'min_height'],
-                        'fill-extrusion-opacity': 0.55
-                    }
-                }, labelLayerId);
-            }
-            map.easeTo({ pitch: 60, bearing: -18, duration: 600 });
-            state.is3D = true;
-            document.getElementById('btn-toggle-3d').classList.add('active');
-        }
-
-        function disable3DBuildings() {
-            map.setTerrain(null);
-            if (map.getLayer('3d-buildings')) {
-                map.removeLayer('3d-buildings');
-            }
-            map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
-            state.is3D = false;
-            document.getElementById('btn-toggle-3d').classList.remove('active');
-        }
-
-        /** 切换地图样式*/
-        function switchStyle(type) {
-            state.preservedVisibleGeometryIds = new Set(
-                state.geometries
-                    .filter(g => state.geometryVisibleMap.get(g.id) !== false)
-                    .map(g => String(g.id))
-            );
-            state.currentStyle = type;
-            const styleMap = {
-                street: 'mapbox://styles/mapbox/streets-v12',
-                satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
-                dark: 'mapbox://styles/mapbox/dark-v11',
-                night: 'mapbox://styles/mapbox/navigation-night-v1'
-            };
-            map.setStyle(styleMap[type] || styleMap.street);
-            document.getElementById('btn-style-street').classList.toggle('active', type === 'street');
-            document.getElementById('btn-style-sat').classList.toggle('active', type === 'satellite');
-            document.getElementById('btn-style-dark').classList.toggle('active', type === 'dark');
-            document.getElementById('btn-style-night').classList.toggle('active', type === 'night');
-            closeViewMenu();
-        }
-
-        /** 地址搜索*/
-        async function searchAddress() {
-            const input = document.getElementById('address-input');
-            const keyword = (input?.value || '').trim();
-            if (!keyword) return;
-            const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(keyword)}.json?access_token=${encodeURIComponent(mapboxgl.accessToken)}&language=zh-Hans&limit=1`;
-            try {
-                const resp = await fetch(endpoint);
-                const data = await resp.json();
-                const feature = data?.features?.[0];
-                if (!feature) {
-                    EleManager.showWarning('未找到该地址');
-                    return;
-                }
-                const [lng, lat] = feature.center;
-                map.flyTo({ center: [lng, lat], zoom: 15, speed: 0.9 });
-            } catch {
-                EleManager.showError('地址搜索失败');
-            }
-        }
+        function startHeaderDatetime() { GisIndexUI.startHeaderDatetime('header-datetime'); }
+        function switchStyle(type) { mapApi.switchStyle(type); }
+        function resetView() { mapApi.resetView(); }
+        async function searchAddress() { return mapApi.searchAddress(); }
 
         //--------------------------------------------------------------
-        // 工具栏和视图控制
+        // 工具栏和视图控制（拆分至 /js/gis-index-ui.js）
         //--------------------------------------------------------------
-        /** 切换工具栏显示状态*/
-        function toggleToolbar() {
-            state.toolbarCollapsed = !state.toolbarCollapsed;
-            syncToolbarUI();
-        }
-
-        function syncToolbarUI() {
-            const toolbar = document.querySelector('.map-toolbar');
-            const toggleBtn = document.getElementById('btn-toolbar-toggle');
-            toolbar.classList.toggle('toolbar-collapsed', state.toolbarCollapsed);
-            if (toggleBtn) {
-                toggleBtn.classList.toggle('active', !state.toolbarCollapsed);
-                toggleBtn.title = state.toolbarCollapsed ? '展开工具栏' : '收起工具栏';
-            }
-        }
-
-        /** 切换图层面板显示状态*/
-        function toggleLayerPanel() {
-            state.layerCollapsed = !state.layerCollapsed;
-            syncLayerPanelUI();
-        }
-
-        function syncLayerPanelUI() {
-            const panel = document.getElementById('layer-panel');
-            const toggleBtn = document.getElementById('btn-layer-toggle');
-            panel.classList.toggle('panel-hidden', state.layerCollapsed);
-            if (toggleBtn) {
-                toggleBtn.classList.toggle('active', !state.layerCollapsed);
-                toggleBtn.title = state.layerCollapsed ? '展开图层列表' : '收起图层列表';
-            }
-        }
-
-        /** 切换视图菜单显示状态*/
-        function toggleViewMenu() {
-            state.viewMenuOpen = !state.viewMenuOpen;
-            syncViewMenuUI();
-        }
-
-        function closeViewMenu() {
-            state.viewMenuOpen = false;
-            syncViewMenuUI();
-        }
-
-        function syncViewMenuUI() {
-            const menu = document.getElementById('view-menu');
-            const toggleBtn = document.getElementById('btn-view-toggle');
-            if (menu) menu.classList.toggle('menu-visible', state.viewMenuOpen);
-            if (toggleBtn) {
-                toggleBtn.classList.toggle('active', state.viewMenuOpen);
-                toggleBtn.title = state.viewMenuOpen ? '收起视图菜单' : '展开视图菜单';
-            }
-        }
-
-        /** 重置视图*/
-        function resetView() {
-            // 仅复位视图参数，不切换样式与图层状态
-            map.easeTo({
-                center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
-                zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
-                pitch: 0,
-                bearing: 0,
-                duration: 500
-            });
-        }
+        function toggleToolbar() { GisIndexUI.toggleToolbar(state); }
+        function syncToolbarUI() { GisIndexUI.syncToolbarUI(state); }
+        function toggleLayerPanel() { GisIndexUI.toggleLayerPanel(state);}
+        function syncLayerPanelUI() { GisIndexUI.syncLayerPanelUI(state); }
+        function toggleViewMenu() { GisIndexUI.toggleViewMenu(state); }
+        function closeViewMenu() { GisIndexUI.closeViewMenu(state); }
+        function syncViewMenuUI() { GisIndexUI.syncViewMenuUI(state); }
+        function syncStatsModeUI() { GisIndexUI.syncStatsModeUI(state); }
+        function toggleStatsMode() { actionApi.toggleStatsMode(); }
 
         //--------------------------------------------------------------
         // 检查对象相关
         //--------------------------------------------------------------
         /** 打开检查对象详情抽屉*/
-        function openCheckObjectDrawer(id) {
-            if (!id) return;
-            const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
-            if (!manager || typeof manager.openDrawer !== 'function') {
-                window.open(`/Checks/CheckObjectForm?id=${id}&md=view`, '_blank');
-                return;
-            }
-            manager.openDrawer({
-                title: '检查对象详情',
-                url: `/Checks/CheckObjectForm?id=${id}&md=view`,
-                direction: 'rtl',
-                size: window.innerWidth < 768 ? '100%' : '25%',
-                resizable: true,
-                closeOnClickModal: false,
-                destroyOnClose: true
-            });
-        }
+        function openCheckObjectDrawer(id) { actionApi.openCheckObjectDrawer(id); }
+        function selectObject(item, openDrawer = true) { return objectApi.selectObject(item, openDrawer); }
+        async function loadObjects() { return objectApi.loadObjects(); }
+        function buildMarkers(items) { return objectApi.buildMarkers(items); }
+        function setLayerVisible(visible) { return objectApi.setLayerVisible(visible); }
 
-        /** 选择检查对象*/
-        function selectObject(item, openDrawer = true) {
-            if (!item) return;
-            state.selectedId = item.id;
-            if (openDrawer) openCheckObjectDrawer(item.id);
-        }
-
-        /** 加载检查对象数据*/
-        async function loadObjects() {
-            const resp = await fetch('?handler=LayerData');
-            const res = await resp.json();
-            if (res.code !== 0 || !Array.isArray(res.data)) return;
-
-            state.objects = res.data;
-            buildMarkers(state.objects);
-            if (state.objects.length > 0) selectObject(state.objects[0], false);
-        }
-
-        /** 构建地图上的标记*/
-        function buildMarkers(items) {
-            state.markerMap.forEach(marker => marker.remove());
-            state.markerMap.clear();
-
-            items.forEach(item => {
-                const el = document.createElement('div');
-                el.style.width = '26px';
-                el.style.height = '26px';
-                el.style.borderRadius = '999px';
-                el.style.background = 'linear-gradient(135deg,#60a5fa,#1d4ed8)';
-                el.style.border = '2px solid rgba(255,255,255,0.85)';
-                el.style.boxShadow = '0 0 12px rgba(96,165,250,0.7)';
-                el.style.cursor = 'pointer';
-                el.title = item.name || '检查对象';
-                el.addEventListener('click', () => selectObject(item, true));
-
-                const marker = new mapboxgl.Marker(el).setLngLat([item.lng, item.lat]).addTo(map);
-                state.markerMap.set(item.id, marker);
-            });
-        }
-
-        /** 设置标记图层是否可见*/
-        function setLayerVisible(visible) {
-            state.markerMap.forEach(marker => {
-                marker.getElement().style.display = visible ? '' : 'none';
-            });
-        }
+        //--------------------------------------------------------------
+        // 图形详情面板
+        //--------------------------------------------------------------
+        function openGeometryDetailPanel(id) { return detailApi.open(id); }
+        function closeGeometryDetailPanel() { return detailApi.close(); }
 
 
         //--------------------------------------------------------------
         // 菜单树
         //--------------------------------------------------------------
-        /** 构建菜单树结构*/
-        function buildMenuNodes() {
-            const nodes = state.menus.map(item => ({ ...item, children: [] }));
-            const byId = new Map(nodes.map(n => [n.id, n]));
-            const roots = [];
+        function buildMenuNodes() { return dataApi.buildMenuNodes(); }
+        function renderMenuTree() { return dataApi.renderMenuTree(); }
+        async function loadMenus() { return dataApi.loadMenus();}
+        function applyGeometryVisibility() {return dataApi.applyGeometryVisibility();}
+        function rebuildGeometryPointMarkers() { return dataApi.rebuildGeometryPointMarkers(); }
+        function syncGeometryPointMarkerVisibility() { return dataApi.syncGeometryPointMarkerVisibility(); }
+        function getActiveGeometryDisplayLayerIds() { return actionApi.getActiveGeometryDisplayLayerIds(); }
+        async function loadGeometries() { return dataApi.loadGeometries();}
+        function bindGeometryMapInteractions() { actionApi.bindGeometryMapInteractions(); }
+        function openGeometryDetailDrawer(id) { actionApi.openGeometryDetailDrawer(id); }
+        function closeGeometryDetailDrawer() { actionApi.closeGeometryDetailDrawer(); }
 
-            nodes.forEach(node => {
-                if (node.parentId && byId.has(node.parentId)) {
-                    byId.get(node.parentId).children.push(node);
-                } else {
-                    roots.push(node);
-                }
-            });
-
-            const sortFn = (a, b) => (a.sortId || 0) - (b.sortId || 0) || a.id - b.id;
-            const sortTree = list => {
-                list.sort(sortFn);
-                list.forEach(node => sortTree(node.children || []));
-            };
-            sortTree(roots);
-            state.menuRoots = roots;
-            state.menuNodeMap = byId;
-        }
-
-        /** 获取菜单及其子菜单关联的几何图形ID*/
-        function getMenuGeometryIds(node, cache = new Map()) {
-            if (!node) return [];
-            if (cache.has(node.id)) return cache.get(node.id);
-
-            const own = state.geometryByMenuId.get(node.id) || [];
-            const childIds = (node.children || []).flatMap(child => getMenuGeometryIds(child, cache));
-            const result = [...own, ...childIds];
-            cache.set(node.id, result);
-            return result;
-        }
-
-        /** 获取菜单及其子菜单关联的叶子几何图形数量*/
-        function getLeafGeometryCount(menuId) {
-            const list = state.geometryByMenuId.get(menuId) || [];
-            return list.length;
-        }
-
-        /** 设置菜单节点的选中状态*/
-        function setMenuChecked(node, checked, cache = new Map()) {
-            const ids = getMenuGeometryIds(node, cache);
-            ids.forEach(id => state.geometryVisibleMap.set(id, !!checked));
-            applyGeometryVisibility();
-        }
-
-        /** 渲染菜单树*/
-        function renderMenuTree() {
-            const container = document.getElementById('menu-tree');
-            if (!container) return;
-            container.innerHTML = '';
-
-            if (!state.menuRoots || state.menuRoots.length === 0) {
-                container.innerHTML = '<div class="menu-empty">加载中...</div>';
-                return;
-            }
-
-            const geometryCache = new Map();
-            const renderNode = (node, depth) => {
-                const row = document.createElement('div');
-                row.className = 'menu-node';
-                row.style.marginLeft = `${depth * 14}px`;
-
-                const ids = getMenuGeometryIds(node, geometryCache);
-                const visibleCount = ids.filter(id => state.geometryVisibleMap.get(id) !== false).length;
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'menu-node-check';
-                checkbox.disabled = ids.length === 0;
-                checkbox.checked = ids.length > 0 && visibleCount === ids.length;
-                checkbox.indeterminate = visibleCount > 0 && visibleCount < ids.length;
-                checkbox.addEventListener('change', () => setMenuChecked(node, !!checkbox.checked, geometryCache));
-
-                const labelBtn = document.createElement('button');
-                labelBtn.type = 'button';
-                labelBtn.className = 'menu-node-label';
-                labelBtn.textContent = node.name || `菜单${node.id}`;
-                labelBtn.addEventListener('click', () => {
-                    if (checkbox.disabled) return;
-                    checkbox.checked = !checkbox.checked;
-                    checkbox.dispatchEvent(new Event('change'));
-                });
-
-                row.appendChild(checkbox);
-                row.appendChild(labelBtn);
-
-                const isLeaf = !node.children || node.children.length === 0;
-                if (isLeaf) {
-                    const count = getLeafGeometryCount(node.id);
-                    const badge = document.createElement('span');
-                    badge.className = `menu-node-count ${count > 0 ? '' : 'empty'}`;
-                    badge.textContent = `${count}`;
-                    row.appendChild(badge);
-                }
-
-                container.appendChild(row);
-
-                (node.children || []).forEach(child => renderNode(child, depth + 1));
-            };
-
-            state.menuRoots.forEach(node => renderNode(node, 0));
-        }
-
-        /** 加载菜单数据*/
-        async function loadMenus() {
-            try {
-                const resp = await fetch('?handler=MenuData');
-                const res = await resp.json();
-                if (res.code !== 0 || !Array.isArray(res.data)) return;
-
-                const flatMenus = [];
-                const walk = (nodes) => {
-                    (nodes || []).forEach(n => {
-                        const id = Number(n.id);
-                        const parentId = n.parentId === null || n.parentId === undefined || n.parentId === ''
-                            ? null
-                            : Number(n.parentId);
-                        flatMenus.push({
-                            id,
-                            parentId,
-                            name: n.name,
-                            sortId: Number(n.sortId || 0),
-                            icon: n.icon,
-                            isDefaultShow: !!n.isDefaultShow
-                        });
-                        walk(n.children || []);
-                    });
-                };
-                walk(res.data);
-
-                state.menus = flatMenus;
-                buildMenuNodes();
-                renderMenuTree();
-            } catch {
-                // ignore menu loading failures
-            }
-        }
-
-        //--------------------------------------------------------------
-        // 图形相关
-        //--------------------------------------------------------------
-        /** 根据菜单配置计算图形是否默认可见*/
-        function isGeometryDefaultVisible(menuId) {
-            if (!menuId || !state.menuNodeMap || state.menuNodeMap.size === 0) return false;
-
-            let current = state.menuNodeMap.get(menuId);
-            while (current) {
-                if (current.isDefaultShow === true) return true;
-                if (!current.parentId) break;
-                current = state.menuNodeMap.get(current.parentId);
-            }
-
-            return false;
-        }
-
-        /** 图形可见性*/
-        function applyGeometryVisibility() {
-            if (!geometryLayerManager) return;
-            geometryLayerManager.render();
-            geometryLayerManager.setVisible(true);
-
-            const visibleIds = state.geometries
-                .filter(g => state.geometryVisibleMap.get(g.id) !== false)
-                .map(g => g.id);
-            geometryLayerManager.setVisibleIds(visibleIds);
-            syncGeometryPointMarkerVisibility();
-            renderMenuTree();
-        }
-
-        function parseGpsText(gps) {
-            if (!gps || typeof gps !== 'string') return null;
-            const text = gps.replaceAll('，', ',').replaceAll('；', ',').replaceAll(';', ',').trim().replace(/\s+/g, ',');
-            const parts = text.split(',').map(x => x.trim()).filter(Boolean);
-            if (parts.length < 2) return null;
-            const lng = Number(parts[0]);
-            const lat = Number(parts[1]);
-            if (Number.isNaN(lng) || Number.isNaN(lat)) return null;
-            return { lng, lat };
-        }
-
-        function normalizeIconPath(path) {
-            if (!path || typeof path !== 'string') return '';
-            const text = path.trim();
-            if (!text) return '';
-            if (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('/')) return text;
-            return `/${text.replace(/^\/+/, '')}`;
-        }
-
-        function clearGeometryPointMarkers() {
-            state.geometryPointMarkerMap.forEach(marker => marker.remove());
-            state.geometryPointMarkerMap.clear();
-        }
-
-        function rebuildGeometryPointMarkers() {
-            clearGeometryPointMarkers();
-
-            state.geometries.forEach(item => {
-                if (!item || !item.gps) return;
-                const gps = parseGpsText(item.gps);
-                if (!gps) return;
-
-                const el = document.createElement('div');
-                el.className = 'geometry-point-marker';
-
-                const iconPath = normalizeIconPath(item.icon);
-                if (iconPath) {
-                    const iconEl = document.createElement('img');
-                    iconEl.className = 'marker-icon';
-                    iconEl.src = iconPath;
-                    iconEl.alt = item.name || item.alias || '点位图标';
-                    iconEl.onerror = () => {
-                        iconEl.remove();
-                        const fallbackDot = document.createElement('span');
-                        fallbackDot.className = 'dot-fallback';
-                        el.appendChild(fallbackDot);
-                    };
-                    el.appendChild(iconEl);
-                }
-
-                if (!iconPath) {
-                    const fallbackDot = document.createElement('span');
-                    fallbackDot.className = 'dot-fallback';
-                    el.appendChild(fallbackDot);
-                }
-
-                const label = document.createElement('span');
-                label.className = 'marker-label';
-                label.textContent = item.alias || item.name || `点位${item.id}`;
-                el.appendChild(label);
-
-                el.addEventListener('click', (evt) => {
-                    evt.stopPropagation();
-                    openGeometryDetailDrawer(item.id);
-                });
-
-                const marker = new mapboxgl.Marker(el)
-                    .setLngLat([gps.lng, gps.lat])
-                    .addTo(map);
-
-                state.geometryPointMarkerMap.set(item.id, marker);
-            });
-
-            syncGeometryPointMarkerVisibility();
-        }
-
-        function syncGeometryPointMarkerVisibility() {
-            state.geometryPointMarkerMap.forEach((marker, id) => {
-                marker.getElement().style.display = state.geometryVisibleMap.get(id) === false ? 'none' : '';
-            });
-        }
-
-        function getActiveGeometryDisplayLayerIds() {
-            return geometryDisplayLayerIds.filter(id => map.getLayer(id));
-        }
-
-        function bindGeometryMapInteractions() {
-            if (state.geometryInteractionBound) return;
-            state.geometryInteractionBound = true;
-
-            map.on('click', (e) => {
-                const layers = getActiveGeometryDisplayLayerIds();
-                if (!layers.length) return;
-
-                const hits = map.queryRenderedFeatures(e.point, { layers });
-                const feature = (hits || []).find(f => f && f.properties && f.properties.__geometryId !== undefined);
-                if (!feature) return;
-
-                const rawId = feature.properties.__geometryId;
-                const geometryId = Number.isNaN(Number(rawId)) ? rawId : Number(rawId);
-                openGeometryDetailDrawer(geometryId);
-            });
-
-            map.on('mousemove', (e) => {
-                const layers = getActiveGeometryDisplayLayerIds();
-                if (!layers.length) {
-                    map.getCanvas().style.cursor = '';
-                    return;
-                }
-
-                const hits = map.queryRenderedFeatures(e.point, { layers });
-                map.getCanvas().style.cursor = hits && hits.length > 0 ? 'pointer' : '';
-            });
-        }
-
-        /** 关闭图形详情抽屉*/
-        function closeGeometryDetailDrawer() {
-            // 图形详情统一通过 EleManager 抽屉打开。
-        }
-
-        /** 打开图形详情抽屉*/
-        function openGeometryDetailDrawer(id) {
-            if (!id) return;
-            state.selectedGeometryId = id;
-            const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
-            if (!manager || typeof manager.openDrawer !== 'function') {
-                window.open(`/GIS/GeometryInfo?id=${id}`, '_blank');
-                return;
-            }
-
-            manager.openDrawer({
-                title: '点位信息',
-                url: `/GIS/GeometryInfo?id=${id}`,
-                direction: 'rtl',
-                size: window.innerWidth < 768 ? '100%' : '38%',
-                resizable: true,
-                closeOnClickModal: false,
-                destroyOnClose: true
-            });
-        }
-
-        /** 加载几何图形数据*/
-        async function loadGeometries() {
-            try {
-                const resp = await fetch('?handler=GeometryLayerData');
-                const res = await resp.json();
-                if (res.code !== 0 || !Array.isArray(res.data)) return;
-
-                state.geometries = res.data;
-                state.geometryByMenuId = new Map();
-                state.geometries.forEach(item => {
-                    const itemId = item.id;
-                    const itemKey = String(itemId);
-                    const existingVisible = state.geometryVisibleMap.get(itemId);
-                    const existingVisibleByKey = state.geometryVisibleMap.get(itemKey);
-                    const hasExisting = existingVisible !== undefined || existingVisibleByKey !== undefined;
-                    const preservedVisible = state.preservedVisibleGeometryIds.has(itemKey);
-
-                    if (!hasExisting) {
-                        state.geometryVisibleMap.set(itemId, preservedVisible ? true : isGeometryDefaultVisible(item.menuId));
-                    } else if (preservedVisible) {
-                        state.geometryVisibleMap.set(itemId, true);
-                    }
-
-                    const menuId = item.menuId === null || item.menuId === undefined || item.menuId === ''
-                        ? null
-                        : Number(item.menuId);
-                    if (!state.geometryByMenuId.has(menuId)) {
-                        state.geometryByMenuId.set(menuId, []);
-                    }
-                    state.geometryByMenuId.get(menuId).push(item.id);
-                });
-
-                geometryLayerManager.setDataFromRows(state.geometries);
-                geometryLayerManager.render();
-                rebuildGeometryPointMarkers();
-                applyGeometryVisibility();
-                renderMenuTree();
-                state.preservedVisibleGeometryIds = new Set();
-            } catch {
-                // ignore geometry loading failures
-            }
-        }
     </script>
 }

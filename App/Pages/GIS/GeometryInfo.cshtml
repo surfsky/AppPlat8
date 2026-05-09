@@ -6,9 +6,21 @@
 }
 
 @section head {
+    <link rel="stylesheet" href="/css/gis-panel.css?v=@DateTime.Now.Ticks" />
+    <script src="/js/gis-panel-element.js?v=@DateTime.Now.Ticks"></script>
     <style>
+        .geo-info-shell {
+            position: absolute;
+            inset: 0;
+            padding: 10px;
+            background: rgba(2, 6, 23, 0.75);
+        }
+        .geo-info-panel {
+            width: 100%;
+            height: 100%;
+        }
         .geo-info-wrap {
-            padding: 14px 16px;
+            padding: 2px;
         }
         .json-kv-table {
             width: 100%;
@@ -17,43 +29,51 @@
         }
         .json-kv-table th,
         .json-kv-table td {
-            border: 1px solid #ebeef5;
+            border: 1px solid rgba(147, 197, 253, 0.32);
             padding: 6px 8px;
             vertical-align: top;
             word-break: break-all;
         }
         .json-kv-table th {
             width: 180px;
-            background: #f8fafc;
-            color: #475569;
+            background: rgba(30, 58, 138, 0.45);
+            color: #93c5fd;
             font-weight: 600;
+        }
+        .json-kv-table td {
+            background: rgba(15, 23, 42, 0.35);
+            color: #e2e8f0;
         }
     </style>
 }
 
 @section body {
-    <div class="geo-info-wrap">
-        <table class="json-kv-table">
-            <tr><th>ID</th><td>@Model.Item.Id</td></tr>
-            <tr><th>名称</th><td>@Model.Item.Name</td></tr>
-            <tr><th>简称/别称</th><td>@Model.Item.Alias</td></tr>
-            <tr><th>地址</th><td>@Model.Item.Addr</td></tr>
-            <tr><th>经纬度</th><td>@Model.Item.GPS</td></tr>
+    <div class="geo-info-shell">
+        <gis-panel class="geo-info-panel" title="图形详情" width="100%" height="100%">
+            <div class="geo-info-wrap">
+                <table class="json-kv-table">
+                    <tr><th>ID</th><td>@Model.Item.Id</td></tr>
+                    <tr><th>名称</th><td>@Model.Item.Name</td></tr>
+                    <tr><th>简称/别称</th><td>@Model.Item.Alias</td></tr>
+                    <tr><th>地址</th><td>@Model.Item.Addr</td></tr>
+                    <tr><th>经纬度</th><td>@Model.Item.GPS</td></tr>
 
-            @if (Model.DataRows.Count == 0)
-            {
-                <tr><th>属性数据</th><td>暂无数据</td></tr>
-            }
-            else
-            {
-                @foreach (var row in Model.DataRows)
-                {
-                    <tr>
-                        <th>@row.Key</th>
-                        <td>@row.Value</td>
-                    </tr>
-                }
-            }
-        </table>
+                    @if (Model.DataRows.Count == 0)
+                    {
+                        <tr><th>属性数据</th><td>暂无数据</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var row in Model.DataRows)
+                        {
+                            <tr>
+                                <th>@row.Key</th>
+                                <td>@row.Value</td>
+                            </tr>
+                        }
+                    }
+                </table>
+            </div>
+        </gis-panel>
     </div>
 }

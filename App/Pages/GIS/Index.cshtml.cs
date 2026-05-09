@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 
 namespace App.Pages.GIS
 {
-    [CheckPower(Power.GisGeometryView)]
+    //[CheckPower(Power.GisGeometryView)]
     public class IndexModel : BaseModel
     {
         public void OnGet()
