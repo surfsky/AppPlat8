@@ -244,7 +244,8 @@ namespace App.EleUI
         protected string BuildDynamicSelectOptionsHtml(string target, string defaultOptionsJson)
         {
             var targetLiteral = $"\"{EscapeJsDoubleQuoted(target)}\"";
-            var expr = $"opt in getControlOptions({targetLiteral}, {defaultOptionsJson})";
+            // In EleTable pages there may be no getControlOptions method; fallback to local default options.
+            var expr = $"opt in (getControlOptions ? getControlOptions({targetLiteral}, {defaultOptionsJson}) : {defaultOptionsJson})";
             return $"<el-option v-for='{expr}' :key='\"\" + opt.value' :label='opt.label' :value='opt.value'></el-option>";
         }
 

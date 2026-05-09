@@ -17,7 +17,7 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
-                <EleButton Type="Info" Click="navigateTo('/Admins/Orgs')" IconCls="fas fa-sitemap">组织管理</EleButton>
+                <EleButton Type="Success" PopupUrl="Orgs" PopupTitle="组织管理" IconCls="fas fa-sitemap" Visible="@Auth.CheckPower(Power.OrgEdit)">组织管理</EleButton>
                 <EleButton Type="Success" Command="Export" Icon="Download">导出</EleButton>
             </Buttons>
         </Toolbar>

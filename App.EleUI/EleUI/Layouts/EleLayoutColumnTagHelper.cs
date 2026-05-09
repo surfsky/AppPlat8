@@ -23,6 +23,9 @@ namespace App.EleUI
         [HtmlAttributeName("Grow")]
         public bool Grow { get; set; }
 
+        [HtmlAttributeName("ShrinkChildren")]
+        public bool? ShrinkChildren { get; set; } = null;
+
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
             if (!CheckPower(output))
@@ -40,6 +43,11 @@ namespace App.EleUI
                 colClass += " justify-" + Justify;
             if (Grow)
                 colClass += " flex-1";
+
+            // Default: do not allow direct children to shrink in column layouts.
+            // Use utility variant instead of post <style> injection so it survives Vue mount(body).
+            if (ShrinkChildren == false)
+                colClass += " [&>*]:shrink-0";
 
             output.Attributes.SetAttribute("class", ComposeClass(output, colClass));
         }

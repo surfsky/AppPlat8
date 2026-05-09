@@ -137,6 +137,10 @@ Object.assign(
  * Usage: EleManager.alert(...)
  **********************************************************************/
 class EleManager {
+    static get Instance() {
+        return EleManager._core;
+    }
+
     static get _core() {
         if (!EleManager.__core) {
             EleManager.__core = new EleManagerCore();

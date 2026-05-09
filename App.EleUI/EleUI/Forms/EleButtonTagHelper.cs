@@ -120,11 +120,11 @@ namespace App.EleUI
                 if (!string.IsNullOrEmpty(PopupTitle))
                 {
                     var popupTitleExpr = PopupTitle.Replace("'", "\\'");
-                    output.Attributes.SetAttribute("v-on:click", $"openForm(0, '{popupUrlExpr}', '{popupTitleExpr}')");
+                    output.Attributes.SetAttribute("v-on:click", $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}', '{popupTitleExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}', title: '{popupTitleExpr}' }}) : null))");
                 }
                 else
                 {
-                    output.Attributes.SetAttribute("v-on:click", $"openForm(0, '{popupUrlExpr}')");
+                    output.Attributes.SetAttribute("v-on:click", $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}' }}) : null))");
                 }
             }
             else if (!string.IsNullOrEmpty(NavigateUrl))

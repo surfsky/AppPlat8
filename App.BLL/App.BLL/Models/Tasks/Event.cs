@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using App.Components;
 using App.Entities;
 using App.Utils;
 
@@ -9,14 +10,16 @@ namespace App.DAL.OA
 {
     /// <summary>事件类别</summary>
     [UI("OA", "事件类别")]
-    public class EventType : EntityBase<EventType>
+    public class EventType : EntityBase<EventType>, ISort
     {
         [UI("名称")]        public string Name { get; set; }
+        [UI("排序")]        public int SortId  {get;set;}
+
         public static IQueryable<EventType> Search(string name)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty())          q = q.Where(o => o.Name.Contains(name.Trim()));
-            return q;
+            return q.OrderBy(o => o.SortId).ThenBy(o => o.Id);
         }
     }
 
@@ -37,6 +40,8 @@ namespace App.DAL.OA
         public virtual Org Org { get; set; }
         public virtual User Publisher { get; set; }
 
+        public string TypeName => Type?.Name;
+
         public override object Export(ExportMode type = ExportMode.Normal)
         {
             return new
@@ -44,7 +49,7 @@ namespace App.DAL.OA
                 Id,
                 TriggleDt,
                 TypeId,
-                TypeName = Type?.Name,
+                TypeName,
                 Title,
                 Content,
                 MainImage,
@@ -53,7 +58,7 @@ namespace App.DAL.OA
                 PublisherId,
                 PublisherName = Publisher?.Name,
                 AllowComment,
-                CreateDt
+                CreateDt,
             };
         }
 
@@ -64,7 +69,7 @@ namespace App.DAL.OA
             if (typeId.IsNotEmpty())       q = q.Where(o => o.TypeId == typeId.Value);
             if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value);
             if (publisherId.IsNotEmpty())  q = q.Where(o => o.PublisherId == publisherId.Value);
-            return q;
+            return q; //.Sort(t => t.SortId, "DESC");
          }
 
     }

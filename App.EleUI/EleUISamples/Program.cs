@@ -29,10 +29,9 @@ var razorPages = builder.Services
     })
     .AddApplicationPart(typeof(EleAppTagHelper).Assembly);
 
-if (builder.Environment.IsDevelopment())
-{
-    razorPages.AddRazorRuntimeCompilation();
-}
+// EleUISamples is for live component demos, so always enable Razor runtime
+// compilation to make .cshtml changes visible after browser refresh.
+razorPages.AddRazorRuntimeCompilation();
 
 var app = builder.Build();
 
@@ -41,7 +40,15 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
 }
 
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+        ctx.Context.Response.Headers["Pragma"] = "no-cache";
+        ctx.Context.Response.Headers["Expires"] = "0";
+    }
+});
 app.UseRouting();
 
 app.MapGet("/", () => Results.Redirect("/EleUISamples"));

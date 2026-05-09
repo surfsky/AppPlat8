@@ -19,7 +19,6 @@ Log.Get(id) 返回null？1833214689845186600
     换回int自增的id，就没问题了
 
 
-
 实体类变更迁移
     https://learn.microsoft.com/zh-cn/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli
         services.AddDbContext<AppPlatContext>(options => {

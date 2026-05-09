@@ -31,7 +31,7 @@ namespace App
                 ReferenceHandler = ReferenceHandler.IgnoreCycles
             };
 
-            options.Converters.Add(new JsonStringEnumConverter());
+            // Keep response enums as numbers for EleUI compatibility (formatters/select filters expect numeric enum values).
             options.Converters.Add(new Int64ToStringJsonConverter());
             options.Converters.Add(new NullableInt64ToStringJsonConverter());
             options.Converters.Add(new UInt64ToStringJsonConverter());

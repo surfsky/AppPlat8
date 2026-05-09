@@ -1171,11 +1171,15 @@
                 const flatMenus = [];
                 const walk = (nodes) => {
                     (nodes || []).forEach(n => {
+                        const id = Number(n.id);
+                        const parentId = n.parentId === null || n.parentId === undefined || n.parentId === ''
+                            ? null
+                            : Number(n.parentId);
                         flatMenus.push({
-                            id: n.id,
-                            parentId: n.parentId,
+                            id,
+                            parentId,
                             name: n.name,
-                            sortId: n.sortId,
+                            sortId: Number(n.sortId || 0),
                             icon: n.icon,
                             isDefaultShow: !!n.isDefaultShow
                         });
@@ -1387,7 +1391,9 @@
                         state.geometryVisibleMap.set(itemId, true);
                     }
 
-                    const menuId = item.menuId;
+                    const menuId = item.menuId === null || item.menuId === undefined || item.menuId === ''
+                        ? null
+                        : Number(item.menuId);
                     if (!state.geometryByMenuId.has(menuId)) {
                         state.geometryByMenuId.set(menuId, []);
                     }

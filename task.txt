@@ -2,22 +2,18 @@
 - 框架
 --------------------------------------------------------
 编写建设方案
-
-
-
 *** 驾驶舱图层显示
     GisGeometry（点位。只负责图层数据展示，一个目录有多个图层）
         *** 增加dataUrl参数，若设置了，则数据直接从该接口获取。
             值如 /httpapi/checkobject/objects?type=xxx，
-            返回字段字段如 id, gps, name，icon, remark, gisType，扩展字段
-            maphelper.js 过于庞大，考虑根据功能重构，拆分成多个js文件
-        添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer，数据DataUrl
-        特殊图层的展示方式：增加gisType属性，可展示企业信息、全景、CAD转BIM、三维模型等
+            返回字段字段如 id, gps, name，icon, addr, remark, gisType，dataJson
+        添加 GisType属性，支持：点Point、聚合图形Graphy、区域图片ImageLayer，数据DataUrl、三维模型、CAD转BIM、全景等
         *** 可导入excel，便于快速录入数据
+        maphelper.js 过于庞大，考虑根据功能重构，拆分成多个js文件
     驾驶舱
-        GisMenus ：控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
+        可切换到统计面板视图
         暗黑/亮白两种模式
-        统计面板
+        实现面板
     剥离地图操作相关操作到 maphelper.js，如显示geojson、构建geojson等
     Gis数据多部门协同编辑: 指定部门和管理员（ownerid）
 
@@ -26,7 +22,6 @@
     实现复杂页面，能用EleControl就用，不能用就用原生Elementplus网页控件
     给定UI界面，和AI讨论这种父子表结构的页面该如何操作
     把隐患排查的数据接口写好
-
 
 
 表格：多选、批量修改能力（*）
@@ -63,6 +58,10 @@ AI 优化
     实现网页水印（可找WebConfig 进行配置），参考https://element-plus.org/en-US/component/watermark
     删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
     把id从int改为long，再启用snowflakeId方案
+        Log.Get(id) 返回null？1833214689845186600
+            经测试是 sqlite 的问题，或者是ef的问题
+            换回int自增的id，就没问题了
+    GisMenus ：控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）。算了。
 
 
 
@@ -139,14 +138,17 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2026.05.09
+    /实现左侧菜单点击隐藏的逻辑
+    /修正index响应式布局能力
+    /globalThis.EleManager 全局对象
+
 2026.05.08
     /实现 EleTree
         1、实现App.EleUI/EleUI/Forms/EleTreeTagHelper 控件（参考 https://element-plus.org/en-US/component/tree）
         2、写测试网页 App.EleUI/EleUISamples/Controls/Tree.cshtml，测试EleTree 控件的各种功能；
         3、写测试网页 App.EleUI/EleUISamples/Datas/DeptUsers，用EleSplitPanel，左侧放置 EleTree 显示部门树，右侧显示用户清单（可用iframe），点击左侧部门树节点，右侧用户清单页面做相应的刷新；
     /Newtonsoft.Json  -> System.Text.Json 
-    /实现左侧菜单点击隐藏的逻辑
-    /修正index响应式布局能力
 
 
 2026.05.07

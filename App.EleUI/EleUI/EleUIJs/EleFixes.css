@@ -116,6 +116,13 @@ html, body {
     text-overflow: ellipsis !important;
 }
 
+/* Desktop filter row: keep all controls at a consistent width */
+.ele-table-toolbar .ele-table-filters-desktop .el-form-item {
+    flex: 0 0 260px;
+    width: 260px;
+    max-width: 260px;
+}
+
 /* Reduce Input Height if needed (Optional, Element Plus defaults are usually fine, but margin is the main spacer) */
 /*
 .el-input__inner {

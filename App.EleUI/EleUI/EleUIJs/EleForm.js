@@ -195,16 +195,9 @@ export class EleForm {
                 const d = res.data.data || {};
                 this.form.value = { ...this.form.value, ...d };
 
-                for (const key of Object.keys(this.form.value)) {
-                    if (key.endsWith('Id')) {
-                        const v = this.form.value[key];
-                        if (v !== null && typeof v !== 'undefined') {
-                            this.form.value[key] = v.toString();
-                        }
-                    }
-                }
-
                 if (typeof d.isTop !== 'undefined') this.form.value.isTop = !!d.isTop;
+                this.sanitizeAllStaticSelectValues();
+                this.sanitizeAllDynamicSelectValues();
                 this.sanitizeAllStaticTreeSelectValues();
                 this.sanitizeAllRemoteTreeSelectValues();
                 this.originalForm.value = JSON.parse(JSON.stringify(this.form.value));

@@ -125,3 +125,8 @@ Tailwind CSS 常用用法速查（分类紧凑）
   - 工具栏统一高度与行高：class="h-[44px] leading-[44px]"
   - 分组标题行：class="flex border-b bg-gray-50 text-gray-700 font-medium"
   - 操作区紧凑图标行：class="flex items-center gap-1 whitespace-nowrap"
+
+- 子项选择器
+  [&>*]:mb-2：给所有直接子元素加下边距。
+  [&_.title]:text-red-500：给后代中 .title 元素上色。
+  [&>div]:p-2：只给直接子 div 加 padding。

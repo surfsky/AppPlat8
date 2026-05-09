@@ -27,7 +27,11 @@ namespace App.Pages.OA
 
         public void OnGet()
         {
-            EventTypes = EventType.Set.Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToList();
+            EventTypes = EventType.Set
+                .OrderBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .Select(t => new SelectListItem(t.Name, t.Id.ToString()))
+                .ToList();
             OrgTree = App.DAL.Org.GetTree();
         }
 

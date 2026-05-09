@@ -4,71 +4,86 @@
     ViewData["Title"] = "EleUI 组件库示例";
 }
 
+@section head {
+    <style>
+        .link {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        .link:hover {
+            background-color: #f0f4ff;
+            border-color: #dbe3f3;
+        }
+    </style>
+}
+
 @section body {
-    <div class="min-h-screen bg-slate-50 p-3 sm:p-4 overflow-y-auto">
-        <Column Gap="3" class="mx-auto w-full max-w-[430px] pb-6">
-            <H1 class="font-semibold text-slate-900 text-center mb-4">EleUI 组件示例</H1>
+    <Column Gap="3" class="h-full w-full px-4 py-6 overflow-y-auto" ShrinkChildren="false">
+        <H1 class="font-semibold text-slate-900 text-center mb-4">EleUI 示例</H1>
 
-            <EleCard Title="Manager" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-                <Column Gap="2">
-                    <a href="./Managers/ManagerServer" class="rounded-lg border border-blue-100 px-3 py-2 text-[15px] font-medium ">Manager Server</a>
-                    <a href="./Managers/Manager" class="rounded-lg border border-blue-100 px-3 py-2 text-[15px] font-medium ">Manager</a>
-                    <a href="Theme" class="rounded-lg border border-blue-100 px-3 py-2 text-[15px] font-medium ">Theme</a>
-                </Column>
-            </EleCard>
+        <EleCard Title="Manager" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
+            <Column Gap="2">
+                <a href="./Managers/ManagerServer" class="link">Manager Server</a>
+                <a href="./Managers/Manager" class="link">Manager</a>
+                <a href="Theme" class="link">Theme</a>
+            </Column>
+        </EleCard>
 
-            <EleCard Title="Layout" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-                <Column Gap="2">
-                    <a href="./Layouts/Row" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">行布局（Row）</a>
-                    <a href="./Layouts/Column" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">列布局（Column）</a>
-                    <a href="./Layouts/Grid" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">网格布局（Grid）</a>
-                </Column>
-            </EleCard>
+        <EleCard Title="Layout" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
+            <Column Gap="2">
+                <a href="./Layouts/Row" class="link">行布局（Row）</a>
+                <a href="./Layouts/Column" class="link">列布局（Column）</a>
+                <a href="./Layouts/Grid" class="link">网格布局（Grid）</a>
+            </Column>
+        </EleCard>
 
-            <EleCard Title="Controls" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-                <Column Gap="2">
-                    <a href="./Controls/Button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">按钮（Button）</a>
-                    <a href="./Controls/Form" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">表单控件（Forms）</a>
-                    <a href="./Controls/Tree" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">树控件（Tree）</a>
-                    <a href="./Controls/CitySelect" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">省市县联动（CitySelect）</a>
-                    <a href="./Controls/Icons" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">图标（Icons）</a>
-                    <a href="./Controls/ImageViewer" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">图片预览（ImageViewer）</a>
-                </Column>
-            </EleCard>
+        <EleCard Title="Controls" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
+            <Column Gap="2">
+                <a href="./Controls/Button" class="link">按钮（Button）</a>
+                <a href="./Controls/Form" class="link">表单控件（Forms）</a>
+                <a href="./Controls/Tree" class="link">树控件（Tree）</a>
+                <a href="./Controls/CitySelect" class="link">省市县联动（CitySelect）</a>
+                <a href="./Controls/Icons" class="link">图标（Icons）</a>
+                <a href="./Controls/ImageViewer" class="link">图片预览（ImageViewer）</a>
+            </Column>
+        </EleCard>
 
-            <EleCard Title="Popups" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-                <Column Gap="2">
-                    <a href="./Popups/Drawer" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">抽屉（Drawer）</a>
-                    <a href="./Popups/ServerDrawer" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">服务端抽屉（ServerDrawer）</a>
-                    <a href="./Popups/OpenDrawer" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">全局抽屉（OpenDrawer）</a>
-                    <a href="./Popups/Dialog" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">对话框（Dialog）</a>
-                </Column>
-            </EleCard>
+        <EleCard Title="Popups" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
+            <Column Gap="2">
+                <a href="./Popups/Drawer" class="link">抽屉（Drawer）</a>
+                <a href="./Popups/ServerDrawer" class="link">服务端抽屉（ServerDrawer）</a>
+                <a href="./Popups/OpenDrawer" class="link">全局抽屉（OpenDrawer）</a>
+                <a href="./Popups/Dialog" class="link">对话框（Dialog）</a>
+            </Column>
+        </EleCard>
 
-            <EleCard Title="Containers" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-                <Column Gap="2">
-                    <a href="./Containers/Card" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">卡片（Card）</a>
-                    <a href="./Containers/SplitPanel" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">分隔面板（SplitPanel）</a>
-                    <a href="./Containers/Container" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">容器（Container）</a>
-                </Column>
-            </EleCard>
+        <EleCard Title="Containers" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
+            <Column Gap="2">
+                <a href="./Containers/Card" class="link">卡片（Card）</a>
+                <a href="./Containers/SplitPanel" class="link">分隔面板（SplitPanel）</a>
+                <a href="./Containers/Container" class="link">容器（Container）</a>
+            </Column>
+        </EleCard>
 
-            <EleCard Title="App" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-                <Column Gap="2">
-                    <a href="./Apps/Index" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">应用示例（Users）</a>
-                </Column>
-            </EleCard>
+        <EleCard Title="App" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
+            <Column Gap="2">
+                <a href="./Apps/Index" class="link">应用示例（Users）</a>
+            </Column>
+        </EleCard>
 
-            <EleCard Title="Data" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-                <Column Gap="2">
-                    <a href="./Datas/Users" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">列表与表单（Users）</a>
-                    <a href="./Datas/UserList" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">用户列表（UserList）</a>
-                    <a href="./Datas/RoleUsers" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">角色-用户联动（RoleUsers）</a>
-                    <a href="./Datas/DeptUsers" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[15px] text-slate-700 hover:bg-slate-50">部门-用户联动（DeptUsers）</a>
-                </Column>
-            </EleCard>
-        </Column>
-    </div>
-
+        <EleCard Title="Data" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
+            <Column Gap="2">
+                <a href="./Datas/Users" class="link">列表与表单（Users）</a>
+                <a href="./Datas/UserList" class="link">用户列表（UserList）</a>
+                <a href="./Datas/RoleUsers" class="link">角色-用户联动（RoleUsers）</a>
+                <a href="./Datas/DeptUsers" class="link">部门-用户联动（DeptUsers）</a>
+            </Column>
+        </EleCard>
+    </Column>
     <EleApp />
 }

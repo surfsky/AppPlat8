@@ -14,7 +14,7 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
-                <EleButton Type="Info" Click="navigateTo('/OA/EventTypes')" Icon="Setting" Visible="@Auth.CheckPower(Power.EventTypeEdit)">类别管理</EleButton>
+                <EleButton Type="Success" PopupUrl="EventTypes" PopupTitle="事件类别" Icon="Setting" Visible="@Auth.CheckPower(Power.EventTypeEdit)">类别管理</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
             </Buttons>
         </Toolbar>
@@ -25,7 +25,7 @@
                 <Op Command="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.EventDelete)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Title" Label="标题" Link="true" MinWidth="200" Sortable="true"></EleColumn>
-            <EleColumn For="Item.Type.Name" Label="类别" Width="100"></EleColumn>
+            <EleColumn For="Item.TypeName" Label="类别" Width="100"></EleColumn>
             <EleColumn For="Item.TriggleDt" Label="时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleColumn For="Item.Org.Name" Label="组织" Width="120"></EleColumn>
             <EleColumn For="Item.Publisher.Name" Label="发布人" Width="100"></EleColumn>

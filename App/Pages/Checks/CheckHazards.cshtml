@@ -12,7 +12,7 @@
             <Filters>
                 <EleInput For="Item.Description" Width="250px" Label="描述" ></EleInput>
                 <EleInput For="Item.Check.CheckObject.Name" Width="250px" Label="对象" ></EleInput>
-                <EleSelect For="Item.Status" Width="250px" Label="状态" Clearable="true" Items="@(new List<string>{"待整改", "整改中", "已整改"}.Select(s => new SelectListItem(s, s)))"></EleSelect>
+                <EleSelect For="Item.Status" Width="250px" Label="状态" Clearable="true" ></EleSelect>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

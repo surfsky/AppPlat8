@@ -92,6 +92,60 @@ Docker 部署方式
 
 
 
+
+
+
+## 菜单及访问权限
+
+以实际运行时的菜单为准
+
+```
+｜目录｜名称    ｜网页                     ｜ 访问权限            ｜
+｜---｜--------｜------------------------｜--------------------｜
+排查
+    对象      Checks/CheckObjects           CheckObjectView
+    排查      Checks/CheckLogs              CheckLogView
+    检查表    Checks/CheckSheets            CheckSheetView
+    隐患      Checks/CheckHarzards          CheckHarzardView
+    任务      Checks/CheckTasks             CheckTaskView
+    报表      Checks/CheckReports           CheckReportView
+OA
+    资产      OA/Assets                     AssetView
+    预算      OA/Budgets                    BudgetView
+    公告      OA/Annouces                   AnnouceView
+    公司      OA/Company                    CompanyView
+知识库
+    文档      Articles/Articles             ArticleView
+    目录      Articles/ArticleDirs          ArticleView
+交办
+    项目      OA/Projects                   ProjectView
+    交办      OA/Tasks                      TaskView
+    事件      OA/Events                     EventView
+驾驶舱
+    驾驶舱    GIS/Index                      GisIndexView
+    菜单      GIS/Menu                      GisMenuView
+    图形      GIS/Geometry                   GisGeometryView
+账户
+    组织      Admins/Orgs                   OrgView
+    用户      Admins/Users                  UserView
+    权限      Admins/Roles                  RoleView
+运维
+    菜单      Maintains/Menus               MenuView
+    在线      Maintains/Onlines             OnlineView
+    配置      Maintains/Config              ConfigView
+    日志      Maintains/Logs                LogView
+开发
+    图标     Dev/Icons                      Dev
+    API     Dev/API                        Dev
+    控件库   EleUI/Index                    Dev
+修改密码     Admins/ChangePassword          Site
+安全退出     Logout                         Site
+登陆        Login                          Site
+```
+
+
+
+
 ## 进度
 
 - [x] 基础框架
@@ -210,78 +264,4 @@ Docker 部署方式
     - [ ] Docker 部署
     - [ ] 网络安全防护：防火墙、VPN、DDoS防护等
     - [ ] 数据库自动备份
-
-
-
-## 菜单
-
-以实际运行时的菜单为准
-
-```
-｜目录｜名称    ｜网页                     ｜ 访问权限            ｜
-｜---｜--------｜------------------------｜--------------------｜
-排查
-    对象      Checks/CheckObjects           CheckObjectView
-    排查      Checks/CheckLogs              CheckLogView
-    检查表    Checks/CheckSheets            CheckSheetView
-    隐患      Checks/CheckHarzards          CheckHarzardView
-    任务      Checks/CheckTasks             CheckTaskView
-    报表      Checks/CheckReports           CheckReportView
-OA
-    资产      OA/Assets                     AssetView
-    预算      OA/Budgets                    BudgetView
-    公告      OA/Annouces                   AnnouceView
-    公司      OA/Company                    CompanyView
-知识库
-    文档      Articles/Articles             ArticleView
-    目录      Articles/ArticleDirs          ArticleView
-交办
-    项目      OA/Projects                   ProjectView
-    交办      OA/Tasks                      TaskView
-    事件      OA/Events                     EventView
-驾驶舱
-    驾驶舱    GIS/Index                      GisIndexView
-    菜单      GIS/Menu                      GisMenuView
-    图形      GIS/Geometry                   GisGeometryView
-账户
-    组织      Admins/Orgs                   OrgView
-    用户      Admins/Users                  UserView
-    权限      Admins/Roles                  RoleView
-运维
-    菜单      Maintains/Menus               MenuView
-    在线      Maintains/Onlines             OnlineView
-    配置      Maintains/Config              ConfigView
-    日志      Maintains/Logs                LogView
-开发
-    图标     Dev/Icons                      Dev
-    API     Dev/API                        Dev
-    控件库   EleUI/Index                    Dev
-修改密码     Admins/ChangePassword          Site
-安全退出     Logout                         Site
-登陆        Login                          Site
-```
-
-
-
-
-## 关于AI编程和分工
-
-此项目基于AppPlat v4-v6框架，并大量用了AI进行辅助编程。为了最大化效率，需重新定义程序员和 AI 的分工
-
-程序员：
-    业务理解
-    系统架构
-    流程设计
-    代码质量与安全
-    边界与异常
-    最终验收
-
-AI 负责：
-    模板代码
-    语法细节
-    重复逻辑
-    样板配置
-    快速初稿
-    搜索 & 查 API
-
 

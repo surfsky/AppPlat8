@@ -30,7 +30,8 @@ namespace App.EleUI
             AddCommonAttributes(context, output);
 
             // attributes
-            if (string.IsNullOrEmpty(Width))        output.Attributes.SetAttribute("class", "w-full");
+            if (string.IsNullOrEmpty(Width) && context.Items.ContainsKey("IsEleForm"))
+                output.Attributes.SetAttribute("class", "w-full");
             if (Multiple)                           output.Attributes.SetAttribute("multiple", "true");
             if (AllowCreate)                        output.Attributes.SetAttribute("allow-create", "true");
             if (Filterable)                         output.Attributes.SetAttribute("filterable", "true");
@@ -49,6 +50,18 @@ namespace App.EleUI
             if (Items == null && string.IsNullOrWhiteSpace(manualOptions) && IsBooleanSelectTarget())
                 options = AppendFromBool(options);
 
+            var modelKey = GetPropName();
+            var target = ResolveControlTarget(context) ?? (string.IsNullOrWhiteSpace(modelKey) ? null : $"field:{modelKey}");
+            var defaultOptionsJson = BuildDefaultOptionsJson(options);
+
+            if (!string.IsNullOrWhiteSpace(modelKey))
+                output.Attributes.SetAttribute("data-select-model", modelKey);
+            if (!string.IsNullOrWhiteSpace(target))
+                output.Attributes.SetAttribute("data-select-target", target);
+            // TagHelper attribute writer will HTML-encode automatically; avoid pre-encoding here,
+            // otherwise JSON quotes become double-encoded (&amp;quot;) and cannot be parsed on client.
+            output.Attributes.SetAttribute("data-static-options", defaultOptionsJson);
+
             // Keep manual options mode unchanged.
             if (!string.IsNullOrWhiteSpace(manualOptions))
             {
@@ -57,8 +70,7 @@ namespace App.EleUI
             }
             else
             {
-                var target = ResolveControlTarget(context) ?? "field:unknown";
-                var defaultOptionsJson = BuildDefaultOptionsJson(options);
+                target ??= "field:unknown";
                 var contentHtml = BuildDynamicSelectOptionsHtml(target, defaultOptionsJson);
                 output.Content.SetHtmlContent(contentHtml);
             }

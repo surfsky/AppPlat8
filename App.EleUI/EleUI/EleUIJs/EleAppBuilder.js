@@ -211,6 +211,10 @@ export class EleAppBuilder {
             }
         }
 
+        if (typeof globalThis !== 'undefined' && globalThis.EleManager) {
+            app.config.globalProperties.$eleManager = globalThis.EleManager;
+        }
+
         if (config.registerIcons !== false && window.ElementPlusIconsVue) {
             for (const [key, component] of Object.entries(window.ElementPlusIconsVue)) {
                 app.component(key, component);

@@ -8,6 +8,7 @@
 @section body {
     <EleForm Model="form" LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
     
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

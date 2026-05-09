@@ -33,6 +33,7 @@ namespace App.Pages.OA
 
             var item = req.Id > 0 ? EventType.Get(req.Id) : new EventType();
             item.Name = req.Name;
+            item.SortId = req.SortId;
             item.Save();
             return BuildResult(0, "保存成功");
         }

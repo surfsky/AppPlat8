@@ -53,6 +53,8 @@ export class EleFormAppBuilder extends EleAppBuilder {
                         }
                     });
                     await Promise.all(jobs);
+                    form.sanitizeAllStaticSelectValues();
+                    form.sanitizeAllDynamicSelectValues();
                     form.sanitizeAllStaticTreeSelectValues();
                     form.sanitizeAllRemoteTreeSelectValues();
 
