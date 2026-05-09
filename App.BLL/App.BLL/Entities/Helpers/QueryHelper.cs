@@ -8,7 +8,6 @@ namespace App.Components
 {
     /// <summary>
     /// Order by enum
-    /// http://fineui.com/bbs/forum.php?mod=viewthread&tid=3844
     /// </summary>
     public enum OrderByType
     {

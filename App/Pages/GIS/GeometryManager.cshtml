@@ -9,21 +9,19 @@
     <div class="h-screen">
         <EleSplitPanel Height="100%" Radius="0" Border="0">
             <PanelItem Size="300" Min="220" Max="460" Collapsible="true">
-                <EleCard Title="GIS 菜单目录" Height="100%" Border="0" Radius="0">
-                    <EleTree Items="Model.NavMenus"
-                             IdField="Id"
-                             NameField="Name"
-                             ChildrenField="Children"
-                             NodeKey="Id"
-                             HighlightCurrent="true"
-                             DefaultExpandAll="true"
-                             ExpandOnClickNode="false"
-                             Height="calc(100vh - 130px)">
-                        <template #default="{ data }">
-                            <a :href="data.url || '#'" target="geometryManagerFrame" class="text-current no-underline">{{ data.name }}</a>
-                        </template>
-                    </EleTree>
-                </EleCard>
+                <EleTree Items="Model.NavMenus"
+                            IdField="Id"
+                            NameField="Name"
+                            ChildrenField="Children"
+                            NodeKey="Id"
+                            HighlightCurrent="true"
+                            DefaultExpandAll="true"
+                            ExpandOnClickNode="false"
+                            Height="calc(100vh)">
+                    <template #default="{ data }">
+                        <a :href="data.url || '#'" target="geometryManagerFrame" class="text-current no-underline">{{ data.name }}</a>
+                    </template>
+                </EleTree>
             </PanelItem>
             <PanelItem Min="360" IframeName="geometryManagerFrame" IframeUrl="@Model.DefaultGeometriesUrl"></PanelItem>
         </EleSplitPanel>

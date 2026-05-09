@@ -199,13 +199,12 @@ namespace App.Components
         }
 
         /// <summary>检查权限失败（页面回发）
-        /// This used to use FineUI's Alert/PageContext. Now we emit a simple script that
-        /// shows a browser alert so the client still sees a message when a POST fails.
+        /// 把错误发到客户端，客户端弹出提示框
         /// </summary>
         public static void CheckPowerFailWithAlert()
         {
             var script = $"<script>alert('{MSG_CHECK_POWER_FAIL_ACTION}');</script>";
-            Asp.Current.Response.WriteAsync(script);
+            Asp.Current.Response.WriteAsync(script); // 考虑改成 EleManager.Alert
         }
 
         /// <summary>检查权限失败（页面第一次加载）</summary>

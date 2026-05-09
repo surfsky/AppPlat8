@@ -1,11 +1,11 @@
 --------------------------------------------------------
 - 框架
 --------------------------------------------------------
-
-
 编写建设方案
+
+
+
 *** 驾驶舱图层显示
-    GisMenus ：控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
     GisGeometry（点位。只负责图层数据展示，一个目录有多个图层）
         *** 增加dataUrl参数，若设置了，则数据直接从该接口获取。
             值如 /httpapi/checkobject/objects?type=xxx，
@@ -14,11 +14,12 @@
         添加 GisType属性，支持点Point、聚合图形Graphy、区域图片ImageLayer，数据DataUrl
         特殊图层的展示方式：增加gisType属性，可展示企业信息、全景、CAD转BIM、三维模型等
         *** 可导入excel，便于快速录入数据
-    Gis数据多部门协同编辑
     驾驶舱
+        GisMenus ：控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）
         暗黑/亮白两种模式
         统计面板
     剥离地图操作相关操作到 maphelper.js，如显示geojson、构建geojson等
+    Gis数据多部门协同编辑: 指定部门和管理员（ownerid）
 
 实现隐患排查页面***
     控件如何联动？如省市县，想在服务器端处理。
@@ -61,6 +62,7 @@ AI 优化
 其它
     实现网页水印（可找WebConfig 进行配置），参考https://element-plus.org/en-US/component/watermark
     删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
+    把id从int改为long，再启用snowflakeId方案
 
 
 
@@ -143,6 +145,8 @@ Done
         2、写测试网页 App.EleUI/EleUISamples/Controls/Tree.cshtml，测试EleTree 控件的各种功能；
         3、写测试网页 App.EleUI/EleUISamples/Datas/DeptUsers，用EleSplitPanel，左侧放置 EleTree 显示部门树，右侧显示用户清单（可用iframe），点击左侧部门树节点，右侧用户清单页面做相应的刷新；
     /Newtonsoft.Json  -> System.Text.Json 
+    /实现左侧菜单点击隐藏的逻辑
+    /修正index响应式布局能力
 
 
 2026.05.07
@@ -648,13 +652,13 @@ Done
             /接口方法如：Alert, MessageBox, Toast, ShowDrawer, RunCallback 等
             /完善 EleManager通用能力：弹窗、Drawer、Toast等，创建测试页面
     /将 pages/admins/目录下的逐步用 EleRazor 控件库替代,逐步替代原有页面框架
-            修复登陆页面 login2，用拖动滑块的方式。咨询一下这些不用图片验证码的都用什么方式，来避免机器人绕过用户界面直接使用数据接口？
-            修改后台主页的布局，弃用 FineUI
-            用新框架重构 Admins/Orgs 组织管理页面
-            用新框架重构 Admins/Users 用户管理页面
-            用新框架重构 Admins/Roles 角色管理页面
-            删除老的组织管理页面 /admins/Orgs, OrgForm, OrgUser, OrgUserNew，根据新框架重新创建组织树的管理页面 /admins/Orgs, OrgForm
-            删除老的账户管理页面 /admins/Users
+            /修复登陆页面 login2，用拖动滑块的方式。咨询一下这些不用图片验证码的都用什么方式，来避免机器人绕过用户界面直接使用数据接口？
+            /修改后台主页的布局，弃用 FineUI
+            /用新框架重构 Admins/Orgs 组织管理页面
+            /用新框架重构 Admins/Users 用户管理页面
+            /用新框架重构 Admins/Roles 角色管理页面
+            /删除老的组织管理页面 /admins/Orgs, OrgForm, OrgUser, OrgUserNew，根据新框架重新创建组织树的管理页面 /admins/Orgs, OrgForm
+            /删除老的账户管理页面 /admins/Users
     
 /forms
     /修正EleImageUpload 控件的删除按钮外观

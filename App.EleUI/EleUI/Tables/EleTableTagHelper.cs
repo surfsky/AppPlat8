@@ -1,7 +1,6 @@
 using App.Components;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using App.Utils; 
@@ -54,6 +53,9 @@ namespace App.EleUI
 
         [HtmlAttributeName("BuildMode")]
         public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;
+
+        [HtmlAttributeName("PageSize")]
+        public int? PageSize { get; set; } = 20;
 
         public override void Init(TagHelperContext context)
         {
@@ -120,7 +122,7 @@ namespace App.EleUI
             var pageSizeOptions = BuildPageSizeOptions(defaultPageSize);
             return $@"
         <el-footer class=""h-auto flex-none p-0 bg-white"">
-            <div class=""py-3 px-4 flex items-center justify-between"">
+                <div class=""py-1.5 px-4 flex items-center justify-between"">
                 <div class=""text-gray-500 whitespace-nowrap"">共 {{{{ total }}}} 条</div>
                 <div class=""flex items-center space-x-2"">
                     <span class=""text-gray-500 whitespace-nowrap"">每页记录数</span>
@@ -163,34 +165,12 @@ namespace App.EleUI
 ";
         }
 
-        private static int ResolveDefaultPageSize()
+        private int ResolveDefaultPageSize()
         {
-            const int fallback = 10;
-            try
-            {
-                var cfgType = Type.GetType("App.DAL.SiteConfig, App.BLL", throwOnError: false);
-                if (cfgType == null)
-                    return fallback;
+            if (PageSize.GetValueOrDefault() > 0)
+                return PageSize.Value;
 
-                var instanceProp = cfgType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
-                var instance = instanceProp?.GetValue(null);
-                if (instance == null)
-                    return fallback;
-
-                var pageSizeProp = cfgType.GetProperty("PageSize", BindingFlags.Public | BindingFlags.Instance);
-                var raw = pageSizeProp?.GetValue(instance);
-                if (raw is int pageSize && pageSize > 0)
-                    return pageSize;
-
-                if (raw != null && int.TryParse(raw.ToString(), out var parsed) && parsed > 0)
-                    return parsed;
-            }
-            catch
-            {
-                // fallback to built-in page size
-            }
-
-            return fallback;
+            return 10;
         }
 
         private static string BuildPageSizeOptions(int defaultPageSize)

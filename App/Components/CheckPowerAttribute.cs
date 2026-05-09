@@ -34,7 +34,7 @@ namespace App.Components
                 }
                 else if (context.Request.Method == "POST")
                 {
-                    // return a simple JSON error instead of using FineUI.UIHelper
+                    // return a simple JSON error
                     filterContext.Result = new JsonResult(new
                     {
                         success = false,

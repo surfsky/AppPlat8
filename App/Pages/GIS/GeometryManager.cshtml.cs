@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace App.Pages.GIS
 {
-    [AllowAnonymous]
+    [CheckPower(Power.GisGeometryView)]
     public class GeometryManagerModel : AdminModel
     {
         public class GeometryNavNode

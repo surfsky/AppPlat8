@@ -177,24 +177,81 @@
             height: 100%;
             border: 0;
         }
+
+        @@media (min-width: 768px) {
+            #sidebarMobile {
+                will-change: width, transform, opacity;
+                transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1), transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease;
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            #sidebarMobile.sidebar-desktop-collapsed {
+                transform: translateX(-14px) !important;
+                opacity: 0;
+            }
+        }
+
+        .sidebar-toggle-zone {
+            position: relative;
+            width: 12px;
+            flex: 0 0 12px;
+            height: 100%;
+            z-index: 25;
+        }
+
+        .sidebar-toggle-btn {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 18px;
+            height: 28px;
+            border: 0;
+            border-radius: 6px;
+            background: #8ec5f8;
+            color: #1f4f8a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.18s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .sidebar-toggle-zone:hover .sidebar-toggle-btn,
+        .sidebar-toggle-btn.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body class="bg-slate-100">
     <div id="app" class="flex flex-col h-screen overflow-hidden">
         <!-- Unified Top Header Bar - Fixed Position, Always Visible -->
         <div id="topHeader" class="fixed top-0 left-0 right-0 z-50 bg-[#3B71F8] h-16 flex items-center justify-between px-4 shadow-lg">
-            <!-- Left Section: Back Button (Hidden by default) + Logo (Hidden on mobile) -->
+            <!-- Left Section -->
             <div class="flex items-center gap-2 flex-shrink-0">
-                <!-- Back Button - only show when there is navigation history -->
-                <button id="backBtn" class="hidden w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white hover:opacity-100 opacity-30" @@click="navigateBack" title="Back">
+                <!-- Desktop: icon + site title -->
+                <div class="hidden md:flex items-center gap-4">
+                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                        <i class="fas fa-rocket text-primary-600 text-base"></i>
+                    </div>
+                    <div class="text-white text-xl font-bold">@Model.SiteTitle</div>
+                </div>
+
+                <!-- Mobile: back button + page title -->
+                <button
+                    id="backBtn"
+                    class="md:hidden w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white"
+                    :class="hasHistory ? 'opacity-100 pointer-events-auto' : 'opacity-30 pointer-events-none'"
+                    @@click="navigateBack"
+                    title="Back">
                     <i class="fas fa-chevron-left text-lg"></i>
                 </button>
-                <!-- Logo - only show on desktop -->
-                <div id="logoContainer" class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-rocket text-primary-600 text-base"></i>
-                </div>
-                <!-- Title -->
-                <div id="headerTitle" class="text-white text-lg font-bold">@Model.SiteTitle</div>
+                <div class="md:hidden text-white text-xl font-bold">{{ currentTitle }}</div>
             </div>
 
 
@@ -215,78 +272,55 @@
             </div>
         </div>
 
-        <!-- Main Container - Add top padding to account for fixed header -->
+        <!-- Main Container - single main content, mobile only hides sidebar -->
         <div class="flex flex-1 overflow-hidden pt-16">
-            <!-- Desktop: Element Plus Splitter -->
-            <div class="hidden md:block w-full h-full">
-                <el-splitter class="w-full h-full" lazy @@resize-end="persistSidebarSize">
-                    <el-splitter-panel v-model:size="sidebarPanelSize" min="0" max="420" collapsible>
-                        <div class="sidebar bg-[#3B71F8] h-full flex flex-col overflow-y-auto overflow-x-hidden">
-                            <div class="flex-1 flex flex-col gap-1 pt-4 px-3">
-                                <menu-tree 
-                                    :menu-data="mainMenuItems" 
-                                    default-target="contentFrameDesktop" 
-                                    :text-color="menuTextColor"
-                                    :active-key="currentPage"
-                                    @@navigate="handleMenuNavigate"
-                                ></menu-tree>
-                            </div>
-                            <div class="flex flex-col gap-2 px-3 py-3">
-                                <menu-tree 
-                                    :menu-data="bottomMenuItems" 
-                                    default-target="contentFrameDesktop" 
-                                    :text-color="menuTextColor"
-                                    :active-key="currentPage"
-                                    @@navigate="handleMenuNavigate"
-                                ></menu-tree>
-                            </div>
-                        </div>
-                    </el-splitter-panel>
-
-                    <el-splitter-panel>
-                        <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden h-full">
-                            <div class="flex-1 overflow-hidden">
-                                <iframe id="contentFrameDesktop" src="/me/dashboard" class="w-full h-full"></iframe>
-                            </div>
-                        </div>
-                    </el-splitter-panel>
-                </el-splitter>
+            <div
+                id="sidebarMobile"
+                class="sidebar w-60 md:w-auto bg-[#3B71F8] fixed md:relative left-0 top-16 md:top-0 h-[calc(100vh-64px)] md:h-full z-40 md:z-auto flex flex-col overflow-y-auto overflow-x-hidden -translate-x-full md:translate-x-0 transition-transform duration-300"
+                :class="{ 'sidebar-desktop-collapsed': !isMobile && desktopSidebarCollapsed }"
+                :style="!isMobile ? { width: desktopSidebarCollapsed ? '0px' : (sidebarPanelSize + 'px') } : null"
+            >
+                <div class="flex-1 flex flex-col gap-1 pt-4 px-3">
+                    <menu-tree 
+                        :menu-data="mainMenuItems" 
+                        default-target="contentFrame" 
+                        :text-color="menuTextColor"
+                        :active-key="currentPage"
+                        @@navigate="handleMenuNavigate"
+                    ></menu-tree>
+                </div>
+                <div class="flex flex-col gap-2 px-3 py-3">
+                    <menu-tree 
+                        :menu-data="bottomMenuItems" 
+                        default-target="contentFrame" 
+                        :text-color="menuTextColor"
+                        :active-key="currentPage"
+                        @@navigate="handleMenuNavigate"
+                    ></menu-tree>
+                </div>
             </div>
 
-            <!-- Mobile: Overlay Sidebar -->
-            <div class="md:hidden flex w-full h-full overflow-hidden">
-                <div id="sidebarMobile" class="sidebar w-60 bg-[#3B71F8] fixed left-0 top-16 h-[calc(100vh-64px)] z-40 flex flex-col overflow-y-auto -translate-x-full transition-transform duration-300">
-                    <div class="flex-1 flex flex-col gap-1 pt-4 px-3">
-                        <menu-tree 
-                            :menu-data="mainMenuItems" 
-                            default-target="contentFrameMobile" 
-                            :text-color="menuTextColor"
-                            :active-key="currentPage"
-                            @@navigate="handleMenuNavigate"
-                        ></menu-tree>
-                    </div>
+            <div class="sidebar-toggle-zone hidden md:block">
+                <button
+                    class="sidebar-toggle-btn"
+                    :class="{ 'is-visible': desktopSidebarCollapsed }"
+                    @@click="toggleDesktopSidebar"
+                    :title="desktopSidebarCollapsed ? '显示菜单' : '隐藏菜单'"
+                >
+                    <i :class="desktopSidebarCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
+                </button>
+            </div>
 
-                    <div class="flex flex-col gap-2 px-3 py-3">
-                        <menu-tree 
-                            :menu-data="bottomMenuItems" 
-                            default-target="contentFrameMobile" 
-                            :text-color="menuTextColor"
-                            :active-key="currentPage"
-                            @@navigate="handleMenuNavigate"
-                        ></menu-tree>
-                    </div>
-                </div>
+            <div id="sidebarOverlay" class="sidebar-overlay md:hidden" @@click="closeSidebar"></div>
 
-                <div id="sidebarOverlay" class="sidebar-overlay" @@click="closeSidebar"></div>
-
-                <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden">
-                    <div class="flex-1 overflow-hidden">
-                        <iframe id="contentFrameMobile" src="/me/dashboard" class="w-full h-full"></iframe>
-                    </div>
+            <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden h-full">
+                <div class="flex-1 overflow-hidden">
+                    <iframe id="contentFrame" src="/me/dashboard" class="w-full h-full"></iframe>
                 </div>
             </div>
         </div>
 
+        <!-- AI Chat Drawer -->
         <el-drawer
             v-model="aiDrawerVisible"
             title="AI 助手"
@@ -324,18 +358,26 @@
                 const currentTitle = ref('仪表板');
                 const sidebarOpen = ref(false);
                 const navigationHistory = ref([]);
+                const hasHistory = computed(() => navigationHistory.value.length > 0);
                 const menuTextColor = ref('#cbd5e1');
                 const aiDrawerVisible = ref(false);
                 const aiDrawerSize = ref('50%');
                 const aiChatUrl = ref('/AI/Chat');
                 const isMobile = ref(window.innerWidth < 768);
                 const sidebarPanelSize = ref(240);
+                const desktopSidebarCollapsed = ref(false);
 
                 try {
                     const savedWidth = parseInt(localStorage.getItem('index.sidebar.size') || '', 10);
                     if (!Number.isNaN(savedWidth) && savedWidth >= 0 && savedWidth <= 420) {
                         sidebarPanelSize.value = savedWidth;
                     }
+                } catch (e) {
+                    // ignore localStorage access errors
+                }
+
+                try {
+                    desktopSidebarCollapsed.value = localStorage.getItem('index.sidebar.collapsed') === '1';
                 } catch (e) {
                     // ignore localStorage access errors
                 }
@@ -398,9 +440,7 @@
                 buildPageMap(menuItems.value);
 
                 const getActiveFrame = () => {
-                    const desktopFrame = document.getElementById('contentFrameDesktop');
-                    const mobileFrame = document.getElementById('contentFrameMobile');
-                    return isMobile.value ? (mobileFrame || desktopFrame) : (desktopFrame || mobileFrame);
+                    return document.getElementById('contentFrame');
                 };
 
 
@@ -439,14 +479,6 @@
                     // Close sidebar on mobile
                     closeSidebar();
 
-                    // Update title in unified header
-                    const headerTitle = document.getElementById('headerTitle');
-                    if (headerTitle) {
-                        headerTitle.innerText = `${currentTitle.value}`;
-                    }
-
-                    // Update back button visibility
-                    updateBackButtonVisibility();
                 };
 
                 const handleMenuNavigate = (item) => {
@@ -456,30 +488,6 @@
                 // Helper for iframe pages to request navigation
                 window.navigateToFromIframe = (page, title) => {
                     navigateTo(page, title);
-                };
-
-                // Update back button visibility and show when history exists
-                const updateBackButtonVisibility = () => {
-                    const backBtn = document.getElementById('backBtn');
-                    const logoContainer = document.getElementById('logoContainer');
-                    
-                    if (backBtn) {
-                        if (navigationHistory.value.length > 0) {
-                            // Show back button with full opacity
-                            backBtn.classList.remove('hidden');
-                            backBtn.classList.add('flex');
-                            backBtn.style.opacity = '1';
-                            backBtn.style.pointerEvents = 'auto';
-                            logoContainer.classList.add('hidden');
-                        } else {
-                            // Hide back button on first page
-                            backBtn.classList.add('hidden');
-                            backBtn.classList.remove('flex');
-                            backBtn.style.opacity = '0.3';
-                            backBtn.style.pointerEvents = 'none';
-                            logoContainer.classList.remove('hidden');
-                        }
-                    }
                 };
 
                 // Initialize on mount
@@ -492,13 +500,22 @@
                     const updateDeviceState = () => {
                         const mobile = window.innerWidth < 768;
                         isMobile.value = mobile;
+                        const sidebar = document.getElementById('sidebarMobile');
+                        const overlay = document.getElementById('sidebarOverlay');
 
                         if (!mobile) {
-                            const sidebar = document.getElementById('sidebar');
-                            const overlay = document.getElementById('sidebarOverlay');
                             if (sidebar) {
                                 sidebar.classList.remove('-translate-x-full');
                                 sidebar.classList.add('translate-x-0');
+                            }
+                            if (overlay) {
+                                overlay.classList.remove('active');
+                            }
+                            sidebarOpen.value = false;
+                        } else {
+                            if (sidebar) {
+                                sidebar.classList.add('-translate-x-full');
+                                sidebar.classList.remove('translate-x-0');
                             }
                             if (overlay) {
                                 overlay.classList.remove('active');
@@ -511,9 +528,6 @@
                     window.addEventListener('resize', updateAiDrawerSize);
                     window.addEventListener('resize', updateDeviceState);
                     
-                    // Initialize back button visibility
-                    updateBackButtonVisibility();
-
                     // Check for direct hash navigation
                     const hash = (location.hash || '').replace('#', '').trim();
                     if (hash && pageMap[hash]) {
@@ -544,15 +558,6 @@
                             iframe.src = pageConfig.url;
                         }
 
-                        // Update title in unified header
-                        const headerTitle = document.getElementById('headerTitle');
-                        if (headerTitle) {
-                            //headerTitle.innerHTML = `<h2 class="text-white font-semibold truncate text-xs sm:text-sm md:text-base">${currentTitle.value}</h2>`;
-                            headerTitle.innerText = `${currentTitle.value}`;
-                        }
-
-                        // Update back button visibility
-                        updateBackButtonVisibility();
                     }
                 };
 
@@ -575,6 +580,16 @@
                     sidebar.classList.add('-translate-x-full');
                     sidebar.classList.remove('translate-x-0');
                     overlay.classList.remove('active');
+                };
+
+                const toggleDesktopSidebar = () => {
+                    if (isMobile.value) return;
+                    desktopSidebarCollapsed.value = !desktopSidebarCollapsed.value;
+                    try {
+                        localStorage.setItem('index.sidebar.collapsed', desktopSidebarCollapsed.value ? '1' : '0');
+                    } catch (e) {
+                        // ignore localStorage access errors
+                    }
                 };
 
                 const refreshMainContent = () => {
@@ -610,6 +625,7 @@
                 return {
                     currentPage,
                     currentTitle,
+                    hasHistory,
                     sidebarOpen,
                     menuItems,
                     mainMenuItems,
@@ -617,6 +633,7 @@
                     menuTextColor,
                     isMobile,
                     sidebarPanelSize,
+                    desktopSidebarCollapsed,
                     aiDrawerVisible,
                     aiDrawerSize,
                     aiChatUrl,
@@ -625,6 +642,7 @@
                     handleMenuNavigate,
                     openSidebar,
                     closeSidebar,
+                    toggleDesktopSidebar,
                     refreshMainContent,
                     openAiChatDrawer,
                     persistSidebarSize

@@ -28,7 +28,7 @@ namespace App.EleUI
     <el-button type='success' v-on:click=""invokeCommand('Select')"">选择</el-button>
 </div>";
             }
-                const string toolbarClass = "ele-table-toolbar w-full flex-none shrink-0 min-h-[40px] flex flex-wrap items-center gap-2 bg-white px-6 py-4 overflow-visible relative z-10";
+                const string toolbarClass = "ele-table-toolbar w-full flex-none shrink-0 min-h-[40px] flex flex-wrap items-center gap-2 bg-white px-6 pt-4 pb-0 overflow-visible relative z-10";
                 const string toolbarStyle = "display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%;min-height:40px;flex-shrink:0;overflow:visible;position:relative;z-index:10;";
 
             var tableContext = (TableContext)context.Items[typeof(TableContext)];

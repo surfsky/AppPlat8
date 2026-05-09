@@ -113,7 +113,7 @@ namespace App.Entities
             return History.GetDetail(item.Id);
         }
 
-        /// <summary>批量删除</summary>
+        /// <summary>删除</summary>
         public static void DeleteBatch(string key)
         {
             Set.Where(t => t.Key == key).Delete();

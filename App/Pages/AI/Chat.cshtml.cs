@@ -462,13 +462,13 @@ namespace App.Pages.AI
             public object Content { get; private set; }
             public string ErrorMessage { get; private set; }
 
+
+            //public static BuiltMessageContent Ok(string content) => Ok(content ?? string.Empty);
             public static BuiltMessageContent Ok(object content) => new BuiltMessageContent
             {
                 Success = true,
                 Content = content
             };
-
-            public static BuiltMessageContent Ok(string content) => Ok(content ?? string.Empty);
 
             public static BuiltMessageContent Fail(string error) => new BuiltMessageContent
             {

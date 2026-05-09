@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable Title="AI配置" FormPage="AIConfigForm" EnableBatch="false">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="AI配置" FormPage="AIConfigForm" EnableBatch="false">
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Name" Label="名称" Width="220px"></EleInput>

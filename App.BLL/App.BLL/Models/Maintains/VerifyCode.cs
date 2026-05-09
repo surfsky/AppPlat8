@@ -31,7 +31,7 @@ namespace App.DAL
             return q;
         }
 
-        /// <summary>批量删除</summary>
+        /// <summary>删除</summary>
         public static void DeleteBatch(int months)
         {
             var date = DateTime.Now.AddMonths(-months);

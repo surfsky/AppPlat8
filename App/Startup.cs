@@ -16,6 +16,7 @@ using App.Components;
 using App.Entities;
 using App.Pages.Chats;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace App
 {
@@ -41,7 +42,14 @@ namespace App
             {
                 options.IdleTimeout = TimeSpan.FromHours(12);
             });
-            services.AddControllersWithViews().AddRazorRuntimeCompilation();  // MVC + Razor Runtime Compilation
+            services.AddControllersWithViews()
+                .AddRazorRuntimeCompilation()
+                .AddJsonOptions(options =>
+                {
+                    // Keep compatibility with legacy payloads that send enum names as strings.
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                });  // MVC + Razor Runtime Compilation
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {
                 options.LoginPath = new PathString("/Login");

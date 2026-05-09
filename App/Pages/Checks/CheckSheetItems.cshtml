@@ -6,7 +6,7 @@
 }
 
 @section body {
-    <EleTable Title="检查项" FormPage="CheckSheetItemForm?sheetId=@Model.SheetId&sheetName=@sheetNameEncoded" EnableBatch="true" DataHandler="?handler=Data&sheetId=@Model.SheetId" DeleteHandler="?handler=Delete&sheetId=@Model.SheetId">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="检查项" FormPage="CheckSheetItemForm?sheetId=@Model.SheetId&sheetName=@sheetNameEncoded" EnableBatch="true" DataHandler="?handler=Data&sheetId=@Model.SheetId" DeleteHandler="?handler=Delete&sheetId=@Model.SheetId">
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Name" Width="250px" Label="名称"></EleInput>
@@ -15,7 +15,7 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" PopupUrl="CheckSheetItemForm?sheetId=@Model.SheetId&sheetName=@sheetNameEncoded" Icon="Plus" Visible="Model.Mode == PageMode.Edit">新增</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="Model.Mode == PageMode.Edit">批量删除</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="Model.Mode == PageMode.Edit">删除</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

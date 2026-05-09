@@ -7,7 +7,7 @@
 }
 
 @section body {
-    <EleTable Title="隐患列表" FormPage="CheckHazardForm" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId&objectName=@objectNameEncoded" >
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="隐患列表" FormPage="CheckHazardForm" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId&objectName=@objectNameEncoded" >
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Description" Width="250px" Label="描述" ></EleInput>
@@ -17,7 +17,7 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">批量删除</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

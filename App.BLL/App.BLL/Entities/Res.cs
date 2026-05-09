@@ -151,7 +151,7 @@ namespace App.Entities
             Set.Where(t => t.Key == key).Delete();
         }
 
-        // 批量删除资源文件
+        // 删除资源文件
         public static void DeleteBatch(List<long> ids)
         {
             var items = Set.Where(t => ids.Contains(t.Id)).ToList();
@@ -163,13 +163,13 @@ namespace App.Entities
             Set.Where(t => ids.Contains(t.Id)).Delete();
         }
 
-        // 批量删除对应键的资源文件
+        // 删除对应键的资源文件
         public static void DeleteBatch(Type entityType, List<long> ids)
         {
             DeleteBatch(entityType.Name, ids);
         }
 
-        // 批量删除对应键的资源文件
+        // 删除对应键的资源文件
         public static void DeleteBatch(string prefix, List<long> ids)
         {
             foreach (int id in ids)

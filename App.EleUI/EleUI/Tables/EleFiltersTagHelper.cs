@@ -32,7 +32,7 @@ namespace App.EleUI
             output.TagName = null;
             output.Content.SetHtmlContent($@"
 <div class='col-span-full ele-table-filters-block w-auto md:w-full shrink-0 flex items-center'>
-    <div class='hidden md:flex md:flex-wrap md:items-start md:gap-4 w-full'>
+    <div class='hidden md:flex md:flex-wrap md:items-start md:gap-x-4 md:gap-y-2 w-full'>
         {content}
     </div>
 

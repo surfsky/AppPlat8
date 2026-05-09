@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable Title="GIS菜单管理" FormPage="MenuForm" EnableBatch="false" RowKey="id">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="GIS菜单管理" FormPage="MenuForm" EnableBatch="false" RowKey="id">
         <Toolbar>
             <Buttons>
                 <EleButton Type="Primary" Command="Add" Icon="Plus" Width="120px">新增菜单</EleButton>
