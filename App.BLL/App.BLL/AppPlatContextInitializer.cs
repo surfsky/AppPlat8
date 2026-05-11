@@ -394,6 +394,14 @@ namespace App.DAL
                             ImageUrl = "fas fa-project-diagram",
                             Power = (Power?)0,
                         },
+                        new Menu
+                        {
+                            Name = "统计面板",
+                            SortId = 30,
+                            NavigateUrl = "GIS/Panels",
+                            ImageUrl = "fas fa-chart-bar",
+                            Power = (Power?)271,
+                        },
                     }
                 },
                 new Menu

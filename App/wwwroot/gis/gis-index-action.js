@@ -10,15 +10,20 @@
         const geometryDisplayLayerIds = ctx.geometryDisplayLayerIds || [];
         const onOpenGeometryDetail = ctx.onOpenGeometryDetail;
         const onCloseGeometryDetail = ctx.onCloseGeometryDetail;
+        const onStatsModeChanged = ctx.onStatsModeChanged;
 
         function toggleStatsMode() {
             const manager = resolveManager();
             window.GisIndexUI.toggleStatsMode(state, {
                 onCloseDrawer: () => {
+                    if (typeof onCloseGeometryDetail === 'function') {
+                        onCloseGeometryDetail();
+                    }
                     if (manager && typeof manager.closeDrawer === 'function') {
                         manager.closeDrawer();
                     }
-                }
+                },
+                onStatsModeChanged
             });
         }
 

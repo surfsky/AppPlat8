@@ -1,0 +1,33 @@
+@page
+@model App.Pages.GIS.PanelFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "统计面板信息";
+}
+
+@section head {
+    <style>
+        .chart-json-selector .el-input__inner {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+}
+
+@section body {
+    <EleForm>
+        <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
+        <EleInput For="Item.Title" Label="标题" Required="true"></EleInput>
+        <EleInput For="Item.Info" Label="提示信息"></EleInput>
+        <EleNumber For="Item.Position" Label="位置/排序" Min="0" Max="9999"></EleNumber>
+        <EleSwitch For="Item.InGis" Label="GIS显示"></EleSwitch>
+        <EleSwitch For="Item.InDashboard" Label="Dashboard显示"></EleSwitch>
+        <EleSelector For="Item.ChartJson" TextFor="Item.ChartJson" Label="图表配置" Class="chart-json-selector" PopupUrl="ChartEditor" KeyMode="Storage" Icon="Edit" Rows="10" Editable="true" FillRow="true"></EleSelector>
+        <EleInput For="Item.Content" Label="普通内容HTML" Rows="8" FillRow="true"></EleInput>
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

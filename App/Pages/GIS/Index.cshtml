@@ -26,15 +26,18 @@
 @section head {
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
-    <link rel="stylesheet" href="/css/gis-index.css?v=@DateTime.Now.Ticks" />
+    <script src="/js/echarts.min.js"></script>
+    <link rel="stylesheet" href="/gis/gis-index.css?v=@DateTime.Now.Ticks" />
     <script src="/js/maphelper.js?v=@DateTime.Now.Ticks"></script>
-    <script src="/js/gis-index-data.js?v=@DateTime.Now.Ticks"></script>
-    <script src="/js/gis-index-action.js?v=@DateTime.Now.Ticks"></script>
-    <script src="/js/gis-index-map.js?v=@DateTime.Now.Ticks"></script>
-    <script src="/js/gis-index-object.js?v=@DateTime.Now.Ticks"></script>
-    <script src="/js/gis-index-detail.js?v=@DateTime.Now.Ticks"></script>
-    <script src="/js/gis-panel-element.js?v=@DateTime.Now.Ticks"></script>
-    <script src="/js/gis-index-ui.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-chart-helper.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-panels.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-data.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-action.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-map.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-object.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-detail.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-panel-element.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-ui.js?v=@DateTime.Now.Ticks"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 }
@@ -58,14 +61,14 @@
         <button id="btn-layer-toggle" class="floating-toggle" title="图层" aria-label="显示/隐藏图层列表">
             <i class="fa-solid fa-layer-group toggle-icon"></i>
         </button>
+        <button id="btn-stats-toggle" class="floating-toggle" title="统计" aria-label="显示/隐藏统计面板">
+            <i class="fa-solid fa-chart-column toggle-icon"></i>
+        </button>
         <button id="btn-view-toggle" class="floating-toggle" title="视图" aria-label="显示/隐藏视图工具栏">
             <i class="fa-solid fa-eye toggle-icon"></i>
         </button>
         <button id="btn-toolbar-toggle" class="floating-toggle" title="工具栏" aria-label="显示/隐藏工具栏">
             <i class="fa-solid fa-screwdriver-wrench toggle-icon"></i>
-        </button>
-        <button id="btn-stats-toggle" class="floating-toggle" title="统计" aria-label="显示/隐藏统计面板">
-            <i class="fa-solid fa-chart-column toggle-icon"></i>
         </button>
     </div>
     <div id="view-menu" class="view-menu" aria-label="视图菜单">
@@ -85,16 +88,8 @@
     </div>
 
     <div id="stats-overlay" class="stats-overlay" aria-label="统计面板">
-        <div class="stats-column stats-column-left">
-            <gis-panel class="stats-gis-panel" title="应急资源" info="应急资源信息" content="接入应急队伍、物资仓库、避难场所等关键资源统计信息。" width="100%" height="100%"></gis-panel>
-            <gis-panel class="stats-gis-panel" title="风险监测" info="风险监测信息" content="展示灾害风险点、重点防御单元和当前监测预警态势。" width="100%" height="100%"></gis-panel>
-            <gis-panel class="stats-gis-panel" title="处置效率" info="处置效率信息" content="汇总事件响应时长、处置进度和闭环率等核心效率指标。" width="100%" height="100%"></gis-panel>
-        </div>
-        <div class="stats-column stats-column-right">
-            <gis-panel class="stats-gis-panel" title="事件总览" info="事件总览信息" content="按类型、区域、时间维度展示事件总量与趋势变化。" width="100%" height="100%"></gis-panel>
-            <gis-panel class="stats-gis-panel" title="联动单位" info="联动单位信息" content="统计部门协同、任务下发与跨单位联动执行情况。" width="100%" height="100%"></gis-panel>
-            <gis-panel class="stats-gis-panel" title="值守状态" info="值守状态信息" content="显示当班力量、值守在线状态和关键岗位覆盖情况。" width="100%" height="100%"></gis-panel>
-        </div>
+        <div id="stats-column-left" class="stats-column stats-column-left"></div>
+        <div id="stats-column-right" class="stats-column stats-column-right"></div>
     </div>
 
     <div id="geo-detail-panel" class="geo-detail-panel" aria-label="图形详情">
@@ -127,7 +122,8 @@
             toolbarCollapsed: true,
             layerCollapsed: false,
             viewMenuOpen: false,
-            statsMode: false
+            statsMode: false,
+            statsPanels: []
         };
         const GisIndexUI = window.GisIndexUI;
         const GisIndexData = window.GisIndexData;
@@ -135,6 +131,15 @@
         const GisIndexMap = window.GisIndexMap;
         const GisIndexObject = window.GisIndexObject;
         const GisIndexDetail = window.GisIndexDetail;
+        const GisIndexPanels = window.GisIndexPanels;
+        const pageTheme = (() => {
+            try {
+                const t = new URLSearchParams(window.location.search || '').get('theme');
+                return (t || 'dark').toLowerCase() === 'light' ? 'light' : 'dark';
+            } catch {
+                return 'dark';
+            }
+        })();
 
 
         //--------------------------------------------------------------
@@ -169,7 +174,10 @@
             state,
             geometryDisplayLayerIds,
             onOpenGeometryDetail: (id) => openGeometryDetailPanel(id),
-            onCloseGeometryDetail: () => closeGeometryDetailPanel()
+            onCloseGeometryDetail: () => closeGeometryDetailPanel(),
+            onStatsModeChanged: () => {
+                setTimeout(() => panelApi.resizeCharts(), 260);
+            }
         });
         const mapApi = GisIndexMap.create({
             map,
@@ -188,6 +196,10 @@
             panelId: 'geo-detail-panel',
             bodyId: 'geo-detail-body',
             endpointBuilder: (id) => `?handler=GeometryDetail&id=${encodeURIComponent(id)}`
+        });
+        const panelApi = GisIndexPanels.create({
+            state,
+            theme: pageTheme
         });
         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
         map.addControl(new mapboxgl.GeolocateControl({
@@ -219,6 +231,7 @@
             // loadObjects();
             await loadMenus();
             await loadGeometries();
+            await panelApi.loadPanels();
             mapApi.applyChineseLabels();
 
             // 初始化按钮
@@ -289,7 +302,7 @@
         async function searchAddress() { return mapApi.searchAddress(); }
 
         //--------------------------------------------------------------
-        // 工具栏和视图控制（拆分至 /js/gis-index-ui.js）
+        // 工具栏和视图控制（拆分至 /gis/gis-index-ui.js）
         //--------------------------------------------------------------
         function toggleToolbar() { GisIndexUI.toggleToolbar(state); }
         function syncToolbarUI() { GisIndexUI.syncToolbarUI(state); }

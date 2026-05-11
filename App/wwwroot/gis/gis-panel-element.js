@@ -4,6 +4,14 @@ class GisPanelElement extends HTMLElement {
     }
 
     connectedCallback() {
+        if (!this.__docPointerHandler) {
+            this.__docPointerHandler = (evt) => {
+                if (this.contains(evt.target)) return;
+                this.closeInfoTooltip();
+            };
+            document.addEventListener('pointerdown', this.__docPointerHandler);
+        }
+
         if (!this.__panelObserver) {
             this.__panelObserver = new MutationObserver(() => {
                 if (this.captureLightDomContent()) {
@@ -22,6 +30,10 @@ class GisPanelElement extends HTMLElement {
     }
 
     disconnectedCallback() {
+        if (this.__docPointerHandler) {
+            document.removeEventListener('pointerdown', this.__docPointerHandler);
+            this.__docPointerHandler = null;
+        }
         if (this.__panelObserver) {
             this.__panelObserver.disconnect();
             this.__panelObserver = null;
@@ -104,16 +116,21 @@ class GisPanelElement extends HTMLElement {
             ? this.__bodyHtml
             : `<div class="gis-panel-content-text">${escapedContent}</div>`;
 
+        const tooltipPart = escapedInfo
+            ? `<div class="gis-panel-tooltip" data-panel-tooltip>${escapedInfo}</div>`
+            : '';
+
         this.innerHTML = `
             <div class="gis-panel-root">
-                <img class="gis-panel-corner tl" src="/images/tl.png" alt="" onerror="this.style.display='none'" />
-                <img class="gis-panel-corner tr" src="/images/tr.png" alt="" onerror="this.style.display='none'" />
-                <img class="gis-panel-corner bl" src="/images/bl.png" alt="" onerror="this.style.display='none'" />
-                <img class="gis-panel-corner br" src="/images/br.png" alt="" onerror="this.style.display='none'" />
+                <img class="gis-panel-corner tl" src="/gis/tl.svg" alt="" onerror="this.style.display='none'" />
+                <img class="gis-panel-corner tr" src="/gis/tr.svg" alt="" onerror="this.style.display='none'" />
+                <img class="gis-panel-corner bl" src="/gis/bl.svg" alt="" onerror="this.style.display='none'" />
+                <img class="gis-panel-corner br" src="/gis/br.svg" alt="" onerror="this.style.display='none'" />
                 <div class="gis-panel-header">
                     <h3 class="gis-panel-title">${escapedTitle}</h3>
                     ${rightPart}
                 </div>
+                ${tooltipPart}
                 <div class="gis-panel-body">${bodyPart}</div>
             </div>
         `;
@@ -122,6 +139,30 @@ class GisPanelElement extends HTMLElement {
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.requestClose());
         }
+
+        const infoBtn = this.querySelector('.gis-panel-info');
+        if (infoBtn) {
+            infoBtn.addEventListener('click', (evt) => {
+                evt.stopPropagation();
+                this.toggleInfoTooltip();
+            });
+        }
+    }
+
+    toggleInfoTooltip() {
+        const tooltip = this.querySelector('[data-panel-tooltip]');
+        if (!tooltip) return;
+        const all = document.querySelectorAll('.gis-panel-tooltip.show');
+        all.forEach(node => {
+            if (node !== tooltip) node.classList.remove('show');
+        });
+        tooltip.classList.toggle('show');
+    }
+
+    closeInfoTooltip() {
+        const tooltip = this.querySelector('[data-panel-tooltip]');
+        if (!tooltip) return;
+        tooltip.classList.remove('show');
     }
 
     requestClose() {

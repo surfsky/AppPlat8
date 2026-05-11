@@ -1,0 +1,230 @@
+@page
+@model App.Pages.GIS.ChartEditorModel
+@{
+    Layout = "_Layout";
+}
+
+@section head {
+    <script src="/js/echarts.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <style>
+        html, body, #app { height: 100%; margin: 0; background: #fff; }
+        .panel { height: 100%; display: grid; grid-template-rows: auto 1fr auto; gap: 10px; padding: 12px; box-sizing: border-box; }
+        .cfg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .cfg-full { grid-column: 1 / span 2; }
+        .preview { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; display: grid; grid-template-rows: 1fr 160px; }
+        #chart-preview { width: 100%; height: 100%; min-height: 260px; background: #0b1228; }
+        .json-editor { border-top: 1px solid #e5e7eb; }
+        .json-editor textarea { width: 100%; height: 100%; border: 0; resize: none; font-family: Menlo, Monaco, Consolas, monospace; font-size: 12px; padding: 10px; box-sizing: border-box; }
+        .foot { display: flex; justify-content: flex-end; gap: 8px; }
+        .hint { color: #64748b; font-size: 12px; }
+    </style>
+}
+
+@section body {
+    <div id="app">
+        <div class="panel">
+            <div class="cfg-grid">
+                <el-input v-model="model.title" placeholder="图表标题" clearable>
+                    <template #prepend>标题</template>
+                </el-input>
+                <el-select v-model="model.type" placeholder="图表类型">
+                    <el-option label="折线图" value="line"></el-option>
+                    <el-option label="柱形图" value="bar"></el-option>
+                    <el-option label="饼图" value="pie"></el-option>
+                </el-select>
+                <el-select v-model="model.source.mode" placeholder="数据源类型">
+                    <el-option label="内嵌JSON" value="json"></el-option>
+                    <el-option label="接口地址" value="api"></el-option>
+                </el-select>
+                <el-input v-model="model.source.api.url" placeholder="接口URL（mode=api时有效）" clearable>
+                    <template #prepend>接口</template>
+                </el-input>
+                <div class="cfg-full hint">内嵌JSON示例：line/bar 需 categories + series；pie 需 data(name/value)。保存时将输出 ChartJson 字符串。</div>
+            </div>
+
+            <div class="preview">
+                <div id="chart-preview"></div>
+                <div class="json-editor">
+                    <textarea v-model="jsonText" placeholder="在此编辑完整ChartJson"></textarea>
+                </div>
+            </div>
+
+            <div class="foot">
+                <el-button @@click="closeOnly">关闭</el-button>
+                <el-button @@click="syncModelFromJson">从JSON载入</el-button>
+                <el-button type="primary" @@click="preview">预览</el-button>
+                <el-button type="success" @@click="save">保存</el-button>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, reactive, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const previewTheme = '@Model.Theme';
+                const model = reactive({
+                    version: 1,
+                    type: 'line',
+                    title: '',
+                    source: {
+                        mode: 'json',
+                        json: {
+                            categories: ['周一', '周二', '周三', '周四', '周五'],
+                            series: [
+                                { name: '数值', data: [12, 18, 15, 20, 14] }
+                            ]
+                        },
+                        api: {
+                            url: '',
+                            method: 'GET',
+                            dataPath: 'data'
+                        }
+                    },
+                    options: {}
+                });
+                const jsonText = ref('');
+                let chart = null;
+
+                const getManager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+
+                const setJsonByModel = () => {
+                    jsonText.value = JSON.stringify(model, null, 2);
+                };
+
+                const readInitialValue = () => {
+                    const params = new URLSearchParams(window.location.search || '');
+                    const candidates = [];
+                    const dataKey = params.get('dk') || params.get('dataKey') || params.get('selectorKey') || '';
+                    if (dataKey && window.sessionStorage) {
+                        const v = window.sessionStorage.getItem(dataKey) || window.localStorage.getItem(dataKey);
+                        if (v) candidates.push(v);
+                    }
+                    ['selectorValue', 'data', 'json', 'chartJson', 'chartjson'].forEach(k => {
+                        const v = params.get(k);
+                        if (v !== null && v !== undefined && String(v).trim()) candidates.push(v);
+                    });
+                    return candidates.find(v => String(v).trim()) || '';
+                };
+
+                const normalizeSeries = (series) => {
+                    if (!Array.isArray(series)) return [];
+                    return series.map((item, idx) => {
+                        if (Array.isArray(item)) {
+                            return { name: `系列${idx + 1}`, data: item };
+                        }
+                        if (item && typeof item === 'object') {
+                            return {
+                                name: item.name || `系列${idx + 1}`,
+                                data: Array.isArray(item.data) ? item.data : []
+                            };
+                        }
+                        return { name: `系列${idx + 1}`, data: [] };
+                    });
+                };
+
+                const buildOption = (cfg) => {
+                    const type = cfg.type || 'line';
+                    const source = cfg.source || {};
+                    const json = source.json || {};
+                    const title = cfg.title || '';
+
+                    if (type === 'pie') {
+                        const pieData = Array.isArray(json.data) ? json.data : [];
+                        return {
+                            title: { text: title, left: 'center', textStyle: { color: '#cbd5e1' } },
+                            tooltip: { trigger: 'item' },
+                            legend: { bottom: 0, textStyle: { color: '#94a3b8' } },
+                            series: [{ type: 'pie', radius: ['38%', '68%'], data: pieData }]
+                        };
+                    }
+
+                    const categories = Array.isArray(json.categories) ? json.categories : [];
+                    const series = normalizeSeries(json.series).map(s => ({ name: s.name, type, data: s.data, smooth: type === 'line' }));
+                    return {
+                        title: { text: title, left: 'center', textStyle: { color: '#cbd5e1' } },
+                        tooltip: { trigger: 'axis' },
+                        legend: { top: 28, textStyle: { color: '#94a3b8' } },
+                        grid: { left: 36, right: 18, top: 62, bottom: 30, containLabel: true },
+                        xAxis: { type: 'category', data: categories, axisLabel: { color: '#94a3b8' } },
+                        yAxis: { type: 'value', axisLabel: { color: '#94a3b8' } },
+                        series
+                    };
+                };
+
+                const syncModelFromJson = () => {
+                    try {
+                        const parsed = JSON.parse(jsonText.value || '{}');
+                        model.version = parsed.version || 1;
+                        model.type = parsed.type || 'line';
+                        model.title = parsed.title || '';
+                        model.source = parsed.source || model.source;
+                        model.options = parsed.options || {};
+                    } catch {
+                        const manager = getManager();
+                        if (manager && typeof manager.showError === 'function') manager.showError('JSON格式错误，无法载入');
+                    }
+                };
+
+                const preview = () => {
+                    syncModelFromJson();
+                    setJsonByModel();
+                    if (!chart) {
+                        const el = document.getElementById('chart-preview');
+                        if (!el || !window.echarts) return;
+                        chart = echarts.init(el, previewTheme === 'light' ? null : 'dark');
+                    }
+                    const option = Object.assign({}, buildOption(model), model.options || {});
+                    chart.setOption(option, true);
+                };
+
+                const closeOnly = () => {
+                    const manager = getManager();
+                    if (manager && typeof manager.closePage === 'function') {
+                        manager.closePage({});
+                        return;
+                    }
+                    window.close();
+                };
+
+                const save = () => {
+                    syncModelFromJson();
+                    const text = JSON.stringify(model);
+                    const payload = { type: 'EleSelector', data: [{ id: text, name: text }] };
+                    const manager = getManager();
+                    if (manager && typeof manager.closePage === 'function') {
+                        manager.closePage(payload);
+                        return;
+                    }
+                    if (window.parent) {
+                        window.parent.postMessage({ __elePageClose: true, data: payload }, '*');
+                    }
+                };
+
+                onMounted(() => {
+                    const initial = readInitialValue();
+                    if (initial) {
+                        jsonText.value = initial;
+                        syncModelFromJson();
+                    }
+                    setJsonByModel();
+                    preview();
+                    window.addEventListener('resize', () => chart && chart.resize());
+                });
+
+                return {
+                    model,
+                    jsonText,
+                    syncModelFromJson,
+                    preview,
+                    closeOnly,
+                    save,
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+}

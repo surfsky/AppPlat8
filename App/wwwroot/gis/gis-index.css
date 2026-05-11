@@ -1,4 +1,11 @@
 body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111827; }
+@font-face {
+    font-family: 'HuXiaoBoNanShenTi';
+    src: url('/gis/huxiaobonanshenti-2.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 .glass-panel {
     background: rgba(255, 255, 255, 0.88);
@@ -16,7 +23,7 @@ body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111
     width: 100%;
     height: 96px;
     /*background: linear-gradient(to bottom, rgba(255,255,255,0.92), rgba(255,255,255,0));*/
-    background-image: url("/gis/head.png");
+    background-image: url('/gis/HeadBg.png');
     background-size: cover;
     background-position: center;
     opacity: 0.95;
@@ -35,7 +42,7 @@ body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111
     color: white;
     opacity: 0.95;
     font-size: 36px;
-    font-family: 'Times New Roman', Times, serif, '方正小标宋简';
+    font-family: 'HuXiaoBoNanShenTi', 'Times New Roman', Times, serif, '方正小标宋简';
     letter-spacing: .08em;
 }
 .header-datetime {
@@ -59,37 +66,46 @@ body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111
     box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.16);
 }
 .map-toolbar {
+    --toolbar-shift-x: -50%;
     position: absolute;
     bottom: 20px;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(var(--toolbar-shift-x)) translateY(0);
     z-index: 11;
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 10px 12px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
-    transition: all .25s ease;
+    background: rgba(3, 16, 80, 0.88);
+    border: 1px solid rgba(22, 170, 255, 0.48);
+    box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.3), 0 8px 24px rgba(2, 6, 23, 0.38);
+    opacity: 1;
+    pointer-events: auto;
+    transition: transform .25s ease, opacity .25s ease;
+    will-change: transform, opacity;
+}
+.map-toolbar:not(.toolbar-collapsed) {
+    transform: translateX(var(--toolbar-shift-x)) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
 }
 .map-toolbar.toolbar-collapsed {
     opacity: 0;
     pointer-events: none;
-    transform: translateX(-50%) translateY(20px);
+    transform: translateX(var(--toolbar-shift-x)) translateY(28px);
 }
 .view-menu {
     position: absolute;
     top: 68px;
     left: 70px;
-    z-index: 12;
+    z-index: 24;
     min-width: 156px;
     padding: 8px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid rgba(148, 163, 184, 0.32);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+    background: rgba(3, 16, 80, 0.95);
+    border: 1px solid rgba(22, 170, 255, 0.52);
+    box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.3), 0 10px 24px rgba(2, 6, 23, 0.42);
     opacity: 0;
     pointer-events: none;
     transform: translateY(-6px);
@@ -106,20 +122,20 @@ body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111
     border: 1px solid transparent;
     border-radius: 8px;
     background: transparent;
-    color: #0f172a;
+    color: #dbeafe;
     font-size: 13px;
     padding: 7px 9px;
     cursor: pointer;
     margin: 2px 0;
 }
 .view-menu-item:hover {
-    background: #eff6ff;
-    border-color: #bfdbfe;
+    background: rgba(14, 66, 146, 0.66);
+    border-color: rgba(56, 189, 248, 0.52);
 }
 .view-menu-item.active {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
+    background: rgba(8, 145, 178, 0.8);
+    border-color: rgba(56, 189, 248, 0.8);
+    color: #ecfeff;
 }
 .toolbar-btn {
     border: 1px solid rgba(22, 170, 255, 0.55);
@@ -142,13 +158,20 @@ body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111
 }
 .toolbar-input {
     width: 220px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid rgba(56, 189, 248, 0.5);
     border-radius: 6px;
     padding: 6px 10px;
     font-size: 12px;
-    color: #111827;
+    color: #e2e8f0;
     outline: none;
-    background: #fff;
+    background: rgba(2, 11, 56, 0.85);
+}
+.toolbar-input::placeholder {
+    color: rgba(148, 163, 184, 0.85);
+}
+.toolbar-input:focus {
+    border-color: rgba(56, 189, 248, 0.85);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 .panel-left {
     position: absolute;
@@ -172,45 +195,34 @@ gis-panel {
     overflow: hidden;
 }
 .gis-panel-root {
+    --gis-border-width: 2px;
+    --gis-corner-size: 12px;
+    --gis-corner-inset: -2px;
     position: relative;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    /*overflow: hidden*/;
     background: rgba(3, 16, 80, 0.86);
-    border: 1px solid rgba(22, 170, 255, 0.55);
-    box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.35);
+    border: var(--gis-border-width) solid #1d4aac;
+    /*box-shadow: 0 0 0 var(--gis-border-width) rgba(147, 223, 255, 0.96);*/
     color: #dbeafe;
     padding: 14px 16px;
     display: flex;
     flex-direction: column;
-    background-image:
-        linear-gradient(#38bdf8, #38bdf8), linear-gradient(#38bdf8, #38bdf8),
-        linear-gradient(#38bdf8, #38bdf8), linear-gradient(#38bdf8, #38bdf8),
-        linear-gradient(#38bdf8, #38bdf8), linear-gradient(#38bdf8, #38bdf8),
-        linear-gradient(#38bdf8, #38bdf8), linear-gradient(#38bdf8, #38bdf8);
-    background-size:
-        16px 2px, 2px 16px,
-        16px 2px, 2px 16px,
-        16px 2px, 2px 16px,
-        16px 2px, 2px 16px;
-    background-position:
-        left top, left top,
-        right top, right top,
-        left bottom, left bottom,
-        right bottom, right bottom;
     background-repeat: no-repeat;
 }
 .gis-panel-corner {
     position: absolute;
-    width: 20px;
-    height: 20px;
+    width: var(--gis-corner-size);
+    height: var(--gis-corner-size);
     pointer-events: none;
-    opacity: 0.95;
+    opacity: 1;
+    z-index: 2;
 }
-.gis-panel-corner.tl { top: -1px; left: -1px; }
-.gis-panel-corner.tr { top: -1px; right: -1px; }
-.gis-panel-corner.bl { bottom: -1px; left: -1px; }
-.gis-panel-corner.br { bottom: -1px; right: -1px; }
+.gis-panel-corner.tl { top: var(--gis-corner-inset); left: var(--gis-corner-inset); }
+.gis-panel-corner.tr { top: var(--gis-corner-inset); right: var(--gis-corner-inset); }
+.gis-panel-corner.bl { bottom: var(--gis-corner-inset); left: var(--gis-corner-inset); }
+.gis-panel-corner.br { bottom: var(--gis-corner-inset); right: var(--gis-corner-inset); }
 .gis-panel-header {
     display: flex;
     align-items: center;
@@ -252,10 +264,35 @@ gis-panel {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    opacity:0.2;
 }
 .gis-panel-info:hover {
     color: #fff;
     background: transparent;
+    opacity: 1;
+}
+.gis-panel-tooltip {
+    position: absolute;
+    top: 46px;
+    right: 12px;
+    max-width: 260px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(125, 211, 252, 0.5);
+    background: rgba(8, 21, 64, 0.96);
+    color: #dbeafe;
+    font-size: 12px;
+    line-height: 1.45;
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.4);
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 5;
+}
+.gis-panel-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
 }
 .gis-panel-close {
     width: 28px;
@@ -286,6 +323,23 @@ gis-panel {
     min-height: 110px;
     padding: 2px;
 }
+.gis-panel-chart {
+    width: 100%;
+    min-height: 160px;
+    height: 180px;
+}
+.gis-panel-chart.gis-panel-chart-full {
+    height: 100%;
+    min-height: 220px;
+}
+.stats-gis-panel .gis-panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.stats-gis-panel .gis-panel-content-text {
+    margin: 0;
+}
 .panel-minimize-btn {
     width: 28px;
     height: 28px;
@@ -315,7 +369,7 @@ gis-panel {
     font-size: 13px;
 }
 .menu-tree-wrap {
-    border: 1px solid rgba(125, 211, 252, 0.32);
+    border: 0px solid rgba(125, 211, 252, 0.32);
     border-radius: 8px;
     background: transparent;
     padding: 8px;
@@ -378,11 +432,27 @@ gis-panel {
     bottom: 10px;
     width: 440px;
     z-index: 30;
-    transform: translateX(108%);
-    transition: transform .25s ease;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(112%);
+    transition: transform .32s cubic-bezier(.22,.61,.36,1), opacity .22s ease, visibility 0s linear .32s;
+}
+.geo-detail-panel.open,
+.geo-detail-panel.closing {
+    visibility: visible;
+    transition: transform .32s cubic-bezier(.22,.61,.36,1), opacity .22s ease, visibility 0s linear 0s;
 }
 .geo-detail-panel.open {
+    opacity: 1;
+    pointer-events: auto;
     transform: translateX(0);
+}
+.geo-detail-panel.closing {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(112%);
 }
 .geo-detail-gis-panel {
     width: 100%;
@@ -419,7 +489,7 @@ gis-panel {
     position: absolute;
     top: 18px;
     left: 20px;
-    z-index: 12;
+    z-index: 24;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -460,47 +530,44 @@ gis-panel {
 }
 .stats-overlay {
     position: absolute;
-    top: 118px;
-    left: 16px;
-    right: 16px;
-    bottom: 28px;
+    top: 108px;
+    left: 14px;
+    right: 14px;
+    bottom: 16px;
     z-index: 16;
     display: grid;
-    grid-template-columns: minmax(280px, 320px) minmax(280px, 320px);
+    grid-template-columns: clamp(320px, 28vw, 420px) clamp(320px, 28vw, 420px);
     justify-content: space-between;
+    align-items: stretch;
     pointer-events: none;
     opacity: 0;
     visibility: hidden;
-    transition: opacity .16s ease;
+    transition: opacity .25s ease, visibility 0s linear .25s;
 }
 .stats-column {
     display: grid;
-    grid-template-rows: repeat(3, minmax(170px, 1fr));
-    gap: 14px;
+    grid-template-rows: repeat(3, minmax(180px, 1fr));
+    gap: 12px;
+    min-height: 0;
 }
 .stats-gis-panel {
     pointer-events: auto;
-    transform: translateX(-20px);
+    transform: translateX(-125%);
     opacity: 0;
-    transition: transform .18s ease, opacity .18s ease;
+    transition: transform .25s ease, opacity .25s ease;
 }
 .stats-column-right .stats-gis-panel {
-    transform: translateX(20px);
+    transform: translateX(125%);
 }
 .stats-overlay.stats-visible {
     opacity: 1;
     visibility: visible;
+    transition: opacity .25s ease, visibility 0s linear 0s;
 }
 .stats-overlay.stats-visible .stats-gis-panel {
     transform: translateX(0);
     opacity: 1;
 }
-.stats-overlay.stats-visible .stats-column-left .stats-gis-panel:nth-child(1),
-.stats-overlay.stats-visible .stats-column-right .stats-gis-panel:nth-child(1) { transition-delay: .02s; }
-.stats-overlay.stats-visible .stats-column-left .stats-gis-panel:nth-child(2),
-.stats-overlay.stats-visible .stats-column-right .stats-gis-panel:nth-child(2) { transition-delay: .05s; }
-.stats-overlay.stats-visible .stats-column-left .stats-gis-panel:nth-child(3),
-.stats-overlay.stats-visible .stats-column-right .stats-gis-panel:nth-child(3) { transition-delay: .08s; }
 .map-center-ctrl {
     min-width: 170px;
     padding: 6px 10px;
@@ -681,20 +748,20 @@ gis-panel {
     white-space: nowrap;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
 }
-@media (max-width: 768px) {
-    .header-bar { height: 76px; }
-    .header-title { font-size: 28px; padding: 8px 12px; }
+@media (max-width: 1024px) {
+    .header-bar { height: 84px; }
+    .header-title { font-size: 30px; padding: 8px 14px; }
     .header-datetime { display: none; }
     .panel-left {
-        width: 260px;
+        width: 280px;
         top: 92px;
-        bottom: 20px;
+        bottom: 16px;
         left: 10px;
     }
     .map-toolbar {
+        --toolbar-shift-x: 0%;
         width: calc(100% - 20px);
         left: 10px;
-        transform: none;
         justify-content: flex-start;
         overflow-x: auto;
         white-space: nowrap;
@@ -710,17 +777,15 @@ gis-panel {
         top: 12px;
     }
     .stats-overlay {
-        top: 86px;
+        top: 90px;
         left: 10px;
         right: 10px;
         bottom: 10px;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
-        overflow-y: auto;
     }
     .stats-column {
-        grid-template-rows: none;
-        grid-auto-rows: minmax(150px, auto);
+        grid-template-rows: repeat(3, minmax(180px, 1fr));
         gap: 10px;
     }
     .stats-gis-panel,
@@ -731,10 +796,51 @@ gis-panel {
         transform: translateY(0);
     }
     .geo-detail-panel {
-        width: 100%;
+        width: min(92vw, 420px);
         right: 0;
         top: 0;
         bottom: 0;
         transform: translateX(100%);
+    }
+}
+
+@media (max-width: 900px) {
+    .stats-overlay {
+        top: 84px;
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        overflow-y: auto;
+    }
+    .stats-column {
+        grid-template-rows: none;
+        grid-auto-rows: minmax(240px, auto);
+        gap: 8px;
+    }
+    .stats-gis-panel {
+        min-height: 240px;
+    }
+    .stats-gis-panel,
+    .stats-column-right .stats-gis-panel {
+        transform: translateY(10px);
+    }
+    .stats-overlay.stats-visible .stats-gis-panel {
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 640px) {
+    .header-bar { height: 76px; }
+    .header-title { font-size: 24px; padding: 6px 10px; }
+    .panel-left {
+        width: calc(100% - 20px);
+        top: 84px;
+        left: 10px;
+        bottom: 12px;
+    }
+    .geo-detail-panel {
+        width: 100%;
     }
 }

@@ -129,6 +129,29 @@ namespace App.Pages.GIS
             });
         }
 
+        public JsonResult OnGetPanelData(string theme = "dark")
+        {
+            var list = GisPanel.Set
+                .Where(t => t.InGis)
+                .OrderBy(t => t.Position)
+                .ThenBy(t => t.Id)
+                .Select(t => new
+                {
+                    id = t.Id,
+                    title = t.Title,
+                    info = t.Info,
+                    position = t.Position,
+                    content = t.Content,
+                    chartJson = t.ChartJson,
+                    inGis = t.InGis,
+                    inDashboard = t.InDashboard,
+                    theme = string.IsNullOrWhiteSpace(theme) ? "dark" : theme.Trim().ToLower(),
+                })
+                .ToList();
+
+            return BuildResult(0, "success", list);
+        }
+
         private static List<object> ParseDataRows(string dataJson)
         {
             var rows = new List<object>();

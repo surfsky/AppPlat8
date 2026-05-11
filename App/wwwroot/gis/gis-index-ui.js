@@ -32,7 +32,6 @@
     }
 
     function toggleToolbar(state) {
-        if (state.statsMode) return;
         state.toolbarCollapsed = !state.toolbarCollapsed;
         syncToolbarUI(state);
     }
@@ -48,7 +47,12 @@
     }
 
     function toggleLayerPanel(state) {
-        if (state.statsMode) return;
+        if (state.statsMode) {
+            state.statsMode = false;
+            state.viewMenuOpen = false;
+            syncStatsModeUI(state);
+            syncViewMenuUI(state);
+        }
         state.layerCollapsed = !state.layerCollapsed;
         syncLayerPanelUI(state);
     }
@@ -64,7 +68,6 @@
     }
 
     function toggleViewMenu(state) {
-        if (state.statsMode) return;
         state.viewMenuOpen = !state.viewMenuOpen;
         syncViewMenuUI(state);
     }
@@ -77,9 +80,6 @@
     function syncStatsModeUI(state) {
         const overlay = document.getElementById('stats-overlay');
         const statsBtn = document.getElementById('btn-stats-toggle');
-        const layerBtn = document.getElementById('btn-layer-toggle');
-        const viewBtn = document.getElementById('btn-view-toggle');
-        const toolbarBtn = document.getElementById('btn-toolbar-toggle');
         const layerPanel = document.getElementById('layer-panel');
         const toolbar = document.querySelector('.map-toolbar');
 
@@ -91,11 +91,6 @@
             statsBtn.classList.toggle('stats-active', !!state.statsMode);
             statsBtn.title = state.statsMode ? '关闭统计面板' : '统计';
         }
-
-        [layerBtn, viewBtn, toolbarBtn].forEach(btn => {
-            if (!btn) return;
-            btn.style.display = state.statsMode ? 'none' : '';
-        });
 
         if (state.statsMode) {
             if (layerPanel) layerPanel.classList.add('panel-hidden');
@@ -117,6 +112,9 @@
         syncLayerPanelUI(state);
         syncViewMenuUI(state);
         syncStatsModeUI(state);
+        if (options && typeof options.onStatsModeChanged === 'function') {
+            options.onStatsModeChanged(state.statsMode);
+        }
     }
 
     function resetView(map, center, zoom) {

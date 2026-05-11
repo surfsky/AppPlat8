@@ -9,105 +9,183 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - @Model.SiteTitle</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/js/echarts.min.js"></script>
+    <script src="/gis/gis-chart-helper.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        :root {
+            --bg: #f3f6fb;
+            --card-bg: #ffffff;
+            --line: #dbe6f3;
+            --text: #1e293b;
+            --subtext: #64748b;
+            --brand: #0ea5e9;
+        }
+        html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }
+        .wrap { max-width: 1680px; margin: 0 auto; padding: 20px; }
+        .header { display: flex; align-items: end; justify-content: space-between; margin-bottom: 16px; }
+        .title { font-size: 30px; font-weight: 700; letter-spacing: .02em; }
+        .sub { color: var(--subtext); font-size: 14px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(320px, 1fr));
+            gap: 14px;
+        }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+            min-height: 260px;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 14px 10px;
+            border-bottom: 1px solid var(--line);
+        }
+        .card-title {
+            margin: 0;
+            font-size: 18px;
+            color: #0f172a;
+            font-weight: 700;
+        }
+        .card-info { color: #64748b; font-size: 12px; }
+        .card-body {
+            flex: 1;
+            min-height: 190px;
+            padding: 10px 12px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chart-box {
+            width: 100%;
+            min-height: 170px;
+            height: 190px;
+        }
+        .content-html {
+            color: #334155;
+            font-size: 13px;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+        .empty {
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.7);
+            color: #94a3b8;
+            padding: 18px;
+            text-align: center;
+        }
+        @@media (max-width: 1200px) {
+            .grid { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+        }
+        @@media (max-width: 768px) {
+            .wrap { padding: 12px; }
+            .title { font-size: 24px; }
+            .grid { grid-template-columns: 1fr; gap: 10px; }
         }
     </style>
 </head>
-<body class="bg-slate-50">
-    <div class="min-h-screen p-8">
-        <div class="max-w-7xl mx-auto">
-            <!-- Header -->
-            <div class="mb-8">
-                <h1 class="text-4xl font-bold text-slate-900 mb-2">欢迎来到 @Model.SiteTitle</h1>
-                <p class="text-slate-600">Dashboard</p>
-            </div>
-
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-500 text-sm">总用户数</p>
-                            <p class="text-3xl font-bold text-slate-900 mt-2">1,234</p>
-                        </div>
-                        <i class="fas fa-users text-4xl text-purple-100"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-500 text-sm">活跃用户</p>
-                            <p class="text-3xl font-bold text-slate-900 mt-2">856</p>
-                        </div>
-                        <i class="fas fa-user-check text-4xl text-blue-100"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-500 text-sm">数据条数</p>
-                            <p class="text-3xl font-bold text-slate-900 mt-2">12,345</p>
-                        </div>
-                        <i class="fas fa-database text-4xl text-green-100"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-slate-500 text-sm">今日操作</p>
-                            <p class="text-3xl font-bold text-slate-900 mt-2">567</p>
-                        </div>
-                        <i class="fas fa-chart-line text-4xl text-orange-100"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-xl font-bold text-slate-900 mb-4">最近活动</h2>
-                <div class="space-y-4">
-                    <div class="flex items-center py-3 border-b border-slate-200">
-                        <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-4">
-                            <i class="fas fa-user-plus text-purple-600"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-slate-900 font-medium">新用户注册</p>
-                            <p class="text-slate-500 text-sm">张三注册了新账户</p>
-                        </div>
-                        <p class="text-slate-400 text-sm">2 小时前</p>
-                    </div>
-
-                    <div class="flex items-center py-3 border-b border-slate-200">
-                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                            <i class="fas fa-file-alt text-blue-600"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-slate-900 font-medium">提交数据</p>
-                            <p class="text-slate-500 text-sm">李四提交了新数据</p>
-                        </div>
-                        <p class="text-slate-400 text-sm">4 小时前</p>
-                    </div>
-
-                    <div class="flex items-center py-3">
-                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                            <i class="fas fa-check-circle text-green-600"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-slate-900 font-medium">任务完成</p>
-                            <p class="text-slate-500 text-sm">王五完成了系统维护</p>
-                        </div>
-                        <p class="text-slate-400 text-sm">6 小时前</p>
-                    </div>
-                </div>
+<body>
+    <div class="wrap">
+        <div class="header">
+            <div>
+                <div class="title">欢迎来到 @Model.SiteTitle</div>
+                <div class="sub">运营看板（Light Theme）</div>
             </div>
         </div>
+
+        <div id="dashboard-panels" class="grid"></div>
     </div>
+
+    <script>
+        (function () {
+            const container = document.getElementById('dashboard-panels');
+            if (!container) return;
+            const pageTheme = (() => {
+                try {
+                    const t = new URLSearchParams(window.location.search || '').get('theme');
+                    return (t || 'light').toLowerCase() === 'dark' ? 'dark' : 'light';
+                } catch {
+                    return 'light';
+                }
+            })();
+
+            const escapeHtml = (text) => String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            function createCard(item) {
+                const card = document.createElement('section');
+                card.className = 'card';
+                const title = item.title || item.Title || '未命名面板';
+                const info = item.info || item.Info || '';
+                const content = item.content || item.Content || '';
+                const hasChart = !!(item.chartJson || item.ChartJson);
+
+                card.innerHTML = `
+                    <div class="card-head">
+                        <h3 class="card-title">${escapeHtml(title)}</h3>
+                        <span class="card-info">${escapeHtml(info)}</span>
+                    </div>
+                    <div class="card-body">
+                        ${hasChart ? `<div class="chart-box" data-panel-id="${item.id || item.Id}"></div>` : ''}
+                        ${content ? `<div class="content-html">${content}</div>` : ''}
+                    </div>
+                `;
+                return card;
+            }
+
+            async function render() {
+                try {
+                    const resp = await fetch(`?handler=PanelData&theme=${encodeURIComponent(pageTheme)}`);
+                    if (!resp.ok) {
+                        container.innerHTML = '<div class="empty">面板数据加载失败</div>';
+                        return;
+                    }
+                    const res = await resp.json();
+                    const code = res?.code ?? res?.Code ?? -1;
+                    const data = res?.data ?? res?.Data;
+                    const list = code === 0 && Array.isArray(data) ? data : [];
+                    if (list.length === 0) {
+                        container.innerHTML = '<div class="empty">暂无可展示的Dashboard面板</div>';
+                        return;
+                    }
+
+                    const sorted = list.slice().sort((a, b) => (a.position || a.Position || 0) - (b.position || b.Position || 0));
+                    container.innerHTML = '';
+                    sorted.forEach(item => container.appendChild(createCard(item)));
+
+                    const chartEls = container.querySelectorAll('.chart-box[data-panel-id]');
+                    for (let i = 0; i < chartEls.length; i += 1) {
+                        const el = chartEls[i];
+                        const panelId = Number(el.getAttribute('data-panel-id'));
+                        const item = sorted.find(t => Number(t.id || t.Id) === panelId);
+                        if (!item || !window.GisChartHelper) continue;
+                        await window.GisChartHelper.renderChart(el, item.chartJson || item.ChartJson, pageTheme);
+                    }
+                } catch {
+                    container.innerHTML = '<div class="empty">面板数据加载失败</div>';
+                }
+            }
+
+            render();
+            window.addEventListener('resize', () => {
+                const chartEls = container.querySelectorAll('.chart-box[data-panel-id]');
+                chartEls.forEach(el => {
+                    if (el.__chartInstance && typeof el.__chartInstance.resize === 'function') {
+                        el.__chartInstance.resize();
+                    }
+                });
+            });
+        })();
+    </script>
 </body>
 </html>

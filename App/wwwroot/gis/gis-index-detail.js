@@ -3,6 +3,7 @@
         const panelId = ctx.panelId || 'geo-detail-panel';
         const bodyId = ctx.bodyId || 'geo-detail-body';
         const endpointBuilder = ctx.endpointBuilder || ((id) => `?handler=GeometryDetail&id=${encodeURIComponent(id)}`);
+        let closeTimer = null;
 
         function getPanel() {
             return document.getElementById(panelId);
@@ -48,6 +49,11 @@
             const body = getBody();
             if (!panel || !body) return;
 
+            if (closeTimer) {
+                clearTimeout(closeTimer);
+                closeTimer = null;
+            }
+            panel.classList.remove('closing');
             panel.classList.add('open');
             body.innerHTML = '正在加载点位信息...';
 
@@ -75,7 +81,13 @@
         function close() {
             const panel = getPanel();
             if (!panel) return;
+            if (!panel.classList.contains('open')) return;
             panel.classList.remove('open');
+            panel.classList.add('closing');
+            if (closeTimer) clearTimeout(closeTimer);
+            closeTimer = setTimeout(() => {
+                panel.classList.remove('closing');
+            }, 260);
         }
 
         return {
