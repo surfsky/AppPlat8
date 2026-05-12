@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Encodings.Web;
 
 namespace App.HttpApi
 {
@@ -120,7 +121,8 @@ namespace App.HttpApi
                 PropertyNamingPolicy = this.FormatLowCamel ? JsonNamingPolicy.CamelCase : null,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                WriteIndented = this.FormatIndented == Formatting.Indented
+                WriteIndented = this.FormatIndented == Formatting.Indented,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
 
             if (this.MaxDepth.HasValue && this.MaxDepth.Value > 0)

@@ -7,17 +7,18 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace App.Pages.GIS
 {
+    // 导航节点类
+    public class GeometryNavNode
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Url { get; set; }
+        public List<GeometryNavNode> Children { get; set; } = new();
+    }
+
     [CheckPower(Power.GisGeometryView)]
     public class GeometryManagerModel : AdminModel
     {
-        public class GeometryNavNode
-        {
-            public string Id { get; set; }
-            public string Name { get; set; }
-            public string Url { get; set; }
-            public List<GeometryNavNode> Children { get; set; } = new();
-        }
-
         public List<GeometryNavNode> NavMenus { get; set; } = new();
         public string DefaultGeometriesUrl { get; set; } = "/GIS/Geometries";
 

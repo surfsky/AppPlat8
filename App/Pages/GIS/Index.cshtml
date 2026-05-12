@@ -48,13 +48,14 @@
     <div class="header-bar">
         <div class="header-title">
             <span>应急驾驶舱</span>
-            <span id="header-datetime" class="header-datetime" aria-label="当前日期时间"></span>
         </div>
+        <span id="header-datetime" class="header-datetime" aria-label="当前日期时间"></span>
     </div>
 
     <div class="map-toolbar">
         <input id="address-input" class="toolbar-input" placeholder="搜索地址，如：杭州西湖" />
         <button id="btn-search" class="toolbar-btn">查找</button>
+        <div id="address-suggest-list" class="address-suggest-list"></div>
     </div>
 
     <div class="floating-toggle-group">
@@ -68,7 +69,7 @@
             <i class="fa-solid fa-eye toggle-icon"></i>
         </button>
         <button id="btn-toolbar-toggle" class="floating-toggle" title="工具栏" aria-label="显示/隐藏工具栏">
-            <i class="fa-solid fa-screwdriver-wrench toggle-icon"></i>
+            <i class="fa-solid fa-magnifying-glass toggle-icon"></i>
         </button>
     </div>
     <div id="view-menu" class="view-menu" aria-label="视图菜单">
@@ -236,6 +237,7 @@
 
             // 初始化按钮
             startHeaderDatetime();
+            positionHeaderDatetime();
             document.getElementById('btn-search').addEventListener('click', searchAddress);
             document.getElementById('btn-view-toggle').addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -272,6 +274,7 @@
             syncLayerPanelUI();
             syncViewMenuUI();
             syncStatsModeUI();
+            window.addEventListener('resize', positionHeaderDatetime);
         });
 
         map.on('style.load', async () => {
@@ -297,6 +300,21 @@
         // 地图控制和交互
         //--------------------------------------------------------------
         function startHeaderDatetime() { GisIndexUI.startHeaderDatetime('header-datetime'); }
+        function positionHeaderDatetime() {
+            const headerBar = document.querySelector('.header-bar');
+            const headerTitle = document.querySelector('.header-title');
+            const dateTime = document.getElementById('header-datetime');
+            if (!headerBar || !headerTitle || !dateTime) return;
+            if (window.getComputedStyle(dateTime).display === 'none') return;
+
+            const barRect = headerBar.getBoundingClientRect();
+            const titleRect = headerTitle.getBoundingClientRect();
+            const gap = 18;
+            const left = titleRect.right - barRect.left + gap;
+
+            dateTime.style.left = `${Math.round(left)}px`;
+            dateTime.style.right = 'auto';
+        }
         function switchStyle(type) { mapApi.switchStyle(type); }
         function resetView() { mapApi.resetView(); }
         async function searchAddress() { return mapApi.searchAddress(); }

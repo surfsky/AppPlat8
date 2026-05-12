@@ -54,3 +54,19 @@
 3. 在 PR 前固定做一次“规格一致性复核”，减少这类回归。
 
 如果你愿意，我可以下一步直接给你生成一个可复制的 Doc/Specs/示例目录和 5 个文件的中文模板内容。
+
+
+
+
+
+            var credentials = AmapCredentials.AsEnumerable();
+            if (!keyName.IsEmpty())
+            {
+                var selected = AmapCredentials.FirstOrDefault(t => string.Equals(t.Name, keyName, StringComparison.OrdinalIgnoreCase));
+                if (selected == null)
+                {
+                    failInfo = $"高德Key未配置: {keyName}";
+                    return false;
+                }
+                credentials = new[] { selected };
+            }

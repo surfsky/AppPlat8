@@ -4,7 +4,9 @@
     Layout = "_Layout";
     ViewData["Title"] = "GIS几何图形信息";
     var currentId = Request.Query["id"].ToString();
-    var selectedId = Request.Query["menuId"].ToString();
+    var selectedId = Request.Query["GisMenuId"].ToString();
+    if (selectedId.IsEmpty())
+        selectedId = Request.Query["menuId"].ToString();
     if (selectedId.IsEmpty())
         selectedId = Request.Query["selectId"].ToString();
     var menuTreeTs = DateTime.Now.Ticks;

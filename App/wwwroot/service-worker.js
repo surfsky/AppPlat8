@@ -1,4 +1,4 @@
-const CACHE_NAME = 'appplat-cache-v5';
+const CACHE_NAME = 'appplat-cache-v6';
 const APP_SHELL = [
   '/',
   '/Login',
@@ -43,10 +43,11 @@ self.addEventListener('fetch', (event) => {
 
   // Avoid stale API/module responses.
   // Always use network for /httpapi/*, /res/*, App.EleUI static assets and requests with ?handler=...
+  const pathLower = requestUrl.pathname.toLowerCase();
   const hasHandler = requestUrl.searchParams.has('handler');
-  const isHttpApi = requestUrl.pathname.startsWith('/httpapi/');
-  const isRuntimeModule = requestUrl.pathname.startsWith('/res/');
-  const isEleUiStaticAsset = requestUrl.pathname.startsWith('/_content/App.EleUI/');
+  const isHttpApi = pathLower.startsWith('/httpapi/');
+  const isRuntimeModule = pathLower.startsWith('/res/');
+  const isEleUiStaticAsset = pathLower.startsWith('/_content/app.eleui/');
   if (hasHandler || isHttpApi || isRuntimeModule || isEleUiStaticAsset) {
     event.respondWith(fetch(event.request));
     return;

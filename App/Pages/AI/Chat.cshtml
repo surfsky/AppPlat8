@@ -91,7 +91,7 @@
         .temp-value { text-align: center; }
         input[type="range"] { padding: 0; height: 6px; border: 0; border-radius: 999px; background: linear-gradient(90deg, #9ec5ff, #0b5fff); appearance: none; }
         input[type="range"]::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0b5fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); cursor: pointer; }
-        .foot { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 10px; }
+        .foot { border-top: 0px solid var(--line); padding: 12px; display: grid; gap: 10px; }
         @@media (max-width: 920px) {
             .row2 { grid-template-columns: 1fr auto auto; }
         }
@@ -100,6 +100,7 @@
 <body>
     <div class="wrap">
         <div class="card">
+            <!-- 卡片头 -->
             <div class="head">
                 <div class="head-main">
                     <div id="modelName" class="head-model">AI 助手</div>
@@ -112,7 +113,11 @@
                     </svg>
                 </button>
             </div>
+
+            <!-- 消息区域 -->
             <div id="messages" class="msgs"></div>
+
+            <!-- 输入区域 -->
             <div class="foot">
                 <div id="attachments" class="attachments" hidden></div>
                 <div class="row2">
@@ -127,6 +132,7 @@
                 <input id="attachInput" type="file" multiple accept="image/*,.txt,.md,.csv,.json,.xml,.html,.htm,.log,.pdf,.doc,.docx" hidden />
             </div>
 
+            <!-- 设置抽屉 -->
             <div id="settingsBackdrop" class="settings-backdrop" aria-hidden="true"></div>
             <aside id="settingsDrawer" class="settings-drawer" aria-hidden="true">
                 <div class="settings-title">聊天设置</div>
@@ -138,11 +144,11 @@
                             {
                                 if (cfg.Id == Model.DefaultConfigId)
                                 {
-                                    <option value="@cfg.Id" selected>@cfg.Name (@cfg.Model)</option>
+                                    <option value="@cfg.Id" data-remark="@cfg.Remark" selected>@cfg.Name (@cfg.Model)</option>
                                 }
                                 else
                                 {
-                                    <option value="@cfg.Id">@cfg.Name (@cfg.Model)</option>
+                                    <option value="@cfg.Id" data-remark="@cfg.Remark">@cfg.Name (@cfg.Model)</option>
                                 }
                             }
                         </select>
@@ -164,6 +170,7 @@
                 </div>
             </aside>
 
+            <!-- 预览抽屉 -->
             <div id="previewOverlay" class="preview-overlay" aria-hidden="true">
                 <div class="preview-dialog" role="dialog" aria-label="图片预览">
                     <button id="previewCloseBtn" class="preview-close" type="button" aria-label="关闭预览">×</button>
@@ -207,6 +214,23 @@
             modelNameEl.textContent = text;
         }
 
+        function getSelectedConfigRemark() {
+            const option = configIdEl.options[configIdEl.selectedIndex];
+            if (!option) return '';
+            return (option.dataset.remark || '').trim();
+        }
+
+        function applyConfigRemarkToPrompt(force = false) {
+            const remark = getSelectedConfigRemark();
+            const current = (systemPromptEl.value || '').trim();
+            const lastAuto = (systemPromptEl.dataset.autoPrompt || '').trim();
+
+            if (force || !current || current === lastAuto) {
+                systemPromptEl.value = remark;
+                systemPromptEl.dataset.autoPrompt = remark;
+            }
+        }
+
         function syncTemperatureFromRange() {
             temperatureEl.value = Number(temperatureRangeEl.value).toFixed(1);
         }
@@ -232,6 +256,7 @@
                 // Ignore invalid local settings.
             }
             updateModelName();
+            applyConfigRemarkToPrompt(false);
         }
 
         function saveSettings() {
@@ -607,7 +632,10 @@
         });
         previewCloseBtnEl.addEventListener('click', closeImagePreview);
         saveSettingsBtn.addEventListener('click', saveSettings);
-        configIdEl.addEventListener('change', updateModelName);
+        configIdEl.addEventListener('change', () => {
+            updateModelName();
+            applyConfigRemarkToPrompt(true);
+        });
         temperatureRangeEl.addEventListener('input', syncTemperatureFromRange);
         temperatureEl.addEventListener('input', syncTemperatureFromInput);
         inputEl.addEventListener('keydown', (e) => {
@@ -627,6 +655,7 @@
         });
         syncTemperatureFromInput();
         loadSavedSettings();
+        applyConfigRemarkToPrompt(false);
     </script>
 </body>
 </html>

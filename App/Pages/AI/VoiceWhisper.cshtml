@@ -1,0 +1,130 @@
+@page
+@model App.Pages.AI.VoiceWhisperModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Voice Whisper";
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Voice Whisper 真识别</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-zinc-100 text-zinc-900">
+<div class="mx-auto max-w-6xl p-4 md:p-8">
+    <div class="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-200">
+      <h1 class="text-2xl font-bold">VoiceWhisper 真识别页</h1>
+      <p class="mt-2 text-sm text-zinc-600">录音或上传音频后，调用服务端转写。默认模型 whisper-1。</p>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+        <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 lg:col-span-1">
+            <h2 class="text-lg font-semibold">Whisper 参数</h2>
+            <div class="mt-4 space-y-4">
+                <label class="block"><span class="mb-1 block text-xs text-zinc-500">API 地址</span><input id="endpoint" class="w-full rounded-xl border-zinc-300 text-sm" placeholder="例如 https://api.openai.com/v1" /></label>
+                <label class="block"><span class="mb-1 block text-xs text-zinc-500">API Key</span><input id="apiKey" type="password" class="w-full rounded-xl border-zinc-300 text-sm" placeholder="sk-..." /></label>
+                <label class="block"><span class="mb-1 block text-xs text-zinc-500">模型</span><input id="model" class="w-full rounded-xl border-zinc-300 text-sm" value="whisper-1" /></label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="block"><span class="mb-1 block text-xs text-zinc-500">语言</span><input id="language" class="w-full rounded-xl border-zinc-300 text-sm" value="zh" /></label>
+                    <label class="block"><span class="mb-1 block text-xs text-zinc-500">温度</span><input id="temperature" class="w-full rounded-xl border-zinc-300 text-sm" value="0" /></label>
+                </div>
+                <label class="block"><span class="mb-1 block text-xs text-zinc-500">提示词</span><textarea id="prompt" rows="3" class="w-full rounded-xl border-zinc-300 text-sm" placeholder="可选"></textarea></label>
+            </div>
+        </section>
+
+        <section class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 lg:col-span-2">
+            <h2 class="text-lg font-semibold">识别操作</h2>
+            <div class="mt-4 flex flex-wrap gap-3">
+                <button id="btnRecStart" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white">开始录音</button>
+                <button id="btnRecStop" class="rounded-xl bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-700">停止录音</button>
+                <label class="cursor-pointer rounded-xl bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-700">选择音频<input id="audioFile" type="file" accept="audio/*" class="hidden" /></label>
+                <button id="btnTranscribe" class="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white">开始转写</button>
+            </div>
+            <div class="mt-4 rounded-xl bg-zinc-900 p-4 text-xs leading-6 text-zinc-100">
+              <div><span class="text-zinc-400">状态：</span><span id="status">待命</span></div>
+              <div><span class="text-zinc-400">音频：</span><span id="audioInfo">无</span></div>
+            </div>
+            <div class="mt-4"><label class="mb-2 block text-sm font-medium">识别结果</label><textarea id="resultText" rows="8" class="w-full rounded-xl border-zinc-300 text-sm" placeholder="这里显示识别文本"></textarea></div>
+            <div class="mt-4"><label class="mb-2 block text-sm font-medium">原始响应</label><textarea id="rawText" rows="8" class="w-full rounded-xl border-zinc-300 font-mono text-xs" placeholder="这里显示原始 JSON"></textarea></div>
+        </section>
+    </div>
+</div>
+
+<script>
+(() => {
+  const statusEl = document.getElementById('status');
+  const audioInfoEl = document.getElementById('audioInfo');
+  const resultTextEl = document.getElementById('resultText');
+  const rawTextEl = document.getElementById('rawText');
+  const fileEl = document.getElementById('audioFile');
+  let selectedFile = null;
+  let mediaRecorder = null;
+  let recordChunks = [];
+
+  function setStatus(text) { statusEl.textContent = text; }
+
+  async function startRecord() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') return;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recordChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) recordChunks.push(e.data); };
+    mediaRecorder.start();
+    setStatus('录音中');
+  }
+
+  function stopRecord() {
+    return new Promise((resolve) => {
+      if (!mediaRecorder || mediaRecorder.state !== 'recording') { resolve(); return; }
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordChunks, { type: 'audio/webm' });
+        selectedFile = new File([blob], `whisper-record-${Date.now()}.webm`, { type: 'audio/webm' });
+        audioInfoEl.textContent = `${selectedFile.name} (${Math.round(selectedFile.size / 1024)}KB)`;
+        setStatus('录音结束');
+        resolve();
+      };
+      mediaRecorder.stop();
+    });
+  }
+
+  async function transcribe() {
+    if (!selectedFile) { setStatus('请先录音或上传文件'); return; }
+    const formData = new FormData();
+    formData.append('audio', selectedFile);
+    formData.append('endpoint', document.getElementById('endpoint').value.trim());
+    formData.append('apiKey', document.getElementById('apiKey').value.trim());
+    formData.append('model', document.getElementById('model').value.trim());
+    formData.append('language', document.getElementById('language').value.trim());
+    formData.append('prompt', document.getElementById('prompt').value.trim());
+    formData.append('temperature', document.getElementById('temperature').value.trim());
+    setStatus('转写中...');
+    resultTextEl.value = '';
+    rawTextEl.value = '';
+    try {
+      const res = await fetch('?handler=Transcribe', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.code !== 0) { setStatus(`失败：${data.msg || '未知错误'}`); rawTextEl.value = JSON.stringify(data, null, 2); return; }
+      setStatus('完成');
+      resultTextEl.value = data.data && data.data.text ? data.data.text : '';
+      rawTextEl.value = data.data && data.data.raw ? data.data.raw : JSON.stringify(data, null, 2);
+    } catch (err) {
+      setStatus('请求异常');
+      rawTextEl.value = String(err);
+    }
+  }
+
+  document.getElementById('btnRecStart').addEventListener('click', async () => { try { await startRecord(); } catch (err) { setStatus('无法开启录音，请检查麦克风权限'); rawTextEl.value = String(err); } });
+  document.getElementById('btnRecStop').addEventListener('click', async () => { await stopRecord(); });
+  fileEl.addEventListener('change', () => {
+    selectedFile = fileEl.files && fileEl.files[0] ? fileEl.files[0] : null;
+    if (!selectedFile) { audioInfoEl.textContent = '无'; return; }
+    audioInfoEl.textContent = `${selectedFile.name} (${Math.round(selectedFile.size / 1024)}KB)`;
+    setStatus('已选择文件');
+  });
+  document.getElementById('btnTranscribe').addEventListener('click', transcribe);
+})();
+</script>
+</body>
+</html>

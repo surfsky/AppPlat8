@@ -7,10 +7,13 @@
     var mapUrl = string.IsNullOrWhiteSpace(queryMenuId)
         ? "/GIS/GeometryMap"
         : $"/GIS/GeometryMap?menuId={queryMenuId}";
+    var formPageUrl = string.IsNullOrWhiteSpace(queryMenuId)
+        ? "GeometryForm"
+        : $"GeometryForm?GisMenuId={queryMenuId}";
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="点位" FormPage="GeometryForm" EnableBatch="true" >
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="点位" FormPage="@formPageUrl" EnableBatch="true" >
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Name" Width="200px" Label="名称" ></EleInput>

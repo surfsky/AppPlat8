@@ -29,7 +29,8 @@ namespace App.Pages.AI
             {
                 Id = t.Id,
                 Name = t.Name,
-                Model = t.Model
+                Model = t.Model,
+                Remark = t.Remark
             }).ToList();
             DefaultConfigId = list.OrderByDescending(t => t.IsDefault).ThenBy(t => t.SortId).ThenBy(t => t.Id).FirstOrDefault()?.Id;
         }
@@ -482,6 +483,7 @@ namespace App.Pages.AI
             public long Id { get; set; }
             public string Name { get; set; }
             public string Model { get; set; }
+            public string Remark { get; set; }
         }
 
         public class ChatRequest

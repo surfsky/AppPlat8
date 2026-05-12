@@ -23,12 +23,13 @@ namespace App.Pages.GIS
         {
         }
 
-        public IActionResult OnGetData(long id, long? menuId, string gps, string geoJson)
+        public IActionResult OnGetData(long id, long? menuId, long? gisMenuId, string gps, string geoJson)
         {
             var item = GisGeometry.GetDetail(id) ?? new GisGeometry();
+            var selectedMenuId = menuId ?? gisMenuId;
             if (id == 0)
             {
-                item.MenuId = menuId;
+                item.MenuId = selectedMenuId;
                 if (!string.IsNullOrWhiteSpace(gps))
                     item.GPS = gps;
                 if (!string.IsNullOrWhiteSpace(geoJson))
@@ -37,13 +38,14 @@ namespace App.Pages.GIS
             return BuildResult(0, "success", item);
         }
 
-        public IActionResult OnPostSave([FromBody] GisGeometry req, long? menuId)
+        public IActionResult OnPostSave([FromBody] GisGeometry req, long? menuId, long? gisMenuId)
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
 
-            if (req.Id == 0 && !req.MenuId.HasValue && menuId.HasValue)
-                req.MenuId = menuId;
+            var selectedMenuId = menuId ?? gisMenuId;
+            if (req.Id == 0 && !req.MenuId.HasValue && selectedMenuId.HasValue)
+                req.MenuId = selectedMenuId;
 
             GisGeometry item;
             if (req.Id > 0)
