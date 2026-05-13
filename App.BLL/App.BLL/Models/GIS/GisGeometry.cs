@@ -25,7 +25,7 @@ namespace App.DAL.GIS
         [UI("简称")]        public string Alias { get; set; }
         [UI("GIS菜单")]     public long? MenuId { get; set; }
         [UI("地址")]        public string Addr { get; set; }
-        [UI("经纬度")]      public string GPS { get; set; }
+        [UI("经纬度")]      public string Gps { get; set; }
         [UI("GeoJSON数据")] public string GeoJson { get; set; }
         [UI("扩展数据")]    public string DataJson { get; set; }
 
@@ -49,7 +49,7 @@ namespace App.DAL.GIS
                 t.Addr = this.Addr;
                 t.CreatorId = this.CreatorId;
                 t.GeoJson = this.GeoJson;
-                t.GPS = this.GPS;
+                t.Gps = this.Gps;
                 t.DataJson = this.DataJson;
             });
         }
@@ -66,7 +66,7 @@ namespace App.DAL.GIS
                 Addr,
                 CreatorId,
                 GeoJson,
-                GPS,
+                Gps,
                 DataJson,
 
                 MenuName,

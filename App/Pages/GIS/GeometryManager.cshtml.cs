@@ -33,7 +33,7 @@ namespace App.Pages.GIS
                 new GeometryNavNode
                 {
                     Id = "all",
-                    Name = "全部点位",
+                    Name = "全部图层",
                     Url = "/GIS/Geometries",
                     Children = BuildNavNodes(menus)
                 }

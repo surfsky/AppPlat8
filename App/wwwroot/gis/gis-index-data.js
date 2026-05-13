@@ -4,6 +4,7 @@
         const map = ctx.map;
         const getGeometryLayerManager = ctx.getGeometryLayerManager;
         const onGeometryMarkerClick = ctx.onGeometryMarkerClick || (() => {});
+        const onMenuBadgeClick = ctx.onMenuBadgeClick || (() => {});
 
         function buildMenuNodes() {
             const nodes = state.menus.map(item => ({ ...item, children: [] }));
@@ -39,9 +40,32 @@
             return result;
         }
 
-        function getLeafGeometryCount(menuId) {
-            const list = state.geometryByMenuId.get(menuId) || [];
-            return list.length;
+        function getNodeGeometryItems(node, cache = new Map()) {
+            if (!node) return [];
+            const ids = getMenuGeometryIds(node, cache);
+            if (!ids.length) return [];
+
+            const byId = new Map((state.geometries || []).map(item => [item.id, item]));
+            return ids
+                .map(id => byId.get(id))
+                .filter(item => !!item)
+                .map(item => {
+                    const center = getGeometryCenter(item);
+                    const geometryType = getGeometryKind(item);
+                    return {
+                        id: item.id,
+                        menuId: item.menuId,
+                        name: item.name || '',
+                        alias: item.alias || '',
+                        addr: item.addr || '',
+                        gps: item.gps || '',
+                        icon: getGeometryIcon(item),
+                        geometryType,
+                        lng: center ? center.lng : null,
+                        lat: center ? center.lat : null,
+                        hasCoord: !!center
+                    };
+                });
         }
 
         function setMenuChecked(node, checked, cache = new Map()) {
@@ -91,14 +115,21 @@
                 row.appendChild(checkbox);
                 row.appendChild(labelBtn);
 
-                const isLeaf = !node.children || node.children.length === 0;
-                if (isLeaf) {
-                    const count = getLeafGeometryCount(node.id);
-                    const badge = document.createElement('span');
-                    badge.className = `menu-node-count ${count > 0 ? '' : 'empty'}`;
-                    badge.textContent = `${count}`;
-                    row.appendChild(badge);
-                }
+                const count = ids.length;
+                const badge = document.createElement('button');
+                badge.type = 'button';
+                badge.className = `menu-node-count ${count > 0 ? '' : 'empty'}`;
+                badge.textContent = `${count}`;
+                const nodeLabel = node.name || `菜单${node.id}`;
+                badge.title = count > 0 ? `查看${nodeLabel}点位清单` : '无点位';
+                badge.disabled = count === 0;
+                badge.addEventListener('click', (evt) => {
+                    evt.stopPropagation();
+                    if (count === 0) return;
+                    const items = getNodeGeometryItems(node, geometryCache);
+                    onMenuBadgeClick(node, items);
+                });
+                row.appendChild(badge);
 
                 container.appendChild(row);
                 (node.children || []).forEach(child => renderNode(child, depth + 1));
@@ -193,10 +224,152 @@
             return { lng, lat };
         }
 
+        function normalizeGeoJson(raw) {
+            if (!raw) return null;
+            let obj = raw;
+            for (let i = 0; i < 3 && typeof obj === 'string'; i += 1) {
+                const text = obj.trim();
+                if (!text) return null;
+                try {
+                    obj = JSON.parse(text);
+                } catch {
+                    return null;
+                }
+            }
+
+            if (!obj || typeof obj !== 'object') return null;
+            if (obj.type === 'FeatureCollection') return obj;
+            if (obj.type === 'Feature') return { type: 'FeatureCollection', features: [obj] };
+            if (obj.type) {
+                return {
+                    type: 'FeatureCollection',
+                    features: [{ type: 'Feature', properties: {}, geometry: obj }]
+                };
+            }
+            return null;
+        }
+
+        function getCenterFromCoordinates(coords) {
+            let minLng = Infinity;
+            let minLat = Infinity;
+            let maxLng = -Infinity;
+            let maxLat = -Infinity;
+            let hasPoint = false;
+
+            const walk = (value) => {
+                if (!Array.isArray(value) || value.length === 0) return;
+                if (typeof value[0] === 'number' && typeof value[1] === 'number') {
+                    const lng = Number(value[0]);
+                    const lat = Number(value[1]);
+                    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
+                    hasPoint = true;
+                    minLng = Math.min(minLng, lng);
+                    minLat = Math.min(minLat, lat);
+                    maxLng = Math.max(maxLng, lng);
+                    maxLat = Math.max(maxLat, lat);
+                    return;
+                }
+                value.forEach(walk);
+            };
+
+            walk(coords);
+            if (!hasPoint) return null;
+            return { lng: (minLng + maxLng) / 2, lat: (minLat + maxLat) / 2 };
+        }
+
+        function getCenterFromGeoJson(raw) {
+            const geo = normalizeGeoJson(raw);
+            if (!geo || !Array.isArray(geo.features)) return null;
+
+            for (let i = 0; i < geo.features.length; i += 1) {
+                const geometry = geo.features[i]?.geometry;
+                if (!geometry) continue;
+                if (geometry.type === 'Point' && Array.isArray(geometry.coordinates)) {
+                    const lng = Number(geometry.coordinates[0]);
+                    const lat = Number(geometry.coordinates[1]);
+                    if (Number.isFinite(lng) && Number.isFinite(lat)) return { lng, lat };
+                }
+                const center = getCenterFromCoordinates(geometry.coordinates);
+                if (center) return center;
+            }
+
+            return null;
+        }
+
+        function getGeometryKind(item) {
+            const geo = normalizeGeoJson(item?.geoJson);
+            if (!geo || !Array.isArray(geo.features) || geo.features.length === 0) {
+                return item?.gps ? 'point' : 'unknown';
+            }
+
+            const geometryType = String(geo.features[0]?.geometry?.type || '').toLowerCase();
+            if (!geometryType) return item?.gps ? 'point' : 'unknown';
+            if (geometryType.includes('point')) return 'point';
+            if (geometryType.includes('line')) return 'line';
+            return 'region';
+        }
+
+        function extractIconFromDataJson(dataJson) {
+            if (!dataJson) return '';
+            let obj = dataJson;
+            for (let i = 0; i < 3 && typeof obj === 'string'; i += 1) {
+                const text = obj.trim();
+                if (!text) return '';
+                try {
+                    obj = JSON.parse(text);
+                } catch {
+                    return '';
+                }
+            }
+
+            if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return '';
+            const icon = obj.icon || obj.iconUrl || obj.markerIcon || '';
+            return typeof icon === 'string' ? icon.trim() : '';
+        }
+
+        function getGeometryIcon(item) {
+            const direct = normalizeIconPath(item?.icon);
+            if (direct) return direct;
+            const fromData = normalizeIconPath(extractIconFromDataJson(item?.dataJson));
+            return fromData;
+        }
+
+        function getGeometryCenter(item) {
+            const gps = parseGpsText(item?.gps);
+            if (gps) return gps;
+            return getCenterFromGeoJson(item?.geoJson);
+        }
+
+        function normalizeDataUrl(url) {
+            if (!url || typeof url !== 'string') return '';
+            const text = url.trim().replace(/\s+/g, '');
+            if (!text.toLowerCase().startsWith('data:')) return text;
+
+            const commaIndex = text.indexOf(',');
+            if (commaIndex < 0) return text;
+
+            const head = text.substring(0, commaIndex);
+            const payload = text.substring(commaIndex + 1);
+            if (!/;base64/i.test(head)) return text;
+
+            const normalizedPayload = payload
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+            const padLength = normalizedPayload.length % 4;
+            const paddedPayload = padLength === 0
+                ? normalizedPayload
+                : normalizedPayload + '='.repeat(4 - padLength);
+
+            return `${head},${paddedPayload}`;
+        }
+
         function normalizeIconPath(path) {
             if (!path || typeof path !== 'string') return '';
-            const text = path.trim();
+            const text = path.trim().replace(/\\/g, '/');
             if (!text) return '';
+            if (text.startsWith('data:')) return normalizeDataUrl(text);
+            if (text.startsWith('blob:')) return text;
+            if (text.startsWith('~/')) return `/${text.substring(2).replace(/^\/+/, '')}`;
             if (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('/')) return text;
             return `/${text.replace(/^\/+/, '')}`;
         }
@@ -216,14 +389,17 @@
             clearGeometryPointMarkers();
 
             state.geometries.forEach(item => {
-                if (!item || !item.gps) return;
-                const gps = parseGpsText(item.gps);
+                if (!item) return;
+                const geometryType = getGeometryKind(item);
+                if (geometryType !== 'point') return;
+
+                const gps = getGeometryCenter(item);
                 if (!gps) return;
 
                 const el = document.createElement('div');
                 el.className = 'geometry-point-marker';
 
-                const iconPath = normalizeIconPath(item.icon);
+                const iconPath = getGeometryIcon(item);
                 if (iconPath) {
                     const iconEl = document.createElement('img');
                     iconEl.className = 'marker-icon';

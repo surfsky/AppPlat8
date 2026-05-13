@@ -473,9 +473,12 @@
 
                     items.value.forEach(item => {
                         const labelText = item.alias || item.name || (`点位${item.id}`);
+                        const fc = normalizeGeoJson(item.geoJson);
+                        const hasGeoJson = !!(fc && Array.isArray(fc.features) && fc.features.length > 0);
                         const gps = parseGps(item.gps);
+                        const shouldRenderMarker = !!gps && !hasGeoJson;
                         let polygonLabelLngLat = null;
-                        if (gps) {
+                        if (shouldRenderMarker) {
                             if (!first) first = gps;
                             polygonLabelLngLat = [gps.lng, gps.lat];
 
@@ -512,8 +515,7 @@
                             markerMap.set(item.id, marker);
                         }
 
-                        const fc = normalizeGeoJson(item.geoJson);
-                        if (!fc || !Array.isArray(fc.features) || fc.features.length === 0) return;
+                        if (!hasGeoJson) return;
 
                         const sourceId = `gm-geo-source-${item.id}`;
                         const fillId = `gm-geo-fill-${item.id}`;
@@ -569,12 +571,15 @@
                             if (!polygonLabelLngLat) {
                                 const c = bounds.getCenter();
                                 polygonLabelLngLat = [c.lng, c.lat];
+                                if (!first) {
+                                    first = { lng: c.lng, lat: c.lat };
+                                }
                             }
                         }
 
                         // Point labels are rendered by DOM markers above.
                         // Here we only add labels for non-point geometries.
-                        if (!gps && polygonLabelLngLat) {
+                        if (!shouldRenderMarker && polygonLabelLngLat) {
                             polygonLabelFeatures.push({
                                 type: 'Feature',
                                 geometry: { type: 'Point', coordinates: polygonLabelLngLat },

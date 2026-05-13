@@ -31,6 +31,7 @@
     <script src="/js/maphelper.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-chart-helper.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-panels.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-point-list.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-action.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-map.js?v=@DateTime.Now.Ticks"></script>
@@ -98,6 +99,12 @@
             <div id="geo-detail-body" class="geo-detail-body">请选择图形</div>
         </gis-panel>
     </div>
+
+    <div id="geo-point-list-panel" class="geo-detail-panel geo-point-list-panel" aria-label="点位清单">
+        <gis-panel id="geo-point-list-gis-panel" class="geo-detail-gis-panel" title="点位清单" width="100%" height="100%" closable="true" close-label="关闭">
+            <div id="geo-point-list-body" class="geo-detail-body">请选择图层节点</div>
+        </gis-panel>
+    </div>
 }
 
 @section script {
@@ -124,7 +131,9 @@
             layerCollapsed: false,
             viewMenuOpen: false,
             statsMode: false,
-            statsPanels: []
+            statsPanels: [],
+            activePointListMenuId: null,
+            activePointListMenuName: ''
         };
         const GisIndexUI = window.GisIndexUI;
         const GisIndexData = window.GisIndexData;
@@ -133,6 +142,7 @@
         const GisIndexObject = window.GisIndexObject;
         const GisIndexDetail = window.GisIndexDetail;
         const GisIndexPanels = window.GisIndexPanels;
+        const GisIndexPointList = window.GisIndexPointList;
         const pageTheme = (() => {
             try {
                 const t = new URLSearchParams(window.location.search || '').get('theme');
@@ -168,7 +178,8 @@
             state,
             map,
             getGeometryLayerManager: () => geometryLayerManager,
-            onGeometryMarkerClick: (id) => openGeometryDetailDrawer(id)
+            onGeometryMarkerClick: (id) => openGeometryDetailDrawer(id),
+            onMenuBadgeClick: (menuNode, geometryItems) => openPointListPanel(menuNode, geometryItems)
         });
         const actionApi = GisIndexAction.create({
             map,
@@ -176,6 +187,7 @@
             geometryDisplayLayerIds,
             onOpenGeometryDetail: (id) => openGeometryDetailPanel(id),
             onCloseGeometryDetail: () => closeGeometryDetailPanel(),
+            onClosePointList: () => closePointListPanel(),
             onStatsModeChanged: () => {
                 setTimeout(() => panelApi.resizeCharts(), 260);
             }
@@ -197,6 +209,13 @@
             panelId: 'geo-detail-panel',
             bodyId: 'geo-detail-body',
             endpointBuilder: (id) => `?handler=GeometryDetail&id=${encodeURIComponent(id)}`
+        });
+        const pointListApi = GisIndexPointList.create({
+            panelId: 'geo-point-list-panel',
+            panelComponentId: 'geo-point-list-gis-panel',
+            bodyId: 'geo-point-list-body',
+            map,
+            state
         });
         const panelApi = GisIndexPanels.create({
             state,
@@ -247,6 +266,7 @@
             document.getElementById('btn-layer-toggle').addEventListener('click', toggleLayerPanel);
             document.getElementById('btn-stats-toggle').addEventListener('click', toggleStatsMode);
             document.getElementById('geo-detail-gis-panel').addEventListener('panel-close', closeGeometryDetailDrawer);
+            document.getElementById('geo-point-list-gis-panel').addEventListener('panel-close', closePointListPanel);
             document.getElementById('address-input').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') searchAddress();
             });
@@ -345,8 +365,16 @@
         //--------------------------------------------------------------
         // 图形详情面板
         //--------------------------------------------------------------
-        function openGeometryDetailPanel(id) { return detailApi.open(id); }
+        function openGeometryDetailPanel(id) {
+            closePointListPanel();
+            return detailApi.open(id);
+        }
         function closeGeometryDetailPanel() { return detailApi.close(); }
+        function openPointListPanel(menuNode, geometryItems) {
+            closeGeometryDetailPanel();
+            return pointListApi.open(menuNode, geometryItems);
+        }
+        function closePointListPanel() { return pointListApi.close(); }
 
 
         //--------------------------------------------------------------
@@ -361,7 +389,10 @@
         function getActiveGeometryDisplayLayerIds() { return actionApi.getActiveGeometryDisplayLayerIds(); }
         async function loadGeometries() { return dataApi.loadGeometries();}
         function bindGeometryMapInteractions() { actionApi.bindGeometryMapInteractions(); }
-        function openGeometryDetailDrawer(id) { actionApi.openGeometryDetailDrawer(id); }
+        function openGeometryDetailDrawer(id) {
+            closePointListPanel();
+            actionApi.openGeometryDetailDrawer(id);
+        }
         function closeGeometryDetailDrawer() { actionApi.closeGeometryDetailDrawer(); }
 
     </script>

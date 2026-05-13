@@ -116,7 +116,8 @@ namespace App.EleUI
             }
             else if (!string.IsNullOrEmpty(PopupUrl))
             {
-                var popupUrlExpr = PopupUrl.Replace("'", "\\'");
+                var resolvedPopupUrl = ResolvePopupUrl(PopupUrl);
+                var popupUrlExpr = resolvedPopupUrl.Replace("'", "\\'");
                 if (!string.IsNullOrEmpty(PopupTitle))
                 {
                     var popupTitleExpr = PopupTitle.Replace("'", "\\'");
@@ -166,6 +167,44 @@ namespace App.EleUI
                 output.Content.SetHtmlContent(buttonText);
              else
                 output.Content.SetHtmlContent(""); // 保持 <el-button></el-button>，不输出空格或换行
+        }
+
+        private string ResolvePopupUrl(string rawUrl)
+        {
+            if (string.IsNullOrWhiteSpace(rawUrl))
+                return rawUrl;
+
+            var url = rawUrl.Trim();
+            if (url.StartsWith("~/", StringComparison.Ordinal))
+                return "/" + url.Substring(2);
+
+            if (url.StartsWith("/", StringComparison.Ordinal)
+                || url.StartsWith("?", StringComparison.Ordinal)
+                || url.StartsWith("#", StringComparison.Ordinal)
+                || url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return url;
+
+            var currentPath = ViewContext?.HttpContext?.Request?.Path.Value;
+            if (string.IsNullOrWhiteSpace(currentPath))
+                return "/" + url.TrimStart('/');
+
+            if (!currentPath.StartsWith("/", StringComparison.Ordinal))
+                currentPath = "/" + currentPath;
+
+            var lastSlash = currentPath.LastIndexOf('/');
+            var baseDir = lastSlash >= 0 ? currentPath.Substring(0, lastSlash + 1) : "/";
+
+            try
+            {
+                var baseUri = new Uri("http://localhost" + baseDir, UriKind.Absolute);
+                var resolved = new Uri(baseUri, url);
+                return resolved.PathAndQuery + resolved.Fragment;
+            }
+            catch
+            {
+                return baseDir + url.TrimStart('/');
+            }
         }
 
         private bool ShouldHideInSelectMode()

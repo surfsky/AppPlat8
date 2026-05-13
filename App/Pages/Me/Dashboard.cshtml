@@ -27,8 +27,9 @@
         .sub { color: var(--subtext); font-size: 14px; }
         .grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(320px, 1fr));
+            grid-template-columns: repeat(3, minmax(min(280px, 100%), 1fr));
             gap: 14px;
+            min-width: 0;
         }
         .card {
             background: var(--card-bg);
@@ -38,13 +39,17 @@
             min-height: 260px;
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
         .card-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
             padding: 14px 14px 10px;
             border-bottom: 1px solid var(--line);
+            min-width: 0;
         }
         .card-title {
             margin: 0;
@@ -52,7 +57,13 @@
             color: #0f172a;
             font-weight: 700;
         }
-        .card-info { color: #64748b; font-size: 12px; }
+        .card-info {
+            color: #64748b;
+            font-size: 12px;
+            max-width: 100%;
+            word-break: break-word;
+            white-space: normal;
+        }
         .card-body {
             flex: 1;
             min-height: 190px;
@@ -60,6 +71,8 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            min-width: 0;
+            overflow-x: hidden;
         }
         .chart-box {
             width: 100%;
@@ -81,12 +94,20 @@
             text-align: center;
         }
         @@media (max-width: 1200px) {
-            .grid { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+            .grid { grid-template-columns: repeat(2, minmax(min(240px, 100%), 1fr)); }
         }
         @@media (max-width: 768px) {
             .wrap { padding: 12px; }
             .title { font-size: 24px; }
             .grid { grid-template-columns: 1fr; gap: 10px; }
+            .card-head {
+                align-items: flex-start;
+                justify-content: flex-start;
+            }
+            .card-title,
+            .card-info {
+                width: 100%;
+            }
         }
     </style>
 </head>

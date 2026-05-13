@@ -8,8 +8,8 @@
         ? "/GIS/GeometryMap"
         : $"/GIS/GeometryMap?menuId={queryMenuId}";
     var formPageUrl = string.IsNullOrWhiteSpace(queryMenuId)
-        ? "GeometryForm"
-        : $"GeometryForm?GisMenuId={queryMenuId}";
+        ? "/GIS/GeometryForm"
+        : $"/GIS/GeometryForm?GisMenuId={queryMenuId}";
 }
 
 @section body {
@@ -43,7 +43,7 @@
             <EleColumn For="Item.Alias" Label="简称" Width="200"></EleColumn>
             <EleColumn For="Item.MenuName" Label="所属菜单" Width="160"></EleColumn>
             <EleColumn For="Item.Addr" Label="地址" MinWidth="220"></EleColumn>
-            <EleColumn For="Item.GPS" Label="经纬度" Width="180"></EleColumn>
+            <EleColumn For="Item.Gps" Label="经纬度" Width="180"></EleColumn>
             <EleColumn For="Item.Creator" Label="编辑者" Width="100" ></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
         </Columns>

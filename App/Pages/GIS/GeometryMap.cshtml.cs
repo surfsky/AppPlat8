@@ -15,7 +15,7 @@ namespace App.Pages.GIS
         public JsonResult OnGetGeometryLayerData(long? menuId)
         {
             var query = GisGeometry.DataSet
-                .Where(g => !string.IsNullOrWhiteSpace(g.GeoJson) || !string.IsNullOrWhiteSpace(g.GPS));
+                .Where(g => !string.IsNullOrWhiteSpace(g.GeoJson) || !string.IsNullOrWhiteSpace(g.Gps));
 
             if (menuId.HasValue)
             {
@@ -39,7 +39,7 @@ namespace App.Pages.GIS
                     alias = g.Alias,
                     sortId = g.SortId,
                     addr = g.Addr,
-                    gps = g.GPS,
+                    gps = g.Gps,
                     geoJson = g.GeoJson,
                     dataJson = g.DataJson,
                     icon = g.Menu != null ? g.Menu.Icon : null
