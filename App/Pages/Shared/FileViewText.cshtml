@@ -1,0 +1,35 @@
+@page
+@using System.Text.Json
+@{
+    Layout = null;
+    var src = Request.Query["src"].ToString();
+    var srcJson = JsonSerializer.Serialize(src ?? string.Empty);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        html, body { margin: 0; height: 100%; background: #0f172a; }
+        pre { margin: 0; height: 100%; overflow: auto; padding: 12px; box-sizing: border-box; color: #e2e8f0; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+    </style>
+</head>
+<body>
+    <pre id="text">正在加载...</pre>
+    <script>
+        async function run() {
+            const host = document.getElementById('text');
+            const src = @Html.Raw(srcJson);
+            try {
+                const resp = await fetch(src);
+                if (!resp.ok) throw new Error('加载失败');
+                host.textContent = await resp.text();
+            } catch (e) {
+                host.textContent = '预览失败：' + (e && e.message ? e.message : '未知错误');
+            }
+        }
+        run();
+    </script>
+</body>
+</html>

@@ -33,6 +33,7 @@ App/.config/
 App/Migrations/
 App/DataProtection/
 Deploy/
+Doc/Data/
 
 # Local tools/temp
 cookies.txt

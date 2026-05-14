@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.DAL.GIS;
+using App.EleUI;
 using App.Entities;
 using App.HttpApi;
 using App.Utils;
@@ -68,6 +70,7 @@ namespace App.Pages.GIS
             item.SortId = req.SortId;
             item.MenuId = req.MenuId;
             item.Addr = req.Addr;
+            item.PageUrl = req.PageUrl;
             item.GeoJson = req.GeoJson;
             item.DataJson = req.DataJson;
 
@@ -78,6 +81,66 @@ namespace App.Pages.GIS
 
             item.Save();
             return BuildResult(0, "保存成功");
+        }
+
+        /// <summary>显示点位附件</summary>
+        public IActionResult OnPostShowFiles([FromBody] GisGeometry req)
+        {
+            var geometryId = req?.Id ?? 0;
+            if (geometryId <= 0)
+                return EleManager.ShowNotify("请先保存点位，再维护附件", NotifyType.Warning, "提示");
+
+            var uniId = req.UniId;
+            var geometryName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Shared/Atts?uniId={uniId}&name={geometryName}&md={this.Mode}";
+            return EleManager.ShowDrawer(
+                title: "点位附件",
+                url: url,
+                size: "50%"
+                );
+        }
+
+        public IActionResult OnGetAttData(Paging pi, long id)
+        {
+            if (id <= 0)
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+
+            var geometry = GisGeometry.GetDetail(id);
+            if (geometry == null)
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+
+            var uniId = geometry.UniId;
+            if (string.IsNullOrWhiteSpace(uniId))
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+
+            var pageIndex = pi?.PageIndex ?? 0;
+            var pageSize = (pi?.PageSize ?? 10) > 0 ? pi.PageSize : 10;
+
+            var query = Att.Set
+                .Where(t => t.Key == uniId)
+                .OrderBy(t => t.SortId)
+                .ThenByDescending(t => t.Id);
+
+            var total = query.Count();
+            var rows = query
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToList()
+                .Select(t => (object)new
+                {
+                    id = t.Id,
+                    name = string.IsNullOrWhiteSpace(t.FileName) ? Path.GetFileName(t.Url ?? string.Empty) : t.FileName,
+                    sizeText = t.FileSizeText,
+                    createDtText = t.CreateDt?.ToString("yyyy-MM-dd HH:mm"),
+                    previewUrl = $"/Shared/FileViewer?uniId={Uri.EscapeDataString(uniId)}&id={t.Id}"
+                })
+                .ToList();
+
+            return BuildResult(0, "success", new
+            {
+                items = rows,
+                total
+            });
         }
 
         private static string NormalizeGps(string gps)

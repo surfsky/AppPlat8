@@ -1,0 +1,309 @@
+@page
+@using System.Text.Json
+@{
+    Layout = null;
+    var src = Request.Query["src"].ToString();
+    var name = Request.Query["name"].ToString();
+    var srcJson = JsonSerializer.Serialize(src ?? string.Empty);
+    var nameJson = JsonSerializer.Serialize(name ?? string.Empty);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsmind@0.8.5/style/jsmind.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jsmind@0.8.5/es6/jsmind.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.0.2/dist/mermaid.min.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: #f1f5f9;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        #mind {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #f8fafc;
+        }
+        #hint {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 3;
+            font-size: 12px;
+            color: #334155;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 8px;
+        }
+        #mermaidWrap {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            display: none;
+            box-sizing: border-box;
+            padding: 18px;
+        }
+        #mermaidHost {
+            min-width: 880px;
+            min-height: 560px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.10);
+            padding: 12px;
+        }
+        #error {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 16px;
+            color: #334155;
+            font-size: 14px;
+            background: #f8fafc;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div id="mind">
+        <div id="hint">脑图预览</div>
+        <div id="mermaidWrap"><div id="mermaidHost"></div></div>
+        <div id="error"></div>
+    </div>
+
+    <script>
+        const src = @Html.Raw(srcJson);
+        const name = @Html.Raw(nameJson);
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        const hint = document.getElementById('hint');
+        const err = document.getElementById('error');
+        const mind = document.getElementById('mind');
+        const mermaidWrap = document.getElementById('mermaidWrap');
+        const mermaidHost = document.getElementById('mermaidHost');
+
+        function showError(message) {
+            err.innerHTML = message;
+            err.style.display = 'flex';
+        }
+
+        function hideError() {
+            err.style.display = 'none';
+        }
+
+        function parseFreeMindNode(xmlNode, indexState) {
+            const id = `node_${indexState.value++}`;
+            const topic = xmlNode.getAttribute('TEXT') || xmlNode.getAttribute('text') || '节点';
+            const children = [];
+
+            const nodeChildren = Array.from(xmlNode.children || []).filter((x) => x && x.tagName && x.tagName.toLowerCase() === 'node');
+            for (let i = 0; i < nodeChildren.length; i += 1) {
+                children.push(parseFreeMindNode(nodeChildren[i], indexState));
+            }
+
+            return {
+                id,
+                topic,
+                children
+            };
+        }
+
+        function renderJsMind(rootData) {
+            const options = {
+                container: 'mind',
+                editable: false,
+                theme: 'primary',
+                view: {
+                    hmargin: 90,
+                    vmargin: 50,
+                    line_width: 2,
+                    line_color: '#93c5fd'
+                }
+            };
+
+            const jm = new jsMind(options);
+            jm.show({
+                meta: {
+                    name: name || 'mindmap',
+                    author: 'App',
+                    version: '1.0'
+                },
+                format: 'node_tree',
+                data: rootData
+            });
+        }
+
+        async function renderMm(contentText) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(contentText, 'text/xml');
+            const parseErr = doc.querySelector('parsererror');
+            if (parseErr) throw new Error('MM 文件解析失败');
+
+            const mapNode = doc.querySelector('map > node');
+            if (!mapNode) throw new Error('未找到脑图根节点');
+
+            const root = parseFreeMindNode(mapNode, { value: 1 });
+            hideError();
+            renderJsMind(root);
+        }
+
+        async function renderMmd(contentText) {
+            mermaidWrap.style.display = 'block';
+            hint.textContent = `脑图预览(.mmd) · ${name || ''}`;
+            mind.style.background = '#f1f5f9';
+
+            if (!window.mermaid) throw new Error('Mermaid 组件不可用');
+            window.mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+
+            const source = (contentText || '').trim();
+            if (!source) throw new Error('脑图内容为空');
+
+            const id = `mermaid_${Date.now()}`;
+            const { svg } = await window.mermaid.render(id, source);
+            mermaidHost.innerHTML = svg;
+            hideError();
+        }
+
+        function parseXmindJsonTopic(topic, indexState) {
+            const id = `xmind_json_${indexState.value++}`;
+            const title = topic && topic.title ? topic.title : '节点';
+            const children = [];
+
+            const childGroup = (topic && topic.children) || {};
+            const attached = Array.isArray(childGroup.attached) ? childGroup.attached : [];
+            const detached = Array.isArray(childGroup.detached) ? childGroup.detached : [];
+            const summary = Array.isArray(childGroup.summary) ? childGroup.summary : [];
+
+            const allChildren = attached.concat(detached, summary);
+            for (let i = 0; i < allChildren.length; i += 1) {
+                const child = allChildren[i];
+                if (!child || typeof child !== 'object') continue;
+                children.push(parseXmindJsonTopic(child, indexState));
+            }
+
+            return {
+                id,
+                topic: title,
+                children
+            };
+        }
+
+        function parseXmindJsonText(contentText) {
+            const raw = JSON.parse(contentText);
+            const sheets = Array.isArray(raw) ? raw : [raw];
+            const first = sheets.find((s) => s && s.rootTopic) || sheets[0];
+            const rootTopic = first && first.rootTopic ? first.rootTopic : null;
+            if (!rootTopic) throw new Error('xmind content.json 未找到 rootTopic');
+            return parseXmindJsonTopic(rootTopic, { value: 1 });
+        }
+
+        function parseXmindXmlTopic(topicNode, indexState) {
+            const id = `xmind_xml_${indexState.value++}`;
+            const titleNode = topicNode.querySelector(':scope > title');
+            const title = titleNode ? (titleNode.textContent || '').trim() : '节点';
+            const children = [];
+
+            const topicNodes = Array.from(topicNode.querySelectorAll(':scope > children > topics > topic'));
+            for (let i = 0; i < topicNodes.length; i += 1) {
+                children.push(parseXmindXmlTopic(topicNodes[i], indexState));
+            }
+
+            return {
+                id,
+                topic: title || '节点',
+                children
+            };
+        }
+
+        function parseXmindXmlText(contentText) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(contentText, 'text/xml');
+            const parseErr = doc.querySelector('parsererror');
+            if (parseErr) throw new Error('xmind content.xml 解析失败');
+
+            const rootTopic = doc.querySelector('sheet > topic');
+            if (!rootTopic) throw new Error('xmind content.xml 未找到根 topic');
+            return parseXmindXmlTopic(rootTopic, { value: 1 });
+        }
+
+        async function renderXmind(arrayBuffer) {
+            if (!window.JSZip) throw new Error('JSZip 组件不可用');
+            const zip = await window.JSZip.loadAsync(arrayBuffer);
+
+            const findByPattern = (pattern) => {
+                const matched = zip.file(pattern);
+                return Array.isArray(matched) && matched.length > 0 ? matched[0] : null;
+            };
+
+            const jsonEntry = findByPattern(/(^|\/)content\.json$/i);
+            if (jsonEntry) {
+                const text = await jsonEntry.async('text');
+                const root = parseXmindJsonText(text);
+                hideError();
+                renderJsMind(root);
+                return;
+            }
+
+            const xmlEntry = findByPattern(/(^|\/)content\.xml$/i);
+            if (xmlEntry) {
+                const text = await xmlEntry.async('text');
+                const root = parseXmindXmlText(text);
+                hideError();
+                renderJsMind(root);
+                return;
+            }
+
+            throw new Error('未找到 xmind 的 content.json 或 content.xml');
+        }
+
+        async function run() {
+            if (!src) {
+                showError('文件地址不存在');
+                return;
+            }
+
+            hint.textContent = `脑图预览 · ${name || ''}`;
+
+            try {
+                if (ext === 'xmind') {
+                    const resp = await fetch(src);
+                    if (!resp.ok) throw new Error('xmind 文件请求失败');
+                    const buffer = await resp.arrayBuffer();
+                    await renderXmind(buffer);
+                    return;
+                }
+
+                const resp = await fetch(src);
+                if (!resp.ok) throw new Error('文件请求失败');
+                const text = await resp.text();
+
+                if (ext === 'mm') {
+                    await renderMm(text);
+                    return;
+                }
+
+                if (ext === 'mmd') {
+                    await renderMmd(text);
+                    return;
+                }
+
+                showError('当前脑图预览支持：.mm（FreeMind）、.mmd（Mermaid）和 .xmind。');
+            } catch (e) {
+                console.error(e);
+                const msg = e && e.message ? e.message : '未知错误';
+                showError('脑图预览失败：' + msg);
+            }
+        }
+
+        run();
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 @model App.Pages.GIS.GeometryFormModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "GIS几何图形信息";
+    ViewData["Title"] = "点位信息";
     var currentId = Request.Query["id"].ToString();
     var selectedId = Request.Query["GisMenuId"].ToString();
     if (selectedId.IsEmpty())
@@ -40,25 +40,52 @@
             color: #475569;
             font-weight: 600; 
         }
+        /* 点位抽屉使用紧凑底栏，减少底部占用高度 */
+        .geo-form-drawer #app > div {
+            padding-bottom: 52px;
+        }
+        .geo-form-drawer #app > div > div.fixed.bottom-0 {
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+        .geo-form-drawer [data-ele-bottom='true'] {
+            min-height: 36px !important;
+            gap: 6px !important;
+        }
     </style>
 }
 
 @section body {
-    <EleForm Model="form" LabelWidth="120px">
-        <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
-        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleInput For="Item.Alias" Label="简称"></EleInput>
-        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
-        <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreeSelect>
-        <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
-        <EleInput For="Item.Addr" Label="地址"></EleInput>
-        <EleSelector For="Item.Gps" TextFor="Item.Gps" Label="定位" PopupUrl="Locator" Icon="Location" Editable="true"></EleSelector>
-        <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-selector" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
-        <EleSelector For="Item.DataJson" TextFor="Item.DataJson" Label="属性数据" Class="geojson-selector" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="12" Editable="true" FillRow="true"></EleSelector>
-        <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
-        </Bottom>
-    </EleForm>
+    <div class="geo-form-drawer">
+        <EleForm Model="form" LabelWidth="120px">
+            <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
+            <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+            <EleInput For="Item.Alias" Label="简称"></EleInput>
+            <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
+            <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+            <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
+            <EleInput For="Item.Addr" Label="地址"></EleInput>
+            <EleSelector For="Item.Gps" TextFor="Item.Gps" Label="定位" PopupUrl="Locator" Icon="Location" Editable="true"></EleSelector>
+            <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-selector" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
+            <EleSelector For="Item.DataJson" TextFor="Item.DataJson" Label="属性数据" Class="geojson-selector" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="12" Editable="true" FillRow="true"></EleSelector>
+            <EleInput For="Item.PageUrl" Label="详情页面" FillRow="true" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
+            <EleList Label="附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+                <ItemTemplate>
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm text-gray-800 truncate">{{ item.name }}</div>
+                            <div class="text-xs text-gray-500 truncate">{{ item.sizeText || item.createDtText || '' }}</div>
+                        </div>
+                        <a href="javascript:void(0)" class="text-xs text-blue-600" v-on:click.prevent="openLinkInDrawer(item.previewUrl, '附件预览', null)">预览</a>
+                    </div>
+                </ItemTemplate>
+            </EleList>
+            <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">管理附件</EleButton>
+            <Bottom>
+                <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+                <EleButton Command="Close">关闭</EleButton>
+            </Bottom>
+        </EleForm>
+    </div>
 }
 

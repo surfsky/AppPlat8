@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.DAL.OA;
+using App.EleUI;
 using App.Entities;
 using App.HttpApi;
 using App.Utils;
@@ -54,6 +55,23 @@ namespace App.Pages.OA
                 items,
                 total = all.Count
             });
+        }
+
+        public IActionResult OnPostShowFiles([FromBody] Article req)
+        {
+            var articleId = req?.Id ?? 0;
+            if (articleId <= 0)
+                return EleManager.ShowNotify("请先保存文档，再编辑附件", NotifyType.Warning, "提示");
+
+            var uniId = req.UniId;
+            var articleName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Shared/Atts?uniId={uniId}&name={articleName}&md={this.Mode}";
+
+            return EleManager.ShowDrawer(
+                title: "文档附件",
+                url: url,
+                size: "50%"
+            );
         }
 
         public IActionResult OnPostSave([FromBody] Article req)

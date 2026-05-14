@@ -31,6 +31,7 @@ namespace App.DAL
         [UI("基础", "地址")]        public string Address { get; set; }
         [UI("基础", "GPS")]        public string Gps { get; set; }
         [UI("基础", "建档日期")]     public DateTime? ArchieveDt { get; set; }
+        [UI("基础", "最新巡查时间")] public DateTime? LatestCheckDt { get; set; }
         [UI("基础", "领域")]        public string Field { get; set; }  // 需枚举
 
         [UI("基础", "风险等级")]    public CheckRiskLevel? RiskLevel { get; set; }
@@ -109,6 +110,7 @@ namespace App.DAL
                 Gps,
                 AreaCode,
                 ArchieveDt,
+                LatestCheckDt,
                 Field,
                 RiskLevel,
                 RiskColor,

@@ -175,7 +175,10 @@ namespace App.EleUI
 
         private static string BuildPageSizeOptions(int defaultPageSize)
         {
-            var values = new List<int> { defaultPageSize, 10, 20, 50 };
+            var values = new List<int> { 10, 20, 50 };
+            if (defaultPageSize > 0 && !values.Contains(defaultPageSize))
+                values.Add(defaultPageSize);
+
             var seen = new HashSet<int>();
             var sb = new StringBuilder();
 

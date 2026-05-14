@@ -124,15 +124,10 @@ export const selectorMethods = {
         this.selectorTitle.value = title || '选择';
         this.selectorVisible.value = true;
 
-        const lowerUrl = String(this.selectorUrl.value || '').toLowerCase();
-        const isPropsEditor = lowerUrl.includes('/gis/propseditor') || lowerUrl.includes('propseditor');
-        const drawerSize = isPropsEditor ? (window.innerWidth < 768 ? '100%' : '42%') : undefined;
-
         EleManager.openDrawer({
             title: this.selectorTitle.value,
             url: this.selectorUrl.value,
             direction: 'rtl',
-            size: drawerSize,
             resizable: true,
             closeOnClickModal: false,
             destroyOnClose: true,

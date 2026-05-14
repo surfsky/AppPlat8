@@ -7,7 +7,6 @@
 
 # 驾驶舱
 
-- 简化地址查找，将文本转化为json后再进行逻辑处理，而不是一层一层的解析，用 text.ParseJson<T>()方法；
 - GisMenu增加 DataUrl 参数，可依此参数获取点位清单数据（结合HttpApi DataResult 结构，结合 GisGeometry 数据）
     同之前的逻辑
         - 若该gismenu有dataurl参数，直接访问dataurl获取数据，并展示点位，若有数据自动填充 gismenu的点位数字段
@@ -15,12 +14,16 @@
     可用后台定期访问该dataurl，以定期刷新填写其 数据量字段，避免数据不实时；
 
     DataUrl 返回的数据结构约束：增加参数GisRegion（容后）
-- GisMenu 增加PageUrl参数，可根据此参数，跳到对应的数据管理页面；
+    - GisMenu 增加 PageUrlTemplate 参数，可根据此参数, 用 Elemanager drawer 打开对应的页面；
+
 - 为了好理解，gismenu更名为GisLayer,修改相关的类名、页面及代码；
+点位：增加图片图层类型
+
 - 点位的jsondata中的数据如果value是超链接，点击后用Elemanager draw打开
 
 - 实现Stat/Chart管理页面（对应实体类 StatChart，用于定义统计图表，也可以根据dataurl（或ApiUrl）及pageurl参数与具体数据对接起来，避免只做一个无意义的花架子，可用echarts展示（有明暗两种风格或可定制风格）
 - 修改gispanel，一个panel可容纳一个文本（用模板的方式容纳多个chart）
+
 
 # 智能表格
 
@@ -30,9 +33,8 @@
 
 # 安全考虑
 
-- 屏蔽手机号字段的列表展示
 - 接入移动能力平台短信接口（避免安全隐患）
-- 介入阿里短信平台短信接口
+- 接入阿里短信平台短信接口
 
 
 
@@ -186,6 +188,26 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2026.05.14
+    /修正pagesize排序问题
+    /屏蔽手机号字段的列表展示
+    /简化地址查找，将文本转化为json后再进行逻辑处理，而不是一层一层的解析，用 text.ParseJson<T>()方法；数据结构见（gaode.text.json文件）
+    /完善点位的管理和展示（GisGeometry）
+        - 给 GisGeometry 增加 PageUrl参数，可根据此参数, 在驾驶舱页面（gis/index) 点位详情面板中展示超链接“更多”，点击后打开对应的页面；
+        - 在点位编辑窗口（Gis/GeometryForm）中增加附件（Att）编辑按钮（点击后跳到对应的附件编辑页面，可参考/Checks/CheckObjectForm 中的“文件”按钮）；
+        - 在驾驶舱页面（gis/index）点位详情面板中展示附件列表，附件文本为超链接，右侧显示下载按钮点击可下载；
+        - 点击附件文本超链接可用elemangere drawer显示相关的文件显示页面：
+            - word、excel、pdf 都支持直接在网页中展示；
+            - 全景视图文件
+            - 三维建模文件
+            - 脑图
+            - Markdown 文件
+            - 视频
+            - 做好各功能代码的隔离封装和备注，便于维护
+        - 创建测试网页 /pages/dev/files/ 
+        - 测试文件 /files/samples/
+
+
 2026.05.13
     /点击图层右侧的数字角标，右侧滑入点位清单面板；点击清单点位数据，地图定位居中到该点位。
     /实现GisMenu 的图标、聚合的配置及驾驶舱展示能力；

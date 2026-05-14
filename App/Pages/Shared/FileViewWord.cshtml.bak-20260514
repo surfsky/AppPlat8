@@ -1,0 +1,130 @@
+@page
+@using System.Text.Json
+@{
+    Layout = null;
+    var src = Request.Query["src"].ToString();
+    var name = Request.Query["name"].ToString();
+    var srcJson = JsonSerializer.Serialize(src ?? string.Empty);
+    var nameJson = JsonSerializer.Serialize(name ?? string.Empty);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+    <style>
+        html, body { margin: 0; height: 100%; background: #eef2f7; }
+        #word {
+            height: 100%;
+            overflow: auto;
+            box-sizing: border-box;
+            padding: 16px;
+        }
+        #word .docx-wrapper {
+            background: transparent !important;
+            padding: 0 !important;
+        }
+        .word-fallback {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+            padding: 18px 22px;
+            line-height: 1.65;
+            color: #0f172a;
+        }
+        .word-fallback-tip {
+            margin: 0 0 10px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        #hint {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            box-sizing: border-box;
+            color: #334155;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="word" style="display:none;"></div>
+    <div id="hint">正在加载文档预览...</div>
+    <script>
+        async function run() {
+            const src = @Html.Raw(srcJson);
+            const name = @Html.Raw(nameJson);
+            const ext = (name.split('.').pop() || '').toLowerCase();
+            const host = document.getElementById('word');
+            const hint = document.getElementById('hint');
+            if (!src) {
+                hint.textContent = '文件地址不存在';
+                return;
+            }
+
+            if (ext === 'doc') {
+                hint.innerHTML = '暂不支持 .doc 在线预览。<br/>请下载后使用 Office/WPS 打开，或转换为 .docx。';
+                return;
+            }
+
+            try {
+                const resp = await fetch(src);
+                if (!resp.ok) throw new Error('文档请求失败');
+                const buffer = await resp.arrayBuffer();
+                let rendered = false;
+
+                if (window.docx && typeof window.docx.renderAsync === 'function') {
+                    try {
+                        await window.docx.renderAsync(buffer, host, null, {
+                            breakPages: true,
+                            renderHeaders: true,
+                            renderFooters: true,
+                            ignoreWidth: false,
+                            ignoreHeight: false,
+                            className: 'docx-preview'
+                        });
+                        rendered = true;
+                    } catch (docxErr) {
+                        console.warn('docx-preview failed, fallback to mammoth', docxErr);
+                    }
+                }
+
+                if (!rendered) {
+                    if (!window.mammoth || typeof window.mammoth.convertToHtml !== 'function') {
+                        throw new Error('文档预览组件不可用');
+                    }
+                    const result = await window.mammoth.convertToHtml({ arrayBuffer: buffer });
+                    const html = result && result.value ? result.value : '<p>文档内容为空</p>';
+                    host.innerHTML = `<div class="word-fallback"><p class="word-fallback-tip">兼容模式预览（样式可能与 Office 略有差异）</p>${html}</div>`;
+                    rendered = true;
+                }
+
+                if (!rendered) {
+                    throw new Error('文档渲染失败');
+                }
+
+                hint.style.display = 'none';
+                host.style.display = 'block';
+            } catch (e) {
+                console.error(e);
+                const msg = e && e.message ? e.message : '未知错误';
+                hint.innerHTML = '文档预览失败：' + msg + '<br/>可下载后使用 Office/WPS 查看。';
+                host.style.display = 'none';
+            }
+        }
+
+        if ((!window.docx || typeof window.docx.renderAsync !== 'function')
+            && (!window.mammoth || typeof window.mammoth.convertToHtml !== 'function')) {
+            const hint = document.getElementById('hint');
+            hint.innerHTML = '文档预览组件加载失败。<br/>请检查网络后刷新，或下载查看。';
+        } else {
+            run();
+        }
+    </script>
+</body>
+</html>

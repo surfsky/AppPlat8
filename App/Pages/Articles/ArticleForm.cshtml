@@ -11,6 +11,7 @@
         <EleTreeSelect For="Item.CategoryId" Label="目录" Items="Model.Categories" ></EleTreeSelect>
         <EleInput For="Item.Content" Label="内容" Rows="10"></EleInput>
         <EleSwitch For="Item.AllowComment" Label="允许评论"></EleSwitch>
+        <EleButton Type="Primary" Look="Text" Icon="Edit" Handler="ShowFiles" EnabledFor="Item.Id" Label="附件" FillRow="true">编辑附件</EleButton>
         <EleList Label="附件" FillRow="true" DataHandler="?handler=AttData&id=@articleId" PageSize="10" SortField="Id" SortDirection="DESC" Height="260px" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-2" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <ItemTemplate>
                 <div class="flex items-start justify-between gap-3">

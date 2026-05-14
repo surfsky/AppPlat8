@@ -652,6 +652,81 @@ gis-panel {
     background: rgba(15, 23, 42, 0.3);
     color: #e2e8f0;
 }
+.geo-more-link {
+    color: #38bdf8;
+    text-decoration: underline;
+}
+.geo-att-section {
+    margin-top: 12px;
+    border: 1px solid rgba(147, 197, 253, 0.28);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.geo-att-title {
+    padding: 8px 10px;
+    background: rgba(30, 58, 138, 0.45);
+    color: #93c5fd;
+    font-size: 12px;
+    font-weight: 600;
+}
+.geo-att-list {
+    display: flex;
+    flex-direction: column;
+}
+.geo-att-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid rgba(147, 197, 253, 0.2);
+    background: rgba(15, 23, 42, 0.3);
+}
+.geo-att-item:first-child {
+    border-top: 0;
+}
+.geo-att-link {
+    color: #e2e8f0;
+    text-decoration: underline;
+    font-size: 13px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.geo-att-link:hover {
+    color: #38bdf8;
+}
+.geo-att-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+.geo-att-size {
+    color: #94a3b8;
+    font-size: 12px;
+}
+.geo-att-download {
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    border-radius: 6px;
+    background: rgba(14, 116, 144, 0.28);
+    color: #dbeafe;
+    font-size: 12px;
+    line-height: 1;
+    padding: 5px 8px;
+    cursor: pointer;
+}
+.geo-att-download:hover {
+    background: rgba(14, 116, 144, 0.48);
+}
+.geo-att-empty {
+    padding: 10px;
+    color: #94a3b8;
+    font-size: 12px;
+    background: rgba(15, 23, 42, 0.3);
+}
 .floating-toggle-group {
     position: absolute;
     top: 18px;

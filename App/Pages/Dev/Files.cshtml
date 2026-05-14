@@ -1,0 +1,107 @@
+@page
+@model App.Pages.Dev.FilesModel
+@using System.Text.Json
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "文件预览测试";
+    var itemsJson = JsonSerializer.Serialize(Model.Items);
+}
+
+@section head {
+    <style>
+        .dev-files-wrap {
+            height: calc(100vh - 8px);
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 10px;
+        }
+        .dev-files-left {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            overflow: auto;
+        }
+        .dev-files-right {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .dev-files-item {
+            width: 100%;
+            border: 0;
+            border-bottom: 1px solid #f1f5f9;
+            background: transparent;
+            text-align: left;
+            padding: 9px 10px;
+            cursor: pointer;
+        }
+        .dev-files-item:hover,
+        .dev-files-item.active {
+            background: #eff6ff;
+        }
+        .dev-files-name { font-size: 13px; color: #0f172a; }
+        .dev-files-meta { margin-top: 2px; font-size: 12px; color: #64748b; }
+        #viewerFrame { width: 100%; height: 100%; border: 0; }
+        .dev-files-empty { padding: 12px; color: #64748b; }
+    </style>
+}
+
+@section body {
+    <div class="dev-files-wrap">
+        <div class="dev-files-left" id="fileList"></div>
+        <div class="dev-files-right">
+            <iframe id="viewerFrame" src="about:blank"></iframe>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const files = @Html.Raw(itemsJson);
+        const listEl = document.getElementById('fileList');
+        const iframe = document.getElementById('viewerFrame');
+
+        function esc(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function openFile(path) {
+            iframe.src = `/Shared/FileViewer?file=${encodeURIComponent(path)}`;
+        }
+
+        function renderList() {
+            if (!Array.isArray(files) || files.length === 0) {
+                listEl.innerHTML = '<div class="dev-files-empty">/Files/Samples 目录下暂无文件</div>';
+                return;
+            }
+
+            listEl.innerHTML = files.map((f, idx) => `
+                <button type="button" class="dev-files-item" data-path="${esc(f.RelativePath)}" data-idx="${idx}">
+                    <div class="dev-files-name">${esc(f.Name)}</div>
+                    <div class="dev-files-meta">${esc(f.RelativePath)} | ${esc(f.SizeText)}</div>
+                </button>
+            `).join('');
+
+            const nodes = Array.from(listEl.querySelectorAll('.dev-files-item'));
+            nodes.forEach(node => {
+                node.addEventListener('click', () => {
+                    nodes.forEach(x => x.classList.remove('active'));
+                    node.classList.add('active');
+                    openFile(node.getAttribute('data-path') || '');
+                });
+            });
+
+            nodes[0].classList.add('active');
+            openFile(nodes[0].getAttribute('data-path') || '');
+        }
+
+        renderList();
+    </script>
+}

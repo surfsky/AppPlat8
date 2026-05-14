@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Text.Json;
 using App.DAL;
 using App.DAL.GIS;
+using App.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -94,6 +96,7 @@ namespace App.Pages.GIS
                     sortId = g.SortId,
                     addr = g.Addr,
                     gps = g.Gps,
+                    pageUrl = g.PageUrl,
                     geoJson = g.GeoJson,
                     dataJson = g.DataJson,
                     icon = g.Menu != null ? g.Menu.Icon : null
@@ -112,6 +115,7 @@ namespace App.Pages.GIS
                 return BuildResult(404, "图形不存在或无权访问");
 
             var canEdit = Auth.CheckPower(HttpContext, Power.GisGeometryEdit) && GisGeometry.Get(id) != null;
+            var atts = BuildGeometryAtts(item.UniId);
 
             return BuildResult(0, "success", new
             {
@@ -122,9 +126,11 @@ namespace App.Pages.GIS
                 alias = item.Alias,
                 addr = item.Addr,
                 gps = item.Gps,
+                pageUrl = item.PageUrl,
                 geoJson = item.GeoJson,
                 dataJson = item.DataJson,
                 dataRows = ParseDataRows(item.DataJson),
+                atts,
                 canEdit
             });
         }
@@ -198,6 +204,30 @@ namespace App.Pages.GIS
                 JsonValueKind.Undefined => string.Empty,
                 _ => JsonSerializer.Serialize(element)
             };
+        }
+
+        private static List<object> BuildGeometryAtts(string uniId)
+        {
+            if (string.IsNullOrWhiteSpace(uniId))
+                return new List<object>();
+
+            var items = Att.Set
+                .Where(t => t.Key == uniId)
+                .OrderBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .ToList();
+
+            return items.Select(t => (object)new
+            {
+                id = t.Id,
+                fileName = string.IsNullOrWhiteSpace(t.FileName) ? Path.GetFileName(t.Url ?? string.Empty) : t.FileName,
+                url = t.Url,
+                type = t.Type,
+                fileSizeText = t.FileSizeText,
+                ext = (t.FileExtension ?? string.Empty).Trim().TrimStart('.').ToLower(),
+                previewUrl = $"/Shared/FileViewer?uniId={Uri.EscapeDataString(uniId)}&id={t.Id}",
+                downloadUrl = $"/Shared/Atts?handler=Download&uniId={Uri.EscapeDataString(uniId)}&id={t.Id}"
+            }).ToList();
         }
 
         private static bool TryParseGps(string gps, out double lng, out double lat)

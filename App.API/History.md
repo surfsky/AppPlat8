@@ -2,6 +2,11 @@
 
 # History
 
+
+8.0.0
+
++ Upgrade to .NET 8.0
+
 3.0.0
 
 + Transport from netframework version 2.8

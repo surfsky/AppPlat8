@@ -70,3 +70,10 @@
                 }
                 credentials = new[] { selected };
             }
+
+
+        <EleSelect For="Item.PageSize" Label="分页大小" Items="10,20,50">
+            <EleOption Value="10">10条</EleOption>
+            <EleOption Value="20">20条</EleOption>
+            <EleOption Value="50">50条</EleOption>
+        </EleSelect>

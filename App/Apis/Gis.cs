@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json.Nodes;
+using System.Text.Json;
 using App.Components;
 using App.DAL.GIS;
 using App.Entities;
@@ -15,6 +15,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.API
 {
+    //---------------------------------------------------------
+    // AMap 相关的数据结构定义
+    //---------------------------------------------------------
     internal class GisAddrItem
     {
         public string Name { get; set; }
@@ -24,6 +27,7 @@ namespace App.API
         public double Lat { get; set; }
     }
 
+    /// <summary>高德地图访问凭证配置项</summary>
     internal class AmapCredential
     {
         public string Name  { get; set; }
@@ -32,6 +36,48 @@ namespace App.API
         public bool PreferSignature { get; set; }
     }
 
+
+    /// <summary>高德地图接口返回的结果结构</summary>
+    internal class AmapResponseBase
+    {
+        public string Status { get; set; }
+        public string Info { get; set; }
+        public string Infocode { get; set; }
+    }
+
+    /// <summary>高德地图 POI 接口返回的结果结构</summary>
+    internal class AmapPoiResult : AmapResponseBase
+    {
+        public string Count { get; set; }
+        public List<AmapPoi> Pois { get; set; } = new();
+    }
+
+    /// <summary>高德地图 POI 数据结构（简化）。TODO：将属性改为完全的string类型</summary>
+    internal class AmapPoi
+    {
+        public JsonElement Adname { get; set; }
+        public JsonElement Address { get; set; }
+        public JsonElement Name { get; set; }
+        public JsonElement Location { get; set; }
+    }
+
+    /// <summary>高德地图地理编码接口返回的结果结构。TODO：将属性改为完全的string类型</summary>
+    internal class AmapGeocode
+    {
+        public JsonElement District { get; set; }
+        public JsonElement Formatted_address { get; set; }
+        public JsonElement Location { get; set; }
+    }
+
+    /// <summary>高德地图地理编码接口返回的结果结构</summary>
+    internal class AmapGeocodeResult : AmapResponseBase
+    {
+        public List<AmapGeocode> Geocodes { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Gis 数据接口
+    /// </summary>
     public class Gis
     {
         // 这里预定义了两个高德地图的访问凭证配置项，分别适用于服务器端和前端调用
@@ -109,23 +155,22 @@ namespace App.API
             };
 
             // POI 文本检索更接近 geocoder.getLocation 的体验，适合“会展中心”等场景。
-            if (TryGetAmapResult("/v3/place/text", query, out var root, out _))
+            if (TryGetAmapResult<AmapPoiResult>("/v3/place/text", query, out var poiResult, out _))
             {
-                var pois = root?["pois"] as JsonArray;
-                if (pois != null)
+                if (poiResult?.Pois != null)
                 {
-                    foreach (var poi in pois.OfType<JsonObject>())
+                    foreach (var poi in poiResult.Pois)
                     {
-                        var location = GetNodeText(poi?["location"]);
+                        var location = GetJsonText(poi.Location);
                         if (!TryParseLngLat(location, out var gcjLng, out var gcjLat))
                             continue;
 
-                        var nameText = GetNodeText(poi?["name"]);
+                        var nameText = GetJsonText(poi.Name);
                         if (nameText.IsEmpty())
                             continue;
 
-                        var district = GetNodeText(poi?["adname"]);
-                        var address = GetNodeText(poi?["address"]);
+                        var district = GetJsonText(poi.Adname);
+                        var address = GetJsonText(poi.Address);
                         var wgs = Gcj02ToWgs84(gcjLng, gcjLat);
                         var key = $"{nameText}:{Math.Round(wgs.lng, 6)},{Math.Round(wgs.lat, 6)}";
                         if (!dedup.Add(key))
@@ -164,23 +209,22 @@ namespace App.API
                 ["address"] = name
             };
 
-            if (!TryGetAmapResult("/v3/geocode/geo", query, out var root, out var failInfo))
+            if (!TryGetAmapResult<AmapGeocodeResult>("/v3/geocode/geo", query, out var geocodeResult, out var failInfo))
                 return new APIResult(-1, failInfo);
 
-            var geocodes = root?["geocodes"] as JsonArray;
-            if (geocodes != null)
+            if (geocodeResult?.Geocodes != null)
             {
-                foreach (var geocode in geocodes.OfType<JsonObject>())
+                foreach (var geocode in geocodeResult.Geocodes)
                 {
-                    var location = GetNodeText(geocode?["location"]);
+                    var location = GetJsonText(geocode.Location);
                     if (!TryParseLngLat(location, out var gcjLng, out var gcjLat))
                         continue;
 
                     var wgs = Gcj02ToWgs84(gcjLng, gcjLat);
-                    var formattedAddress = GetNodeText(geocode?["formatted_address"]);
+                    var formattedAddress = GetJsonText(geocode.Formatted_address);
                     if (formattedAddress.IsEmpty())
                         formattedAddress = name;
-                    var district = GetNodeText(geocode?["district"]);
+                    var district = GetJsonText(geocode.District);
                     var key = $"{formattedAddress}:{Math.Round(wgs.lng, 6)},{Math.Round(wgs.lat, 6)}";
                     if (!dedup.Add(key))
                         continue;
@@ -211,24 +255,24 @@ namespace App.API
             {
                 ["address"] = name
             };
-            if (!TryGetAmapResult("/v3/geocode/geo", query, out var root, out var failInfo))
+            if (!TryGetAmapResult<AmapGeocodeResult>("/v3/geocode/geo", query, out var geocodeResult, out var failInfo))
                 return new APIResult(-1, failInfo);
 
             // 解析
-            var geocode = (root?["geocodes"] as JsonArray)?.OfType<JsonObject>().FirstOrDefault();
-            var location = GetNodeText(geocode?["location"]);
+            var geocode = geocodeResult?.Geocodes?.FirstOrDefault();
+            var location = geocode == null ? string.Empty : GetJsonText(geocode.Location);
             if (!TryParseLngLat(location, out var gcjLng, out var gcjLat))
                 return new APIResult(-1, "未找到该地址");
 
             // 转换为 WGS84 坐标系
             var wgs = Gcj02ToWgs84(gcjLng, gcjLat);
-            var formattedAddress = GetNodeText(geocode?["formatted_address"]);
+            var formattedAddress = geocode == null ? string.Empty : GetJsonText(geocode.Formatted_address);
             if (formattedAddress.IsEmpty())
                 formattedAddress = name;
             var addr = new GisAddrItem
             {
                 Name = formattedAddress,
-                District = GetNodeText(geocode?["district"]),
+                District = geocode == null ? string.Empty : GetJsonText(geocode.District),
                 Address = formattedAddress,
                 Lng = Math.Round(wgs.lng, 6),
                 Lat = Math.Round(wgs.lat, 6)
@@ -236,83 +280,83 @@ namespace App.API
             return addr.ToResult();
         }
 
-
-        private static string GetNodeText(JsonNode node)
+        private static string GetJsonText(JsonElement node)
         {
-            if (node == null)
+            if (node.ValueKind == JsonValueKind.Undefined || node.ValueKind == JsonValueKind.Null)
                 return string.Empty;
 
-            if (node is JsonValue value)
-            {
-                try
-                {
-                    if (value.TryGetValue<string>(out var s))
-                        return s ?? string.Empty;
+            if (node.ValueKind == JsonValueKind.String)
+                return node.GetString() ?? string.Empty;
 
-                    var raw = value.ToString();
-                    return string.Equals(raw, "null", StringComparison.OrdinalIgnoreCase) ? string.Empty : raw;
-                }
-                catch
+            if (node.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in node.EnumerateArray())
                 {
-                    return string.Empty;
+                    var text = GetJsonText(item);
+                    if (!text.IsEmpty())
+                        return text;
                 }
+
+                return string.Empty;
             }
 
-            if (node is JsonArray arr)
+            if (node.ValueKind == JsonValueKind.Object)
             {
-                var first = arr.FirstOrDefault();
-                if (first == null)
-                    return string.Empty;
-                return GetNodeText(first);
+                if (node.TryGetProperty("name", out var nameValue))
+                {
+                    var name = GetJsonText(nameValue);
+                    if (!name.IsEmpty())
+                        return name;
+                }
+
+                if (node.TryGetProperty("value", out var valueValue))
+                {
+                    var value = GetJsonText(valueValue);
+                    if (!value.IsEmpty())
+                        return value;
+                }
+
+                var rawObject = node.GetRawText();
+                return string.Equals(rawObject, "null", StringComparison.OrdinalIgnoreCase) ? string.Empty : rawObject;
             }
 
-            var text = node.ToString();
-            return string.Equals(text, "null", StringComparison.OrdinalIgnoreCase) ? string.Empty : text;
+            var raw = node.GetRawText();
+            if (raw.IsEmpty())
+                return string.Empty;
+
+            return string.Equals(raw, "null", StringComparison.OrdinalIgnoreCase) ? string.Empty : raw.Trim('"');
         }
 
-        private static bool GetAmapResult(string path, Dictionary<string, string> query, out JsonObject root, out string failInfo, AmapCredential credential)
+        private static bool GetAmapResult<T>(string path, Dictionary<string, string> query, out T result, out string failInfo, AmapCredential credential)
+            where T : AmapResponseBase
         {
-            root = null;
-            failInfo = "";
+            result = null;
             var includeSignature = credential.PreferSignature;
             var body = Fetch(BuildAmapUrl(path, query, credential, includeSignature), out var error);
-            if (body.IsEmpty())
-            {
-                failInfo = error.IsEmpty() ? "高德地址查询失败" : error;
-                return false;
-            }
-
-            JsonObject parsed;
             try
             {
-                parsed = JsonNode.Parse(body) as JsonObject;
-            }
-            catch
-            {
-                failInfo = "高德返回格式异常";
+                result = body.Parse<T>();
+                var status = result.Status;
+                var info = result.Info;
+                if (status == "1")
+                {
+                    failInfo = string.Empty;
+                    return true;
+                }
+                failInfo = $"{credential.Key}: {info}";
                 return false;
             }
-
-            var status = GetNodeText(parsed?["status"]);
-            if (status.IsEmpty())
-                status = "0";
-            var info = GetNodeText(parsed?["info"]);
-            if (info.IsEmpty())
-                info = error;
-            if (status == "1")
+            catch (Exception ex)
             {
-                root = parsed;
-                failInfo = string.Empty;
-                return true;
+                failInfo = $"{credential.Key}: 返回格式异常({ex.Message})";
+                return false;
             }
-
-            failInfo = $"{credential.Key}: {info}";
-            return false;
         }
 
-        private static bool TryGetAmapResult(string path, Dictionary<string, string> query, out JsonObject root, out string failInfo)
+        private static bool TryGetAmapResult<T>(string path, Dictionary<string, string> query, out T result, out string failInfo)
+            where T : AmapResponseBase
         {
-            root = null;
+            result = null;
             failInfo = string.Empty;
             var errors = new List<string>();
             foreach (var credential in AmapCredentials)
@@ -320,7 +364,7 @@ namespace App.API
                 if (credential.PreferSignature)
                     continue;
 
-                if (GetAmapResult(path, query, out root, out var oneFail, credential))
+                if (GetAmapResult(path, query, out result, out var oneFail, credential))
                     return true;
                 if (!oneFail.IsEmpty())
                     errors.Add(oneFail);
