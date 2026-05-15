@@ -7,6 +7,9 @@ using System.Web;
 
 namespace App.Entities
 {
+    //-------------------------------------------------------
+    // 实体属性接口
+    //-------------------------------------------------------
     /// <summary>记录数据操作日期</summary>
     public interface ILogChange
     {
@@ -14,10 +17,18 @@ namespace App.Entities
         DateTime? UpdateDt { get; set; }
     }
 
-    /// <summary>导出数据接口</summary>
-    public interface IExport
+
+    /// <summary>逻辑删除接口</summary>
+    public interface IDeleteLogic
     {
-        object Export(ExportMode type);
+        bool? IsDel { get; set; }
+    }
+
+    /// <summary>排序索引接口</summary>
+    public interface ISort
+    {
+        /// <summary>排序索引</summary>
+        int SortId { get; set; }
     }
 
 
@@ -29,21 +40,6 @@ namespace App.Entities
         int? CollisionId { get; set; }
     }
 
-
-    /// <summary>逻辑删除接口</summary>
-    public interface IDeleteLogic
-    {
-        bool? InUsed { get; set; }
-    }
-
-
-
-    /// <summary>排序索引接口</summary>
-    public interface ISort
-    {
-        /// <summary>排序索引</summary>
-        int SortId { get; set; }
-    }
 
     /// <summary>树接口</summary>
     public interface ITree<T> : IId, ISort, IClone<T>
@@ -61,37 +57,51 @@ namespace App.Entities
         List<T> Children { get; set; }
     }
 
-    /// <summary>克隆接口</summary>
-    public interface IClone<T>
-    {
-        T Clone();
-    }
 
     /// <summary>
     /// 缓存数据接口。这是一个标注接口，无任何成员。
-    /// 标注了本接口的类，将不直接从数据库获取数据，而是从缓存中获取数据。
+    /// 标注了本接口的类，将全部从缓存中获取数据，以加快响应速度。（考虑删除，直接用 All属性）
     /// </summary>
     public interface ICacheAll
     {
     }
 
 
-    /// <summary>修正数据接口</summary>
-    public interface IFix
+    //-------------------------------------------------------
+    // 实体方法接口
+    //-------------------------------------------------------
+    /// <summary>导出数据接口（供输出json给客户端用）</summary>
+    public interface IExport
     {
-        /// <summary>修正实体自身数据</summary>
-        object FixItem();
+        object Export(ExportMode type);
+    }
 
-        /// <summary>批量修正数据</summary>
-        /// <remarks>由于 C# 接口无法定义静态方法，只能用这种方法折衷实现。调用方法如：new XXX().FixBatch(); </remarks>
-        int Fix();
+    /// <summary>克隆接口</summary>
+    public interface IClone<T>
+    {
+        T Clone();
     }
 
     /// <summary>初始化数据接口</summary>
     public interface IInit
     {
         /// <summary>批量初始化数据</summary>
-        /// <remarks>由于 C# 接口无法定义静态方法，只能用这种方法折衷实现。调用方法如：new XXX().Init(); </remarks>
-        void Init();
+        static abstract void Init();
     }
+
+    /// <summary>修正数据接口</summary>
+    /// <remarks>用于修正数据错误或填充某些字段，如补充缺失的默认值。</remarks>
+    public interface IFix<T>
+    {
+        /// <summary>修正实体自身数据</summary>
+        T Fix();
+    }
+
+    /// <summary>批量修正数据接口</summary>
+    public interface IFixAll
+    {
+        /// <summary>批量修正数据</summary>
+        static abstract int FixAll();
+    }
+
 }

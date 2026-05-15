@@ -24,26 +24,64 @@ namespace App.Pages.Checks
         public IActionResult OnGetData(
             Paging pi, 
             string name="", 
+            string code="",
             string socialCreditCode="", 
+            string address="",
+            string dutyUserName="",
+            string hasHazard="",
+            string patrolStatus="",
             long? orgId=null, 
+            long? tagId=null,
             long? checkerId=null, 
             CheckObjectType? objectType=null, 
+            CheckScope? scope=null,
             CheckObjectScale? scale=null, 
-            bool? isUsing=null,
+            CheckRiskLevel? riskLevel=null,
+            CheckIndustryType? industryType=null,
+            DateTime? createStartDt=null,
+            DateTime? createEndDt=null,
+            DateTime? updateStartDt=null,
+            DateTime? updateEndDt=null,
+            DateTime? latestCheckStartDt=null,
+            DateTime? latestCheckEndDt=null,
+            bool? isDel=null,
             bool? isDemonstration=null,
             bool? isKeySupervision=null,
             bool? isProductInNight=null,
             bool? isThreePlacesThreeEnterprises=null
             )
         {
+            bool? hasHazardValue = null;
+            if (bool.TryParse(hasHazard, out var parsedHasHazard))
+                hasHazardValue = parsedHasHazard;
+
+            bool? hasPatrolValue = null;
+            if (patrolStatus == "1") hasPatrolValue = true;
+            if (patrolStatus == "0") hasPatrolValue = false;
+
             var list = CheckObject.Search(
                 name, 
+                code,
                 socialCreditCode, 
+                address,
+                dutyUserName,
                 orgId, 
+                tagId,
                 checkerId, 
                 objectType, 
+                scope,
                 scale,
-                isUsing,
+                riskLevel,
+                industryType,
+                createStartDt,
+                createEndDt,
+                updateStartDt,
+                updateEndDt,
+                latestCheckStartDt,
+                latestCheckEndDt,
+                hasHazardValue,
+                hasPatrolValue,
+                isDel,
                 isDemonstration,
                 isKeySupervision,
                 isProductInNight,

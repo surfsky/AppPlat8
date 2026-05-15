@@ -38,6 +38,17 @@ html, body {
     padding-left: 12px !important;
     padding-right: 12px !important;
     display: block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Per-column wrap opt-in: EleColumn Wrap=true */
+.el-table td.el-table__cell.ele-col-wrap .cell {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word;
 }
 
 /* Widen pagination page size select */

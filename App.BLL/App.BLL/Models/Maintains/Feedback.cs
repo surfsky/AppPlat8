@@ -53,6 +53,12 @@ namespace App.DAL
         [UI("模块")]        public string AppVersion { get; set; }
         [UI("模块")]        public string AppModule { get; set; }
         [UI("在用")]        public bool? InUsed { get; set; } = true;
+        [NotMapped]
+        bool? IDeleteLogic.IsDel
+        {
+            get => InUsed == null ? null : !InUsed.Value;
+            set => InUsed = value == null ? null : !value.Value;
+        }
 
         // 提交人
         [UI("提交人")]      public long? UserID { get; set; }

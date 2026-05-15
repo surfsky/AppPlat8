@@ -77,3 +77,19 @@
             <EleOption Value="20">20条</EleOption>
             <EleOption Value="50">50条</EleOption>
         </EleSelect>
+
+
+        [UI("基础", "风险四色")]    public CheckRiskColor? RiskColor { get; set; }
+    [UI("检查", "检查对象四色")]
+    public enum CheckRiskColor
+    {
+        [UI("绿色")] Green = 0,
+        [UI("黄色")] Yellow = 1,
+        [UI("橙色")] Orange = 2,
+        [UI("红色")] Red = 3
+    }
+        [HttpApi("RiskColor", CacheSeconds = 60 * 60, AuthLogin=true)]
+        public static APIResult GetRiskColor() => typeof(CheckRiskColor).GetEnumInfos().ToResult();
+        <EleInput For="Item.Gps" Label="GPS" Placeholder="例如 120.155100, 30.274100"></EleInput>
+        <EleSelect For="Item.RiskColor" Label="风险四色"></EleSelect>
+            <EleColumn For="Item.RiskColor" Label="风险四色" Width="100"></EleColumn>

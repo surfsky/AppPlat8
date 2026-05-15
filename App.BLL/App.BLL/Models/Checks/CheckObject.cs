@@ -22,10 +22,11 @@ namespace App.DAL
     [UI("检查", "检查对象")]
     public class CheckObject : EntityBase<CheckObject>, IDeleteLogic
     {
-        [UI("基础", "在用状态")]    public bool? IsUsing { get; set; } = true;
-        [UI("基础", "逻辑删除标记")] public bool? InUsed { get; set; } = true;
+        [UI("基础", "主键ID")]      public string Code { get; set; }
+        [UI("基础", "是否失效")]    public bool? IsDel { get; set; } = false;
+        [UI("基础", "失效原因")]    public string FailReason { get; set; }
+        [UI("基础", "是否存在隐患")] public bool? HasHarzard { get; set; } = false;
         [UI("基础", "名称")]        public string Name { get; set;}
-        [UI("基础", "编码")]        public string Code { get; set;}  // XC（中心编号）-01（网格员编号）-001（网格企业编号）
         [UI("基础", "地块号")]       public string AreaCode { get; set; }
         [UI("基础", "社会信用代码")]  public string SocialCreditCode { get; set;}
         [UI("基础", "地址")]        public string Address { get; set; }
@@ -35,7 +36,6 @@ namespace App.DAL
         [UI("基础", "领域")]        public string Field { get; set; }  // 需枚举
 
         [UI("基础", "风险等级")]    public CheckRiskLevel? RiskLevel { get; set; }
-        [UI("基础", "风险四色")]    public CheckRiskColor? RiskColor { get; set; }
         [UI("基础", "领域")]       public CheckScope? Scope { get; set; }  
         [UI("基础", "规模")]       public CheckObjectScale? Scale { get; set; }
         [UI("基础", "类型")]       public CheckObjectType? ObjectType { get; set; }
@@ -43,10 +43,8 @@ namespace App.DAL
         [UI("基础", "责任组织")]    public long? DutyOrgId { get; set; }
         [UI("基础", "技术检查员")] public long? CheckerId { get; set; }
         [UI("基础", "社区网格员")] public long? SocialCheckerId { get; set; }
-        [NotMapped] public string CheckerName { get; set; }
-        [NotMapped] public string SocialCheckerName { get; set; }
         [UI("基础", "电表号")] public string EleMeeterNum { get; set; }
-        [UI("基础", "员工数")] public int? EmployeeCount { get; set; }
+        [UI("基础", "员工人数")] public int? EmployeeCount { get; set; }
 
         [UI("基础", "生产内容")] public string ProductContent { get; set; }
         [UI("基础", "外观图片")] public string OutlookImage { get; set; }
@@ -94,6 +92,10 @@ namespace App.DAL
         public virtual User Checker { get; set; }
         public virtual User SocialChecker { get; set; }
 
+        // 临时字段
+        [NotMapped] public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name ?? "";
+        [NotMapped] public string CheckerName => Checker?.Name;
+        [NotMapped] public string SocialCheckerName => SocialChecker?.Name;
 
         // 导出
         public override object Export(ExportMode mode)
@@ -101,8 +103,9 @@ namespace App.DAL
             return new
             {
                 Id,
-                IsUsing,
-                InUsed,
+                IsDel,
+                FailReason,
+                HasHarzard,
                 Name,
                 Code,
                 SocialCreditCode,
@@ -113,15 +116,15 @@ namespace App.DAL
                 LatestCheckDt,
                 Field,
                 RiskLevel,
-                RiskColor,
                 Scope,
                 Scale,
                 ObjectType,
                 DutyOrgId,
+                DutyOrgName,
                 CheckerId,
-                CheckerName = Checker?.Name,
+                CheckerName,
                 SocialCheckerId,
-                SocialCheckerName = SocialChecker?.Name,
+                SocialCheckerName,
                 EleMeeterNum,
                 EmployeeCount,
                 ProductContent,
@@ -156,12 +159,27 @@ namespace App.DAL
 
         public static IQueryable<CheckObject> Search(
             string name="", 
+            string code="",
             string socialCreditCode="", 
+            string address="",
+            string dutyUserName="",
             long? orgId=null, 
+            long? tagId=null,
             long? checkerId=null, 
             CheckObjectType? objectType=null, 
+            CheckScope? scope=null,
             CheckObjectScale? scale=null, 
-            bool? isUsing=null,
+            CheckRiskLevel? riskLevel=null,
+            CheckIndustryType? industryType=null,
+            DateTime? createStartDt=null,
+            DateTime? createEndDt=null,
+            DateTime? updateStartDt=null,
+            DateTime? updateEndDt=null,
+            DateTime? latestCheckStartDt=null,
+            DateTime? latestCheckEndDt=null,
+            bool? hasHazard=null,
+            bool? hasPatrol=null,
+            bool? isDel=null,
             bool? isDemonstration=null,
             bool? isKeySupervision=null,
             bool? isProductInNight=null,
@@ -173,10 +191,27 @@ namespace App.DAL
             if (orgId.IsNotEmpty())            q = q.Where(o => o.DutyOrgId == orgId.Value);
             if (checkerId.IsNotEmpty())        q = q.Where(o => o.CheckerId == checkerId.Value);
             if (name.IsNotEmpty())             q = q.Where(o => o.Name.Contains(name.Trim()));
+            if (code.IsNotEmpty())             q = q.Where(o => o.Code.Contains(code.Trim()));
+            if (address.IsNotEmpty())          q = q.Where(o => o.Address.Contains(address.Trim()));
+            if (dutyUserName.IsNotEmpty())     q = q.Where(o => o.DutyUserName.Contains(dutyUserName.Trim()));
+            if (tagId.IsNotEmpty())            q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && t.TagId == tagId.Value));
             if (objectType.IsNotEmpty())       q = q.Where(o => o.ObjectType == objectType.Value);
+            if (scope.IsNotEmpty())            q = q.Where(o => o.Scope == scope.Value);
             if (scale.IsNotEmpty())            q = q.Where(o => o.Scale == scale.Value);
+            if (riskLevel.IsNotEmpty())        q = q.Where(o => o.RiskLevel == riskLevel.Value);
+            if (industryType.IsNotEmpty())     q = q.Where(o => o.IndustryType == industryType.Value);
             if (socialCreditCode.IsNotEmpty()) q = q.Where(o => o.SocialCreditCode.Contains(socialCreditCode.Trim()));
-            if (isUsing.IsNotEmpty())          q = q.Where(o => o.IsUsing == isUsing.Value);
+            if (createStartDt.IsNotEmpty())    q = q.Where(o => o.CreateDt >= createStartDt.Value);
+            if (createEndDt.IsNotEmpty())      q = q.Where(o => o.CreateDt <= createEndDt.Value);
+            if (updateStartDt.IsNotEmpty())    q = q.Where(o => o.UpdateDt >= updateStartDt.Value);
+            if (updateEndDt.IsNotEmpty())      q = q.Where(o => o.UpdateDt <= updateEndDt.Value);
+            if (latestCheckStartDt.IsNotEmpty()) q = q.Where(o => o.LatestCheckDt >= latestCheckStartDt.Value);
+            if (latestCheckEndDt.IsNotEmpty())   q = q.Where(o => o.LatestCheckDt <= latestCheckEndDt.Value);
+            if (hasHazard.IsNotEmpty())        q = q.Where(o => o.HasHarzard == hasHazard.Value);
+            if (hasPatrol.IsNotEmpty())        q = hasPatrol.Value
+                                                ? q.Where(o => o.LatestCheckDt != null)
+                                                : q.Where(o => o.LatestCheckDt == null);
+            if (isDel.IsNotEmpty())            q = q.Where(o => o.IsDel == isDel.Value);
             if (isDemonstration.IsNotEmpty())  q = q.Where(o => o.IsDemonstration == isDemonstration.Value);
             if (isKeySupervision.IsNotEmpty()) q = q.Where(o => o.IsKeySupervision == isKeySupervision.Value);
             if (isProductInNight.IsNotEmpty()) q = q.Where(o => o.IsProductInNight == isProductInNight.Value);

@@ -4,12 +4,14 @@
 
 ## 功能
 
+- 支持将 Excel 的 `主键ID` 列导入到 `CheckObject.Code` 字段。
 - 按 `社会统一信用代码` 优先匹配已有 `CheckObject`。
 - 当无社会信用代码时，按 Excel 的 `ID` 匹配已有 `CheckObject`。
 - 若仍未命中，则按 `名称 + 所属网格叶子节点` 兜底匹配。
 - 不存在则新增，存在则更新。
 - `所属网格` 自动拆分为树路径，缺失节点自动插入 `Orgs`。
 - 自动尝试补充 `CheckObjects.LatestCheckDt` 列（可用 `--no-schema-update` 关闭）。
+- 自动尝试补充 `CheckObjects.Code` 列（可用 `--no-schema-update` 关闭）。
 - 生成导入日志，默认输出到 `Doc/Data/260514-对象数据.import.log.txt`。
 
 ## 用法

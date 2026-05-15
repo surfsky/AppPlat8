@@ -48,6 +48,9 @@ namespace App.EleUI
         [HtmlAttributeName("Link")]
         public bool Link { get; set; }
 
+        [HtmlAttributeName("Wrap")]
+        public bool Wrap { get; set; } = false;
+
         public EleColumnTagHelper()
         {
             Sortable = true;
@@ -103,6 +106,13 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("prop", propName);
             ApplyBaseColumnAttributes(output, labelText);
 
+            output.Attributes.SetAttribute("class-name", Wrap ? "ele-col-wrap" : "ele-col-nowrap");
+            if (!Wrap)
+            {
+                // Use Element Plus built-in overflow tooltip so full text appears on hover.
+                output.Attributes.SetAttribute("show-overflow-tooltip", "true");
+            }
+
             // 2. Handle Template Content
             var childContent = await output.GetChildContentAsync();
             if (!childContent.IsEmptyOrWhiteSpace)
@@ -116,7 +126,7 @@ namespace App.EleUI
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
-                            <span class=""text-blue-600 cursor-pointer"" v-on:click=""openView(scope.row.id)"">{{{{ scope.row.{propName} }}}}</span>
+                            <span class=""text-blue-600 cursor-pointer"" v-on:click=""openView(scope.row.id)"">{{{{ scope.row.{propName} ?? '' }}}}</span>
                         </template>
                     ");
                 }

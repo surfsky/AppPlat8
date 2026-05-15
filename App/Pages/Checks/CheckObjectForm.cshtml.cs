@@ -57,7 +57,9 @@ namespace App.Pages.Checks
             item.EmployeeCount = req.EmployeeCount;
             item.Scale = req.Scale;
             item.ProductContent = req.ProductContent;
-            item.IsUsing = req.IsUsing;
+            item.IsDel = req.IsDel;
+            item.FailReason = req.FailReason;
+            item.HasHarzard = req.HasHarzard;
             item.LandArea = req.LandArea;
             item.BuildingArea = req.BuildingArea;
             item.IsInOnlinePlatform = req.IsInOnlinePlatform;
@@ -68,7 +70,6 @@ namespace App.Pages.Checks
             item.IsYiEnterprise = req.IsYiEnterprise;
 
             item.RiskLevel = req.RiskLevel;
-            item.RiskColor = req.RiskColor;
             item.Scope = req.Scope;
             item.CheckerId = req.CheckerId;
             item.SocialCheckerId = req.SocialCheckerId;

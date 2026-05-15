@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using App.DAL;
+using App.Utils;
 using Microsoft.EntityFrameworkCore;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
@@ -34,12 +35,12 @@ try
     var headers = ReadHeaders(headerRow, formatter, evaluator);
     var columnPicker = new ColumnPicker(headers);
 
-    var cId = columnPicker.Pick("id", "对象id", "检查对象id");
+    var cId = columnPicker.Pick("主键ID", "主键id", "主键", "id", "对象id", "检查对象id");
     var cName = columnPicker.Pick("名称", "企业名称", "单位名称", "对象名称", "场所名称");
     var cSocial = columnPicker.Pick("社会统一信用代码", "统一社会信用代码", "社会信用代码", "信用代码");
     var cGrid = columnPicker.Pick("所属网格", "网格", "所属组织", "所属机构", "责任组织", "归属网格");
     var cLatestCheck = columnPicker.Pick("最新巡查时间", "最新检查时间", "最近巡查时间", "最近检查时间", "最后巡查时间", "巡查时间");
-    var cCode = columnPicker.Pick("编码", "对象编码", "编号");
+    var cCode = columnPicker.Pick("主键ID", "编码", "对象编码", "编号");
     var cAddress = columnPicker.Pick("地址", "详细地址", "经营地址");
     var cGps = columnPicker.Pick("gps", "经纬度", "坐标", "定位");
     var cField = columnPicker.Pick("领域", "行业领域", "行业");
@@ -47,6 +48,14 @@ try
     var cDutyUser = columnPicker.Pick("负责人", "主要负责人", "法定代表人", "法人");
     var cSafetyAdmin = columnPicker.Pick("安全管理员", "安管员", "安全责任人");
     var cEmployee = columnPicker.Pick("员工数", "从业人数", "人员数量", "职工人数");
+    var cObjectType = columnPicker.Pick("类型", "对象类型");
+    var cScope = columnPicker.Pick("所属领域", "领域");
+    var cBuildingType = columnPicker.Pick("建筑类型");
+    var cRiskLevel = columnPicker.Pick("分析等级", "风险等级");
+    var cHasHazard = columnPicker.Pick("是否存在隐患", "有无隐患");
+    var cTags = columnPicker.Pick("标签属性", "标签");
+    var cFailReason = columnPicker.Pick("失效原因");
+    var cIsDel = columnPicker.Pick("是否失效", "有效状态");
 
     report.Add("Detected columns:");
     foreach (var item in columnPicker.Detected)
@@ -78,6 +87,14 @@ try
             DutyUserName = ReadCell(row, cDutyUser, formatter, evaluator),
             SafetyAdminName = ReadCell(row, cSafetyAdmin, formatter, evaluator),
             EmployeeCount = TryParseInt(ReadCell(row, cEmployee, formatter, evaluator)),
+            ObjectTypeText = ReadCell(row, cObjectType, formatter, evaluator),
+            ScopeText = ReadCell(row, cScope, formatter, evaluator),
+            BuildingTypeText = ReadCell(row, cBuildingType, formatter, evaluator),
+            RiskLevelText = ReadCell(row, cRiskLevel, formatter, evaluator),
+            HasHazardText = ReadCell(row, cHasHazard, formatter, evaluator),
+            TagsText = ReadCell(row, cTags, formatter, evaluator),
+            FailReason = ReadCell(row, cFailReason, formatter, evaluator),
+            IsDelText = ReadCell(row, cIsDel, formatter, evaluator),
         };
 
         if (string.IsNullOrWhiteSpace(data.Name) && string.IsNullOrWhiteSpace(data.SocialCreditCode) && !data.SourceId.HasValue)
@@ -123,7 +140,32 @@ try
         }
     }
 
+    if (options.EnsureCodeColumn)
+    {
+        try
+        {
+            db.Database.ExecuteSqlRaw("ALTER TABLE CheckObjects ADD COLUMN Code TEXT NULL;");
+            report.Add("Schema: Added CheckObjects.Code");
+        }
+        catch (Exception ex)
+        {
+            var msg = ex.GetBaseException().Message;
+            if (msg.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                report.Add("Schema: CheckObjects.Code already exists");
+            else
+                throw;
+        }
+    }
+
+    if (options.EnsureDeleteColumns)
+    {
+        TryEnsureColumn(db, report, "CheckObjects", "IsDel", "INTEGER NULL");
+        TryEnsureColumn(db, report, "CheckObjects", "FailReason", "TEXT NULL");
+        TryEnsureColumn(db, report, "CheckObjects", "HasHarzard", "INTEGER NULL");
+    }
+
     var orgCache = LoadOrgCache(db);
+    var tagCache = LoadTagCache(db);
     var objectById = db.CheckObjects.ToDictionary(t => t.Id, t => t);
     var objectBySocial = db.CheckObjects
         .Where(t => !string.IsNullOrWhiteSpace(t.SocialCreditCode))
@@ -170,8 +212,7 @@ try
             var isNew = item == null;
             item ??= new CheckObject
             {
-                InUsed = true,
-                IsUsing = true,
+                IsDel = false,
                 CreateDt = DateTime.Now,
             };
 
@@ -242,6 +283,54 @@ try
                 changed = true;
             }
 
+            var objectType = ParseEnumByText<CheckObjectType>(row.ObjectTypeText);
+            if (objectType.HasValue && item.ObjectType != objectType)
+            {
+                item.ObjectType = objectType;
+                changed = true;
+            }
+
+            var scope = ParseEnumByText<CheckScope>(row.ScopeText);
+            if (scope.HasValue && item.Scope != scope)
+            {
+                item.Scope = scope;
+                changed = true;
+            }
+
+            var buildingType = ParseEnumByText<CheckBuildingType>(row.BuildingTypeText);
+            if (buildingType.HasValue && item.BuildingType != buildingType)
+            {
+                item.BuildingType = buildingType;
+                changed = true;
+            }
+
+            var riskLevel = ParseEnumByText<CheckRiskLevel>(row.RiskLevelText);
+            if (riskLevel.HasValue && item.RiskLevel != riskLevel)
+            {
+                item.RiskLevel = riskLevel;
+                changed = true;
+            }
+
+            var hasHazard = ParseBoolByText(row.HasHazardText);
+            if (hasHazard.HasValue && item.HasHarzard != hasHazard)
+            {
+                item.HasHarzard = hasHazard;
+                changed = true;
+            }
+
+            var isDel = ParseBoolByText(row.IsDelText);
+            if (isDel.HasValue && item.IsDel != isDel)
+            {
+                item.IsDel = isDel;
+                changed = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(row.FailReason) && !string.Equals(item.FailReason ?? string.Empty, row.FailReason.Trim(), StringComparison.Ordinal))
+            {
+                item.FailReason = row.FailReason.Trim();
+                changed = true;
+            }
+
             if (isNew)
             {
                 if (string.IsNullOrWhiteSpace(item.Name))
@@ -279,6 +368,11 @@ try
 
             if (!string.IsNullOrWhiteSpace(item.Code))
                 objectBySourceId[NormalizeSourceId(item.Code)] = item;
+
+            if (!string.IsNullOrWhiteSpace(row.TagsText) && item.Id > 0)
+            {
+                ApplyObjectTags(db, tagCache, item.Id, row.TagsText, dutyOrgId);
+            }
         }
         catch (Exception ex)
         {
@@ -481,6 +575,125 @@ static void WriteReport(string reportPath, List<string> lines)
     File.WriteAllLines(reportPath, lines, new UTF8Encoding(false));
 }
 
+static void TryEnsureColumn(AppPlatContext db, List<string> report, string table, string column, string sqlType)
+{
+    try
+    {
+        db.Database.ExecuteSqlRaw($"ALTER TABLE \"{table}\" ADD COLUMN \"{column}\" {sqlType};");
+        report.Add($"Schema: Added {table}.{column}");
+    }
+    catch (Exception ex)
+    {
+        var msg = ex.GetBaseException().Message;
+        if (msg.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+            report.Add($"Schema: {table}.{column} already exists");
+        else
+            throw;
+    }
+}
+
+static TEnum? ParseEnumByText<TEnum>(string? text)
+    where TEnum : struct, Enum
+{
+    if (string.IsNullOrWhiteSpace(text))
+        return null;
+
+    var raw = text.Trim();
+    if (int.TryParse(raw, out var iv) && Enum.IsDefined(typeof(TEnum), iv))
+        return (TEnum)Enum.ToObject(typeof(TEnum), iv);
+
+    foreach (var value in Enum.GetValues(typeof(TEnum)).Cast<TEnum>())
+    {
+        var name = value.ToString();
+        var title = value.GetTitle();
+        if (string.Equals(raw, name, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(raw, title, StringComparison.OrdinalIgnoreCase)
+            || raw.Contains(title, StringComparison.OrdinalIgnoreCase)
+            || title.Contains(raw, StringComparison.OrdinalIgnoreCase))
+            return value;
+    }
+
+    return null;
+}
+
+static bool? ParseBoolByText(string? text)
+{
+    if (string.IsNullOrWhiteSpace(text))
+        return null;
+
+    var raw = text.Trim();
+    if (bool.TryParse(raw, out var b))
+        return b;
+    if (raw is "1" or "是" or "有" or "true" or "TRUE" or "已巡查")
+        return true;
+    if (raw is "0" or "否" or "无" or "false" or "FALSE" or "未巡查")
+        return false;
+    if (raw.Contains("有效"))
+        return false;
+    if (raw.Contains("失效") || raw.Contains("删除"))
+        return true;
+    return null;
+}
+
+static Dictionary<string, CheckTag> LoadTagCache(AppPlatContext db)
+{
+    return db.CheckTags
+        .AsNoTracking()
+        .ToList()
+        .GroupBy(t => NormalizeHeader(t.Name))
+        .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+}
+
+static void ApplyObjectTags(AppPlatContext db, Dictionary<string, CheckTag> tagCache, long objectId, string tagsText, long? orgId)
+{
+    if (string.IsNullOrWhiteSpace(tagsText) || objectId <= 0)
+        return;
+
+    var names = tagsText
+        .Split(new[] { ',', '，', ';', '；', '|', '/' }, StringSplitOptions.RemoveEmptyEntries)
+        .Select(t => t.Trim())
+        .Where(t => !string.IsNullOrWhiteSpace(t))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    if (names.Count == 0)
+        return;
+
+    var tagIds = new HashSet<long>();
+    foreach (var name in names)
+    {
+        var key = NormalizeHeader(name);
+        if (!tagCache.TryGetValue(key, out var tag))
+        {
+            tag = new CheckTag
+            {
+                Name = name,
+                OrgId = orgId,
+                SortId = 10,
+            };
+            db.CheckTags.Add(tag);
+            db.SaveChanges();
+            tagCache[key] = tag;
+        }
+        tagIds.Add(tag.Id);
+    }
+
+    var exists = db.ObjectTags.Where(t => t.CheckObjectId == objectId).ToList();
+    var toDelete = exists.Where(t => !tagIds.Contains(t.TagId)).ToList();
+    if (toDelete.Count > 0)
+        db.ObjectTags.RemoveRange(toDelete);
+
+    var existingTagIds = exists.Select(t => t.TagId).ToHashSet();
+    foreach (var tid in tagIds)
+    {
+        if (existingTagIds.Contains(tid))
+            continue;
+        db.ObjectTags.Add(new CheckObjectTag { CheckObjectId = objectId, TagId = tid });
+    }
+
+    db.SaveChanges();
+}
+
 internal sealed class ColumnPicker
 {
     private readonly List<string> _headers;
@@ -560,6 +773,14 @@ internal sealed class ImportRow
     public string DutyUserName { get; set; } = string.Empty;
     public string SafetyAdminName { get; set; } = string.Empty;
     public int? EmployeeCount { get; set; }
+    public string ObjectTypeText { get; set; } = string.Empty;
+    public string ScopeText { get; set; } = string.Empty;
+    public string BuildingTypeText { get; set; } = string.Empty;
+    public string RiskLevelText { get; set; } = string.Empty;
+    public string HasHazardText { get; set; } = string.Empty;
+    public string TagsText { get; set; } = string.Empty;
+    public string FailReason { get; set; } = string.Empty;
+    public string IsDelText { get; set; } = string.Empty;
 }
 
 internal sealed class ImportOptions
@@ -569,6 +790,8 @@ internal sealed class ImportOptions
     public required string ReportPath { get; init; }
     public bool DryRun { get; init; }
     public bool EnsureLatestCheckColumn { get; init; }
+    public bool EnsureCodeColumn { get; init; }
+    public bool EnsureDeleteColumns { get; init; }
 
     public static ImportOptions Parse(string[] args)
     {
@@ -578,6 +801,8 @@ internal sealed class ImportOptions
         var reportPath = Path.Combine(root, "Doc", "Data", "260514-对象数据.import.log.txt");
         var dryRun = false;
         var ensureCol = true;
+        var ensureCodeCol = true;
+        var ensureDeleteCols = true;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -598,6 +823,8 @@ internal sealed class ImportOptions
                     break;
                 case "--no-schema-update":
                     ensureCol = false;
+                    ensureCodeCol = false;
+                    ensureDeleteCols = false;
                     break;
             }
         }
@@ -609,6 +836,8 @@ internal sealed class ImportOptions
             ReportPath = Path.GetFullPath(reportPath),
             DryRun = dryRun,
             EnsureLatestCheckColumn = ensureCol,
+            EnsureCodeColumn = ensureCodeCol,
+            EnsureDeleteColumns = ensureDeleteCols,
         };
     }
 

@@ -18,14 +18,6 @@ namespace App.DAL
         [UI("高风险")] High = 3
     }
 
-    [UI("检查", "检查对象四色")]
-    public enum CheckRiskColor
-    {
-        [UI("绿色")] Green = 0,
-        [UI("黄色")] Yellow = 1,
-        [UI("橙色")] Orange = 2,
-        [UI("红色")] Red = 3
-    }
 
     [UI("检查", "检查对象类型")]
     public enum CheckObjectType

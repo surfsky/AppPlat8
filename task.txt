@@ -1,9 +1,17 @@
 # 业务
 
-- 导入对象数据
 - 隐患排查
 - 统计及调度
 
+补足导入的数据：
+/给 Org 增加 FullName 属性，默认填写全路径树全称，如：浙江省/温州市/龙港市/XXXX，写个方法
+/修正导入的对象数据code，存储编码
+/导入org
+/删除RiskColor
+
+实现列的数据跳转，给EleColumn增加属性PopupUrlTemplate=""
+
+对于excel文件，尝试使用canvas-cells 打开编辑窗口；
 
 # 驾驶舱
 
@@ -17,9 +25,8 @@
     - GisMenu 增加 PageUrlTemplate 参数，可根据此参数, 用 Elemanager drawer 打开对应的页面；
 
 - 为了好理解，gismenu更名为GisLayer,修改相关的类名、页面及代码；
-点位：增加图片图层类型
+- 点位：增加图片图层类型, 可在指定矩形区域拉伸显示图片；
 
-- 点位的jsondata中的数据如果value是超链接，点击后用Elemanager draw打开
 
 - 实现Stat/Chart管理页面（对应实体类 StatChart，用于定义统计图表，也可以根据dataurl（或ApiUrl）及pageurl参数与具体数据对接起来，避免只做一个无意义的花架子，可用echarts展示（有明暗两种风格或可定制风格）
 - 修改gispanel，一个panel可容纳一个文本（用模板的方式容纳多个chart）
@@ -188,6 +195,13 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2026.05.15
+    /点位的jsondata中的数据如果value是超链接，点击后用Elemanager draw打开，可以不用了，用附件就行；
+    /导入对象数据
+    /EleTable行高固定，文本不允许换行，显示不了的缩略显示（如在尾部加...），鼠标移动上去后会显示tooltip文本全称；增加Wrap属性，默认为false；
+    /修正IFix， IInit 接口，支持静态方法；
+
+
 2026.05.14
     /修正pagesize排序问题
     /屏蔽手机号字段的列表展示

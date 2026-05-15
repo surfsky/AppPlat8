@@ -12,6 +12,7 @@ namespace App.DAL
     public class Org : TreeEntity<Org>
     {
         [UI("备注")] public string Remark { get; set; }
+        [UI("全称")] public string FullName { get; set; }
 
         public override object Export(ExportMode mode = ExportMode.Normal)
         {
@@ -23,7 +24,7 @@ namespace App.DAL
                 Remark,
                 SortId,
                 TreeLevel,
-                Children // Add this line to include children in JSON output
+                Children
             };
         }
         
@@ -31,5 +32,20 @@ namespace App.DAL
         {
             return base.Clone().SetValue(t => t.Remark, this.Remark);
         }
+
+        public override void BeforeSave(EntityOp op) 
+        {
+            this.FullName = GetFullName();
+        }
+
+        /// <summary>获取全称（包含父级）</summary>
+        public string GetFullName()
+        {
+            if (ParentId == null)
+                return Name;
+            var parent = Get(ParentId.Value);
+            return parent == null ? Name : parent.GetFullName() + "/" + Name;
+        }
+
     }
 }

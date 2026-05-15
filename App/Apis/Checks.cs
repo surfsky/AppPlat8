@@ -27,8 +27,6 @@ namespace App.API
         [HttpApi("RiskLevel", CacheSeconds = 60 * 60, AuthLogin=true)]
         public static APIResult GetRiskLevel() => typeof(CheckRiskLevel).GetEnumInfos().ToResult();
 
-        [HttpApi("RiskColor", CacheSeconds = 60 * 60, AuthLogin=true)]
-        public static APIResult GetRiskColor() => typeof(CheckRiskColor).GetEnumInfos().ToResult();
 
         [HttpApi("BuildingType", CacheSeconds = 60 * 60, AuthLogin=true)]
         public static APIResult GetBuildingType() => typeof(CheckBuildingType).GetEnumInfos().ToResult();
@@ -53,7 +51,14 @@ namespace App.API
             var userId = Auth.GetUserId();
             var user = User.Get(userId);
             orgId = orgId ?? user?.OrgId;
-            return CheckObject.Search(name, socialCreditCode, orgId, checkerId, objectType, scale).SortPageExport(pi).ToResult();
+            return CheckObject.Search(
+                name: name,
+                socialCreditCode: socialCreditCode,
+                orgId: orgId,
+                checkerId: checkerId,
+                objectType: objectType,
+                scale: scale
+            ).SortPageExport(pi).ToResult();
         }
 
         [HttpApi("检查对象详情", AuthLogin = true)]

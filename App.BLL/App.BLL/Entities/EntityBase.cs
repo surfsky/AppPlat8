@@ -87,7 +87,7 @@ namespace App.Entities
             // 逻辑删除
             if (this is IDeleteLogic)
             {
-                (this as IDeleteLogic).InUsed = false;
+                (this as IDeleteLogic).IsDel = true;
             }
             // 物理删除
             else

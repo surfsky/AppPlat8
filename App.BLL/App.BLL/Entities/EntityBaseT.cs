@@ -72,14 +72,20 @@ namespace App.Entities
         /// <summary>按当前用户数据权限过滤后的数据集</summary>
         public static IQueryable<T> DataSet => DataAccessFilter.Apply(Set, EntityConfig.DataAccessScope);
 
-        /// <summary>有效数据集（若为逻辑删除，返回 Set.Where(t => t.InUsed != false)）</summary>
+        /// <summary>有效数据集（若为逻辑删除，优先按 IsDel != true 过滤；兼容旧字段 InUsed != false）</summary>
         public static IQueryable<T> ValidSet
         {
             get
             {
                 IQueryable<T> set = DataSet;
                 if (typeof(T).IsInterface(typeof(IDeleteLogic)))
-                    set = set.WhereNotEqual(nameof(IDeleteLogic.InUsed), false, true);
+                {
+                    var deleteField = ResolveDeleteFieldName();
+                    if (deleteField == "IsDel")
+                        set = set.WhereNotEqual("IsDel", true, true);
+                    else
+                        set = set.WhereNotEqual("InUsed", false, true);
+                }
                 return set;
             }
         }
@@ -212,9 +218,19 @@ namespace App.Entities
             {
                 if (!physical && typeof(T).IsInterface(typeof(IDeleteLogic)))
                 {
-                    bool? inused = (bool?)o.GetValue(nameof(IDeleteLogic.InUsed));
-                    if (inused == false)
-                        return null;
+                    var deleteField = ResolveDeleteFieldName();
+                    if (deleteField == "IsDel")
+                    {
+                        bool? isDel = (bool?)o.GetValue("IsDel");
+                        if (isDel == true)
+                            return null;
+                    }
+                    else
+                    {
+                        bool? inused = (bool?)o.GetValue("InUsed");
+                        if (inused == false)
+                            return null;
+                    }
                 }
                 return o;
             }
@@ -277,7 +293,7 @@ namespace App.Entities
             // 逻辑删除
             if (this is IDeleteLogic)
             {
-                (this as IDeleteLogic).InUsed = false;
+                (this as IDeleteLogic).IsDel = true;
                 this.Save();
             }
             // 物理删除
@@ -292,6 +308,20 @@ namespace App.Entities
 
             // 删除后处理
             AfterChange(EntityOp.Delete);
+        }
+
+        private static string ResolveDeleteFieldName()
+        {
+            var type = typeof(T);
+            var isDel = type.GetProperty("IsDel");
+            if (isDel != null && isDel.GetAttribute<NotMappedAttribute>() == null)
+                return "IsDel";
+
+            var inUsed = type.GetProperty("InUsed");
+            if (inUsed != null)
+                return "InUsed";
+
+            return "IsDel";
         }
 
         /*
