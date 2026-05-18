@@ -15,6 +15,11 @@
 
 @section head {
     <style>
+        html,
+        body {
+            height: 100%;
+        }
+
         /* GeoJSON 文本可能很长，保持单行省略，避免撑出输入框 */
         .geojson-selector .el-input__inner {
             overflow: hidden;
@@ -40,6 +45,19 @@
             color: #475569;
             font-weight: 600; 
         }
+
+        .geo-form-drawer {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .geo-form-drawer #app {
+            height: 100vh !important;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
         /* 点位抽屉使用紧凑底栏，减少底部占用高度 */
         .geo-form-drawer #app > div {
             padding-bottom: 52px;
@@ -59,6 +77,7 @@
     <div class="geo-form-drawer">
         <EleForm Model="form" LabelWidth="120px">
             <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
+            <EleSelect For="Item.Type" Label="类型" Clearable="true" ></EleSelect>
             <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
             <EleInput For="Item.Alias" Label="简称"></EleInput>
             <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
@@ -68,8 +87,9 @@
             <EleSelector For="Item.Gps" TextFor="Item.Gps" Label="定位" PopupUrl="Locator" Icon="Location" Editable="true"></EleSelector>
             <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-selector" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
             <EleSelector For="Item.DataJson" TextFor="Item.DataJson" Label="属性数据" Class="geojson-selector" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="12" Editable="true" FillRow="true"></EleSelector>
-            <EleInput For="Item.PageUrl" Label="详情页面" FillRow="true" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
-            <EleList Label="附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <EleInput For="Item.Url" Label="链接地址" FillRow="true" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
+            <EleFileUpload For="Item.Att" Label="附件" FillRow="true" Placeholder="请选择附件文件" Exts=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.obj,.fbx,.gltf,.glb,.zip,.rar,.7z,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" MaxSizeMb="80"></EleFileUpload>
+            <EleList Label="更多附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
                 <ItemTemplate>
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0 flex-1">

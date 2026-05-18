@@ -21,6 +21,12 @@ namespace App.Pages.Shared
         [BindProperty(SupportsGet = true)]
         public string FilePath { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public string Source { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string Name { get; set; }
+
         public string FileName { get; set; }
         public string FileExt { get; set; }
         public string SourceUrl { get; set; }
@@ -28,11 +34,19 @@ namespace App.Pages.Shared
         public string DownloadUrl { get; set; }
         public string Error { get; set; }
 
-        public void OnGet(string uniId, long id, string file)
+        public void OnGet(string uniId, long id, string file, string src, string name)
         {
             UniId = uniId?.Trim();
             Id = id;
             FilePath = file?.Trim();
+            Source = src?.Trim();
+            Name = name?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(Source))
+            {
+                InitFromSourceUrl(Source, Name);
+                return;
+            }
 
             if (!string.IsNullOrWhiteSpace(FilePath))
             {
@@ -163,6 +177,36 @@ namespace App.Pages.Shared
             SourceUrl = $"/Shared/FileViewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}";
             ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
             DownloadUrl = $"/Shared/FileViewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}&download=true";
+        }
+
+        private void InitFromSourceUrl(string sourceUrl, string name)
+        {
+            var src = (sourceUrl ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(src))
+            {
+                Error = "文件地址为空";
+                return;
+            }
+
+            SourceUrl = src;
+
+            var text = src;
+            var q = text.IndexOf('?');
+            if (q >= 0) text = text.Substring(0, q);
+            var hash = text.IndexOf('#');
+            if (hash >= 0) text = text.Substring(0, hash);
+
+            var fileName = Path.GetFileName(text.Replace('\\', '/'));
+            FileName = string.IsNullOrWhiteSpace(name)
+                ? (string.IsNullOrWhiteSpace(fileName) ? "未命名文件" : fileName)
+                : name.Trim();
+
+            FileExt = Path.GetExtension(fileName).TrimStart('.').ToLower();
+            if (string.IsNullOrWhiteSpace(FileExt))
+                FileExt = Path.GetExtension(FileName).TrimStart('.').ToLower();
+
+            ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
+            DownloadUrl = SourceUrl;
         }
 
         private static string BuildViewerUrl(string sourceUrl, string fileName, string fileExt)

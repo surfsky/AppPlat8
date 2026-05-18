@@ -7,6 +7,122 @@ export function initUploadState(form, vueApi) {
 }
 
 export const uploadMethods = {
+    getUploadedFileName(value) {
+        if (!value) return '';
+
+        if (typeof value === 'object') {
+            return value.name || value.fileName || '已选择文件';
+        }
+
+        if (typeof value !== 'string') return '';
+
+        const text = value.trim();
+        if (!text) return '';
+
+        if (text.startsWith('{')) {
+            try {
+                const parsed = JSON.parse(text);
+                if (parsed && typeof parsed === 'object' && parsed.name) {
+                    return parsed.name;
+                }
+            } catch {
+                // Ignore parse errors and fallback below.
+            }
+        }
+
+        if (text.startsWith('data:')) {
+            return '已选择文件';
+        }
+
+        const normalized = text.split('?')[0].split('#')[0];
+        const idx = normalized.lastIndexOf('/');
+        if (idx >= 0 && idx < normalized.length - 1) {
+            const fileName = normalized.substring(idx + 1);
+            try {
+                return decodeURIComponent(fileName);
+            } catch {
+                return fileName;
+            }
+        }
+
+        return text;
+    },
+
+    isFileExtensionAllowed(fileName, exts) {
+        if (!exts) return true;
+        const name = (fileName || '').toLowerCase();
+        const dot = name.lastIndexOf('.');
+        const ext = dot >= 0 ? name.substring(dot) : '';
+        if (!ext) return false;
+
+        const accepted = exts
+            .split(',')
+            .map(x => x.trim().toLowerCase())
+            .filter(x => !!x)
+            .map(x => x.startsWith('.') ? x : `.${x}`);
+
+        if (accepted.length === 0) return true;
+        return accepted.includes(ext);
+    },
+
+    buildClientFilePayload(file, dataUrl) {
+        return JSON.stringify({
+            __eleFileUpload: true,
+            name: file?.name || '',
+            type: file?.type || '',
+            data: dataUrl || ''
+        });
+    },
+
+    async handleClientFileUpload(event, propName, exts, maxSizeMb) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (maxSizeMb && maxSizeMb > 0) {
+            const maxBytes = maxSizeMb * 1024 * 1024;
+            if (file.size > maxBytes) {
+                EleManager.showError(`文件大小不能超过 ${maxSizeMb}MB`);
+                event.target.value = '';
+                return;
+            }
+        }
+
+        if (!this.isFileExtensionAllowed(file.name, exts)) {
+            EleManager.showError(`仅支持以下扩展名：${exts}`);
+            event.target.value = '';
+            return;
+        }
+
+        try {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target?.result;
+                if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) {
+                    EleManager.showError('文件读取失败');
+                    event.target.value = '';
+                    return;
+                }
+
+                if (propName && this.form.value) {
+                    this.form.value[propName] = this.buildClientFilePayload(file, dataUrl);
+                }
+                EleManager.showSuccess('文件已加载');
+                event.target.value = '';
+            };
+
+            reader.onerror = () => {
+                EleManager.showError('文件读取失败');
+                event.target.value = '';
+            };
+
+            reader.readAsDataURL(file);
+        } catch (e) {
+            console.error('File upload error:', e);
+            EleManager.showError('文件处理失败');
+            event.target.value = '';
+        }
+    },
+
     handleUploadSuccess(res, file, prop) {
         if (res.code === 0) {
             if (prop && this.form.value) {

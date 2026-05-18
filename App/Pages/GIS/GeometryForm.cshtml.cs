@@ -65,12 +65,14 @@ namespace App.Pages.GIS
                 item.CreatorId = GetUserId();
             }
 
+            item.Type = req.Type;
             item.Name = req.Name;
             item.Alias = req.Alias;
             item.SortId = req.SortId;
             item.MenuId = req.MenuId;
             item.Addr = req.Addr;
-            item.PageUrl = req.PageUrl;
+            item.Url = req.Url;
+            item.Att = Uploader.SaveFile(nameof(GisGeometry), req.Att);
             item.GeoJson = req.GeoJson;
             item.DataJson = req.DataJson;
 

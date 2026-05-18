@@ -224,6 +224,22 @@
     </div>
 
     <script>
+        (() => {
+        const vueReady = typeof Vue !== 'undefined' && typeof ElementPlus !== 'undefined' && typeof ElementPlusIconsVue !== 'undefined';
+        if (!vueReady) {
+            const root = document.getElementById('app');
+            if (root) {
+                root.innerHTML = `
+                    <div style="max-width:560px;background:rgba(255,255,255,.95);padding:20px 24px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif;">
+                        <h3 style="margin:0 0 10px 0;color:#1f2937;">前端资源加载失败</h3>
+                        <p style="margin:0 0 8px 0;color:#374151;line-height:1.6;">当前登录页依赖外部 CDN（Vue/Element Plus）。若网络、代理或浏览器插件拦截了 CDN，会出现页面一直 loading 或空白。</p>
+                        <p style="margin:0;color:#374151;line-height:1.6;">请先检查浏览器控制台网络错误，或临时使用 <a href="/LoginDev" style="color:#2563eb;">/LoginDev</a> 进入开发环境。</p>
+                    </div>`;
+            }
+            console.warn('Login page bootstrap skipped: CDN assets not loaded.');
+            return;
+        }
+
         const { createApp, reactive, ref } = Vue;
         const { ElMessage } = ElementPlus;
 
@@ -440,11 +456,24 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register('/service-worker.js').catch(function (error) {
-                    console.warn('Service Worker register failed:', error);
-                });
+                const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname === '::1';
+                if (isLocalhost) {
+                    navigator.serviceWorker.getRegistrations()
+                        .then(regs => Promise.all(regs.map(r => r.unregister())))
+                        .catch(err => console.warn('Service Worker unregister failed:', err));
+                    if (window.caches) {
+                        caches.keys()
+                            .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+                            .catch(err => console.warn('Cache cleanup failed:', err));
+                    }
+                } else {
+                    navigator.serviceWorker.register('/service-worker.js').catch(function (error) {
+                        console.warn('Service Worker register failed:', error);
+                    });
+                }
             });
         }
+        })();
     </script>
 </body>
 </html>

@@ -34,12 +34,15 @@ namespace App.Pages.GIS
                 .Select(g => new
                 {
                     id = g.Id,
+                    type = g.Type,
                     menuId = g.MenuId,
                     name = g.Name,
                     alias = g.Alias,
                     sortId = g.SortId,
                     addr = g.Addr,
                     gps = g.Gps,
+                    url = g.Url,
+                    att = g.Att,
                     geoJson = g.GeoJson,
                     dataJson = g.DataJson,
                     icon = g.Menu != null ? g.Menu.Icon : null

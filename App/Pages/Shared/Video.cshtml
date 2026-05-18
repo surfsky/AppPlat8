@@ -1,0 +1,292 @@
+@page
+@model App.Pages.Shared.VideoModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "监控视频";
+}
+
+@section head {
+    <style>
+        /* 视频监控页面样式 */
+        .video-page {
+            padding: 16px;
+            background: #0f172a;
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+        .video-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .video-toolbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        .video-layout-btn {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .video-layout-btn:hover {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        .video-layout-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+        .video-grid {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+        }
+        .video-grid.layout-1 { grid-template-columns: 1fr; }
+        .video-grid.layout-2 { grid-template-columns: 1fr 1fr; }
+        .video-grid.layout-4 { grid-template-columns: 1fr 1fr; }
+        .video-grid.layout-6 { grid-template-columns: 1fr 1fr 1fr; }
+
+        .video-card {
+            background: #1e293b;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #334155;
+            position: relative;
+        }
+        .video-card video,
+        .video-card .video-placeholder {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .video-card video {
+            object-fit: contain;
+        }
+        .video-card .video-placeholder i {
+            font-size: 36px;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+        .video-card .video-placeholder div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .video-card .video-label {
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #cbd5e1;
+            background: #1e293b;
+            border-top: 1px solid #334155;
+        }
+        .video-card .video-url {
+            padding: 0 12px 8px;
+            font-size: 11px;
+            color: #64748b;
+            word-break: break-all;
+        }
+        .video-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            color: #64748b;
+        }
+        .video-empty i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.4;
+        }
+        .video-add-btn {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px dashed #475569;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 13px;
+            margin-left: auto;
+        }
+        .video-add-btn:hover {
+            border-color: #60a5fa;
+            color: #60a5fa;
+        }
+    </style>
+}
+
+@section body {
+    <div class="video-page">
+        <div class="video-toolbar">
+            <span class="video-toolbar-title">监控视频</span>
+            <button type="button" class="video-layout-btn active" data-layout="1" onclick="switchLayout(1)">1x1</button>
+            <button type="button" class="video-layout-btn" data-layout="2" onclick="switchLayout(2)">2x1</button>
+            <button type="button" class="video-layout-btn" data-layout="4" onclick="switchLayout(4)">2x2</button>
+            <button type="button" class="video-layout-btn" data-layout="6" onclick="switchLayout(6)">3x2</button>
+        </div>
+        <div id="video-grid" class="video-grid layout-1"></div>
+    </div>
+}
+
+@section script {
+    <script>
+        // 从 localStorage 读取视频 URL 列表
+        function getVideoUrls() {
+            try {
+                const stored = localStorage.getItem('gis_video_urls');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) return parsed;
+                }
+            } catch {}
+            return [];
+        }
+
+        // 存储视频 URL 列表到 localStorage
+        function saveVideoUrls(urls) {
+            try {
+                localStorage.setItem('gis_video_urls', JSON.stringify(urls));
+            } catch {}
+        }
+
+        // 从查询参数获取视频 URL（兼容单视频模式）
+        function getQueryUrls() {
+            const params = new URLSearchParams(window.location.search);
+            const urls = params.get('urls');
+            if (urls) {
+                try {
+                    const parsed = JSON.parse(decodeURIComponent(urls));
+                    if (Array.isArray(parsed)) return parsed;
+                } catch {
+                    return [urls];
+                }
+            }
+            const single = params.get('url');
+            if (single) return [single];
+            return [];
+        }
+
+        // 合并视频列表：优先取查询参数（覆盖），否则取 localStorage
+        function getMergedUrls() {
+            const queryUrls = getQueryUrls();
+            if (queryUrls.length > 0) return queryUrls;
+            return getVideoUrls();
+        }
+
+        let currentLayout = 1;
+        let videoUrls = [];
+
+        function switchLayout(layout) {
+            currentLayout = layout;
+            document.querySelectorAll('.video-layout-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.layout) === layout);
+            });
+            renderVideos();
+        }
+
+        function renderVideos() {
+            const grid = document.getElementById('video-grid');
+            if (!grid) return;
+
+            grid.className = `video-grid layout-${currentLayout}`;
+
+            if (videoUrls.length === 0) {
+                grid.innerHTML = `
+                    <div class="video-empty">
+                        <i class="fa-solid fa-video"></i>
+                        <div>暂无视频地址</div>
+                        <div style="font-size:12px;margin-top:8px;">请通过 GisGeometry 的视频类型点位添加视频地址</div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = videoUrls.map((item, index) => {
+                const url = typeof item === 'string' ? item : (item.url || '');
+                const name = typeof item === 'string' ? `视频 ${index + 1}` : (item.name || `视频 ${index + 1}`);
+                const isStream = url.includes('.m3u8') || url.includes('.flv');
+
+                if (isStream) {
+                    // HLS 流媒体使用 video.js 或原生 HLS 支持
+                    return `
+                        <div class="video-card">
+                            <video controls autoplay muted preload="metadata" playsinline>
+                                <source src="${escapeHtml(url)}" type="application/x-mpegURL">
+                            </video>
+                            <div class="video-label">${escapeHtml(name)}</div>
+                            <div class="video-url">${escapeHtml(url)}</div>
+                        </div>
+                    `;
+                }
+
+                // 普通视频 URL
+                const isEmbed = /youtube|youku|bilibili/i.test(url);
+                if (isEmbed) {
+                    return `
+                        <div class="video-card">
+                            <div class="video-placeholder">
+                                <div>
+                                    <i class="fa-solid fa-link"></i>
+                                    <span>${escapeHtml(name)}</span>
+                                </div>
+                            </div>
+                            <div class="video-label">${escapeHtml(name)}</div>
+                            <div class="video-url"><a href="${escapeHtml(url)}" target="_blank" style="color:#60a5fa;">${escapeHtml(url)}</a></div>
+                        </div>
+                    `;
+                }
+
+                // 通用视频
+                return `
+                    <div class="video-card">
+                        <video controls autoplay muted preload="metadata" playsinline>
+                            <source src="${escapeHtml(url)}">
+                        </video>
+                        <div class="video-label">${escapeHtml(name)}</div>
+                        <div class="video-url">${escapeHtml(url)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // 尝试自动播放；浏览器通常要求先静音。
+            grid.querySelectorAll('video').forEach(v => {
+                v.muted = true;
+                const p = v.play?.();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(() => {
+                        // 自动播放被策略阻止时，保留控件供用户手动播放
+                    });
+                }
+            });
+        }
+
+        function escapeHtml(text) {
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            videoUrls = getMergedUrls();
+            renderVideos();
+        });
+    </script>
+}

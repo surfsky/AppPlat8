@@ -50,9 +50,146 @@
             });
         }
 
+        function parseGeometryType(item) {
+            if (!item) return 0;
+            const raw = item.type ?? item.Type;
+            if (raw === null || raw === undefined) return 0;
+
+            const num = Number(raw);
+            if (Number.isFinite(num)) return num;
+
+            const text = String(raw).trim().toLowerCase();
+            if (!text) return 0;
+            if (text === 'video' || text === '视频') return 5;
+            if (text === 'image' || text === '图片') return 4;
+            if (text === 'point' || text === '点') return 1;
+            if (text === 'shape' || text === '形状') return 2;
+            if (text === 'text' || text === '文字') return 3;
+            if (text === 'file' || text === '文件' || text === 'threed' || text === '3d' || text === '三维') return 6;
+            return 0;
+        }
+
+        function findGeometryById(id) {
+            if (!Array.isArray(state.geometries) || !state.geometries.length) return null;
+            return state.geometries.find(x => Number(x?.id) === Number(id)) || null;
+        }
+
+        function splitMultiUrls(src) {
+            const text = String(src || '').trim();
+            if (!text) return [];
+
+            return text
+                .split(/[\n,;，；]+/)
+                .map(x => x.trim())
+                .filter(Boolean);
+        }
+
+        function collectVideoUrls(item) {
+            const parts = splitMultiUrls(item?.url ?? item?.Url ?? '');
+            if (!parts.length) return [];
+
+            return parts.map((url, idx) => ({
+                url,
+                name: (item?.name || item?.Name || '监控视频') + (parts.length > 1 ? ` ${idx + 1}` : '')
+            }));
+        }
+
+        function collectFileUrl(item) {
+            const parts = splitMultiUrls(item?.att ?? item?.Att ?? '');
+            return parts.length ? parts[0] : '';
+        }
+
+        function normalizeFileUrl(url) {
+            const text = String(url || '').trim().replace(/\\/g, '/');
+            if (!text) return '';
+            if (/^https?:\/\//i.test(text) || text.startsWith('/')) return text;
+            return `/${text.replace(/^\/+/, '')}`;
+        }
+
+        function buildFilePreviewUrl(fileUrl, name) {
+            const src = normalizeFileUrl(fileUrl);
+            if (!src) return '';
+            const encodedSrc = encodeURIComponent(src);
+            const encodedName = encodeURIComponent(String(name || '附件预览'));
+            return `/Shared/FileViewer?src=${encodedSrc}&name=${encodedName}`;
+        }
+
+        function openFileDrawer(previewUrl, title) {
+            if (!previewUrl) return;
+
+            const manager = resolveManager();
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open(previewUrl, '_blank');
+                return;
+            }
+
+            manager.openDrawer({
+                title: title || '文件预览',
+                url: previewUrl,
+                direction: 'rtl',
+                size: window.innerWidth < 768 ? '100%' : '72%',
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true
+            });
+        }
+
+        function openVideoDrawer(urls, title) {
+            const manager = resolveManager();
+            const list = Array.isArray(urls) ? urls.filter(x => !!x?.url) : [];
+            try {
+                localStorage.setItem('gis_video_urls', JSON.stringify(list));
+            } catch {
+                // ignore localStorage failures (private mode / quota)
+            }
+
+            let pageUrl = '/Shared/Video';
+            if (list.length === 1) {
+                pageUrl += `?url=${encodeURIComponent(list[0].url)}`;
+            } else if (list.length > 1) {
+                pageUrl += `?urls=${encodeURIComponent(JSON.stringify(list))}`;
+            }
+
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open(pageUrl, '_blank');
+                return;
+            }
+
+            manager.openDrawer({
+                title: title || '监控视频',
+                url: pageUrl,
+                direction: 'rtl',
+                size: window.innerWidth < 768 ? '100%' : '70%',
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true
+            });
+        }
+
         function openGeometryDetailDrawer(id) {
             if (!id) return;
             state.selectedGeometryId = id;
+
+            const geometry = findGeometryById(id);
+            const geometryType = parseGeometryType(geometry);
+            if (geometryType === 5) {
+                openVideoDrawer(collectVideoUrls(geometry), geometry?.name || geometry?.Name || '监控视频');
+                return;
+            }
+
+            if (geometryType === 6) {
+                const fileUrl = collectFileUrl(geometry);
+                if (!fileUrl) {
+                    const manager = resolveManager();
+                    if (manager && typeof manager.showWarning === 'function')
+                        manager.showWarning('未配置文件地址');
+                    return;
+                }
+
+                const previewUrl = buildFilePreviewUrl(fileUrl, geometry?.name || geometry?.Name || '文件预览');
+                openFileDrawer(previewUrl, geometry?.name || geometry?.Name || '文件预览');
+                return;
+            }
 
             if (typeof onOpenGeometryDetail === 'function') {
                 onOpenGeometryDetail(id);

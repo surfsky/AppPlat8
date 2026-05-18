@@ -7,6 +7,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using App.HttpApi;
+using System.Text.Json;
 
 namespace App.Components
 {
@@ -63,7 +64,109 @@ namespace App.Components
                 return "";
             if (urlOrdata.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
                 return Uploader.SaveBase64Image(folderName, urlOrdata);
+            if (TryParseClientBase64FilePayload(urlOrdata, out var payloadName, out var payloadData))
+                return Uploader.SaveBase64File(folderName, payloadData, payloadName);
+            if (urlOrdata.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                return Uploader.SaveBase64File(folderName, urlOrdata, null);
             return urlOrdata;
+        }
+
+        /// <summary>上传 base64 编码的任意文件</summary>
+        public static string SaveBase64File(string folderName, string dataUrl, string fileName = null)
+        {
+            if (dataUrl.IsEmpty())
+                return "";
+
+            var commaIndex = dataUrl.IndexOf(',');
+            if (commaIndex <= 0 || commaIndex >= dataUrl.Length - 1)
+                return "";
+
+            var header = dataUrl.Substring(0, commaIndex);
+            var base64Text = dataUrl.Substring(commaIndex + 1);
+            if (!header.Contains(";base64", StringComparison.OrdinalIgnoreCase))
+                return "";
+
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(base64Text);
+            }
+            catch
+            {
+                return "";
+            }
+
+            var ext = fileName.GetFileExtension();
+            if (ext.IsEmpty())
+                ext = ResolveExtensionFromDataUrlHeader(header);
+            if (ext.IsEmpty())
+                ext = ".bin";
+
+            var safeName = fileName.IsEmpty()
+                ? $"file{ext}"
+                : Path.GetFileName(fileName);
+            if (safeName.GetFileExtension().IsEmpty())
+                safeName += ext;
+
+            var url = GetSavePath(folderName, safeName);
+            var path = Asp.MapPath(url);
+            IO.PrepareDirectory(path);
+            File.WriteAllBytes(path, bytes);
+            return url;
+        }
+
+        private static bool TryParseClientBase64FilePayload(string text, out string fileName, out string dataUrl)
+        {
+            fileName = null;
+            dataUrl = null;
+
+            if (text.IsEmpty())
+                return false;
+
+            var trimmed = text.Trim();
+            if (!trimmed.StartsWith("{"))
+                return false;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(trimmed);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                    return false;
+
+                if (!doc.RootElement.TryGetProperty("__eleFileUpload", out var marker)
+                    || marker.ValueKind != JsonValueKind.True)
+                    return false;
+
+                if (!doc.RootElement.TryGetProperty("data", out var dataEl)
+                    || dataEl.ValueKind != JsonValueKind.String)
+                    return false;
+
+                dataUrl = dataEl.GetString();
+                if (doc.RootElement.TryGetProperty("name", out var nameEl)
+                    && nameEl.ValueKind == JsonValueKind.String)
+                    fileName = nameEl.GetString();
+
+                return dataUrl.IsNotEmpty();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string ResolveExtensionFromDataUrlHeader(string header)
+        {
+            var h = (header ?? string.Empty).ToLowerInvariant();
+            if (h.Contains("application/pdf")) return ".pdf";
+            if (h.Contains("application/zip")) return ".zip";
+            if (h.Contains("application/json")) return ".json";
+            if (h.Contains("text/plain")) return ".txt";
+            if (h.Contains("text/csv")) return ".csv";
+            if (h.Contains("video/mp4")) return ".mp4";
+            if (h.Contains("image/png")) return ".png";
+            if (h.Contains("image/jpeg")) return ".jpg";
+            if (h.Contains("image/gif")) return ".gif";
+            return string.Empty;
         }
 
         //-----------------------------------------------------------

@@ -8,26 +8,32 @@ using App.Utils;
 namespace App.DAL.GIS
 {
     /// <summary>图层类型</summary>
-    public enum LayerType
+    public enum GeometryType
     {
         [UI("点")]  Point = 1,
-        [UI("几何")] Geometry = 2,
-        [UI("图片")] Image = 3,
+        [UI("形状")] Shape = 2,
+        [UI("文字")] Text = 3,
+        [UI("图片")] Image = 4,
+        [UI("监控")] Video = 5,
+        [UI("文件")] File = 6,
     }
 
 
-    /// <summary>GIS几何图形</summary>
-    [UI("GIS", "GIS几何图形")]
+    /// <summary>GIS点位（包括点、几何、文字、图片、视频、文件等）</summary>
+    [UI("GIS", "GIS点位")]
     public class GisGeometry : EntityBase<GisGeometry>
     {
+        [UI("类型")]        public GeometryType? Type { get; set; } = GeometryType.Point;
         [UI("名称")]        public string Name { get; set; }
-        [UI("排序")]        public int SortId { get; set; }
-        [UI("简称")]        public string Alias { get; set; }
+        [UI("别称")]        public string Alias { get; set; }
         [UI("GIS菜单")]     public long? MenuId { get; set; }
+        [UI("排序")]        public int SortId { get; set; }
         [UI("地址")]        public string Addr { get; set; }
+        [UI("链接地址")]    public string Url { get; set; }         // 通用链接地址（原 PageUrl）
+        [UI("附件地址")]    public string Att { get; set; }         // 附件链接（图片、模型、视频等）
+
         [UI("经纬度")]      public string Gps { get; set; }
-        [UI("更多页面")]    public string PageUrl { get; set; }
-        [UI("GeoJSON数据")] public string GeoJson { get; set; }
+        [UI("图形数据")]    public string GeoJson { get; set; }
         [UI("扩展数据")]    public string DataJson { get; set; }
 
         //
@@ -43,6 +49,7 @@ namespace App.DAL.GIS
         {
             return new GisGeometry().Let(t => {
                 t.Id = this.Id;
+                t.Type = this.Type;
                 t.Name = this.Name;
                 t.SortId = this.SortId;
                 t.Alias = this.Alias;
@@ -51,7 +58,8 @@ namespace App.DAL.GIS
                 t.CreatorId = this.CreatorId;
                 t.GeoJson = this.GeoJson;
                 t.Gps = this.Gps;
-                t.PageUrl = this.PageUrl;
+                t.Url = this.Url;
+                t.Att = this.Att;
                 t.DataJson = this.DataJson;
             });
         }
@@ -61,6 +69,7 @@ namespace App.DAL.GIS
             return new
             {
                 Id,
+                Type,
                 Name,
                 Alias,
                 SortId,
@@ -69,7 +78,8 @@ namespace App.DAL.GIS
                 CreatorId,
                 GeoJson,
                 Gps,
-                PageUrl,
+                Url,
+                Att,
                 DataJson,
 
                 MenuName,
@@ -79,12 +89,13 @@ namespace App.DAL.GIS
         }
 
 
-        public static IQueryable<GisGeometry> Search(string name, long? creator, long? menuId)
+        public static IQueryable<GisGeometry> Search(string name, long? creator, long? menuId, GeometryType? type = null)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty())       q = q.Where(o => o.Name.Contains(name.Trim()));
             if (creator.IsNotEmpty())    q = q.Where(o => o.CreatorId == creator.Value);
             if (menuId.IsNotEmpty())     q = q.Where(o => o.MenuId == menuId.Value);
+            if (type.HasValue)           q = q.Where(o => o.Type == type.Value);
             return q;
         }
     }

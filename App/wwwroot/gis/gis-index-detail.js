@@ -92,12 +92,23 @@
             return `<div class="geo-att-list">${rows}</div>`;
         }
 
+        /**
+         * 获取类型文本
+         */
+        function getTypeText(type) {
+            var map = { 1: '点', 2: '形状', 3: '文字', 4: '图片', 5: '视频', 6: '文件' };
+            return map[type] || ('类型' + type);
+        }
+
         function renderGeometryDetailHtml(detail) {
             const rows = Array.isArray(detail.dataRows || detail.DataRows) ? (detail.dataRows || detail.DataRows) : [];
-            const pageUrl = normalizeOpenUrl(detail.pageUrl ?? detail.PageUrl);
+            const pageUrl = normalizeOpenUrl(detail.url ?? detail.Url ?? detail.pageUrl ?? detail.PageUrl);
+            const att = detail.att ?? detail.Att;
             const atts = detail.atts ?? detail.Atts;
+            const typeText = getTypeText(detail.type ?? detail.Type);
             let rowHtml = `
                 <tr><th>ID</th><td>${escapeHtml(detail.id ?? detail.Id)}</td></tr>
+                <tr><th>类型</th><td>${escapeHtml(typeText)}</td></tr>
                 <tr><th>名称</th><td>${escapeHtml(detail.name ?? detail.Name)}</td></tr>
                 <tr><th>简称/别称</th><td>${escapeHtml(detail.alias ?? detail.Alias)}</td></tr>
                 <tr><th>地址</th><td>${escapeHtml(detail.addr ?? detail.Addr)}</td></tr>
@@ -105,7 +116,11 @@
             `;
 
             if (pageUrl) {
-                rowHtml += `<tr><th>更多</th><td><a href="javascript:void(0)" class="geo-more-link" data-page-url="${escapeHtml(pageUrl)}">更多</a></td></tr>`;
+                rowHtml += `<tr><th>链接</th><td><a href="javascript:void(0)" class="geo-more-link" data-page-url="${escapeHtml(pageUrl)}">查看详情</a></td></tr>`;
+            }
+
+            if (att) {
+                rowHtml += `<tr><th>附件</th><td><a href="${escapeHtml(att)}" target="_blank" style="color:#60a5fa;">${escapeHtml(att)}</a></td></tr>`;
             }
 
             if (rows.length === 0) {

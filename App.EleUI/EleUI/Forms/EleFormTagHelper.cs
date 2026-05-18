@@ -140,7 +140,7 @@ namespace App.EleUI
             if (!hasBottom)
                 return string.Empty;
 
-            var customFooterHtml = "<div class=\"px-4 pb-3 fixed bottom-0 left-0 bg-white w-full border-t border-gray-100 py-2 z-10 flex justify-center shadow-sm\">";
+            var customFooterHtml = "<div class=\"px-4 py-1 fixed bottom-0 left-0 bg-white w-full border-t border-gray-100 z-10 flex justify-center shadow-sm\">";
             customFooterHtml += bottomHtml;
             customFooterHtml += "</div>\n";
             return customFooterHtml;
@@ -149,7 +149,7 @@ namespace App.EleUI
         /// <summary>获取包装器的CSS类</summary>
         private string GetWrapperClass(bool hasBottom)
         {
-            return hasBottom ? "pb-[60px]" : string.Empty;
+            return hasBottom ? "pb-[48px]" : string.Empty;
         }
 
         /// <summary>创建脚本HTML</summary>

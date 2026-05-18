@@ -18,8 +18,8 @@ namespace App.EleUI
 
             output.TagName = "div";
             output.Attributes.SetAttribute("data-ele-bottom", "true");
-            output.Attributes.SetAttribute("class", "w-full min-h-[48px] flex flex-wrap items-center justify-center gap-2");
-            output.Attributes.SetAttribute("style", "display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;");
+            output.Attributes.SetAttribute("class", "w-full min-h-[36px] flex flex-wrap items-center justify-center gap-1");
+            output.Attributes.SetAttribute("style", "display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;width:100%;min-height:36px;");
             AddCommonAttributes(context, output);
             output.Content.SetHtmlContent(content);
         }

@@ -65,6 +65,9 @@ namespace App.EleUI
         [HtmlAttributeName("EmptyText")]
         public string EmptyText { get; set; } = "暂无数据";
 
+        [HtmlAttributeName("MinHeight")]
+        public string MinHeight { get; set; } = "40px";
+
         public override void Init(TagHelperContext context)
         {
             base.Init(context);
@@ -78,9 +81,12 @@ namespace App.EleUI
             var appId = $"ele-list-{Guid.NewGuid():N}";
             var listKey = $"list_{Guid.NewGuid():N}";
             var inForm = context.Items.ContainsKey("IsEleForm");
+            var listHeight = Height;
 
             output.TagName = "div";
+            Height = null;
             AddCommonAttributes(context, output);
+            Height = listHeight;
             output.Attributes.RemoveAll("Label");
             output.Attributes.RemoveAll("LabelWidth");
             output.Attributes.RemoveAll("ColSpan");
@@ -123,7 +129,11 @@ namespace App.EleUI
             var title = string.IsNullOrWhiteSpace(Title) ? "列表" : Title.Trim();
             var stateExpr = $"eleListState(`{listKey}`)";
             var showHeader = ShowHeader ?? !inForm;
-            var scrollStyle = string.IsNullOrWhiteSpace(Height) ? string.Empty : $" style='max-height:{Height};'";
+            var minHeight = string.IsNullOrWhiteSpace(MinHeight) ? "40px" : MinHeight.Trim();
+            var scrollStyle = string.IsNullOrWhiteSpace(listHeight)
+                ? $" style='min-height:{minHeight};'"
+                : $" style='min-height:{minHeight};max-height:{listHeight};'";
+            var emptyStyle = $" style='min-height:{minHeight};line-height:{minHeight};padding-top:0;padding-bottom:0;'";
 
             var startHtml = "";
             var endHtml = "";
@@ -152,7 +162,7 @@ namespace App.EleUI
             </div>
 
             <div v-if='{stateExpr}.loading' class='text-center text-gray-400 py-3'>加载中...</div>
-            <div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400 py-8'>{EmptyText}</div>
+            <div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400 py-0'{emptyStyle}>{EmptyText}</div>
             <div v-else-if='{stateExpr}.finished' class='text-center text-gray-400 py-3'>没有更多数据了</div>
         </div>
     </div>

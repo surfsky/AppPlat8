@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,6 +17,7 @@ using App.DAL;
 using App.Components;
 using App.Entities;
 using App.Pages.Chats;
+using System.IO;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -179,10 +182,22 @@ namespace App
             app.UseSession();                               // 会话状态管理
             app.UseImager();                                // 图像处理中间件：缓存、缩放等
             app.UseStaticFiles();                           // 静态文件
+            var filesRoot = Path.Combine(env.ContentRootPath, "Files");
+            if (!Directory.Exists(filesRoot))
+                Directory.CreateDirectory(filesRoot);
+
+            // 允许通过 /Files/* 访问项目根目录 Files 下的上传文件。
+            FileExtensionContentTypeProvider provider = GetFileProvider();
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(filesRoot),
+                RequestPath = "/Files",
+                ContentTypeProvider = provider,
+            });
             app.UseRouting();                               // 路由
             app.UseAuthentication();                        // 认证
             app.UseAuthorization();                         // 授权
- 
+
             // 自定义中间件
             app.UserAppWeb(env.ContentRootPath);            // 注册后，可用 Asp.Current, Asp.User, Asp.Response 等静态属性获取当前请求的上下文信息
             app.UseMonitor(o => Logger.Info("[VISIT] {0} from {1} use {2}s", o.Url, o.ClientIP, o.Seconds));  // 监控网页访问情况，输出访问的 URL、耗时和客户端 IP 地址
@@ -196,8 +211,9 @@ namespace App
                 o.FormatLongNumber = "Int64,Decimal";
                 o.Language = "en";
                 o.OnVisit += args => Logger.Info("[API-VISIT] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
-                o.OnBan   += args => Logger.Warn("[API-BAN] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
-                o.OnAuth  += args => {
+                o.OnBan += args => Logger.Warn("[API-BAN] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
+                o.OnAuth += args =>
+                {
                     var token = args.Context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();  // 如：Bearer token
                     Logger.Warn("[API-AUTH] {0} {1} from {2} token={3}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress, token);
                 };
@@ -212,6 +228,64 @@ namespace App
                 endpoints.MapBlazorHub();                   // 启用 Blazor 应用的 SignalR 通信路由（Blazor Server 核心）
                 endpoints.MapControllers();                 // 启用 MVC 控制器的路由支持（见 /Controllers 目录）
             });
+        }
+
+        private static FileExtensionContentTypeProvider GetFileProvider()
+        {
+            var provider = new FileExtensionContentTypeProvider();
+            // Office / 文档
+            provider.Mappings[".pdf"] = "application/pdf";
+            provider.Mappings[".doc"] = "application/msword";
+            provider.Mappings[".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            provider.Mappings[".xls"] = "application/vnd.ms-excel";
+            provider.Mappings[".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            provider.Mappings[".ppt"] = "application/vnd.ms-powerpoint";
+            provider.Mappings[".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            provider.Mappings[".csv"] = "text/csv";
+            provider.Mappings[".txt"] = "text/plain";
+            provider.Mappings[".md"] = "text/markdown";
+            provider.Mappings[".markdown"] = "text/markdown";
+            provider.Mappings[".json"] = "application/json";
+            provider.Mappings[".xml"] = "application/xml";
+            provider.Mappings[".yaml"] = "application/x-yaml";
+            provider.Mappings[".yml"] = "application/x-yaml";
+
+            // 脑图
+            provider.Mappings[".mm"] = "text/xml";
+            provider.Mappings[".mmd"] = "text/plain";
+            provider.Mappings[".xmind"] = "application/vnd.xmind.workbook";
+
+            // 图片 / 全景
+            provider.Mappings[".jpg"] = "image/jpeg";
+            provider.Mappings[".jpeg"] = "image/jpeg";
+            provider.Mappings[".png"] = "image/png";
+            provider.Mappings[".gif"] = "image/gif";
+            provider.Mappings[".webp"] = "image/webp";
+            provider.Mappings[".bmp"] = "image/bmp";
+            provider.Mappings[".svg"] = "image/svg+xml";
+
+            // 视频
+            provider.Mappings[".mp4"] = "video/mp4";
+            provider.Mappings[".mov"] = "video/quicktime";
+            provider.Mappings[".avi"] = "video/x-msvideo";
+            provider.Mappings[".mkv"] = "video/x-matroska";
+            provider.Mappings[".webm"] = "video/webm";
+            provider.Mappings[".ogv"] = "video/ogg";
+            provider.Mappings[".m4v"] = "video/x-m4v";
+            provider.Mappings[".m3u8"] = "application/vnd.apple.mpegurl";
+
+            // 模型
+            provider.Mappings[".glb"] = "model/gltf-binary";
+            provider.Mappings[".gltf"] = "model/gltf+json";
+            provider.Mappings[".usdz"] = "model/vnd.usdz+zip";
+            provider.Mappings[".obj"] = "model/obj";
+            provider.Mappings[".fbx"] = "application/octet-stream";
+
+            // 压缩包
+            provider.Mappings[".zip"] = "application/zip";
+            provider.Mappings[".rar"] = "application/vnd.rar";
+            provider.Mappings[".7z"] = "application/x-7z-compressed";
+            return provider;
         }
     }
 }

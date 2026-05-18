@@ -1,4 +1,5 @@
 (function () {
+
     function create(ctx) {
         const state = ctx.state;
         const map = ctx.map;
@@ -296,7 +297,33 @@
             return null;
         }
 
+        /**
+         * 获取点位渲染类型（从 type 字段或 GeoJson 推断）
+         * @param {object} item - 点位数据对象
+         * @returns {string} 类型名: point/shape/text/video/image/file/unknown
+         */
         function getGeometryKind(item) {
+            // 优先使用已定义的类型字段 (GeometryType枚举: 1=点,2=形状,3=文字,4=图片,5=视频,6=文件)
+            var rawType = item?.type ?? item?.Type;
+            if (rawType !== undefined && rawType !== null && rawType !== '') {
+                var t = Number(rawType);
+                if (t === 1) return 'point';
+                if (t === 2) return 'shape';
+                if (t === 3) return 'text';
+                if (t === 4) return 'image';
+                if (t === 5) return 'video';
+                if (t === 6) return 'file';
+
+                var txt = String(rawType).trim().toLowerCase();
+                if (txt === 'point' || txt === '点') return 'point';
+                if (txt === 'shape' || txt === '形状') return 'shape';
+                if (txt === 'text' || txt === '文字') return 'text';
+                if (txt === 'image' || txt === '图片') return 'image';
+                if (txt === 'video' || txt === '视频') return 'video';
+                if (txt === 'file' || txt === '文件' || txt === 'threed' || txt === '3d' || txt === '三维') return 'file';
+            }
+
+            // 回退：从 GeoJson 推断
             const geo = normalizeGeoJson(item?.geoJson);
             if (!geo || !Array.isArray(geo.features) || geo.features.length === 0) {
                 return item?.gps ? 'point' : 'unknown';
@@ -306,7 +333,7 @@
             if (!geometryType) return item?.gps ? 'point' : 'unknown';
             if (geometryType.includes('point')) return 'point';
             if (geometryType.includes('line')) return 'line';
-            return 'region';
+            return 'shape';
         }
 
         function extractIconFromDataJson(dataJson) {
@@ -385,56 +412,254 @@
             });
         }
 
+        /**
+         * 创建"文字"类型点位标记 - 在地图上显示纯文本标签
+         */
+        function createTextMarker(item, gps) {
+            const el = document.createElement('div');
+            el.className = 'geometry-text-marker';
+            el.textContent = item.alias || item.name || `点位${item.id}`;
+            el.style.cssText = `
+                background: rgba(15, 23, 42, 0.75);
+                color: #f1f5f9;
+                padding: 4px 12px;
+                border-radius: 4px;
+                font-size: 14px;
+                font-weight: 600;
+                white-space: nowrap;
+                border: 1px solid rgba(96, 165, 250, 0.5);
+                backdrop-filter: blur(4px);
+                cursor: pointer;
+                pointer-events: auto;
+            `;
+            el.addEventListener('click', (evt) => {
+                evt.stopPropagation();
+                onGeometryMarkerClick(item.id);
+            });
+            return new mapboxgl.Marker({ element: el, anchor: 'center' })
+                .setLngLat([gps.lng, gps.lat])
+                .addTo(map);
+        }
+
+        /**
+         * 创建"视频"类型点位标记 - 显示监控摄像头图标，点击打开通用视频窗口
+         */
+        function createVideoMarker(item, gps) {
+            const el = document.createElement('div');
+            el.className = 'geometry-video-marker';
+            el.style.cssText = 'cursor:pointer;text-align:center;';
+
+            const iconImg = document.createElement('img');
+            iconImg.src = '/icons/camera.svg';
+            iconImg.alt = '监控';
+            iconImg.style.cssText = 'width:36px;height:36px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));';
+            iconImg.onerror = function() {
+                this.style.display = 'none';
+                const fallback = document.createElement('span');
+                fallback.textContent = '📹';
+                fallback.style.cssText = 'font-size:28px;';
+                el.appendChild(fallback);
+            };
+            el.appendChild(iconImg);
+
+            const label = document.createElement('span');
+            label.className = 'marker-label';
+            label.textContent = item.alias || item.name || `点位${item.id}`;
+            el.appendChild(label);
+
+            el.addEventListener('click', (evt) => {
+                evt.stopPropagation();
+                // 统一交给 action 层分流（视频窗口/详情窗口）
+                onGeometryMarkerClick(item.id);
+            });
+
+            return new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+                .setLngLat([gps.lng, gps.lat])
+                .addTo(map);
+        }
+
+        /**
+         * 创建"文件"类型点位标记 - 显示文件图标，点击后打开文件预览
+         */
+        function createFileMarker(item, gps) {
+            const el = document.createElement('div');
+            el.className = 'geometry-file-marker';
+            el.style.cssText = 'cursor:pointer;text-align:center;';
+
+            const iconSpan = document.createElement('span');
+            iconSpan.textContent = '📄';
+            iconSpan.style.cssText = 'font-size:32px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));display:block;';
+            el.appendChild(iconSpan);
+
+            const label = document.createElement('span');
+            label.className = 'marker-label';
+            label.textContent = item.alias || item.name || `点位${item.id}`;
+            el.appendChild(label);
+
+            el.addEventListener('click', (evt) => {
+                evt.stopPropagation();
+                onGeometryMarkerClick(item.id);
+            });
+
+            return new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+                .setLngLat([gps.lng, gps.lat])
+                .addTo(map);
+        }
+
+        /**
+         * 创建"图片"类型 - 使用 Mapbox ImageSource 显示图片图层
+         * GeoJson 应包含一个矩形 Polygon 作为显示区域
+         */
+        function createImageLayer(item) {
+            // 从 GeoJson 获取矩形区域坐标
+            var geo = normalizeGeoJson(item?.geoJson);
+            if (!geo || !Array.isArray(geo.features)) return;
+
+            var imageUrl = item.att || '';
+            if (!imageUrl) return;
+
+            // 取第一个 Polygon 的坐标作为矩形边界
+            var coords = null;
+            for (var i = 0; i < geo.features.length; i++) {
+                var geom = geo.features[i]?.geometry;
+                if (geom && (geom.type === 'Polygon' || geom.type === 'MultiPolygon')) {
+                    var polygon = geom.type === 'Polygon' ? geom : geom;
+                    if (geom.type === 'Polygon' && Array.isArray(geom.coordinates) && geom.coordinates.length > 0) {
+                        coords = geom.coordinates[0];
+                        break;
+                    }
+                }
+            }
+
+            if (!coords || coords.length < 4) {
+                // 无矩形区域，使用 gps 点扩展一个默认矩形
+                var gps = getGeometryCenter(item);
+                if (!gps) return;
+                var d = 0.005; // 约500m
+                coords = [
+                    [gps.lng - d, gps.lat - d],
+                    [gps.lng + d, gps.lat - d],
+                    [gps.lng + d, gps.lat + d],
+                    [gps.lng - d, gps.lat + d],
+                    [gps.lng - d, gps.lat - d]
+                ];
+            }
+
+            var sourceId = 'gis-image-source-' + item.id;
+            var layerId = 'gis-image-layer-' + item.id;
+
+            // 确保 source 和 layer 不重复
+            if (map.getLayer(layerId)) map.removeLayer(layerId);
+            if (map.getSource(sourceId)) map.removeSource(sourceId);
+
+            try {
+                map.addSource(sourceId, {
+                    type: 'image',
+                    url: normalizeIconPath(imageUrl),
+                    coordinates: coords
+                });
+                map.addLayer({
+                    id: layerId,
+                    type: 'raster',
+                    source: sourceId,
+                    paint: { 'raster-opacity': 0.85 }
+                });
+            } catch (e) {
+                console.warn('图片图层创建失败:', e);
+            }
+        }
+
+        /**
+         * 重建所有几何点位标记（支持多种类型）
+         * - point: 显示图标+标签（现有逻辑）
+         * - text: 纯文本标签
+         * - video: 监控图标，点击打开视频
+         * - file: 文件图标，点击打开文件预览
+         * - shape: 由 geometryLayerManager 处理
+         * - image: 由 createImageLayer 处理
+         */
         function rebuildGeometryPointMarkers() {
             clearGeometryPointMarkers();
+
+            // 先清除旧的图片图层
+            state.geometries.forEach(item => {
+                if (!item) return;
+                var gk = getGeometryKind(item);
+                if (gk === 'image') {
+                    var srcId = 'gis-image-source-' + item.id;
+                    var lyrId = 'gis-image-layer-' + item.id;
+                    if (map.getLayer(lyrId)) map.removeLayer(lyrId);
+                    if (map.getSource(srcId)) map.removeSource(srcId);
+                }
+            });
 
             state.geometries.forEach(item => {
                 if (!item) return;
                 const geometryType = getGeometryKind(item);
-                if (geometryType !== 'point') return;
+
+                // 图片类型用 ImageSource 渲染
+                if (geometryType === 'image') {
+                    createImageLayer(item);
+                    return;
+                }
+
+                // 形状类型由 geometryLayerManager 处理
+                if (geometryType === 'shape') return;
 
                 const gps = getGeometryCenter(item);
                 if (!gps) return;
 
-                const el = document.createElement('div');
-                el.className = 'geometry-point-marker';
+                var marker = null;
 
-                const iconPath = getGeometryIcon(item);
-                if (iconPath) {
-                    const iconEl = document.createElement('img');
-                    iconEl.className = 'marker-icon';
-                    iconEl.src = iconPath;
-                    iconEl.alt = item.name || item.alias || '点位图标';
-                    iconEl.onerror = () => {
-                        iconEl.remove();
-                        const fallbackDot = document.createElement('span');
-                        fallbackDot.className = 'dot-fallback';
-                        el.appendChild(fallbackDot);
-                    };
-                    el.appendChild(iconEl);
+                switch (geometryType) {
+                    case 'text':
+                        marker = createTextMarker(item, gps);
+                        break;
+                    case 'video':
+                        marker = createVideoMarker(item, gps);
+                        break;
+                    case 'file':
+                        marker = createFileMarker(item, gps);
+                        break;
+                    default: // 'point' 或其他
+                        const el = document.createElement('div');
+                        el.className = 'geometry-point-marker';
+                        const iconPath = getGeometryIcon(item);
+                        if (iconPath) {
+                            const iconEl = document.createElement('img');
+                            iconEl.className = 'marker-icon';
+                            iconEl.src = iconPath;
+                            iconEl.alt = item.name || item.alias || '点位图标';
+                            iconEl.onerror = () => {
+                                iconEl.remove();
+                                const fallbackDot = document.createElement('span');
+                                fallbackDot.className = 'dot-fallback';
+                                el.appendChild(fallbackDot);
+                            };
+                            el.appendChild(iconEl);
+                        }
+                        if (!iconPath) {
+                            const fallbackDot = document.createElement('span');
+                            fallbackDot.className = 'dot-fallback';
+                            el.appendChild(fallbackDot);
+                        }
+                        const label = document.createElement('span');
+                        label.className = 'marker-label';
+                        label.textContent = item.alias || item.name || `点位${item.id}`;
+                        el.appendChild(label);
+                        el.addEventListener('click', (evt) => {
+                            evt.stopPropagation();
+                            onGeometryMarkerClick(item.id);
+                        });
+                        marker = new mapboxgl.Marker(el)
+                            .setLngLat([gps.lng, gps.lat])
+                            .addTo(map);
+                        break;
                 }
 
-                if (!iconPath) {
-                    const fallbackDot = document.createElement('span');
-                    fallbackDot.className = 'dot-fallback';
-                    el.appendChild(fallbackDot);
+                if (marker) {
+                    state.geometryPointMarkerMap.set(item.id, marker);
                 }
-
-                const label = document.createElement('span');
-                label.className = 'marker-label';
-                label.textContent = item.alias || item.name || `点位${item.id}`;
-                el.appendChild(label);
-
-                el.addEventListener('click', (evt) => {
-                    evt.stopPropagation();
-                    onGeometryMarkerClick(item.id);
-                });
-
-                const marker = new mapboxgl.Marker(el)
-                    .setLngLat([gps.lng, gps.lat])
-                    .addTo(map);
-
-                state.geometryPointMarkerMap.set(item.id, marker);
             });
 
             syncGeometryPointMarkerVisibility();
@@ -487,7 +712,12 @@
 
                 const geometryLayerManager = getGeometryLayerManager();
                 if (geometryLayerManager) {
-                    geometryLayerManager.setDataFromRows(state.geometries);
+                    // 仅将"形状"类型的数据传给 geometryLayerManager 渲染（点/文字/视频/图片/文件由自定义标记处理）
+                    var shapeRows = state.geometries.filter(function(g) {
+                        var kind = getGeometryKind(g);
+                        return kind === 'shape' || kind === 'region' || kind === 'line';
+                    });
+                    geometryLayerManager.setDataFromRows(shapeRows.length > 0 ? shapeRows : state.geometries);
                     geometryLayerManager.render();
                 }
                 rebuildGeometryPointMarkers();

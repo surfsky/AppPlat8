@@ -90,13 +90,15 @@ namespace App.Pages.GIS
                 .Select(g => new
                 {
                     id = g.Id,
+                    type = g.Type,
                     menuId = g.MenuId,
                     name = g.Name,
                     alias = g.Alias,
                     sortId = g.SortId,
                     addr = g.Addr,
                     gps = g.Gps,
-                    pageUrl = g.PageUrl,
+                    url = g.Url,
+                    att = g.Att,
                     geoJson = g.GeoJson,
                     dataJson = g.DataJson,
                     icon = g.Menu != null ? g.Menu.Icon : null
@@ -120,13 +122,15 @@ namespace App.Pages.GIS
             return BuildResult(0, "success", new
             {
                 id = item.Id,
+                type = item.Type,
                 menuId = item.MenuId,
                 menuName = item.MenuName,
                 name = item.Name,
                 alias = item.Alias,
                 addr = item.Addr,
                 gps = item.Gps,
-                pageUrl = item.PageUrl,
+                url = item.Url,
+                att = item.Att,
                 geoJson = item.GeoJson,
                 dataJson = item.DataJson,
                 dataRows = ParseDataRows(item.DataJson),

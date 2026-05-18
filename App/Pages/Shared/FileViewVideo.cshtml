@@ -60,7 +60,7 @@
 <body>
     <div class="tip">可使用空格键播放或暂停</div>
     <div class="wrap">
-        <video id="player" controls preload="metadata" playsinline></video>
+        <video id="player" controls autoplay muted preload="metadata" playsinline></video>
     </div>
     <div id="err" class="err"></div>
 
@@ -78,6 +78,13 @@
             showError('视频地址不存在');
         } else {
             player.src = src;
+            player.muted = true;
+            const playPromise = player.play?.();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {
+                    // 自动播放被浏览器策略拦截时，用户仍可手动点击播放
+                });
+            }
             player.addEventListener('error', () => {
                 showError('视频加载失败，请检查文件格式或内容。');
             });
