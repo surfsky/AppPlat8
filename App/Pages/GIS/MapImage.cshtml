@@ -1,0 +1,731 @@
+@page
+@model App.Pages.GIS.MapImageModel
+@using System.Globalization
+@{
+    Layout = "_Layout";
+
+    var mapCenterText = (SiteConfig.Instance.MapCenter ?? string.Empty).Replace("，", ",").Trim();
+    var mapCenterLng = 120.6034;
+    var mapCenterLat = 27.5686;
+    if (!string.IsNullOrWhiteSpace(mapCenterText))
+    {
+        var parts = mapCenterText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length >= 2
+            && double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLng)
+            && double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLat))
+        {
+            mapCenterLng = parsedLng;
+            mapCenterLat = parsedLat;
+        }
+    }
+
+    var tlx = Model.Tlx ?? (mapCenterLng - 0.004);
+    var tly = Model.Tly ?? (mapCenterLat + 0.003);
+    var brx = Model.Brx ?? (mapCenterLng + 0.004);
+    var bry = Model.Bry ?? (mapCenterLat - 0.003);
+    var initCenterLng = (tlx + brx) / 2d;
+    var initCenterLat = (tly + bry) / 2d;
+    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
+    var imageUrlJson = System.Text.Json.JsonSerializer.Serialize(Model.ImageUrl ?? string.Empty);
+}
+
+@section head {
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        html, body, #app { height: 100%; margin: 0; }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        .tool-panel {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            width: 320px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+            padding: 12px;
+            max-height: calc(100% - 28px);
+            overflow-y: auto;
+        }
+        .panel-title {
+            font-size: 16px;
+            color: #0f172a;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .panel-row {
+            margin-bottom: 10px;
+        }
+        .row-label {
+            font-size: 13px;
+            color: #334155;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .img-box {
+            width: 100%;
+            height: 168px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+        .img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #f8fafc;
+        }
+        .img-empty {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .coord-input .el-input__inner {
+            font-size: 12px;
+            color: #334155;
+        }
+        .toolbar-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .result-list {
+            margin-top: 8px;
+            max-height: 160px;
+            overflow: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+        .result-item {
+            padding: 8px 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+            color: #111827;
+        }
+        .result-item:last-child { border-bottom: none; }
+    </style>
+}
+
+@section body {
+    <div id="app">
+        <div id="map"></div>
+
+        <div class="tool-panel">
+            <div class="panel-title">图片区域</div>
+
+            <div class="panel-row">
+                <span class="row-label">图片</span>
+                <div class="img-box">
+                    <img v-if="imageUrlText" :src="imageUrlText" alt="图片预览" />
+                    <span v-else class="img-empty">未检测到图片</span>
+                </div>
+                <div class="toolbar-inline" style="margin-top: 8px;">
+                    <input ref="uploadInput" type="file" accept="image/*" style="display:none" @@change="onUploadImage" />
+                    <el-button type="primary" plain @@click="triggerUpload">上传图片</el-button>
+                    <el-button @@click="clearImage" :disabled="!imageUrlText">清空图片</el-button>
+                </div>
+            </div>
+
+            <div class="panel-row">
+                <span class="row-label">左上角</span>
+                <el-input class="coord-input" v-model="topLeftText" readonly></el-input>
+            </div>
+
+            <div class="panel-row">
+                <span class="row-label">右下角</span>
+                <el-input class="coord-input" v-model="bottomRightText" readonly></el-input>
+            </div>
+
+            <div class="panel-row">
+                <span class="row-label">不透明度</span>
+                <el-slider v-model="imageOpacityPercent" :min="0" :max="100" :step="1" @@input="onOpacityInput"></el-slider>
+            </div>
+
+            <div class="panel-row">
+                <span class="row-label">地址</span>
+                <el-input v-model="keyword" placeholder="输入地名搜索定位" clearable @@keyup.enter="searchPlace"></el-input>
+                <div class="toolbar-inline" style="margin-top: 8px;">
+                    <el-button type="primary" @@click="searchPlace" :loading="searching">搜索</el-button>
+                    <el-button type="primary" @@click="confirmRegion">保存</el-button>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #334155; word-break: break-all;">{{ regionText }}</div>
+            </div>
+
+            <div v-if="searchResults.length > 0" class="result-list">
+                <div v-for="item in searchResults" :key="item.id" class="result-item" @@click="chooseSearchResult(item)">{{ item.place_name }}</div>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const accessToken = "@SiteConfig.Instance.MapKey";
+                const initial = {
+                    minLng: @tlx.ToString(CultureInfo.InvariantCulture),
+                    maxLng: @brx.ToString(CultureInfo.InvariantCulture),
+                    minLat: @bry.ToString(CultureInfo.InvariantCulture),
+                    maxLat: @tly.ToString(CultureInfo.InvariantCulture)
+                };
+
+                const keyword = ref('');
+                const searching = ref(false);
+                const searchResults = ref([]);
+                const regionText = ref('');
+                const topLeftText = ref('');
+                const bottomRightText = ref('');
+                const imageOpacityPercent = ref(95);
+                const uploadInput = ref(null);
+                const imageUrl = @Html.Raw(imageUrlJson);
+                const imageUrlText = ref('');
+
+                let map = null;
+                let cornerMarkers = {};
+                let centerMarker = null;
+                let cornersSourceId = 'map-image-corners-source';
+                let rectFillLayerId = 'map-image-rect-fill';
+                let rectLineLayerId = 'map-image-rect-line';
+                let imageSourceId = 'map-image-preview-source';
+                let imageLayerId = 'map-image-preview-layer';
+                let centerMarkerDragSnapshot = null;
+                let deferredImageUpdateId = 0;
+
+                const bounds = {
+                    minLng: initial.minLng,
+                    maxLng: initial.maxLng,
+                    minLat: initial.minLat,
+                    maxLat: initial.maxLat
+                };
+
+                const showError = (msg) => {
+                    const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                    if (manager && typeof manager.showError === 'function') manager.showError(msg);
+                    else alert(msg);
+                };
+
+                function clampLat(lat) {
+                    return Math.max(-85, Math.min(85, lat));
+                }
+
+                function normalizeBounds() {
+                    const minLng = Math.min(bounds.minLng, bounds.maxLng);
+                    const maxLng = Math.max(bounds.minLng, bounds.maxLng);
+                    const minLat = Math.min(bounds.minLat, bounds.maxLat);
+                    const maxLat = Math.max(bounds.minLat, bounds.maxLat);
+                    const gapLng = Math.max(1e-7, maxLng - minLng);
+                    const gapLat = Math.max(1e-7, maxLat - minLat);
+
+                    bounds.minLng = minLng;
+                    bounds.maxLng = minLng + gapLng;
+                    bounds.minLat = clampLat(minLat);
+                    bounds.maxLat = clampLat(minLat + gapLat);
+                }
+
+                function currentCenter() {
+                    return {
+                        lng: (bounds.minLng + bounds.maxLng) / 2,
+                        lat: (bounds.minLat + bounds.maxLat) / 2
+                    };
+                }
+
+                function computeRegionText() {
+                    const tlx = bounds.minLng;
+                    const tly = bounds.maxLat;
+                    const brx = bounds.maxLng;
+                    const bry = bounds.minLat;
+                    return `${tlx.toFixed(6)},${tly.toFixed(6)},${brx.toFixed(6)},${bry.toFixed(6)}`;
+                }
+
+                function updateRegionFields() {
+                    topLeftText.value = `${bounds.minLng.toFixed(6)},${bounds.maxLat.toFixed(6)}`;
+                    bottomRightText.value = `${bounds.maxLng.toFixed(6)},${bounds.minLat.toFixed(6)}`;
+                }
+
+                function rectangleRing() {
+                    return [
+                        [bounds.minLng, bounds.maxLat],
+                        [bounds.maxLng, bounds.maxLat],
+                        [bounds.maxLng, bounds.minLat],
+                        [bounds.minLng, bounds.minLat],
+                        [bounds.minLng, bounds.maxLat]
+                    ];
+                }
+
+                function imageCoordinates() {
+                    return [
+                        [bounds.minLng, bounds.maxLat],
+                        [bounds.maxLng, bounds.maxLat],
+                        [bounds.maxLng, bounds.minLat],
+                        [bounds.minLng, bounds.minLat]
+                    ];
+                }
+
+                function ensureRectLayers() {
+                    if (!map || !map.isStyleLoaded()) return;
+
+                    if (!map.getSource(cornersSourceId)) {
+                        map.addSource(cornersSourceId, {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: [{
+                                    type: 'Feature',
+                                    geometry: { type: 'Polygon', coordinates: [rectangleRing()] },
+                                    properties: {}
+                                }]
+                            }
+                        });
+                    }
+
+                    if (!map.getLayer(rectFillLayerId)) {
+                        map.addLayer({
+                            id: rectFillLayerId,
+                            type: 'fill',
+                            source: cornersSourceId,
+                            paint: {
+                                'fill-color': '#2563eb',
+                                'fill-opacity': 0.12
+                            }
+                        });
+                    }
+
+                    if (!map.getLayer(rectLineLayerId)) {
+                        map.addLayer({
+                            id: rectLineLayerId,
+                            type: 'line',
+                            source: cornersSourceId,
+                            paint: {
+                                'line-color': '#2563eb',
+                                'line-width': 2
+                            }
+                        });
+                    }
+                }
+
+                function updateRectSource() {
+                    if (!map) return;
+                    const src = map.getSource(cornersSourceId);
+                    if (!src || typeof src.setData !== 'function') return;
+                    src.setData({
+                        type: 'FeatureCollection',
+                        features: [{
+                            type: 'Feature',
+                            geometry: { type: 'Polygon', coordinates: [rectangleRing()] },
+                            properties: {}
+                        }]
+                    });
+                }
+
+                function normalizeImageUrl(url) {
+                    if (!url || typeof url !== 'string') return '';
+                    const text = url.trim();
+                    if (!text) return '';
+                    if (text.startsWith('data:image/')) return text;
+                    if (/^https?:\/\//i.test(text)) return text;
+                    if (text.startsWith('/')) return text;
+                    if (text.startsWith('~/')) return '/' + text.substring(2);
+                    return '/' + text.replace(/^\/+/, '');
+                }
+
+                function ensureImageLayer() {
+                    if (!map || !map.isStyleLoaded()) return;
+
+                    const srcUrl = normalizeImageUrl(imageUrlText.value || imageUrl);
+                    imageUrlText.value = srcUrl;
+                    if (!srcUrl) return;
+
+                    if (!map.getSource(imageSourceId)) {
+                        map.addSource(imageSourceId, {
+                            type: 'image',
+                            url: srcUrl,
+                            coordinates: imageCoordinates()
+                        });
+                    }
+
+                    if (!map.getLayer(imageLayerId)) {
+                        map.addLayer({
+                            id: imageLayerId,
+                            type: 'raster',
+                            source: imageSourceId,
+                            paint: {
+                                'raster-opacity': imageOpacityPercent.value / 100,
+                                'raster-fade-duration': 0
+                            }
+                        });
+                    }
+
+                    if (map.getLayer(rectFillLayerId)) {
+                        map.moveLayer(rectFillLayerId);
+                    }
+                    if (map.getLayer(rectLineLayerId)) {
+                        map.moveLayer(rectLineLayerId);
+                    }
+                }
+
+                function setImageSourceUrl(url) {
+                    imageUrlText.value = normalizeImageUrl(url);
+                    if (!map || !map.isStyleLoaded()) return;
+
+                    if (map.getLayer(imageLayerId)) {
+                        map.removeLayer(imageLayerId);
+                    }
+                    if (map.getSource(imageSourceId)) {
+                        map.removeSource(imageSourceId);
+                    }
+                    ensureImageLayer();
+                }
+
+                function updateImageCoordinates() {
+                    if (!map) return;
+                    const source = map.getSource(imageSourceId);
+                    if (!source) return;
+                    if (typeof source.setCoordinates === 'function') {
+                        source.setCoordinates(imageCoordinates());
+                    }
+                }
+
+                function scheduleImageUpdate() {
+                    if (deferredImageUpdateId) {
+                        window.cancelAnimationFrame(deferredImageUpdateId);
+                    }
+                    deferredImageUpdateId = window.requestAnimationFrame(() => {
+                        deferredImageUpdateId = 0;
+                        updateImageCoordinates();
+                    });
+                }
+
+                function onOpacityInput() {
+                    if (!map || !map.getLayer(imageLayerId)) return;
+                    map.setPaintProperty(imageLayerId, 'raster-opacity', imageOpacityPercent.value / 100);
+                }
+
+                function triggerUpload() {
+                    const el = uploadInput.value;
+                    if (el) el.click();
+                }
+
+                function onUploadImage(event) {
+                    const file = event?.target?.files?.[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const dataUrl = e?.target?.result;
+                        if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+                            showError('图片读取失败');
+                            return;
+                        }
+                        setImageSourceUrl(dataUrl);
+                    };
+                    reader.onerror = () => {
+                        showError('图片读取失败');
+                    };
+                    reader.readAsDataURL(file);
+
+                    if (event.target) {
+                        event.target.value = '';
+                    }
+                }
+
+                function clearImage() {
+                    imageUrlText.value = '';
+                    if (!map) return;
+                    if (map.getLayer(imageLayerId)) {
+                        map.removeLayer(imageLayerId);
+                    }
+                    if (map.getSource(imageSourceId)) {
+                        map.removeSource(imageSourceId);
+                    }
+                }
+
+                function iconEl(name) {
+                    const el = document.createElement('div');
+                    el.style.width = '24px';
+                    el.style.height = '24px';
+                    el.style.backgroundImage = `url('/gis/icon-${name}.png')`;
+                    el.style.backgroundSize = 'contain';
+                    el.style.backgroundRepeat = 'no-repeat';
+                    el.style.backgroundPosition = 'center';
+                    return el;
+                }
+
+                function markerPos(kind) {
+                    switch (kind) {
+                        case 'tl': return [bounds.minLng, bounds.maxLat];
+                        case 'tr': return [bounds.maxLng, bounds.maxLat];
+                        case 'br': return [bounds.maxLng, bounds.minLat];
+                        case 'bl': return [bounds.minLng, bounds.minLat];
+                        default: {
+                            const c = currentCenter();
+                            return [c.lng, c.lat];
+                        }
+                    }
+                }
+
+                function applyCornerDrag(kind, lng, lat) {
+                    switch (kind) {
+                        case 'tl':
+                            bounds.minLng = lng;
+                            bounds.maxLat = lat;
+                            break;
+                        case 'tr':
+                            bounds.maxLng = lng;
+                            bounds.maxLat = lat;
+                            break;
+                        case 'br':
+                            bounds.maxLng = lng;
+                            bounds.minLat = lat;
+                            break;
+                        case 'bl':
+                            bounds.minLng = lng;
+                            bounds.minLat = lat;
+                            break;
+                    }
+                    normalizeBounds();
+                }
+
+                function refreshMarkersAndRegion(fit, deferImage = false) {
+                    normalizeBounds();
+                    regionText.value = computeRegionText();
+                    updateRegionFields();
+                    updateRectSource();
+                    if (deferredImageUpdateId) {
+                        window.cancelAnimationFrame(deferredImageUpdateId);
+                        deferredImageUpdateId = 0;
+                    }
+
+                    if (deferImage) {
+                        // During dragging, render rectangle first, then update image in next frame.
+                        scheduleImageUpdate();
+                    } else {
+                        updateImageCoordinates();
+                    }
+
+                    ['tl', 'tr', 'br', 'bl'].forEach((k) => {
+                        const marker = cornerMarkers[k];
+                        if (marker) marker.setLngLat(markerPos(k));
+                    });
+
+                    if (centerMarker) centerMarker.setLngLat(markerPos('o'));
+
+                    if (fit && map) {
+                        map.fitBounds([
+                            [bounds.minLng, bounds.minLat],
+                            [bounds.maxLng, bounds.maxLat]
+                        ], { padding: 80, duration: 0 });
+                    }
+                }
+
+                function installMarkers() {
+                    const createCorner = (kind) => {
+                        const m = new mapboxgl.Marker({ element: iconEl(kind), draggable: true })
+                            .setLngLat(markerPos(kind))
+                            .addTo(map);
+
+                        m.on('drag', () => {
+                            const p = m.getLngLat();
+                            applyCornerDrag(kind, p.lng, p.lat);
+                            refreshMarkersAndRegion(false, true);
+                        });
+                        m.on('dragend', () => {
+                            refreshMarkersAndRegion(false);
+                        });
+                        cornerMarkers[kind] = m;
+                    };
+
+                    createCorner('tl');
+                    createCorner('tr');
+                    createCorner('br');
+                    createCorner('bl');
+
+                    centerMarker = new mapboxgl.Marker({ element: iconEl('o'), draggable: true })
+                        .setLngLat(markerPos('o'))
+                        .addTo(map);
+
+                    centerMarker.on('dragstart', () => {
+                        centerMarkerDragSnapshot = {
+                            minLng: bounds.minLng,
+                            maxLng: bounds.maxLng,
+                            minLat: bounds.minLat,
+                            maxLat: bounds.maxLat,
+                            center: currentCenter()
+                        };
+                    });
+
+                    centerMarker.on('drag', () => {
+                        if (!centerMarkerDragSnapshot) return;
+                        const p = centerMarker.getLngLat();
+                        const dx = p.lng - centerMarkerDragSnapshot.center.lng;
+                        const dy = p.lat - centerMarkerDragSnapshot.center.lat;
+
+                        bounds.minLng = centerMarkerDragSnapshot.minLng + dx;
+                        bounds.maxLng = centerMarkerDragSnapshot.maxLng + dx;
+                        bounds.minLat = clampLat(centerMarkerDragSnapshot.minLat + dy);
+                        bounds.maxLat = clampLat(centerMarkerDragSnapshot.maxLat + dy);
+                        refreshMarkersAndRegion(false, true);
+                    });
+
+                    centerMarker.on('dragend', () => {
+                        centerMarkerDragSnapshot = null;
+                        refreshMarkersAndRegion(false);
+                    });
+                }
+
+                async function searchPlace() {
+                    const q = (keyword.value || '').trim();
+                    if (!q) {
+                        searchResults.value = [];
+                        return;
+                    }
+                    if (!accessToken) {
+                        showError('缺少 Mapbox Token，无法搜索地名');
+                        return;
+                    }
+
+                    searching.value = true;
+                    try {
+                        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json`;
+                        const res = await axios.get(url, {
+                            params: {
+                                access_token: accessToken,
+                                limit: 8,
+                                language: 'zh'
+                            }
+                        });
+                        searchResults.value = Array.isArray(res.data?.features) ? res.data.features : [];
+                    } catch (e) {
+                        console.error(e);
+                        showError('地名搜索失败');
+                    } finally {
+                        searching.value = false;
+                    }
+                }
+
+                function chooseSearchResult(item) {
+                    const center = item?.center || [];
+                    if (!Array.isArray(center) || center.length < 2) return;
+                    map.flyTo({ center: [Number(center[0]), Number(center[1])], zoom: Math.max(map.getZoom(), 14) });
+                    searchResults.value = [];
+                }
+
+                function locateMe() {
+                    if (!navigator.geolocation) {
+                        showError('当前浏览器不支持定位');
+                        return;
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            map.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: Math.max(map.getZoom(), 14) });
+                        },
+                        () => showError('定位失败，请检查浏览器定位权限'),
+                        { enableHighAccuracy: true, timeout: 12000 }
+                    );
+                }
+
+                function resetByCenter() {
+                    const center = map ? map.getCenter() : { lng: @mapCenterLng.ToString(CultureInfo.InvariantCulture), lat: @mapCenterLat.ToString(CultureInfo.InvariantCulture) };
+                    const halfW = 0.004;
+                    const halfH = 0.003;
+                    bounds.minLng = Number(center.lng) - halfW;
+                    bounds.maxLng = Number(center.lng) + halfW;
+                    bounds.minLat = Number(center.lat) - halfH;
+                    bounds.maxLat = Number(center.lat) + halfH;
+                    refreshMarkersAndRegion(false);
+                }
+
+                function closeOnly() {
+                    const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                    if (manager && typeof manager.closePage === 'function') {
+                        manager.closePage({});
+                        return;
+                    }
+                    if (window.parent) window.parent.postMessage({ __elePageClose: true, data: {} }, '*');
+                    if (window.top && window.top !== window.parent) window.top.postMessage({ __elePageClose: true, data: {} }, '*');
+                }
+
+                function confirmRegion() {
+                    const value = computeRegionText();
+                    const payload = {
+                        type: 'EleSelector',
+                        data: [{ id: value, name: value, att: imageUrlText.value || '' }]
+                    };
+
+                    const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                    if (manager && typeof manager.closePage === 'function') {
+                        manager.closePage(payload);
+                        return;
+                    }
+                    if (window.parent) window.parent.postMessage(payload, '*');
+                    if (window.top && window.top !== window.parent) window.top.postMessage(payload, '*');
+                }
+
+                function initMap() {
+                    if (!accessToken) {
+                        showError('缺少 Mapbox Token，请检查系统配置');
+                        return;
+                    }
+
+                    mapboxgl.accessToken = accessToken;
+                    map = new mapboxgl.Map({
+                        container: 'map',
+                        style: 'mapbox://styles/mapbox/streets-v11',
+                        center: [@initCenterLng.ToString(CultureInfo.InvariantCulture), @initCenterLat.ToString(CultureInfo.InvariantCulture)],
+                        zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
+                    });
+
+                    map.addControl(new mapboxgl.NavigationControl(), 'top-right'); // 导航控件
+                    map.addControl(new mapboxgl.GeolocateControl({
+                        positionOptions: { enableHighAccuracy: true },
+                        trackUserLocation: true,
+                        showUserHeading: true
+                    }), 'top-right');
+                    map.on('load', () => {
+                        ensureRectLayers();
+                        ensureImageLayer();
+                        installMarkers();
+                        refreshMarkersAndRegion(true);
+                    });
+                }
+
+                onMounted(() => {
+                    initMap();
+                });
+
+                return {
+                    keyword,
+                    searching,
+                    searchResults,
+                    regionText,
+                    topLeftText,
+                    bottomRightText,
+                    imageOpacityPercent,
+                    uploadInput,
+                    imageUrlText,
+                    searchPlace,
+                    chooseSearchResult,
+                    onOpacityInput,
+                    triggerUpload,
+                    onUploadImage,
+                    clearImage,
+                    locateMe,
+                    resetByCenter,
+                    closeOnly,
+                    confirmRegion
+                };
+            }
+        }).use(ElementPlus, { locale: ElementPlusLocaleZhCn }).mount('#app');
+    </script>
+}

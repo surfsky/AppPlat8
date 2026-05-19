@@ -113,6 +113,12 @@ export const selectorMethods = {
         url = this.appendQuery(url, keyId, value);
         url = this.appendQuery(url, 'data', value);
         url = this.appendQuery(url, 'geojson', value);
+
+        // GIS: region editor also needs current attachment/image path.
+        if (keyId === 'region') {
+            const attValue = this.form?.value ? (this.form.value.att ?? '') : '';
+            url = this.appendQuery(url, 'att', attValue == null ? '' : String(attValue));
+        }
         return url;
     },
 
@@ -165,6 +171,11 @@ export const selectorMethods = {
         } else if (rows.length > 0) {
             this.form.value[keyId] = rows[0].id;
             this.form.value[keyText] = rows[0].name;
+
+            // Optional extra field synchronization for custom selectors.
+            if (Object.prototype.hasOwnProperty.call(rows[0], 'att') && this.form?.value && Object.prototype.hasOwnProperty.call(this.form.value, 'att')) {
+                this.form.value.att = rows[0].att;
+            }
         }
 
         this.selectorVisible.value = false;

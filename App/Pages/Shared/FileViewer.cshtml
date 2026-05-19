@@ -6,6 +6,7 @@
     ViewData["Title"] = "文件预览";
     var viewerUrlJson = JsonSerializer.Serialize(Model.ViewerUrl ?? string.Empty);
     var downloadUrlJson = JsonSerializer.Serialize(Model.DownloadUrl ?? string.Empty);
+    var fileNameJson = JsonSerializer.Serialize(Model.FileName ?? string.Empty);
 }
 
 @section head {
@@ -60,18 +61,51 @@
             display: inline-flex;
             gap: 8px;
         }
-        .toolbar-btn {
-            border: 1px solid #dbeafe;
-            border-radius: 6px;
+        .fv-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 30px;
+            border-radius: 4px;
+            border: 1px solid #dcdfe6;
             background: #ffffff;
-            color: #1d4ed8;
+            color: #606266;
             font-size: 12px;
             line-height: 1;
-            padding: 7px 10px;
+            padding: 0 12px;
             cursor: pointer;
+            transition: all .2s;
+            user-select: none;
         }
-        .toolbar-btn:hover {
-            background: #eff6ff;
+        .fv-btn:hover {
+            color: #409eff;
+            border-color: #c6e2ff;
+            background: #ecf5ff;
+        }
+        .fv-btn:active {
+            color: #3a8ee6;
+            border-color: #3a8ee6;
+        }
+        .fv-btn-primary {
+            color: #ffffff;
+            background: #409eff;
+            border-color: #409eff;
+        }
+        .fv-btn-primary:hover {
+            color: #ffffff;
+            background: #66b1ff;
+            border-color: #66b1ff;
+        }
+        .fv-btn-primary:active {
+            color: #ffffff;
+            background: #3a8ee6;
+            border-color: #3a8ee6;
+        }
+        .fv-btn-icon {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            fill: currentColor;
         }
     </style>
 }
@@ -81,9 +115,18 @@
         <div class="fv-toolbar">
             <div class="fv-title" id="fv-title">@Model.FileName</div>
             <div class="fv-actions">
-                <button type="button" id="fv-open" class="toolbar-btn">新窗口</button>
-                <button type="button" id="fv-download" class="toolbar-btn">下载</button>
-                <button type="button" id="fv-close" class="toolbar-btn">关闭</button>
+                <button type="button" id="fv-open" class="fv-btn">
+                    <svg class="fv-btn-icon" viewBox="0 0 1024 1024" aria-hidden="true">
+                        <path d="M128 128h320v64H192v640h640V576h64v320H128V128zm424.96 0H896v343.04h-64V237.248L533.248 536 488 490.752 786.752 192H552.96v-64z"></path>
+                    </svg>
+                    <span>新窗口</span>
+                </button>
+                <button type="button" id="fv-download" class="fv-btn fv-btn-primary">
+                    <svg class="fv-btn-icon" viewBox="0 0 1024 1024" aria-hidden="true">
+                        <path d="M160 832h704v64H160zM480 128h64v416h172.8L512 748.8 307.2 544H480z"></path>
+                    </svg>
+                    <span>下载</span>
+                </button>
             </div>
         </div>
         <div class="fv-content" id="fv-content">
@@ -107,18 +150,57 @@
     <script>
         const viewerUrl = @Html.Raw(viewerUrlJson);
         const downloadUrl = @Html.Raw(downloadUrlJson);
+        const fileName = @Html.Raw(fileNameJson);
 
-        function downloadFile() {
+        function triggerAnchorDownload(url, name) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            if (name) a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function getFileNameFromDisposition(disposition) {
+            if (!disposition) return '';
+
+            const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+            if (utf8 && utf8[1]) {
+                try {
+                    return decodeURIComponent(utf8[1]);
+                } catch {
+                    return utf8[1];
+                }
+            }
+
+            const plain = disposition.match(/filename="?([^";]+)"?/i);
+            return plain && plain[1] ? plain[1] : '';
+        }
+
+        async function downloadFile() {
             if (!downloadUrl) {
                 if (window.EleManager && typeof EleManager.showWarning === 'function')
                     EleManager.showWarning('下载地址不存在');
                 return;
             }
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+
+            try {
+                const response = await fetch(downloadUrl, { credentials: 'same-origin' });
+                if (!response.ok)
+                    throw new Error('下载失败: ' + response.status);
+
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const disposition = response.headers.get('Content-Disposition') || response.headers.get('content-disposition') || '';
+                const downloadName = getFileNameFromDisposition(disposition) || fileName || 'download';
+                triggerAnchorDownload(blobUrl, downloadName);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+            } catch (err) {
+                console.error(err);
+                triggerAnchorDownload(downloadUrl, fileName || 'download');
+            }
         }
 
         function openInNewTab() {
@@ -126,19 +208,9 @@
             window.open(viewerUrl, '_blank');
         }
 
-        function closeViewer() {
-            if (window.EleManager && typeof EleManager.closeDrawer === 'function') {
-                EleManager.closeDrawer();
-            } else {
-                window.close();
-            }
-        }
-
         const btnOpen = document.getElementById('fv-open');
         if (btnOpen) btnOpen.addEventListener('click', openInNewTab);
         const btnDownload = document.getElementById('fv-download');
         if (btnDownload) btnDownload.addEventListener('click', downloadFile);
-        const btnClose = document.getElementById('fv-close');
-        if (btnClose) btnClose.addEventListener('click', closeViewer);
     </script>
 }

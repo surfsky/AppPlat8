@@ -401,6 +401,145 @@
             return `/${text.replace(/^\/+/, '')}`;
         }
 
+        function splitMultiUrls(text) {
+            if (!text || typeof text !== 'string') return [];
+            return text
+                .replace(/[\r\n]+/g, ',')
+                .split(/[;,，；\s]+/)
+                .map(function (x) { return (x || '').trim(); })
+                .filter(Boolean);
+        }
+
+        function resolveImageUrlFromAtt(att) {
+            var parts = splitMultiUrls(att);
+            if (!parts.length) return '';
+
+            var first = parts[0];
+            if (!first) return '';
+
+            // 兼容把 FileViewer 地址误存到 Att 的场景：优先提取 src
+            if (first.indexOf('/Shared/FileViewer') >= 0) {
+                try {
+                    var base = window.location && window.location.origin ? window.location.origin : 'http://localhost';
+                    var u = new URL(first, base);
+                    var src = (u.searchParams.get('src') || '').trim();
+                    if (src) return normalizeIconPath(decodeURIComponent(src));
+                } catch {
+                    // ignore parse errors
+                }
+            }
+
+            return normalizeIconPath(first);
+        }
+
+        function toImageSourceCoordinatesFromRegion(regionText) {
+            if (!regionText || typeof regionText !== 'string') return null;
+            var parts = regionText
+                .replace(/[，；;]/g, ',')
+                .split(',')
+                .map(function (x) { return Number((x || '').trim()); })
+                .filter(function (n) { return Number.isFinite(n); });
+
+            if (parts.length < 4) return null;
+
+            var tlx = parts[0];
+            var tly = parts[1];
+            var brx = parts[2];
+            var bry = parts[3];
+
+            var minLng = Math.min(tlx, brx);
+            var maxLng = Math.max(tlx, brx);
+            var minLat = Math.min(tly, bry);
+            var maxLat = Math.max(tly, bry);
+
+            if (!Number.isFinite(minLng) || !Number.isFinite(maxLng) || !Number.isFinite(minLat) || !Number.isFinite(maxLat)) return null;
+            if (Math.abs(maxLng - minLng) < 1e-9 || Math.abs(maxLat - minLat) < 1e-9) return null;
+
+            return [
+                [minLng, maxLat],
+                [maxLng, maxLat],
+                [maxLng, minLat],
+                [minLng, minLat]
+            ];
+        }
+
+        function toImageSourceCoordinatesFromRing(ring) {
+            if (!Array.isArray(ring) || ring.length < 4) return null;
+
+            var minLng = Infinity;
+            var maxLng = -Infinity;
+            var minLat = Infinity;
+            var maxLat = -Infinity;
+            var count = 0;
+
+            ring.forEach(function (coord) {
+                if (!Array.isArray(coord) || coord.length < 2) return;
+                var lng = Number(coord[0]);
+                var lat = Number(coord[1]);
+                if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
+                minLng = Math.min(minLng, lng);
+                maxLng = Math.max(maxLng, lng);
+                minLat = Math.min(minLat, lat);
+                maxLat = Math.max(maxLat, lat);
+                count += 1;
+            });
+
+            if (count < 4) return null;
+            if (!Number.isFinite(minLng) || !Number.isFinite(maxLng) || !Number.isFinite(minLat) || !Number.isFinite(maxLat)) return null;
+            if (Math.abs(maxLng - minLng) < 1e-9 || Math.abs(maxLat - minLat) < 1e-9) return null;
+
+            // Mapbox ImageSource 坐标顺序：左上、右上、右下、左下
+            return [
+                [minLng, maxLat],
+                [maxLng, maxLat],
+                [maxLng, minLat],
+                [minLng, minLat]
+            ];
+        }
+
+        function toImageSourceCoordinatesFromGeoJson(geo) {
+            if (!geo || !Array.isArray(geo.features) || geo.features.length === 0) return null;
+
+            var minLng = Infinity;
+            var maxLng = -Infinity;
+            var minLat = Infinity;
+            var maxLat = -Infinity;
+            var count = 0;
+
+            var collect = function (value) {
+                if (!Array.isArray(value) || value.length === 0) return;
+                if (typeof value[0] === 'number' && typeof value[1] === 'number') {
+                    var lng = Number(value[0]);
+                    var lat = Number(value[1]);
+                    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
+                    minLng = Math.min(minLng, lng);
+                    maxLng = Math.max(maxLng, lng);
+                    minLat = Math.min(minLat, lat);
+                    maxLat = Math.max(maxLat, lat);
+                    count += 1;
+                    return;
+                }
+                value.forEach(collect);
+            };
+
+            geo.features.forEach(function (feature) {
+                var geometry = feature && feature.geometry;
+                if (!geometry) return;
+                collect(geometry.coordinates);
+            });
+
+            if (count < 4) return null;
+            if (!Number.isFinite(minLng) || !Number.isFinite(maxLng) || !Number.isFinite(minLat) || !Number.isFinite(maxLat)) return null;
+            if (Math.abs(maxLng - minLng) < 1e-9 || Math.abs(maxLat - minLat) < 1e-9) return null;
+
+            return [
+                [minLng, maxLat],
+                [maxLng, maxLat],
+                [maxLng, minLat],
+                [minLng, minLat]
+            ];
+        }
+
         function clearGeometryPointMarkers() {
             state.geometryPointMarkerMap.forEach(marker => marker.remove());
             state.geometryPointMarkerMap.clear();
@@ -408,7 +547,14 @@
 
         function syncGeometryPointMarkerVisibility() {
             state.geometryPointMarkerMap.forEach((marker, id) => {
-                marker.getElement().style.display = state.geometryVisibleMap.get(id) === false ? 'none' : '';
+                var markerEl = marker.getElement();
+                if (!markerEl) return;
+
+                markerEl.style.display = state.geometryVisibleMap.get(id) === false ? 'none' : '';
+
+                var normalizedId = Number.isFinite(Number(id)) ? Number(id) : id;
+                var isSelected = String(state.selectedGeometryId ?? '') === String(normalizedId ?? '');
+                markerEl.classList.toggle('is-selected', !!isSelected);
             });
         }
 
@@ -511,22 +657,35 @@
          * GeoJson 应包含一个矩形 Polygon 作为显示区域
          */
         function createImageLayer(item) {
-            // 从 GeoJson 获取矩形区域坐标
-            var geo = normalizeGeoJson(item?.geoJson);
-            if (!geo || !Array.isArray(geo.features)) return;
-
-            var imageUrl = item.att || '';
+            var imageUrl = resolveImageUrlFromAtt(item?.att || item?.Att || '');
             if (!imageUrl) return;
 
-            // 取第一个 Polygon 的坐标作为矩形边界
-            var coords = null;
-            for (var i = 0; i < geo.features.length; i++) {
-                var geom = geo.features[i]?.geometry;
-                if (geom && (geom.type === 'Polygon' || geom.type === 'MultiPolygon')) {
-                    var polygon = geom.type === 'Polygon' ? geom : geom;
+            // 1) 优先使用 Region 字段
+            var coords = toImageSourceCoordinatesFromRegion(item?.region || item?.Region || '');
+
+            // 2) 兜底从 GeoJson 获取外围矩形区域坐标
+            var geo = normalizeGeoJson(item?.geoJson);
+            if (!coords && (!geo || !Array.isArray(geo.features))) return;
+
+            if (!coords) coords = toImageSourceCoordinatesFromGeoJson(geo);
+
+            // 兼容历史数据：若无法从全量坐标得到外接矩形，则回退到首个 polygon ring。
+            if (!coords) {
+                for (var i = 0; i < geo.features.length; i++) {
+                    var geom = geo.features[i]?.geometry;
+                    if (!geom || (geom.type !== 'Polygon' && geom.type !== 'MultiPolygon')) continue;
+
                     if (geom.type === 'Polygon' && Array.isArray(geom.coordinates) && geom.coordinates.length > 0) {
-                        coords = geom.coordinates[0];
-                        break;
+                        coords = toImageSourceCoordinatesFromRing(geom.coordinates[0]);
+                        if (coords) break;
+                    }
+
+                    if (geom.type === 'MultiPolygon' && Array.isArray(geom.coordinates) && geom.coordinates.length > 0) {
+                        var firstPolygon = geom.coordinates[0];
+                        if (Array.isArray(firstPolygon) && firstPolygon.length > 0) {
+                            coords = toImageSourceCoordinatesFromRing(firstPolygon[0]);
+                            if (coords) break;
+                        }
                     }
                 }
             }
@@ -537,10 +696,9 @@
                 if (!gps) return;
                 var d = 0.005; // 约500m
                 coords = [
-                    [gps.lng - d, gps.lat - d],
-                    [gps.lng + d, gps.lat - d],
-                    [gps.lng + d, gps.lat + d],
                     [gps.lng - d, gps.lat + d],
+                    [gps.lng + d, gps.lat + d],
+                    [gps.lng + d, gps.lat - d],
                     [gps.lng - d, gps.lat - d]
                 ];
             }
@@ -567,6 +725,23 @@
             } catch (e) {
                 console.warn('图片图层创建失败:', e);
             }
+        }
+
+        function syncImageLayerVisibility() {
+            state.geometries.forEach(function (item) {
+                if (!item) return;
+                if (getGeometryKind(item) !== 'image') return;
+
+                var layerId = 'gis-image-layer-' + item.id;
+                if (!map.getLayer(layerId)) return;
+
+                var isVisible = state.geometryVisibleMap.get(item.id) !== false;
+                try {
+                    map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
+                } catch {
+                    // ignore layout errors
+                }
+            });
         }
 
         /**
@@ -676,6 +851,7 @@
                 .map(g => g.id);
             geometryLayerManager.setVisibleIds(visibleIds);
             syncGeometryPointMarkerVisibility();
+            syncImageLayerVisibility();
             renderMenuTree();
         }
 

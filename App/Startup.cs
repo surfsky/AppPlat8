@@ -181,19 +181,25 @@ namespace App
             // 文件和授权（顺序不要动）
             app.UseSession();                               // 会话状态管理
             app.UseImager();                                // 图像处理中间件：缓存、缩放等
-            app.UseStaticFiles();                           // 静态文件
-            var filesRoot = Path.Combine(env.ContentRootPath, "Files");
-            if (!Directory.Exists(filesRoot))
-                Directory.CreateDirectory(filesRoot);
 
             // 允许通过 /Files/* 访问项目根目录 Files 下的上传文件。
-            FileExtensionContentTypeProvider provider = GetFileProvider();
+            app.UseStaticFiles();
+
+            // 允许下载Files目录下的各种静态文件
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(filesRoot),
+                FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "Files")),
                 RequestPath = "/Files",
-                ContentTypeProvider = provider,
+                ContentTypeProvider = GetFileProvider(),
             });
+            // 允许下载 Pages 目录下的普通静态文件
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "Pages")),
+                RequestPath = "/Pages"
+            });
+
+            //
             app.UseRouting();                               // 路由
             app.UseAuthentication();                        // 认证
             app.UseAuthorization();                         // 授权

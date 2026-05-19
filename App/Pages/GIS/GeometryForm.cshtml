@@ -70,6 +70,11 @@
             min-height: 36px !important;
             gap: 6px !important;
         }
+
+        /* 条件显隐仅负责开关，不参与表单栅格布局，避免破坏 FillRow */
+        .geo-field-toggle {
+            display: contents;
+        }
     </style>
 }
 
@@ -77,18 +82,30 @@
     <div class="geo-form-drawer">
         <EleForm Model="form" LabelWidth="120px">
             <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
+            <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
+            <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreeSelect>
             <EleSelect For="Item.Type" Label="类型" Clearable="true" ></EleSelect>
             <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-            <EleInput For="Item.Alias" Label="简称"></EleInput>
+            <EleInput For="Item.Alias" Label="别称"></EleInput>
             <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
-            <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreeSelect>
-            <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
-            <EleInput For="Item.Addr" Label="地址"></EleInput>
-            <EleSelector For="Item.Gps" TextFor="Item.Gps" Label="定位" PopupUrl="Locator" Icon="Location" Editable="true"></EleSelector>
-            <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-selector" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
-            <EleSelector For="Item.DataJson" TextFor="Item.DataJson" Label="属性数据" Class="geojson-selector" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="12" Editable="true" FillRow="true"></EleSelector>
-            <EleInput For="Item.Url" Label="链接地址" FillRow="true" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
-            <EleFileUpload For="Item.Att" Label="附件" FillRow="true" Placeholder="请选择附件文件" Exts=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.obj,.fbx,.gltf,.glb,.zip,.rar,.7z,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" MaxSizeMb="80"></EleFileUpload>
+            <EleInput For="Item.Url" Label="链接" FillRow="false" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
+            <EleInput For="Item.Addr" Label="地址" FillRow="true"></EleInput>
+            <EleSelector For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-selector" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></EleSelector>
+
+            <EleLabel Label="更多" FillRow="true"></EleLabel>
+            <div class="geo-field-toggle" v-show="!form.type || ['1','点','point','3','文字','text','5','监控','video','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleSelector For="Item.Gps" TextFor="Item.Gps" Label="定位" PopupUrl="Locator" Icon="Location" Editable="true"></EleSelector>
+            </div>
+
+            <div class="geo-field-toggle" v-show="['4','图片','image','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleFileUpload For="Item.Att" Label="文件" FillRow="true" Placeholder="请选择附件文件" Exts=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.obj,.fbx,.gltf,.glb,.zip,.rar,.7z,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" MaxSizeMb="80" ViewerUrl="/Shared/FileViewer?src={0}"></EleFileUpload>
+            </div>
+            <div class="geo-field-toggle" v-show="['4','图片','image'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleSelector For="Item.Region" TextFor="Item.Region" Label="图片区域" PopupUrl="MapImage" KeyMode="Url" Icon="Location" Editable="true" FillRow="true"></EleSelector>
+            </div>
+            <div class="geo-field-toggle" v-show="['2','形状','shape'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleSelector For="Item.GeoJson" TextFor="Item.GeoJson" Label="形状数据" Class="geojson-selector" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></EleSelector>
+            </div>
             <EleList Label="更多附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
                 <ItemTemplate>
                     <div class="flex items-center justify-between gap-3">
@@ -108,4 +125,5 @@
         </EleForm>
     </div>
 }
+
 

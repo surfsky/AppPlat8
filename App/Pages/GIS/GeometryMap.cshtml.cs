@@ -41,6 +41,7 @@ namespace App.Pages.GIS
                     sortId = g.SortId,
                     addr = g.Addr,
                     gps = g.Gps,
+                    region = g.Region,
                     url = g.Url,
                     att = g.Att,
                     geoJson = g.GeoJson,

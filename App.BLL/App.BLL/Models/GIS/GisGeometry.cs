@@ -33,6 +33,7 @@ namespace App.DAL.GIS
         [UI("附件地址")]    public string Att { get; set; }         // 附件链接（图片、模型、视频等）
 
         [UI("经纬度")]      public string Gps { get; set; }
+        [UI("区域矩形")]    public string Region { get; set; }      // 图片显示区域：tlx,tly,brx,bry
         [UI("图形数据")]    public string GeoJson { get; set; }
         [UI("扩展数据")]    public string DataJson { get; set; }
 
@@ -58,6 +59,7 @@ namespace App.DAL.GIS
                 t.CreatorId = this.CreatorId;
                 t.GeoJson = this.GeoJson;
                 t.Gps = this.Gps;
+                t.Region = this.Region;
                 t.Url = this.Url;
                 t.Att = this.Att;
                 t.DataJson = this.DataJson;
@@ -78,6 +80,7 @@ namespace App.DAL.GIS
                 CreatorId,
                 GeoJson,
                 Gps,
+                Region,
                 Url,
                 Att,
                 DataJson,

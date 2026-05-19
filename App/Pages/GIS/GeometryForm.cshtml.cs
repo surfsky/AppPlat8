@@ -75,6 +75,9 @@ namespace App.Pages.GIS
             item.Att = Uploader.SaveFile(nameof(GisGeometry), req.Att);
             item.GeoJson = req.GeoJson;
             item.DataJson = req.DataJson;
+            item.Region = NormalizeRegion(req.Region);
+            if (string.IsNullOrWhiteSpace(item.Region))
+                item.Region = TryBuildRegionFromGeoJson(req.GeoJson);
 
             var gpsText = string.IsNullOrWhiteSpace(req.Gps)
                 ? TryBuildGpsFromGeoJson(req.GeoJson)
@@ -184,6 +187,68 @@ namespace App.Pages.GIS
                 var lng = (minLng + maxLng) / 2d;
                 var lat = (minLat + maxLat) / 2d;
                 return string.Create(CultureInfo.InvariantCulture, $"{lng:0.######},{lat:0.######}");
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string NormalizeRegion(string region)
+        {
+            if (string.IsNullOrWhiteSpace(region))
+                return string.Empty;
+
+            var parts = region
+                .Replace("，", ",")
+                .Replace("；", ",")
+                .Replace(";", ",")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (parts.Length < 4)
+                return string.Empty;
+
+            if (!double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var tlx)
+                && !double.TryParse(parts[0], NumberStyles.Float, CultureInfo.CurrentCulture, out tlx))
+                return string.Empty;
+            if (!double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var tly)
+                && !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.CurrentCulture, out tly))
+                return string.Empty;
+            if (!double.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var brx)
+                && !double.TryParse(parts[2], NumberStyles.Float, CultureInfo.CurrentCulture, out brx))
+                return string.Empty;
+            if (!double.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var bry)
+                && !double.TryParse(parts[3], NumberStyles.Float, CultureInfo.CurrentCulture, out bry))
+                return string.Empty;
+
+            var minLng = Math.Min(tlx, brx);
+            var maxLng = Math.Max(tlx, brx);
+            var minLat = Math.Min(tly, bry);
+            var maxLat = Math.Max(tly, bry);
+
+            if (!double.IsFinite(minLng) || !double.IsFinite(maxLng) || !double.IsFinite(minLat) || !double.IsFinite(maxLat))
+                return string.Empty;
+            if (Math.Abs(maxLng - minLng) < 1e-9 || Math.Abs(maxLat - minLat) < 1e-9)
+                return string.Empty;
+
+            return string.Create(CultureInfo.InvariantCulture, $"{minLng:0.######},{maxLat:0.######},{maxLng:0.######},{minLat:0.######}");
+        }
+
+        private static string TryBuildRegionFromGeoJson(string geoJson)
+        {
+            if (string.IsNullOrWhiteSpace(geoJson))
+                return string.Empty;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(geoJson);
+                if (!TryCollectBounds(doc.RootElement, out var minLng, out var minLat, out var maxLng, out var maxLat))
+                    return string.Empty;
+
+                if (Math.Abs(maxLng - minLng) < 1e-9 || Math.Abs(maxLat - minLat) < 1e-9)
+                    return string.Empty;
+
+                return string.Create(CultureInfo.InvariantCulture, $"{minLng:0.######},{maxLat:0.######},{maxLng:0.######},{minLat:0.######}");
             }
             catch
             {

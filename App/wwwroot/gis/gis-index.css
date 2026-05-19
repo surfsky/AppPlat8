@@ -981,9 +981,13 @@ gis-panel {
     width: 12px;
     height: 12px;
     border-radius: 999px;
-    background: #2563eb;
+    background: #9ca3af;
     border: 2px solid #fff;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.55);
+    box-shadow: 0 2px 8px rgba(75, 85, 99, 0.45);
+}
+.geometry-point-marker.is-selected .dot-fallback {
+    background: #ef4444;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.6);
 }
 .geometry-point-marker .marker-label {
     position: absolute;

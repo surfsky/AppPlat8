@@ -53,6 +53,9 @@
 1. 数据库迁移: 运行 `dotnet ef migrations add OrgFullName --project App/App.csproj --startup-project App/App.csproj`.
 2. 若端口被占用，查找占用 6060 的进程，然后kill
   ```bash
+    lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
+
+    # 即
     lsof -iTCP:6060 -sTCP:LISTEN
     kill -9 <pid>
 

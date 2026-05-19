@@ -7,6 +7,69 @@ export function initUploadState(form, vueApi) {
 }
 
 export const uploadMethods = {
+    resolveUploadFileUrl(value) {
+        if (!value) return '';
+
+        if (typeof value === 'object') {
+            if (typeof value.url === 'string' && value.url.trim()) return value.url.trim();
+            return '';
+        }
+
+        if (typeof value !== 'string') return '';
+        const text = value.trim();
+        if (!text) return '';
+
+        if (text.startsWith('{')) {
+            try {
+                const parsed = JSON.parse(text);
+                if (parsed && typeof parsed === 'object') {
+                    if (typeof parsed.url === 'string' && parsed.url.trim()) return parsed.url.trim();
+                    // Client-side payload has only name/type/data, and cannot be previewed by server viewer.
+                    if (typeof parsed.data === 'string' && parsed.data.trim()) return '';
+                }
+            } catch {
+                // fallback below
+            }
+        }
+
+        if (text.startsWith('data:')) return '';
+        if (text.startsWith('~/')) return `/${text.substring(2).replace(/^\/+/, '')}`;
+        return text;
+    },
+
+    openFileViewer(value, viewerUrlTemplate = '') {
+        const fileUrl = this.resolveUploadFileUrl(value);
+        if (!fileUrl) {
+            EleManager.showWarning('该文件尚未上传，无法预览');
+            return;
+        }
+
+        let targetUrl = String(viewerUrlTemplate || '').trim();
+        if (targetUrl && targetUrl.includes('{0}')) {
+            targetUrl = targetUrl.replaceAll('{0}', encodeURIComponent(fileUrl));
+        } else if (!targetUrl) {
+            targetUrl = fileUrl;
+        }
+
+        const title = this.getUploadedFileName(value) || '文件预览';
+        const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+
+        if (manager && typeof manager.openDrawer === 'function') {
+            manager.openDrawer({
+                title,
+                url: targetUrl,
+                direction: 'rtl',
+                size: window.innerWidth < 768 ? '100%' : '72%',
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true
+            });
+            return;
+        }
+
+        window.open(targetUrl, '_blank');
+    },
+
     getUploadedFileName(value) {
         if (!value) return '';
 

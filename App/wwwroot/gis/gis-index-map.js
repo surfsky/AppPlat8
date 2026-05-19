@@ -103,7 +103,7 @@
             if (!document.getElementById(dynamicScriptKey)) {
                 const script = document.createElement('script');
                 script.id = dynamicScriptKey;
-                script.src = `/js/maphelper.js?v=${Date.now()}`;
+                script.src = `/gis/maphelper.js?v=${Date.now()}`;
                 document.head.appendChild(script);
             }
 

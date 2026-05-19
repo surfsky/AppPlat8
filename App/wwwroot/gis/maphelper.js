@@ -15,7 +15,7 @@
         var initialZoom = normalizeZoom(options.initialZoom, 11);
 
         var palette = {
-            pointColor: '#dc2626',
+            pointColor: '#9ca3af',
             lineColor: '#1e3a8a',
             fillColor: '#1d4ed8',
             fillOpacityPercent: 35
@@ -652,7 +652,12 @@
             var lineColorExpr = ['coalesce', ['get', 'stroke'], ['get', 'lineColor'], palette.lineColor];
             var fillColorExpr = ['coalesce', ['get', 'fill'], ['get', 'fillColor'], palette.fillColor];
             var fillOpacityExpr = ['to-number', ['coalesce', ['get', 'fill-opacity'], ['get', 'fillOpacity'], palette.fillOpacityPercent / 100]];
-            var pointColorExpr = ['coalesce', ['get', 'marker-color'], ['get', 'pointColor'], ['get', 'stroke'], palette.pointColor];
+            var pointColorExpr = [
+                'case',
+                ['==', ['to-string', ['coalesce', ['get', 'active'], false]], 'true'],
+                '#ef4444',
+                ['coalesce', ['get', 'marker-color'], ['get', 'pointColor'], ['get', 'stroke'], palette.pointColor]
+            ];
 
             layers.forEach(function (layer) {
                 var id = layer.id || '';

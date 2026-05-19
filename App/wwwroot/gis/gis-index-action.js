@@ -12,6 +12,7 @@
         const onCloseGeometryDetail = ctx.onCloseGeometryDetail;
         const onClosePointList = ctx.onClosePointList;
         const onStatsModeChanged = ctx.onStatsModeChanged;
+        const onGeometrySelectedChanged = ctx.onGeometrySelectedChanged;
 
         function toggleStatsMode() {
             const manager = resolveManager();
@@ -169,6 +170,9 @@
         function openGeometryDetailDrawer(id) {
             if (!id) return;
             state.selectedGeometryId = id;
+            if (typeof onGeometrySelectedChanged === 'function') {
+                onGeometrySelectedChanged(id);
+            }
 
             const geometry = findGeometryById(id);
             const geometryType = parseGeometryType(geometry);
