@@ -42,6 +42,11 @@
     dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
     vscode 顶部的命令行中输入：Debug EleUISamples
 
+    # 运行Consoler项目
+    dotnet run --project App.Consoler
+    或
+    dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
+
     # 测试项目
     dotnet test App.Utils/App.UtilsTests/App.UtilsTests.csproj
    ```

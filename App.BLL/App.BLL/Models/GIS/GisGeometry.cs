@@ -92,14 +92,32 @@ namespace App.DAL.GIS
         }
 
 
-        public static IQueryable<GisGeometry> Search(string name, long? creator, long? menuId, GeometryType? type = null)
+        public static IQueryable<GisGeometry> Search(string name=null, long? creatorId=null, long? menuId=null, GeometryType? type = null)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty())       q = q.Where(o => o.Name.Contains(name.Trim()));
-            if (creator.IsNotEmpty())    q = q.Where(o => o.CreatorId == creator.Value);
+            if (creatorId.IsNotEmpty())    q = q.Where(o => o.CreatorId == creatorId.Value);
             if (menuId.IsNotEmpty())     q = q.Where(o => o.MenuId == menuId.Value);
             if (type.HasValue)           q = q.Where(o => o.Type == type.Value);
             return q;
+        }
+
+        /// <summary>保存结束后，更新菜单统计数据</summary>
+        public override void AfterChange(EntityOp op)
+        {
+            base.AfterChange(op);
+            var menu = GetMenu();
+            if (menu != null)
+                menu.Fix();
+        }
+
+        GisMenu GetMenu()
+        {
+            if (this.Menu != null)
+                return this.Menu;
+            if (this.MenuId.HasValue)
+                return GisMenu.Get(this.MenuId.Value);
+            return null;
         }
     }
 }

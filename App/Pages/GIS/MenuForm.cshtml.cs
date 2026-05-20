@@ -47,7 +47,7 @@ namespace App.Pages.GIS
             item.Icon = req.Icon;
             item.IsDefaultShow = req.IsDefaultShow;
             item.SortId = req.SortId;
-            item.DataCount = req.DataCount;
+            item.DataCnt = req.DataCnt;
             item.DataDt = req.DataDt;
             item.Save();
 

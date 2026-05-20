@@ -27,6 +27,7 @@ namespace App.Pages.GIS
         {
         }
 
+        /// <summary>获取点位数据</summary>
         public IActionResult OnGetData(long id, long? menuId, long? gisMenuId, string gps, string geoJson)
         {
             var item = GisGeometry.GetDetail(id) ?? new GisGeometry();
@@ -42,6 +43,7 @@ namespace App.Pages.GIS
             return BuildResult(0, "success", item);
         }
 
+        /// <summary>保存点位</summary>
         public IActionResult OnPostSave([FromBody] GisGeometry req, long? menuId, long? gisMenuId)
         {
             if (req == null)
@@ -105,6 +107,7 @@ namespace App.Pages.GIS
                 );
         }
 
+        /// <summary>获取点位附件数据</summary>
         public IActionResult OnGetAttData(Paging pi, long id)
         {
             if (id <= 0)
@@ -148,6 +151,7 @@ namespace App.Pages.GIS
             });
         }
 
+        /// <summary>规范化GPS文本，生成经度在前、纬度在后的格式，如"{lng:0.######},{lat:0.######}"</summary>
         private static string NormalizeGps(string gps)
         {
             if (string.IsNullOrWhiteSpace(gps))

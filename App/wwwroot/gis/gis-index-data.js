@@ -87,6 +87,17 @@
             }
 
             const geometryCache = new Map();
+            const formatDataDt = (value) => {
+                if (!value) return '';
+                const dt = new Date(value);
+                if (Number.isNaN(dt.getTime())) return '';
+                const yy = dt.getFullYear();
+                const mm = String(dt.getMonth() + 1).padStart(2, '0');
+                const dd = String(dt.getDate()).padStart(2, '0');
+                const hh = String(dt.getHours()).padStart(2, '0');
+                const mi = String(dt.getMinutes()).padStart(2, '0');
+                return `${yy}-${mm}-${dd} ${hh}:${mi}`;
+            };
             const renderNode = (node, depth) => {
                 const row = document.createElement('div');
                 row.className = 'menu-node';
@@ -94,11 +105,13 @@
 
                 const ids = getMenuGeometryIds(node, geometryCache);
                 const visibleCount = ids.filter(id => state.geometryVisibleMap.get(id) !== false).length;
+                const menuCount = Number(node.dataCnt ?? 0);
+                const count = Number.isFinite(menuCount) && menuCount >= 0 ? menuCount : 0;
 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.className = 'menu-node-check';
-                checkbox.disabled = ids.length === 0;
+                checkbox.disabled = count === 0;
                 checkbox.checked = ids.length > 0 && visibleCount === ids.length;
                 checkbox.indeterminate = visibleCount > 0 && visibleCount < ids.length;
                 checkbox.addEventListener('change', () => setMenuChecked(node, !!checkbox.checked, geometryCache));
@@ -116,13 +129,15 @@
                 row.appendChild(checkbox);
                 row.appendChild(labelBtn);
 
-                const count = ids.length;
                 const badge = document.createElement('button');
                 badge.type = 'button';
                 badge.className = `menu-node-count ${count > 0 ? '' : 'empty'}`;
                 badge.textContent = `${count}`;
                 const nodeLabel = node.name || `菜单${node.id}`;
-                badge.title = count > 0 ? `查看${nodeLabel}点位清单` : '无点位';
+                const dtText = formatDataDt(node.dataDt);
+                badge.title = count > 0
+                    ? `查看${nodeLabel}点位清单${dtText ? `（统计时间: ${dtText}）` : ''}`
+                    : '无点位';
                 badge.disabled = count === 0;
                 badge.addEventListener('click', (evt) => {
                     evt.stopPropagation();
@@ -180,7 +195,9 @@
                             name: n.name ?? n.Name,
                             sortId: Number(sortIdRaw || 0),
                             icon: n.icon ?? n.Icon,
-                            isDefaultShow: !!(n.isDefaultShow ?? n.IsDefaultShow)
+                            isDefaultShow: !!(n.isDefaultShow ?? n.IsDefaultShow),
+                            dataCnt: Number(n.dataCnt ?? n.DataCnt ?? 0),
+                            dataDt: n.dataDt ?? n.DataDt ?? null
                         });
                         walk(n.children || n.Children || []);
                     });

@@ -67,6 +67,10 @@ namespace App.Pages.GIS
             return string.Empty;
         }
 
+        /// <summary>
+        /// 规范化文本，支持以下格式：
+        /// 1. 逗号分隔，如"100, 20, 300, 40"
+        /// </summary>
         private static string[] NormalizeParts(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -88,24 +92,29 @@ namespace App.Pages.GIS
             return double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
         }
 
+        /// <summary>
+        /// 解析图片URL，支持以下格式：
+        /// 1. 直接的URL，如"http://example.com/image.png"或"/image.png"
+        /// 2. 文件查看器URL，如"/Shared/FileViewer?src=http://example.com/image.png"
+        /// </summary>
         private static string ResolveImageUrl(string att)
         {
             if (string.IsNullOrWhiteSpace(att))
                 return string.Empty;
 
+            // 移除首尾空格，并按行分割，取第一行
             var text = att.Trim();
             var first = text
                 .Replace("\r", ",")
                 .Replace("\n", ",")
                 .Split(new[] { ',', ';', '，', '；' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
             if (first.Length == 0)
                 return string.Empty;
-
             var raw = first[0].Trim();
             if (string.IsNullOrWhiteSpace(raw))
                 return string.Empty;
 
+            // 文件查看器URL
             if (raw.StartsWith("/Shared/FileViewer", StringComparison.OrdinalIgnoreCase))
             {
                 try
@@ -136,6 +145,7 @@ namespace App.Pages.GIS
                 }
             }
 
+            // 直接的URL
             if (raw.StartsWith("~/"))
                 return "/" + raw.Substring(2);
 
