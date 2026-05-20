@@ -217,7 +217,44 @@
             panelComponentId: 'geo-point-list-gis-panel',
             bodyId: 'geo-point-list-body',
             map,
-            state
+            state,
+            onRefreshMenuData: async (menuId) => {
+                const resp = await fetch('?handler=RefreshMenuData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ menuId })
+                });
+
+                if (!resp.ok) {
+                    const msg = `刷新失败(${resp.status})`;
+                    if (window.EleManager && typeof window.EleManager.showError === 'function') {
+                        window.EleManager.showError(msg);
+                    }
+                    return { code: -1, message: msg };
+                }
+
+                const res = await resp.json();
+                const code = res?.code ?? res?.Code ?? -1;
+                if (code !== 0) {
+                    const msg = res?.message || res?.msg || '刷新失败';
+                    if (window.EleManager && typeof window.EleManager.showError === 'function') {
+                        window.EleManager.showError(msg);
+                    }
+                    return { code, message: msg };
+                }
+
+                await loadMenus();
+                await loadGeometries();
+
+                if (window.EleManager && typeof window.EleManager.showSuccess === 'function') {
+                    const data = res?.data || res?.Data || {};
+                    window.EleManager.showSuccess(`刷新完成：成功${data.okCount ?? 0}，失败${data.failCount ?? 0}`);
+                }
+
+                return { code: 0, data: res?.data ?? res?.Data };
+            }
         });
         const panelApi = GisIndexPanels.create({
             state,

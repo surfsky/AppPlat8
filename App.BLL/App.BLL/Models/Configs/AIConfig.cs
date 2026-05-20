@@ -18,26 +18,26 @@ namespace App.DAL
         [UI("支持服务")] public string Services { get; set; } = "chat";
         [UI("超时(秒)")] public int TimeoutSeconds { get; set; } = 60;
         [UI("是否默认")] public bool IsDefault { get; set; } = false;
-        [UI("启用")] public bool InUsed { get; set; } = true;
+        [UI("启用")] public bool IsEnabled { get; set; } = true;
         [UI("排序")] public int SortId { get; set; } = 0;
         [UI("备注")] public string Remark { get; set; }
 
         [UI("API Key(脱敏)")] public string ApiKeyMask => MaskKey(ApiKey);
 
-        public static IQueryable<AIConfig> Search(string name, bool? inUsed)
+        public static IQueryable<AIConfig> Search(string name, bool? isEnabled)
         {
             var q = Set.AsQueryable();
             if (!string.IsNullOrWhiteSpace(name))
                 q = q.Where(t => t.Name.Contains(name));
-            if (inUsed != null)
-                q = q.Where(t => t.InUsed == inUsed);
+            if (isEnabled != null)
+                q = q.Where(t => t.IsEnabled == isEnabled);
             return q.OrderByDescending(t => t.IsDefault).ThenBy(t => t.SortId).ThenBy(t => t.Id);
         }
 
         public static AIConfig GetDefault()
         {
             return Set
-                .Where(t => t.InUsed)
+                .Where(t => t.IsEnabled)
                 .OrderByDescending(t => t.IsDefault)
                 .ThenBy(t => t.SortId)
                 .ThenBy(t => t.Id)
@@ -57,7 +57,7 @@ namespace App.DAL
                 Services,
                 TimeoutSeconds,
                 IsDefault,
-                InUsed,
+                IsEnabled,
                 SortId,
                 Remark,
                 CreateDt,

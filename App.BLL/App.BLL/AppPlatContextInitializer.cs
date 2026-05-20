@@ -474,7 +474,7 @@ namespace App.DAL
                     Password = PasswordUtil.CreateDbPassword(userName),
                     RealName = chineseName,
                     Email = userName + "@" + EMAIL_NAMES[rdm.Next(0, EMAIL_NAMES.Length)],
-                    InUsed = true,
+                    IsDel = false,
                     CreateDt = DateTime.Now
                 });
             }
@@ -487,7 +487,7 @@ namespace App.DAL
                 Password = PasswordUtil.CreateDbPassword("admin"),
                 RealName = "超级管理员",
                 Email = "admin@189.com",
-                InUsed = true,
+                IsDel = false,
                 CreateDt = DateTime.Now
             });
 

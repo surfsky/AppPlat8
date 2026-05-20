@@ -51,7 +51,7 @@ namespace App.Pages.AI
             item.TimeoutSeconds = req.TimeoutSeconds <= 0 ? 60 : req.TimeoutSeconds;
             item.SortId = req.SortId;
             item.IsDefault = req.IsDefault;
-            item.InUsed = req.InUsed;
+            item.IsEnabled = req.IsEnabled;
             item.Remark = req.Remark;
             item.Save();
 

@@ -1,0 +1,38 @@
+@page
+@model App.Pages.GIS.ApiManagerModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "GIS接口管理中心";
+}
+
+@section body {
+    <div class="h-screen">
+        <EleSplitPanel Height="100%" Radius="0" Border="0">
+            <PanelItem Size="300" Min="220" Max="460" Collapsible="true">
+                <div class="h-full flex flex-col bg-white">
+                    <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                        <span class="text-sm font-semibold text-gray-700">菜单</span>
+                        <EleButton Type="Primary" Look="Circle" Icon="Edit" PopupUrl="Menus" PopupTitle="菜单编辑"></EleButton>
+                    </div>
+                    <div class="flex-1 min-h-0">
+                        <EleTree Items="Model.NavMenus"
+                                 IdField="Id"
+                                 NameField="Name"
+                                 ChildrenField="Children"
+                                 NodeKey="Id"
+                                 HighlightCurrent="true"
+                                 DefaultExpandAll="true"
+                                 ExpandOnClickNode="false"
+                                 Height="100%">
+                            <template #default="{ data }">
+                                <a :href="data.url || '#'" target="gisApiManagerFrame" class="text-current no-underline">{{ data.name }}</a>
+                            </template>
+                        </EleTree>
+                    </div>
+                </div>
+            </PanelItem>
+            <PanelItem Min="360" IframeName="gisApiManagerFrame" IframeUrl="@Model.DefaultApisUrl"></PanelItem>
+        </EleSplitPanel>
+    </div>
+    <EleApp />
+}

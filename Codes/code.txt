@@ -173,7 +173,7 @@
             }
             else
             {
-                item.InUsed = true;
+                item.IsDel = false;
             }
 
             return new JsonResult(new { 
@@ -202,7 +202,7 @@
                 user.Email = Item.Email;
                 user.Mobile = Item.Mobile;
                 user.Gender = Item.Gender;
-                user.InUsed = Item.InUsed ?? true;
+                user.IsDel = Item.IsDel ?? false;
                 user.Photo = Item.Photo;
                 user.Remark = Item.Remark;
                 user.Save();

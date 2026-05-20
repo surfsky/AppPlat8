@@ -52,13 +52,7 @@ namespace App.DAL
         [UI("系统")]        public FeedApp? App { get; set; }
         [UI("模块")]        public string AppVersion { get; set; }
         [UI("模块")]        public string AppModule { get; set; }
-        [UI("在用")]        public bool? InUsed { get; set; } = true;
-        [NotMapped]
-        bool? IDeleteLogic.IsDel
-        {
-            get => InUsed == null ? null : !InUsed.Value;
-            set => InUsed = value == null ? null : !value.Value;
-        }
+        [UI("失效")]        public bool? IsDel { get; set; } = false;
 
         // 提交人
         [UI("提交人")]      public long? UserID { get; set; }
@@ -92,7 +86,7 @@ namespace App.DAL
             DateTime? fromDt = null
             )
         {
-            IQueryable<Feedback> q = Set.Where(t => t.InUsed != false);
+            IQueryable<Feedback> q = Set.Where(t => t.IsDel != true);
             if (userId != null)            q = q.Where(t => t.UserID == userId);
             if (user.IsNotEmpty())         q = q.Where(t => t.User.Contains(user));
             if (keyword.IsNotEmpty())      q = q.Where(t => t.Content.Contains(keyword) || t.Title.Contains(keyword));

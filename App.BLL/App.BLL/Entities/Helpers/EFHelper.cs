@@ -131,8 +131,8 @@ namespace App.Entities
         // Where 表达式
         //---------------------------------------------------
         /// <summary>过滤（字段是非泛型的）</summary>
-        /// <example>q.Where("InUsed", true)</example>
-        /// <remarks>q.Where(t=> t.InUsed==true)</remarks>
+        /// <example>q.Where("IsEnabled", true)</example>
+        /// <remarks>q.Where(t=> t.IsEnabled==true)</remarks>
         public static IQueryable<T> WhereEqual<T>(this IQueryable<T> query, string field, object o, bool nullable)
         {
             if (field.IsEmpty())
@@ -148,8 +148,8 @@ namespace App.Entities
         }
 
         /// <summary>过滤（字段是非泛型的）</summary>
-        /// <example>q.WhereNot("InUsed", true)</example>
-        /// <remarks>q.Where(t=> t.InUsed!=true)</remarks>
+        /// <example>q.WhereNot("IsEnabled", true)</example>
+        /// <remarks>q.Where(t=> t.IsEnabled!=true)</remarks>
         public static IQueryable<T> WhereNotEqual<T>(this IQueryable<T> query, string field, object o, bool nullable)
         {
             if (field.IsEmpty())

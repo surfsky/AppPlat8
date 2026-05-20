@@ -27,6 +27,22 @@ namespace App.Pages.GIS
             return BuildResult(0, "success", menus);
         }
 
+        public JsonResult OnPostRefreshMenuData([FromBody] RefreshMenuDataReq req)
+        {
+            var menuId = req?.MenuId;
+            var (okCount, failCount) = GisApi.RefreshStats(menuId);
+            var menuFixCnt = GisMenu.FixAll();
+
+            return BuildResult(0, "刷新完成", new
+            {
+                okCount,
+                failCount,
+                menuFixCnt,
+                menuId,
+                refreshDt = DateTime.Now,
+            });
+        }
+
         public JsonResult OnGetLayerData()
         {
             var tagLookup = CheckObjectTag.IncludeSet
@@ -199,6 +215,11 @@ namespace App.Pages.GIS
             }
 
             return rows;
+        }
+
+        public class RefreshMenuDataReq
+        {
+            public long? MenuId { get; set; }
         }
 
         private static string FormatElement(JsonElement element)

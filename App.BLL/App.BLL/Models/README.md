@@ -29,7 +29,7 @@
 | Id       | identify       | 主键
 | Uid      | user id        | 如SaleUid, CreateUid
 | Dt       | date           | 日期时间
-| InUsed   | in used        | 是否在用
+| IsEnabled | is enabled   | 是否启用
 | SortId   | sort id        | 排序Id
 | Seq      | sequence       | 序列号
 | Cert     | centificate    | 认证

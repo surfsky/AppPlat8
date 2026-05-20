@@ -11,11 +11,10 @@ namespace App.DAL.GIS
     [UI("GIS", "GIS菜单")]
     public class GisMenu : TreeEntity<GisMenu>, IFix<GisMenu>, IFixAll
     {
-        [UI("责任组织")]     public long? OrgId { get; set; }
-        [UI("图标")]        public string Icon { get; set; }
-        [UI("默认显示")]     public bool IsDefaultShow { get; set; }
-        [UI("点位数")]
-        public int? DataCnt { get; set; }
+        [UI("责任组织")]      public long? OrgId { get; set; }
+        [UI("图标")]         public string Icon { get; set; }
+        [UI("默认显示")]      public bool IsDefaultShow { get; set; }
+        [UI("点位数")]        public int? DataCnt { get; set; }
         [UI("最后数据时间")]   public DateTime? DataDt { get; set; }
 
         //
@@ -89,13 +88,20 @@ namespace App.DAL.GIS
                 .GroupBy(t => t.MenuId.Value)
                 .ToDictionary(g => g.Key, g => g.Count());
 
+            var apiCntMap = GisApi.Set
+                .Where(t => t.IsEnabled && t.MenuId != null)
+                .GroupBy(t => t.MenuId.Value)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.DataCnt ?? 0));
+
             var menuMap = menus.ToDictionary(t => t.Id);
             var childLookup = menus.ToLookup(t => t.ParentId);
             var now = DateTime.Now;
 
             int SumCnt(long menuId)
             {
-                var own = dataCntMap.TryGetValue(menuId, out var directCnt) ? directCnt : 0;
+                var geoCnt = dataCntMap.TryGetValue(menuId, out var directGeoCnt) ? directGeoCnt : 0;
+                var apiCnt = apiCntMap.TryGetValue(menuId, out var directApiCnt) ? directApiCnt : 0;
+                var own = geoCnt + apiCnt;
                 var childCnt = childLookup[menuId].Sum(child => SumCnt(child.Id));
                 var total = own + childCnt;
 

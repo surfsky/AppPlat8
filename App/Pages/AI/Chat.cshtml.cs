@@ -43,7 +43,7 @@ namespace App.Pages.AI
             var cfg = req.ConfigId > 0 ? AIConfig.Get(req.ConfigId) : AIConfig.GetDefault();
             if (cfg == null)
                 return BuildResult(400, "请先配置可用的AI模型");
-            if (!cfg.InUsed)
+            if (!cfg.IsEnabled)
                 return BuildResult(400, "当前配置已禁用");
             if (string.IsNullOrWhiteSpace(cfg.BaseUrl) || string.IsNullOrWhiteSpace(cfg.Model))
                 return BuildResult(400, "AI配置不完整：缺少地址或模型");
@@ -157,7 +157,7 @@ namespace App.Pages.AI
             var cfg = req.ConfigId > 0 ? AIConfig.Get(req.ConfigId) : AIConfig.GetDefault();
             if (cfg == null)
                 return BuildResult(400, "请先配置可用的AI模型");
-            if (!cfg.InUsed)
+            if (!cfg.IsEnabled)
                 return BuildResult(400, "当前配置已禁用");
             if (string.IsNullOrWhiteSpace(cfg.BaseUrl) || string.IsNullOrWhiteSpace(cfg.Model))
                 return BuildResult(400, "AI配置不完整：缺少地址或模型");

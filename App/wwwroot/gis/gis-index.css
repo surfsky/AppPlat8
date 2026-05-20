@@ -531,9 +531,30 @@ gis-panel {
     color: #e2e8f0;
 }
 .point-list-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     margin-bottom: 10px;
     color: #93c5fd;
     font-size: 12px;
+}
+.point-list-refresh-btn {
+    border: 1px solid rgba(147, 197, 253, 0.32);
+    background: rgba(15, 23, 42, 0.4);
+    color: #93c5fd;
+    border-radius: 6px;
+    font-size: 12px;
+    padding: 2px 8px;
+    cursor: pointer;
+}
+.point-list-refresh-btn:hover {
+    border-color: rgba(56, 189, 248, 0.75);
+    color: #e2e8f0;
+}
+.point-list-refresh-btn:disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
 }
 .point-list-wrap {
     display: flex;

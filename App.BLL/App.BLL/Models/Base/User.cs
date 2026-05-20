@@ -27,13 +27,7 @@ namespace App.DAL
     //public class User : IKeyId
     public class User : EntityBase<User>, IDeleteLogic
     {
-        [UI("是否在用")]   public bool? InUsed { get; set; } = true;
-        [NotMapped]
-        bool? IDeleteLogic.IsDel
-        {
-            get => InUsed == null ? null : !InUsed.Value;
-            set => InUsed = value == null ? null : !value.Value;
-        }
+        [UI("是否失效")]   public bool? IsDel { get; set; } = false;
         [UI("用户名")]     public string Name { get; set; }
         [UI("邮箱")]       public string Email { get; set; }
         [UI("密码")]       public string Password { get; set; }
@@ -119,7 +113,7 @@ namespace App.DAL
                 this.Remark,
                 this.IdCard,
                 this.Photo,
-                this.InUsed,
+                this.IsDel,
                 this.RoleIds,
                 Roles = this.Roles.Export(type),
             };

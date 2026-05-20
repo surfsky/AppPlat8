@@ -99,7 +99,7 @@
 |------|------|
 | `ILogChange` | 包含 `CreateDt`/`UpdateDt`，用于自动记录操作时间。 |
 | `IExport` | 支持数据导出方法，实体实现可返回自定义对象。 |
-| `IDeleteLogic` | 标识启用逻辑删除的实体，包含 `InUsed` 字段。 |
+| `IDeleteLogic` | 标识启用逻辑删除的实体，包含 `IsDel` 字段。 |
 | `ICollsionDetect` | 并发冲突检测，通过 `CollisionId` 实现。 |
 | `ISort` | 包含排序索引 `SortId`。 |
 | `ITree` / `ITree<T>` | 支持树结构实体，含父子关系与层级属性。 |

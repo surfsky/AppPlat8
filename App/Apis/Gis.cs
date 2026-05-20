@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using App.Components;
+using App.DAL;
 using App.DAL.GIS;
 using App.Entities;
 using App.HttpApi;
@@ -137,6 +138,77 @@ namespace App.API
         //---------------------------------------------------------
         // 地址查询相关接口（使用高德地图API）
         //---------------------------------------------------------
+        [HttpApi("获取检查对象点位数据", AuthLogin = false)]
+        public static APIResult GetCheckObjectPoints(string name = null, long? orgId = null, bool? isDel = false, string region = null, int maxCount = 500)
+        {
+            if (maxCount <= 0)
+                maxCount = 100;
+            if (maxCount > 5000)
+                maxCount = 5000;
+
+            var q = CheckObject.Set.AsNoTracking()
+                .Where(t => !string.IsNullOrWhiteSpace(t.Gps));
+
+            if (isDel != null)
+                q = q.Where(t => t.IsDel == isDel.Value);
+            if (orgId.IsNotEmpty())
+                q = q.Where(t => t.DutyOrgId == orgId.Value);
+            if (name.IsNotEmpty())
+                q = q.Where(t => (t.Name ?? string.Empty).Contains(name.Trim()));
+
+            var regionFilter = RegionFilter.Parse(region);
+            var list = new List<object>();
+            var rows = q
+                .OrderBy(t => t.Id)
+                .Take(maxCount * 4)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Name,
+                    t.Address,
+                    t.Gps,
+                    t.SocialCreditCode,
+                    t.RiskLevel,
+                    t.ObjectType,
+                    t.Scale,
+                    t.DutyOrgId,
+                    t.DutyUserName,
+                })
+                .ToList();
+
+            foreach (var item in rows)
+            {
+                if (!TryParseLngLat(item.Gps, out var lng, out var lat))
+                    continue;
+                if (regionFilter != null && !regionFilter.Contains(lng, lat))
+                    continue;
+
+                list.Add(new
+                {
+                    id = item.Id,
+                    name = item.Name,
+                    gps = item.Gps,
+                    addr = item.Address,
+                    lng,
+                    lat,
+                    dataJson = new
+                    {
+                        item.SocialCreditCode,
+                        item.RiskLevel,
+                        item.ObjectType,
+                        item.Scale,
+                        item.DutyOrgId,
+                        item.DutyUserName,
+                    }
+                });
+
+                if (list.Count >= maxCount)
+                    break;
+            }
+
+            return list.ToResult();
+        }
+
         [HttpApi("获取地址列表", AuthLogin = true)]
         public static APIResult GetAddrs(string name)
         {
@@ -458,6 +530,144 @@ namespace App.API
 
             return double.TryParse(arr[0], NumberStyles.Float, CultureInfo.InvariantCulture, out lng)
                 && double.TryParse(arr[1], NumberStyles.Float, CultureInfo.InvariantCulture, out lat);
+        }
+
+        private class RegionFilter
+        {
+            public string Type { get; set; }
+            public double[] Data { get; set; }
+            public double[] Center { get; set; }
+            public double Radius { get; set; }
+            public List<double[]> PolygonPoints { get; set; }
+
+            public static RegionFilter Parse(string text)
+            {
+                if (text.IsEmpty())
+                    return null;
+
+                try
+                {
+                    using var doc = JsonDocument.Parse(text);
+                    var root = doc.RootElement;
+                    if (root.ValueKind != JsonValueKind.Object)
+                        return null;
+
+                    var type = root.TryGetProperty("type", out var typeNode) ? (typeNode.GetString() ?? string.Empty).Trim() : string.Empty;
+                    if (type.IsEmpty())
+                        return null;
+
+                    var f = new RegionFilter { Type = type };
+                    if (string.Equals(type, "Rectangle", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!root.TryGetProperty("data", out var dataNode) || dataNode.ValueKind != JsonValueKind.Array)
+                            return null;
+                        var arr = dataNode.EnumerateArray().Select(x => x.GetDouble()).ToArray();
+                        if (arr.Length < 4)
+                            return null;
+                        f.Data = arr;
+                        return f;
+                    }
+
+                    if (string.Equals(type, "Circle", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!root.TryGetProperty("center", out var centerNode) || centerNode.ValueKind != JsonValueKind.Array)
+                            return null;
+                        var center = centerNode.EnumerateArray().Select(x => x.GetDouble()).ToArray();
+                        if (center.Length < 2)
+                            return null;
+                        var radius = root.TryGetProperty("radius", out var radiusNode) && radiusNode.ValueKind == JsonValueKind.Number
+                            ? radiusNode.GetDouble()
+                            : 0;
+                        if (radius <= 0)
+                            return null;
+
+                        f.Center = center;
+                        f.Radius = radius;
+                        return f;
+                    }
+
+                    if (string.Equals(type, "Polygon", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!root.TryGetProperty("data", out var polyNode) || polyNode.ValueKind != JsonValueKind.Array)
+                            return null;
+
+                        var points = new List<double[]>();
+                        foreach (var p in polyNode.EnumerateArray())
+                        {
+                            if (p.ValueKind != JsonValueKind.Array)
+                                continue;
+                            var pair = p.EnumerateArray().Select(x => x.GetDouble()).ToArray();
+                            if (pair.Length < 2)
+                                continue;
+                            points.Add(new[] { pair[0], pair[1] });
+                        }
+                        if (points.Count < 3)
+                            return null;
+                        f.PolygonPoints = points;
+                        return f;
+                    }
+                }
+                catch
+                {
+                    return null;
+                }
+
+                return null;
+            }
+
+            public bool Contains(double lng, double lat)
+            {
+                if (string.Equals(Type, "Rectangle", StringComparison.OrdinalIgnoreCase))
+                {
+                    var left = Math.Min(Data[0], Data[2]);
+                    var right = Math.Max(Data[0], Data[2]);
+                    var bottom = Math.Min(Data[1], Data[3]);
+                    var top = Math.Max(Data[1], Data[3]);
+                    return lng >= left && lng <= right && lat >= bottom && lat <= top;
+                }
+
+                if (string.Equals(Type, "Circle", StringComparison.OrdinalIgnoreCase))
+                {
+                    return DistanceMeter(Center[0], Center[1], lng, lat) <= Radius;
+                }
+
+                if (string.Equals(Type, "Polygon", StringComparison.OrdinalIgnoreCase))
+                {
+                    return PointInPolygon(lng, lat, PolygonPoints);
+                }
+
+                return true;
+            }
+
+            private static bool PointInPolygon(double x, double y, List<double[]> points)
+            {
+                var inside = false;
+                for (int i = 0, j = points.Count - 1; i < points.Count; j = i++)
+                {
+                    var xi = points[i][0];
+                    var yi = points[i][1];
+                    var xj = points[j][0];
+                    var yj = points[j][1];
+
+                    var intersect = ((yi > y) != (yj > y)) &&
+                                    (x < (xj - xi) * (y - yi) / ((yj - yi) + 1e-12) + xi);
+                    if (intersect)
+                        inside = !inside;
+                }
+                return inside;
+            }
+
+            private static double DistanceMeter(double lng1, double lat1, double lng2, double lat2)
+            {
+                const double earthRadius = 6378137d;
+                var dLat = (lat2 - lat1) * Math.PI / 180d;
+                var dLng = (lng2 - lng1) * Math.PI / 180d;
+                var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
+                        + Math.Cos(lat1 * Math.PI / 180d) * Math.Cos(lat2 * Math.PI / 180d)
+                        * Math.Sin(dLng / 2) * Math.Sin(dLng / 2);
+                var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+                return earthRadius * c;
+            }
         }
 
         private static string ToMd5(string text)

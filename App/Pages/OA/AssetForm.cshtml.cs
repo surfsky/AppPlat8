@@ -29,7 +29,7 @@ namespace App.Pages.OA
         /// <summary>获取用户列表</summary>
         public IActionResult OnGetUsers(string keyword)
         {
-            var query = App.DAL.User.Set.Where(u => u.InUsed == true);
+            var query = App.DAL.User.Set.Where(u => u.IsDel != true);
             if (!string.IsNullOrEmpty(keyword))
             {
                 query = query.Where(u => u.Name.Contains(keyword) || u.RealName.Contains(keyword));

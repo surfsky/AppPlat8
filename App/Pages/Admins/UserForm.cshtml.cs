@@ -73,7 +73,7 @@ namespace App.Pages.Admins
             user.Mobile = req.Mobile;
             user.Email = req.Email;
             user.Gender = req.Gender;
-            user.InUsed = req.InUsed;
+            user.IsDel = req.IsDel;
             user.Remark = req.Remark;
             user.Photo = Uploader.SaveFile(nameof(User), req.Photo);
             user.RoleIds = req.RoleIds;

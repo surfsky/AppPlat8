@@ -6,6 +6,7 @@
         const map = ctx.map;
         const state = ctx.state;
         const onSelectGeometry = ctx.onSelectGeometry || (() => {});
+        const onRefreshMenuData = ctx.onRefreshMenuData || (async () => ({ code: -1, message: '未实现刷新' }));
         let closeTimer = null;
 
         function getPanel() {
@@ -78,6 +79,30 @@
         function bindListItemEvents() {
             const body = getBody();
             if (!body) return;
+
+            const refreshBtn = body.querySelector('[data-command="refresh-menu-data"]');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', async () => {
+                    const menuId = Number(refreshBtn.getAttribute('data-menu-id'));
+                    refreshBtn.disabled = true;
+                    const oldText = refreshBtn.textContent;
+                    refreshBtn.textContent = '刷新中...';
+                    try {
+                        const res = await onRefreshMenuData(Number.isFinite(menuId) ? menuId : null);
+                        if ((res?.code ?? -1) !== 0) {
+                            const msg = res?.message || res?.msg || '刷新失败';
+                            if (window.EleManager && typeof window.EleManager.showError === 'function') {
+                                window.EleManager.showError(msg);
+                            }
+                            return;
+                        }
+                    } finally {
+                        refreshBtn.disabled = false;
+                        refreshBtn.textContent = oldText;
+                    }
+                });
+            }
+
             const buttons = body.querySelectorAll('.point-list-item[data-geometry-id]');
             buttons.forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -133,7 +158,10 @@
                 .join('');
 
             body.innerHTML = `
-                <div class="point-list-summary">${escapeHtml(menuName)} 共 ${items.length} 个点位</div>
+                <div class="point-list-summary">
+                    <span>${escapeHtml(menuName)} 共 ${items.length} 个点位</span>
+                    <button type="button" class="point-list-refresh-btn" data-command="refresh-menu-data" data-menu-id="${escapeHtml(state.activePointListMenuId ?? '')}" title="刷新接口数据并更新统计">⟳ 刷新</button>
+                </div>
                 <div class="point-list-wrap">${rowHtml}</div>
             `;
 

@@ -74,7 +74,7 @@ namespace App.Components
                     return -1;
                 else
                 {
-                    if (user.InUsed == false)
+                    if (user.IsDel == true)
                         return -2;
                     else
                     {

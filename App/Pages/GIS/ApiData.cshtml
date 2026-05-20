@@ -1,0 +1,25 @@
+@page
+@model App.Pages.GIS.ApiDataModel
+@{
+    ViewData["Title"] = "GIS接口调试";
+}
+
+@section body {
+    <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
+        <div style="padding:10px 12px; background:#f5f7fa; border:1px solid #dcdfe6; border-radius:6px; font-size:13px; color:#606266;">
+            本页会对 DataUrl 发起 POST 请求（Body 为 {}），用于快速检查返回结构。
+        </div>
+
+        <div><strong>接口ID：</strong>@Model.ApiId</div>
+        <div><strong>接口名称：</strong>@Model.ApiName</div>
+        <div><strong>接口地址：</strong>@Model.DataUrl</div>
+        <div><strong>错误信息：</strong>@Model.ErrorText</div>
+
+        <label for="resp"><strong>响应报文：</strong></label>
+        <textarea id="resp" readonly style="width:100%; min-height:420px; font-family:Menlo, Consolas, monospace; font-size:12px; line-height:1.5;">@Model.ResponseText</textarea>
+
+        <div>
+            <a class="el-button el-button--primary" href="@($"/GIS/ApiData?apiId={Model.ApiId}")">刷新</a>
+        </div>
+    </div>
+}
