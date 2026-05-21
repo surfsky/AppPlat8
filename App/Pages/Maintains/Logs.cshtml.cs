@@ -21,7 +21,7 @@ namespace App.Pages.Maintains
 
         public void OnGet(){}
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name, string message, LogLevel? level, DateTime? startDt, string ip)
+        public IActionResult OnGetData(Paging pi, string name, string message, LogLevel? level, DateTime? startDt, string ip)
         {
             var list = Log.Search(name, message, level, startDt, ip).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

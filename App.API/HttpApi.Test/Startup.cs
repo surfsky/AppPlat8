@@ -48,7 +48,7 @@ namespace App.HttpApi.Test
 
             services.AddResponseCaching();
             services.AddResponseCompression();
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            services.AddMvc();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();     // ����HttpContext����������
 
             // ��֤��https://www.cnblogs.com/RainingNight/archive/2017/09/26/7512903.html��

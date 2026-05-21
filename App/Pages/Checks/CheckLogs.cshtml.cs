@@ -35,7 +35,7 @@ namespace App.Pages.Checks
             }
         }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string objectName, string socialCreditCode, long? objectId, CheckObjectType? objectType, DateTime? checkStartDt, DateTime? checkEndDt)
+        public IActionResult OnGetData(Paging pi, string objectName, string socialCreditCode, long? objectId, CheckObjectType? objectType, DateTime? checkStartDt, DateTime? checkEndDt)
         {
             var list = Check.Search(objectName, socialCreditCode, objectId, objectType, checkStartDt, checkEndDt).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

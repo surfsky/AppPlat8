@@ -21,7 +21,7 @@ namespace App.Pages.OA
 
         public void OnGet() { }
 
-        public async Task<IActionResult> OnGetData(Paging pi, long? taskId)
+        public IActionResult OnGetData(Paging pi, long? taskId)
         {
             var list = AssignTaskLog.Search(taskId).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

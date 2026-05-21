@@ -27,14 +27,14 @@ namespace App.Pages.Admins
         }
 
         /// <summary>获取用户列表</summary>
-        public async Task<IActionResult> OnGetData(Paging pi, string name, string realName, long? deptId)
+        public IActionResult OnGetData(Paging pi, string name, string realName, long? deptId)
         {
             var list = App.DAL.User.Search(name, realName, deptId).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
         // 导出用户列表到 Excel
-        public async Task<IActionResult> OnPostExport(Paging pi, string name, string username, long? deptId)
+        public IActionResult OnPostExport(Paging pi, string name, string username, long? deptId)
         {
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue }; // 导出所有匹配的数据（不分页）
             var list = App.DAL.User.Search(name, username, deptId).SortPageExport(exportPi);

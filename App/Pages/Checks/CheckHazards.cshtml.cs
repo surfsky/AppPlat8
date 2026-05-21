@@ -35,7 +35,7 @@ namespace App.Pages.Checks
             }
         }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
+        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
         {
             var list = CheckHazard.Search(objectName, objectId, checkerName, checkerId, status, createStartDt).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

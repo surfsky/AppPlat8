@@ -20,7 +20,7 @@ namespace App.Pages.Checks
 
         public void OnGet() { }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name, CheckScope? scope)
+        public IActionResult OnGetData(Paging pi, string name, CheckScope? scope)
         {
             var q = CheckSheet.Search(name, scope);
             pi.SetTotal(q.Count());

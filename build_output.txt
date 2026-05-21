@@ -1,0 +1,30 @@
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  HttpApi -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.API/HttpApi/bin/Debug/net8.0/HttpApi.dll
+  App.Utils -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.Utils/App.Utils/bin/Debug/net8.0/App.Utils.dll
+  App.Web -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.Web/bin/Debug/net8.0/App.Web.dll
+  包 HttpApi.6.0.0 缺少自述文件。转到 https://aka.ms/nuget/authoring-best-practices/readme 了解为什么包阅读主题很重要。
+  已成功创建包“/Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.API/HttpApi/bin/Debug/HttpApi.6.0.0.nupkg”。
+  App.BLL -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.BLL/App.BLL/bin/Debug/net8.0/App.BLL.dll
+  App.UtilsTests -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.Utils/App.UtilsTests/bin/Debug/net8.0/App.UtilsTests.dll
+  App.EleUI -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.EleUI/EleUI/bin/Debug/net8.0/App.EleUI.dll
+  App.BLL.Tests -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.BLL/App.BLL.Tests/bin/Debug/net8.0/App.BLL.Tests.dll
+  App.Consoler -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.Consoler/bin/Debug/net8.0/App.Consoler.dll
+  
+  up to date, audited 3 packages in 4s
+  
+  found 0 vulnerabilities
+  
+  > app-eleui@8.0.0 build
+  > node ./build.mjs
+  
+  [App.EleUI] built static assets to wwwroot/eleui
+  HttpApi.Test -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.API/HttpApi.Test/bin/Debug/net8.0/HttpApi.Test.dll
+  EleUISamples -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App.EleUI/EleUISamples/bin/Debug/net8.0/EleUISamples.dll
+  App -> /Users/CJH/Downloads/Dev/180701-AppPlat/AppPlat8/AppPlat8/App/bin/Debug/net8.0/App.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:01:14.95

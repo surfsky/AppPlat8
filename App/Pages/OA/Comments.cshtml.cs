@@ -21,7 +21,7 @@ namespace App.Pages.OA
 
         public void OnGet() { }
 
-        public async Task<IActionResult> OnGetData(Paging pi, long? targetId, CommentType? type, string author)
+        public IActionResult OnGetData(Paging pi, long? targetId, CommentType? type, string author)
         {
             var list = Comment.Search(targetId, type, author).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

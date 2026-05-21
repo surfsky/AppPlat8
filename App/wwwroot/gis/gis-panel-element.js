@@ -1,3 +1,6 @@
+/*****************************************************
+* Gis Panel
+*****************************************************/
 class GisPanelElement extends HTMLElement {
     static get observedAttributes() {
         return ['title', 'info', 'content', 'width', 'height', 'closable', 'close-label'];

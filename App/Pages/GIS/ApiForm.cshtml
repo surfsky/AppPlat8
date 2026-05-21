@@ -10,14 +10,15 @@
     <EleForm LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?excludeId=@currentId&selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
-        <EleInput For="Item.DataUrl" Label="接口地址" Required="true" Placeholder="如: http://localhost:6060/httpapi/gis/GetCheckObjectPoints"></EleInput>
-        <EleSwitch For="Item.IsEnabled" Label="启用"></EleSwitch>
-        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
+        <EleInput For="Item.DataUrl" Label="接口地址" Required="true" FillRow="true" Placeholder="如: http://localhost:6060/httpapi/gis/GetCheckObjectPoints"></EleInput>
         <EleNumber For="Item.DataCnt" Label="最后数据量" Min="0" Max="100000000"></EleNumber>
         <EleDatePicker For="Item.DataDt" Label="最后更新时间" Type="DateTime"></EleDatePicker>
         <EleInput For="Item.LastErr" Label="最近错误" Type="TextArea" Rows="3" FillRow="true"></EleInput>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
+        <EleSwitch For="Item.IsEnabled" Label="启用"></EleSwitch>
 
         <Bottom>
+            <EleButton Type="Success" Handler="TestApi" Icon="View">测试</EleButton>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Type="Primary" Command="SaveNew" Visible="@(Model.Mode != PageMode.View)">保存并新增</EleButton>
             <EleButton Command="Close">关闭</EleButton>

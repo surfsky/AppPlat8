@@ -22,7 +22,7 @@ namespace App.Pages.OA
         public void OnGet(){}
 
         /// <summary>查询厂商列表</summary>
-        public async Task<IActionResult> OnGetData(Paging pi, string name, string unifiedSocialCreditCode)
+        public IActionResult OnGetData(Paging pi, string name, string unifiedSocialCreditCode)
         {
             var list = Company.Search(name, null, null).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

@@ -26,7 +26,7 @@ namespace App.Pages.OA
             this.Categories = ArticleDir.GetTree();
         }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name, long? categoryId)
+        public IActionResult OnGetData(Paging pi, string name, long? categoryId)
         {
             var list = Article.Search(name, categoryId).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

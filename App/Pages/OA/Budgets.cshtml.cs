@@ -26,7 +26,7 @@ namespace App.Pages.OA
             BudgetTypes = BudgetType.Set.Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToList();
         }
 
-        public async Task<IActionResult> OnGetData(Paging pi, int? year, long? orgId, long? typeId, string name, bool includeChildOrgs = false)
+        public IActionResult OnGetData(Paging pi, int? year, long? orgId, long? typeId, string name, bool includeChildOrgs = false)
         {
             var list = Budget.Search(name, year, orgId, typeId, null, includeChildOrgs).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

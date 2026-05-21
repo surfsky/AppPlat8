@@ -25,7 +25,7 @@ namespace App.Pages.Admins
         {
         }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name)
+        public IActionResult OnGetData(Paging pi, string name)
         {
             var q = Role.Search(name);
             var list = q.SortPageExport(pi);

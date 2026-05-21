@@ -22,7 +22,7 @@ namespace App.Pages
         public string ProductVersion { get; set; }
         public string SiteTitle { get; set; }
 
-        public async Task OnGetAsync()
+        public void OnGet()
         {
             UserName = GetUserName();
             ProductVersion = Common.GetVersion();

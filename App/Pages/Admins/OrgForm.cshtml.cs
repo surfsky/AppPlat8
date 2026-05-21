@@ -34,7 +34,7 @@ namespace App.Pages.Admins
         }
 
         /// <summary>保存组织</summary>
-        public async Task<IActionResult> OnPostSave([FromBody] App.DAL.Org req)
+        public IActionResult OnPostSave([FromBody] App.DAL.Org req)
         {
             if (req == null) 
                 return BuildResult(400, "参数错误");

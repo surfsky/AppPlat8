@@ -21,7 +21,7 @@ namespace App.Pages.OA
 
         public void OnGet(){}
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name, AssetCategory? category)
+        public IActionResult OnGetData(Paging pi, string name, AssetCategory? category)
         {
             var list = Asset.Search(name, category, null).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

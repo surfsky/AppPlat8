@@ -18,7 +18,7 @@ namespace App.Pages.Admin
 
 
         /// <summary>查询</summary>
-        public async Task<IActionResult> OnGetData(Paging pi, string title, AnnounceStatus? status, List<DateTime> createTime)
+        public IActionResult OnGetData(Paging pi, string title, AnnounceStatus? status, List<DateTime> createTime)
         {
             var q = createTime.Count > 0 ? Announce.Search(title, status, fromDt:createTime[0], toDt:createTime[1]) : Announce.Search(title, status);
             var list = q.SortPageExport(pi);

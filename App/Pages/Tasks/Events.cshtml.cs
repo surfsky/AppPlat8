@@ -30,7 +30,7 @@ namespace App.Pages.OA
                 .ToList();
         }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string title, long? typeId, long? orgId, long? publisherId)
+        public IActionResult OnGetData(Paging pi, string title, long? typeId, long? orgId, long? publisherId)
         {
             var list = Event.Search(title, typeId, orgId, publisherId).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

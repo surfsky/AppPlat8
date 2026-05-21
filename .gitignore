@@ -14,6 +14,11 @@ Thumbs.db
 **/[Bb]in/
 **/[Oo]bj/
 
+# Files
+temp.txt
+history.txt
+
+
 # Logs
 **/Logs/
 *.log

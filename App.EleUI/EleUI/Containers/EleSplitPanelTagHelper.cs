@@ -29,9 +29,9 @@ namespace App.EleUI
         [HtmlAttributeName("Lazy")]
         public bool Lazy { get; set; }
 
-        public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+        public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
-            if (!CheckPower(output)) return;
+            if (!CheckPower(output)) return Task.CompletedTask;
             output.TagName = "el-splitter";
             AddCommonAttributes(context, output);
 
@@ -39,6 +39,7 @@ namespace App.EleUI
             if (Lazy) output.Attributes.SetAttribute("lazy", "true");
 
             // Element Plus splitter needs explicit height often, handled by EleTagHelper.Height -> style
+            return Task.CompletedTask;
         }
     }
 
@@ -82,9 +83,9 @@ namespace App.EleUI
         [HtmlAttributeName("IframeName")]
         public string IframeName { get; set; }
 
-        public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+        public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
-            if (!CheckPower(output)) return;
+            if (!CheckPower(output)) return Task.CompletedTask;
             output.TagName = "el-splitter-panel";
             AddCommonAttributes(context, output);
 
@@ -106,6 +107,8 @@ namespace App.EleUI
                     : $" name=\"{WebUtility.HtmlEncode(IframeName.Trim())}\"";
                 output.Content.SetHtmlContent($"<iframe{iframeName} src=\"{iframeUrl}\" class=\"w-full h-full border-0\" frameborder=\"0\"></iframe>");
             }
+
+            return Task.CompletedTask;
         }
 
         private string BuildPanelSizeExpression(string raw)

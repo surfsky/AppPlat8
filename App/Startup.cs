@@ -141,6 +141,7 @@ namespace App
                 };
             };
 
+            // 数据审计权限
             EntityConfig.Instance.OnGetDataAuditScope += () =>
             {
                 var db = Common.GetDbConnection();

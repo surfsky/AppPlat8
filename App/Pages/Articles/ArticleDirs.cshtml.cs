@@ -21,7 +21,7 @@ namespace App.Pages.OA
 
         public void OnGet() { }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name)
+        public IActionResult OnGetData(Paging pi, string name)
         {
             var list = ArticleDir.GetTree();
             return BuildResult(0, "success", list, pi);

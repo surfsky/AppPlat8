@@ -209,7 +209,7 @@ namespace App.EleUI
             return null;
         }
 
-        protected async Task RenderWrapper(TagHelperOutput output)
+        protected Task RenderWrapper(TagHelperOutput output)
         {
             // TryAutoSetLabel has been called in AddCommonAttributes, but RenderWrapper might be called later?
             // Actually ProcessAsync calls AddCommonAttributes then RenderWrapper. So Label should be set.
@@ -248,6 +248,8 @@ namespace App.EleUI
                 output.PostElement.SetHtmlContent("</el-form-item>");
 
             }
+
+            return Task.CompletedTask;
         }
     }
 }

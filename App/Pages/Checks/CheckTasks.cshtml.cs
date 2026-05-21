@@ -22,7 +22,7 @@ namespace App.Pages.Checks
         {
         }
 
-        public async Task<IActionResult> OnGetData(Paging pi, string name, long? publisherId, DateTime? expireBefore)
+        public IActionResult OnGetData(Paging pi, string name, long? publisherId, DateTime? expireBefore)
         {
             var list = CheckTask.Search(name, publisherId, expireBefore).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

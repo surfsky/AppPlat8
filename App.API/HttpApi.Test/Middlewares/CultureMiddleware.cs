@@ -95,9 +95,10 @@ namespace App.HttpApi
         }
 
         protected virtual void Process(HttpContext httpContext) { }
-        public async Task Invoke(HttpContext httpContext)
+        public Task Invoke(HttpContext httpContext)
         {
             Process(httpContext);
+            return Task.CompletedTask;
         }
     }
 

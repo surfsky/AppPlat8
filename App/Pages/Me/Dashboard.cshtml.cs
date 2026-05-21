@@ -16,7 +16,7 @@ namespace App.Pages
     {
         public string SiteTitle { get; set; }
 
-        public async Task OnGetAsync()
+        public void OnGet()
         {
             SiteTitle = SiteConfig.Instance.Title;
         }
