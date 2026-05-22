@@ -40,22 +40,21 @@
     # 编译EleUI示例项目
     dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
     dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
-    vscode 顶部的命令行中输入：Debug EleUISamples
+    调试： vscode 左侧的调试图标页面打开，选择 Debug EleUISamples 进行调试。或者顶部的命令行中输入：Debug EleUISamples；
 
     # 运行Consoler项目
+    # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
     dotnet run --project App.Consoler
-    或
-    dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
 
     # 测试项目
     dotnet test App.Utils/App.UtilsTests/App.UtilsTests.csproj
    ```
-4.打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
+4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
 
 
 其它
 
-1. 数据库迁移: 运行 `dotnet ef migrations add OrgFullName --project App/App.csproj --startup-project App/App.csproj`.
+1. 数据库迁移: 运行 `dotnet ef migrations add MenuAddDataFrom --project App/App.csproj --startup-project App/App.csproj`.
 2. 若端口被占用，查找占用 6060 的进程，然后kill
   ```bash
     lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9

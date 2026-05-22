@@ -1,18 +1,29 @@
 # 工程
 
+- 修正调试配置（launch.json），debug consoler 是没问题的，另外两个都有问题；
 - 编写建设方案
 
 
 # 业务
 
+
+checkobject增加CustomTag字段，与系统标签区别开来
 - 导入隐患检查表
 - 隐患排查
 - 统计及调度
 
 
-- 修正调试配置（launch.json），debug consoler 是没问题的，另外两个都有问题；
 
 # 驾驶舱
+
+GisMenu数据来源
+    字段 DataFrom =Geometry/Api，区分数据来源；
+    修改 list/form 页面
+    修改 /gis/GeometryManager 页面，左侧菜单只显示 DataFrom = Geometry 的菜单
+    修改 /gis/apiManager 页面，左侧菜单只显示 DataFrom = Api 的菜单
+    修改 /gis/index 页面，根据 DataFrom 类型，取对应的数据，并展示；
+
+
 
 
 点位
@@ -27,6 +38,18 @@
     GisGeometry 可导入excel，便于快速录入数据
     Gis数据多部门协同编辑: 仅菜单的管理员（ownerid）才能编辑该数据
     驾驶舱：暗黑/亮白两种模式
+    - 驾驶舱融合ai问答能力，根据请求自动选取相应的图层和数据并展示；
+
+图层扩展
+    - 事件也作为为图层，gisapi需要定义抽取周期、需增加订阅能力。虚拟一个数据源接口
+    - 应急人员/移动设备都可以作为图层
+    - 人员/车辆/移动设备也是图层，手机端打开定位就会刷新在地图上
+    - 预案
+
+GisApi优化
+    - 接口类别分：轮询、回调、订阅
+    - 注意接口必须有验证方式（如checkobjects）
+
 
 
 # 后台调度进度（App.Consoler）
@@ -58,6 +81,7 @@
 智能表格
     - 完成通用数据维护界面（可考虑用UIConfignfig类），体模型类自动生成对应的列表和表单页面
     - 完成智能表格编辑页面，可根据导入excel自动生成管理页面，可直接在页面编辑表格，可直接黏贴数据
+    - ai问答表格，任意请求都能返回数据表格
 
 EleUI
     - 所有页面都加上 Loading 效果；

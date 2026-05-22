@@ -7,6 +7,13 @@ using App.Utils;
 
 namespace App.DAL.GIS
 {
+    /// <summary>GIS数据来源</summary>
+    public enum GisDataFrom
+    {
+        [UI("Geometry")] Geometry = 1,   // 来自 Geometry点位表
+        [UI("API")]      API = 2,        // 来自 API 表
+    }
+
     /// <summary>GIS菜单</summary>
     [UI("GIS", "GIS菜单")]
     public class GisMenu : TreeEntity<GisMenu>, IFix<GisMenu>, IFixAll
@@ -14,6 +21,7 @@ namespace App.DAL.GIS
         [UI("责任组织")]      public long? OrgId { get; set; }
         [UI("图标")]         public string Icon { get; set; }
         [UI("默认显示")]      public bool IsDefaultShow { get; set; }
+        [UI("数据来源")]      public GisDataFrom? DataFrom { get; set; } = GisDataFrom.Geometry;
         [UI("点位数")]        public int? DataCnt { get; set; }
         [UI("最后数据时间")]   public DateTime? DataDt { get; set; }
 
@@ -33,6 +41,7 @@ namespace App.DAL.GIS
                 t.IsDefaultShow = this.IsDefaultShow;
                 t.DataCnt = this.DataCnt;
                 t.DataDt = this.DataDt;
+                t.DataFrom = this.DataFrom;
             });
         }
 
@@ -51,6 +60,7 @@ namespace App.DAL.GIS
                 Children,
                 DataCnt,
                 DataDt,
+                DataFrom,
 
                 OrgName,
                 CreatorName,
@@ -61,10 +71,10 @@ namespace App.DAL.GIS
         public static IQueryable<GisMenu> Search(string name=null, long? creatorId=null, long? orgId=null, long? parentId=null)
         {
             var q = IncludeSet.AsQueryable();
-            if (name.IsNotEmpty())       q = q.Where(o => o.Name.Contains(name.Trim()));
+            if (name.IsNotEmpty())         q = q.Where(o => o.Name.Contains(name.Trim()));
             if (creatorId.IsNotEmpty())    q = q.Where(o => o.CreatorId == creatorId.Value);
-            if (orgId.IsNotEmpty())      q = q.Where(o => o.OrgId == orgId.Value);
-            if (parentId.IsNotEmpty())   q = q.Where(o => o.ParentId == parentId.Value);
+            if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value);
+            if (parentId.IsNotEmpty())     q = q.Where(o => o.ParentId == parentId.Value);
             return q;
         }
 
