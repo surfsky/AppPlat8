@@ -16,17 +16,19 @@ namespace App.DAL.GIS
     {
         [UI("菜单ID")] public long? MenuId { get; set; }
         [UI("名称")] public string Name { get; set; }
-        [UI("接口地址")] public string DataUrl { get; set; }
-        [UI("在用")] public bool IsEnabled { get; set; } = true;
         [UI("排序")] public int SortId { get; set; }
+        [UI("接口地址")] public string DataUrl { get; set; }
         [UI("最后数据量")] public int? DataCnt { get; set; }
         [UI("最后更新时间")] public DateTime? DataDt { get; set; }
         [UI("最近错误")] public string LastErr { get; set; }
+        [UI("是否正常")] public bool IsLive { get; set; } = true;
 
+
+        //
         public virtual GisMenu Menu { get; set; }
-
         public string MenuName => Menu?.Name;
 
+        //
         public override object Export(ExportMode type = ExportMode.Normal)
         {
             return new
@@ -38,7 +40,7 @@ namespace App.DAL.GIS
                 DataCnt,
                 DataDt,
                 LastErr,
-                IsEnabled,
+                IsLive,
                 SortId,
                 MenuName,
             };
@@ -55,7 +57,7 @@ namespace App.DAL.GIS
         /// <summary>刷新接口统计；返回（成功数, 失败数）</summary>
         public static (int okCount, int failCount) RefreshStats(long? menuId = null)
         {
-            var q = Set.AsQueryable().Where(t => t.IsEnabled);
+            var q = Set.AsQueryable().Where(t => t.IsLive);
             if (menuId.IsNotEmpty())
             {
                 var ids = GisMenu.All.GetDescendants(menuId).Select(t => t.Id).Distinct().ToList();

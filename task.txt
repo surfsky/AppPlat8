@@ -7,7 +7,7 @@
 # 业务
 
 
-checkobject增加CustomTag字段，与系统标签区别开来
+- 检查对象 checkobject 增加 CustomTag 字段，与系统标签区别开来
 - 导入隐患检查表
 - 隐患排查
 - 统计及调度
@@ -15,6 +15,17 @@ checkobject增加CustomTag字段，与系统标签区别开来
 
 
 # 驾驶舱
+
+统一固定点位和接口点位
+    - 所有都是图层，gismenu真的要改成gislayer了。加一个字段IsVisible（是否在菜单上显示）
+    - 改造方案一：gislayer增加dataurl参数，如果不为空则从接口取数（增加字段Autosave，若为true可保存到gisgemetry），如果接口挂了，提示错误且图层变红；允许用户从gisgeometry表取历史数据。
+    - 改造方案二：数据都从gisgeometry取，接口根据配置在后台自动刷新数据
+    - 如何展示点位离线和紧急状态：GisGeometry增加IsOnline/IsErgency属性，图标分别为灰色和红色闪烁；图标要能用代码变化色彩（考虑用cssfilter或者iconfont）
+
+# 路径数据如何保存和显示？
+    - 方案一：弄个点位轨迹表GeometryLog，字段geometryid、logDt、action, IsOnline。如台风路径，一个台风一个点位。同时显示会很乱？那给gislayer加一个属性，showDays，表示只显示最近几天的数据。另外，数据列表面板可以多选；搞个通用方法和ui在地图上展示轨迹；
+    - 方案二：路径可保存到datajson（否定,不好检索和动态更新）。也可保存到各自的业务表中，用pageurl参数控制显示展示页面；
+
 
 GisMenu数据来源
     字段 DataFrom =Geometry/Api，区分数据来源；

@@ -1,7 +1,23 @@
-using App.DAL;
 using System.Text.Json;
+using App.DAL;
+using Quartz;
+/// <summary>
+/// 检查对象GPS修复任务
+/// </summary>
+public class CheckObjectGpsFixJob : IJob
+{
+	public Task Execute(IJobExecutionContext context)
+	{
+		Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 开始执行检查对象GPS修复任务");
+		var amapKey = context.MergedJobDataMap.GetString("amapKey");
+		GpsRunner.Sync(amapKey);
+		Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 检查对象GPS修复任务执行完成");
+		return Task.CompletedTask;
+	}
+}
 
-public static class CheckObjectGpsSync
+
+public static class GpsRunner
 {
 	private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
@@ -12,7 +28,7 @@ public static class CheckObjectGpsSync
 		public int Failed { get; set; }
 	}
 
-	public static SyncResult Sync(int limit, int intervalMs, string amapKey)
+	public static SyncResult Sync(string? amapKey, int limit=1000, int intervalMs=1800)
 	{
 		var result = new SyncResult();
 		if (string.IsNullOrWhiteSpace(amapKey))

@@ -20,7 +20,7 @@ namespace App.DAL
 
     /// <summary>检查对象</summary>
     [UI("检查", "检查对象")]
-    public class CheckObject : EntityBase<CheckObject>, IDeleteLogic
+    public class CheckObject : EntityBase<CheckObject>, IDeleteLogic, IFixAll
     {
         [UI("基础", "主键ID")]      public string Code { get; set; }
         [UI("基础", "是否失效")]    public bool? IsDel { get; set; } = false;
@@ -31,6 +31,7 @@ namespace App.DAL
         [UI("基础", "社会信用代码")]  public string SocialCreditCode { get; set;}
         [UI("基础", "地址")]        public string Address { get; set; }
         [UI("基础", "GPS")]        public string Gps { get; set; }
+        [UI("基础", "是否巡查")]     public bool? IsChecked { get; set; } 
         [UI("基础", "建档日期")]     public DateTime? ArchieveDt { get; set; }
         [UI("基础", "最新巡查时间")] public DateTime? LatestCheckDt { get; set; }
         [UI("基础", "领域")]        public string Field { get; set; }  // 需枚举
@@ -93,9 +94,10 @@ namespace App.DAL
         public virtual User SocialChecker { get; set; }
 
         // 临时字段
-        [NotMapped] public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name ?? "";
-        [NotMapped] public string CheckerName => Checker?.Name;
-        [NotMapped] public string SocialCheckerName => SocialChecker?.Name;
+        [UI("基础", "责任组织")] public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name ?? "";
+        [UI("基础", "技术检查员")] public string CheckerName => Checker?.Name;
+        [UI("基础", "社区网格员")] public string SocialCheckerName => SocialChecker?.Name;
+        [UI("基础", "检查周期")] public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
 
         // 导出
         public override object Export(ExportMode mode)
@@ -112,10 +114,12 @@ namespace App.DAL
                 Address,
                 Gps,
                 AreaCode,
+                IsChecked,
                 ArchieveDt,
                 LatestCheckDt,
                 Field,
                 RiskLevel,
+                CheckCycle,
                 Scope,
                 Scale,
                 ObjectType,
@@ -178,7 +182,7 @@ namespace App.DAL
             DateTime? latestCheckStartDt=null,
             DateTime? latestCheckEndDt=null,
             bool? hasHazard=null,
-            bool? hasPatrol=null,
+            bool? isChecked=null,
             bool? isDel=null,
             bool? isDemonstration=null,
             bool? isKeySupervision=null,
@@ -208,9 +212,7 @@ namespace App.DAL
             if (latestCheckStartDt.IsNotEmpty()) q = q.Where(o => o.LatestCheckDt >= latestCheckStartDt.Value);
             if (latestCheckEndDt.IsNotEmpty())   q = q.Where(o => o.LatestCheckDt <= latestCheckEndDt.Value);
             if (hasHazard.IsNotEmpty())        q = q.Where(o => o.HasHarzard == hasHazard.Value);
-            if (hasPatrol.IsNotEmpty())        q = hasPatrol.Value
-                                                ? q.Where(o => o.LatestCheckDt != null)
-                                                : q.Where(o => o.LatestCheckDt == null);
+            if (isChecked.IsNotEmpty())        q = q.Where(o => o.IsChecked == isChecked.Value);
             if (isDel.IsNotEmpty())            q = q.Where(o => o.IsDel == isDel.Value);
             if (isDemonstration.IsNotEmpty())  q = q.Where(o => o.IsDemonstration == isDemonstration.Value);
             if (isKeySupervision.IsNotEmpty()) q = q.Where(o => o.IsKeySupervision == isKeySupervision.Value);
@@ -218,6 +220,50 @@ namespace App.DAL
             if (isThreePlacesThreeEnterprises.IsNotEmpty()) q = q.Where(o => o.IsThreePlacesThreeEnterprises == isThreePlacesThreeEnterprises.Value);
 
             return q;
+        }
+
+        /// <summary>修复所有检查对象的IsChecked字段</summary>
+        /// <returns>修复的检查对象数量</returns>
+        public static int FixAll()
+        {
+            // 根据最后更新时间，以及对象的风险等级 RiskLevel（对应到检查周期CheckCycle），更新IsChecked字段
+            var cnt = 0;
+            var now = DateTime.Now;
+            var list = CheckObject.IncludeSet.ToList();
+            foreach (var item in list)
+            {
+                var isChecked = false; // 计算得到的新值
+                if (item.RiskLevel.HasValue && item.LatestCheckDt.HasValue)
+                {
+                    var checkCycleMonths = GetCheckCycleMonths(item.RiskLevel);
+                    isChecked = item.LatestCheckDt.Value.AddMonths(checkCycleMonths) > now; // 已到检查周期需要检查了（检查状态为false）
+                }
+                else
+                {
+                    isChecked = false; // 无风险等级或无巡查时间的对象，设置为false（尚未检查）
+                }
+
+                // 如果计算得到的新值与原值不同，则更新并计数
+                if (item.IsChecked != isChecked)
+                {
+                    item.IsChecked = isChecked;
+                    cnt++;
+                }
+            }
+            return cnt;
+        }
+
+        // 根据风险等级获取检查周期（月数）
+        static int GetCheckCycleMonths(CheckRiskLevel? riskLevel)
+        {
+            return riskLevel switch
+            {
+                CheckRiskLevel.None => 12,
+                CheckRiskLevel.Low => 9,
+                CheckRiskLevel.Medium => 6,
+                CheckRiskLevel.High => 3,
+                _ => 12
+            };
         }
     }
 

@@ -45,7 +45,7 @@ namespace App.Pages.GIS
             item.MenuId = req.MenuId;
             item.Name = req.Name?.Trim();
             item.DataUrl = req.DataUrl?.Trim();
-            item.IsEnabled = req.IsEnabled;
+            item.IsLive = req.IsLive;
             item.SortId = req.SortId;
             item.DataCnt = req.DataCnt;
             item.DataDt = req.DataDt;

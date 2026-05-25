@@ -93,3 +93,26 @@
         <EleInput For="Item.Gps" Label="GPS" Placeholder="例如 120.155100, 30.274100"></EleInput>
         <EleSelect For="Item.RiskColor" Label="风险四色"></EleSelect>
             <EleColumn For="Item.RiskColor" Label="风险四色" Width="100"></EleColumn>
+
+
+/// <summary>解析整数参数</summary>
+/// <param name="cmdArgs"></param>
+/// <param name="key"></param>
+/// <param name="defaultValue"></param>
+/// <param name="min"></param>
+/// <param name="max"></param>
+/// <returns></returns>
+static int ParseIntArg(string[] cmdArgs, string key, int defaultValue, int min, int max)
+{
+	var text = cmdArgs
+		.FirstOrDefault(t => t.StartsWith(key, StringComparison.OrdinalIgnoreCase))
+		?.Substring(key.Length)
+		?.Trim();
+
+	if (!int.TryParse(text, out var value))
+		return defaultValue;
+    if (value < min) return min;
+    if (value > max) return max;
+	return value;
+}
+

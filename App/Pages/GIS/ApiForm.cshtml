@@ -15,7 +15,7 @@
         <EleDatePicker For="Item.DataDt" Label="最后更新时间" Type="DateTime"></EleDatePicker>
         <EleInput For="Item.LastErr" Label="最近错误" Type="TextArea" Rows="3" FillRow="true"></EleInput>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
-        <EleSwitch For="Item.IsEnabled" Label="启用"></EleSwitch>
+        <EleSwitch For="Item.IsLive" Label="状态" Enabled="false"></EleSwitch>
 
         <Bottom>
             <EleButton Type="Success" Handler="TestApi" Icon="View">测试</EleButton>

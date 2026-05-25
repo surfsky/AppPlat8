@@ -22,6 +22,8 @@ namespace App.EleUI
         [HtmlAttributeName("KeyField")]     public string KeyField { get; set; }
         [HtmlAttributeName("TextField")]    public string TextField { get; set; }
 
+        [HtmlAttributeName("Value")]        public object Value { get; set; }
+
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             if (!CheckPower(output)) return;
@@ -35,6 +37,14 @@ namespace App.EleUI
             if (Multiple)                           output.Attributes.SetAttribute("multiple", "true");
             if (AllowCreate)                        output.Attributes.SetAttribute("allow-create", "true");
             if (Filterable)                         output.Attributes.SetAttribute("filterable", "true");
+
+            // 支持 Value 属性，优先级高于 v-model
+            if (Value != null)
+            {
+                // 兼容 bool/数字/字符串
+                var valueStr = Value is bool ? Value.ToString().ToLower() : Value.ToString();
+                output.Attributes.SetAttribute(":value", valueStr);
+            }
 
             // Build unified options list for runtime override (SetControlData)
             var childContent = await output.GetChildContentAsync();

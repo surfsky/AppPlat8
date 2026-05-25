@@ -99,7 +99,7 @@ namespace App.DAL.GIS
                 .ToDictionary(g => g.Key, g => g.Count());
 
             var apiCntMap = GisApi.Set
-                .Where(t => t.IsEnabled && t.MenuId != null)
+                .Where(t => t.MenuId != null)
                 .GroupBy(t => t.MenuId.Value)
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.DataCnt ?? 0));
 

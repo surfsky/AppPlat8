@@ -11,8 +11,8 @@
                 <EleInput For="Item.Name" Width="250px" Label="检查对象名称" ></EleInput>
                 <EleSelect For="Item.ObjectType" Width="250px" Label="类型" Clearable="true"></EleSelect>
                 <EleSelect For="Item.Scope" Width="250px" Label="所属领域" Clearable="true"></EleSelect>
-                <EleSelect Prop="isDel" Width="250px" Label="有效状态" Items="@("{'有效':'false','失效':'true'}")" Clearable="true"></EleSelect>
-                <EleSelect Prop="patrolStatus" Width="250px" Label="巡查状态" Items="@("{'已巡查':'1','未巡查':'0'}")" Clearable="true"></EleSelect>
+                <EleSelect For="Item.IsDel" Width="250px" Label="已删除"  Clearable="true"></EleSelect>
+                <EleSelect For="Item.IsChecked" Width="250px" Label="是否检查" Clearable="true"></EleSelect>
                 <EleTreeSelect For="Item.DutyOrgId" Width="250px" Label="所属网格" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true"></EleTreeSelect>
                 <EleDatePicker Prop="updateStartDt" Width="250px" Label="修改时间起" Type="DateTime" ></EleDatePicker>
                 <EleDatePicker Prop="updateEndDt" Width="250px" Label="修改时间止" Type="DateTime" ></EleDatePicker>
