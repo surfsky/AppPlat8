@@ -74,7 +74,7 @@ namespace App.Pages.GIS
             item.MenuId = req.MenuId;
             item.Addr = req.Addr;
             item.Url = req.Url;
-            item.Att = Uploader.SaveFile(nameof(GisGeometry), req.Att);
+            item.File = Uploader.SaveFile(nameof(GisGeometry), req.File);
             item.GeoJson = req.GeoJson;
             item.DataJson = req.DataJson;
             item.Region = NormalizeRegion(req.Region);

@@ -28,7 +28,7 @@ namespace App.Pages.GIS
 
         public IActionResult OnGetData(Paging pi, string name, GeometryType? type, long? menuId)
         {
-            var list = GisGeometry.Search(name, null, menuId, type).SortPageExport(pi);
+            var list = GisGeometry.Search(name:name, type:type, menuId:menuId, recursive:false).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

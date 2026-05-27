@@ -14,20 +14,7 @@ namespace App.Pages.GIS
 
         public JsonResult OnGetGeometryLayerData(long? menuId)
         {
-            var query = GisGeometry.DataSet
-                .Where(g => !string.IsNullOrWhiteSpace(g.GeoJson) || !string.IsNullOrWhiteSpace(g.Gps));
-
-            if (menuId.HasValue)
-            {
-                var menuIds = GisMenu.All
-                    .GetDescendants(menuId)
-                    .Select(m => m.Id)
-                    .Distinct()
-                    .ToList();
-
-                query = query.Where(g => g.MenuId.HasValue && menuIds.Contains(g.MenuId.Value));
-            }
-
+            var query = GisGeometry.Search(menuId: menuId, isValid: true, recursive: true);
             var list = query
                 .OrderBy(g => g.SortId)
                 .ThenBy(g => g.Id)
@@ -43,7 +30,7 @@ namespace App.Pages.GIS
                     gps = g.Gps,
                     region = g.Region,
                     url = g.Url,
-                    att = g.Att,
+                    file = g.File,
                     geoJson = g.GeoJson,
                     dataJson = g.DataJson,
                     icon = g.Menu != null ? g.Menu.Icon : null

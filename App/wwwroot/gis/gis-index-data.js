@@ -427,14 +427,17 @@
                 .filter(Boolean);
         }
 
-        function resolveImageUrlFromAtt(att) {
-            var parts = splitMultiUrls(att);
+
+        // 兼容 file/att 字段，优先 file
+        function resolveImageUrlFromFileOrAtt(file, att) {
+            var url = file || att || '';
+            var parts = splitMultiUrls(url);
             if (!parts.length) return '';
 
             var first = parts[0];
             if (!first) return '';
 
-            // 兼容把 FileViewer 地址误存到 Att 的场景：优先提取 src
+            // 兼容把 FileViewer 地址误存到 Att/File 的场景：优先提取 src
             if (first.indexOf('/Shared/FileViewer') >= 0) {
                 try {
                     var base = window.location && window.location.origin ? window.location.origin : 'http://localhost';
@@ -649,10 +652,20 @@
             el.className = 'geometry-file-marker';
             el.style.cssText = 'cursor:pointer;text-align:center;';
 
-            const iconSpan = document.createElement('span');
-            iconSpan.textContent = '📄';
-            iconSpan.style.cssText = 'font-size:32px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));display:block;';
-            el.appendChild(iconSpan);
+            // 优先 file 字段，兼容 att
+            const fileUrl = resolveImageUrlFromFileOrAtt(item?.file || item?.File, item?.att || item?.Att || '');
+            if (fileUrl && /\.(png|jpg|jpeg|gif|webp|bmp|svg)$/i.test(fileUrl)) {
+                const img = document.createElement('img');
+                img.src = fileUrl;
+                img.alt = '附件';
+                img.style.cssText = 'max-width:48px;max-height:48px;display:block;margin:0 auto 2px;object-fit:contain;box-shadow:0 2px 6px rgba(0,0,0,0.15);border-radius:4px;';
+                el.appendChild(img);
+            } else {
+                const iconSpan = document.createElement('span');
+                iconSpan.textContent = '📄';
+                iconSpan.style.cssText = 'font-size:32px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));display:block;';
+                el.appendChild(iconSpan);
+            }
 
             const label = document.createElement('span');
             label.className = 'marker-label';
@@ -673,8 +686,9 @@
          * 创建"图片"类型 - 使用 Mapbox ImageSource 显示图片图层
          * GeoJson 应包含一个矩形 Polygon 作为显示区域
          */
+
         function createImageLayer(item) {
-            var imageUrl = resolveImageUrlFromAtt(item?.att || item?.Att || '');
+            var imageUrl = resolveImageUrlFromFileOrAtt(item?.file || item?.File, item?.att || item?.Att || '');
             if (!imageUrl) return;
 
             // 1) 优先使用 Region 字段

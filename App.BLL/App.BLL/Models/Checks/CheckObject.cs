@@ -67,16 +67,20 @@ namespace App.DAL
         [UI("风险", "三场所三企业")] public bool? IsThreePlacesThreeEnterprises { get; set; }
         [UI("风险", "园中园厂中厂")] public bool? IsParkFactoryOverlayRisk { get; set; }
         [UI("风险", "涉及电气焊")] public bool? HasWelding { get; set; }
-        [UI("风险", "环保设备")] public bool? HasEnvironmentalEquipment { get; set; }
-        [UI("风险", "喷淋系统")] public bool HasSprinklerSystem { get; set; }
+
+        //
+        [UI("设备", "有环保设备")] public bool? HasEnvironmentalEquipment { get; set; }
+        [UI("设备", "有喷淋系统")] public bool HasSprinklerSystem { get; set; }
+
+        //
+        [UI("标准化", "标准化创建")] public string StandardizationStatus { get; set; }
+        [UI("标准化", "内部奖励机制")] public string InternalRewardMechanism { get; set; }
 
         // 人员相关
         [UI("人员", "三方机构")] public string ThirdPartySafetyAgency { get; set; }
         [UI("人员", "负责人信息")] public string DutyUserName { get; set; }
         [UI("人员", "安全管理员")] public string SafetyAdminName { get; set; }
         [UI("人员", "安全管家")] public string SafetySteward { get; set; }
-        [UI("人员", "内部奖励机制")] public string InternalRewardMechanism { get; set; }
-        [UI("人员", "标准化创建")] public string StandardizationStatus { get; set; }
 
         // 建筑相关
         [UI("建筑", "建筑类型")] public CheckBuildingType? BuildingType { get; set; }

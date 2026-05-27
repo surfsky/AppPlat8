@@ -98,7 +98,7 @@
             </div>
 
             <div class="geo-field-toggle" v-show="['4','图片','image','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">
-                <EleFileUpload For="Item.Att" Label="文件" FillRow="true" Placeholder="请选择附件文件" Exts=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.obj,.fbx,.gltf,.glb,.zip,.rar,.7z,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" MaxSizeMb="80" ViewerUrl="/Shared/FileViewer?src={0}"></EleFileUpload>
+                <EleFileUpload For="Item.File" Label="文件" FillRow="true" Placeholder="请选择附件文件" Exts=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.obj,.fbx,.gltf,.glb,.zip,.rar,.7z,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" MaxSizeMb="80" ViewerUrl="/Shared/FileViewer?src={0}"></EleFileUpload>
             </div>
             <div class="geo-field-toggle" v-show="['4','图片','image'].includes((form.type ?? '').toString().toLowerCase())">
                 <EleSelector For="Item.Region" TextFor="Item.Region" Label="图片区域" PopupUrl="MapImage" KeyMode="Url" Icon="Location" Editable="true" FillRow="true"></EleSelector>

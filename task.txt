@@ -7,18 +7,40 @@
 # 业务
 
 
+bug：新建标签时，组织老是自动设置为“新城应消中心”
+将检查对象 checkobject 的风险类标签合并到 Tags，检索页面增加多标签检索的能力；
+
 - 隐患排查
 - 统计及调度
-- 检查对象 checkobject 增加 CustomTag 字段，与系统标签区别开来
+- web监管进度
+- 做简单的统计报表
 
+
+检查对象CheckObjects 页面的过滤条件：
+CheckSheet 中有两个特别大的检查表，预计要删除；
 
 # 驾驶舱
 
-统一固定点位和接口点位
-    - 所有都是图层，gismenu真的要改成gislayer了。加一个字段IsVisible（是否在菜单上显示）
-    - 改造方案一：gislayer增加dataurl参数，如果不为空则从接口取数（增加字段Autosave，若为true可保存到gisgemetry），如果接口挂了，提示错误且图层变红；允许用户从gisgeometry表取历史数据。
-    - 改造方案二：数据都从gisgeometry取，接口根据配置在后台自动刷新数据
-    - 如何展示点位离线和紧急状态：GisGeometry增加IsOnline/IsErgency属性，图标分别为灰色和红色闪烁；图标要能用代码变化色彩（考虑用cssfilter或者iconfont）
+统一固定点位 GisGeometry 和接口 GisApi 获取的点位
+    /所有都是图层，gismenu真的要改成gislayer了（不改了，事实上一个menu可以容纳多个layer）
+    - 改造方案一（推荐）
+        数据都从gisgeometry取，接口根据配置在后台自动刷新数据；
+        增加ApiId字段，表示数据是中Api中获取的；
+        Gis数据清单面板，就可以以普通表格方式进行展示和检索；
+        提供一个刷新数据按钮，从接口取数据并插入数据库，完毕后刷新页面；
+        优点：任何时候都有数据可以展示，统一展示方式，统一检索方式；
+        缺点：该方案会导致数据不实时，导致疑惑和解释不清楚、也会造成数据冗余，如检查对象（CheckObjec本身就提供物理表了，根据此逻辑需要再复制到GisGeometry表）
+    - 改造方案二：
+        gislayer增加dataurl参数，如果不为空，则直接从接口取数（含分页逻辑）
+        如果接口挂了，图层菜单节点提示错误且图层变红；
+        增加字段Autosave，若为true可保存到gisgemetry
+        允许用户从gisgeometry表取历史数据。
+    - 如何展示点位离线和紧急状态：
+        GisGeometry增加 Status 属性（Normal、Offline、Ergent），默认为Normal，图标分别为灰色和红色闪烁；图标要能用代码变化色彩（考虑用cssfilter或者iconfont）
+    - 增加 ApiLog 表
+        用于记录Api刷新记录，字段为：Id、FetchDt，DataCnt，IsSucceed
+        每次刷新记录时记录一下
+
 
 # 路径数据如何保存和显示？
     - 方案一：弄个点位轨迹表GeometryLog，字段geometryid、logDt、action, IsOnline。如台风路径，一个台风一个点位。同时显示会很乱？那给gislayer加一个属性，showDays，表示只显示最近几天的数据。另外，数据列表面板可以多选；搞个通用方法和ui在地图上展示轨迹；
@@ -231,6 +253,11 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2025.05.27
+    /修改 GisGeometry.Att属性名称（改为File），避免和 Atts 混淆
+    /GisGeometry.Search() 支持递归和非递归搜索
+
+
 2026.05.25
     /导入隐患检查表
 

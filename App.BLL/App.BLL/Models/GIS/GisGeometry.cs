@@ -29,8 +29,8 @@ namespace App.DAL.GIS
         [UI("GIS菜单")]     public long? MenuId { get; set; }
         [UI("排序")]        public int SortId { get; set; }
         [UI("地址")]        public string Addr { get; set; }
-        [UI("链接地址")]    public string Url { get; set; }         // 通用链接地址（原 PageUrl）
-        [UI("附件地址")]    public string Att { get; set; }         // 附件链接（图片、模型、视频等）
+        [UI("链接地址")]     public string Url { get; set; }         // 通用链接地址（原 PageUrl）
+        [UI("文件")]        public string File { get; set; }        // 文件链接（图片、模型、视频等）
 
         [UI("经纬度")]      public string Gps { get; set; }
         [UI("区域矩形")]    public string Region { get; set; }      // 图片显示区域：tlx,tly,brx,bry
@@ -61,7 +61,7 @@ namespace App.DAL.GIS
                 t.Gps = this.Gps;
                 t.Region = this.Region;
                 t.Url = this.Url;
-                t.Att = this.Att;
+                t.File = this.File;
                 t.DataJson = this.DataJson;
             });
         }
@@ -82,7 +82,7 @@ namespace App.DAL.GIS
                 Gps,
                 Region,
                 Url,
-                Att,
+                File,
                 DataJson,
 
                 MenuName,
@@ -92,13 +92,44 @@ namespace App.DAL.GIS
         }
 
 
-        public static IQueryable<GisGeometry> Search(string name=null, long? creatorId=null, long? menuId=null, GeometryType? type = null)
+        /// <summary>搜索点位</summary>
+        /// <param name="name"></param>
+        /// <param name="creatorId"></param>
+        /// <param name="type"></param>
+        /// <param name="isValid"></param>
+        /// <param name="menuId">菜单ID</param>
+        /// <param name="recursive">是否递归检索子菜单</param>
+        public static IQueryable<GisGeometry> Search(
+            string name=null, 
+            long? creatorId=null, 
+            GeometryType? type = null, 
+            bool? isValid = null,
+            long? menuId=null, 
+            bool recursive = false
+        )
         {
             var q = IncludeSet.AsQueryable();
-            if (name.IsNotEmpty())       q = q.Where(o => o.Name.Contains(name.Trim()));
+            if (name.IsNotEmpty())         q = q.Where(o => o.Name.Contains(name.Trim()));
             if (creatorId.IsNotEmpty())    q = q.Where(o => o.CreatorId == creatorId.Value);
-            if (menuId.IsNotEmpty())     q = q.Where(o => o.MenuId == menuId.Value);
-            if (type.HasValue)           q = q.Where(o => o.Type == type.Value);
+            if (type.IsNotEmpty())         q = q.Where(o => o.Type == type.Value);
+            if (menuId.IsNotEmpty())       
+            {
+                if (!recursive)
+                    q = q.Where(o => o.MenuId == menuId.Value);
+                else
+                {
+                    var menuIds = GisMenu.All.GetDescendants(menuId.Value).Select(m => m.Id).Distinct().ToList();
+                    q = q.Where(g => g.MenuId.HasValue && menuIds.Contains(g.MenuId.Value));
+                }
+            }
+            // 是否有效点位
+            if (isValid.IsNotEmpty())
+            {
+                if (isValid.Value)
+                    q = q.Where(o => !string.IsNullOrWhiteSpace(o.GeoJson) || !string.IsNullOrWhiteSpace(o.Gps));  // 有效点位，有GeoJson或Gps数据
+                else
+                    q = q.Where(o => string.IsNullOrWhiteSpace(o.GeoJson) && string.IsNullOrWhiteSpace(o.Gps));    // 无效点位，GeoJson或Gps数据为空
+            }
             return q;
         }
 

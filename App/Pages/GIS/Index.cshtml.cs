@@ -94,15 +94,11 @@ namespace App.Pages.GIS
 
         public JsonResult OnGetGeometryLayerData(long? menuId)
         {
-            var query = GisGeometry.DataSet
-                .Where(g => !string.IsNullOrWhiteSpace(g.GeoJson) || !string.IsNullOrWhiteSpace(g.Gps));
-
-            if (menuId.HasValue)
-                query = query.Where(g => g.MenuId == menuId.Value);
-
+            var query = GisGeometry.Search(menuId: menuId, isValid: true);  // 当前菜单下的有效点位（不递归）
             var list = query
                 .OrderBy(g => g.SortId)
                 .ThenBy(g => g.Id)
+                //.SortPageExport(new Paging { PageSize = int.MaxValue })  // 导出版本，查询时就排序分页
                 .Select(g => new
                 {
                     id = g.Id,
@@ -115,7 +111,7 @@ namespace App.Pages.GIS
                     gps = g.Gps,
                     region = g.Region,
                     url = g.Url,
-                    att = g.Att,
+                    file = g.File,
                     geoJson = g.GeoJson,
                     dataJson = g.DataJson,
                     icon = g.Menu != null ? g.Menu.Icon : null
@@ -148,7 +144,7 @@ namespace App.Pages.GIS
                 gps = item.Gps,
                 region = item.Region,
                 url = item.Url,
-                att = item.Att,
+                file = item.File,
                 geoJson = item.GeoJson,
                 dataJson = item.DataJson,
                 dataRows = ParseDataRows(item.DataJson),

@@ -11,8 +11,9 @@
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreeSelect For="Item.ParentId" Label="上级" Api="/httpapi/checks/GetCheckTagTree?excludeId=@currentId&selectedId=@selectedId"></EleTreeSelect>
         <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+        <EleSwitch For="Item.IsExtra" Label="是否扩展标签"></EleSwitch>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
-    
+        
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Type="Primary" Command="SaveNew" Visible="@(Model.Mode != PageMode.View)">保存并新增</EleButton>

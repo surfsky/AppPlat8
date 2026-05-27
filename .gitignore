@@ -16,7 +16,9 @@ Thumbs.db
 
 # Files
 temp.txt
-history.txt
+tasklog.txt
+Deploy/
+Doc/Data/
 
 
 # Logs
@@ -37,8 +39,6 @@ App/Caches/
 App/.config/
 App/Migrations/
 App/DataProtection/
-Deploy/
-Doc/Data/
 
 # Local tools/temp
 cookies.txt

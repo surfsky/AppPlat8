@@ -15,10 +15,11 @@ namespace App.DAL
     public class CheckTag : TreeEntity<CheckTag>
     {
         [UI("组织")]                    public long? OrgId { get; set; }
+        [UI("是否是扩展标签")]            public bool? IsExtra {get;set;}   // 非141系统的标签
+
+
         [UI("组织")]                    public virtual Org Org { get; set; }
         [UI("组织名称"), NotMapped]      public string OrgName => Org?.Name;
-
-        // 检查表Id列表
         [UI("检查表Id列表"), NotMapped]   public List<long> SheetIds { get; set; } = new List<long>();      // 冗余属性，用于表单数据传递
         [UI("检查表列表")]                public virtual List<CheckSheet> Sheets { get; set; } = new List<CheckSheet>();  // 检查表。n:n关系
 
@@ -28,6 +29,7 @@ namespace App.DAL
             return base.Clone().Let(t => {
                 t.OrgId = this.OrgId;
                 t.SheetIds = this.SheetIds;
+                t.IsExtra = this.IsExtra;
             });
         }
 
@@ -38,6 +40,7 @@ namespace App.DAL
             {
                 this.Id,
                 this.Name,
+                this.IsExtra,
                 this.ParentId,
                 this.TreeLevel,
                 this.OrgId,
@@ -57,12 +60,13 @@ namespace App.DAL
         }
 
         //
-        public IQueryable<CheckTag> Query(string name="", long? sheetId=null, long? orgId=null)
+        public IQueryable<CheckTag> Query(string name="", long? sheetId=null, long? orgId=null, bool? isExtra=null)
         {
             IQueryable<CheckTag> q = CheckTag.IncludeSet;
-            if (name.IsNotEmpty())  q.Where(t => t.Name.Contains(name));
-            if (sheetId != null)    q.Where(t => t.Sheets.Any(s => s.Id == sheetId));
-            if (orgId != null)      q.Where(t => t.OrgId == orgId);
+            if (name.IsNotEmpty())  q = q.Where(t => t.Name.Contains(name));
+            if (sheetId != null)    q = q.Where(t => t.Sheets.Any(s => s.Id == sheetId));
+            if (orgId != null)      q = q.Where(t => t.OrgId == orgId);
+            if (isExtra != null)    q = q.Where(t => t.IsExtra == isExtra);
             return q;
         }
     }
