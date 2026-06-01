@@ -210,3 +210,44 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
 
 
 
+
+                <EleSelect For="Item.IsDemonstration" Width="250px" Label="示范企业" Clearable="true"></EleSelect>
+                <EleSelect For="Item.IsKeySupervision" Width="250px" Label="重点监管" Clearable="true"></EleSelect>
+                <EleSelect For="Item.IsProductInNight" Width="250px" Label="夜晚生产" Clearable="true"></EleSelect>
+                <EleSelect For="Item.IsThreePlacesThreeEnterprises" Width="250px" Label="三场所三企业" Clearable="true"></EleSelect>
+
+            <EleColumn For="Item.IsDemonstration" Label="示范企业" Width="100" Format="Switch"></EleColumn>
+            <EleColumn For="Item.IsKeySupervision" Label="重点监管" Width="100" Format="Switch"></EleColumn>
+            <EleColumn For="Item.IsProductInNight" Label="夜晚生产" Width="100" Format="Switch"></EleColumn>
+            <EleColumn For="Item.IsThreePlacesThreeEnterprises" Label="三场所三企业" Width="100" Format="Switch"></EleColumn>
+
+                <EleDatePicker Prop="updateStartDt" Width="250px" Label="修改时间起" Type="DateTime" ></EleDatePicker>
+                <EleDatePicker Prop="updateEndDt" Width="250px" Label="修改时间止" Type="DateTime" ></EleDatePicker>
+                <EleSelect Prop="hasHazard" Width="250px" Label="有无隐患" Items="@("{'有隐患':'true','无隐患':'false'}")" Clearable="true"></EleSelect>
+
+                <EleTreeSelect Prop="tagId" Width="250px" Label="标签属性" Api="/httpapi/checks/GetCheckTagTree" Clearable="true"></EleTreeSelect>
+
+                hasHazardValue: hasHazardValue,
+                hasPatrolValue: hasPatrolValue,
+                isKeySupervision: isKeySupervision,
+                isDemonstration: isDemonstration ?? false ? isDemonstration.Value : null,
+                isKeySupervision: isKeySupervision ?? false ? isKeySupervision.Value : null,
+                isProductInNight: isProductInNight ?? false ? isProductInNight.Value : null,
+                isProductInNight: isProductInNight,
+                isThreePlacesThreeEnterprises: isThreePlacesThreeEnterprises ?? false ? isThreePlacesThreeEnterprises.Value : null,
+                isThreePlacesThreeEnterprises: isThreePlacesThreeEnterprises
+            bool? isDemonstration=null,
+            bool? isKeySupervision=null,
+            bool? isProductInNight=null,
+            bool? isThreePlacesThreeEnterprises=null
+
+
+            bool? hasHazardValue = null;
+            if (bool.TryParse(hasHazard, out var parsedHasHazard))
+                hasHazardValue = parsedHasHazard;
+
+            bool? hasPatrolValue = null;
+            if (patrolStatus == "1") hasPatrolValue = true;
+            if (patrolStatus == "0") hasPatrolValue = false;
+
+            if (tagId.IsNotEmpty())            q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && t.TagId == tagId.Value));

@@ -35,6 +35,7 @@
     cd AppPlat
     dotnet build
     dotnet run --project App
+    dotnet run --project App/App.csproj --urls "http://127.0.0.1:6060"
     dotnet app.dll --urls=http://localhost:6060;http://abc.org
 
     # 编译EleUI示例项目

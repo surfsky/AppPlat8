@@ -28,10 +28,9 @@ namespace App.Pages.Checks
             string socialCreditCode="", 
             string address="",
             string dutyUserName="",
-            string hasHazard="",
-            string patrolStatus="",
+            bool? hasHarzard=null,
+            bool? isChecked=null,
             long? orgId=null, 
-            long? tagId=null,
             long? checkerId=null, 
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
@@ -44,48 +43,33 @@ namespace App.Pages.Checks
             DateTime? updateEndDt=null,
             DateTime? latestCheckStartDt=null,
             DateTime? latestCheckEndDt=null,
-            bool? isDel=null,
-            bool? isDemonstration=null,
-            bool? isKeySupervision=null,
-            bool? isProductInNight=null,
-            bool? isThreePlacesThreeEnterprises=null
+            List<long> tagIds=null,
+            bool? isDel=null
             )
         {
-            bool? hasHazardValue = null;
-            if (bool.TryParse(hasHazard, out var parsedHasHazard))
-                hasHazardValue = parsedHasHazard;
-
-            bool? hasPatrolValue = null;
-            if (patrolStatus == "1") hasPatrolValue = true;
-            if (patrolStatus == "0") hasPatrolValue = false;
-
             var list = CheckObject.Search(
-                name, 
-                code,
-                socialCreditCode, 
-                address,
-                dutyUserName,
-                orgId, 
-                tagId,
-                checkerId, 
-                objectType, 
-                scope,
-                scale,
-                riskLevel,
-                industryType,
-                createStartDt,
-                createEndDt,
-                updateStartDt,
-                updateEndDt,
-                latestCheckStartDt,
-                latestCheckEndDt,
-                hasHazardValue,
-                hasPatrolValue,
-                isDel,
-                isDemonstration,
-                isKeySupervision,
-                isProductInNight,
-                isThreePlacesThreeEnterprises
+                name: name, 
+                code: code,
+                isChecked: isChecked,
+                hasHarzard: hasHarzard,
+                socialCreditCode: socialCreditCode, 
+                address: address,
+                dutyUserName: dutyUserName,
+                orgId: orgId, 
+                tagIds: tagIds,
+                checkerId: checkerId, 
+                objectType: objectType, 
+                scope: scope,
+                scale: scale,
+                riskLevel: riskLevel,
+                industryType: industryType,
+                createStartDt: createStartDt,
+                createEndDt: createEndDt,
+                updateStartDt: updateStartDt,
+                updateEndDt: updateEndDt,
+                latestCheckStartDt: latestCheckStartDt,
+                latestCheckEndDt: latestCheckEndDt,
+                isDel: isDel
                 ).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }

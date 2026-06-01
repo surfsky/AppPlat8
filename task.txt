@@ -7,19 +7,61 @@
 # 业务
 
 
-bug：新建标签时，组织老是自动设置为“新城应消中心”
-将检查对象 checkobject 的风险类标签合并到 Tags，检索页面增加多标签检索的能力；
+弄一个excel点位导入页面
+    只取通用的列（id编号、menu菜单、name名称、alias别称、gps坐标、type类别、geojson图形数据），其它列都存储到datajson中
+    写一个通用方法，可设置列名兼容
+    可解析gps坐标，支持: x,y      
 
+标签下拉框太高，考虑用 ElePopup 替代
+
+
+bug：新建标签时，组织老是自动设置为“新城应消中心”
+将检查对象 checkobject 的风险类标签合并到 Tags（原风险类别字段尚未删除）
+知识库采用自由上传文件方式（云文档）
+    目录，文件都自由创建和上传
+    安全防护：网站禁止访问运行
+
+- 检索页面增加多标签检索的能力；
 - 隐患排查
 - 统计及调度
 - web监管进度
 - 做简单的统计报表
 
 
+我的任务 me/tasks 任务看板
+
+左中右三块：待办、处理中、已完成
+可增加、修改或拖动
+
+
+
 检查对象CheckObjects 页面的过滤条件：
 CheckSheet 中有两个特别大的检查表，预计要删除；
+/CheckObject 增加安全责任人（即CheckContact表，不用改），可以考虑增加联系人类型
 
 # 驾驶舱
+
+点位增加 MinZoom/MaxZoom属性，表示地图在 MinZoom 和 MaxZoom 以内才可展示，若为空则始终展示；
+弄个半透明遮罩层（中奖部分亮，两侧暗），在统计模式时显示（便于展示统计面板），在图层模式时隐藏；
+调整统计模式页面布局：左右侧各放置一个容器，可上下滚动，内部可放置多个面板，这样可以容纳和展示更多统计数据；
+
+重构气象地图
+    - 将图层逻辑进行统一和抽象，接口如（供参考）：
+        public class MapLayer {
+            string name;   // 图层名称（唯一）
+            string title;  // 标题
+            string descript;  // 描述
+            string api;       // 接口地址（如果有）
+            string key;       // 接口key（如果有）
+            long refreshSeconds;   // 更新秒数（若为0，则不刷新）
+            datetime lastTime;   // 最后尝试时间
+            bool lastStatus;   // 最后尝试状态
+            bool show(map, float opacity=1.0);  // 显示图层或面板
+            bool hide();       // 隐藏或关闭
+        }
+    - 每个图层都用一个js文件进行管理，继承自 MapLayer；
+    - 每个图层的内容自己负责，可根据map的当前信息（主要是zoom和区域）动态进行展示；
+    - 主文件中用数组管理若干 MapLayer;
 
 统一固定点位 GisGeometry 和接口 GisApi 获取的点位
     /所有都是图层，gismenu真的要改成gislayer了（不改了，事实上一个menu可以容纳多个layer）

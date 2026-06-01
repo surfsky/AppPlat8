@@ -22,7 +22,7 @@ namespace App.DAL
     [UI("检查", "检查对象")]
     public class CheckObject : EntityBase<CheckObject>, IDeleteLogic, IFixAll
     {
-        [UI("基础", "主键ID")]      public string Code { get; set; }
+        [UI("基础", "编码")]      public string Code { get; set; }
         [UI("基础", "是否失效")]    public bool? IsDel { get; set; } = false;
         [UI("基础", "失效原因")]    public string FailReason { get; set; }
         [UI("基础", "是否存在隐患")] public bool? HasHarzard { get; set; } = false;
@@ -57,24 +57,13 @@ namespace App.DAL
 
 
         // 风险相关
-        [UI("风险", "行业类型")] public CheckIndustryType? IndustryType { get; set; }  // 需枚举
-        [UI("风险", "行业风险")] public CheckIndustryRiskType? IndustryRisk { get; set; }  // 需枚举
-        [UI("风险", "亿元企业")] public bool? IsYiEnterprise { get; set; }
-        [UI("风险", "重点监管")] public bool? IsKeySupervision { get; set; }
-        [UI("风险", "示范企业")] public bool? IsDemonstration { get; set; }
-        [UI("风险", "夜间生产")] public bool? IsProductInNight { get; set; }
-        [UI("风险", "春节生产")] public bool? IsProductInSpringFestival { get; set; }
-        [UI("风险", "三场所三企业")] public bool? IsThreePlacesThreeEnterprises { get; set; }
-        [UI("风险", "园中园厂中厂")] public bool? IsParkFactoryOverlayRisk { get; set; }
-        [UI("风险", "涉及电气焊")] public bool? HasWelding { get; set; }
+        [UI("风险", "行业类型")] public CheckIndustryType? IndustryType { get; set; }  // 枚举（考虑用tag实现，更容易扩展维护）
+        [UI("风险", "行业风险")] public CheckIndustryRiskType? IndustryRisk { get; set; }  // 枚举（考虑用tag实现，更容易扩展维护）
 
         //
-        [UI("设备", "有环保设备")] public bool? HasEnvironmentalEquipment { get; set; }
-        [UI("设备", "有喷淋系统")] public bool HasSprinklerSystem { get; set; }
-
-        //
-        [UI("标准化", "标准化创建")] public string StandardizationStatus { get; set; }
-        [UI("标准化", "内部奖励机制")] public string InternalRewardMechanism { get; set; }
+        [UI("其它", "重点监管")] public bool? IsKeySupervision { get; set; }
+        [UI("其它", "示范企业")] public bool? IsDemonstration { get; set; } 
+        [UI("其它", "内部奖励机制")] public string InternalRewardMechanism { get; set; }
 
         // 人员相关
         [UI("人员", "三方机构")] public string ThirdPartySafetyAgency { get; set; }
@@ -90,6 +79,21 @@ namespace App.DAL
         [UI("建筑", "房屋结构")] public CheckBuildingStructure? BuildingStructure { get; set; }   // 需枚举
 
 
+
+        //
+        // 以下计划删除，用 Tag 替代
+        //
+        [UI("风险", "亿元企业")] public bool? IsYiEnterprise { get; set; }
+        [UI("风险", "夜间生产")] public bool? IsProductInNight { get; set; }
+        [UI("风险", "春节生产")] public bool? IsProductInSpringFestival { get; set; }
+        [UI("风险", "三场所三企业")] public bool? IsThreePlacesThreeEnterprises { get; set; }
+        [UI("风险", "园中园厂中厂")] public bool? IsParkFactoryOverlayRisk { get; set; }
+        [UI("风险", "涉及电气焊")] public bool? HasWelding { get; set; }
+        [UI("设备", "有环保设备")] public bool? HasEnvironmentalEquipment { get; set; }
+        [UI("设备", "有喷淋系统")] public bool HasSprinklerSystem { get; set; }
+        [UI("标准化", "标准化创建")] public string StandardizationStatus { get; set; }
+
+
         // Relations
         public virtual List<CheckObjectTag> Tags { get; set; }  // 标签列表（1:n 关系）
         public virtual List<CheckObjectContact> Contacts { get; set; }  // 联系人列表（1:n 关系）
@@ -97,11 +101,27 @@ namespace App.DAL
         public virtual User Checker { get; set; }
         public virtual User SocialChecker { get; set; }
 
-        // 临时字段
-        [UI("基础", "责任组织")] public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name ?? "";
+        // 扩展字段，供列表展示
+        [UI("基础", "责任组织")]   public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name ?? "";
         [UI("基础", "技术检查员")] public string CheckerName => Checker?.Name;
         [UI("基础", "社区网格员")] public string SocialCheckerName => SocialChecker?.Name;
-        [UI("基础", "检查周期")] public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
+        [UI("基础", "检查周期")]   public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
+        [UI("基础", "标签")]      public List<string> TagNames => Tags?.Select(t => t.Tag?.Name).ToList() ?? new List<string>();
+        [UI("基础", "标签")]      public List<long> TagIds => Tags?.Select(t => t.TagId).ToList() ?? new List<long>();
+
+        /// <summary>设置匹配的标签列表</summary>
+        /// <param name="tagIds">标签ID列表</param>
+        public void SetTags(List<long> tagIds)
+        {
+            tagIds = tagIds.Distinct().ToList();
+            foreach (var tagId in tagIds){
+                var tag = CheckTag.Set.Find(tagId);
+                if (tag != null){
+                    new CheckObjectTag{TagId = tag.Id, CheckObjectId = Id}.Save();
+                }
+            }
+        }
+
 
         // 导出
         public override object Export(ExportMode mode)
@@ -162,37 +182,39 @@ namespace App.DAL
                 HasSprinklerSystem,
                 IndustryType,
                 IndustryRisk,
+                TagNames,
+                Tags,
             };
         }
 
         public static IQueryable<CheckObject> Search(
-            string name="", 
-            string code="",
-            string socialCreditCode="", 
-            string address="",
-            string dutyUserName="",
-            long? orgId=null, 
-            long? tagId=null,
-            long? checkerId=null, 
-            CheckObjectType? objectType=null, 
-            CheckScope? scope=null,
-            CheckObjectScale? scale=null, 
-            CheckRiskLevel? riskLevel=null,
-            CheckIndustryType? industryType=null,
-            DateTime? createStartDt=null,
-            DateTime? createEndDt=null,
-            DateTime? updateStartDt=null,
-            DateTime? updateEndDt=null,
-            DateTime? latestCheckStartDt=null,
-            DateTime? latestCheckEndDt=null,
-            bool? hasHazard=null,
-            bool? isChecked=null,
-            bool? isDel=null,
-            bool? isDemonstration=null,
-            bool? isKeySupervision=null,
-            bool? isProductInNight=null,
-            bool? isThreePlacesThreeEnterprises=null
-            )
+            string name = "",
+            string code = "",
+            string socialCreditCode = "",
+            string address = "",
+            string dutyUserName = "",
+            long? orgId = null,
+            List<long> tagIds = null,
+            long? checkerId = null,
+            CheckObjectType? objectType = null,
+            CheckScope? scope = null,
+            CheckObjectScale? scale = null,
+            CheckRiskLevel? riskLevel = null,
+            CheckIndustryType? industryType = null,
+            DateTime? createStartDt = null,
+            DateTime? createEndDt = null,
+            DateTime? updateStartDt = null,
+            DateTime? updateEndDt = null,
+            DateTime? latestCheckStartDt = null,
+            DateTime? latestCheckEndDt = null,
+            bool? hasHarzard = null,
+            bool? isChecked = null,
+            bool? isDel = null,
+            bool? isDemonstration = null,
+            bool? isKeySupervision = null,
+            bool? isProductInNight = null,
+            bool? isThreePlacesThreeEnterprises = null
+        )
         {
             IQueryable<CheckObject> q = CheckObject.IncludeSet;
 
@@ -202,7 +224,8 @@ namespace App.DAL
             if (code.IsNotEmpty())             q = q.Where(o => o.Code.Contains(code.Trim()));
             if (address.IsNotEmpty())          q = q.Where(o => o.Address.Contains(address.Trim()));
             if (dutyUserName.IsNotEmpty())     q = q.Where(o => o.DutyUserName.Contains(dutyUserName.Trim()));
-            if (tagId.IsNotEmpty())            q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && t.TagId == tagId.Value));
+            if (tagIds != null && tagIds.Count > 0)
+                q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && tagIds.Contains(t.TagId)));
             if (objectType.IsNotEmpty())       q = q.Where(o => o.ObjectType == objectType.Value);
             if (scope.IsNotEmpty())            q = q.Where(o => o.Scope == scope.Value);
             if (scale.IsNotEmpty())            q = q.Where(o => o.Scale == scale.Value);
@@ -215,7 +238,7 @@ namespace App.DAL
             if (updateEndDt.IsNotEmpty())      q = q.Where(o => o.UpdateDt <= updateEndDt.Value);
             if (latestCheckStartDt.IsNotEmpty()) q = q.Where(o => o.LatestCheckDt >= latestCheckStartDt.Value);
             if (latestCheckEndDt.IsNotEmpty())   q = q.Where(o => o.LatestCheckDt <= latestCheckEndDt.Value);
-            if (hasHazard.IsNotEmpty())        q = q.Where(o => o.HasHarzard == hasHazard.Value);
+            if (hasHarzard.IsNotEmpty())        q = q.Where(o => o.HasHarzard == hasHarzard.Value);
             if (isChecked.IsNotEmpty())        q = q.Where(o => o.IsChecked == isChecked.Value);
             if (isDel.IsNotEmpty())            q = q.Where(o => o.IsDel == isDel.Value);
             if (isDemonstration.IsNotEmpty())  q = q.Where(o => o.IsDemonstration == isDemonstration.Value);

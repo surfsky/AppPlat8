@@ -20,10 +20,11 @@ namespace App.DAL
     {
         [UI("名称")] public string Name { get; set; }
         [UI("领域")] public CheckScope Scope { get; set; }
+
+
         [UI("匹配标签"), NotMapped] public List<long> TagIds { get; set; } = new List<long>();
         [UI("标签列表"), NotMapped] public string TagNames { get; set; } = string.Empty;
         [UI("检查项数目"), NotMapped] public int ItemCount { get; set; }
-
         [UI("匹配的标签")] public virtual List<CheckTag> Tags { get; set; } = new List<CheckTag>(); // n:n关系
 
         //
@@ -61,5 +62,21 @@ namespace App.DAL
             if (tagIds.IsNotEmpty()) q = q.Where(o => o.Tags.Any(t => tagIds.Contains(t.Id)));
             return q;
         }
+
+        /// <summary>设置匹配的标签列表</summary>
+        /// <param name="tagIds">标签ID列表</param>
+        public void SetTags(List<long> tagIds, bool save = false)
+        {
+            tagIds = tagIds.Distinct().ToList();
+            var tags = tagIds.Count == 0
+                ? new List<CheckTag>()
+                : CheckTag.Set.Where(t => tagIds.Contains(t.Id)).ToList();
+            Tags.Clear();
+            foreach (var tag in tags)
+                Tags.Add(tag);
+            if (save)
+                this.Save();
+        }
+
     }
 }

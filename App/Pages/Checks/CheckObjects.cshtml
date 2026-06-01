@@ -14,24 +14,20 @@
                 <EleSelect For="Item.IsDel" Width="250px" Label="已删除"  Clearable="true"></EleSelect>
                 <EleSelect For="Item.IsChecked" Width="250px" Label="是否检查" Clearable="true"></EleSelect>
                 <EleTreeSelect For="Item.DutyOrgId" Width="250px" Label="所属网格" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true"></EleTreeSelect>
-                <EleDatePicker Prop="updateStartDt" Width="250px" Label="修改时间起" Type="DateTime" ></EleDatePicker>
-                <EleDatePicker Prop="updateEndDt" Width="250px" Label="修改时间止" Type="DateTime" ></EleDatePicker>
-                <EleDatePicker Prop="createStartDt" Width="250px" Label="创建时间起" Type="DateTime" ></EleDatePicker>
-                <EleDatePicker Prop="createEndDt" Width="250px" Label="创建时间止" Type="DateTime" ></EleDatePicker>
-                <EleTreeSelect Prop="tagId" Width="250px" Label="标签属性" Api="/httpapi/checks/GetCheckTagTree" Clearable="true"></EleTreeSelect>
                 <EleInput For="Item.Address" Width="250px" Label="详细地址" ></EleInput>
-                <EleSelect Prop="hasHazard" Width="250px" Label="有无隐患" Items="@("{'有隐患':'true','无隐患':'false'}")" Clearable="true"></EleSelect>
+                <EleSelect For="Item.HasHarzard" Width="250px" Label="存在隐患" Clearable="true"></EleSelect>
                 <EleInput For="Item.SocialCreditCode" Width="250px" Label="统一社会信用代码" ></EleInput>
                 <EleSelect For="Item.RiskLevel" Width="250px" Label="风险等级" Clearable="true"></EleSelect>
                 <EleInput For="Item.Code" Width="250px" Label="对象标识" ></EleInput>
                 <EleSelect For="Item.IndustryType" Width="250px" Label="行业" Clearable="true"></EleSelect>
                 <EleInput For="Item.DutyUserName" Width="250px" Label="责任人" ></EleInput>
+                <EleDatePicker Prop="createStartDt" Width="250px" Label="创建时间起" Type="DateTime" ></EleDatePicker>
+                <EleDatePicker Prop="createEndDt" Width="250px" Label="创建时间止" Type="DateTime" ></EleDatePicker>
                 <EleDatePicker Prop="latestCheckStartDt" Width="250px" Label="巡查时间起" Type="DateTime" ></EleDatePicker>
                 <EleDatePicker Prop="latestCheckEndDt" Width="250px" Label="巡查时间止" Type="DateTime" ></EleDatePicker>
-                <EleSelect For="Item.IsDemonstration" Width="250px" Label="示范企业" Clearable="true"></EleSelect>
-                <EleSelect For="Item.IsKeySupervision" Width="250px" Label="重点监管" Clearable="true"></EleSelect>
-                <EleSelect For="Item.IsProductInNight" Width="250px" Label="夜晚生产" Clearable="true"></EleSelect>
-                <EleSelect For="Item.IsThreePlacesThreeEnterprises" Width="250px" Label="三场所三企业" Clearable="true"></EleSelect>
+                <EleSelect For="Item.IndustryRisk" Width="250px" Label="行业风险类型" Clearable="true"></EleSelect>
+
+                <EleTreeSelect Prop="tagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Clearable="true"></EleTreeSelect>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
@@ -71,11 +67,7 @@
             <EleColumn For="Item.SocialCheckerName" Label="网格员" Width="120"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="建档日期" Width="110" FormatString="yyyy-MM-dd"></EleColumn>
             <EleColumn For="Item.LatestCheckDt" Label="最新巡查时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
-
-            <EleColumn For="Item.IsDemonstration" Label="示范企业" Width="100" Format="Switch"></EleColumn>
-            <EleColumn For="Item.IsKeySupervision" Label="重点监管" Width="100" Format="Switch"></EleColumn>
-            <EleColumn For="Item.IsProductInNight" Label="夜晚生产" Width="100" Format="Switch"></EleColumn>
-            <EleColumn For="Item.IsThreePlacesThreeEnterprises" Label="三场所三企业" Width="100" Format="Switch"></EleColumn>
+            <EleColumn For="Item.TagNames" Label="标签列表" MinWidth="220"></EleColumn>
         </Columns>
     </EleTable>
 }

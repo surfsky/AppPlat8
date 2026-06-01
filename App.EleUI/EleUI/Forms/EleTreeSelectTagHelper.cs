@@ -20,7 +20,7 @@ namespace App.EleUI
         [HtmlAttributeName("ChildrenField")]    public string ChildrenField { get; set; }
         [HtmlAttributeName("CheckStrictly")]    public bool CheckStrictly { get; set; } = true;
         [HtmlAttributeName("Multiple")]         public bool Multiple { get; set; } = false;
-        [HtmlAttributeName("CollapseTags")]     public bool? CollapseTags { get; set; }
+        [HtmlAttributeName("CollapseTags")]     public bool? CollapseTags { get; set; } = false;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

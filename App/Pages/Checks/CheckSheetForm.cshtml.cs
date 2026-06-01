@@ -46,19 +46,11 @@ namespace App.Pages.Checks
 
             item.Name = req.Name;
             item.Scope = req.Scope;
-
-            var tagIds = (req.TagIds ?? new List<long>()).Distinct().ToList();
-            var tags = tagIds.Count == 0
-                ? new List<CheckTag>()
-                : CheckTag.Set.Where(t => tagIds.Contains(t.Id)).ToList();
-
-            item.Tags.Clear();
-            foreach (var tag in tags)
-                item.Tags.Add(tag);
-
+            item.SetTags(req.TagIds);
             item.Save();
             return BuildResult(0, "保存成功");
         }
+
 
         /// <summary>显示检查项</summary>
         public IActionResult OnPostShowItems([FromBody] CheckSheet req)

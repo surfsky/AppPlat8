@@ -19,7 +19,8 @@ temp.txt
 tasklog.txt
 Deploy/
 Doc/Data/
-
+Doc/Map/
+Doc/Specs/
 
 # Logs
 **/Logs/
