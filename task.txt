@@ -1,3 +1,27 @@
+# 优先
+
+
+
+/风险点管理
+1、批量导入
+2、场景图层
+3、事发点标定、范围搜索及ai统计
+4、定制图层的融合
+5、语音或文本命令ai操作
+6、事件记录及处置流程，含预案过程和复盘
+7、人员定位和上图
+8、酷炫动画
+9、任务派发和分配、进度统计、巡查可选任务
+
+
+事件独立，不绑定对象，可关联对象
+风险点独立、增加风险类别，便于绑定到菜单及上图
+菜单带刷新时间
+更换时间范围控件
+
+
+
+
 # 工程
 
 - 修正调试配置（launch.json），debug consoler 是没问题的，另外两个都有问题；
@@ -7,13 +31,12 @@
 # 业务
 
 
-弄一个excel点位导入页面
-    只取通用的列（id编号、menu菜单、name名称、alias别称、gps坐标、type类别、geojson图形数据），其它列都存储到datajson中
-    写一个通用方法，可设置列名兼容
-    可解析gps坐标，支持: x,y      
+*** 所有检查都有一个任务ID，默认为日常任务；这样便于统计某个检查归属在哪个专项任务下面；
+*** 任务可以设置起止时间、受理部门；
+
 
 标签下拉框太高，考虑用 ElePopup 替代
-
+增加风险点 Check 对象，用于保存风险点，可关联到企业，也可以独立存在，并关联到企业责任人、政府监管人
 
 bug：新建标签时，组织老是自动设置为“新城应消中心”
 将检查对象 checkobject 的风险类标签合并到 Tags（原风险类别字段尚未删除）
@@ -28,40 +51,32 @@ bug：新建标签时，组织老是自动设置为“新城应消中心”
 - 做简单的统计报表
 
 
-我的任务 me/tasks 任务看板
 
-左中右三块：待办、处理中、已完成
-可增加、修改或拖动
+我的任务 me/tasks 任务看板
+    左中右三块：待办、处理中、已完成
+    可增加、修改或拖动
 
 
 
 检查对象CheckObjects 页面的过滤条件：
 CheckSheet 中有两个特别大的检查表，预计要删除；
-/CheckObject 增加安全责任人（即CheckContact表，不用改），可以考虑增加联系人类型
+重写梳理新系统的检查表
+/CheckObject 增加安全责任人（即CheckContact表，不用改），可以考虑
+增加联系人类型枚举, 并修改完善list、form页面
 
 # 驾驶舱
 
+实现点位 excel 导入页面
+    只取通用的列（id编号、menu菜单、name名称、alias别称、gps坐标、type类别、geojson图形数据），其它列都存储到datajson中
+    写一个通用方法，可设置列名兼容
+    可解析gps坐标，支持: lng,lat    xxxxE, xxxxN
+
+将气象地图图层（这些图层定制图层）迁移到gis/index页面，考虑：
+    把这些图层加到顶部的视图图层去？
+    或融合到左侧图层面板？
 点位增加 MinZoom/MaxZoom属性，表示地图在 MinZoom 和 MaxZoom 以内才可展示，若为空则始终展示；
 弄个半透明遮罩层（中奖部分亮，两侧暗），在统计模式时显示（便于展示统计面板），在图层模式时隐藏；
 调整统计模式页面布局：左右侧各放置一个容器，可上下滚动，内部可放置多个面板，这样可以容纳和展示更多统计数据；
-
-重构气象地图
-    - 将图层逻辑进行统一和抽象，接口如（供参考）：
-        public class MapLayer {
-            string name;   // 图层名称（唯一）
-            string title;  // 标题
-            string descript;  // 描述
-            string api;       // 接口地址（如果有）
-            string key;       // 接口key（如果有）
-            long refreshSeconds;   // 更新秒数（若为0，则不刷新）
-            datetime lastTime;   // 最后尝试时间
-            bool lastStatus;   // 最后尝试状态
-            bool show(map, float opacity=1.0);  // 显示图层或面板
-            bool hide();       // 隐藏或关闭
-        }
-    - 每个图层都用一个js文件进行管理，继承自 MapLayer；
-    - 每个图层的内容自己负责，可根据map的当前信息（主要是zoom和区域）动态进行展示；
-    - 主文件中用数组管理若干 MapLayer;
 
 统一固定点位 GisGeometry 和接口 GisApi 获取的点位
     /所有都是图层，gismenu真的要改成gislayer了（不改了，事实上一个menu可以容纳多个layer）
@@ -295,6 +310,27 @@ Task - 业务
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2025.06.01
+    /创建气象地图
+    - 将图层逻辑进行统一和抽象，接口如（供参考）：
+        public class MapLayer {
+            string name;   // 图层名称（唯一）
+            string title;  // 标题
+            string descript;  // 描述
+            string api;       // 接口地址（如果有）
+            string key;       // 接口key（如果有）
+            long refreshSeconds;   // 更新秒数（若为0，则不刷新）
+            datetime lastTime;   // 最后尝试时间
+            bool lastStatus;   // 最后尝试状态
+            bool show(map, float opacity=1.0);  // 显示图层或面板
+            bool hide();       // 隐藏或关闭
+        }
+    - 每个图层都用一个js文件进行管理，继承自 MapLayer；
+    - 每个图层的内容自己负责，可根据map的当前信息（主要是zoom和区域）动态进行展示；
+    - 主文件中用数组管理若干 MapLayer;
+
+
+
 2025.05.27
     /修改 GisGeometry.Att属性名称（改为File），避免和 Atts 混淆
     /GisGeometry.Search() 支持递归和非递归搜索

@@ -5,16 +5,29 @@ using App.Utils;
 using Z.EntityFramework.Plus;
 
 
+
+
 /*
 检查对象CheckObject --(1:n)-- 检查对象联系人CheckObjectContact
                   --(1:n)-- 检查对象标签CheckTag
 */
 namespace App.DAL
 {
+    [UI("联系人类型")]
+    public enum ContactType
+    {
+        [UI("法定代表人")] Legal = 0,
+        [UI("负责人")] Principal = 1,
+        [UI("安全管理员")] SafetyAdmin = 2,
+        [UI("其他")] Other = 3,
+    }
+
+
     /// <summary>对象拥有的人员</summary>
     [UI("检查", "对象拥有的人员清单")]
     public class CheckObjectContact : EntityBase<CheckObjectContact>
     {
+        [UI("联系人类型")] public ContactType? ContactType { get; set; }
         [UI("姓名")] public string Name { get; set; }
         [UI("照片")] public string Photo { get; set; }
         [UI("证件号")] public string IdCard { get; set; }
@@ -24,6 +37,8 @@ namespace App.DAL
         [UI("过期日期")] public DateTime? CertExpireDt { get; set; }
 
         public virtual CheckObject CheckObject { get; set; }
+        public string ContactTypeName => ContactType.GetTitle();
+        public string CheckObjectName => CheckObject?.Name ?? string.Empty;
 
         //
         public override object Export(ExportMode mode)

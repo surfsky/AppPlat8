@@ -251,3 +251,52 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
             if (patrolStatus == "0") hasPatrolValue = false;
 
             if (tagId.IsNotEmpty())            q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && t.TagId == tagId.Value));
+
+
+        [HttpApi("获取地址列表（旧）", AuthLogin = true)]
+        public static APIResult GetAddrsGeo(string name)
+        {
+            name = AmapHelper.NormalizeAddressQuery(name);
+            if (name.IsEmpty())
+                return new APIResult(-1, "请输入地址关键字");
+
+            var list = new List<GisAddrItem>();
+            var dedup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var query = new Dictionary<string, string>
+            {
+                ["address"] = name
+            };
+
+            if (!AmapHelper.TryGetAmapResult<AmapGeocodeResult>("/v3/geocode/geo", query, out var geocodeResult, out var failInfo))
+                return new APIResult(-1, failInfo);
+
+            if (geocodeResult?.Geocodes != null)
+            {
+                foreach (var geocode in geocodeResult.Geocodes)
+                {
+                    var location = AmapHelper.GetJsonText(geocode.Location);
+                    if (!GisHelper.TryParseLngLat(location, out var gcjLng, out var gcjLat))
+                        continue;
+
+                    var wgs = GisHelper.Gcj02ToWgs84(gcjLng, gcjLat);
+                    var formattedAddress = AmapHelper.GetJsonText(geocode.Formatted_address);
+                    if (formattedAddress.IsEmpty())
+                        formattedAddress = name;
+                    var district = AmapHelper.GetJsonText(geocode.District);
+                    var key = $"{formattedAddress}:{Math.Round(wgs.Lng, 6)},{Math.Round(wgs.Lat, 6)}";
+                    if (!dedup.Add(key))
+                        continue;
+
+                    list.Add(new GisAddrItem
+                    {
+                        Name = formattedAddress,
+                        District = district,
+                        Address = formattedAddress,
+                        Lng = Math.Round(wgs.Lng, 6),
+                        Lat = Math.Round(wgs.Lat, 6)
+                    });
+                }
+            }
+
+            return list.Take(12).ToList().ToResult();
+        }     

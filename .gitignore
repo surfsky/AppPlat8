@@ -1,5 +1,8 @@
 # OS
 .DS_Store
+.trae/
+.codegraph/
+.venv/
 Thumbs.db
 
 # IDE / Editor
@@ -40,10 +43,6 @@ App/Caches/
 App/.config/
 App/Migrations/
 App/DataProtection/
-
-# Local tools/temp
-cookies.txt
-.trae/
 
 # Node.js / debug tools
 node_modules/

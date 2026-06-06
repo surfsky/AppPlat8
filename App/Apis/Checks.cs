@@ -284,5 +284,28 @@ namespace App.API
             CheckHazard.Delete(id);
             return new APIResult(0, "删除成功");
         }
+
+        //--------------------------------------------
+        // 风险点
+        //--------------------------------------------
+        [HttpApi("风险点列表", AuthLogin = true)]
+        public static APIResult GetCheckPoints(Paging pi, long objectId, string name, CheckRiskLevel? riskLevel, string geoRegion)
+        {
+            if (geoRegion.IsNotEmpty())
+            {
+                // 检索指定地理区域内的风险点
+                var gisRegion = GisRegion.Parse(geoRegion);
+                var list = CheckPoint.Search(objectId: objectId, name: name, riskLevel: riskLevel).ToList();
+                return list.Where(p =>
+                {
+                    var gps = LngLat.Parse(p.Gps);
+                    if (gps == null)
+                        return false;
+                    return gisRegion.Contains(gps.Lng, gps.Lat);
+                }).AsQueryable().SortPageExport(pi).ToResult();
+            }
+            return CheckPoint.Search(objectId, name, riskLevel).SortPageExport(pi).ToResult();
+        }
+
     }
 }

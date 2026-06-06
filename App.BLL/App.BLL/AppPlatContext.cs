@@ -61,6 +61,9 @@ namespace App.DAL
 
         // Check 隐患排查
         public DbSet<CheckObject> CheckObjects { get; set; }
+        public DbSet<CheckSheet> CheckSheets { get; set; }
+        public DbSet<CheckSheetItem> CheckSheetItems { get; set; }
+        public DbSet<CheckTag> CheckTags { get; set; }
         public DbSet<CheckObjectContact> CheckObjectContacts { get; set; }
         public DbSet<CheckObjectEvent> CheckObjectEvents { get; set; }
         public DbSet<CheckObjectTag> ObjectTags { get; set; }
@@ -71,11 +74,8 @@ namespace App.DAL
         public DbSet<CheckTaskObject> CheckTaskObjects {get;set;}
         public DbSet<CheckTaskOrg> CheckTaskOrgs {get;set;}
         public DbSet<CheckTaskSheet> CheckTaskSheets {get;set;}
+        public DbSet<CheckPoint> CheckPoints { get; set; }
 
-        // CheckSheet 检查表
-        public DbSet<CheckSheet> CheckSheets { get; set; }
-        public DbSet<CheckSheetItem> CheckSheetItems { get; set; }
-        public DbSet<CheckTag> CheckTags { get; set; }
 
 
         // Article 知识库
