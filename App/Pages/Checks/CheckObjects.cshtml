@@ -32,7 +32,8 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.CheckObjectNew)">新增</EleButton>
-                <EleButton Type="Warning" Icon="Upload" Handler="OpenCheckObjectImport" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">导入</EleButton>
+                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">导入</EleButton>
+                <EleButton Type="Primary" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.CheckObjectView)">导出</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckObjectDelete)">删除</EleButton>
             </Buttons>
         </Toolbar>

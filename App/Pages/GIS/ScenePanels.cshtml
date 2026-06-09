@@ -1,0 +1,75 @@
+@page
+@model App.Pages.GIS.ScenePanelsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "场景面板关联";
+}
+
+@section body {
+    <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
+        <div class="flex-1 overflow-auto border border-slate-200 rounded p-4 mb-4">
+            <el-checkbox-group v-model="checkedIds" class="flex flex-col gap-2">
+                <el-checkbox v-for="item in panels" :key="item.id" :label="item.id">
+                    {{ item.title }}
+                </el-checkbox>
+            </el-checkbox-group>
+        </div>
+        <div class="flex justify-end gap-2">
+            <el-button type="primary" @@click="save" :loading="saving">保存</el-button>
+            <el-button @@click="close">取消</el-button>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    panels: [],
+                    checkedIds: [],
+                    saving: false
+                }
+            },
+            mounted() {
+                this.loadData();
+            },
+            methods: {
+                async loadData() {
+                    const res = await axios.get('?handler=Data&sceneId=@Model.SceneId');
+                    if (res.data.code === 0) {
+                        this.panels = res.data.data.panels;
+                        this.checkedIds = res.data.data.checkedIds;
+                    }
+                },
+                async save() {
+                    this.saving = true;
+                    try {
+                        const res = await axios.post('?handler=Save&sceneId=@Model.SceneId', this.checkedIds, {
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+                        if (res.data.code === 0) {
+                            this.$message.success('保存成功');
+                            setTimeout(() => {
+                                if (window.top && window.top.manager) window.top.manager.closeDrawer();
+                            }, 500);
+                        } else {
+                            this.$message.error(res.data.msg);
+                        }
+                    } catch (err) {
+                        this.$message.error('请求失败');
+                    } finally {
+                        this.saving = false;
+                    }
+                },
+                close() {
+                    if (window.top && window.top.manager) window.top.manager.closeDrawer();
+                }
+            }
+        });
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+}

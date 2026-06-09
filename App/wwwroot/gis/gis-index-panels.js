@@ -82,9 +82,11 @@
             });
         }
 
-        async function loadPanels() {
+        async function loadPanels(sceneId = null) {
             try {
-                const resp = await fetch(`?handler=PanelData&theme=${encodeURIComponent(theme)}`);
+                let url = `?handler=PanelData&theme=${encodeURIComponent(theme)}`;
+                if (sceneId) url += `&sceneId=${sceneId}`;
+                const resp = await fetch(url);
                 if (!resp.ok) {
                     state.statsPanels = [];
                     await renderPanels();

@@ -1,0 +1,91 @@
+@page
+@model App.Pages.GIS.SceneMenusModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "场景图层关联";
+}
+
+@section body {
+    <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
+        <div class="flex-1 overflow-auto border border-slate-200 rounded p-2 mb-4">
+            <el-tree
+                ref="tree"
+                :data="menus"
+                show-checkbox
+                node-key="id"
+                default-expand-all
+                :props="defaultProps">
+            </el-tree>
+        </div>
+        <div class="flex justify-end gap-2">
+            <el-button type="primary" @@click="save" :loading="saving">保存</el-button>
+            <el-button @@click="close">取消</el-button>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    menus: [],
+                    checkedIds: [],
+                    saving: false,
+                    defaultProps: {
+                        children: 'children',
+                        label: 'name'
+                    }
+                }
+            },
+            mounted() {
+                this.loadData();
+            },
+            methods: {
+                async loadData() {
+                    const res = await axios.get('?handler=Data&sceneId=@Model.SceneId');
+                    if (res.data.code === 0) {
+                        this.menus = res.data.data.menus;
+                        this.checkedIds = res.data.data.checkedIds;
+                        this.$nextTick(() => {
+                            this.$refs.tree.setCheckedKeys(this.checkedIds);
+                        });
+                    }
+                },
+                async save() {
+                    this.saving = true;
+                    try {
+                        // 获取选中的节点（包括半选状态的父节点，根据业务需求，这里通常只存叶子节点或全部，
+                        // 但为了场景展示，存所有选中的 ID 比较稳妥）
+                        const checkedKeys = this.$refs.tree.getCheckedKeys();
+                        const halfCheckedKeys = this.$refs.tree.getHalfCheckedKeys();
+                        const allKeys = [...checkedKeys, ...halfCheckedKeys];
+
+                        const res = await axios.post('?handler=Save&sceneId=@Model.SceneId', allKeys, {
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+                        if (res.data.code === 0) {
+                            this.$message.success('保存成功');
+                            setTimeout(() => {
+                                if (window.top && window.top.manager) window.top.manager.closeDrawer();
+                            }, 500);
+                        } else {
+                            this.$message.error(res.data.msg);
+                        }
+                    } catch (err) {
+                        this.$message.error('请求失败');
+                    } finally {
+                        this.saving = false;
+                    }
+                },
+                close() {
+                    if (window.top && window.top.manager) window.top.manager.closeDrawer();
+                }
+            }
+        });
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+}

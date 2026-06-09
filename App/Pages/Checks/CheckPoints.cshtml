@@ -15,7 +15,8 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" PopupUrl="CheckPointForm?objectId=@Model.ObjectId&objectName=@objectNameEncoded" Icon="Plus" Visible="Model.Mode == PageMode.Edit">新增</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="Model.Mode == PageMode.Edit">删除</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckPointEdit)">删除</EleButton>
+                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.CheckPointEdit)">导入</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

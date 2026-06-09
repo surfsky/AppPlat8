@@ -1,0 +1,22 @@
+@page
+@model App.Pages.GIS.SceneFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "GIS场景信息";
+}
+
+@section body {
+    <EleForm>
+        <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="9999"></EleNumber>
+        <EleInput For="Item.Desc" Label="描述" Rows="3" FillRow="true"></EleInput>
+        <EleNumber For="Item.MapZoom" Label="缩放级别" Min="1" Max="20"></EleNumber>
+        <EleInput For="Item.MapCenter" Label="中心点" Placeholder="lng,lat"></EleInput>
+        <EleIconSelector For="Item.Icon" Label="图标"></EleIconSelector>
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

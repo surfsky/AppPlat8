@@ -57,6 +57,9 @@ namespace App.DAL
         public DbSet<App.DAL.GIS.GisGeometry> GisGeometries { get; set; }
         public DbSet<App.DAL.GIS.GisApi> GisApis { get; set; }
         public DbSet<App.DAL.GIS.GisPanel> GisPanels { get; set; }
+        public DbSet<App.DAL.GIS.GisScene> GisScenes { get; set; }
+        public DbSet<App.DAL.GIS.GisSceneMenu> GisSceneMenus { get; set; }
+        public DbSet<App.DAL.GIS.GisScenePanel> GisScenePanels { get; set; }
 
 
         // Check 隐患排查

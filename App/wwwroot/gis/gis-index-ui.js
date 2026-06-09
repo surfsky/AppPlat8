@@ -72,6 +72,47 @@
         syncViewMenuUI(state);
     }
 
+    function syncSceneMenuUI(state) {
+        const menu = document.getElementById('scene-menu');
+        const toggleBtn = document.getElementById('btn-scene-toggle');
+        if (menu) {
+            menu.style.display = state.sceneMenuOpen ? 'block' : 'none';
+            menu.classList.toggle('menu-visible', !!state.sceneMenuOpen);
+        }
+        if (toggleBtn) {
+            toggleBtn.classList.toggle('active', !!state.sceneMenuOpen);
+            
+            // 更新场景图标
+            const currentScene = state.scenes.find(s => s.id === state.currentSceneId);
+            const iconEl = toggleBtn.querySelector('.toggle-icon');
+            if (iconEl) {
+                if (currentScene && currentScene.icon) {
+                    iconEl.className = currentScene.icon + ' toggle-icon';
+                } else {
+                    iconEl.className = 'fa-solid fa-mountain-sun toggle-icon';
+                }
+            }
+        }
+    }
+
+    function toggleSceneMenu(state) {
+        state.sceneMenuOpen = !state.sceneMenuOpen;
+        syncSceneMenuUI(state);
+    }
+
+    function renderSceneMenu(state, onSelect) {
+        const menu = document.getElementById('scene-menu');
+        if (!menu) return;
+        menu.innerHTML = '';
+        state.scenes.forEach(scene => {
+            const btn = document.createElement('button');
+            btn.className = 'view-menu-item' + (state.currentSceneId === scene.id ? ' active' : '');
+            btn.innerHTML = (scene.icon ? `<i class="${scene.icon}"></i> ` : '') + scene.name;
+            btn.onclick = () => onSelect(scene);
+            menu.appendChild(btn);
+        });
+    }
+
     function closeViewMenu(state) {
         state.viewMenuOpen = false;
         syncViewMenuUI(state);
@@ -128,6 +169,11 @@
         });
     }
 
+    function closeSceneMenu(state) {
+        state.sceneMenuOpen = false;
+        syncSceneMenuUI(state);
+    }
+
     window.GisIndexUI = {
         startHeaderDatetime,
         toggleToolbar,
@@ -137,6 +183,10 @@
         toggleViewMenu,
         closeViewMenu,
         syncViewMenuUI,
+        toggleSceneMenu,
+        closeSceneMenu,
+        syncSceneMenuUI,
+        renderSceneMenu,
         toggleStatsMode,
         syncStatsModeUI,
         resetView

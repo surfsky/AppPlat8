@@ -36,7 +36,7 @@ namespace App.Pages.Admins
         // 导出用户列表到 Excel
         public IActionResult OnPostExport(Paging pi, string name, string username, long? deptId)
         {
-            var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue }; // 导出所有匹配的数据（不分页）
+            var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
             var list = App.DAL.User.Search(name, username, deptId).SortPageExport(exportPi);
             ExcelExporter.Export(list, $"用户列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             return new EmptyResult();

@@ -7,6 +7,7 @@ using App.DAL.GIS;
 using App.Entities;
 using App.HttpApi;
 using App.Utils;
+using App.Utils.Gis;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.API
@@ -50,6 +51,39 @@ namespace App.API
 
             var tree = visibleMap.Values.OrderBy(t => t.SortId).ThenBy(t => t.Id).ToList().ToTree();
             return tree.ToResult();
+        }
+
+
+        //---------------------------------------------------------
+        // GIS场景相关接口
+        //---------------------------------------------------------
+        [HttpApi("获取GIS场景列表", AuthLogin = true)]
+        public static APIResult GetScenes()
+        {
+            var list = GisScene.Set.AsNoTracking().OrderBy(t => t.SortId).ToList();
+            return list.ToResult();
+        }
+
+        [HttpApi("获取GIS场景详情", AuthLogin = true)]
+        public static APIResult GetSceneDetail(long id)
+        {
+            var scene = GisScene.Set.AsNoTracking()
+                .Include(t => t.SceneMenus)
+                .Include(t => t.ScenePanels)
+                .FirstOrDefault(t => t.Id == id);
+            
+            if (scene == null)
+                return new APIResult(404, "场景不存在");
+
+            return new
+            {
+                scene.Id,
+                scene.Name,
+                scene.MapZoom,
+                scene.MapCenter,
+                menuIds = scene.SceneMenus.Select(m => m.MenuId).ToList(),
+                panelIds = scene.ScenePanels.Select(p => p.PanelId).ToList()
+            }.ToResult();
         }
 
         //---------------------------------------------------------

@@ -61,6 +61,9 @@
     </div>
 
     <div class="floating-toggle-group">
+        <button id="btn-scene-toggle" class="floating-toggle" title="场景" aria-label="切换场景">
+            <i class="fa-solid fa-mountain-sun toggle-icon"></i>
+        </button>
         <button id="btn-layer-toggle" class="floating-toggle" title="图层" aria-label="显示/隐藏图层列表">
             <i class="fa-solid fa-layer-group toggle-icon"></i>
         </button>
@@ -80,6 +83,9 @@
         <button id="btn-style-dark" class="view-menu-item">暗黑模式</button>
         <button id="btn-style-night" class="view-menu-item">黑蓝夜景</button>
         <button id="btn-toggle-3d" class="view-menu-item">三维模式</button>
+    </div>
+
+    <div id="scene-menu" class="view-menu" style="left: 60px; top: 10px; display:none" aria-label="场景菜单">
     </div>
 
     <div id="layer-panel" class="panel-left">
@@ -134,7 +140,10 @@
             statsMode: false,
             statsPanels: [],
             activePointListMenuId: null,
-            activePointListMenuName: ''
+            activePointListMenuName: '',
+            scenes: [],
+            currentSceneId: null,
+            sceneMenuOpen: false
         };
         const GisIndexUI = window.GisIndexUI;
         const GisIndexData = window.GisIndexData;
@@ -288,6 +297,7 @@
 
             // 加载数据
             // loadObjects();
+            await loadScenes();
             await loadMenus();
             await loadGeometries();
             await panelApi.loadPanels();
@@ -297,6 +307,10 @@
             startHeaderDatetime();
             positionHeaderDatetime();
             document.getElementById('btn-search').addEventListener('click', searchAddress);
+            document.getElementById('btn-scene-toggle').addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSceneMenu();
+            });
             document.getElementById('btn-view-toggle').addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleViewMenu();
@@ -320,13 +334,22 @@
             });
 
             document.addEventListener('click', (e) => {
-                if (!state.viewMenuOpen) return;
-                const menu = document.getElementById('view-menu');
-                const trigger = document.getElementById('btn-view-toggle');
-                const target = e.target;
-                if (menu && menu.contains(target)) return;
-                if (trigger && trigger.contains(target)) return;
-                closeViewMenu();
+                if (state.viewMenuOpen) {
+                    const menu = document.getElementById('view-menu');
+                    const trigger = document.getElementById('btn-view-toggle');
+                    const target = e.target;
+                    if (!(menu && menu.contains(target)) && !(trigger && trigger.contains(target))) {
+                        closeViewMenu();
+                    }
+                }
+                if (state.sceneMenuOpen) {
+                    const menu = document.getElementById('scene-menu');
+                    const trigger = document.getElementById('btn-scene-toggle');
+                    const target = e.target;
+                    if (!(menu && menu.contains(target)) && !(trigger && trigger.contains(target))) {
+                        closeSceneMenu();
+                    }
+                }
             });
 
             syncToolbarUI();
@@ -421,7 +444,69 @@
         //--------------------------------------------------------------
         function buildMenuNodes() { return dataApi.buildMenuNodes(); }
         function renderMenuTree() { return dataApi.renderMenuTree(); }
+        async function loadScenes() {
+            try {
+                const res = await axios.get('/httpapi/gis/GetScenes');
+                if (res.data.code === 0) {
+                    state.scenes = res.data.data;
+                    GisIndexUI.renderSceneMenu(state, switchScene);
+                }
+            } catch (err) {
+                console.error('加载场景失败', err);
+            }
+        }
+
+        async function switchScene(scene) {
+            try {
+                const res = await axios.get('/httpapi/gis/GetSceneDetail?id=' + scene.id);
+                if (res.data.code === 0) {
+                    const detail = res.data.data;
+                    state.currentSceneId = detail.id;
+                    
+                    // 1. 切换地图中心和缩放 (兼容 camelCase 和 PascalCase)
+                    const centerStr = detail.mapCenter || detail.MapCenter;
+                    const zoomVal = detail.mapZoom ?? detail.MapZoom;
+
+                    if (centerStr) {
+                        const parts = centerStr.split(/[,，\s]+/).filter(Boolean);
+                        if (parts.length >= 2) {
+                            const lng = parseFloat(parts[0]);
+                            const lat = parseFloat(parts[1]);
+                            if (!isNaN(lng) && !isNaN(lat)) {
+                                map.flyTo({
+                                    center: [lng, lat],
+                                    zoom: (zoomVal !== null && zoomVal !== undefined) ? zoomVal : map.getZoom(),
+                                    duration: 2000 // 平滑过渡
+                                });
+                            }
+                        }
+                    } else if (zoomVal !== null && zoomVal !== undefined) {
+                        map.flyTo({
+                            zoom: zoomVal,
+                            duration: 2000
+                        });
+                    }
+
+                    // 2. 勾选图层 (兼容两种 Case)
+                    const menuIds = detail.menuIds || detail.MenuIds || [];
+                    dataApi.setBatchMenusChecked(menuIds);
+
+                    // 3. 过滤面板
+                    await panelApi.loadPanels(detail.id);
+
+                    // 4. 关闭菜单并更新 UI
+                    GisIndexUI.closeSceneMenu(state);
+                    GisIndexUI.syncSceneMenuUI(state); // 同步图标等 UI
+                    GisIndexUI.renderSceneMenu(state, switchScene);
+                }
+            } catch (err) {
+                console.error('切换场景失败', err);
+            }
+        }
+
         async function loadMenus() { return dataApi.loadMenus();}
+        function toggleSceneMenu() { GisIndexUI.toggleSceneMenu(state); }
+        function closeSceneMenu() { GisIndexUI.closeSceneMenu(state); }
         function applyGeometryVisibility() {return dataApi.applyGeometryVisibility();}
         function rebuildGeometryPointMarkers() { return dataApi.rebuildGeometryPointMarkers(); }
         function syncGeometryPointMarkerVisibility() { return dataApi.syncGeometryPointMarkerVisibility(); }

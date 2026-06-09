@@ -189,6 +189,11 @@ namespace App.DAL
         [UI("GIS", "GIS查看")]             GisGeometryView = 271,
         [UI("GIS", "GIS修改")]             GisGeometryEdit = 272,
         [UI("GIS", "GIS删除")]             GisGeometryDelete = 273,
+        [UI("GIS", "场景新增")]             GisSceneNew = 274,
+        [UI("GIS", "场景查看")]             GisSceneView = 275,
+        [UI("GIS", "场景修改")]             GisSceneEdit = 276,
+        [UI("GIS", "场景删除")]             GisSceneDelete = 277,
+
 
         //---------------------------------------------
         // 检查 (300)
@@ -217,6 +222,10 @@ namespace App.DAL
         [UI("检查", "检查表修改")]           CheckSheetEdit = 342,
         [UI("检查", "检查表删除")]           CheckSheetDelete = 343,
 
+        [UI("检查", "检查点新增")]           CheckPointNew = 350,
+        [UI("检查", "检查点查看")]           CheckPointView = 351,
+        [UI("检查", "检查点修改")]           CheckPointEdit = 352,
+        [UI("检查", "检查点删除")]           CheckPointDelete = 353,
 
         //---------------------------------------------
         // 报表相关权限（900-999）

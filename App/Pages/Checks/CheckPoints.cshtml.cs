@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using App.Components;
 using App.DAL;
+using App.EleUI;
 using App.Entities;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -56,5 +57,20 @@ namespace App.Pages.Checks
 
             return BuildResult(0, "删除成功");
         }
+
+        public IActionResult OnPostImport()
+        {
+            if (!CheckPower(Power.CheckPointEdit))
+                return BuildResult(403, "无权操作");
+
+            var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckPoint") + "&objectId=" + ObjectId;
+            return EleManager.ShowDrawer(
+                title: "导入检查点",
+                url: url,
+                //size: "980px",
+                direction: "rtl",
+                closeAction: DrawerCloseAction.RefreshData);
+        }
+
     }
 }

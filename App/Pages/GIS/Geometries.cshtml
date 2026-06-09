@@ -31,6 +31,7 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
+                <EleButton Type="Info" Icon="Download" VClick="openImporter">导入简单点位</EleButton>
                 <EleButton Type="Success" Icon="Location" NavigateUrl="@mapUrl">地图编辑</EleButton>
             </Buttons>
         </Toolbar>
@@ -48,7 +49,7 @@
             <EleColumn For="Item.Gps" Label="经纬度" Width="180"></EleColumn>
             <EleColumn For="Item.Url" Label="网址" Width="180"></EleColumn>
             <EleColumn For="Item.File" Label="文件" Width="180"></EleColumn>
-            <EleColumn For="Item.Creator" Label="编辑者" Width="100" ></EleColumn>
+            <EleColumn For="Item.CreatorName" Label="编辑者" Width="100" ></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="100" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
         </Columns>
     </EleTable>
@@ -56,6 +57,27 @@
 
 @section script {
     <script>
-        var userMixin = { methods: {} };
+        var userMixin = {
+            methods: {
+                openImporter() {
+                    const manager = window.top?.EleManager || window.EleManager;
+                    if (manager) {
+                        manager.openDrawer({
+                            title: '导入简单点位',
+                            url: '/GIS/GeometryImporter',
+                            size: '50%',
+                            destroyOnClose: true,
+                            onClosed: () => {
+                                // 导入完成后刷新表格
+                                if (window.table) window.table.reload();
+                            }
+                        });
+                    } else {
+                        // 如果没有管理器，尝试直接打开新窗口或备选方案
+                        window.open('/GIS/GeometryImporter', '_blank');
+                    }
+                }
+            }
+        };
     </script>
 }

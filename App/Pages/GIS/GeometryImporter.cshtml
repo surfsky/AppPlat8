@@ -1,0 +1,120 @@
+@page
+@model App.Pages.GIS.GeometryImporterModel
+@{
+    ViewData["Title"] = "GIS点位批量导入";
+}
+
+@section body {
+    <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
+        <div class="mb-4 rounded border border-slate-200 p-3 bg-slate-50 text-slate-700 text-sm">
+            <div>导入类型: <span class="font-semibold">@Model.TypeTitle</span></div>
+            <div class="mt-1 text-slate-500">支持中英文标题，支持多种经纬度格式，额外列将自动存入扩展数据。</div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-3">
+            <el-button type="primary" @@click="downloadTemplate" :loading="downloading">下载模板</el-button>
+            <el-button @@click="chooseFile">选择Excel文件</el-button>
+            <el-button type="success" @@click="startImport" :loading="importing" :disabled="!file">开始导入</el-button>
+            <input id="excelFileInput" type="file" accept=".xls,.xlsx" style="display:none" @@change="onFileChange" />
+        </div>
+
+        <div class="mb-3 text-sm text-slate-600">
+            已选文件: <span class="font-medium">{{ fileName || '未选择文件' }}</span>
+        </div>
+
+        <div class="mb-3">
+            <el-progress :percentage="progress" :status="progressStatus"></el-progress>
+        </div>
+
+        <div class="flex-1 overflow-hidden flex flex-col">
+            <div class="text-sm font-medium mb-2">导入日志:</div>
+            <div class="flex-1 border border-slate-200 rounded p-2 overflow-y-auto bg-slate-50 font-mono text-xs">
+                <div v-for="(log, index) in logs" :key="index" :class="{'text-red-500': log.includes('失败'), 'text-green-600': log.includes('成功')}">
+                    {{ log }}
+                </div>
+                <div v-if="logs.length === 0" class="text-slate-400">等待导入...</div>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    file: null,
+                    fileName: '',
+                    downloading: false,
+                    importing: false,
+                    progress: 0,
+                    progressStatus: '',
+                    logs: []
+                }
+            },
+            methods: {
+                downloadTemplate() {
+                    this.downloading = true;
+                    location.href = '?handler=Template';
+                    setTimeout(() => {
+                        this.downloading = false;
+                    }, 2000);
+                },
+                chooseFile() {
+                    document.getElementById('excelFileInput').click();
+                },
+                onFileChange(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        this.file = file;
+                        this.fileName = file.name;
+                    }
+                },
+                async startImport() {
+                    if (!this.file) return;
+
+                    this.importing = true;
+                    this.progress = 10;
+                    this.progressStatus = '';
+                    this.logs = ['准备开始导入...'];
+
+                    const formData = new FormData();
+                    formData.append('file', this.file);
+
+                    try {
+                        const res = await axios.post('?handler=Import', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            onUploadProgress: (progressEvent) => {
+                                this.progress = Math.round((progressEvent.loaded * 90) / progressEvent.total);
+                            }
+                        });
+
+                        const data = res.data;
+                        if (data.code === 0) {
+                            this.progress = 100;
+                            this.progressStatus = 'success';
+                            this.logs = data.data.logs || [];
+                            this.$message.success(data.msg || '导入成功');
+                        } else {
+                            this.progressStatus = 'exception';
+                            this.logs = (data.data && data.data.logs) ? data.data.logs : [data.msg || '导入失败'];
+                            this.$message.error(data.msg || '导入失败');
+                        }
+                    } catch (err) {
+                        this.progressStatus = 'exception';
+                        const errMsg = err.response?.data?.msg || err.message || '网络请求错误';
+                        this.logs.push('网络请求错误: ' + errMsg);
+                        this.$message.error(errMsg);
+                    } finally {
+                        this.importing = false;
+                    }
+                }
+            }
+        });
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+}

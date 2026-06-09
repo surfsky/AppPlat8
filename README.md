@@ -55,7 +55,7 @@
 
 其它
 
-1. 数据库迁移: 运行 `dotnet ef migrations add CheckPoint --project App/App.csproj --startup-project App/App.csproj`.
+1. 数据库迁移: 运行 `dotnet ef migrations add GisScene --project App/App.csproj --startup-project App/App.csproj`.
 2. 若端口被占用，查找占用 6060 的进程，然后kill
   ```bash
     lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
@@ -231,6 +231,7 @@ OA
         - [x] 隐患：清单、详情
         - [x] 任务：清单、详情
         - [x] 检查表：检查表、标签、检查项
+        - [x] 风险点：清单、详情
         - [ ] 日常排查流程：
             - [ ] 选取一个企业、点击排查、选择检查表、显示检查项、填写检查信息、生成隐患记录、提交
             - [ ] 查看隐患记录、复查登记

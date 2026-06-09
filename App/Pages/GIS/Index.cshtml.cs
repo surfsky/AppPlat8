@@ -153,10 +153,20 @@ namespace App.Pages.GIS
             });
         }
 
-        public JsonResult OnGetPanelData(string theme = "dark")
+        public JsonResult OnGetPanelData(string theme = "dark", long? sceneId = null)
         {
-            var list = GisPanel.Set
-                .Where(t => t.InGis)
+            var q = GisPanel.Set.AsNoTracking().Where(t => t.InGis);
+            
+            if (sceneId.HasValue && sceneId.Value > 0)
+            {
+                var panelIds = GisScenePanel.Set.AsNoTracking()
+                    .Where(t => t.SceneId == sceneId.Value)
+                    .Select(t => t.PanelId)
+                    .ToList();
+                q = q.Where(t => panelIds.Contains(t.Id));
+            }
+
+            var list = q
                 .OrderBy(t => t.Position)
                 .ThenBy(t => t.Id)
                 .Select(t => new

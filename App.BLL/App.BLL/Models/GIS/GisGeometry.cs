@@ -5,6 +5,8 @@ using App.Components;
 using App.Entities;
 using App.Utils;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace App.DAL.GIS
 {
     /// <summary>图层类型</summary>
@@ -36,6 +38,7 @@ namespace App.DAL.GIS
         [UI("区域矩形")]    public string Region { get; set; }      // 图片显示区域：tlx,tly,brx,bry
         [UI("图形数据")]    public string GeoJson { get; set; }
         [UI("扩展数据")]    public string DataJson { get; set; }
+        [UI("备注")]        public string Remark { get; set; }
 
         //
         public virtual GisMenu Menu { get; set; }

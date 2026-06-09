@@ -75,6 +75,28 @@
             applyGeometryVisibility();
         }
 
+        function setBatchMenusChecked(menuIds) {
+            const cache = new Map();
+            const checkedSet = new Set(menuIds.map(Number));
+            
+            // 将所有点位设为隐藏（切换场景通常是全量替换）
+            if (state.geometries) {
+                state.geometries.forEach(g => state.geometryVisibleMap.set(g.id, false));
+            }
+
+            // 设置选中的菜单及其子菜单点位为可见
+            checkedSet.forEach(menuId => {
+                const node = state.menuNodeMap.get(menuId);
+                if (node) {
+                    const ids = getMenuGeometryIds(node, cache);
+                    ids.forEach(id => state.geometryVisibleMap.set(id, true));
+                }
+            });
+
+            applyGeometryVisibility();
+            renderMenuTree();
+        }
+
         function renderMenuTree() {
             const container = document.getElementById('menu-tree');
             if (!container) return;
@@ -940,6 +962,7 @@
             buildMenuNodes,
             renderMenuTree,
             loadMenus,
+            setBatchMenusChecked,
             applyGeometryVisibility,
             loadGeometries,
             rebuildGeometryPointMarkers,
