@@ -3,7 +3,6 @@ using System.Linq;
 using App.Components;
 using App.DAL;
 using App.DAL.GIS;
-using Microsoft.AspNetCore.Authorization;
 
 namespace App.Pages.GIS
 {
@@ -12,7 +11,10 @@ namespace App.Pages.GIS
     {
         public string Id { get; set; }
         public string Name { get; set; }
+        public long? MenuId { get; set; }
         public string Url { get; set; }
+        public string ListUrl { get; set; }
+        public string MapUrl { get; set; }
         public List<GeometryNavNode> Children { get; set; } = new();
     }
 
@@ -20,13 +22,15 @@ namespace App.Pages.GIS
     public class GeometryManagerModel : AdminModel
     {
         public List<GeometryNavNode> NavMenus { get; set; } = new();
-        public string DefaultGeometriesUrl { get; set; } = "/GIS/Geometries";
+        public string CurrentMode { get; set; } = "list";
+        public string DefaultFrameUrl { get; set; } = "/GIS/Geometries";
 
-        public void OnGet(long? menuId)
+        /// <summary>加载页面</summary>
+        public void OnGet(long? menuId, string mode)
         {
+            CurrentMode = mode == "map" ? "map" : "list";
             var menus = GisMenu.GetTree().OrderBy(x => x.SortId).ThenBy(x => x.Id).ToList();
-            if (menuId.HasValue)
-                DefaultGeometriesUrl = $"/GIS/Geometries?menuId={menuId.Value}";
+            DefaultFrameUrl = BuildUrl(menuId, CurrentMode == "map");
 
             NavMenus = new List<GeometryNavNode>
             {
@@ -34,12 +38,15 @@ namespace App.Pages.GIS
                 {
                     Id = "all",
                     Name = "全部图层",
-                    Url = "/GIS/Geometries",
+                    Url = BuildUrl(null, CurrentMode == "map"),
+                    ListUrl = BuildUrl(null, false),
+                    MapUrl = BuildUrl(null, true),
                     Children = BuildNavNodes(menus)
                 }
             };
         }
 
+        /// <summary>构建导航节点</summary>
         private static List<GeometryNavNode> BuildNavNodes(IEnumerable<GisMenu> menus)
         {
             if (menus == null)
@@ -52,10 +59,20 @@ namespace App.Pages.GIS
                 {
                     Id = x.Id.ToString(),
                     Name = x.Name,
-                    Url = $"/GIS/Geometries?menuId={x.Id}",
+                    MenuId = x.Id,
+                    Url = BuildUrl(x.Id, false),
+                    ListUrl = BuildUrl(x.Id, false),
+                    MapUrl = BuildUrl(x.Id, true),
                     Children = BuildNavNodes(x.Children)
                 })
                 .ToList();
+        }
+
+        /// <summary>构建目标地址</summary>
+        private static string BuildUrl(long? menuId, bool isMap)
+        {
+            var baseUrl = isMap ? "/GIS/GeometryMap" : "/GIS/Geometries";
+            return menuId.HasValue ? $"{baseUrl}?menuId={menuId.Value}" : baseUrl;
         }
     }
 }

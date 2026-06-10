@@ -300,3 +300,31 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
 
             return list.Take(12).ToList().ToResult();
         }     
+
+                <EleButton Type="Info" Icon="Download" VClick="openImporter">导入简单点位</EleButton>
+@section script {
+    <script>
+        var userMixin = {
+            methods: {
+                openImporter() {
+                    const manager = window.top?.EleManager || window.EleManager;
+                    if (manager) {
+                        manager.openDrawer({
+                            title: '导入简单点位',
+                            url: '/GIS/GeometryImporter',
+                            size: '50%',
+                            destroyOnClose: true,
+                            onClosed: () => {
+                                // 导入完成后刷新表格
+                                if (window.table) window.table.reload();
+                            }
+                        });
+                    } else {
+                        // 如果没有管理器，尝试直接打开新窗口或备选方案
+                        window.open('/GIS/GeometryImporter', '_blank');
+                    }
+                }
+            }
+        };
+    </script>
+}

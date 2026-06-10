@@ -5,14 +5,96 @@
     ViewData["Title"] = "点位管理中心";
 }
 
+@section head {
+    <style>
+        .gm-mode-group {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px;
+            border: 1px solid #dbe3f0;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+        }
+        .gm-mode-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 28px;
+            padding: 0 10px;
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        .gm-mode-btn:hover { color: #334155; }
+        .gm-mode-btn.is-active {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            color: #2563eb;
+            box-shadow: 0 1px 2px rgba(15,23,42,.08), inset 0 0 0 1px rgba(37,99,235,.12);
+        }
+        .gm-mode-icon {
+            width: 14px;
+            height: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gm-mode-icon svg {
+            width: 14px;
+            height: 14px;
+            display: block;
+        }
+    </style>
+}
+
 @section body {
-    <div class="h-screen">
+    <div id="geometryManagerPage"
+         class="h-screen"
+         data-current-mode="@Model.CurrentMode"
+         data-current-menu-id="@Request.Query["menuId"].ToString()"
+         data-default-list-url="/GIS/Geometries"
+         data-default-map-url="/GIS/GeometryMap">
         <EleSplitPanel Height="100%" Radius="0" Border="0">
             <PanelItem Size="300" Min="220" Max="460" Collapsible="true">
                 <div class="h-full flex flex-col bg-white">
                     <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100">
                         <span class="text-sm font-semibold text-gray-700">目录</span>
-                        <EleButton Type="Primary" Look="Circle" Icon="Edit" PopupUrl="Menus" PopupTitle="目录编辑"></EleButton>
+                        <div class="flex items-center gap-2">
+                            <div class="gm-mode-group">
+                                <button type="button"
+                                        class="js-geometry-mode-btn gm-mode-btn @(Model.CurrentMode == "list" ? "is-active" : "")"
+                                        data-mode="list">
+                                    <span class="gm-mode-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                                            <path d="M5.5 4h7"></path>
+                                            <path d="M5.5 8h7"></path>
+                                            <path d="M5.5 12h7"></path>
+                                            <circle cx="3" cy="4" r="0.8" fill="currentColor" stroke="none"></circle>
+                                            <circle cx="3" cy="8" r="0.8" fill="currentColor" stroke="none"></circle>
+                                            <circle cx="3" cy="12" r="0.8" fill="currentColor" stroke="none"></circle>
+                                        </svg>
+                                    </span>
+                                </button>
+                                <button type="button"
+                                        class="js-geometry-mode-btn gm-mode-btn @(Model.CurrentMode == "map" ? "is-active" : "")"
+                                        data-mode="map">
+                                    <span class="gm-mode-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M2.5 3.5l3-1 3 1 3-1 2 1v8l-2-1-3 1-3-1-3 1v-8z"></path>
+                                            <path d="M5.5 2.7v8.6"></path>
+                                            <path d="M8.5 3.5v8.6"></path>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
+                            <EleButton Type="Primary" Look="Circle" Icon="Edit" PopupUrl="Menus" PopupTitle="目录编辑"></EleButton>
+                        </div>
                     </div>
                     <div class="flex-1 min-h-0">
                         <EleTree Items="Model.NavMenus"
@@ -25,14 +107,186 @@
                                     ExpandOnClickNode="false"
                                     Height="100%">
                             <template #default="{ data }">
-                                <a :href="data.url || '#'" target="geometryManagerFrame" class="text-current no-underline">{{ data.name }}</a>
+                                <a :href="data.url || '#'"
+                                   :data-list-url="data.listUrl || ''"
+                                   :data-map-url="data.mapUrl || ''"
+                                   :data-menu-id="data.menuId || ''"
+                                   onclick="return window.geometryManagerNav ? window.geometryManagerNav.onNodeClick(event, this) : true;"
+                                   target="geometryManagerFrame"
+                                   class="js-geometry-nav-link block rounded-sm py-0.5 pr-2 text-current no-underline transition-colors">
+                                    {{ data.name }}
+                                </a>
                             </template>
                         </EleTree>
                     </div>
                 </div>
             </PanelItem>
-            <PanelItem Min="360" IframeName="geometryManagerFrame" IframeUrl="@Model.DefaultGeometriesUrl"></PanelItem>
+            <PanelItem Min="360" IframeName="geometryManagerFrame" IframeUrl="@Model.DefaultFrameUrl"></PanelItem>
         </EleSplitPanel>
     </div>
     <EleApp />
+}
+
+@section script {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const page = document.getElementById('geometryManagerPage');
+            if (!page) return;
+
+            let mode = page.dataset.currentMode === 'map' ? 'map' : 'list';
+            let menuId = String(page.dataset.currentMenuId || '').trim();
+
+            /**获取导航链接 */
+            const getLinks = () => Array.from(page.querySelectorAll('.js-geometry-nav-link'));
+
+            /**获取模式按钮 */
+            const getModeBtns = () => Array.from(page.querySelectorAll('.js-geometry-mode-btn'));
+
+            /**获取右侧框架 */
+            const getFrame = () => document.querySelector('iframe[name="geometryManagerFrame"]');
+
+            /**解析菜单ID */
+            const parseMenuId = (url) => {
+                if (!url || url === '#') return '';
+                try {
+                    const parsed = new URL(url, window.location.origin);
+                    return parsed.searchParams.get('menuId') || '';
+                } catch {
+                    return '';
+                }
+            };
+
+            /**构建目标地址 */
+            const getUrl = (targetMenuId, targetMode) => {
+                const baseUrl = targetMode === 'map'
+                    ? (page.dataset.defaultMapUrl || '/GIS/GeometryMap')
+                    : (page.dataset.defaultListUrl || '/GIS/Geometries');
+                const id = String(targetMenuId || '').trim();
+                return id ? `${baseUrl}?menuId=${encodeURIComponent(id)}` : baseUrl;
+            };
+
+            /**获取链接菜单ID */
+            const getLinkMenuId = (link) => {
+                if (!link) return '';
+                return String(
+                    link.dataset.menuId
+                    || parseMenuId(link.dataset.listUrl)
+                    || parseMenuId(link.dataset.mapUrl)
+                    || parseMenuId(link.getAttribute('href'))
+                    || ''
+                );
+            };
+
+            /**获取当前模式地址 */
+            const getLinkUrl = (link) => {
+                const id = getLinkMenuId(link);
+                return getUrl(id, mode);
+            };
+
+            /**获取当前链接 */
+            const getCurrentLink = () => {
+                const links = getLinks();
+                return links.find(x => getLinkMenuId(x) === String(menuId || '')) || links[0] || null;
+            };
+
+            /**设置当前菜单ID */
+            const setMenuId = (id) => {
+                menuId = String(id || '').trim();
+                page.dataset.currentMenuId = menuId;
+            };
+
+            /**同步按钮状态 */
+            const syncModeBtns = () => {
+                getModeBtns().forEach(btn => {
+                    const isActive = btn.dataset.mode === mode;
+                    btn.classList.toggle('is-active', isActive);
+                });
+            };
+
+            /**同步链接地址 */
+            const syncLinkUrls = () => {
+                getLinks().forEach(link => link.setAttribute('href', getLinkUrl(link)));
+            };
+
+            /**同步当前节点样式 */
+            const syncCurrentLink = () => {
+                const current = getCurrentLink();
+                getLinks().forEach(link => {
+                    const isCurrent = link === current;
+                    link.classList.toggle('bg-blue-50', isCurrent);
+                    link.classList.toggle('text-blue-600', isCurrent);
+                    link.classList.toggle('font-semibold', isCurrent);
+                });
+            };
+
+            /**同步地址栏参数 */
+            const syncQuery = () => {
+                const url = new URL(window.location.href);
+                if (mode === 'map') url.searchParams.set('mode', 'map');
+                else url.searchParams.delete('mode');
+                if (menuId) url.searchParams.set('menuId', menuId);
+                else url.searchParams.delete('menuId');
+                window.history.replaceState({}, '', url.toString());
+            };
+
+            /**刷新右侧页面 */
+            const refreshFrame = () => {
+                const frame = getFrame();
+                const url = getUrl(menuId, mode);
+                if (frame && url) frame.src = url;
+            };
+
+            /**切换模式 */
+            const setMode = (nextMode) => {
+                mode = nextMode === 'map' ? 'map' : 'list';
+                page.dataset.currentMode = mode;
+                syncModeBtns();
+                syncLinkUrls();
+                syncCurrentLink();
+                syncQuery();
+                refreshFrame();
+            };
+
+            /**初始化导航 */
+            const initNav = (count) => {
+                const links = getLinks();
+                if (links.length === 0 && count < 10) {
+                    window.setTimeout(() => initNav(count + 1), 120);
+                    return;
+                }
+                const frame = getFrame();
+                if (!menuId && frame) {
+                    setMenuId(parseMenuId(frame.getAttribute('src') || frame.src || ''));
+                }
+                syncModeBtns();
+                syncLinkUrls();
+                syncCurrentLink();
+                syncQuery();
+            };
+
+            /**点击目录节点 */
+            const onNodeClick = (evt, link) => {
+                if (evt) evt.preventDefault();
+                const id = getLinkMenuId(link);
+                setMenuId(id);
+                syncLinkUrls();
+                syncCurrentLink();
+                syncQuery();
+                refreshFrame();
+                return false;
+            };
+
+            page.addEventListener('click', (evt) => {
+                const modeBtn = evt.target.closest('.js-geometry-mode-btn');
+                if (modeBtn) {
+                    evt.preventDefault();
+                    if (modeBtn.dataset.mode !== mode) setMode(modeBtn.dataset.mode);
+                    return;
+                }
+            });
+
+            window.geometryManagerNav = { onNodeClick };
+            initNav(0);
+        });
+    </script>
 }
