@@ -51,6 +51,24 @@ namespace App.Pages.GIS
             return BuildResult(0, "删除成功");
         }
 
+        public IActionResult OnPostSaveGeometry([FromBody] GisGeometry req)
+        {
+            if (req == null || req.Id <= 0)
+                return BuildResult(400, "参数错误");
+            if (!CheckPower(Power.GisGeometryEdit))
+                return BuildResult(403, "无权操作");
+
+            var item = GisGeometry.Get(req.Id);
+            if (item == null)
+                return BuildResult(404, "点位不存在");
+
+            if (!string.IsNullOrWhiteSpace(req.Gps)) item.Gps = req.Gps;
+            if (!string.IsNullOrWhiteSpace(req.GeoJson)) item.GeoJson = req.GeoJson;
+            
+            item.Save();
+            return BuildResult(0, "保存成功");
+        }
+
         public class DeleteReq
         {
             public long Id { get; set; }

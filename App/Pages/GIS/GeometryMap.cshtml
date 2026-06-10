@@ -25,6 +25,8 @@
 @section head {
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
     <style>
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
         .gm-map-root { position: relative; height: 100vh; overflow: hidden; margin: 0; }
@@ -41,6 +43,21 @@
             flex-direction: column;
             z-index: 2;
         }
+        #geometryMapCanvas.drawing-point { cursor: crosshair !important; }
+        #geometryMapCanvas.drawing-polygon { cursor: crosshair !important; }
+        .geometry-point-marker.is-dragging {
+            cursor: grabbing !important;
+        }
+        .geometry-point-marker.is-dragging .marker-icon {
+            filter: drop-shadow(0 4px 6px rgba(220,38,38,.5)) !important;
+            opacity: 0.8;
+        }
+        .geometry-point-marker.is-dragging .marker-label {
+            display: none;
+        }
+        .geometry-point-marker.editable .marker-icon {
+            filter: drop-shadow(0 0 4px #ef4444);
+        }
         .gm-map-toolbar {
             padding: 10px;
             border-bottom: 1px solid #e5e7eb;
@@ -48,6 +65,7 @@
             flex-wrap: wrap;
             gap: 8px;
             align-items: center;
+            background: #fff;
         }
         .gm-map-list { flex: 1; overflow: auto; padding: 10px; }
         .gm-item {
@@ -60,14 +78,14 @@
         .gm-item-title { font-weight: 600; color: #0f172a; font-size: 13px; line-height: 1.25; margin-bottom: 2px; }
         .gm-item-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .gm-item-sub { color: #64748b; font-size: 11px; line-height: 1.2; margin-bottom: 4px; }
-        .gm-item-ops { display: flex; gap: 4px; align-items: center; }
+        .gm-item-ops { display: flex; gap: 0; align-items: center; }
         .gm-op-btn {
-            width: 18px;
-            height: 18px;
-            min-height: 18px;
-            min-width: 18px;
+            width: 16px;
+            height: 16px;
+            min-height: 16px;
+            min-width: 16px;
             padding: 0;
-            font-size: 13px;
+            font-size: 12px;
             line-height: 1;
             border: 0;
             background: transparent;
@@ -123,12 +141,35 @@
 
         <div class="gm-map-panel">
             <div class="gm-map-toolbar">
-                <el-button type="success" size="small" @@click="startDrawPoint">新增点</el-button>
-                <el-button type="warning" size="small" @@click="startDrawPolygon">新增面</el-button>
-                <el-button v-if="drawMode === 'polygon' && draftPoints.length >= 3" type="success" size="small" @@click="finishPolygon">完成面</el-button>
-                <el-button v-if="drawMode !== 'none'" type="danger" size="small" @@click="cancelDrawing">取消面</el-button>
-                <el-button type="default" size="small" @@click="gotoList">查看清单</el-button>
-                <el-tag v-if="drawMode !== 'none'" size="small" type="warning">标注模式: {{ drawMode === 'point' ? '点位' : '多边形' }}</el-tag>
+                <el-tooltip content="新增点">
+                    <el-button type="success" size="small" circle @@click="startDrawPoint"><i class="fa-solid fa-location-dot"></i></el-button>
+                </el-tooltip>
+                <el-tooltip content="新增形状">
+                    <el-button type="warning" size="small" circle @@click="startDrawPolygon"><i class="fa-solid fa-draw-polygon"></i></el-button>
+                </el-tooltip>
+                
+                <el-tooltip v-if="drawMode === 'polygon' && draftPoints.length >= 3" content="完成形状">
+                    <el-button type="success" size="small" circle @@click="finishPolygon"><i class="fa-solid fa-check"></i></el-button>
+                </el-tooltip>
+                
+                <el-tooltip v-if="drawMode !== 'none'" content="取消新增">
+                    <el-button type="danger" size="small" circle @@click="cancelDrawing"><i class="fa-solid fa-xmark"></i></el-button>
+                </el-tooltip>
+
+                <el-tooltip v-if="editingId" content="保存">
+                    <el-button type="primary" size="small" circle @@click="saveEditing"><i class="fa-solid fa-floppy-disk"></i></el-button>
+                </el-tooltip>
+                <el-tooltip v-if="editingId" content="取消编辑">
+                    <el-button type="info" size="small" circle @@click="cancelEditing"><i class="fa-solid fa-rotate-left"></i></el-button>
+                </el-tooltip>
+
+                <el-tooltip content="查看清单">
+                    <el-button type="default" size="small" circle @@click="gotoList"><i class="fa-solid fa-list"></i></el-button>
+                </el-tooltip>
+
+                <el-tag v-if="drawMode !== 'none'" size="small" type="warning" style="margin-left: auto;">
+                    {{ drawMode === 'point' ? '点位标绘' : '形状标绘' }}
+                </el-tag>
             </div>
             <div class="gm-map-list">
                 <div v-if="items.length === 0" class="gm-empty">暂无点位数据</div>
@@ -136,7 +177,10 @@
                     <div class="gm-item-head">
                         <div class="gm-item-title">{{ item.name || ('点位#' + item.id) }}</div>
                         <div class="gm-item-ops">
-                        <el-button class="gm-op-btn" type="primary" link @@click="openEdit(item.id)" title="编辑">
+                        <el-button class="gm-op-btn" type="primary" link @@click="startEditing(item.id)" title="快速编辑">
+                            <i class="fa-solid fa-pencil"></i>
+                        </el-button>
+                        <el-button class="gm-op-btn" type="primary" link @@click="openEdit(item.id)" title="详情编辑">
                             <i class="fa-regular fa-pen-to-square"></i>
                         </el-button>
                         <el-button class="gm-op-btn" type="danger" link @@click="removeItem(item.id)" title="删除">
@@ -155,7 +199,7 @@
 
 @section script {
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, ref, onMounted, onUnmounted } = Vue;
 
         const app = createApp({
             setup() {
@@ -168,8 +212,11 @@
                 const geoLayerIds = [];
                 const geoBoundsMap = new Map();
                 const activeId = ref(null);
+                const editingId = ref(null);
                 const drawMode = ref('none');
+                const isDragging = ref(false);
                 const draftPoints = ref([]);
+                const draw = ref(null);
                 const draftSourceId = 'gm-draft-source';
                 const draftFillLayerId = 'gm-draft-fill';
                 const draftLineLayerId = 'gm-draft-line';
@@ -207,14 +254,14 @@
 
                 const manager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
 
-                const openDrawer = (url, title) => {
+                const openDrawer = (url, title, size) => {
                     const m = manager();
                     if (m && typeof m.openDrawer === 'function') {
                         m.openDrawer({
                             title,
                             url,
                             direction: 'rtl',
-                            size: window.innerWidth < 768 ? '100%' : '65%',
+                            size: size || (window.innerWidth < 768 ? '100%' : '65%'),
                             resizable: true,
                             closeOnClickModal: false,
                             destroyOnClose: true,
@@ -227,19 +274,114 @@
 
                 const openNew = () => {
                     const q = menuId ? ('&menuId=' + encodeURIComponent(menuId)) : '';
-                    openDrawer('/GIS/GeometryForm?id=0&md=new' + q, '新增点位');
+                    openDrawer('/GIS/GeometryForm?id=0&md=new' + q, '新增点位', '50%');
                 };
 
-                const openNewByDraft = (gps, geoJsonObj) => {
+                const openNewByDraft = (gps, geoJsonObj, type) => {
                     const qMenu = menuId ? ('&menuId=' + encodeURIComponent(menuId)) : '';
                     const qGps = gps ? ('&gps=' + encodeURIComponent(gps)) : '';
                     const qGeo = geoJsonObj ? ('&geoJson=' + encodeURIComponent(JSON.stringify(geoJsonObj))) : '';
-                    openDrawer('/GIS/GeometryForm?id=0&md=new' + qMenu + qGps + qGeo, '新增点位');
+                    const qType = type ? ('&type=' + encodeURIComponent(type)) : '';
+                    openDrawer('/GIS/GeometryForm?id=0&md=new' + qMenu + qGps + qGeo + qType, '新增点位', '50%');
                 };
 
                 const openEdit = (id) => {
                     if (!id) return;
-                    openDrawer('/GIS/GeometryForm?id=' + encodeURIComponent(id) + '&md=edit', '编辑点位');
+                    openDrawer('/GIS/GeometryForm?id=' + encodeURIComponent(id) + '&md=edit', '编辑点位', '50%');
+                };
+
+                const startEditing = (id) => {
+                    if (editingId.value === id) return;
+                    if (editingId.value) {
+                        cancelEditing();
+                    }
+                    
+                    cancelDrawing();
+                    editingId.value = id;
+                    const item = items.value.find(x => x.id === id);
+                    if (!item) return;
+
+                    const fc = normalizeGeoJson(item.geoJson);
+                    if (fc && fc.features.length > 0) {
+                        // 多边形或复杂图形：切换到 MapboxDraw
+                        draw.value.deleteAll();
+                        draw.value.add(fc);
+                        draw.value.changeMode('simple_select', { featureIds: [draw.value.getAll().features[0].id] });
+                        
+                        // 隐藏原始图层
+                        if (map.value.getLayer(`gm-geo-fill-${id}`)) map.value.setLayoutProperty(`gm-geo-fill-${id}`, 'visibility', 'none');
+                        if (map.value.getLayer(`gm-geo-line-${id}`)) map.value.setLayoutProperty(`gm-geo-line-${id}`, 'visibility', 'none');
+                        if (map.value.getLayer(`gm-geo-circle-${id}`)) map.value.setLayoutProperty(`gm-geo-circle-${id}`, 'visibility', 'none');
+                    } else {
+                        // 简单点位：设置标记为可拖拽状态
+                        const marker = markerMap.get(id);
+                        if (marker) {
+                            marker.setDraggable(true);
+                            marker.getElement().classList.add('editable');
+                        }
+                    }
+                    
+                    const m = manager();
+                    if (m && typeof m.showInfo === 'function') m.showInfo('进入编辑模式，您可以拖动点位或修改形状，完成后点击“保存”按钮');
+                };
+
+                const cancelEditing = () => {
+                    if (!editingId.value) return;
+                    const id = editingId.value;
+                    const item = items.value.find(x => x.id === id);
+                    
+                    // 恢复原始图层显示
+                    if (map.value.getLayer(`gm-geo-fill-${id}`)) map.value.setLayoutProperty(`gm-geo-fill-${id}`, 'visibility', 'visible');
+                    if (map.value.getLayer(`gm-geo-line-${id}`)) map.value.setLayoutProperty(`gm-geo-line-${id}`, 'visibility', 'visible');
+                    if (map.value.getLayer(`gm-geo-circle-${id}`)) map.value.setLayoutProperty(`gm-geo-circle-${id}`, 'visibility', 'visible');
+
+                    draw.value.deleteAll();
+                    
+                    const marker = markerMap.get(id);
+                    if (marker) {
+                        marker.setDraggable(false);
+                        marker.getElement().classList.remove('editable');
+                        // 恢复坐标
+                        const gps = parseGps(item.gps);
+                        if (gps) marker.setLngLat([gps.lng, gps.lat]);
+                    }
+                    
+                    editingId.value = null;
+                };
+
+                const saveEditing = async () => {
+                    if (!editingId.value) return;
+                    const id = editingId.value;
+                    const item = items.value.find(x => x.id === id);
+                    const updateData = { id: id };
+
+                    const marker = markerMap.get(id);
+                    if (marker && marker.isDraggable()) {
+                        const lngLat = marker.getLngLat();
+                        updateData.gps = `${lngLat.lng.toFixed(6)},${lngLat.lat.toFixed(6)}`;
+                    }
+
+                    const drawn = draw.value.getAll();
+                    if (drawn.features.length > 0) {
+                        updateData.geoJson = JSON.stringify(drawn);
+                    }
+
+                    try {
+                        const res = await axios.post('?handler=SaveGeometry', updateData, {
+                            headers: { 'RequestVerificationToken': getCsrfToken() }
+                        });
+                        if (res.data.code === 0) {
+                            const m = manager();
+                            if (m && typeof m.showSuccess === 'function') m.showSuccess('保存成功');
+                            editingId.value = null;
+                            reload();
+                        } else {
+                            throw new Error(res.data.msg || '保存失败');
+                        }
+                    } catch (err) {
+                        const m = manager();
+                        if (m && typeof m.showError === 'function') m.showError(err.message);
+                    }
                 };
 
                 const gotoList = () => {
@@ -412,15 +554,19 @@
                 };
 
                 const startDrawPoint = () => {
+                    cancelEditing();
                     drawMode.value = 'point';
                     clearDraft();
+                    map.value.getCanvasContainer().classList.add('drawing-point');
                     const m = manager();
                     if (m && typeof m.showInfo === 'function') m.showInfo('请在地图上点击一个位置标注点位');
                 };
 
                 const startDrawPolygon = () => {
+                    cancelEditing();
                     drawMode.value = 'polygon';
                     clearDraft();
+                    map.value.getCanvasContainer().classList.add('drawing-polygon');
                     if (map.value) map.value.doubleClickZoom.disable();
                     const m = manager();
                     if (m && typeof m.showInfo === 'function') m.showInfo('请在地图上连续点击绘制多边形，完成后点“完成面标注”');
@@ -428,6 +574,7 @@
 
                 const cancelDrawing = () => {
                     drawMode.value = 'none';
+                    map.value.getCanvasContainer().classList.remove('drawing-point', 'drawing-polygon');
                     clearDraft();
                     if (map.value) map.value.doubleClickZoom.enable();
                 };
@@ -444,7 +591,7 @@
                     };
 
                     cancelDrawing();
-                    openNewByDraft('', feature);
+                    openNewByDraft('', feature, 'Shape');
                 };
 
                 const onMapClick = (evt) => {
@@ -454,7 +601,7 @@
                         const lat = Number(evt.lngLat.lat);
                         const gps = `${lng.toFixed(6)},${lat.toFixed(6)}`;
                         cancelDrawing();
-                        openNewByDraft(gps, null);
+                        openNewByDraft(gps, null, 'Point');
                         return;
                     }
 
@@ -508,10 +655,18 @@
                             el.addEventListener('click', (evt) => {
                                 evt.stopPropagation();
                                 focusItem(item.id);
-                                openEdit(item.id);
+                                if (drawMode.value === 'none') {
+                                    startEditing(item.id);
+                                }
                             });
 
-                            const marker = new mapboxgl.Marker(el).setLngLat([gps.lng, gps.lat]).addTo(map.value);
+                            const marker = new mapboxgl.Marker({ element: el, draggable: false })
+                                .setLngLat([gps.lng, gps.lat])
+                                .addTo(map.value);
+
+                            marker.on('dragstart', () => { isDragging.value = true; el.classList.add('is-dragging'); });
+                            marker.on('dragend', () => { isDragging.value = false; el.classList.remove('is-dragging'); });
+                            
                             markerMap.set(item.id, marker);
                         }
 
@@ -548,9 +703,11 @@
                         geoLayerIds.push(fillId, lineId, circleId);
 
                         [fillId, lineId, circleId].forEach(layerId => {
-                            map.value.on('click', layerId, () => {
+                            map.value.on('click', layerId, (e) => {
+                                if (drawMode.value !== 'none') return;
+                                e.originalEvent.stopPropagation();
                                 focusItem(item.id);
-                                openEdit(item.id);
+                                startEditing(item.id);
                             });
                             map.value.on('mouseenter', layerId, () => {
                                 map.value.getCanvas().style.cursor = 'pointer';
@@ -625,30 +782,95 @@
                     }
                 };
 
-                onMounted(async () => {
-                    mapboxgl.accessToken = mapToken;
-                    map.value = new mapboxgl.Map({
-                        container: 'geometryMapCanvas',
-                        style: 'mapbox://styles/mapbox/streets-v12',
-                        center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
-                        zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
-                    });
+                const onKeyDown = (e) => {
+                    // 仅在未处于输入框焦点时触发快捷键
+                    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+                    
+                    if (e.key === 'Delete' || e.key === 'Backspace') {
+                        const targetId = editingId.value || activeId.value;
+                        if (targetId) {
+                            removeItem(targetId);
+                        }
+                    }
+                };
 
-                    map.value.addControl(new mapboxgl.NavigationControl(), 'top-right');
-                    map.value.on('click', onMapClick);
-                    map.value.on('load', () => reload());
+                onMounted(async () => {
+                    window.addEventListener('keydown', onKeyDown);
+                    // 确保 DOM 容器已准备就绪
+                    setTimeout(async () => {
+                        mapboxgl.accessToken = mapToken;
+                        map.value = new mapboxgl.Map({
+                            container: 'geometryMapCanvas',
+                            style: 'mapbox://styles/mapbox/streets-v12',
+                            center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
+                            zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
+                        });
+
+                        draw.value = new MapboxDraw({
+                            displayControlsDefault: false,
+                            defaultMode: 'simple_select',
+                            styles: [
+                                // 默认样式，可以根据需要自定义
+                                {
+                                    'id': 'gl-draw-polygon-fill-inactive',
+                                    'type': 'fill',
+                                    'filter': ['all', ['==', 'active', 'false'], ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+                                    'paint': { 'fill-color': '#ef4444', 'fill-outline-color': '#ef4444', 'fill-opacity': 0.1 }
+                                },
+                                {
+                                    'id': 'gl-draw-polygon-fill-active',
+                                    'type': 'fill',
+                                    'filter': ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
+                                    'paint': { 'fill-color': '#ef4444', 'fill-outline-color': '#ef4444', 'fill-opacity': 0.2 }
+                                },
+                                {
+                                    'id': 'gl-draw-polygon-stroke-active',
+                                    'type': 'line',
+                                    'filter': ['all', ['==', 'active', 'true'], ['==', '$type', 'Polygon']],
+                                    'layout': { 'line-cap': 'round', 'line-join': 'round' },
+                                    'paint': { 'line-color': '#ef4444', 'line-width': 2 }
+                                },
+                                {
+                                    'id': 'gl-draw-line-active',
+                                    'type': 'line',
+                                    'filter': ['all', ['==', '$type', 'LineString'], ['==', 'active', 'true']],
+                                    'layout': { 'line-cap': 'round', 'line-join': 'round' },
+                                    'paint': { 'line-color': '#ef4444', 'line-width': 2 }
+                                },
+                                {
+                                    'id': 'gl-draw-polygon-and-line-vertex-active',
+                                    'type': 'circle',
+                                    'filter': ['all', ['==', 'meta', 'vertex'], ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
+                                    'paint': { 'circle-radius': 4, 'circle-color': '#ef4444' }
+                                }
+                            ]
+                        });
+                        map.value.addControl(draw.value);
+
+                        map.value.addControl(new mapboxgl.NavigationControl(), 'top-right');
+                        map.value.on('click', onMapClick);
+                        map.value.on('load', () => reload());
+                    }, 0);
+                });
+
+                onUnmounted(() => {
+                    window.removeEventListener('keydown', onKeyDown);
                 });
 
                 return {
                     menuId,
                     items,
                     drawMode,
+                    editingId,
                     draftPoints,
                     openNew,
                     startDrawPoint,
                     startDrawPolygon,
                     finishPolygon,
                     cancelDrawing,
+                    startEditing,
+                    cancelEditing,
+                    saveEditing,
                     openEdit,
                     removeItem,
                     reload,

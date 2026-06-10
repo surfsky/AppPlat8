@@ -28,7 +28,7 @@ namespace App.Pages.GIS
         }
 
         /// <summary>获取点位数据</summary>
-        public IActionResult OnGetData(long id, long? menuId, long? gisMenuId, string gps, string geoJson)
+        public IActionResult OnGetData(long id, long? menuId, long? gisMenuId, string gps, string geoJson, string type)
         {
             var item = GisGeometry.GetDetail(id) ?? new GisGeometry();
             var selectedMenuId = menuId ?? gisMenuId;
@@ -39,6 +39,14 @@ namespace App.Pages.GIS
                     item.Gps = gps;
                 if (!string.IsNullOrWhiteSpace(geoJson))
                     item.GeoJson = geoJson;
+                
+                if (!string.IsNullOrWhiteSpace(type))
+                {
+                    if (Enum.TryParse<GeometryType>(type, true, out var geometryType))
+                        item.Type = geometryType;
+                    else if (type == "形状" || type.ToLower() == "shape")
+                        item.Type = GeometryType.Shape;
+                }
             }
             return BuildResult(0, "success", item);
         }
