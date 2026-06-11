@@ -15,7 +15,7 @@ namespace App.EleUI
         [HtmlAttributeName("Multi")]         public bool Multi { get; set; } = false;
         [HtmlAttributeName("TextFor")]       public ModelExpression TextFor { get; set; }
         [HtmlAttributeName("KeyMode")]       public string KeyMode { get; set; } = "Url";
-        [HtmlAttributeName("Icon")]          public EleIconName Icon { get; set; } = EleIconName.Search;
+        [HtmlAttributeName("Icon")]          public EleIcons Icon { get; set; } = EleIcons.Search;
         [HtmlAttributeName("Rows")]          public int Rows { get; set; } = 1;
         [HtmlAttributeName("Editable")]      public bool Editable { get; set; } = false;
 
@@ -57,7 +57,7 @@ namespace App.EleUI
             var title = (Label ?? "选择").Replace("'", "\\'");
             var multiStr = Multi.ToString().ToLower();
             var keyMode = (KeyMode ?? "Url").Replace("'", "\\'");
-            var iconName = Icon == EleIconName.None ? EleIconName.Search : Icon;
+            var iconName = Icon == EleIcons.None ? EleIcons.Search : Icon;
             var rowCount = Rows > 0 ? Rows : 1;
             var isTextArea = rowCount > 1;
             var placeHolderText = ("请选择或输入" + (Label ?? "")).Replace("'", "\\'");

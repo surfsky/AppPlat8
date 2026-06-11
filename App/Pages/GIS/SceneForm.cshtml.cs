@@ -48,6 +48,7 @@ namespace App.Pages.GIS
             item.Desc = req.Desc;
             item.MapZoom = req.MapZoom;
             item.MapCenter = req.MapCenter;
+            item.MapPitch = req.MapPitch;
             item.Icon = req.Icon;
 
             item.Save();

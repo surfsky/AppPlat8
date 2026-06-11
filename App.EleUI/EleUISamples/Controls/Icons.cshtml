@@ -3,8 +3,8 @@
 @using System.Linq
 @{
     ViewData["Title"] = "EleIcon 图标";
-    var icons = ((EleIconName[])System.Enum.GetValues(typeof(EleIconName)))
-                    .Where(x => x != EleIconName.None).ToArray();
+    var icons = ((EleIcons[])System.Enum.GetValues(typeof(EleIcons)))
+                    .Where(x => x != EleIcons.None).ToArray();
     var colorSamples = new (string Color, string Label)[]
     {
         ("#409EFF", "primary"),
@@ -60,7 +60,7 @@
     @* ── 全部图标 ── *@
     <EleCard Title="@($"全部图标（共 {icons.Length} 个）")" Collapsible="true">
         <div class="grid gap-1" style="grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));">
-            @foreach (EleIconName icon in icons)
+            @foreach (EleIcons icon in icons)
             {
                 <div class="flex flex-col items-center gap-1 p-3 rounded cursor-default hover:bg-gray-50 transition-colors">
                     <EleIcon Name="@icon" Size="24" />

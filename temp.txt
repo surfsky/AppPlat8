@@ -328,3 +328,6 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
         };
     </script>
 }
+
+                <el-button @@click="locateMe">当前位置</el-button>
+                <el-button @@click="closeOnly">取消</el-button>

@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace App.EleUI
 {
-
+    /// <summary>操作列项</summary>
     internal class OpItem
     {
         public string Icon { get; set; }
@@ -24,11 +24,13 @@ namespace App.EleUI
         public string Text { get; set; }
     }
 
+    /// <summary>操作列上下文</summary>
     internal class OpColumnContext
     {
         public List<OpItem> Items { get; } = new List<OpItem>();
     }
 
+    /// <summary>操作列项标签助手</summary>
     [HtmlTargetElement("Op", ParentTag = "EleOpColumn")]
     public class EleOpTagHelper : TagHelper
     {
@@ -37,7 +39,7 @@ namespace App.EleUI
         public ViewContext ViewContext { get; set; }
 
         [HtmlAttributeName("Icon")]
-        public string Icon { get; set; }
+        public EleIcons Icon { get; set; } = EleIcons.None;
 
         [HtmlAttributeName("Tooltip")]
         public string Tooltip { get; set; }
@@ -73,7 +75,7 @@ namespace App.EleUI
 
             opCtx.Items.Add(new OpItem
             {
-                Icon = Icon,
+                Icon = Icon.ToString(),
                 Tooltip = Tooltip,
                 Visible = Visible,
                 Command = Command,
@@ -115,8 +117,9 @@ namespace App.EleUI
     [RestrictChildren("Op")]
     public class EleOpColumnTagHelper : EleColumnBaseTagHelper
     {
-        [HtmlAttributeName("MaxInlineOps")]
-        public int MaxInlineOps { get; set; } = 2;
+        /// <summary>显示的操作项数量</summary>
+        [HtmlAttributeName("Shows")]
+        public int Shows { get; set; } = 2;
 
         public EleOpColumnTagHelper()
         {
@@ -140,10 +143,12 @@ namespace App.EleUI
                 (!string.IsNullOrWhiteSpace(c.Command) || !string.IsNullOrWhiteSpace(c.Popup) || !string.IsNullOrWhiteSpace(c.Handler)))
                 .ToList();
 
+            NormalizePopupUrls(ops);
+
             SetupColumnShell(output);
             ApplyBaseColumnAttributes(output);
 
-            var maxInline = Math.Max(0, MaxInlineOps);
+            var maxInline = Math.Max(0, Shows);
             var inlineOps = ops.Take(maxInline).ToList();
             var moreOps = ops.Skip(maxInline).ToList();
 
@@ -159,6 +164,42 @@ namespace App.EleUI
                 </template>
             ");
 
+        }
+
+        private void NormalizePopupUrls(List<OpItem> ops)
+        {
+            if (ops == null || ops.Count == 0) return;
+            var baseDir = GetBaseDir(ViewContext?.HttpContext?.Request?.Path.ToString());
+            foreach (var op in ops)
+            {
+                if (op == null || string.IsNullOrWhiteSpace(op.Popup)) continue;
+                var p = op.Popup.Trim();
+                if (p.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || p.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (p.StartsWith("`") || p.Contains("scope.", StringComparison.OrdinalIgnoreCase) || p.Contains("+"))
+                    continue;
+
+                if (p.StartsWith("~/", StringComparison.Ordinal))
+                {
+                    op.Popup = "/" + p.Substring(2);
+                    continue;
+                }
+
+                if (p.StartsWith("/", StringComparison.Ordinal))
+                    continue;
+
+                op.Popup = (string.IsNullOrWhiteSpace(baseDir) ? "/" : baseDir + "/") + p;
+            }
+        }
+
+        private static string GetBaseDir(string requestPath)
+        {
+            var path = (requestPath ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(path) || !path.StartsWith("/", StringComparison.Ordinal))
+                return string.Empty;
+            var idx = path.LastIndexOf('/');
+            if (idx <= 0) return string.Empty;
+            return path.Substring(0, idx);
         }
 
         private static string BuildInlineOpsHtml(List<OpItem> ops)

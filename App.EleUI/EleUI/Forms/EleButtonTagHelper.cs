@@ -52,7 +52,7 @@ namespace App.EleUI
     {
         [HtmlAttributeName("Type")]            public EleButtonType Type { get; set; } = EleButtonType.Default;
         [HtmlAttributeName("Look")]            public EleButtonLook Look { get; set; } = EleButtonLook.Fill;
-        [HtmlAttributeName("Icon")]            public EleIconName Icon { get; set; } = EleIconName.None;
+        [HtmlAttributeName("Icon")]            public EleIcons Icon { get; set; } = EleIcons.None;
         [HtmlAttributeName("IconCls")]         public string IconCls { get; set;}  // 图标 CSS 类，如："fas fa-edit"
         [HtmlAttributeName("TextFor")]         public ModelExpression TextFor { get; set; }
         [HtmlAttributeName("Loading")]         public string Loading { get; set; } // v-bind:loading
@@ -155,7 +155,7 @@ namespace App.EleUI
             var iconHtml = "";
             if (!string.IsNullOrEmpty(this.IconCls))
                 iconHtml = $"<i class=\"{this.IconCls}\"></i> ";
-            else if (Icon != EleIconName.None)
+            else if (Icon != EleIcons.None)
                 iconHtml = $"<el-icon><component :is=\"'{this.Icon}'\"></component></el-icon> ";  // 用动态组件规避 link/view/filter/switch 等与原生标签同名导致的渲染冲突
 
             // icon + text

@@ -12,11 +12,12 @@ namespace App.DAL.GIS
     public class GisScene : EntityBase<GisScene>
     {
         [UI("名称")] public string Name { get; set; }
+        [UI("图标")] public string Icon { get; set; }
         [UI("排序")] public int SortId { get; set; }
         [UI("描述")] public string Desc { get; set; }
         [UI("缩放级别")] public int? MapZoom { get; set; }
         [UI("中心点")] public string MapCenter { get; set; }
-        [UI("图标")] public string Icon { get; set; }
+        [UI("倾斜角")] public int MapPitch { get; set; } = 0;
 
         public virtual User Creator { get; set; }
         public string CreatorName => Creator?.Name;
@@ -34,6 +35,7 @@ namespace App.DAL.GIS
                 Desc,
                 MapZoom,
                 MapCenter,
+                MapPitch,
                 Icon,
                 CreatorId,
                 CreateDt,

@@ -7,7 +7,7 @@ namespace App.EleUI
     /// Element Plus 图标名称枚举（来自 @element-plus/icons-vue）。
     /// 枚举值与 Vue 组件名一致（PascalCase），参考：https://element-plus.org/zh-CN/component/icon
     /// </summary>
-    public enum EleIconName
+    public enum EleIcons
     {
         /// <summary>不指定图标（使用子内容或空）</summary>
         None = 0,
@@ -92,7 +92,7 @@ namespace App.EleUI
     {
         /// <summary>图标名称（Element Plus 图标枚举）。默认 None 时使用子内容。</summary>
         [HtmlAttributeName("Name")]
-        public EleIconName Name { get; set; } = EleIconName.None;
+        public EleIcons Name { get; set; } = EleIcons.None;
 
         /// <summary>图标尺寸（像素数字或 CSS 字符串），例如 "24" 或 "1.5em"。对应 el-icon 的 size 属性。</summary>
         [HtmlAttributeName("Size")]        public string Size { get; set; }
@@ -117,7 +117,7 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("color", Color);
 
             // name
-            if (Name != EleIconName.None)
+            if (Name != EleIcons.None)
             {
                 // Use dynamic component to avoid conflicts with native tags like link/view/filter/switch.
                 output.Content.SetHtmlContent($"<component :is=\"'{Name}'\"></component>");

@@ -466,6 +466,7 @@
                     // 1. 切换地图中心和缩放 (兼容 camelCase 和 PascalCase)
                     const centerStr = detail.mapCenter || detail.MapCenter;
                     const zoomVal = detail.mapZoom ?? detail.MapZoom;
+                    const pitchVal = detail.mapPitch ?? detail.MapPitch;
 
                     if (centerStr) {
                         const parts = centerStr.split(/[,，\s]+/).filter(Boolean);
@@ -476,6 +477,7 @@
                                 map.flyTo({
                                     center: [lng, lat],
                                     zoom: (zoomVal !== null && zoomVal !== undefined) ? zoomVal : map.getZoom(),
+                                    pitch: (pitchVal !== null && pitchVal !== undefined) ? pitchVal : map.getPitch(),
                                     duration: 2000 // 平滑过渡
                                 });
                             }
@@ -483,6 +485,12 @@
                     } else if (zoomVal !== null && zoomVal !== undefined) {
                         map.flyTo({
                             zoom: zoomVal,
+                            pitch: (pitchVal !== null && pitchVal !== undefined) ? pitchVal : map.getPitch(),
+                            duration: 2000
+                        });
+                    } else if (pitchVal !== null && pitchVal !== undefined) {
+                        map.flyTo({
+                            pitch: pitchVal,
                             duration: 2000
                         });
                     }

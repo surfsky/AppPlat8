@@ -7,13 +7,15 @@
 
 @section body {
     <EleForm>
+        <EleIconSelector For="Item.Icon" Label="图标" FillRow="true"></EleIconSelector>
         <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
-        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="9999"></EleNumber>
-        <EleInput For="Item.Desc" Label="描述" Rows="3" FillRow="true"></EleInput>
-        <EleNumber For="Item.MapZoom" Label="缩放级别" Min="1" Max="20"></EleNumber>
-        <EleInput For="Item.MapCenter" Label="中心点" Placeholder="lng,lat"></EleInput>
-        <EleIconSelector For="Item.Icon" Label="图标"></EleIconSelector>
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.Desc" Label="描述" Rows="1" FillRow="false"></EleInput>
+        <EleNumber For="Item.MapZoom" Label="地图缩放级别" Min="1" Max="20"></EleNumber>
+        <EleSelector For="Item.MapCenter" TextFor="Item.MapCenter" Label="地图中心坐标" PopupUrl="Locator" Icon="Location" Editable="true" Placeholder="lng, lat"></EleSelector>
+        <EleNumber For="Item.MapPitch" Label="地图倾斜角" Min="0" Max="85"></EleNumber>
+        
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Command="Close">关闭</EleButton>

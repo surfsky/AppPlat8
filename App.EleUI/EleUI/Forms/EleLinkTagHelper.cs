@@ -26,7 +26,7 @@ namespace App.EleUI
         [HtmlAttributeName("Href")]          public string Href { get; set; }
         [HtmlAttributeName("Display")]       public EleLinkDisplay Display { get; set; } = EleLinkDisplay.Blank;
         [HtmlAttributeName("Text")]          public string Text { get; set; } = "";
-        [HtmlAttributeName("Icon")]          public EleIconName Icon { get; set; } = EleIconName.None;
+        [HtmlAttributeName("Icon")]          public EleIcons Icon { get; set; } = EleIcons.None;
         [HtmlAttributeName("DrawerTitle")]   public string DrawerTitle { get; set; }
         [HtmlAttributeName("DrawerSize")]    public string DrawerSize { get; set; }
 
@@ -44,7 +44,7 @@ namespace App.EleUI
             }
 
             var hasText = !string.IsNullOrWhiteSpace(content);
-            var hasIcon = Icon != EleIconName.None;
+            var hasIcon = Icon != EleIcons.None;
             var drawerTitleText = hasText ? content : "查看";
 
             if (!hasText && !hasIcon)

@@ -39,7 +39,7 @@ namespace App.EleUI
         public string Title { get; set; }
 
         [HtmlAttributeName("Icon")]
-        public EleIconName Icon { get; set; } = EleIconName.None;
+        public EleIcons Icon { get; set; } = EleIcons.None;
 
         [HtmlAttributeName("IconCls")]
         public string IconCls { get; set; }
@@ -88,7 +88,7 @@ namespace App.EleUI
                 // 优先使用 <Header> 子标签提供的自定义 header
                 headerTemplate = $"<template #header>{cardCtx.HeaderHtml}</template>";
             }
-            else if (!string.IsNullOrWhiteSpace(Title) || Icon != EleIconName.None || !string.IsNullOrWhiteSpace(IconCls) || isCollapsible)
+            else if (!string.IsNullOrWhiteSpace(Title) || Icon != EleIcons.None || !string.IsNullOrWhiteSpace(IconCls) || isCollapsible)
             {
                 var headerClass = string.IsNullOrWhiteSpace(HeaderClass)
                     ? "flex items-center justify-between"
@@ -226,7 +226,7 @@ window.__eleInitCardBody && window.__eleInitCardBody('__BODY_ID__');
             return value.Replace("-", "_").Replace(":", "_");
         }
 
-        private static string BuildIconHtml(EleIconName icon, string iconCls)
+        private static string BuildIconHtml(EleIcons icon, string iconCls)
         {
             if (!string.IsNullOrWhiteSpace(iconCls))
             {
@@ -234,7 +234,7 @@ window.__eleInitCardBody && window.__eleInitCardBody('__BODY_ID__');
                 return $"<i class='{escapedClass}'></i>";
             }
 
-            if (icon == EleIconName.None)
+            if (icon == EleIcons.None)
                 return string.Empty;
 
             var escaped = icon.ToString().Replace("'", "\\'").Replace("\"", "&quot;");

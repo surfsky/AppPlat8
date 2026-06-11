@@ -81,6 +81,7 @@ namespace App.API
                 scene.Name,
                 scene.MapZoom,
                 scene.MapCenter,
+                scene.MapPitch,
                 menuIds = scene.SceneMenus.Select(m => m.MenuId).ToList(),
                 panelIds = scene.ScenePanels.Select(p => p.PanelId).ToList()
             }.ToResult();

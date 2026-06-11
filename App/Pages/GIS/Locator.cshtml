@@ -27,7 +27,7 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
     <style>
         html, body, #app { height: 100%; margin: 0; }
-        #map { width: 100%; height: 100%; }
+        #map { width: 100%; height: calc(100% - 50px); top: 50px; }
         .panel {
             position: absolute;
             top: 0px;
@@ -35,7 +35,7 @@
             right: 0px;
             z-index: 10;
             background: rgba(255, 255, 255, 0.95);
-            padding: 10px;
+            padding: 10px 0px;
         }
         .footer {
             position: absolute;
@@ -57,8 +57,6 @@
             <div style="display:flex; gap:8px; align-items:center;">
                 <el-input v-model="keyword" placeholder="输入地名搜索定位" clearable @@keyup.enter="searchPlace"></el-input>
                 <el-button type="primary" @@click="searchPlace" :loading="searching">搜索</el-button>
-                <el-button @@click="locateMe">当前位置</el-button>
-                <el-button @@click="closeOnly">取消</el-button>
                 <el-button type="primary" @@click="confirmLocation">保存</el-button>
             </div>
             <div v-if="searchResults.length > 0" style="margin-top:8px; max-height:180px; overflow:auto; border:1px solid #e5e7eb; border-radius:6px;">
@@ -130,6 +128,7 @@
                 };
 
                 const initMap = () => {
+                    // 初始化地图
                     if (!accessToken) {
                         showError('缺少 Mapbox Token，请在 URL 追加 token 参数或配置 window.MAPBOX_ACCESS_TOKEN');
                         return;
@@ -142,15 +141,19 @@
                         zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
                     });
 
-                    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+                    // 增加工具栏按钮
+                    map.addControl(new mapboxgl.NavigationControl(), 'top-right');  // 导航
+                    map.addControl(new mapboxgl.GeolocateControl({
+                        positionOptions: { enableHighAccuracy: true },
+                        trackUserLocation: true,
+                        showUserHeading: true
+                    }), 'top-right');  // 定位
+                    map.addControl(new mapboxgl.FullscreenControl());  // 全屏
+                    //map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');  // 版权信息
 
-                    map.on('load', () => {
-                        setPoint(lng.value, lat.value, false);
-                    });
-
-                    map.on('click', (e) => {
-                        setPoint(e.lngLat.lng, e.lngLat.lat, false);
-                    });
+                    // 事件
+                    map.on('load', () => { setPoint(lng.value, lat.value, false); });
+                    map.on('click', (e) => { setPoint(e.lngLat.lng, e.lngLat.lat, false);});
                 };
 
                 const searchPlace = async () => {

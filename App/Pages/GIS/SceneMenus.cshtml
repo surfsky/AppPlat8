@@ -19,7 +19,6 @@
         </div>
         <div class="flex justify-end gap-2">
             <el-button type="primary" @@click="save" :loading="saving">保存</el-button>
-            <el-button @@click="close">取消</el-button>
         </div>
     </div>
 }
@@ -55,13 +54,11 @@
                 async save() {
                     this.saving = true;
                     try {
-                        // 获取选中的节点（包括半选状态的父节点，根据业务需求，这里通常只存叶子节点或全部，
-                        // 但为了场景展示，存所有选中的 ID 比较稳妥）
-                        const checkedKeys = this.$refs.tree.getCheckedKeys();
-                        const halfCheckedKeys = this.$refs.tree.getHalfCheckedKeys();
-                        const allKeys = [...checkedKeys, ...halfCheckedKeys];
+                        // 仅保存真正勾选的节点，避免半选父节点被持久化后，
+                        // 下次回填时把整个目录错误地恢复为“已选中”。
+                        const checkedKeys = this.$refs.tree.getCheckedKeys(false);
 
-                        const res = await axios.post('?handler=Save&sceneId=@Model.SceneId', allKeys, {
+                        const res = await axios.post('?handler=Save&sceneId=@Model.SceneId', checkedKeys, {
                             headers: {
                                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                             }
