@@ -97,6 +97,17 @@
             renderMenuTree();
         }
 
+        function isMenuCollapsed(nodeId) {
+            return !!state.collapsedMenuIds?.has(nodeId);
+        }
+
+        function toggleMenuCollapsed(nodeId) {
+            if (!state.collapsedMenuIds) state.collapsedMenuIds = new Set();
+            if (state.collapsedMenuIds.has(nodeId)) state.collapsedMenuIds.delete(nodeId);
+            else state.collapsedMenuIds.add(nodeId);
+            renderMenuTree();
+        }
+
         function renderMenuTree() {
             const container = document.getElementById('menu-tree');
             if (!container) return;
@@ -124,11 +135,33 @@
                 const row = document.createElement('div');
                 row.className = 'menu-node';
                 row.style.marginLeft = `${depth * 14}px`;
+                const children = node.children || [];
+                const hasChildren = children.length > 0;
+                const isCollapsed = hasChildren && isMenuCollapsed(node.id);
 
                 const ids = getMenuGeometryIds(node, geometryCache);
                 const visibleCount = ids.filter(id => state.geometryVisibleMap.get(id) !== false).length;
                 const menuCount = Number(node.dataCnt ?? 0);
                 const count = Number.isFinite(menuCount) && menuCount >= 0 ? menuCount : 0;
+
+                if (hasChildren) {
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.type = 'button';
+                    toggleBtn.className = 'menu-node-toggle';
+                    toggleBtn.textContent = isCollapsed ? '▸' : '▾';
+                    toggleBtn.title = isCollapsed ? '展开子节点' : '折叠子节点';
+                    toggleBtn.setAttribute('aria-label', toggleBtn.title);
+                    toggleBtn.addEventListener('click', (evt) => {
+                        evt.stopPropagation();
+                        toggleMenuCollapsed(node.id);
+                    });
+                    row.appendChild(toggleBtn);
+                } else {
+                    const togglePlaceholder = document.createElement('span');
+                    togglePlaceholder.className = 'menu-node-toggle empty';
+                    togglePlaceholder.setAttribute('aria-hidden', 'true');
+                    row.appendChild(togglePlaceholder);
+                }
 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
@@ -170,7 +203,9 @@
                 row.appendChild(badge);
 
                 container.appendChild(row);
-                (node.children || []).forEach(child => renderNode(child, depth + 1));
+                if (!isCollapsed) {
+                    children.forEach(child => renderNode(child, depth + 1));
+                }
             };
 
             state.menuRoots.forEach(node => renderNode(node, 0));

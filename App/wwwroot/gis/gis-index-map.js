@@ -182,12 +182,14 @@
             state.currentStyle = type;
             const styleMap = {
                 street: 'mapbox://styles/mapbox/streets-v12',
+                terrain: 'mapbox://styles/mapbox/satellite-v9',
                 satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
                 dark: 'mapbox://styles/mapbox/dark-v11',
                 night: 'mapbox://styles/mapbox/navigation-night-v1'
             };
             map.setStyle(styleMap[type] || styleMap.street);
             document.getElementById('btn-style-street')?.classList.toggle('active', type === 'street');
+            document.getElementById('btn-style-terrain')?.classList.toggle('active', type === 'terrain');
             document.getElementById('btn-style-sat')?.classList.toggle('active', type === 'satellite');
             document.getElementById('btn-style-dark')?.classList.toggle('active', type === 'dark');
             document.getElementById('btn-style-night')?.classList.toggle('active', type === 'night');

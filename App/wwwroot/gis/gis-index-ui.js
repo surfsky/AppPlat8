@@ -57,6 +57,25 @@
         syncLayerPanelUI(state);
     }
 
+    function syncLayerTabsUI(state) {
+        const activeTab = state.activeLayerTab || 'resource';
+        document.querySelectorAll('.layer-tab-btn').forEach(btn => {
+            const isActive = btn.dataset.tab === activeTab;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        document.querySelectorAll('.layer-tab-panel').forEach(panel => {
+            const isActive = panel.dataset.tabPanel === activeTab;
+            panel.classList.toggle('active', isActive);
+            panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+        });
+    }
+
+    function switchLayerTab(state, tab) {
+        state.activeLayerTab = tab || 'resource';
+        syncLayerTabsUI(state);
+    }
+
     function syncViewMenuUI(state) {
         const menu = document.getElementById('view-menu');
         const toggleBtn = document.getElementById('btn-view-toggle');
@@ -180,6 +199,8 @@
         syncToolbarUI,
         toggleLayerPanel,
         syncLayerPanelUI,
+        switchLayerTab,
+        syncLayerTabsUI,
         toggleViewMenu,
         closeViewMenu,
         syncViewMenuUI,
