@@ -22,10 +22,51 @@ namespace App.Pages.Checks
         {
         }
 
-        public IActionResult OnGetData(long id)
+        public IActionResult OnGetData(
+            long id,
+            long? objectId,
+            long? checkLogId,
+            long? checkSheetId,
+            long? checkItemId,
+            string checkItemText)
         {
-            var item = CheckHazard.GetDetail(id) ?? new CheckHazard();
-            return BuildResult(0, "success", item.Export(ExportMode.Normal));
+            var item = id > 0 ? (CheckHazard.GetDetail(id) ?? new CheckHazard()) : new CheckHazard();
+            if (id <= 0)
+            {
+                item.ObjectId = objectId;
+                item.CheckLogId = checkLogId;
+                item.CheckSheetId = checkSheetId;
+                item.CheckItemId = checkItemId;
+                item.CheckItemText = checkItemText;
+            }
+
+            var objectName = item.ObjectName;
+            if (string.IsNullOrWhiteSpace(objectName) && item.ObjectId.HasValue)
+                objectName = CheckObject.Get(item.ObjectId)?.Name ?? string.Empty;
+
+            var sheetName = item.CheckSheetName;
+            if (string.IsNullOrWhiteSpace(sheetName) && item.CheckSheetId.HasValue)
+                sheetName = CheckSheet.Get(item.CheckSheetId)?.Name ?? string.Empty;
+
+            var data = new
+            {
+                item.Id,
+                item.ObjectId,
+                ObjectName = objectName,
+                item.CheckLogId,
+                item.CheckSheetId,
+                CheckSheetName = sheetName,
+                item.CheckItemId,
+                item.CheckItemText,
+                item.Description,
+                item.Status,
+                item.ExpireDt,
+                item.RectifyDt,
+                item.IsIn141,
+                ImageUrls = item.ImageUrls
+            };
+
+            return BuildResult(0, "success", data);
         }
 
         public IActionResult OnPostSave([FromBody] CheckHazard req)
@@ -43,6 +84,9 @@ namespace App.Pages.Checks
                 item.ObjectId = req.ObjectId;
                 item.CheckItemId = req.CheckItemId;
                 item.CheckSheetId = req.CheckSheetId;
+                item.CheckLogId = req.CheckLogId;
+                item.CheckerId = GetUserId();
+                item.CheckItemText = req.CheckItemText;
             }
 
             item.Description = req.Description;
@@ -54,6 +98,31 @@ namespace App.Pages.Checks
 
             // 保存图片
             item.AddAtt(Uploader.SaveFiles(nameof(CheckHazard), req.ImageUrls));
+
+            if (item.CheckLogId.HasValue)
+            {
+                var check = Check.Get(item.CheckLogId.Value);
+                if (check == null)
+                {
+                    var userId = GetUserId();
+                    var user = GetUser();
+                    check = new Check
+                    {
+                        Id = item.CheckLogId.Value,
+                        CreateDt = DateTime.Now,
+                        CheckDt = DateTime.Now,
+                        CheckObjectId = item.ObjectId,
+                        CheckerId = userId,
+                        OrgId = user?.OrgId,
+                        HazardCount = 0,
+                        RemainHazardCount = 0,
+                        Result = false,
+                        IsClosed = false
+                    };
+                    check.Save();
+                }
+            }
+
             return BuildResult(0, "保存成功");
         }
 

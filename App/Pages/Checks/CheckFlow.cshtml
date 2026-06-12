@@ -1,0 +1,115 @@
+@page
+@model App.Pages.Checks.CheckFlowModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "隐患排查";
+}
+
+@section body {
+    <EleForm BuildMode="None">
+        <EleHidden For="Item.ObjectId"></EleHidden>
+        <EleHidden For="Item.CheckLogId"></EleHidden>
+
+        <EleLabel Label="对象基础信息" FillRow="true"></EleLabel>
+        <EleInput For="Item.ObjectName" Label="对象名称" Enabled="false" FillRow="true"></EleInput>
+        <EleInput For="Item.DutyOrgName" Label="责任单位" Enabled="false"></EleInput>
+        <EleInput For="Item.Address" Label="地址" Enabled="false" FillRow="true"></EleInput>
+        <EleInput For="Item.RiskLevelName" Label="风险等级" Enabled="false"></EleInput>
+        <EleInput For="Item.ScopeName" Label="领域" Enabled="false"></EleInput>
+        <EleInput For="Item.TagNames" Label="标签" Enabled="false" FillRow="true"></EleInput>
+
+        <EleLabel Label="检查信息" FillRow="true"></EleLabel>
+        <EleInput For="Item.CheckLogId" Label="检查记录标识" Enabled="false" FillRow="true"></EleInput>
+        <EleDatePicker For="Item.CheckDt" Label="检查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+        <EleSelect For="Item.TaskId" Label="检查任务" Items="Model.TaskOptions" Clearable="true"></EleSelect>
+        <EleInput For="Item.PatrolOrgName" Label="巡查单位" Enabled="false"></EleInput>
+        <EleInput For="Item.PatrolOrgLevel" Label="单位类型" Enabled="false"></EleInput>
+
+        <EleLabel Label="检查表及检查项" FillRow="true"></EleLabel>
+        <EleSelect For="Item.SheetIds" Label="检查表" Items="Model.SheetOptions" Multiple="true" Filterable="true" FillRow="true" OnChange="SheetItems"></EleSelect>
+
+        <div class="col-span-full">
+            <el-table
+                :data="form.checkItems || []"
+                stripe
+                size="small"
+                style="width: 100%;"
+                row-key="checkItemId">
+                <el-table-column prop="sheetName" label="检查表" width="160"></el-table-column>
+                <el-table-column prop="name" label="检查项" min-width="260"></el-table-column>
+                <el-table-column prop="hazardLevelName" label="隐患级别" width="120"></el-table-column>
+                <el-table-column label="结果" width="140">
+                    <template #default="{ row }">
+                        <el-select
+                            v-model="row.result"
+                            placeholder="请选择"
+                            v-on:change="onCheckFlowItemResultChanged(form, row, $event, save)">
+                            <el-option label="合格" value="pass"></el-option>
+                            <el-option label="不合格" value="fail"></el-option>
+                            <el-option label="不涉及" value="na"></el-option>
+                        </el-select>
+                    </template>
+                </el-table-column>
+                <el-table-column label="备注" min-width="220">
+                    <template #default="{ row }">
+                        <el-input v-model="row.remark" placeholder="备注"></el-input>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}
+
+@section script {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkFlowMixin = {
+                methods: {
+                    async onCheckFlowItemResultChanged(form, row, val, save) {
+                        if (!row || val !== 'fail') return;
+
+                        const objId = form && form.objectId ? '' + form.objectId : '';
+                        const checkLogId = form && form.checkLogId ? '' + form.checkLogId : '';
+                        if (!objId || !checkLogId) {
+                            EleManager.showWarning('缺少检查对象或检查记录标识');
+                            return;
+                        }
+
+                        const sheetId = row.sheetId ? '' + row.sheetId : '';
+                        const itemId = row.checkItemId ? '' + row.checkItemId : '';
+                        const itemText = row.name ? '' + row.name : '';
+                        const url =
+                            '/Checks/CheckHazardForm?md=new'
+                            + '&objectId=' + encodeURIComponent(objId)
+                            + '&checkLogId=' + encodeURIComponent(checkLogId)
+                            + '&checkSheetId=' + encodeURIComponent(sheetId)
+                            + '&checkItemId=' + encodeURIComponent(itemId)
+                            + '&checkItemText=' + encodeURIComponent(itemText);
+
+                        EleManager.openDrawer({
+                            title: '隐患录入',
+                            url,
+                            closeHandler: async (payload) => {
+                                const saved = payload && payload.data && payload.data.saved === true;
+                                if (saved && typeof save === 'function') {
+                                    await save({ closeAfterSave: false });
+                                }
+                            }
+                        });
+                    }
+                }
+            };
+
+            new EleFormAppBuilder().mount('#app', {
+                dataHandler: '?handler=Data',
+                saveHandler: '?handler=Save',
+                mixins: [checkFlowMixin]
+            });
+        });
+    </script>
+}

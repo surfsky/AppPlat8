@@ -155,9 +155,11 @@ namespace App.EleUI
         /// <summary>创建脚本HTML</summary>
         private string CreateScript()
         {
+            // 无脚本模式下，不生成脚本
             if (BuildMode == EleAppBuildMode.None)
                 return string.Empty;
 
+            // 服务器端脚本模式下，生成服务器端一次性加载页面及数据的脚本
             if (BuildMode == EleAppBuildMode.Server)
             {
                 var initData = ResolveInitDataJson();
@@ -179,6 +181,7 @@ namespace App.EleUI
 ";
             }
 
+            // 客户端脚本模式下，生成客户端动态加载数据的脚本
             return $@"
 <script>
     document.addEventListener('DOMContentLoaded', function() {{

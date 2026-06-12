@@ -16,6 +16,7 @@
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Primary" PopupUrl="/Checks/CheckFlow?objectId=@Model.ObjectId&objectName=@objectNameEncoded" Icon="DocumentChecked" Visible="@(Model.ObjectId.GetValueOrDefault() > 0 && Auth.CheckPower(Power.CheckNew))">开始排查</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
             </Buttons>
@@ -23,7 +24,7 @@
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="60" Fixed="right">
-                <Op Command="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckDelete)"></Op>
+                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckDelete)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.CheckObjectName" Label="检查对象" MinWidth="150"></EleColumn>
             <EleColumn For="Item.Task.Name" Label="关联任务" Width="150"></EleColumn>

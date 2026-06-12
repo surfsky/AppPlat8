@@ -24,8 +24,8 @@
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="100" Fixed="right">
-                <Op Command="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.UserEdit)"></Op>
-                <Op Command="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.UserDelete)"></Op>
+                <Op Command="Edit" Tooltip="编辑" Icon="Edit" Visible="@Auth.CheckPower(Power.UserEdit)"></Op>
+                <Op Command="Delete" Tooltip="删除" Icon="Delete" Visible="@Auth.CheckPower(Power.UserDelete)"></Op>
             </EleOpColumn>
             <EleImageColumn For="Item.Photo" Label="头像" Width="60" Sortable="false"></EleImageColumn>
             <EleColumn For="Item.Name" Label="账号" Link="true" MinWidth="120" Sortable="true"></EleColumn>

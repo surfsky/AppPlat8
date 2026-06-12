@@ -336,31 +336,36 @@ cad转三维模型：
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+2026.06.13
+    继续优化隐患闭环
+        - 检查详情（只读）页面，可查看对应的隐患记录表
+        - 完成隐患闭环操作
+        - 看情况，若有必要把 CheckFlow 改为 CheckNew
+    余局要的多系统功能比较
+
+
 2026.06.12
-    参照示意图，完成隐患排查页面/pages/checks/CheckFlow（检查对象CheckObject----(1:n)----隐患排查Check----(1:n)----隐患CheckHarzard）
+    /完成隐患排查页面/pages/checks/CheckFlow（检查对象CheckObject----(1:n)----隐患排查Check----(1:n)----隐患CheckHarzard）
         - 在检查对象清单CheckObjects、检查对象表单页面CheckObjectForm、检查清单页面Checks，增加“开始检查”入口；
         - 点击弹出对象检查表单，包括：对象基础信息区域、检查信息区域、检查项区域（见图1，但我们调整一下位置，将检查表和检查项放到最后）。其中检查记录标志ID可用 SnowflakeId 类来预生成。
         - 用户选择检查表（可多选），检查项区域显示对应的检查项（见图2），其中检查结果有三个选项“合格、不合格、不涉及”；
         - 若某个检查项选择“不合格”，则弹出隐患录入页面（图3）；
         - 用户将隐患录入保存后，会自动保存隐患排查记录（避免隐患排查记录缺失）, 并关闭隐患录入表单。
-
-    其它细节
-        - 新增检查权限为 Power.CheckNew
-        - 尽量用 EleUI 来展示UI，可参考/pages/checks/下的相关网页；
-        - 所有的弹窗都用elemanger drawer 来展示，使用默认宽度；
-        - 检查表单中的检查信息区域中
-            其中检查记录标志ID可用 SnowflakeId 类来预生成。
-            有一个检查任务下拉框（数据来自CheckTask表），若为空可理解为“日常检查”
-            巡查单位：来自当前登录用户的归属Org
-            检查单位类型：来自归属Org.OrgLevel
-        - 是否全局启用 SnowFlakeId 方案做个评估，开启 EntityBase.Id 的 snowflakeid attribute就行了
-
+        /相关细节
+            - 新增检查权限为 Power.CheckNew
+            - 尽量用 EleUI 来展示UI，可参考/pages/checks/下的相关网页；
+            - 所有的弹窗都用elemanger drawer 来展示，使用默认宽度；
+            - 检查表单中的检查信息区域中
+                其中检查记录标志ID可用 SnowflakeId 类来预生成。
+                有一个检查任务下拉框（数据来自CheckTask表），若为空可理解为“日常检查”
+                巡查单位：来自当前登录用户的归属Org
+                检查单位类型：来自归属Org.OrgLevel
+            - 是否全局启用 SnowFlakeId 方案做个评估，开启 EntityBase.Id 的 snowflakeid attribute就行了，主要是要注意 long 类型的Id渲染到客户端要用string，上传回来后要用long类型来容纳；
         /org 
             /Org.FullName 逻辑下沉到基类
             /增加单位属性 IsSolo
             /增加单位层级枚举：OrgLevel 省级、市级、县级、乡镇
 
-    余局要的多系统功能比较
 
 
 2026.06.11

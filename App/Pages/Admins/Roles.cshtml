@@ -20,8 +20,8 @@
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="100" Fixed="right">
-                <Op Command="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.RoleEdit)"></Op>
-                <Op Command="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.RoleDelete)"></Op>
+                <Op Command="Edit" Tooltip="编辑" Icon="Edit" Visible="@Auth.CheckPower(Power.RoleEdit)"></Op>
+                <Op Command="Delete" Tooltip="删除" Icon="Delete" Visible="@Auth.CheckPower(Power.RoleDelete)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="120" Sortable="true"></EleColumn>
             <EleColumn For="Item.Remark" Label="备注"></EleColumn>
