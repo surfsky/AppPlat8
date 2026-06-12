@@ -15,6 +15,7 @@ namespace App.DAL
     [UI("检查", "检查记录")]
     public class Check : EntityBase<Check>
     {
+        [UI("ID"), SnowflakeId]     public override long Id { get; set; }
         [UI("任务")]    public long? TaskId { get; set; }
         [UI("检查科室")] public long? OrgId { get; set; }
         [UI("检查人员")] public long? CheckerId { get; set; }

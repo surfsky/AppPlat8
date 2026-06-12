@@ -13,8 +13,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckLogEdit)]
-    public class CheckLogFormModel : AdminModel
+    [CheckPower(Power.CheckEdit)]
+    public class CheckFormModel : AdminModel
     {
         public Check Item { get; set; }
         public List<SelectListItem> CheckObjects { get; set; }

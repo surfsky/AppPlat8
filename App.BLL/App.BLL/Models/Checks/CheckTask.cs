@@ -15,10 +15,8 @@ namespace App.DAL
               --1:n--CheckTaskSheet（检查单）
     */
     [UI("检查", "检查任务")]
-    public class CheckTask : EntityBase<CheckTask>
+    public class CheckTask : TreeEntity<CheckTask>
     {
-        [UI("父任务")] public long? ParentId { get; set; }
-        [UI("名称")] public string Name { get; set; }
         [UI("发布人")] public long? PublisherId { get; set; }
         [UI("备注")] public string Remark { get; set; }
         [UI("截止时间")] public DateTime? ExpireDt { get; set; }
@@ -27,7 +25,6 @@ namespace App.DAL
 
         // Relations
         public virtual CheckTask Parent { get; set; }
-        public virtual List<CheckTask> Children { get; set; }
         public virtual User Publisher { get; set; }
         public virtual List<CheckTaskOrg> Orgs { get; set; }
         public virtual List<CheckTaskObject> CheckObjects { get; set; }

@@ -208,10 +208,10 @@ namespace App.DAL
         [UI("检查", "检查任务修改")]           CheckTaskEdit = 312,
         [UI("检查", "检查任务删除")]           CheckTaskDelete = 313,
 
-        [UI("检查", "检查记录新增")]           CheckLogNew = 320,
-        [UI("检查", "检查记录查看")]           CheckLogView = 321,
-        [UI("检查", "检查记录修改")]           CheckLogEdit = 322,
-        [UI("检查", "检查记录删除")]           CheckLogDelete = 323,
+        [UI("检查", "检查记录新增")]           CheckNew = 320,
+        [UI("检查", "检查记录查看")]           CheckView = 321,
+        [UI("检查", "检查记录修改")]           CheckEdit = 322,
+        [UI("检查", "检查记录删除")]           CheckDelete = 323,
 
         [UI("检查", "隐患查看")]               CheckHazardView = 331,
         [UI("检查", "隐患修改")]               CheckHazardEdit = 332,

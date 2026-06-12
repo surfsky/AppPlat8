@@ -13,8 +13,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckLogView)]
-    public class CheckLogsModel : AdminModel
+    [CheckPower(Power.CheckView)]
+    public class ChecksModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]
         public long? ObjectId { get; set; }
@@ -31,7 +31,7 @@ namespace App.Pages.Checks
 
             if (ObjectId.GetValueOrDefault() > 0 && string.IsNullOrWhiteSpace(ObjectName))
             {
-                ObjectName = CheckObject.Get(ObjectId.Value)?.Name ?? string.Empty;
+                ObjectName = CheckObject.Get(ObjectId)?.Name ?? string.Empty;
             }
         }
 
@@ -45,7 +45,7 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.CheckLogDelete))
+            if (!CheckPower(Power.CheckDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

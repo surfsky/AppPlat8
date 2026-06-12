@@ -110,6 +110,7 @@
     - 子表-联系人表（Contacts）：ID.姓名.照片.证件号.证件照片.联系方式.执证日期.证件过期日期。一个对象包含多个人员。
     - 子表-对象标签表（CheckTag）：ID.父ID.Name。一个对象包含多个标签；
     - 子表-检查项表（CheckItem）：ID.TagID.Name.Order，Level。一个标签对应多个检查项；
+    - 子表-隐患点（CheckPoint）：ID, CheckObjectId, Name, Level, Picture。一个对象包含多个隐患点；
 
 2.检查（Check）
     - 字段：检查ID.任务ID.时间.科室.人员.对象ID.检查表ID.检查结果.是否有隐患.隐患是否闭环.过期日期.隐患数.隐患清单

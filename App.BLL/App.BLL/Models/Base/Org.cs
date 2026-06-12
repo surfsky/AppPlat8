@@ -9,10 +9,21 @@ using App.Entities;
 
 namespace App.DAL
 {
+    /// <summary>组织等级</summary>
+    public enum OrgLevel
+    {
+        [UI("省级")]  Province = 1,
+        [UI("市级")]  City = 2,
+        [UI("区县")]  District = 3,
+        [UI("社区")]  Community = 4,
+    }
+
+    /// <summary>组织</summary>
     public class Org : TreeEntity<Org>
     {
         [UI("备注")] public string Remark { get; set; }
-        [UI("全称")] public string FullName { get; set; }
+        [UI("级别")] public OrgLevel? Level { get; set; }
+        [UI("是否独立主体")] public bool? IsSolo { get; set; }
 
         public override object Export(ExportMode mode = ExportMode.Normal)
         {
@@ -21,6 +32,8 @@ namespace App.DAL
                 Id,
                 ParentId,
                 Name,
+                FullName,
+                Level,
                 Remark,
                 SortId,
                 TreeLevel,
@@ -30,21 +43,17 @@ namespace App.DAL
         
         public override Org Clone()
         {
-            return base.Clone().SetValue(t => t.Remark, this.Remark);
+            return base.Clone()
+                .SetValue(t => t.Remark, this.Remark)
+                .SetValue(t => t.Level, this.Level)
+                .SetValue(t => t.IsSolo, this.IsSolo)
+                ;
         }
 
-        public override void BeforeSave(EntityOp op) 
+        /// <summary>获取独立主体组织</summary>
+        public Org GetSoloOrg()
         {
-            this.FullName = GetFullName();
-        }
-
-        /// <summary>获取全称（包含父级）</summary>
-        public string GetFullName()
-        {
-            if (ParentId == null)
-                return Name;
-            var parent = Get(ParentId.Value);
-            return parent == null ? Name : parent.GetFullName() + "/" + Name;
+            return IsSolo == true ? this : GetParent().GetSoloOrg();
         }
 
     }

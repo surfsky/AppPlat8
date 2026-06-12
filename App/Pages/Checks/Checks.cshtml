@@ -1,5 +1,5 @@
 @page
-@model App.Pages.Checks.CheckLogsModel
+@model App.Pages.Checks.ChecksModel
 @{
     ViewData["Title"] = "检查记录管理";
     var objectNameEncoded = System.Net.WebUtility.UrlEncode(Model.ObjectName ?? string.Empty);
@@ -23,7 +23,7 @@
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="60" Fixed="right">
-                <Op Command="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckLogDelete)"></Op>
+                <Op Command="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckDelete)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.CheckObjectName" Label="检查对象" MinWidth="150"></EleColumn>
             <EleColumn For="Item.Task.Name" Label="关联任务" Width="150"></EleColumn>
