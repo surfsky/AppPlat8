@@ -55,10 +55,11 @@ export class LatLonGridLayer extends MapLayer {
   }
 
   buildGeo(bounds, step, zoom) {
-    const west = Math.floor(bounds.getWest() / step) * step;
-    const east = Math.ceil(bounds.getEast() / step) * step;
-    const south = Math.floor(bounds.getSouth() / step) * step;
-    const north = Math.ceil(bounds.getNorth() / step) * step;
+    const projectionName = this.runtime?.map?.getProjection && this.runtime.map.getProjection()?.name;
+    const west = projectionName === "globe" ? -180 : Math.floor(bounds.getWest() / step) * step;
+    const east = projectionName === "globe" ? 180 : Math.ceil(bounds.getEast() / step) * step;
+    const south = projectionName === "globe" ? -90 : Math.floor(bounds.getSouth() / step) * step;
+    const north = projectionName === "globe" ? 90 : Math.ceil(bounds.getNorth() / step) * step;
 
     const features = [];
     const spanLon = Math.max(step, east - west);

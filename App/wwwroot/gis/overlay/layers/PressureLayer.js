@@ -40,6 +40,16 @@ export class PressureLayer extends MapLayer {
 
   getSamplingBounds() {
     const { map } = this.runtime;
+    const projectionName = map.getProjection && map.getProjection()?.name;
+    if (projectionName === "globe") {
+      return {
+        west: -180,
+        east: 180,
+        south: -89.5,
+        north: 89.5
+      };
+    }
+
     const b = map.getBounds();
     const w = b.getWest();
     const e = b.getEast();
@@ -52,10 +62,10 @@ export class PressureLayer extends MapLayer {
     
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
     return {
-      west: clamp(w - dw, 45, 175),
-      east: clamp(e + dw, 45, 175),
-      south: clamp(s - dh, -5, 80),
-      north: clamp(n + dh, -5, 80)
+      west: clamp(w - dw, -180, 180),
+      east: clamp(e + dw, -180, 180),
+      south: clamp(s - dh, -89.5, 89.5),
+      north: clamp(n + dh, -89.5, 89.5)
     };
   }
 
@@ -430,9 +440,10 @@ export class PressureLayer extends MapLayer {
           "text-padding": 2 // 减小间距，让标签更易出现
         },
         paint: {
-          "text-color": "#dbeafe",
-          "text-halo-color": "rgba(2,6,23,.9)",
-          "text-halo-width": 1.1,
+          "text-color": "#ffffff",
+          "text-halo-color": "rgba(2,6,23,.96)",
+          "text-halo-width": 1.35,
+          "text-halo-blur": 0.2,
           "text-opacity": 0.95
         }
       });

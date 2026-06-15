@@ -46,10 +46,15 @@ export class LayerManager {
     const layer = this.layerMap.get(name);
     if (!layer) return;
     const enabled = this.runtime.isEnabled(name);
+    const infoId = this.getInfoId(name);
 
     try {
-      if (enabled) await layer.show(1);
-      else layer.hide();
+      if (enabled) {
+        if (infoId) setInfo(infoId, "加载中...");
+        await layer.show(1);
+      } else {
+        layer.hide();
+      }
     } catch (error) {
       console.error(`切换图层 ${name} 失败`, error);
     }
@@ -73,8 +78,14 @@ export class LayerManager {
       const toggleEl = document.getElementById(layer.name);
       if (toggleEl) toggleEl.addEventListener("change", () => this.toggle(layer.name));
       if (toggleEl) toggleEl.checked = false;
-      const infoId = `${layer.name}Info`;
+      const infoId = this.getInfoId(layer.name);
       if (document.getElementById(infoId)) setInfo(infoId, "未开启");
     }
+  }
+
+  getInfoId(name) {
+    const toggleEl = document.getElementById(name);
+    const infoId = toggleEl?.dataset?.infoId;
+    return infoId || `${name}Info`;
   }
 }

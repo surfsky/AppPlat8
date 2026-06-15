@@ -22,7 +22,7 @@ const layerDefs = [
   { name: "cityTemp", title: "城市温度", infoId: "cityTempInfo" },
   { name: "latlonGrid", title: "经纬度", infoId: "gridInfo" },
   { name: "tidePanel", title: "海况与潮汐", infoId: "tidePanelInfo" },
-  //{ name: "adminBoundary", title: "行政边界", infoId: "adminBoundaryInfo" },
+  { name: "adminBoundary", title: "行政边界", infoId: "adminBoundaryInfo" },
 ];
 
 /**创建图层实例 */
@@ -51,7 +51,7 @@ function buildLayerItemHtml(def) {
   return `
     <div class="view-layer-item" data-layer-name="${def.name}">
       <label class="view-layer-check">
-        <input type="checkbox" id="${def.name}">
+        <input type="checkbox" id="${def.name}" data-info-id="${def.infoId}">
         <span>${def.title}</span>
       </label>
       <div id="${def.infoId}" class="view-layer-info">未开启</div>
