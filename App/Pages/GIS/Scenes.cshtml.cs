@@ -3,6 +3,7 @@ using App.Components;
 using App.DAL;
 using App.DAL.GIS;
 using App.Entities;
+using App.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
@@ -19,6 +20,8 @@ namespace App.Pages.GIS
 
         public IActionResult OnGetData(Paging pi, string name)
         {
+            if (pi.SortField.IsEmpty())
+                pi.SortField = "SortId";
             var list = GisScene.Search(name)
                 .SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

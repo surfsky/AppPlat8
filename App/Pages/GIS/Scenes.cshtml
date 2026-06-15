@@ -31,32 +31,10 @@
             <EleColumn For="Item.MapZoom" Label="缩放" Width="80"></EleColumn>
             <EleColumn For="Item.MapCenter" Label="中心点" Width="180"></EleColumn>
             <EleColumn For="Item.MapPitch" Label="倾斜" Width="80"></EleColumn>
+            <EleColumn For="Item.MapStyle" Label="地图样式"></EleColumn>
+            <EleColumn For="Item.MapProjection" Label="地图投影" Width="110" Format="Enum"></EleColumn>
+            <EleColumn For="Item.Map3D" Label="启用3D"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="160" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
         </Columns>
     </EleTable>
-}
-
-@section script {
-    <script>
-        var userMixin = {
-            methods: {
-                openSceneMenus(row) {
-                    manager.openDrawer({
-                        title: '场景图层关联 - ' + row.Name,
-                        url: '/GIS/SceneMenus?sceneId=' + row.Id,
-                        size: '500px',
-                        destroyOnClose: true
-                    });
-                },
-                openScenePanels(row) {
-                    manager.openDrawer({
-                        title: '场景面板关联 - ' + row.Name,
-                        url: '/GIS/ScenePanels?sceneId=' + row.Id,
-                        size: '500px',
-                        destroyOnClose: true
-                    });
-                }
-            }
-        };
-    </script>
 }

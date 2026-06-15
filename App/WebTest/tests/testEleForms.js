@@ -49,7 +49,7 @@ module.exports = async (browser, baseUrl) => {
 
     // Check Icon
     // Look for the icon container or the specific class
-    const iconSelector = '.ele-icon-selector i'; 
+    const iconSelector = '.ele-icon-picker i'; 
     try {
         await page.waitForSelector(iconSelector, { timeout: 5000 });
         
@@ -65,7 +65,7 @@ module.exports = async (browser, baseUrl) => {
             console.log('❌ FAILURE: Icon class "fas fa-user" NOT found.');
         }
     } catch (e) {
-        console.log('❌ FAILURE: Icon selector not found.', e.message);
+        console.log('❌ FAILURE: Icon picker not found.', e.message);
     }
 
     // Check EleNumber Prefix/Suffix and ControlPosition

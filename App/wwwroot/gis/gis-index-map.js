@@ -9,6 +9,104 @@
         let addressListBound = false;
         let pendingAddresses = [];
         let searchMarker = null;
+        let pending3DRequestId = 0;
+
+        function normalizeStyleKey(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function getFallbackStyles() {
+            return [
+                { name: 'Streets', path: 'mapbox://styles/mapbox/streets-v11', aliases: ['street', 'streets'] },
+                { name: 'Satellite', path: 'mapbox://styles/mapbox/satellite-v9', aliases: ['satellite', 'terrain', 'sat'] },
+                { name: 'Dark', path: 'mapbox://styles/mapbox/dark-v10', aliases: ['dark'] },
+                { name: 'Light', path: 'mapbox://styles/mapbox/light-v10', aliases: ['light'] },
+                { name: 'Outdoors', path: 'mapbox://styles/mapbox/outdoors-v11', aliases: ['outdoors'] },
+                { name: 'Navigation', path: 'mapbox://styles/mapbox/navigation-v1', aliases: ['navigation', 'night'] }
+            ];
+        }
+
+        function resolveProjection(projection) {
+            if (projection === null || projection === undefined || projection === '') {
+                return 'mercator';
+            }
+
+            const raw = String(projection).trim();
+            const key = raw.toLowerCase();
+            const map = {
+                '0': 'mercator',
+                mercator: 'mercator',
+                '1': 'globe',
+                globe: 'globe',
+                '2': 'equirectangular',
+                equirectangular: 'equirectangular',
+                '3': 'naturalEarth',
+                naturalearth: 'naturalEarth',
+                '4': 'winkelTripel',
+                winkeltripel: 'winkelTripel'
+            };
+
+            return map[key] || 'mercator';
+        }
+
+        function resolveStyle(styleKey) {
+            const key = normalizeStyleKey(styleKey);
+            const styles = Array.isArray(state.mapStyles) && state.mapStyles.length > 0
+                ? state.mapStyles
+                : getFallbackStyles();
+
+            let match = styles.find(item =>
+                normalizeStyleKey(item.name) === key || normalizeStyleKey(item.path) === key
+            );
+            if (match) {
+                return {
+                    name: match.name,
+                    path: match.path
+                };
+            }
+
+            match = getFallbackStyles().find(item =>
+                item.aliases.some(alias => normalizeStyleKey(alias) === key)
+            );
+            if (match) {
+                return {
+                    name: match.name,
+                    path: match.path
+                };
+            }
+
+            if (styles.length > 0) {
+                return {
+                    name: styles[0].name,
+                    path: styles[0].path
+                };
+            }
+
+            return null;
+        }
+
+        function syncStyleButtons() {
+            const current = normalizeStyleKey(state.currentStyle);
+            document.querySelectorAll('[data-view-style]').forEach(btn => {
+                btn.classList.toggle('active', normalizeStyleKey(btn.dataset.viewStyle) === current);
+            });
+        }
+
+        function sync3DToggleButton() {
+            const button = document.getElementById('btn-toggle-3d');
+            if (button) button.classList.toggle('active', !!state.is3D);
+        }
+
+        function applyProjection(projection, options = {}) {
+            const projectionName = resolveProjection(projection);
+            state.currentProjection = projectionName;
+            if (typeof map.setProjection === 'function') {
+                map.setProjection(projectionName);
+            }
+            if (options.closeMenu !== false) {
+                closeViewMenu();
+            }
+        }
 
         function flyToWithMarker(lng, lat) {
             map.flyTo({ center: [lng, lat], zoom: 15, speed: 0.9 });
@@ -45,7 +143,7 @@
             const setText = () => {
                 if (!container) return;
                 const mapCenter = map.getCenter();
-                const mapZoom = map.getZoom().toFixed(0);
+                const mapZoom = map.getZoom().toFixed(2);
                 container.textContent = `${mapZoom}: ${mapCenter.lng.toFixed(6)}， ${mapCenter.lat.toFixed(6)}`;
             };
 
@@ -124,11 +222,11 @@
                     type: 'raster-dem',
                     url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
                     tileSize: 512,
-                    maxzoom: 14
+                    maxzoom: 15
                 });
             }
 
-            map.setTerrain({ source: terrainSourceId, exaggeration: 1.25 });
+            map.setTerrain({ source: terrainSourceId, exaggeration: 1.8 });
             map.setFog({
                 color: 'rgb(186, 210, 235)',
                 'high-color': 'rgb(36, 92, 223)',
@@ -136,64 +234,184 @@
             });
         }
 
-        function enable3DBuildings() {
-            ensureTerrainEnabled();
-            const layers = map.getStyle().layers;
-            const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
-            if (!map.getLayer('3d-buildings')) {
-                map.addLayer({
-                    id: '3d-buildings',
-                    source: 'composite',
-                    'source-layer': 'building',
-                    filter: ['==', 'extrude', 'true'],
-                    type: 'fill-extrusion',
-                    minzoom: 15,
-                    paint: {
-                        'fill-extrusion-color': '#94a3b8',
-                        'fill-extrusion-height': ['get', 'height'],
-                        'fill-extrusion-base': ['get', 'min_height'],
-                        'fill-extrusion-opacity': 0.55
-                    }
-                }, labelLayerId);
+        function isTerrainStyleReady() {
+            try {
+                const style = map.getStyle();
+                return !!style
+                    && map.isStyleLoaded()
+                    && Array.isArray(style.layers)
+                    && style.layers.length > 0;
+            } catch {
+                return false;
             }
-            map.easeTo({ pitch: 60, bearing: -18, duration: 600 });
-            state.is3D = true;
-            const button = document.getElementById('btn-toggle-3d');
-            if (button) button.classList.add('active');
         }
 
-        function disable3DBuildings() {
+        function canEnable3DBuildings() {
+            try {
+                return !!map.getSource('composite');
+            } catch {
+                return false;
+            }
+        }
+
+        async function waitForTerrainStyleReady(timeoutMs = 5000) {
+            if (isTerrainStyleReady()) {
+                return true;
+            }
+
+            return await new Promise(resolve => {
+                let done = false;
+                let timer = null;
+                let poller = null;
+
+                const cleanup = () => {
+                    if (done) return;
+                    done = true;
+                    map.off('style.load', onReadyCheck);
+                    map.off('idle', onReadyCheck);
+                    map.off('sourcedata', onReadyCheck);
+                    if (timer) clearTimeout(timer);
+                    if (poller) clearInterval(poller);
+                };
+                const finish = (ok) => {
+                    cleanup();
+                    resolve(ok);
+                };
+                const onReadyCheck = () => {
+                    if (isTerrainStyleReady()) {
+                        finish(true);
+                    }
+                };
+
+                map.on('style.load', onReadyCheck);
+                map.on('idle', onReadyCheck);
+                map.on('sourcedata', onReadyCheck);
+                timer = setTimeout(() => finish(false), timeoutMs);
+                poller = setInterval(onReadyCheck, 120);
+                onReadyCheck();
+            });
+        }
+
+        async function enable3DBuildings(options = {}) {
+            const requestId = ++pending3DRequestId;
+            const adjustCamera = options.adjustCamera !== false;
+            state.is3D = true;
+            sync3DToggleButton();
+            const ready = await waitForTerrainStyleReady(options.timeoutMs || 5000);
+            if (!ready) {
+                if (requestId === pending3DRequestId) {
+                    state.is3D = false;
+                    sync3DToggleButton();
+                    console.warn('3D 地图未能在限定时间内完成地形样式加载');
+                }
+                return;
+            }
+            if (requestId !== pending3DRequestId || !state.is3D) {
+                return;
+            }
+
+            ensureTerrainEnabled();
+            if (canEnable3DBuildings()) {
+                const layers = map.getStyle().layers;
+                const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
+                if (!map.getLayer('3d-buildings')) {
+                    map.addLayer({
+                        id: '3d-buildings',
+                        source: 'composite',
+                        'source-layer': 'building',
+                        filter: ['==', 'extrude', 'true'],
+                        type: 'fill-extrusion',
+                        minzoom: 15,
+                        paint: {
+                            'fill-extrusion-color': '#94a3b8',
+                            'fill-extrusion-height': ['get', 'height'],
+                            'fill-extrusion-base': ['get', 'min_height'],
+                            'fill-extrusion-opacity': 0.55
+                        }
+                    }, labelLayerId);
+                }
+            }
+            if (adjustCamera) {
+                map.easeTo({ pitch: 72, bearing: -18, duration: 700 });
+            }
+            if (options.closeMenu !== false) {
+                closeViewMenu();
+            }
+        }
+
+        function disable3DBuildings(options = {}) {
+            pending3DRequestId++;
+            const adjustCamera = options.adjustCamera !== false;
             map.setTerrain(null);
             if (map.getLayer('3d-buildings')) {
                 map.removeLayer('3d-buildings');
             }
-            map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
             state.is3D = false;
-            const button = document.getElementById('btn-toggle-3d');
-            if (button) button.classList.remove('active');
+            sync3DToggleButton();
+            if (adjustCamera) {
+                map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
+            }
+            if (options.closeMenu !== false) {
+                closeViewMenu();
+            }
         }
 
-        function switchStyle(type) {
+        function switchStyle(type, options = {}) {
+            const style = resolveStyle(type);
+            if (!style) return;
+
             state.preservedVisibleGeometryIds = new Set(
                 state.geometries
                     .filter(g => state.geometryVisibleMap.get(g.id) !== false)
                     .map(g => String(g.id))
             );
-            state.currentStyle = type;
-            const styleMap = {
-                street: 'mapbox://styles/mapbox/streets-v12',
-                terrain: 'mapbox://styles/mapbox/satellite-v9',
-                satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
-                dark: 'mapbox://styles/mapbox/dark-v11',
-                night: 'mapbox://styles/mapbox/navigation-night-v1'
-            };
-            map.setStyle(styleMap[type] || styleMap.street);
-            document.getElementById('btn-style-street')?.classList.toggle('active', type === 'street');
-            document.getElementById('btn-style-terrain')?.classList.toggle('active', type === 'terrain');
-            document.getElementById('btn-style-sat')?.classList.toggle('active', type === 'satellite');
-            document.getElementById('btn-style-dark')?.classList.toggle('active', type === 'dark');
-            document.getElementById('btn-style-night')?.classList.toggle('active', type === 'night');
-            closeViewMenu();
+            state.currentStyle = style.name;
+            syncStyleButtons();
+            map.setStyle(style.path);
+            if (options.closeMenu !== false) {
+                closeViewMenu();
+            }
+        }
+
+        function applyViewConfig(options = {}) {
+            const hasStyle = options.style !== null && options.style !== undefined && options.style !== '';
+            const has3D = options.enable3D !== null && options.enable3D !== undefined;
+            const hasProjection = options.projection !== null && options.projection !== undefined && options.projection !== '';
+
+            if (hasStyle) {
+                switchStyle(options.style, { closeMenu: false });
+            } else {
+                syncStyleButtons();
+            }
+
+            if (hasProjection) {
+                applyProjection(options.projection, { closeMenu: false });
+            }
+
+            if (has3D) {
+                if (options.enable3D) {
+                    state.is3D = true;
+                    sync3DToggleButton();
+                    enable3DBuildings({
+                        closeMenu: false,
+                        adjustCamera: options.adjustCamera
+                    });
+                } else {
+                    const was3D = state.is3D || !!map.getLayer('3d-buildings');
+                    state.is3D = false;
+                    sync3DToggleButton();
+                    if (was3D) {
+                        disable3DBuildings({
+                            closeMenu: false,
+                            adjustCamera: options.adjustCamera
+                        });
+                    }
+                }
+            }
+
+            if (options.closeMenu !== false) {
+                closeViewMenu();
+            }
         }
 
         function hideAddressSuggestList() {
@@ -371,6 +589,8 @@
             enable3DBuildings,
             disable3DBuildings,
             switchStyle,
+            applyProjection,
+            applyViewConfig,
             searchAddress,
             resetView
         };

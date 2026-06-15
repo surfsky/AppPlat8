@@ -15,6 +15,9 @@
         <EleNumber For="Item.MapZoom" Label="地图缩放级别" Min="1" Max="20"></EleNumber>
         <ElePicker For="Item.MapCenter" TextFor="Item.MapCenter" Label="地图中心坐标" PopupUrl="Locator" Icon="Location" Editable="true" Placeholder="lng, lat"></ElePicker>
         <EleNumber For="Item.MapPitch" Label="地图倾斜角" Min="0" Max="85"></EleNumber>
+        <EleSelect For="Item.MapStyle" Label="地图样式" Items="Model.Styles"></EleSelect>
+        <EleSelect For="Item.MapProjection" Label="地图投影" Items="Model.Projections"></EleSelect>
+        <EleSwitch For="Item.Map3D" Label="启用3D"></EleSwitch>
         
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

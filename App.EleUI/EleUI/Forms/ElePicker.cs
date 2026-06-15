@@ -92,7 +92,7 @@ namespace App.EleUI
             //
             output.Attributes.SetAttribute("style", "width: 100%");
             output.TagName = "div";
-            output.Attributes.SetAttribute("class", "ele-selector-wrapper");
+            output.Attributes.SetAttribute("class", "ele-picker-wrapper");
             output.Attributes.SetAttribute("v-show", vVisibleExpr);
             if (!string.IsNullOrWhiteSpace(target))
                 output.Attributes.SetAttribute("data-ele-control-id", target);
@@ -107,9 +107,9 @@ namespace App.EleUI
                 if (isTextArea)
                 {
                     content = $@"
-                    <div class=""ele-selector-wrapper ele-selector-editable"" style=""width: 100%; position: relative;"">
+                    <div class=""ele-picker-wrapper ele-picker-editable"" style=""width: 100%; position: relative;"">
                         <el-input v-model=""{formModel}.{textProp}"" {inputTypeHtml} {rowHtml} clearable placeholder=""{placeHolderText}"" :disabled=""{finalDisabledExpr}""></el-input>
-                        <span class=""ele-selector-icon-wrap"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'cursor-not-allowed': ({finalDisabledExpr}) }}"" style=""position:absolute;top:8px;right:10px;z-index:2;pointer-events:auto;background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 3px;"" @click.stop=""!({finalDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
+                        <span class=""ele-picker-icon-wrap"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'cursor-not-allowed': ({finalDisabledExpr}) }}"" style=""position:absolute;top:8px;right:10px;z-index:2;pointer-events:auto;background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 3px;"" @click.stop=""!({finalDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
                             <el-icon><component :is=""({finalDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                         </span>
                     </div>
@@ -118,10 +118,10 @@ namespace App.EleUI
                 else
                 {
                     content = $@"
-                    <div class=""ele-selector-wrapper ele-selector-editable"" style=""width: 100%;"">
+                    <div class=""ele-picker-wrapper ele-picker-editable"" style=""width: 100%;"">
                         <el-input v-model=""{formModel}.{textProp}"" {inputTypeHtml} {rowHtml} clearable placeholder=""{placeHolderText}"" :disabled=""{finalDisabledExpr}"">
                             <template #suffix>
-                                <span class=""ele-selector-icon-wrap"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'cursor-not-allowed': ({finalDisabledExpr}) }}"" style=""pointer-events:auto;"" @click.stop=""!({finalDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
+                                <span class=""ele-picker-icon-wrap"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'cursor-not-allowed': ({finalDisabledExpr}) }}"" style=""pointer-events:auto;"" @click.stop=""!({finalDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
                                     <el-icon><component :is=""({finalDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                                 </span>
                             </template>

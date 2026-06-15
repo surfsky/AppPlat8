@@ -62,14 +62,14 @@
     </div>
 
     <div class="floating-toggle-group">
-        <button id="btn-scene-toggle" class="floating-toggle" title="场景" aria-label="切换场景">
-            <i class="fa-solid fa-mountain-sun toggle-icon"></i>
-        </button>
         <button id="btn-layer-toggle" class="floating-toggle" title="图层" aria-label="显示/隐藏图层列表">
             <i class="fa-solid fa-layer-group toggle-icon"></i>
         </button>
         <button id="btn-stats-toggle" class="floating-toggle" title="统计" aria-label="显示/隐藏统计面板">
             <i class="fa-solid fa-chart-column toggle-icon"></i>
+        </button>
+        <button id="btn-scene-toggle" class="floating-toggle" title="场景" aria-label="切换场景">
+            <i class="fa-solid fa-mountain-sun toggle-icon"></i>
         </button>
         <button id="btn-view-toggle" class="floating-toggle" title="视图" aria-label="显示/隐藏视图工具栏">
             <i class="fa-solid fa-eye toggle-icon"></i>
@@ -79,13 +79,9 @@
         </button>
     </div>
     <div id="view-menu" class="view-menu" aria-label="视图菜单">
-        <div class="view-menu-section-title">底图视图</div>
-        <button id="btn-style-street" class="view-menu-item active">默认视图</button>
-        <button id="btn-style-terrain" class="view-menu-item">地形视图</button>
-        <button id="btn-style-sat" class="view-menu-item">遥感视图</button>
-        <button id="btn-style-dark" class="view-menu-item">暗黑模式</button>
-        <button id="btn-style-night" class="view-menu-item">黑蓝夜景</button>
-        <button id="btn-toggle-3d" class="view-menu-item">三维模式</button>
+        <div id="view-style-list"></div>
+        <div class="view-menu-section-title">---------------</div>
+        <button id="btn-toggle-3d" class="view-menu-item">3D地形</button>
     </div>
 
     <div id="scene-menu" class="view-menu" style="left: 60px; top: 10px; display:none" aria-label="场景菜单">
@@ -93,7 +89,7 @@
 
     <div id="layer-panel" class="panel-left">
         <gis-panel class="layer-gis-panel" title="图层" width="100%" height="100%">
-            <div class="layer-tabs" role="tablist" aria-label="图层分类">
+            <div class="layer-tabs" data-panel-actions role="tablist" aria-label="图层分类">
                 <button type="button" id="btn-layer-tab-resource" class="layer-tab-btn active" data-tab="resource" role="tab" aria-selected="true">资源</button>
                 <button type="button" id="btn-layer-tab-weather" class="layer-tab-btn" data-tab="weather" role="tab" aria-selected="false">气象</button>
                 <button type="button" id="btn-layer-tab-iot" class="layer-tab-btn" data-tab="iot" role="tab" aria-selected="false">物联设备</button>
@@ -151,6 +147,7 @@
             geometryInteractionBound: false,
             preservedVisibleGeometryIds: new Set(),
             currentStyle: 'street',
+            currentProjection: 'mercator',
             is3D: false,
             toolbarCollapsed: true,
             layerCollapsed: false,
@@ -159,6 +156,7 @@
             statsPanels: [],
             activePointListMenuId: null,
             activePointListMenuName: '',
+            mapStyles: [],
             scenes: [],
             currentSceneId: null,
             sceneMenuOpen: false,
@@ -198,10 +196,11 @@
         ];
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v12',
+            style: 'mapbox://styles/mapbox/streets-v11',
             center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
             zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
             pitch: 0,
+            projection: 'mercator',
             attributionControl: false
         });
         const dataApi = GisIndexData.create({
@@ -330,6 +329,7 @@
 
             // 加载数据
             // loadObjects();
+            await loadMapStyles();
             await loadScenes();
             await loadMenus();
             await loadGeometries();
@@ -359,11 +359,6 @@
             document.getElementById('address-input').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') searchAddress();
             });
-            document.getElementById('btn-style-street').addEventListener('click', () => switchStyle('street'));
-            document.getElementById('btn-style-terrain').addEventListener('click', () => switchStyle('terrain'));
-            document.getElementById('btn-style-sat').addEventListener('click', () => switchStyle('satellite'));
-            document.getElementById('btn-style-dark').addEventListener('click', () => switchStyle('dark'));
-            document.getElementById('btn-style-night').addEventListener('click', () => switchStyle('night'));
             document.getElementById('btn-toggle-3d').addEventListener('click', () => {
                 if (state.is3D) mapApi.disable3DBuildings();
                 else mapApi.enable3DBuildings();
@@ -410,8 +405,9 @@
             if (state.menuNodeMap && state.menuNodeMap.size > 0) {
                 await loadGeometries();
             }
+            mapApi.applyProjection(state.currentProjection, { closeMenu: false });
             map.once('idle', () => applyGeometryVisibility());
-            if (state.is3D) mapApi.enable3DBuildings();
+            if (state.is3D) mapApi.enable3DBuildings({ closeMenu: false, adjustCamera: false });
 
             objectApi.setLayerVisible(true);
             renderMenuTree();
@@ -485,6 +481,45 @@
         //--------------------------------------------------------------
         function buildMenuNodes() { return dataApi.buildMenuNodes(); }
         function renderMenuTree() { return dataApi.renderMenuTree(); }
+        function renderViewStyleMenu() {
+            const host = document.getElementById('view-style-list');
+            if (!host) return;
+
+            host.innerHTML = '';
+            state.mapStyles.forEach(style => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'view-menu-item' + (state.currentStyle === style.name ? ' active' : '');
+                btn.dataset.viewStyle = style.name;
+                btn.textContent = style.name;
+                btn.addEventListener('click', () => switchStyle(style.name));
+                host.appendChild(btn);
+            });
+        }
+
+        async function loadMapStyles() {
+            try {
+                const res = await axios.get('/httpapi/gis/GetMapStyles');
+                if (res.data.code !== 0) return;
+
+                const list = Array.isArray(res.data.data) ? res.data.data : [];
+                state.mapStyles = list
+                    .map(item => ({
+                        name: item.name || item.Name || '',
+                        path: item.path || item.Path || ''
+                    }))
+                    .filter(item => item.name && item.path);
+
+                if (!state.currentStyle && state.mapStyles.length > 0) {
+                    state.currentStyle = state.mapStyles[0].name;
+                }
+
+                renderViewStyleMenu();
+            } catch (err) {
+                console.error('加载地图样式失败', err);
+            }
+        }
+
         async function loadScenes() {
             try {
                 const res = await axios.get('/httpapi/gis/GetScenes');
@@ -503,11 +538,28 @@
                 if (res.data.code === 0) {
                     const detail = res.data.data;
                     state.currentSceneId = detail.id;
+                    const styleName = detail.mapStyle || detail.MapStyle || '';
+                    const enable3D = detail.enable3D ?? detail.Enable3D;
+                    const projection = detail.mapProjection ?? detail.MapProjection;
+                    const scenePitch = detail.mapPitch ?? detail.MapPitch;
+
+                    if (styleName || enable3D !== null && enable3D !== undefined || projection !== null && projection !== undefined) {
+                        mapApi.applyViewConfig({
+                            style: styleName,
+                            projection: projection,
+                            enable3D: enable3D,
+                            closeMenu: false,
+                            adjustCamera: false
+                        });
+                        renderViewStyleMenu();
+                    }
                     
                     // 1. 切换地图中心和缩放 (兼容 camelCase 和 PascalCase)
                     const centerStr = detail.mapCenter || detail.MapCenter;
                     const zoomVal = detail.mapZoom ?? detail.MapZoom;
-                    const pitchVal = detail.mapPitch ?? detail.MapPitch;
+                    const pitchVal = (enable3D === true || enable3D === 'true')
+                        ? (scenePitch !== null && scenePitch !== undefined ? scenePitch : 72)
+                        : scenePitch;
 
                     if (centerStr) {
                         const parts = centerStr.split(/[,，\s]+/).filter(Boolean);

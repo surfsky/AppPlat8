@@ -49,7 +49,7 @@ const puppeteer = require('puppeteer');
 
         // 3. 打开图标选择器
         console.log('Opening Icon Chooser...');
-        const addBtn = await page.waitForSelector('.ele-icon-selector .border-dashed', { timeout: 5000 });
+        const addBtn = await page.waitForSelector('.ele-icon-picker .border-dashed', { timeout: 5000 });
         if (addBtn) {
             await addBtn.click();
             await new Promise(r => setTimeout(r, 2000)); // 等待弹窗和 iframe 加载
@@ -71,13 +71,13 @@ const puppeteer = require('puppeteer');
                     await new Promise(r => setTimeout(r, 1000)); // 等待关闭和回填
                     
                     // 5. 验证是否回填
-                    // 检查页面上是否有 .ele-icon-selector .relative (预览模式)
-                    const preview = await page.$('.ele-icon-selector .relative');
+                    // 检查页面上是否有 .ele-icon-picker .relative (预览模式)
+                    const preview = await page.$('.ele-icon-picker .relative');
                     if (preview) {
                         console.log('PASS: Icon preview is visible.');
                         // 获取图标类名
                         const iconClass = await page.evaluate(() => {
-                            const i = document.querySelector('.ele-icon-selector i');
+                            const i = document.querySelector('.ele-icon-picker i');
                             return i ? i.className : null;
                         });
                         console.log(`Icon Class: ${iconClass}`);

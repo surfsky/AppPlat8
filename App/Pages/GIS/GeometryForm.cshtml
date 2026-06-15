@@ -21,7 +21,7 @@
         }
 
         /* GeoJSON 文本可能很长，保持单行省略，避免撑出输入框 */
-        .geojson-selector .el-input__inner {
+        .geojson-picker .el-input__inner {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -90,7 +90,7 @@
             <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
             <EleInput For="Item.Url" Label="链接" FillRow="false" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
             <EleInput For="Item.Addr" Label="地址" FillRow="true"></EleInput>
-            <ElePicker For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-selector" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>
+            <ElePicker For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-picker" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>
 
             <EleLabel Label="更多" FillRow="true"></EleLabel>
             <div class="geo-field-toggle" v-show="!form.type || ['1','点','point','3','文字','text','5','监控','video','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">
@@ -104,7 +104,7 @@
                 <ElePicker For="Item.Region" TextFor="Item.Region" Label="图片区域" PopupUrl="MapImage" KeyMode="Url" Icon="Location" Editable="true" FillRow="true"></ElePicker>
             </div>
             <div class="geo-field-toggle" v-show="['2','形状','shape'].includes((form.type ?? '').toString().toLowerCase())">
-                <ElePicker For="Item.GeoJson" TextFor="Item.GeoJson" Label="形状数据" Class="geojson-selector" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></ElePicker>
+                <ElePicker For="Item.GeoJson" TextFor="Item.GeoJson" Label="形状数据" Class="geojson-picker" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></ElePicker>
             </div>
             <EleList Label="更多附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
                 <ItemTemplate>

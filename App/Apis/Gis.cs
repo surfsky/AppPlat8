@@ -57,6 +57,12 @@ namespace App.API
         //---------------------------------------------------------
         // GIS场景相关接口
         //---------------------------------------------------------
+        [HttpApi("获取GIS地图样式", AuthLogin = true)]
+        public static APIResult GetMapStyles()
+        {
+            return GisScene.Styles.ToResult();
+        }
+
         [HttpApi("获取GIS场景列表", AuthLogin = true)]
         public static APIResult GetScenes()
         {
@@ -82,6 +88,9 @@ namespace App.API
                 scene.MapZoom,
                 scene.MapCenter,
                 scene.MapPitch,
+                Enable3D = scene.Map3D,
+                scene.MapStyle,
+                scene.MapProjection,
                 menuIds = scene.SceneMenus.Select(m => m.MenuId).ToList(),
                 panelIds = scene.ScenePanels.Select(p => p.PanelId).ToList()
             }.ToResult();

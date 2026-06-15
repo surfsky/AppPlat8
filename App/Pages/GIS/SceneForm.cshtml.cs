@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using App.Components;
 using App.DAL;
 using App.DAL.GIS;
+using App.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.GIS
 {
@@ -10,17 +14,20 @@ namespace App.Pages.GIS
     public class SceneFormModel : AdminModel
     {
         public GisScene Item { get; set; }
+        public List<SelectListItem> Styles { get; set; }
+        public List<SelectListItem> Projections { get; set; }
 
         public void OnGet()
         {
+            Styles = GisScene.Styles.Select(x => new SelectListItem(x.Name, x.Name)).ToList();
+            Projections = Enum.GetValues<GisMapProjection>()
+                .Select(x => new SelectListItem(x.GetTitle(), ((int)x).ToString()))
+                .ToList();
         }
 
         public IActionResult OnGetData(long id)
         {
-            var item = GisScene.GetDetail(id) ?? new GisScene
-            {
-                SortId = 0,
-            };
+            var item = GisScene.GetDetail(id) ?? new GisScene();
             return BuildResult(0, "success", item.Export());
         }
 
@@ -50,6 +57,9 @@ namespace App.Pages.GIS
             item.MapCenter = req.MapCenter;
             item.MapPitch = req.MapPitch;
             item.Icon = req.Icon;
+            item.MapStyle = req.MapStyle;
+            item.Map3D = req.Map3D;
+            item.MapProjection = req.MapProjection;
 
             item.Save();
             return BuildResult(0, "保存成功");

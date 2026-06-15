@@ -331,3 +331,29 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
 
                 <el-button @@click="locateMe">当前位置</el-button>
                 <el-button @@click="closeOnly">取消</el-button>
+
+
+@section script {
+    <script>
+        var userMixin = {
+            methods: {
+                openSceneMenus(row) {
+                    manager.openDrawer({
+                        title: '场景图层关联 - ' + row.Name,
+                        url: '/GIS/SceneMenus?sceneId=' + row.Id,
+                        size: '500px',
+                        destroyOnClose: true
+                    });
+                },
+                openScenePanels(row) {
+                    manager.openDrawer({
+                        title: '场景面板关联 - ' + row.Name,
+                        url: '/GIS/ScenePanels?sceneId=' + row.Id,
+                        size: '500px',
+                        destroyOnClose: true
+                    });
+                }
+            }
+        };
+    </script>
+}

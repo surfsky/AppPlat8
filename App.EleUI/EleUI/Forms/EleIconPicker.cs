@@ -51,12 +51,12 @@ namespace App.EleUI
             
             output.Attributes.SetAttribute("style", "width: 100%");
             output.TagName = "div";
-            output.Attributes.SetAttribute("class", "ele-selector-wrapper");
+            output.Attributes.SetAttribute("class", "ele-picker-wrapper");
             
             // 自定义模板：显示图标预览
             // 当有值时，显示一个类似 ImageUpload 的预览框，但内容是图标
             var content = $@"
-            <div class=""ele-icon-selector"">
+            <div class=""ele-icon-picker"">
                 <div v-if=""{formModel}.{textProp}"" class=""relative inline-block group overflow-visible"">
                      <!-- 图标预览框 -->
                             <div style=""{boxStyle}"" class=""border border-gray-200 rounded flex flex-col justify-center items-center cursor-pointer hover:bg-gray-50 transition-colors""
