@@ -336,11 +336,13 @@ cad转三维模型：
 --------------------------------------------------------
 Done
 --------------------------------------------------------
-2026.06.13
+2026.06.15
+    /重构EleUI，去掉TagHelper字样简化代码，将row/column更名为HStack/VStack避免和其它混淆；
     继续优化隐患闭环
         - 检查详情（只读）页面，可查看对应的隐患记录表
         - 完成隐患闭环操作
         - 看情况，若有必要把 CheckFlow 改为 CheckNew
+        - 检查对应的任务可多选，这个排查既归属于这个任务，又归属于那个任务，有重叠的。
     余局要的多系统功能比较
 
 
@@ -502,7 +504,7 @@ Done
         - 图片：隐藏gps、显示文件、显示图片区域、隐藏形状数据
         - 文件：显示gps、显示文件、隐藏图片区域、隐藏形状数据
         2、创建 /Gis/MapImage 页面，可在地图上放置图片，拖拽四个顶点和中心点（图标已放在/wwwroot/gis/icon-tl.png等）、可查找定位（参考图3及 /Gis/GeometryEditor 页面）
-        3、将GeometryForm中的Region 字段用EleSelector 点击弹出 MapImage页面，进行设置区域；
+        3、将GeometryForm中的Region 字段用ElePicker 点击弹出 MapImage页面，进行设置区域；
     /测试点位图片图层类型, 可在指定矩形区域拉伸显示图片；
     /点位附件（att属性）优化外观，将输入框用文本替换；已上传的显示文件的相对路径，新增的显示文件的本机路径；可删除已上传的文件
     /优化点位表单控件的可见性：
@@ -603,7 +605,7 @@ Done
 
 2026.05.08
     /实现 EleTree
-        1、实现App.EleUI/EleUI/Forms/EleTreeTagHelper 控件（参考 https://element-plus.org/en-US/component/tree）
+        1、实现App.EleUI/EleUI/Forms/EleTree 控件（参考 https://element-plus.org/en-US/component/tree）
         2、写测试网页 App.EleUI/EleUISamples/Controls/Tree.cshtml，测试EleTree 控件的各种功能；
         3、写测试网页 App.EleUI/EleUISamples/Datas/DeptUsers，用EleSplitPanel，左侧放置 EleTree 显示部门树，右侧显示用户清单（可用iframe），点击左侧部门树节点，右侧用户清单页面做相应的刷新；
     /Newtonsoft.Json  -> System.Text.Json 
@@ -717,7 +719,7 @@ Done
         将 EleUI 控件项目发布为 nuget 包
     /系统做得很艰难
         /建设方案文档写得不够（可以让AI辅助编写），返工很多。
-        /RazorPage TagHelper 少代码开发框架、和强类型编码方式，耗费了太多的时间
+        /RazorPage  少代码开发框架、和强类型编码方式，耗费了太多的时间
         /前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
 
 
@@ -728,8 +730,8 @@ Done
     /考虑合并 EleItem, EleControl （没必要，有些容器继承自EleItem）
     /剥离App
         剥离 <EleFormApp>，修改所有相关页面
-        剥离 EleFormTagHelper 中的App创建部分，拆分出 EleFormAppTagHelper, 只管表单页面渲染
-        剥离 EleTableTagHelper 中的App创建部分，拆分出 EleTableAppTagHelper，只管网格页面渲染
+        剥离 EleForm 中的App创建部分，拆分出 EleFormApp, 只管表单页面渲染
+        剥离 EleTable 中的App创建部分，拆分出 EleTableApp，只管网格页面渲染
 
     /优化通用drawer弹窗
         /实现右滑关闭逻辑（含提示）

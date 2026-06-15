@@ -16,7 +16,7 @@
     <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true" FillRow="true"></EleImageUpload>
 
 用户选择、对象选择
-    <EleSelector For="Item.UserId" TextFor="Item.UserName" Label="检查人" Enabled="false" FillRow="true" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
-    <EleSelector For="Item.CheckObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="false" FillRow="true" PopupUrl="CheckObjects?md=select"></EleSelector>
+    <ElePicker For="Item.UserId" TextFor="Item.UserName" Label="检查人" Enabled="false" FillRow="true" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
+    <ElePicker For="Item.CheckObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="false" FillRow="true" PopupUrl="CheckObjects?md=select"></ElePicker>
 
 ```

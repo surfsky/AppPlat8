@@ -192,7 +192,7 @@ createApp({
             }
 
             const applySelectorPayload = (selectorData) => {
-                if (!selectorData || selectorData.type !== 'EleSelector') return;
+                if (!selectorData || selectorData.type !== 'ElePicker') return;
                 const list = Array.isArray(selectorData.data) ? selectorData.data : [];
                 if (list.length === 0) return;
                 const raw = list[0] && list[0].id !== undefined ? String(list[0].id) : '';
@@ -222,7 +222,7 @@ createApp({
                     closeOnClickModal: false,
                     destroyOnClose: true,
                     closeHandler: (payload) => {
-                        if (payload && payload.data && payload.data.type === 'EleSelector') {
+                        if (payload && payload.data && payload.data.type === 'ElePicker') {
                             applySelectorPayload(payload.data);
                         }
                     }
@@ -400,7 +400,7 @@ createApp({
                 if (!geojson) throw new Error('请先绘制图形');
 
                 const payload = {
-                    type: 'EleSelector',
+                    type: 'ElePicker',
                     data: [{ id: geojson, name: geojson }]
                 };
 

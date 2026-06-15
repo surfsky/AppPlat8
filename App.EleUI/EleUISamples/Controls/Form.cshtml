@@ -39,11 +39,11 @@
         <EleLabel Label="文件上传" Size="16px" FillRow="true"></EleLabel>
         <EleImageUpload For="Item.Photo" ItemWidth="160" LimitWidth="1024"></EleImageUpload>
         <EleImageUpload For="Item.Photos" Multi="true" MultiLimit="5" ItemWidth="160" LimitWidth="1024"></EleImageUpload>
-        <EleIconSelector For="Item.Icon" ItemWidth="64" Popup="/EleUISamples/Shared/IconSelector"></EleIconSelector>
+        <EleIconPicker For="Item.Icon" ItemWidth="64" Popup="/EleUISamples/Shared/IconSelector"></EleIconPicker>
 
         <!-- 弹出选择器 -->
         <EleLabel Label="弹出选择器" Size="16px" FillRow="true"></EleLabel>
-        <EleSelector For="Item.UserId" TextFor="Item.UserName" Label="选择用户" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
+        <ElePicker For="Item.UserId" TextFor="Item.UserName" Label="选择用户" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
 
         <Bottom>
             <EleButton Type="Primary" Command="Save" Visible="@(Request.Query["md"].ToString().ToLower() != "view")">保存</EleButton>

@@ -4,14 +4,14 @@
 @section body {
     <div id="app" class="p-4">
         <EleCard Title="EleManager.openImageViewer 测试" class="box-card">
-            <Column Gap="4">
+            <VStack Gap="4">
                 <EleLabel Label="操作" FillRow="true" />
-                <Row>
+                <HStack>
                     <EleButton Type="Primary" Click="window.imageViewerDemo.openSingle()">打开单图</EleButton>
                     <EleButton Type="Success" Click="window.imageViewerDemo.openGroup(0)">打开多图(第1张)</EleButton>
                     <EleButton Type="Warning" Click="window.imageViewerDemo.openGroup(2)">打开多图(第3张)</EleButton>
                     <EleButton Click="window.imageViewerDemo.closeViewer()">关闭预览</EleButton>
-                </Row>
+                </HStack>
 
                 <EleLabel Label="缩略图点击测试" FillRow="true" />
                 <div class="flex gap-3 flex-wrap">
@@ -23,7 +23,7 @@
                         @@click="openGroup(idx)"
                     />
                 </div>
-            </Column>
+            </VStack>
         </EleCard>
     </div>
 }

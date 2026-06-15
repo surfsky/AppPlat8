@@ -28,22 +28,22 @@
 @section body {
     <div id="app" class="theme-demo-wrap">
         <EleCard Title="Element Plus 暗黑模式切换测试">
-            <Column Gap="4">
-                <Row Items="center" Gap="3">
+            <VStack Gap="4">
+                <HStack Items="center" Gap="3">
                     <EleLabel Label="主题模式" Width="20" />
                     <el-radio-group v-model="mode">
                         <el-radio-button value="system">跟随系统</el-radio-button>
                         <el-radio-button value="light">浅色</el-radio-button>
                         <el-radio-button value="dark">深色</el-radio-button>
                     </el-radio-group>
-                </Row>
+                </HStack>
 
-                <Row Gap="3" Items="center">
+                <HStack Gap="3" Items="center">
                     <EleButton Type="Primary">主要按钮</EleButton>
                     <EleButton Type="Success">成功按钮</EleButton>
                     <EleButton Type="Warning">警告按钮</EleButton>
                     <EleButton Type="Danger">危险按钮</EleButton>
-                </Row>
+                </HStack>
 
                 <el-alert
                     title="切换后可观察按钮、输入框、卡片和背景对比度变化"
@@ -57,7 +57,7 @@
                     <br />
                     实现方式：给 html 节点切换 dark class，并引入 Element Plus 的暗黑变量文件。
                 </div>
-            </Column>
+            </VStack>
         </EleCard>
     </div>
 }

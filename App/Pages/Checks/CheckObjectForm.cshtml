@@ -15,7 +15,7 @@
         <EleInput For="Item.Code" Label="主键ID"></EleInput>
         <EleInput For="Item.AreaCode" Label="地块号"></EleInput>
         <EleInput For="Item.Address" Label="地址"></EleInput>
-        <EleSelector For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location"></EleSelector>
+        <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location"></ElePicker>
         <EleSwitch For="Item.IsDel" Label="是否失效"></EleSwitch>
         <EleSwitch For="Item.HasHarzard" Label="是否存在隐患"></EleSwitch>
         <div v-show="form.isDel === true">
@@ -29,8 +29,8 @@
         <EleInput For="Item.SafetyAdminName" Label="安全管理员"></EleInput>
         <EleInput For="Item.ThirdPartySafetyAgency" Label="三方机构"></EleInput>
         <EleTreeSelect For="Item.DutyOrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
-        <EleSelector For="Item.CheckerId" TextFor="Item.CheckerName" Label="技术检查员" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
-        <EleSelector For="Item.SocialCheckerId" TextFor="Item.SocialCheckerName" Label="社区网格员" PopupUrl="/Shared/UserSelector?multi=0"></EleSelector>
+        <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Label="技术检查员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
+        <ElePicker For="Item.SocialCheckerId" TextFor="Item.SocialCheckerName" Label="社区网格员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
 
         <EleLabel Label="企业信息" FillRow="true"></EleLabel>
         <EleImageUpload For="Item.LicenseImage" Label="工商执照" FillRow="true"></EleImageUpload>

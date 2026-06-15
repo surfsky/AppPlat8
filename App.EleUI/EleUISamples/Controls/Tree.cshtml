@@ -8,7 +8,7 @@
 @section body {
     <div class="p-4 space-y-4">
         <EleCard Title="EleTree 基础能力演示" Border="1px solid #e5e7eb" Radius="8px">
-            <Column Gap="8">
+            <VStack Gap="8">
                 <EleTree Items="Model.BasicTree"
                     NodeKey="id"
                     NameField="name"
@@ -34,7 +34,7 @@
                     Border="1px solid #e5e7eb"
                     OnCheckChange="CheckedChanged">
                 </EleTree>
-            </Column>
+            </VStack>
         </EleCard>
     </div>
     <EleApp />

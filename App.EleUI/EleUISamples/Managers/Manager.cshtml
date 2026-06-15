@@ -4,32 +4,32 @@
 @section body {
     <div id="app" class="p-4">
         <EleCard Title="EleManager 客户端交互能力测试" class="box-card">
-            <Column Gap="4">
+            <VStack Gap="4">
                 <EleLabel Label="Toast" FillRow="true" />
-                <Row>
+                <HStack>
                     <EleButton Type="Success" Click="EleManager.showSuccess('操作成功！')">Success</EleButton>
                     <EleButton Type="Danger" Click="EleManager.showError('操作失败！')">Error</EleButton>
                     <EleButton Type="Warning" Click="EleManager.showWarning('这是警告信息')">Warning</EleButton>
                     <EleButton Type="Info" Click="EleManager.showInfo('这是提示信息')">Info</EleButton>
-                </Row>
+                </HStack>
 
                 <EleLabel Label="Notify" FillRow="true" />
-                <Row>
+                <HStack>
                     <EleButton Type="Success" Click="EleManager.notifySuccess('通知成功')">Success</EleButton>
                     <EleButton Type="Warning" Click="EleManager.notifyWarning('通知警告')">Warning</EleButton>
                     <EleButton Type="Danger" Click="EleManager.notifyError('通知失败')">Error</EleButton>
                     <EleButton Type="Info" Click="EleManager.notifyInfo('通知信息')">Info</EleButton>
-                </Row>
+                </HStack>
 
                 <EleLabel Label="Messagebox" FillRow="true" />
-                <Row>
+                <HStack>
                     <EleButton Type="Primary" Click="window.eleManagerDemo.testAlert()">Alert</EleButton>
                     <EleButton Type="Primary" Click="window.eleManagerDemo.testConfirm()">Confirm</EleButton>
                     <EleButton Type="Primary" Click="window.eleManagerDemo.testPrompt()">Prompt/InputBox</EleButton>
-                </Row>
+                </HStack>
 
                 <EleLabel Label="Misc" FillRow="true" />
-                <Row Items="center">
+                <HStack Items="center">
                     <ElePopconfirm Title="确定执行这个操作吗？" Confirm="confirmPop">
                         <template #reference>
                             <EleButton Type="Warning">Popconfirm</EleButton>
@@ -45,15 +45,15 @@
                     <EleTooltip Content="这是 Tooltip 提示" Placement="top">
                         <EleButton>Tooltip</EleButton>
                     </EleTooltip>
-                </Row>
+                </HStack>
 
                 <EleLabel Label="Loading" FillRow="true" />
-                <Row>
+                <HStack>
                     <EleButton Type="Primary" Click="window.eleManagerDemo.testLoading()">Loading 1.5s</EleButton>
                     <EleButton Type="Info" Click="EleManager.showLoading('手动开启 Loading...')">Open Loading</EleButton>
                     <EleButton Click="EleManager.closeLoading()">Close Loading</EleButton>
-                </Row>
-            </Column>
+                </HStack>
+            </VStack>
         </EleCard>
     </div>
 }

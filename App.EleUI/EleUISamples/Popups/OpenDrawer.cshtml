@@ -8,7 +8,7 @@
 
 @section body {
     <EleCard Title="Drawer 嵌套与堆栈返回测试" class="box-card">
-        <Column>
+        <VStack>
             <EleButton Type="Primary" Click="openSelf()" Icon="Open">再次打开当前页面</EleButton>
             <EleButton Type="Success" Click="EleManager.closePage({value:0})" Icon="Close">关闭当前页面(return 0)</EleButton>
             <EleButton Type="Warning" Click="EleManager.closePage({value:1})" Icon="Close">关闭当前页面(return 1)</EleButton>
@@ -16,7 +16,7 @@
             <div class="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 break-all">
                 回传结果：<span id="closeResultText">暂无</span>
             </div>
-        </Column>
+        </VStack>
     </EleCard>
 }
 

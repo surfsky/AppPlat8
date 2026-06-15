@@ -39,10 +39,10 @@ module.exports = async (browser, page) => {
     // Save
     // await page.click('button span:contains("保存")'); // Save button is in the main page (footer of drawer)
     
-    // Save button is in the main page (footer of drawer) but rendered by EleFormTagHelper which appends to output?
-    // Let's check EleFormTagHelper implementation again.
+    // Save button is in the main page (footer of drawer) but rendered by EleForm which appends to output?
+    // Let's check EleForm implementation again.
     // output.TagName = "div"; ... output.Content.SetHtmlContent(wrapperHtml + scriptHtml);
-    // And EleTableTagHelper renders drawer: <el-drawer ...><iframe ...></iframe></el-drawer>
+    // And EleTable renders drawer: <el-drawer ...><iframe ...></iframe></el-drawer>
     // The SAVE button is inside the IFRAME because EleForm is the content of the EditPage which is loaded in IFrame.
     
     await frame.waitForSelector('button', { visible: true });
@@ -60,12 +60,12 @@ module.exports = async (browser, page) => {
     const hasRowKey = await page.evaluate(() => {
         // Element Plus table with row-key has row-key attribute on the root element usually?
         // Actually, props are not always attributes.
-        // But EleTableTagHelper adds 'row-key="id"' attribute to <el-table>.
+        // But EleTable adds 'row-key="id"' attribute to <el-table>.
         // Vue compiles this.
         // If it's a prop, it might not be in DOM attribute.
         // But if I put it in HTML, it should be passed.
         // Let's check if the table element has the attribute or if we can infer it.
-        // Actually, if I added `row-key="id"` in TagHelper, it renders into the HTML source.
+        // Actually, if I added `row-key="id"` in taghelper, it renders into the HTML source.
         // So checking page content should work.
         const html = document.body.innerHTML;
         return html.includes('row-key="id"') || html.includes('row-key="id"');
@@ -85,7 +85,7 @@ module.exports = async (browser, page) => {
 
     if (hasRowKey) {
         // Note: Vue might consume the attribute, so checking HTML source might be needed before mount or check Vue component.
-        // But checking if my TagHelper outputted it is enough to say I did my job.
+        // But checking if my  outputted it is enough to say I did my job.
         // Wait, Puppeteer sees the rendered DOM.
         // If Vue mounted, it might have removed the attribute from DOM if it's a prop.
         // But Element Plus table usually keeps row-key logic internal.

@@ -55,66 +55,66 @@ TemporaryDependencyNodeTargetIdentifier=net8.0
 [sourceFiles]
 Command.cs
 Containers/
- EleCardTagHelper.cs
- EleContainerTagHelper.cs
- EleSplitPanelTagHelper.cs
+ EleCard.cs
+ EleContainer.cs
+ EleSplitPanel.cs
 EleAppBuildMode.cs
-EleAppTagHelper.cs
-EleControlTagHelper.cs
+EleApp.cs
+EleControl.cs
 EleHelper.cs
-EleItemTagHelper.cs
+EleItem.cs
 EleManager.cs
 Forms/
- EleBottomTagHelper.cs
- EleButtonTagHelper.cs
- EleDatePickerTagHelper.cs
- EleFileUploadTagHelper.cs
- EleFormControlTagHelper.cs
- EleFormTagHelper.cs
- EleHiddenTagHelper.cs
- EleIconSelectTagHelper.cs
- EleIconTagHelper.cs
- EleImageUploadTagHelper.cs
- EleInputTagHelper.cs
- EleLabelTagHelper.cs
- EleLinkTagHelper.cs
- EleNumberTagHelper.cs
- EleRadioTagHelper.cs
- EleSelectorTagHelper.cs
- EleSelectTagHelper.cs
- EleSwitchTagHelper.cs
- EleTextTagHelper.cs
- EleTreeSelectTagHelper.cs
- EleTreeTagHelper.cs
+ EleBottom.cs
+ EleButton.cs
+ EleDatePicker.cs
+ EleFileUpload.cs
+ EleFormControl.cs
+ EleForm.cs
+ EleHidden.cs
+ EleIconSelect.cs
+ EleIcon.cs
+ EleImageUpload.cs
+ EleInput.cs
+ EleLabel.cs
+ EleLink.cs
+ EleNumber.cs
+ EleRadio.cs
+ ElePicker.cs
+ EleSelect.cs
+ EleSwitch.cs
+ EleText.cs
+ EleTreeSelect.cs
+ EleTree.cs
 Layouts/
- EleLayoutColumnTagHelper.cs
- EleLayoutGridTagHelper.cs
- EleLayoutRowTagHelper.cs
+ EleLayoutColumn.cs
+ EleLayoutGrid.cs
+ EleLayoutRow.cs
 Lists/
- EleItemTemplateTagHelper.cs
- EleListTagHelper.cs
+ EleItemTemplate.cs
+ EleList.cs
 obj/Debug/net8.0/
  .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
  App.EleUI.AssemblyInfo.cs
  App.EleUI.GlobalUsings.g.cs
 Popups/
- EleDialogTagHelper.cs
- EleDrawerTagHelper.cs
- ElePopconfirmTagHelper.cs
- ElePopoverTagHelper.cs
- EleTooltipTagHelper.cs
+ EleDialog.cs
+ EleDrawer.cs
+ ElePopconfirm.cs
+ ElePopover.cs
+ EleTooltip.cs
 Tables/
- EleButtonsTagHelper.cs
- EleColumnBaseTagHelper.cs
- EleColumnsTagHelper.cs
- EleColumnTagHelper.cs
- EleFiltersTagHelper.cs
- EleIconColumnTagHelper.cs
- EleImageColumnTagHelper.cs
- EleNumColumnTagHelper.cs
- EleOpColumnTagHelper.cs
- EleTableTagHelper.cs
- EleToolbarTagHelper.cs
+ EleButtons.cs
+ EleColumnBase.cs
+ EleColumns.cs
+ EleColumn.cs
+ EleFilters.cs
+ EleIconColumn.cs
+ EleImageColumn.cs
+ EleNumColumn.cs
+ EleOpColumn.cs
+ EleTable.cs
+ EleToolbar.cs
 
 [metadataReferences]
 ../../
@@ -178,7 +178,7 @@ Tables/
  Microsoft.AspNetCore.Mvc.Localization.dll
  Microsoft.AspNetCore.Mvc.Razor.dll
  Microsoft.AspNetCore.Mvc.RazorPages.dll
- Microsoft.AspNetCore.Mvc.TagHelpers.dll
+ Microsoft.AspNetCore.Mvc.s.dll
  Microsoft.AspNetCore.Mvc.ViewFeatures.dll
  Microsoft.AspNetCore.OutputCaching.dll
  Microsoft.AspNetCore.RateLimiting.dll

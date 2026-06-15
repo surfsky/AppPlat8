@@ -4,17 +4,17 @@
 @section body {
     <div id="app" class="p-4">
         <EleCard Title="EleDrawer 测试页" class="box-card">
-            <Column Gap="4">
+            <VStack Gap="4">
                 <EleLabel Text="基础抽屉" FillRow="true" />
-                <Row>
+                <HStack>
                     <EleButton Type="Primary" VClick="drawerVisible = true">打开内容抽屉</EleButton>
                     <EleButton Type="Success" VClick="iframeDrawerVisible = true">打开 IFrame 抽屉</EleButton>
-                </Row>
+                </HStack>
 
-                <Row>
+                <HStack>
                     <div class="text-sm text-gray-500">支持 Header(标题+关闭按钮)、中间内容区、Footer 工具栏；IFrameUrl 不为空时自动全区域 iframe。</div>
-                </Row>
-            </Column>
+                </HStack>
+            </VStack>
         </EleCard>
 
         <EleDrawer VModel="drawerVisible" Title="内容抽屉" Direction="Rtl" Size="45%" IsModal="true">

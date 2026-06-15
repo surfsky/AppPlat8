@@ -138,7 +138,7 @@ export const selectorMethods = {
             closeOnClickModal: false,
             destroyOnClose: true,
             closeHandler: (payload) => {
-                if (payload && payload.data && payload.data.type === 'EleSelector') {
+                if (payload && payload.data && payload.data.type === 'ElePicker') {
                     this.handleSelectorMessage({ data: payload.data });
                     return;
                 }
@@ -151,7 +151,7 @@ export const selectorMethods = {
         if (!event.data) return;
 
         const msgType = event.data.type;
-        if (msgType !== 'EleSelector' && msgType !== 'user-selected') return;
+        if (msgType !== 'ElePicker' && msgType !== 'user-selected') return;
         const data = event.data.data || event.data;
 
         let rows = [];

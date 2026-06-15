@@ -194,7 +194,7 @@
                 const save = () => {
                     syncModelFromJson();
                     const text = JSON.stringify(model);
-                    const payload = { type: 'EleSelector', data: [{ id: text, name: text }] };
+                    const payload = { type: 'ElePicker', data: [{ id: text, name: text }] };
                     const manager = getManager();
                     if (manager && typeof manager.closePage === 'function') {
                         manager.closePage(payload);

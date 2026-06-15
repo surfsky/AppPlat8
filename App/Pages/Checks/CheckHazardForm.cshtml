@@ -7,9 +7,9 @@
 
 @section body {
     <EleForm Model="form" LabelWidth="120px">
-        <EleSelector For="Item.ObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckObjects?md=select"></EleSelector>
-        <EleSelector For="Item.CheckSheetId" TextFor="Item.CheckSheetName" Label="检查单" Visible="false"  Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheets?md=select"></EleSelector>
-        <EleSelector For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheetItems?md=select"></EleSelector>
+        <ElePicker For="Item.ObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckObjects?md=select"></ElePicker>
+        <ElePicker For="Item.CheckSheetId" TextFor="Item.CheckSheetName" Label="检查单" Visible="false"  Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheets?md=select"></ElePicker>
+        <ElePicker For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheetItems?md=select"></ElePicker>
 
         <EleInput For="Item.CheckItemText" Label="检查项内容" Enabled="false" FillRow="true"></EleInput>
         <EleInput For="Item.Description" Label="隐患描述" Rows="1" FillRow="true"></EleInput>

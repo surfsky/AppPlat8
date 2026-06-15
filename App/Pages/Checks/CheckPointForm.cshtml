@@ -6,11 +6,11 @@
 
 @section body {
     <EleForm Model="form" LabelWidth="120px" SaveHandler="?handler=Save&objectId=@Model.ObjectId">
-        <EleSelector For="ObjectId" TextFor="ObjectName" Label="所属对象" Enabled="false" FillRow="true" PopupUrl="CheckObjects?md=Select"></EleSelector>
+        <ElePicker For="ObjectId" TextFor="ObjectName" Label="所属对象" Enabled="false" FillRow="true" PopupUrl="CheckObjects?md=Select"></ElePicker>
         <EleInput For="Item.Name" Label="风险点名称" Required="true" FillRow="true"></EleInput>
         <EleSelect For="Item.RiskLevel" Label="风险等级"></EleSelect>
         <EleInput For="Item.Gps" Label="坐标"></EleInput>
-        <EleSelector For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location" FillRow="true"></EleSelector>
+        <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location" FillRow="true"></ElePicker>
         <EleImageUpload For="Item.Picture" Label="图片" FillRow="true"></EleImageUpload>
 
         <Bottom>

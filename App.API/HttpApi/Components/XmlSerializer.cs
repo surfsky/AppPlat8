@@ -117,13 +117,13 @@ namespace App.HttpApi
                 var cols = table.Columns;
                 foreach (DataRow row in table.Rows)
                 {
-                    sb.AppendFormat("<Row>");
+                    sb.AppendFormat("<HStack>");
                     foreach (DataColumn col in cols)
                     {
                         var columnName = col.ColumnName;
                         VisitObject(sb, row[columnName], columnName);
                     }
-                    sb.AppendFormat("</Row>");
+                    sb.AppendFormat("</HStack>");
                 }
             }
             else if (obj is IDictionary)

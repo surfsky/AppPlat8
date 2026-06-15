@@ -6,7 +6,7 @@
 
 @section body {
     <EleContainer id="app" MaxWidth="full" Margin="8" PaddingX="4" H="full" Overflow="AutoY">
-        <Column>
+        <VStack>
             <EleLabel Label="Container 响应式容器" Size="2xl" Bold="true" FillRow="true" />
             <EleContainer class="bg-blue-50 border border-blue-200 rounded p-4">
                 <p class="font-medium text-blue-700">这是一个默认容器</p>
@@ -16,7 +16,7 @@
                 <p class="font-medium text-green-700">响应式容器示例</p>
                 <p class="text-sm text-green-600 mt-2">默认断点：md=768 / lg=992 / xl=1200 / xxl=1400，窗口宽度越大容器固定宽度越大。</p>
             </EleContainer>
-        </Column>
+        </VStack>
     </EleContainer>
 
     <EleApp />

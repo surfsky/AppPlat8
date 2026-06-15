@@ -86,7 +86,7 @@
 
         function selectIcon(icon) {
             const data = { id: icon, name: icon };
-            const payload = { type: 'EleSelector', data };
+            const payload = { type: 'ElePicker', data };
 
             if (window.EleManager && typeof window.EleManager.closePage === 'function') {
                 window.EleManager.closePage(payload);

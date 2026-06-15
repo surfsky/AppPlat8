@@ -1,6 +1,6 @@
 # App.EleUI 组件说明
 
-`App.EleUI` 是一套基于 Razor TagHelper + Vue3 + Element Plus 的页面UI框架，目标是：
+`App.EleUI` 是一套基于 Razor  + Vue3 + Element Plus 的页面UI框架，目标是：
 
 - 在 Razor 页面里用声明式标签，强类型绑定，快速搭建表单、表格、布局与弹窗等。
 - 服务器端事件处理，支持异步更新页面状态。
@@ -71,12 +71,12 @@ dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/i
 
 ## 关键基类职责
 
-- `EleControlTagHelper`: 所有可视控件基础能力
+- `EleControl`: 所有可视控件基础能力
   - 公共属性：`Width`、`Height`、`Radius`、`Border`、`BorderColor`、`Rounded`、`Shadow`、`Enabled`
   - 通用能力：权限检查、`v-model`/`:disabled` 注入、基础 style 组装
-- `EleFormControlTagHelper`: 表单字段基础能力
+- `EleFormControl`: 表单字段基础能力
   - `For`、`Label`、`FillRow`、`Required`、自动从模型推导标签和字段绑定
-- `EleItemTagHelper`: 面向布局容器的 Tailwind 工具类基础
+- `EleItem`: 面向布局容器的 Tailwind 工具类基础
   - `W/H/MinW/MaxW/MinH/MaxH`、`P/Px/Py`、`M/Mx/My`、`Bg`、`Overflow`
 
 ## 控件清单
@@ -99,8 +99,8 @@ dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/i
   - `EleLabel`
   - `EleIcon`
   - `EleImageUpload`
-  - `EleSelector`
-  - `EleIconSelector`
+  - `ElePicker`
+  - `EleIconPicker`
 - Containers
   - `EleContainer`
   - `EleCard`
@@ -141,60 +141,60 @@ dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/i
 
 ```mermaid
 classDiagram
-TagHelper <|-- EleControlTagHelper
-EleControlTagHelper <|-- EleFormControlTagHelper
-EleControlTagHelper <|-- EleItemTagHelper
+TagHelper <|-- EleControl
+EleControl <|-- EleFormControl
+EleControl <|-- EleItem
 
-EleControlTagHelper <|-- EleButtonTagHelper
-EleControlTagHelper <|-- EleTableTagHelper
-EleControlTagHelper <|-- EleIconTagHelper
-EleControlTagHelper <|-- EleHiddenTagHelper
-EleControlTagHelper <|-- EleCardTagHelper
-EleControlTagHelper <|-- EleSplitPanelTagHelper
-EleControlTagHelper <|-- EleSplitPanelItemTagHelper
-EleControlTagHelper <|-- EleDialogTagHelper
-EleControlTagHelper <|-- EleDrawerTagHelper
-EleControlTagHelper <|-- ElePopoverTagHelper
-EleControlTagHelper <|-- ElePopconfirmTagHelper
-EleControlTagHelper <|-- EleTooltipTagHelper
+EleControl <|-- EleButton
+EleControl <|-- EleTable
+EleControl <|-- EleIcon
+EleControl <|-- EleHidden
+EleControl <|-- EleCard
+EleControl <|-- EleSplitPanel
+EleControl <|-- EleSplitPanelItem
+EleControl <|-- EleDialog
+EleControl <|-- EleDrawer
+EleControl <|-- ElePopover
+EleControl <|-- ElePopconfirm
+EleControl <|-- EleTooltip
 
-EleFormControlTagHelper <|-- EleInputTagHelper
-EleFormControlTagHelper <|-- EleNumberTagHelper
-EleFormControlTagHelper <|-- EleDatePickerTagHelper
-EleFormControlTagHelper <|-- EleSelectTagHelper
-EleFormControlTagHelper <|-- EleTreeSelectTagHelper
-EleFormControlTagHelper <|-- EleRadioTagHelper
-EleFormControlTagHelper <|-- EleSwitchTagHelper
-EleFormControlTagHelper <|-- EleLabelTagHelper
-EleFormControlTagHelper <|-- EleSelectorTagHelper
-EleFormControlTagHelper <|-- EleImageUploadTagHelper
-EleFormControlTagHelper <|-- EleIconSelectorTagHelper
+EleFormControl <|-- EleInput
+EleFormControl <|-- EleNumber
+EleFormControl <|-- EleDatePicker
+EleFormControl <|-- EleSelect
+EleFormControl <|-- EleTreeSelect
+EleFormControl <|-- EleRadio
+EleFormControl <|-- EleSwitch
+EleFormControl <|-- EleLabel
+EleFormControl <|-- ElePicker
+EleFormControl <|-- EleImageUpload
+EleFormControl <|-- EleIconPicker
 
-EleItemTagHelper <|-- EleContainerTagHelper
-EleItemTagHelper <|-- EleLayoutRowTagHelper
-EleItemTagHelper <|-- EleLayoutColumnTagHelper
-EleItemTagHelper <|-- EleLayoutGridTagHelper
+EleItem <|-- EleContainer
+EleItem <|-- EleLayoutRow
+EleItem <|-- EleLayoutColumn
+EleItem <|-- EleLayoutGrid
 
-TagHelper <|-- EleFormTagHelper
-TagHelper <|-- EleAppTagHelper
-TagHelper <|-- ToolbarTagHelper
-TagHelper <|-- EleColumnsTagHelper
-TagHelper <|-- EleColumnTagHelper
-TagHelper <|-- EleOpColumnTagHelper
-TagHelper <|-- EleNumColumnTagHelper
-TagHelper <|-- EleIconColumnTagHelper
-TagHelper <|-- EleImageColumnTagHelper
-TagHelper <|-- EleToolbarTagHelper
-TagHelper <|-- EleCardHeaderTagHelper
-TagHelper <|-- EleDialogHeaderTagHelper
-TagHelper <|-- EleDialogContentTagHelper
-TagHelper <|-- EleDialogFooterTagHelper
-TagHelper <|-- EleDrawerContentTagHelper
-TagHelper <|-- EleDrawerFooterTagHelper
+ <|-- EleForm
+ <|-- EleApp
+ <|-- Toolbar
+ <|-- EleColumns
+ <|-- EleColumn
+ <|-- EleOpColumn
+ <|-- EleNumColumn
+ <|-- EleIconColumn
+ <|-- EleImageColumn
+ <|-- EleToolbar
+ <|-- EleCardHeader
+ <|-- EleDialogHeader
+ <|-- EleDialogContent
+ <|-- EleDialogFooter
+ <|-- EleDrawerContent
+ <|-- EleDrawerFooter
 ```
 
 ## 命名与约定
 
-- 带弹窗选择语义的控件统一使用 `XXXSelector` 后缀。如：`EleSelector`、`EleIconSelector`
+- 带弹窗选择语义的控件统一使用 `XXXPicker` 后缀。如：`ElePicker`、`EleIconPicker`
 - 抽屉/iframe 关闭统一走 `EleManager.closePage(...)` 协议。
 

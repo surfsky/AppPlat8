@@ -115,7 +115,7 @@ namespace App.EleUI
     /// <summary>表格操作列，包含编辑、删除按钮。</summary>
     [HtmlTargetElement("EleOpColumn")]
     [RestrictChildren("Op")]
-    public class EleOpColumnTagHelper : EleColumnBaseTagHelper
+    public class EleOpColumnTagHelper : EleColumnBase
     {
         /// <summary>显示的操作项数量</summary>
         [HtmlAttributeName("Shows")]

@@ -61,7 +61,7 @@ export const commandMethods = {
         }
 
         const payload = {
-            type: 'EleSelector',
+            type: 'ElePicker',
             data: [{
                 id,
                 name: (name === null || typeof name === 'undefined') ? `${id}` : `${name}`

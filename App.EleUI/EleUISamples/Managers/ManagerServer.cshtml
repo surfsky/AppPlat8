@@ -3,42 +3,42 @@
 
 @section body {
     <EleCard Title="EleManagerServer (Handler + 服务端命令)" class="box-card p-4">
-        <Column Gap="4">
+        <VStack Gap="4">
             <EleLabel Label="Toast/Notify" FillRow="true" />
-            <Row>
+            <HStack>
                 <EleButton Type="Warning" Handler="Toast">Toast</EleButton>
                 <EleButton Type="Success" Handler="Notify">Notify</EleButton>
-            </Row>
+            </HStack>
 
             <EleLabel Label="MessageBox" FillRow="true" />
-            <Row>
+            <HStack>
                 <EleButton Type="Primary" Handler="OpenMessageBoxAlert">Alert</EleButton>
                 <EleButton Type="Info"    Handler="OpenMessageBoxServer">Confirm</EleButton>
                 <EleButton Type="Primary" Handler="OpenInputBox">InputBox</EleButton>
                 <EleButton Type="Info"    Handler="OpenInputBoxServer">InputBox (Server)</EleButton>
                 <EleButton Type="Warning" Handler="OpenInputBoxValidate">InputBox with Validation</EleButton>
-            </Row>
+            </HStack>
 
 
             <EleLabel Label="Drawer - 基本用法" FillRow="true" />
-            <Row>
+            <HStack>
                 <EleButton Type="Info"    Handler="OpenDrawer">服务端打开</EleButton>
                 <EleButton Type="Primary" Click="openDrawer()">客户端打开 (rtl)</EleButton>
                 <EleButton Type="Success" Click="openDrawerLtr()">客户端打开 (ltr)</EleButton>
                 <EleButton Type="Warning" Click="openDrawerBtt()">客户端打开 (btt)</EleButton>
                 <EleButton Type="Danger"  Handler="CloseDrawer">关闭 Drawer</EleButton>
-            </Row>
+            </HStack>
 
             <EleLabel Label="Drawer - beforeCloseHandler（关闭前确认）" FillRow="true" />
-            <Row>
+            <HStack>
                 <EleButton Type="Primary" Click="openDrawerBeforeClose()">Confirm 确认关闭</EleButton>
                 <EleButton Type="Warning" Click="openDrawerBeforeCloseAsync()">异步校验后关闭</EleButton>
-            </Row>
+            </HStack>
 
-            <Row>
+            <HStack>
                 <div class="text-sm text-gray-500">说明：Drawer 按钮通过 Handler POST 服务端后由服务端下发客户端命令；客户端按钮直接调用 EleManager API。</div>
-            </Row>
-        </Column>
+            </HStack>
+        </VStack>
     </EleCard>
 }
 

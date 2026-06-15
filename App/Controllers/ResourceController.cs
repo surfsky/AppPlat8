@@ -66,7 +66,7 @@ namespace App.Controllers
             // 主项目程序集 + App.EleUI 程序集，覆盖新旧两套路径。
             yield return typeof(App.Startup).Assembly;
 
-            var eleAssembly = typeof(EleAppTagHelper).Assembly;
+            var eleAssembly = typeof(EleApp).Assembly;
             if (eleAssembly != null && eleAssembly != typeof(App.Startup).Assembly)
                 yield return eleAssembly;
         }
