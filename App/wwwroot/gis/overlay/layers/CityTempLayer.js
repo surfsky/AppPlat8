@@ -218,7 +218,8 @@ export class CityTempLayer extends MapLayer {
     }
 
     const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
-    setInfo("cityTempInfo", `温度标签城市: ${features.length}（Zoom ${zoom.toFixed(1)}），更新时间: ${timeText}`);
+    //setInfo("cityTempInfo", `温度标签城市: ${features.length}（Zoom ${zoom.toFixed(1)}），更新时间: ${timeText}`);
+    setInfo("cityTempInfo", `更新时间: ${timeText}`);
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
     this.lastTime = now;

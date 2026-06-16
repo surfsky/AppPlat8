@@ -455,7 +455,8 @@ export class PressureLayer extends MapLayer {
       const ageMin = Math.round((Date.now() - sampleTs) / 60000);
       ageText = ageMin >= 0 ? `${ageMin}分钟前` : `预报${Math.abs(ageMin)}分钟后`;
     }
-    setInfo("pressureInfo", `等压线段: ${contourGeo.features.length}，采样: ${rawField.okCount}/${rawField.totalCount}，数据时效: ${ageText}`);
+    //setInfo("pressureInfo", `等压线段: ${contourGeo.features.length}，采样: ${rawField.okCount}/${rawField.totalCount}，数据时效: ${ageText}`);
+    setInfo("pressureInfo", `数据时效: ${ageText}`);
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
     this.lastTime = Date.now();

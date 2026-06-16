@@ -412,7 +412,8 @@ export class WindLayer extends MapLayer {
       this.field = await this.fetchField();
       this.startAnimation();
       const timeText = this.formatDataTime(this.field);
-      setInfo("windInfo", `风场粒子: ${this.particles.length}，采样点: ${this.field.okCount}/${this.field.totalCount}${timeText ? `，更新时间: ${timeText}` : ""}`);
+      //setInfo("windInfo", `风场粒子: ${this.particles.length}，采样点: ${this.field.okCount}/${this.field.totalCount}${timeText ? `，更新时间: ${timeText}` : ""}`);
+      setInfo("windInfo", `更新时间: ${timeText}`);
     } catch (e) {
       console.error("刷新风场失败", e);
       setInfo("windInfo", "加载失败");
