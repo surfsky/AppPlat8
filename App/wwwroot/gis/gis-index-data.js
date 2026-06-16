@@ -1,3 +1,6 @@
+/***
+ * 数据相关逻辑。TODO：文件太大了，待拆分
+ */
 (function () {
 
     function create(ctx) {
@@ -28,6 +31,13 @@
             sortTree(roots);
             state.menuRoots = roots;
             state.menuNodeMap = byId;
+
+            if (!state.menuCollapseInitialized) {
+                state.collapsedMenuIds = new Set(
+                    nodes.filter(node => Array.isArray(node.children) && node.children.length > 0).map(node => node.id)
+                );
+                state.menuCollapseInitialized = true;
+            }
         }
 
         function getMenuGeometryIds(node, cache = new Map()) {
@@ -105,6 +115,10 @@
             if (!state.collapsedMenuIds) state.collapsedMenuIds = new Set();
             if (state.collapsedMenuIds.has(nodeId)) state.collapsedMenuIds.delete(nodeId);
             else state.collapsedMenuIds.add(nodeId);
+            state.lastMenuToggle = {
+                nodeId,
+                collapsed: state.collapsedMenuIds.has(nodeId)
+            };
             renderMenuTree();
         }
 
@@ -145,12 +159,16 @@
                 const count = Number.isFinite(menuCount) && menuCount >= 0 ? menuCount : 0;
 
                 if (hasChildren) {
+                    const shouldAnimate = state.lastMenuToggle && state.lastMenuToggle.nodeId === node.id;
+                    const animationClass = shouldAnimate
+                        ? (state.lastMenuToggle.collapsed ? 'animating-collapse' : 'animating-expand')
+                        : '';
                     const toggleBtn = document.createElement('button');
                     toggleBtn.type = 'button';
-                    toggleBtn.className = 'menu-node-toggle';
-                    toggleBtn.textContent = isCollapsed ? '▸' : '▾';
+                    toggleBtn.className = `menu-node-toggle ${isCollapsed ? 'collapsed' : 'expanded'} ${animationClass}`.trim();
                     toggleBtn.title = isCollapsed ? '展开子节点' : '折叠子节点';
                     toggleBtn.setAttribute('aria-label', toggleBtn.title);
+                    toggleBtn.innerHTML = '<span class="menu-node-toggle-icon" aria-hidden="true">▶</span>';
                     toggleBtn.addEventListener('click', (evt) => {
                         evt.stopPropagation();
                         toggleMenuCollapsed(node.id);
@@ -209,6 +227,7 @@
             };
 
             state.menuRoots.forEach(node => renderNode(node, 0));
+            state.lastMenuToggle = null;
         }
 
         async function loadMenus() {

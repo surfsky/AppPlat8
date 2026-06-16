@@ -35,6 +35,8 @@
     <script src="/gis/gis-public-cameras.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-action.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-address.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-view.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-map.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-object.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-detail.js?v=@DateTime.Now.Ticks"></script>
@@ -95,7 +97,7 @@
             <div class="layer-tabs" data-panel-actions role="tablist" aria-label="图层分类">
                 <button type="button" id="btn-layer-tab-resource" class="layer-tab-btn active" data-tab="resource" role="tab" aria-selected="true">资源</button>
                 <button type="button" id="btn-layer-tab-weather" class="layer-tab-btn" data-tab="weather" role="tab" aria-selected="false">气象</button>
-                <button type="button" id="btn-layer-tab-iot" class="layer-tab-btn" data-tab="iot" role="tab" aria-selected="false">物联设备</button>
+                <button type="button" id="btn-layer-tab-iot" class="layer-tab-btn" data-tab="iot" role="tab" aria-selected="false">物联</button>
             </div>
             <div class="layer-tab-panels">
                 <div id="layer-tab-panel-resource" class="layer-tab-panel active" data-tab-panel="resource" role="tabpanel">
@@ -169,6 +171,7 @@
         const GisIndexUI = window.GisIndexUI;
         const GisIndexData = window.GisIndexData;
         const GisIndexAction = window.GisIndexAction;
+        const GisIndexView = window.GisIndexView;
         const GisIndexMap = window.GisIndexMap;
         const GisIndexObject = window.GisIndexObject;
         const GisIndexDetail = window.GisIndexDetail;
@@ -225,13 +228,16 @@
                 setTimeout(() => panelApi.resizeCharts(), 260);
             }
         });
-        const mapApi = GisIndexMap.create({
+        const viewApi = GisIndexView.create({
             map,
             state,
             terrainSourceId,
-            center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
-            zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
             closeViewMenu: () => closeViewMenu()
+        });
+        const mapApi = GisIndexMap.create({
+            map,
+            center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
+            zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
         });
         const objectApi = GisIndexObject.create({
             map,
@@ -296,6 +302,7 @@
             state,
             dataApi,
             actionApi,
+            viewApi,
             mapApi,
             panelApi,
             closeViewMenu: () => closeViewMenu()
@@ -363,8 +370,8 @@
                 if (e.key === 'Enter') searchAddress();
             });
             document.getElementById('btn-toggle-3d').addEventListener('change', (e) => {
-                if (e.target.checked) mapApi.enable3D();
-                else mapApi.disable3DBuildings();
+                if (e.target.checked) viewApi.enable3D();
+                else viewApi.disable3D();
                 closeViewMenu();
             });
 
@@ -408,9 +415,9 @@
             if (state.menuNodeMap && state.menuNodeMap.size > 0) {
                 await loadGeometries();
             }
-            mapApi.applyProjection(state.currentProjection, { closeMenu: false });
+            viewApi.applyProjection(state.currentProjection, { closeMenu: false });
             map.once('idle', () => applyGeometryVisibility());
-            if (state.is3D) mapApi.enable3D({ closeMenu: false, adjustCamera: false });
+            if (state.is3D) viewApi.enable3D({ closeMenu: false, adjustCamera: false });
 
             objectApi.setLayerVisible(true);
             renderMenuTree();
@@ -435,7 +442,7 @@
             dateTime.style.left = `${Math.round(left)}px`;
             dateTime.style.right = 'auto';
         }
-        function switchStyle(type) { mapApi.switchStyle(type); }
+        function switchStyle(type) { viewApi.switchStyle(type); }
         function resetView() { mapApi.resetView(); }
         async function searchAddress() { return mapApi.searchAddress(); }
 
@@ -559,7 +566,7 @@
                     const scenePitch = detail.mapPitch ?? detail.MapPitch;
 
                     if (styleName || enable3D !== null && enable3D !== undefined || projection !== null && projection !== undefined) {
-                        mapApi.applyViewConfig({
+                        viewApi.applyViewConfig({
                             style: styleName,
                             projection: projection,
                             enable3D: enable3D,

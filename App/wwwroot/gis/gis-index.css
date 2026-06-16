@@ -670,18 +670,43 @@ gis-panel {
     margin-bottom: 2px;
 }
 .menu-node-toggle {
-    width: 16px;
-    height: 16px;
+    width: 22px;
+    height: 22px;
     padding: 0;
     border: none;
     background: transparent;
     color: #93c5fd;
-    font-size: 11px;
-    line-height: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 22px;
     text-align: center;
     cursor: pointer;
     border-radius: 4px;
-    flex: 0 0 16px;
+    flex: 0 0 22px;
+}
+.menu-node-toggle-icon {
+    display: inline-block;
+    transform-origin: 50% 50%;
+}
+.menu-node-toggle.collapsed .menu-node-toggle-icon {
+    transform: rotate(0deg);
+}
+.menu-node-toggle.expanded .menu-node-toggle-icon {
+    transform: rotate(90deg);
+}
+.menu-node-toggle.animating-expand .menu-node-toggle-icon {
+    animation: menu-toggle-expand .22s ease-out;
+}
+.menu-node-toggle.animating-collapse .menu-node-toggle-icon {
+    animation: menu-toggle-collapse .22s ease-out;
+}
+@keyframes menu-toggle-expand {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(90deg); }
+}
+@keyframes menu-toggle-collapse {
+    from { transform: rotate(90deg); }
+    to { transform: rotate(0deg); }
 }
 .menu-node-toggle:hover {
     color: #ffffff;

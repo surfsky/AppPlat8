@@ -1,3 +1,6 @@
+/***
+ * 对象详情面板相关逻辑
+ */
 (function () {
     function resolveManager() {
         if (window.top && window.top.EleManager) return window.top.EleManager;

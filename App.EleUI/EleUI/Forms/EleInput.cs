@@ -22,6 +22,7 @@ namespace App.EleUI
         [HtmlAttributeName("Rows")]         public int Rows { get; set; }
         [HtmlAttributeName("Prepend")]      public string Prepend { get; set; }
         [HtmlAttributeName("Append")]       public string Append { get; set; }
+        [HtmlAttributeName("ShowPassword")] public bool ShowPassword { get; set; } = false;  // show eye icon to toggle password visibility
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -44,6 +45,9 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("type", "textarea");
                 output.Attributes.SetAttribute(":rows", Rows);
             }
+
+            // ShowPassword。 增加 show-password 不赋值的属性，如<ele-input .... show-password>
+            if (ShowPassword)  output.Attributes.Add("show-password", "");
 
             // Child
             var childContent = await output.GetChildContentAsync();

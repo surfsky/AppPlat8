@@ -1,6 +1,10 @@
+/**
+ * 地图UI相关逻辑
+ */
 (function () {
     let headerDatetimeTimer = null;
 
+    /**更新顶部时间显示 */
     function startHeaderDatetime(outputId) {
         const output = document.getElementById(outputId || 'header-datetime');
         if (!output) return;
@@ -21,6 +25,7 @@
         headerDatetimeTimer = setInterval(render, 1000);
     }
 
+    /**同步工具栏状态 */
     function syncToolbarUI(state) {
         const toolbar = document.querySelector('.map-toolbar');
         const toggleBtn = document.getElementById('btn-toolbar-toggle');
@@ -31,11 +36,13 @@
         }
     }
 
+    /**切换工具栏状态 */
     function toggleToolbar(state) {
         state.toolbarCollapsed = !state.toolbarCollapsed;
         syncToolbarUI(state);
     }
 
+    /**同步图层列表面板状态 */
     function syncLayerPanelUI(state) {
         const panel = document.getElementById('layer-panel');
         const toggleBtn = document.getElementById('btn-layer-toggle');
@@ -46,6 +53,7 @@
         }
     }
 
+    /**切换图层列表面板状态 */
     function toggleLayerPanel(state) {
         if (state.statsMode) {
             state.statsMode = false;
@@ -57,6 +65,7 @@
         syncLayerPanelUI(state);
     }
 
+    /**同步图层列表选项卡状态 */
     function syncLayerTabsUI(state) {
         const activeTab = state.activeLayerTab || 'resource';
         document.querySelectorAll('.layer-tab-btn').forEach(btn => {
@@ -71,11 +80,13 @@
         });
     }
 
+    /**切换图层列表选项卡状态 */
     function switchLayerTab(state, tab) {
         state.activeLayerTab = tab || 'resource';
         syncLayerTabsUI(state);
     }
 
+    /**同步视图菜单状态 */
     function syncViewMenuUI(state) {
         const menu = document.getElementById('view-menu');
         const toggleBtn = document.getElementById('btn-view-toggle');
@@ -86,11 +97,13 @@
         }
     }
 
+    /**切换视图菜单状态 */
     function toggleViewMenu(state) {
         state.viewMenuOpen = !state.viewMenuOpen;
         syncViewMenuUI(state);
     }
 
+    /**同步场景菜单状态 */
     function syncSceneMenuUI(state) {
         const menu = document.getElementById('scene-menu');
         const toggleBtn = document.getElementById('btn-scene-toggle');
@@ -114,11 +127,13 @@
         }
     }
 
+    /**切换场景菜单状态 */
     function toggleSceneMenu(state) {
         state.sceneMenuOpen = !state.sceneMenuOpen;
         syncSceneMenuUI(state);
     }
 
+    /**渲染场景菜单 */
     function renderSceneMenu(state, onSelect) {
         const menu = document.getElementById('scene-menu');
         if (!menu) return;
@@ -132,11 +147,13 @@
         });
     }
 
+    /**关闭视图菜单 */
     function closeViewMenu(state) {
         state.viewMenuOpen = false;
         syncViewMenuUI(state);
     }
 
+    /**同步统计模式状态 */
     function syncStatsModeUI(state) {
         const overlay = document.getElementById('stats-overlay');
         const statsBtn = document.getElementById('btn-stats-toggle');
@@ -158,6 +175,7 @@
         }
     }
 
+    /**切换统计模式状态 */
     function toggleStatsMode(state, options) {
         state.statsMode = !state.statsMode;
         if (state.statsMode) {
@@ -177,6 +195,7 @@
         }
     }
 
+    /**重置视图 */
     function resetView(map, center, zoom) {
         if (!map) return;
         map.easeTo({
@@ -188,6 +207,7 @@
         });
     }
 
+    /**关闭场景菜单 */
     function closeSceneMenu(state) {
         state.sceneMenuOpen = false;
         syncSceneMenuUI(state);

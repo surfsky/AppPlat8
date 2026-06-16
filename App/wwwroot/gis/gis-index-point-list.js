@@ -1,3 +1,6 @@
+/***
+ * 点列表面板相关逻辑
+*/
 (function () {
     function create(ctx) {
         const panelId = ctx.panelId || 'geo-point-list-panel';

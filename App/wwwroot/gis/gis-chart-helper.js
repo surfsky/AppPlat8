@@ -1,3 +1,6 @@
+/**
+ * 图表绘制相关
+ */
 (function () {
     function safeParseJson(text, fallbackValue) {
         if (!text || typeof text !== 'string') return fallbackValue;

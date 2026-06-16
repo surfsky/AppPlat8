@@ -1,3 +1,6 @@
+/**
+ * 面板相关逻辑
+ */
 (function () {
     function create(ctx) {
         const state = ctx.state;

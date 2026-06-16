@@ -1,15 +1,26 @@
+/**
+ * 企业检查对象相关逻辑？？？
+*/
 (function () {
     function create(ctx) {
         const map = ctx.map;
         const state = ctx.state;
         const onOpenDetail = ctx.onOpenDetail || (() => {});
 
+        /**
+         * 选择对象
+         * @param {Object} item - 对象数据
+         * @param {boolean} [openDrawer=true] - 是否打开详情抽屉
+         */
         function selectObject(item, openDrawer = true) {
             if (!item) return;
             state.selectedId = item.id;
             if (openDrawer) onOpenDetail(item.id);
         }
 
+        /**
+         * 加载对象数据
+         */
         async function loadObjects() {
             const resp = await fetch('?handler=LayerData');
             const res = await resp.json();
@@ -20,6 +31,10 @@
             if (state.objects.length > 0) selectObject(state.objects[0], false);
         }
 
+        /**
+         * 构建对象标记
+         * @param {Array} items - 对象数据数组
+         */
         function buildMarkers(items) {
             state.markerMap.forEach(marker => marker.remove());
             state.markerMap.clear();
@@ -41,6 +56,10 @@
             });
         }
 
+        /**
+         * 设置对象标记图层是否可见
+         * @param {boolean} visible - 是否可见
+         */
         function setLayerVisible(visible) {
             state.markerMap.forEach(marker => {
                 marker.getElement().style.display = visible ? '' : 'none';

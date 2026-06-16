@@ -1,3 +1,6 @@
+/**
+ * 地图操作相关（点位详情、点位列表、统计模式等）
+ */
 (function () {
     function resolveManager() {
         if (window.top && window.top.EleManager) return window.top.EleManager;
