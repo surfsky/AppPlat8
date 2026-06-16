@@ -11,6 +11,7 @@ import { PressureLayer } from "./overlay/layers/PressureLayer.js";
 import { AdminBoundaryLayer } from "./overlay/layers/AdminBoundaryLayer.js";
 import { WindLayer } from "./overlay/layers/WindLayer.js";
 import { CityTempLayer } from "./overlay/layers/CityTempLayer.js";
+import { CityHumidityLayer } from "./overlay/layers/CityHumidityLayer.js";
 import { LatLonGridLayer } from "./overlay/layers/LatLonGridLayer.js";
 import { TidePanelLayer } from "./overlay/layers/TidePanelLayer.js";
 import { TyphoonLayer } from "./overlay/layers/TyphoonLayer.js";
@@ -25,6 +26,7 @@ const layerDefs = [
   { name: "pressure", title: "气压", infoId: "pressureInfo" },
   { name: "wind", title: "气流", infoId: "windInfo" },
   { name: "cityTemp", title: "城市温度", infoId: "cityTempInfo" },
+  { name: "cityHumidity", title: "城市湿度", infoId: "cityHumidityInfo" },
   { name: "latlonGrid", title: "经纬度", infoId: "gridInfo" },
   { name: "tidePanel", title: "海况与潮汐", infoId: "tidePanelInfo" },
   { name: "adminBoundary", title: "行政边界", infoId: "adminBoundaryInfo" },
@@ -41,6 +43,7 @@ function createLayers() {
     new AdminBoundaryLayer(),
     new WindLayer(),
     new CityTempLayer(),
+    new CityHumidityLayer(),
     new LatLonGridLayer(),
     new TidePanelLayer(),
     new TyphoonLayer()
