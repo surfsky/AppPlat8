@@ -79,9 +79,12 @@
         </button>
     </div>
     <div id="view-menu" class="view-menu" aria-label="视图菜单">
-        <div id="view-style-list"></div>
-        <div class="view-menu-section-title">---------------</div>
-        <button id="btn-toggle-3d" class="view-menu-item">3D地形</button>
+        <div id="view-style-list" class="view-menu-options" role="radiogroup" aria-label="底图样式"></div>
+        <div class="view-menu-divider" role="separator"></div>
+        <label class="view-menu-option view-menu-checkbox">
+            <input type="checkbox" id="btn-toggle-3d">
+            <span>3D地形</span>
+        </label>
     </div>
 
     <div id="scene-menu" class="view-menu" style="left: 60px; top: 10px; display:none" aria-label="场景菜单">
@@ -359,9 +362,9 @@
             document.getElementById('address-input').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') searchAddress();
             });
-            document.getElementById('btn-toggle-3d').addEventListener('click', () => {
-                if (state.is3D) mapApi.disable3DBuildings();
-                else mapApi.enable3DBuildings();
+            document.getElementById('btn-toggle-3d').addEventListener('change', (e) => {
+                if (e.target.checked) mapApi.enable3D();
+                else mapApi.disable3DBuildings();
                 closeViewMenu();
             });
 
@@ -407,7 +410,7 @@
             }
             mapApi.applyProjection(state.currentProjection, { closeMenu: false });
             map.once('idle', () => applyGeometryVisibility());
-            if (state.is3D) mapApi.enable3DBuildings({ closeMenu: false, adjustCamera: false });
+            if (state.is3D) mapApi.enable3D({ closeMenu: false, adjustCamera: false });
 
             objectApi.setLayerVisible(true);
             renderMenuTree();
@@ -487,13 +490,25 @@
 
             host.innerHTML = '';
             state.mapStyles.forEach(style => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'view-menu-item' + (state.currentStyle === style.name ? ' active' : '');
-                btn.dataset.viewStyle = style.name;
-                btn.textContent = style.name;
-                btn.addEventListener('click', () => switchStyle(style.name));
-                host.appendChild(btn);
+                const label = document.createElement('label');
+                label.className = 'view-menu-option view-menu-radio';
+
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = 'view-style';
+                input.value = style.name;
+                input.dataset.viewStyle = style.name;
+                input.checked = state.currentStyle === style.name;
+                input.addEventListener('change', () => {
+                    if (input.checked) switchStyle(style.name);
+                });
+
+                const text = document.createElement('span');
+                text.textContent = style.name;
+
+                label.appendChild(input);
+                label.appendChild(text);
+                host.appendChild(label);
             });
         }
 

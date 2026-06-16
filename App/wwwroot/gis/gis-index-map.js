@@ -87,14 +87,16 @@
 
         function syncStyleButtons() {
             const current = normalizeStyleKey(state.currentStyle);
-            document.querySelectorAll('[data-view-style]').forEach(btn => {
-                btn.classList.toggle('active', normalizeStyleKey(btn.dataset.viewStyle) === current);
+            document.querySelectorAll('[data-view-style]').forEach(input => {
+                if (input.type === 'radio') {
+                    input.checked = normalizeStyleKey(input.dataset.viewStyle) === current;
+                }
             });
         }
 
         function sync3DToggleButton() {
-            const button = document.getElementById('btn-toggle-3d');
-            if (button) button.classList.toggle('active', !!state.is3D);
+            const input = document.getElementById('btn-toggle-3d');
+            if (input) input.checked = !!state.is3D;
         }
 
         function applyProjection(projection, options = {}) {
@@ -246,7 +248,7 @@
             }
         }
 
-        function canEnable3DBuildings() {
+        function canEnable3D() {
             try {
                 return !!map.getSource('composite');
             } catch {
@@ -292,7 +294,7 @@
             });
         }
 
-        async function enable3DBuildings(options = {}) {
+        async function enable3D(options = {}) {
             const requestId = ++pending3DRequestId;
             const adjustCamera = options.adjustCamera !== false;
             state.is3D = true;
@@ -311,7 +313,7 @@
             }
 
             ensureTerrainEnabled();
-            if (canEnable3DBuildings()) {
+            if (canEnable3D()) {
                 const layers = map.getStyle().layers;
                 const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
                 if (!map.getLayer('3d-buildings')) {
@@ -332,7 +334,7 @@
                 }
             }
             if (adjustCamera) {
-                map.easeTo({ pitch: 72, bearing: -18, duration: 700 });
+                map.easeTo({ pitch: 72, duration: 1000 });
             }
             if (options.closeMenu !== false) {
                 closeViewMenu();
@@ -392,7 +394,7 @@
                 if (options.enable3D) {
                     state.is3D = true;
                     sync3DToggleButton();
-                    enable3DBuildings({
+                    enable3D({
                         closeMenu: false,
                         adjustCamera: options.adjustCamera
                     });
@@ -586,7 +588,7 @@
             createCenterCoordControl,
             createResetControl,
             ensureMapGeometryHelperReady,
-            enable3DBuildings,
+            enable3D,
             disable3DBuildings,
             switchStyle,
             applyProjection,

@@ -1,3 +1,6 @@
+                map.easeTo({ pitch: 72, bearing: -18, duration: 700 });
+
+
 可以，给你一个适合你这个仓库的 SDD 落地做法。核心是先写规格，再让 Copilot按规格实现和验收。
 
 **推荐放在哪个目录**

@@ -3,6 +3,7 @@ import { LayerManager } from "./overlay/core/LayerManager.js";
 import { RadarLayer } from "./overlay/layers/RadarLayer.js";
 import { SatelliteLiveLayer } from "./overlay/layers/SatelliteLiveLayer.js";
 import { SatelliteFallbackLayer } from "./overlay/layers/SatelliteFallbackLayer.js";
+import { SatelliteWorldMosaicLayer } from "./overlay/layers/SatelliteWorldMosaicLayer.js";
 import { PressureLayer } from "./overlay/layers/PressureLayer.js";
 import { AdminBoundaryLayer } from "./overlay/layers/AdminBoundaryLayer.js";
 import { WindLayer } from "./overlay/layers/WindLayer.js";
@@ -15,8 +16,9 @@ import { TyphoonLayer } from "./overlay/layers/TyphoonLayer.js";
 const layerDefs = [
   { name: "typhoon", title: "台风", infoId: "typhoonInfo" },
   { name: "radar", title: "雷达图", infoId: "radarTime" },
-  { name: "satelliteLive", title: "卫星云图", infoId: "satelliteLiveTime" },
-  { name: "satellite", title: "卫星云图2", infoId: "satelliteTime" },
+  //{ name: "satelliteLive", title: "卫星云图", infoId: "satelliteLiveTime" },
+  { name: "satellite", title: "卫星云图", infoId: "satelliteTime" },
+  { name: "satelliteWorld", title: "红外云图", infoId: "satelliteWorldTime" },
   { name: "pressure", title: "气压", infoId: "pressureInfo" },
   { name: "wind", title: "气流", infoId: "windInfo" },
   { name: "cityTemp", title: "城市温度", infoId: "cityTempInfo" },
@@ -31,6 +33,7 @@ function createLayers() {
     new RadarLayer(),
     new SatelliteLiveLayer(),
     new SatelliteFallbackLayer(),
+    new SatelliteWorldMosaicLayer(),
     new PressureLayer(),
     new AdminBoundaryLayer(),
     new WindLayer(),

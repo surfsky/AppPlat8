@@ -251,7 +251,8 @@ export class AdminBoundaryLayer extends MapLayer {
     const adcode = this.pickNearestProvinceAdcode(this.runtime.map.getCenter());
     await this.ensureCityDistrictSource(adcode);
     this.setOpacity(this.runtime.getOpacity(this.name));
-    setInfo("adminBoundaryInfo", `行政边界已开启（国/省/市/区县），省份码: ${this.loadedProvinceAdcode || "--"}`);
+    //setInfo("adminBoundaryInfo", `已开启（国/省/市/区县），省份码: ${this.loadedProvinceAdcode || "--"}`);
+    setInfo("adminBoundaryInfo", `已开启`);
     this.lastStatus = true;
     this.lastTime = Date.now();
     return true;
