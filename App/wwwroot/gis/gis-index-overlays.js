@@ -12,6 +12,7 @@ import { AdminBoundaryLayer } from "./overlay/layers/AdminBoundaryLayer.js";
 import { WindLayer } from "./overlay/layers/WindLayer.js";
 import { CityTempLayer } from "./overlay/layers/CityTempLayer.js";
 import { CityHumidityLayer } from "./overlay/layers/CityHumidityLayer.js";
+import { CityWeatherLayer } from "./overlay/layers/CityWeatherLayer.js";
 import { LatLonGridLayer } from "./overlay/layers/LatLonGridLayer.js";
 import { TidePanelLayer } from "./overlay/layers/TidePanelLayer.js";
 import { TyphoonLayer } from "./overlay/layers/TyphoonLayer.js";
@@ -25,6 +26,7 @@ const layerDefs = [
   { name: "satelliteWorld", title: "红外云图", infoId: "satelliteWorldTime" },
   { name: "pressure", title: "气压", infoId: "pressureInfo" },
   { name: "wind", title: "气流", infoId: "windInfo" },
+  { name: "cityWeather", title: "城市综合天气", infoId: "cityWeatherInfo" },
   { name: "cityTemp", title: "城市温度", infoId: "cityTempInfo" },
   { name: "cityHumidity", title: "城市湿度", infoId: "cityHumidityInfo" },
   { name: "latlonGrid", title: "经纬度", infoId: "gridInfo" },
@@ -42,6 +44,7 @@ function createLayers() {
     new PressureLayer(),
     new AdminBoundaryLayer(),
     new WindLayer(),
+    new CityWeatherLayer(),
     new CityTempLayer(),
     new CityHumidityLayer(),
     new LatLonGridLayer(),

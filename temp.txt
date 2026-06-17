@@ -360,3 +360,6 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
         };
     </script>
 }
+
+          <div class="city-weather-popup-card"><span class="city-weather-popup-key">当前天气：</span>${meta.label}</div>
+          <div class="city-weather-popup-card"><span class="city-weather-popup-key">城市级别：</span>${city.level || "--"}</div>

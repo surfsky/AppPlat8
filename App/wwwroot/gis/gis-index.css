@@ -1528,12 +1528,47 @@ gis-panel {
 
 @media (max-width: 640px) {
     .header-bar { height: 76px; }
-    .header-title { font-size: 24px; padding: 6px 10px; }
+    .header-title { display: none; }
     .panel-left {
         width: calc(100% - 20px);
         top: 84px;
         left: 10px;
         bottom: 12px;
+    }
+    .floating-toggle-group {
+        left: 50%;
+        top: 12px;
+        transform: translateX(-50%);
+        gap: 10px;
+        width: max-content;
+    }
+    .map-toolbar {
+        --toolbar-shift-x: 0%;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        bottom: 12px;
+        padding: 8px 10px;
+        gap: 8px;
+        overflow: visible;
+        white-space: normal;
+    }
+    .toolbar-input {
+        width: auto;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+    .toolbar-btn {
+        position: static;
+        top: auto;
+        right: auto;
+        transform: none;
+        flex: 0 0 auto;
+        padding: 8px 12px;
+    }
+    .address-suggest-list {
+        left: 0;
+        right: 0;
     }
     .geo-detail-panel {
         width: 100%;
