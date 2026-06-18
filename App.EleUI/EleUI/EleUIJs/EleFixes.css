@@ -134,6 +134,14 @@ html, body {
     max-width: 260px;
 }
 
+.ele-table-buttons-block {
+    gap: 6px !important;
+}
+
+.ele-table-buttons-block .el-button + .el-button {
+    margin-left: 0 !important;
+}
+
 /* Reduce Input Height if needed (Optional, Element Plus defaults are usually fine, but margin is the main spacer) */
 /*
 .el-input__inner {

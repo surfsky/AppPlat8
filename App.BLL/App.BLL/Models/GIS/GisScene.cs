@@ -27,7 +27,7 @@ namespace App.DAL.GIS
         public static List<GisMapStyle> Styles = new List<GisMapStyle>
         {
             new("Streets", "mapbox://styles/mapbox/streets-v11"),
-            new("Satellite", "mapbox://styles/mapbox/satellite-v9"),
+            new("Satellite", "mapbox://styles/mapbox/satellite-streets-v12"),  // satellite-v9无标签
             new("Dark", "mapbox://styles/mapbox/dark-v10"),
             new("Light", "mapbox://styles/mapbox/light-v10"),
             new("Outdoors", "mapbox://styles/mapbox/outdoors-v11"),

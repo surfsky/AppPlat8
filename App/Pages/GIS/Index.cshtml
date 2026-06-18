@@ -92,6 +92,10 @@
             <input type="checkbox" id="btn-toggle-3d">
             <span>3D地形</span>
         </label>
+        <label class="view-menu-option view-menu-checkbox">
+            <input type="checkbox" id="btn-toggle-rotate">
+            <span>自动旋转</span>
+        </label>
     </div>
 
     <div id="scene-menu" class="view-menu" style="left: 60px; top: 10px; display:none" aria-label="场景菜单">
@@ -159,6 +163,7 @@
             currentStyle: 'street',
             currentProjection: 'mercator',
             is3D: false,
+            isAutoRotate: false,
             toolbarCollapsed: true,
             layerCollapsed: false,
             viewMenuOpen: false,

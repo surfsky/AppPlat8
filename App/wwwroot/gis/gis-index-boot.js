@@ -73,6 +73,11 @@
                 else viewApi.disable3D();
                 ctx.closeViewMenu();
             });
+            document.getElementById('btn-toggle-rotate').addEventListener('change', e => {
+                if (e.target.checked) viewApi.enableRotate();
+                else viewApi.disableRotate();
+                ctx.closeViewMenu();
+            });
 
             document.addEventListener('click', e => {
                 if (state.viewMenuOpen) {

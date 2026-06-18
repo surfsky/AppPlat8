@@ -2246,4 +2246,101 @@
         createEditor: createEditor,
         createDisplayLayerManager: createDisplayLayerManager
     };
+
+    function rotateView(enabled, map, options) {
+        if (!map) return;
+        var opt = options || {};
+        var stateKey = '__rotateViewState';
+        var s = map[stateKey] || null;
+        if (!s) {
+            s = {
+                enabled: false,
+                userInteracting: false,
+                rafId: 0,
+                handlers: []
+            };
+            map[stateKey] = s;
+        }
+
+        var secondsPerRevolution = Number(opt.secondsPerRevolution);
+        if (!Number.isFinite(secondsPerRevolution) || secondsPerRevolution <= 0) secondsPerRevolution = 120;
+        var maxSpinZoom = Number(opt.maxSpinZoom);
+        if (!Number.isFinite(maxSpinZoom)) maxSpinZoom = 5;
+        var slowSpinZoom = Number(opt.slowSpinZoom);
+        if (!Number.isFinite(slowSpinZoom)) slowSpinZoom = 3;
+
+        function setUserInteracting(value) {
+            s.userInteracting = !!value;
+        }
+
+        function bindMapEvent(eventName, handler) {
+            if (!map || typeof map.on !== 'function') return;
+            map.on(eventName, handler);
+            s.handlers.push({ name: eventName, fn: handler });
+        }
+
+        function unbindAll() {
+            if (!map || typeof map.off !== 'function') return;
+            s.handlers.forEach(function (h) {
+                try {
+                    map.off(h.name, h.fn);
+                } catch { }
+            });
+            s.handlers = [];
+        }
+
+        function step() {
+            if (!s.enabled) return;
+            try {
+                var zoom = typeof map.getZoom === 'function' ? map.getZoom() : 0;
+                if (!s.userInteracting && zoom < maxSpinZoom) {
+                    var distancePerSecond = 360 / secondsPerRevolution;
+                    if (zoom > slowSpinZoom) {
+                        var zoomDif = (maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
+                        distancePerSecond *= zoomDif;
+                    }
+                    var c = map.getCenter();
+                    c.lng -= distancePerSecond / 60;
+                    map.setCenter(c);
+                }
+            } catch { }
+
+            s.rafId = requestAnimationFrame(step);
+        }
+
+        if (enabled) {
+            if (s.enabled) return;
+            s.enabled = true;
+            unbindAll();
+            bindMapEvent('mousedown', function () { setUserInteracting(true); });
+            bindMapEvent('mouseup', function () { setUserInteracting(false); });
+            bindMapEvent('dragstart', function () { setUserInteracting(true); });
+            bindMapEvent('dragend', function () { setUserInteracting(false); });
+            bindMapEvent('zoomstart', function () { setUserInteracting(true); });
+            bindMapEvent('zoomend', function () { setUserInteracting(false); });
+            bindMapEvent('rotatestart', function () { setUserInteracting(true); });
+            bindMapEvent('rotateend', function () { setUserInteracting(false); });
+            bindMapEvent('pitchstart', function () { setUserInteracting(true); });
+            bindMapEvent('pitchend', function () { setUserInteracting(false); });
+            bindMapEvent('rotatebackstart', function () { setUserInteracting(true); });
+            bindMapEvent('rotatebackend', function () { setUserInteracting(false); });
+            if (s.rafId) {
+                try { cancelAnimationFrame(s.rafId); } catch { }
+                s.rafId = 0;
+            }
+            s.rafId = requestAnimationFrame(step);
+            return;
+        }
+
+        s.enabled = false;
+        if (s.rafId) {
+            try { cancelAnimationFrame(s.rafId); } catch { }
+            s.rafId = 0;
+        }
+        unbindAll();
+    }
+
+    global.maphelper = global.maphelper || {};
+    global.maphelper.rotateView = rotateView;
+    global.MapGeometryHelper.rotateView = rotateView;
 })(window);

@@ -97,6 +97,33 @@
             if (input) input.checked = !!state.is3D;
         }
 
+        function syncRotateToggleButton() {
+            const input = document.getElementById('btn-toggle-rotate');
+            if (input) input.checked = !!state.isAutoRotate;
+        }
+
+        function enableRotate(options = {}) {
+            state.isAutoRotate = true;
+            syncRotateToggleButton();
+            if (window.maphelper && typeof window.maphelper.rotateView === 'function') {
+                window.maphelper.rotateView(true, map, options);
+            }
+            if (options.closeMenu !== false) {
+                closeViewMenu();
+            }
+        }
+
+        function disableRotate(options = {}) {
+            state.isAutoRotate = false;
+            syncRotateToggleButton();
+            if (window.maphelper && typeof window.maphelper.rotateView === 'function') {
+                window.maphelper.rotateView(false, map, options);
+            }
+            if (options.closeMenu !== false) {
+                closeViewMenu();
+            }
+        }
+
         function applyProjection(projection, options = {}) {
             const projectionName = resolveProjection(projection);
             state.currentProjection = projectionName;
@@ -309,11 +336,14 @@
         return {
             enable3D,
             disable3D,
+            enableRotate,
+            disableRotate,
             switchStyle,
             applyProjection,
             applyViewConfig,
             syncStyleButtons,
-            sync3DToggleButton
+            sync3DToggleButton,
+            syncRotateToggleButton
         };
     }
 

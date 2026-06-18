@@ -45,6 +45,8 @@ namespace App.EleUI
             {
                 output.Attributes.SetAttribute("multiple", "true");
                 output.Attributes.SetAttribute("show-checkbox", "true");
+                output.Attributes.SetAttribute(":check-on-click-node", "true");
+                output.Attributes.SetAttribute(":expand-on-click-node", "false");
                 if (CollapseTags.HasValue)
                 {
                     output.Attributes.SetAttribute(":collapse-tags", CollapseTags.Value ? "true" : "false");

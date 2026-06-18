@@ -29,7 +29,7 @@ namespace App.EleUI
 
             output.TagName = null;
             output.Content.SetHtmlContent($@"
-<div class='ele-table-buttons-block w-auto md:w-full shrink-0 flex items-center gap-2 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible'>
+<div class='ele-table-buttons-block w-auto md:w-full shrink-0 flex items-center gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible'>
     {content}
 </div>");
         }
