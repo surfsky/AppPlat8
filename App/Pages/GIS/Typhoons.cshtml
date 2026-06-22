@@ -1,0 +1,37 @@
+@page
+@model App.Pages.GIS.TyphoonsModel
+@{
+    ViewData["Title"] = "台风轨迹数据";
+}
+
+@section body {
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="台风轨迹" EnableBatch="false">
+        <Toolbar>
+            <Filters>
+                <EleNumber For="Item.Year" Width="120px" Label="年份" LabelWidth="60px"></EleNumber>
+                <EleInput For="Item.Name" Width="180px" Label="名称" LabelWidth="60px"></EleInput>
+                <EleInput For="Item.Code" Width="150px" Label="编号" LabelWidth="60px"></EleInput>
+            </Filters>
+            <Buttons>
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Warning" Icon="Upload" PopupTitle="导入台风数据" PopupUrl="/GIS/TyphoonImporter">导入</EleButton>
+            </Buttons>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleOpColumn Width="90" Fixed="right">
+                <Op Popup="/GIS/TyphoonLogs?code={code}&name={chineseName}" Icon="List" Text="轨迹"></Op>
+            </EleOpColumn>
+            <EleColumn For="Item.Code" Label="编号" Width="110" Sortable="true"></EleColumn>
+            <EleColumn For="Item.Year" Label="年份" Width="80" Sortable="true"></EleColumn>
+            <EleColumn For="Item.ChineseName" Label="中文名" Width="120"></EleColumn>
+            <EleColumn For="Item.Name" Label="英文名" Width="160"></EleColumn>
+            <EleColumn For="Item.MaxLevel" Label="最高等级" Width="100"></EleColumn>
+            <EleColumn For="Item.IsLandText" Label="登陆" Width="80"></EleColumn>
+            <EleColumn For="Item.LogCnt" Label="轨迹点" Width="90" Sortable="true"></EleColumn>
+            <EleColumn For="Item.BirthUtc" Label="生成时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.DeathUtc" Label="结束时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.LastTimeUtc" Label="最后轨迹" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+        </Columns>
+    </EleTable>
+}

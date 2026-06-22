@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="description" content="æ°è±¡åº">
+  <meta name="keywords" content="æ°è±¡åº">
+  <meta name="viewport" content="width=device-width,user-scalable=yes,maximum-scale=2" />
+  <meta name="format-detection" content="telephone=no">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="57x57" href="../apple-touch-icon.png">
+  <link rel="stylesheet" href="//www.jma.go.jp/bosai/common/lib/leaflet.css" />
+  <link rel="stylesheet" href="//www.jma.go.jp/bosai/common/css/jmamap.css" />
+  <link rel="stylesheet" href="//www.jma.go.jp/bosai/typhoon/css/typhoon.css" />
+  <link href="../css/normalize.css" type="text/css" rel="stylesheet" />
+  <link href="../css/layout.css" type="text/css" rel="stylesheet" />
+  <link href="../css/layout_sp.css" type="text/css" rel="stylesheet" />
+  <link href="../css/cyclone.css" type="text/css" rel="stylesheet" />
+  <style>
+  #map {
+    width: 500px;
+    height: 500px;
+    margin: auto;
+  }
+  #map * {
+    pointer-events: none;
+  }
+  #infoTime {
+    width: 250px;
+    margin: auto;
+  }
+  #infoLabel {
+    width: 250px;
+    margin: auto;
+    text-align: right;
+  }
+  #legend, #legend_img {
+    width: 500px;
+    margin: auto;
+  }
+</style>
+<title></title>
+</head>
+
+  <body>
+  <div class="wrap">
+
+  <header>
+  <div class="inner">
+  <h1><img id="icon_jma" src="../images/common/logo.gif"/></h1>
+  <div class="language_select">
+  <div id="language_select_label" class="language_select_label"></div>
+  <form>
+  <select name="language_select" id="language_select" title="language_select" onChange="onChangeLanguage(value)">
+    <option value="jp">æ¥æ¬èª</option>
+    <option value="en">English</option>
+    <option value="cn_zs">ç®ä½ä¸­æ</option>
+    <option value="cn_zt">ç¹é«ä¸­æ</option>
+    <option value="kr">íêµ­ì´</option>
+    <option value="es">EspaÃ±ol</option>
+    <option value="pt">PortuguÃªs</option>
+    <option value="id">Bahasa Indonesia</option>
+    <option value="vn">Tiáº¿ng Viá»t</option>
+    <option value="ph">Tagalog</option>
+    <option value="th">à¸ à¸²à¸©à¸²à¹à¸à¸¢</option>
+    <option value="np">à¤¨à¥à¤ªà¤¾à¤²à¥ à¤­à¤¾à¤·à¤¾</option>
+    <option value="kh">áá¶áá¶ááááá</option>
+    <option value="mm">áá¼ááºáá¬áá¬áá¬ááá¬á¸</option>
+    <option value="mn">ÐÐ¾Ð½Ð³Ð¾Ð» ÑÑÐ»</option>
+  </select>
+  </form>
+  </div>
+  </div>
+  </header>
+
+  <div id="globalMenuS"><!-- globalMenuS start-->
+  <div id="top-head">
+    <div id="mobile-head">
+      <div id="nav-toggle">
+        <div id="menu_title" class="init-bottom"> </div>
+      </div>
+    </div>
+    <nav id="global-nav">
+      <ul>
+        <li><a id="tab_home" href="../index.html"></a></li>
+        <li><a id="tab_warn" href="../warn/index.html"></a></li>
+        <li><a id="tab_yoho" href="../yoho/index.html"></a></li>
+        <li><a id="tab_cyclon" href="../cyclone/index.html"></a></li>
+        <li><a id="tab_cloud" target="_blank" href="#"></a></li>
+        <li><a id="tab_kotan" target="_blank" href="#"></a></li>
+        <li><a id="tab_sub_landslide" target="_blank" href="#"></a></li>
+        <li><a id="tab_sub_inundation" target="_blank" href="#"></a></li>
+        <li><a id="tab_sub_flood" target="_blank" href="#"></a></li>
+        <li><a id="tab_tsunami" href="../tsunami/index.html"></a></li>
+        <li><a id="tab_quake" href="../quake/index.html"></a></li>
+        <li><a id="tab_volcano" href="../volcano/index.html"></a></li>
+      </ul>
+      </nav>
+    </div>
+  </div><!-- globalMenuS end-->
+
+  <main>
+    <div class="inner">
+      <div id="mente">
+        <div id="mente-emoji"></div>
+        <div id="mente-message"></div>
+      </div>
+
+    <div class="breadcrumb">
+      <ul>
+        <li><a id="breadcrumb_home" href="../index.html"></a></li>
+        <li><a id="breadcrumb_cyclone_list" href="index.html"></a></li>
+        <li id="breadcrumb_cyclone_detail"></li>
+      </ul>
+      </div>
+
+    <section class="cyclone_contents">
+
+    <h1 id="header"></h1>
+
+    <h2 id="sub_header" class="cyclone_announcement"></h2>
+    <div id="cyclone_issued" class="cyclone_announcement"></div>
+    <table style="margin:auto;">
+      <tr>
+        <td> <div id="infoTime"></div> </td>
+        <td> <div id="infoLabel"></div> </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <div id="map"></div>
+          <div id="legend"> <img id="legend_img"> </div>
+        </td>
+      </tr>
+    </table>
+    <script src="//www.jma.go.jp/bosai/common/lib/jquery-3.4.1.min.js"></script>
+    <script src="//www.jma.go.jp/bosai/common/lib/promise-6.1.0.min.js"></script>
+    <script src="//www.jma.go.jp/bosai/common/lib/leaflet-src.js"></script>
+    <script src="//www.jma.go.jp/bosai/common/js/jmaweb_utility.js"></script>
+    <script src="//www.jma.go.jp/bosai/common/js/simple_table.js"></script>
+    <script src="//www.jma.go.jp/bosai/common/js/contents_common.js"></script>
+    <script src="//www.jma.go.jp/bosai/common/js/Semicircle_mod.js"></script>
+    <script src="//www.jma.go.jp/bosai/common/js/jmamap.js"></script>
+    <script src="//www.jma.go.jp/bosai/js/unitmap_translate.js"></script>
+    <script src="//www.jma.go.jp/bosai/js/mapinsert.js"></script>
+    <script src="//www.jma.go.jp/bosai/typhoon/js/typhoon_dictionary.js"></script>
+    <script src="//www.jma.go.jp/bosai/typhoon/js/typhoon_map_common.js"></script>
+    <script src="//www.jma.go.jp/bosai/typhoon/js/typhoon_map_table.js"></script>
+    <script src="//www.jma.go.jp/bosai/typhoon/js/typhoon_map.js"></script>
+    <p class="cyclone_announcement">All rights reserved. Copyright Â© Japan Meteorological Agency</p>
+
+    <article class="cyclonedetail_info">
+
+      <div class="cyclone_announcement">
+        <p class="cyclone_map_notes" id="cyclone_map_notes_1"></p>
+        <p class="cyclone_map_notes" id="cyclone_map_notes_2"></p>
+        <p class="cyclone_map_notes" id="cyclone_map_notes_3"></p>
+        <p class="cyclone_map_notes" id="cyclone_map_notes_4"></p>
+      </div>
+
+      <div class="cyclone_noannouncement" style="display:none">
+        <p id="no_announcement"></p>
+      </div>
+
+      <div class="cyclone_link"><a id="cyclone_rain_advisory_link" target="_blank" href="../cyclone/cyclone_rain_advisory.html"></a></div>
+      <div class="cyclone_link"><a id="cyclone_wind_advisory_link" target="_blank" href="../cyclone/cyclone_wind_advisory.html"></a></div>
+
+    </article>
+
+    <div class="cyclone_caplink clearfix">
+      <div class="cyclonetable_cap"><a id="cyclone_caplink" href="cyclone_caplink.html"></a></div>
+      <br>
+      <div id="cyclonemap_caption">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" class="cyclonemapcap_table">
+          <tbody>
+            <tr>
+              <th id="cyclone_units_note_header"> </th>
+              <td id="cyclone_units_note"> </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <article id="cyclonedetail_info" class="cyclonedetail_info"> </article>
+
+    <div class="cyclone_annotation clearfix" id="purpose_announcement"></div>
+    </section>
+  </div>
+  </main>
+
+  <div id="pagetop"><a href="#top">topã¸</a></div>
+  
+  <footer><!-- footer -->
+    <div class="inner"> <p id="copyright" class="copyright"></p> </div>
+  </footer>
+  <!-- /footer -->
+
+  <script src="../js/jquery.min.js"></script>
+  <script src="../js/util.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../js/cyclone.js"></script>
+  <script src="../js/cyclone_detail.js"></script>
+  <script src="../js/mente_message.js"></script>
+  <script>
+  write_error_message("../data/VPTW60/warning.json", "#mente-emoji", "#mente-message");
+  </script>
+
+</div>
+</body>
+</html>

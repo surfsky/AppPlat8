@@ -30,6 +30,7 @@ export class WindLayer extends MapLayer {
     this.lastFrameAt = 0;
     this.refreshTimer = null;
     this.fieldCache = new Map(); // 简单的内存缓存，key 为经纬度边界的字符串
+    this.hostEl = null;
   }
 
   bind(runtime) {
@@ -54,17 +55,28 @@ export class WindLayer extends MapLayer {
   ensureCanvas() {
     if (this.canvas && this.ctx) return;
     this.ensureStyle();
+    const { map } = this.runtime;
+    this.hostEl = map?.getContainer?.() || document.body;
     this.canvas = document.getElementById(this.canvasId);
     if (!this.canvas) {
       this.canvas = document.createElement("canvas");
       this.canvas.id = this.canvasId;
       this.canvas.setAttribute("aria-hidden", "true");
       this.canvas.style.display = "none";
-      document.body.appendChild(this.canvas);
+      this.hostEl.appendChild(this.canvas);
     }
     this.ctx = this.canvas.getContext("2d", { alpha: true });
+    this.ensureCanvasOrder();
     this.resizeCanvas();
     window.addEventListener("resize", this.resizeHandler);
+  }
+
+  /**确保风场画布位于地图之上、面板之下 */
+  ensureCanvasOrder() {
+    if (!this.canvas) return;
+    const { map } = this.runtime || {};
+    const host = map?.getContainer?.() || this.hostEl || document.body;
+    if (this.canvas.parentNode !== host) host.appendChild(this.canvas);
   }
 
   /**确保风场画布样式已注入 */
@@ -80,13 +92,13 @@ export class WindLayer extends MapLayer {
   getCanvasStyle() {
     return `
       #${this.canvasId} {
-        position: fixed;
+        position: absolute;
         left: 0;
         top: 0;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         pointer-events: none;
-        z-index: 9;
+        z-index: 3;
         opacity: 0.8;
       }
     `;
@@ -94,8 +106,10 @@ export class WindLayer extends MapLayer {
 
   resizeCanvas() {
     if (!this.canvas) return;
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
+    const host = this.hostEl || this.runtime?.map?.getContainer?.();
+    const rect = host?.getBoundingClientRect?.();
+    this.canvas.width = Math.max(1, Math.round(rect?.width || window.innerWidth));
+    this.canvas.height = Math.max(1, Math.round(rect?.height || window.innerHeight));
     this.createParticles(); // 窗口大小改变时重置粒子
   }
 
@@ -408,6 +422,7 @@ export class WindLayer extends MapLayer {
 
   async refresh() {
     this.ensureCanvas();
+    this.ensureCanvasOrder();
     try {
       this.field = await this.fetchField();
       this.startAnimation();
@@ -437,6 +452,7 @@ export class WindLayer extends MapLayer {
 
   async show(opacity = 1) {
     this.ensureCanvas();
+    this.ensureCanvasOrder();
     if (this.canvas) this.canvas.style.display = "block";
     const ok = await super.show(opacity);
     this.setOpacity(opacity);

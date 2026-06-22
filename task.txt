@@ -1,12 +1,21 @@
-# 优先
+----------------------------------------------------------
+数据
+----------------------------------------------------------
+导入数据****
+    导入用户数据
+    导入对象数据
+    导入检查表
+
+完善点位
+    拆分四个应消中心区域
+    拆分社区联合党委为多个点位（一个形状一个点位）
+    拆分社区点位为多个点位（一个形状一个点位）
+    点位增加一个属性：能否点击Clickable（默认值true）。如一些行政区域没必要被点击选中;
+    重新导入企业对象数据，并完善标签
+
+余局要的多系统功能比较
 
 
-实现检查对象Gis接口（如tag：人员密集场所、学校、娱乐场所），接口字段参考GisGeometry
-如何融合普通点位图层、定制代码图层（如云图）、接口图层（如人员密集场所）？
-如何融合展示 signalr 实时推送图层？
-    创建一个 SignalR 测试hub，用于展示人员的位置
-    给图层增加一个值班人员的图层
-    点击该图层后，根据signalr实时数据展示人员
 
 
 3、事发点标定、范围搜索及ai统计
@@ -22,11 +31,9 @@
 
 
 完善场景
-    增加
+    增加图层背景设置
+    变更场景时，先缩放定位，结束后再更换地图
 
-# 框架
-
-现有的菜单控制不直观，还是创建一个页面 RoleMenus，左侧是角色，右侧是菜单树供勾选；
 
 
 # 工程
@@ -49,9 +56,6 @@
 
 bug：新建标签时，组织老是自动设置为“新城应消中心”
 将检查对象 checkobject 的风险类标签合并到 Tags（原风险类别字段尚未删除）
-知识库采用自由上传文件方式（云文档）
-    目录，文件都自由创建和上传
-    安全防护：网站禁止访问运行
 
 - 检索页面增加多标签检索的能力；
 - 隐患排查
@@ -120,35 +124,6 @@ GisMenu数据来源
     修改 /gis/apiManager 页面，左侧菜单只显示 DataFrom = Api 的菜单
     修改 /gis/index 页面，根据 DataFrom 类型，取对应的数据，并展示；
 
-
-
-
-点位
-    直接在地图上显示三维模型
-
-重构面板和报表（容后）
-    - 实现Stat/Chart管理页面
-        （对应实体类 StatChart，用于定义统计图表
-        也可以根据dataurl（或ApiUrl）及pageurl参数与具体数据对接起来，避免只做一个无意义的花架子
-        可用echarts展示（有明暗两种风格或可定制风格）
-    - 修改gispanel，一个panel可容纳多个图表（用模板的方式容纳多个chart）
-    GisGeometry 可导入excel，便于快速录入数据
-    Gis数据多部门协同编辑: 仅菜单的管理员（ownerid）才能编辑该数据
-    驾驶舱：暗黑/亮白两种模式
-    - 驾驶舱融合ai问答能力，根据请求自动选取相应的图层和数据并展示；
-
-图层扩展
-    - 事件也作为为图层，gisapi需要定义抽取周期、需增加订阅能力。虚拟一个数据源接口
-    - 应急人员/移动设备都可以作为图层
-    - 人员/车辆/移动设备也是图层，手机端打开定位就会刷新在地图上
-    - 预案
-
-GisApi优化
-    - 接口类别分：轮询、回调、订阅
-    - 注意接口必须有验证方式（如checkobjects）
-
-
-
 # 后台调度进度（App.Consoler）
     用独立的sqlite数据库？
     看是否要用数据库进行配置任务，用反射方式填写任务需要调用的方法
@@ -166,12 +141,6 @@ GisApi优化
 - Canvas编辑引擎：LeaferJs
 
 
-# 安全考虑
-
-- 接入移动能力平台短信接口（避免安全隐患）
-- 接入阿里短信平台短信接口
-- Api接口列表页面必须授权才能访问
-
 
 # 框架
 
@@ -182,19 +151,9 @@ GisApi优化
 
 EleUI
     - 所有页面都加上 Loading 效果；
-    - 把所有的XXXSelector （带弹窗选择器）更名为 XXXPicker
-    - 实现列的数据跳转，给EleColumn增加属性 PopupUrlTemplate=""
+    - 实现列的数据跳转，给EleColumn增加属性 PopupUrl=""
     - 实现所有EleUI控件的亮暗双色模式（如 elemanger drawer 在驾驶舱使用暗色系）；
 
-如何融合 AI
-    - AI 对软件的重构，AI来引导用户，而不是用户去用软件；
-    - 在驾驶舱提供AI对话能力，可根据用户需求，自动操作页面展示
-    - 提供独立的AIData页面（或扩展AIChat页面），每次AI对话查询，都会显示数据表格（含下载能力，需约束AI可访问的数据表和列）
-    - 本系统 AI 增值提效的业务切入口：？？？
-    - 优化AI聊天功能
-        可上传图片分析（用deepseek 新版接口、vlc）
-        AI 生成图片、生成音乐、生成视频等
-        MCP 可访问数据库（看如何限制AI能访问的表格和字段，并结合当前提问人的授权安全级别、授权数据范围）
 
 文档预览技术方案备案：
     kkfileviewer, jitword, onlyoffice
@@ -205,13 +164,8 @@ EleUI
 
 
 --------------------------------------------------------
-- 框架
+- UI框架
 --------------------------------------------------------
-实现隐患排查页面***
-    实现复杂页面，能用 EleUI 就用，不能用就用 Elementplus 控件
-    把隐患排查的数据接口写好
-
-
 表格：多选、批量修改能力（*）
 数据模型的UI自动化展示和编辑（*）
     创建自动展示列表的页面 UISetting
@@ -226,15 +180,6 @@ EleUI
     改用 postgresql, 可实现全文检索
 
 
-技术思路
-    系统易用性和扩展性
-        Excel 表格编辑及分享（参考云表）：上传一个excel即可获得页面检索、列表、表单编辑、excel编辑能力
-        可ai对话的数据库管理工具/网站
-    完全的接口、前端、测试的剥离
-    取消cookie
-        把 token 改为用 header authorization bearer 方式，更为现代和通用
-        网页端都要改了，原先会自动带上cookie，现在可考虑存储在localstorage里面，并修改vue app，每个请求都要在header中带上参数
-
 其它
     实现网页水印（可找WebConfig 进行配置），参考https://element-plus.org/en-US/component/watermark
     删除重复的 bootstrap 目录(（容后， blazor两个地方用到了)
@@ -242,38 +187,33 @@ EleUI
         Log.Get(id) 返回null？1833214689845186600
             经测试是 sqlite 的问题，或者是ef的问题
             换回int自增的id，就没问题了
-    GisMenus ：控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）。算了。
 
 
 
 --------------------------------------------------------
-Task - 业务
+业务
 --------------------------------------------------------
+实现检查任务流程
+    bug：标签表单，保存新标签后，并未刷新父节点下拉树。可以用新增的 OnChange 方法了
+    隐患复查记录：隐患ID、记录人ID、日志时间、说明、图片列表、整改状态
 
+优化通用任务（AssignTask）
+    - Id、OrgId、Type任务类别、TargetValue任务指标值、TargetValueUnit指标值单位、CurrentValue当前进度值、ParentId、DataJson扩展属性
+    - 实现任务面板，分“全部”、“我的”、“我参与的”，可显示任务的进度，及任务的树状及任务分解情况
+    - 某个事件的归属任务可多选，如一个企业检查可挂在多个任务下面（如日常检查、春季检查、XX专项检查等）
 
-部署
-    用笔记本？局内政务网，可使用公网，需部署防火墙只运行局内网段访问
-    用服务器？现在只开公网，以后迁移到内网，需部署防火墙
-    部署：waf 参考“雷池”，或部署三方防火墙，仅授权网段访问：10.36.247.1-240
+继续优化隐患闭环
+    - 检查详情（只读）页面，可查看对应的隐患记录表
+    - 完成隐患闭环操作
+    - 看情况，若有必要把 CheckFlow 改为 CheckNew
+    - 检查对应的任务可多选，这个排查既归属于这个任务，又归属于那个任务，有重叠的。
 
-
-导入数据****
-    导入用户数据
-    导入对象数据
-    导入检查表
-
-核心业务
-    实现检查任务流程
-        检查任务：包括检查人、检查组织、检查表单的选择
-        bug：标签表单，保存新标签后，并未刷新父节点下拉树。可以用新增的 OnChange 方法了
-    完善项目管理
-        实现项目管理的附件功能
-        实现项目管理的历史功能
+完善项目管理
+    实现项目管理的附件功能
+    实现项目管理的历史功能
     需补充数据模型：
         项目进度日志：ID、项目ID、操作人、说明、项目状态、进度百分比
         资产变更日志：ID、资产ID、执有人、说明（算了）
-        隐患复查记录：隐患ID、记录人ID、日志时间、说明、图片列表、整改状态
-
 
 统计
     调度引擎：可用于后台自动调度生成统计报表
@@ -288,9 +228,6 @@ Task - 业务
 		基础专项任务进度统计表（四）
 	个人工作量报表
     -----------------------------------
-    定时任务
-        每日定时统计数据
-        每日到期提醒
     展示框架
         用vtable展示
             透视表:https://visactor.com/vtable/demo/table-type/pivot-chart
@@ -299,11 +236,99 @@ Task - 业务
         甘特图可做任务进度（交办）管理、日历图
             表格直接编辑：https://visactor.com/vtable/demo/edit/add-delete-records
 
+定时任务
+    每日定时统计数据
+    每日到期提醒
+
+
+--------------------------------------------------------
+驾驶舱框架
+--------------------------------------------------------
+实现范围检索，在点位图层中增加过滤条件：几公里
+gismenu 支持几种图层及融合
+    点位（geometry）：从 GisGeometry 表取数，包括普通点、多边形、折线。至于数据是否时手工录入的，还是后台进程处理的，逻辑自己处理；
+    接口（api）：数据直接取自接口，接口取数成功可获取数量、最后取数时间，没有就提示取数失败、最后取数时间；
+        接口数据用后台任务自动调度获取
+        补充接口调度日志，融合到系统的log表，增加日志类别api
+        实现menu+api访问数据的能力：api地址、支持的检索条件（可用dict编辑器）
+    脚本（script）：点击后会执行固定接口的脚本（参考Doc/Map/Core/MapLayer），显示相关图层，并自主定时刷新；
+    实时（realtime）：反向推送告警
+        - 事件也作为为图层，gisapi需要定义抽取周期、需增加订阅能力。虚拟一个数据源接口
+        - 应急人员/移动设备都可以作为图层
+        - 人员/车辆/移动设备也是图层，手机端打开定位就会刷新在地图上
+        如何融合展示 signalr 实时推送图层？
+            创建一个 SignalR 测试hub，用于展示人员的位置
+            给图层增加一个值班人员的图层
+            点击该图层后，根据signalr实时数据展示人员
+            创建signalr服务，提供频道，客户端收到后会刷新相应菜单图层或面板
+gismenu优化
+    gismenu菜单节点提供刷新按钮，点击可手工刷新
+    必须实现gis/roleGisMenu管理页面，授权角色可以管理哪些gis菜单，否则也要用老的方式配置每个菜单的power收取
+
+事件点
+    是否直接融合到 GisGeometry 增加一个来源类别即可，事件本质上也是一种点位，便于统一数据结构；
+    创建数据表 GisEvent（id、title、addr、gps、createdt、expiredt、status，appid， from）
+    创建后台管理页面 gis/events，eventForm
+    创建接口 
+        apis/gisevent/list获取事件清单，get获取事件详情，create新事件，update更新事件，finish结束事件
+        公开接口，外部应用可调用接口，用app token或者登录机制
+    结合后台signalr，推送事件到前段页面并展示
+    手动添加事件：
+        在gis/index驾驶舱左上角增加“标注”按钮，点击后弹出下拉菜单（先显示一个“事件点”），点击后可在地图上标注点位，标注成功用elemanger drawer 滑出事件编辑窗口；
+
+实现消息面板
+    - 平时是横幅状态，可点击展示事件面板
+    - 事件分类别
+    - 先实现台风预警
+    - 定义统一事件通知接口，可接受各种异源事件接口
+    告警消息实时推送：signalr
+
+重构面板和报表（容后）
+    - 实现Stat/Chart管理页面
+        （对应实体类 StatChart，用于定义统计图表
+        也可以根据dataurl（或ApiUrl）及pageurl参数与具体数据对接起来，避免只做一个无意义的花架子
+        可用echarts展示（有明暗两种风格或可定制风格）
+    - 修改gispanel，一个panel可容纳多个图表（用模板的方式容纳多个chart）
+    GisGeometry 可导入excel，便于快速录入数据
+    Gis数据多部门协同编辑: 仅菜单的管理员（ownerid）才能编辑该数据
+    驾驶舱：暗黑/亮白两种模式
+    - 驾驶舱融合ai问答能力，根据请求自动选取相应的图层和数据并展示；
+
+摄像头视频展示：
+实现检查对象Gis接口（如tag：人员密集场所、学校、娱乐场所），接口字段参考GisGeometry
+如何融合普通点位图层、定制代码图层（如云图）、接口图层（如人员密集场所）？
+
+
+预案如何管理和展示？
+    作为对象附件，word、excel、脑图、maimaid流程图文件
+    作为固定表的列存储（很难规范）
+    作为结构化存储，要定义一个合适的json结构，用于描述事件预案操作流程（含各阶段任务、责任人等）
+
+
+GisApi优化
+    - 接口类别分：轮询、回调、订阅
+    - 注意接口必须有验证方式（如checkobjects）
+
+还得重构gis/index中用到的各个js模块
+    现有的模式感觉还是有点不舒服，还是想改成class；
+    用typescript重构前端，也便于实时代码合并混淆和安全，避免单独文件被三方提取使用
 
 
 
+--------------------------------------------------------
+后台框架
+--------------------------------------------------------
+计划统一token和cookie的内容，只是存储位置不一样（cookie、header），内容应该是一样的；
+    cookie和token的合并
+    把 token 改为用 header authorization bearer 方式，更为现代和通用（并行吧，否则要大改前端页面，每个ajax操作都要修改header部分）
+    网页端都要改了，原先会自动带上cookie，现在可考虑存储在localstorage里面，并修改vue app，每个请求都要在header中带上参数
+
+实现在线excel附件编辑功能，简化系统业务表堆积压力，大部分的数据都用excel管理就行了；要有历史留档能力，确保数据安全；
 
 知识库及授权规划
+    知识库采用自由上传文件方式（云文档）
+        目录，文件都自由创建和上传
+        安全防护：网站禁止访问运行
     详讲《政务内部私有化知识库项目》
     在线预览及编辑
     全文检索、AI矢量检索
@@ -313,567 +338,81 @@ Task - 业务
         文档级别限制：用户查阅等级 >= 文档等级
         文档分享：分享给用户、限制查看编辑权限
 
-
-
---------------------------------------------------------
-技术方案
---------------------------------------------------------
-cad转三维模型：
-告警消息实时推送：signalr
-摄像头视频展示：
-代码图层融合：
-    gismenu 支持几种图层
-        点位（geometry）：从 GisGeometry 表取数，包括普通点和多边形。至于数据是否时手工录入的，还是后台进程处理的，自己判定；
-        接口（api）：数据直接取自接口，接口取数成功可获取数量、最后取数时间，没有就提示取数失败、最后取数时间；
-        脚本（script）：点击后会执行固定接口的脚本（参考Doc/Map/Core/MapLayer），显示相关图层，并自主定时刷新；
-        实时（realtime）：
-    其它
-        gismenu菜单节点提供刷新按钮，点击可手工刷新
-    信创适配：数据库、地图（换不了了）
-        人大金仓 KingbaseES（V8/V9，政务首选 PG 兼容库）
-            官网首页：https://www.kingbase.com.cn/
-            专用下载中心直达：https://www.kingbase.com.cn/Download.html
-            下载要求：邮箱验证，免费 90 天试用授权，支持飞腾 / 鲲鹏 / 龙芯 / 海光、麒麟 / 统信。
-        达梦 DM8（自研内核，支持 PG 兼容模式）
-            官网首页：https://www.dameng.com/
-            在线服务平台（开发版下载）：https://eco.dameng.com/download/
-            包含：DM8 服务端、DM 嵌入式单文件版，分 x86 / 信创 ARM / 龙芯架构。
-        openGauss：
-            官方下载页：https://opengauss.org/zh/download/
-            开源镜像：https://github.com/opengauss-mirror/openGauss-server
-            完全免费开源，无授权限制，适配鲲鹏、openEuler。
-        星瑞格 SinoDB Lite（对标 SQLite 国产单文件库）
-            厂商官网：http://www.sinoregal.cn/
-            社区试用下载专区：https://forum.sinoregal.cn/t/topic/56
-            社区主站：https://forum.sinoregal.cn/，注册后下载 Lite 单文件版。
-        达梦 DM Embedded（单.dmb 文件嵌入式内核）
-            下载入口：https://eco.dameng.com/download/
-            下载时选择嵌入式开发包，区别于服务端 ISO 安装包。
-
-实现系统MCP功能，可以对外提供服务，如气象、企业
-实现在线excel附件编辑功能，简化系统业务表堆积压力，大部分的数据都用excel管理就行了；要有历史留档能力，确保数据安全；
-实现menu+api访问数据的能力：api地址、支持的检索条件（可用dict编辑器）
-实现范围检索，在点位图层中增加
-还得重构gis/index中用到的各个js模块，现有的模式感觉还是有点不舒服，还是想改成class；
 原有的用菜单权限管理逻辑需要重构
     思考：
-        每个页面的权限都已经设置了，和菜单权限有重复的嫌疑
+        现有的菜单控制不直观，计划创建一个页面 RoleMenus，左侧是角色，右侧是菜单树供勾选；
+        每个页面的权限都在代码中已经用Auth、AllowPower设置了，和菜单权限有重复的嫌疑
         实现角色菜单管理页面，原有的用菜单权限管理逻辑，过于基础，不能直观的体现某个用户（角色）能访问的菜单；
         如何防止用户直接打网址？页面已有权限限制了。如果启用角色菜单方案，又担心不一致的情况；
     改进策略：
         菜单权限从页面权限 attribute 自动获取，不用手动设置，避免重复设置或产生冲突
         实现角色菜单只读页面，供核查用
-做一个3d模型在地图上的示例
+
+
+信创适配数据库
+    人大金仓 KingbaseES（V8/V9，政务首选 PG 兼容库）
+        官网首页：https://www.kingbase.com.cn/
+        专用下载中心直达：https://www.kingbase.com.cn/Download.html
+        下载要求：邮箱验证，免费 90 天试用授权，支持飞腾 / 鲲鹏 / 龙芯 / 海光、麒麟 / 统信。
+    达梦 DM8（自研内核，支持 PG 兼容模式）
+        官网首页：https://www.dameng.com/
+        在线服务平台（开发版下载）：https://eco.dameng.com/download/
+        包含：DM8 服务端、DM 嵌入式单文件版，分 x86 / 信创 ARM / 龙芯架构。
+    openGauss：
+        官方下载页：https://opengauss.org/zh/download/
+        开源镜像：https://github.com/opengauss-mirror/openGauss-server
+        完全免费开源，无授权限制，适配鲲鹏、openEuler。
+    星瑞格 SinoDB Lite（对标 SQLite 国产单文件库）
+        厂商官网：http://www.sinoregal.cn/
+        社区试用下载专区：https://forum.sinoregal.cn/t/topic/56
+        社区主站：https://forum.sinoregal.cn/，注册后下载 Lite 单文件版。
+    达梦 DM Embedded（单.dmb 文件嵌入式内核）
+        下载入口：https://eco.dameng.com/download/
+        下载时选择嵌入式开发包，区别于服务端 ISO 安装包。
+
+数据库sqllite替代：
+
+
+
+--------------------------------------------------------
+AI 融合
+--------------------------------------------------------
+AI 对软件的重构
+    AI来引导用户，而不是用户去用软件；
+    根据用户需求，调用cli或者api服务，自动生成交互界面或根据问答，自动展示结果
+
+AI聊天
+    /普通对话
+    可上传图片分析（用deepseek 新版接口、vlc）
+    数据库 MCP 可访问能力
+        实现AI聊天检索数据库及统计的能力
+        提供独立的AIData页面（或扩展AIChat页面），每次AI对话查询，都会显示数据表格（含下载能力，需约束AI可访问的数据表和列）
+        需限制AI能访问的表格和字段，并结合当前提问人的授权安全级别、授权数据范围
+
+系统服务能力
+    /实现api接口服务
+    实现系统cli功能
+    实现系统MCP功能，可以对外提供服务，如气象、企业等查询操作能力
+    实现驾驶舱AI互动操作能力：
+        切换场景
+        新建事件（内容地点）
+        显示周边资源
+        列出图层清单
+        显示指定图层
+
+AI辅助
+    cad转三维模型：
+    生成图片、音乐、视频等
+
 
 --------------------------------------------------------
 Done
 --------------------------------------------------------
-2026.06.18
-    /gis/index 旋转地球
-    继续优化隐患闭环
-        - 检查详情（只读）页面，可查看对应的隐患记录表
-        - 完成隐患闭环操作
-        - 看情况，若有必要把 CheckFlow 改为 CheckNew
-        - 检查对应的任务可多选，这个排查既归属于这个任务，又归属于那个任务，有重叠的。
-    完善点位
-        拆分四个应消中心区域
-        拆分社区联合党委为多个点位（一个形状一个点位）
-        拆分社区点位为多个点位（一个形状一个点位）
-        点位增加一个属性：能否点击Clickable（默认值true）。如一些行政区域没必要被点击选中;
-        重新导入企业对象数据，并完善标签
-    gis/index驾驶舱左上角增加“标注”按钮，点击后弹出下拉菜单（先显示一个“事件点”），点击后可在地图上标注点位，标注成功用elemanger drawer 滑出事件编辑窗口；
-    余局要的多系统功能比较
-
-2026.06.17
-    /实现城市综合天气图层（包括温度、湿度、晴雨阴）
-        感觉单独的温度、湿度过于分散，创建城市综合天气图层CityWeatherLayer.js：
-        - 可综合展示指定城市的天气、温度、湿度等;
-        - 每个城市标签的图标用一个水滴图标（内嵌当前天气：太阳、云朵、雨、雪、台风），svg 图标已经保存在/wwwroot/overlay/layers/ 目录下（sun, cloud, rain, snow, wind)；
-        - 每个城市标签的文字显示：城市、天气、温度、湿度，并根据温度显示不同颜色；
-        - 点击城市标签，可弹窗显示城市基础信息和5日天气预报  
-    /优化手机端布局，隐藏标题文字
-
-
-2026.06.16
-    /卫星红外图
-    /gis/index 相关js拆分重构
-    /城市湿度图层
-
-
-2026.06.15
-    /重构EleUI，去掉TagHelper字样简化代码，将row/column更名为HStack/VStack避免和其它混淆；
-    /zoom支持小数，保留2位小数
-    /完善场景gis/scene：
-        我已经给gisScene增加了配置： Map3D（是否启用三维地图）,  MapStyle(地图样式), MapProjection（投影方式）
-        并完善了场景配置页面：/pages/gis/scenes 和 sceneForm
-        请完善驾驶舱（/pages/gis/index）
-            场景变化时可切换地图的：是否启用三维地图、地图底图（同“视图”下拉菜单功能）
-            “视图”下拉框的选项由接口 /gis/GetMapStyles() 提供，和一个独立的“3D地图“选项组成；
-
-
-2026.06.12
-    /完成隐患排查页面/pages/checks/CheckFlow（检查对象CheckObject----(1:n)----隐患排查Check----(1:n)----隐患CheckHarzard）
-        - 在检查对象清单CheckObjects、检查对象表单页面CheckObjectForm、检查清单页面Checks，增加“开始检查”入口；
-        - 点击弹出对象检查表单，包括：对象基础信息区域、检查信息区域、检查项区域（见图1，但我们调整一下位置，将检查表和检查项放到最后）。其中检查记录标志ID可用 SnowflakeId 类来预生成。
-        - 用户选择检查表（可多选），检查项区域显示对应的检查项（见图2），其中检查结果有三个选项“合格、不合格、不涉及”；
-        - 若某个检查项选择“不合格”，则弹出隐患录入页面（图3）；
-        - 用户将隐患录入保存后，会自动保存隐患排查记录（避免隐患排查记录缺失）, 并关闭隐患录入表单。
-        /相关细节
-            - 新增检查权限为 Power.CheckNew
-            - 尽量用 EleUI 来展示UI，可参考/pages/checks/下的相关网页；
-            - 所有的弹窗都用elemanger drawer 来展示，使用默认宽度；
-            - 检查表单中的检查信息区域中
-                其中检查记录标志ID可用 SnowflakeId 类来预生成。
-                有一个检查任务下拉框（数据来自CheckTask表），若为空可理解为“日常检查”
-                巡查单位：来自当前登录用户的归属Org
-                检查单位类型：来自归属Org.OrgLevel
-            - 是否全局启用 SnowFlakeId 方案做个评估，开启 EntityBase.Id 的 snowflakeid attribute就行了，主要是要注意 long 类型的Id渲染到客户端要用string，上传回来后要用long类型来容纳；
-        /org 
-            /Org.FullName 逻辑下沉到基类
-            /增加单位属性 IsSolo
-            /增加单位层级枚举：OrgLevel 省级、市级、县级、乡镇
-
-
-
-2026.06.11
-    /EleOp增加Shows属性，EleOpColumn.Icon改为枚举
-    /优化gis/locator页面，简化及新增地图定位控件、全屏幕控件
-    /Gis/Scene页面优化，支持gps坐标选取，支持倾斜角度
-    /修正场景菜单管理页面的子项选择问题；
-    /融合气象图层
-
-
-2026.06.10
-    /修正和优化 geometryManager 地图编辑模式，更方便直观的录入多个点位；
-
-2026.06.09
-    /风险点（风险点CheckPoint）独立、增加风险类别，便于绑定到GIS菜单并上图
-    /风险点管理
-    /将 GisMenu 重命名为 GisLayer（图层），更容易理解，修改相关的实体类、页面、接口；（算了，改造成本太大，而且有些菜单项，并非就是图层，也可以是某些面板）
-    /实现批量导入Gis点位的功能
-        - Gis/Geometries 页面增加“导入简单点位”的按钮，点击后弹出导入窗口 GeometryImporter 页面；
-        - 导入窗口布局可参考 /shared/Importor：下载模版文件、导入按钮、导入日志， 提供一个示例excel模版供下载，其中第二个sheet 内容为gis菜单树，从数据库中获取；
-        - 根据 GisGeometry 类的定义，导入以下简单点位的字段（Type = GeometryType.Point, Name, Alias, MenuId, Addr, Gps, Remark)，支持中英文标题；
-        - 其中 Gps 字段会处理多种坐标格式, 完善 LngLat.Parse()方法，如支持:
-            东经 120.1234, 北纬 30.2568
-            120.1234, 30.2568
-            120.1234, -30.2568
-            120.1234E, 30.2568N        
-            120°07.404′, 30°15.408′
-            120°07′22″E, 30°15′24″N
-        - 其它扩展的excel列，都整理成json后填入 DataJson 字段中；
-    /实现驾驶舱场景
-        概念：一个场景(GisScene)对应多个图层(GisMenu)、面板(GisPanel)等，如台风场景需要显示气象图层、监控图层，工业园区需定位到某个工业园区并显示三维图层、企业图层
-        - 创建场景类  GisScene（Id, Name, SortId, Desc, MapZoom, MapCenter, Icon），场景图层类 GisSceneMenu(SceneId, MenuId)、场景面板类 GisScenePanel(SceneId, PanelId)
-        - 创建对应的场景列表和表单管理页面、场景图层管理页面（左边为场景名称、右侧为图层树供勾选）、场景面板管理页面（左侧为场景名称、右侧为面板供勾选）
-        - Gis/Index 左侧增加场景切换按钮，点击后下拉显示场景列表，选中某个场景后，页面上的图层菜单树会根据场景进行勾选展示，页面上的面板会根据场景进行过滤展示；
-
-2026.06.01
-    /创建气象地图
-    - 将图层逻辑进行统一和抽象，接口如（供参考）：
-        public class MapLayer {
-            string name;   // 图层名称（唯一）
-            string title;  // 标题
-            string descript;  // 描述
-            string api;       // 接口地址（如果有）
-            string key;       // 接口key（如果有）
-            long refreshSeconds;   // 更新秒数（若为0，则不刷新）
-            datetime lastTime;   // 最后尝试时间
-            bool lastStatus;   // 最后尝试状态
-            bool show(map, float opacity=1.0);  // 显示图层或面板
-            bool hide();       // 隐藏或关闭
-        }
-    - 每个图层都用一个js文件进行管理，继承自 MapLayer；
-    - 每个图层的内容自己负责，可根据map的当前信息（主要是zoom和区域）动态进行展示；
-    - 主文件中用数组管理若干 MapLayer;
-
-
-
-2026.05.27
-    /修改 GisGeometry.Att属性名称（改为File），避免和 Atts 混淆
-    /GisGeometry.Search() 支持递归和非递归搜索
-
-
-2026.05.25
-    /导入隐患检查表
-
-
-2026.5.20
-    /检测系统中所有的逻辑删除字段，统一改为 IsDel， 字段保持统一，不用兼容旧字段；其它有语意的可用IsEnabled
-    /优化 GisMenu 菜单数据统计逻辑
-        - 将 GisMenu.DataCount 更名为 DataCnt （统一缩写）；
-        - 完成 GisMenu.IFixAll 接口，递归遍历菜单树，统计点位数据量（子节点的数据量会累加到父节点），并填写DataDt字段；
-        - 创建 App.Consoler 控制台项目，运行该接口做一次数据更新；
-        - 确保 Gis/Index 直接从 Menu表获取统计数据和统计时间，不用在前端自己统计；
-        /每次 GisGeometry 新增或删除后，自动调用归属menu.Fix() 方法；
-    /Gis 展示接口来的数据技术方案
-        方案一：单独建一个 GisApi 接口表：
-            用于管理和监管使用到的所有 API，包括三方提供的；
-            字段：Id、MenuId（菜单Id）、DataUrl（数据Url）、DataCnt（最后数据量）、DataDt（最后更新时间）
-            窗口：管理页面（Gis/ApiManager，左侧为菜单，右侧为接口）、接口列表(Gis/Apis）、接口表单（Gis/ApiForm）、接口数据（Gis/ApiData）
-            接口数据结构：如果是点位，参照GisGeometry + DataResult 封装，如：
-                {
-                    code: 0,
-                    message: 'ok',
-                    data : [
-                        {..gisgeometry data..},
-                        {..gisgeometry data..},
-                        ...
-                    ]
-                }
-            接口支持请求参数 region，可传递给接口供过滤数据，如：
-                {
-                    type : 'Rectangle',           // 矩形范围（如只展示当前地图区域内的对象，以减少地图渲染压力）
-                    data : [tlx, tly, brx, bry]   // 左上角和右下角的经纬度
-                }
-                或
-                {
-                    type : 'Circle',       // 圆形范围（如搜索某个事件点周边的危险源）
-                    center : [lng, lat],   // 中心点经纬度
-                    radius : x             // 半径（米）
-                }
-                或
-                {
-                    type: 'Polygon',       // 多边形（如搜索某个园区内的企业）
-                    data: [.....]          // 多边形数据
-                }
-                备注：接口数据请求用post、region参数是根据页面及业务需求动态调整的。
-                备注：如果数据库原生支持地理位置检索，性能会加强
-            Gis/Index展示（同老逻辑）：
-                - 在图层面板叶子节点右侧显示“数据量标签”，若数据量不为零则该节点才可点击勾选；
-                - 点击“数据量标签”后，右侧弹出“点位清单”面板，根据接口（来自DataUrl字段）显示点位清单；
-                - 勾选叶子节点，根据接口获取点位清单，并在地图上展示点位；
-                - 点击具体点位，右侧滑出“点位详情”面板，显示点位详情；
-            优点：独立管理、且接口数据不仅仅可用于图层、也可以用于其它方面（如风雨情等）
-            缺点：结构复杂，一个菜单项会对应多个数据接口，无法正确展示数量（可考虑后台统计，并更新到gismenu.datacnt 上以解决此问题）；
-        方案二：改造 GisMenu 表
-            增加参数 DataCnt、DataDt字段
-            后台定期统计，或手动更新；
-        接口监管
-            每次修改数据接口信息后，自动测试和刷新 DataCnt、DataDt 等字段；
-            可在后台定期访问接口地址（用App.Consoler项目），定期测试和刷新 DataCnt、DataDt 等字段；
-        结论：混合采用方案一（独立建GisApi表），并定期统计更新到方案二的（Datacnt、DataDt上）
-    /App.Consoler 结合自动调度引擎Quartz.NET，每日进行接口检测、接口及菜单数据统计；
-    /Gis/index 中的“数据清单”面板，增加一个“刷新”图标按钮，点击后可刷新数据，并更新数据统计信息；
-    /在 App.Consoler 项目中，以低速高间隔方式，遍历CheckObject 表（先跑10条），并查询高德地图接口，找到匹配的对象，并将其坐标转换为gps坐标（WGS84）保存在CheckObject.Gps字段中；
-    /根据GisApi的要求，创建一个httpapi数据接口，提供带gps数据的检查对象，并将接口填写到 GisApi 中。
-
-
-2026.5.19
-    /gis/index 显示image、vedio等点位了
-        1、优化点位编辑窗口GeometryForm，根据类型自动显隐控件：
-        - 点：显示gps、隐藏文件、隐藏图片区域、隐藏形状数据
-        - 形状：隐藏gps、隐藏文件、隐藏图片区域、显示形状数据
-        - 文字：显示gps、隐藏文件、隐藏图片区域、隐藏形状数据
-        - 监控：显示gps、隐藏文件、隐藏图片区域、隐藏形状数据
-        - 图片：隐藏gps、显示文件、显示图片区域、隐藏形状数据
-        - 文件：显示gps、显示文件、隐藏图片区域、隐藏形状数据
-        2、创建 /Gis/MapImage 页面，可在地图上放置图片，拖拽四个顶点和中心点（图标已放在/wwwroot/gis/icon-tl.png等）、可查找定位（参考图3及 /Gis/GeometryEditor 页面）
-        3、将GeometryForm中的Region 字段用ElePicker 点击弹出 MapImage页面，进行设置区域；
-    /测试点位图片图层类型, 可在指定矩形区域拉伸显示图片；
-    /点位附件（att属性）优化外观，将输入框用文本替换；已上传的显示文件的相对路径，新增的显示文件的本机路径；可删除已上传的文件
-    /优化点位表单控件的可见性：
-    /优化形状数据编辑窗口，新增“矩形”按钮，以支撑类型为Image的点位
-    /增加 PageUrlTemplate 参数，可根据此参数, 在点击点位后，用 Drawer 打开对应的点位详情页面；（不用，直接在接口中提供）
-    /校验一下：点位附件（att属性）数据统一走做服务器端文件上传接口，统一过滤、保存逻辑；
-
-
-
-2026.5.18
-    /完善GisGeometry（点位）:
-        - 添加属性 GeometryType? Type（该属性已添加，数据库尚未落实）；将PageUrl 改为 Url 更为通用；增加属性  Att，用于存储一个附件Url，在界面上展示为文件上传控件；
-        - 修改相关的接口、列表窗口、表单窗口、前端展示代码，注意分模块、小方法、做好备注、若有必要分文件;
-        - 修正“点”类型的展示：根据 Gps 显示图标（来自Menu.Icon）；
-        - 修正“形状”类型的展示：根据 GeoJson 展示形状；
-        - 实现“文字”类型：在地图上显示一个纯文本标签;
-        - 实现“图片”类型：需要在地图某个矩形区域上显示一个图片，可随着地图的缩放而自动缩放（即ImageLayer）；图片地址用Att字段；区域信息能否保存在GeoJson中（必须是个矩形）？
-        - 实现“监控”类型：在地图上显示一个监控图标（麻烦设计或下载一个保存在/wwwroot/icons/目录下），点击后用通用监控窗口/Shared/Video 查看该视频（根据 Url 字段） ；通用视频窗口需新建，可以LocalStorage的方式传递多个视频url参数，可同时展示多个监控视频，可切换多视频布局方式；搜索网络，提供几个公开的监控经纬度和播放地址；备注：若已有开源的视频播放组件能满足需求，用它也行；在地图上显示一个点位，点击后打开视频播放窗口，视频地址取 Url 字段
-        - 实现“文件”类型：在地图上显示一个文件图标（麻烦设计或下载一个保存在/wwwroot/icons/目录下），点击后用通用文件窗口/Shared/File 查看该文件（根据 Url 字段） ；通用文件窗口需新建，可以LocalStorage的方式传递多个文件url参数，可同时展示多个文件，可切换多文件布局方式；支持多种文件格式（office、pdf、三维、全景、脑图等）；
-        - 实现“三维”类型：在地图三维模式下，可在指定区域直接显示三维模型，找个合适的三维建筑模型进行展示，模型文件地址用Att字段；
-    /为了好理解，gismenu更名为GisLayer,修改相关的类名、页面及代码； （算了）
-
- 
-
-2026.05.15
-    /点位的jsondata中的数据如果value是超链接，点击后用Elemanager draw打开，可以不用了，用附件就行；
-    /导入对象数据
-    /EleTable行高固定，文本不允许换行，显示不了的缩略显示（如在尾部加...），鼠标移动上去后会显示tooltip文本全称；增加Wrap属性，默认为false；
-    /修正IFix， IInit 接口，支持静态方法；
-    /补足导入的数据：
-        /给 Org 增加 FullName 属性，默认填写全路径树全称，如：浙江省/温州市/龙港市/XXXX，写个方法
-        /修正导入的对象数据code，存储编码
-        /导入org
-        /删除RiskColor
-
-
-
-2026.05.14
-    /修正pagesize排序问题
-    /屏蔽手机号字段的列表展示
-    /简化地址查找，将文本转化为json后再进行逻辑处理，而不是一层一层的解析，用 text.ParseJson<T>()方法；数据结构见（gaode.text.json文件）
-    /完善点位的管理和展示（GisGeometry）
-        - 给 GisGeometry 增加 PageUrl参数，可根据此参数, 在驾驶舱页面（gis/index) 点位详情面板中展示超链接“更多”，点击后打开对应的页面；
-        - 在点位编辑窗口（Gis/GeometryForm）中增加附件（Att）编辑按钮（点击后跳到对应的附件编辑页面，可参考/Checks/CheckObjectForm 中的“文件”按钮）；
-        - 在驾驶舱页面（gis/index）点位详情面板中展示附件列表，附件文本为超链接，右侧显示下载按钮点击可下载；
-        - 点击附件文本超链接可用elemangere drawer显示相关的文件显示页面：
-            - word、excel、pdf 都支持直接在网页中展示；
-            - 全景视图文件
-            - 三维建模文件
-            - 脑图
-            - Markdown 文件
-            - 视频
-            - 做好各功能代码的隔离封装和备注，便于维护
-        - 创建测试网页 /pages/dev/files/ 
-        - 测试文件 /files/samples/
-
-
-2026.05.13
-    /点击图层右侧的数字角标，右侧滑入点位清单面板；点击清单点位数据，地图定位居中到该点位。
-    /实现GisMenu 的图标、聚合的配置及驾驶舱展示能力；
-    /控件如何联动？如省市县，想在服务器端处理。
-
-
-
-
-2026.05.12
-    /- 介入 Deepseek V4 多模态(api 不支持)
-    /使用deepseek v4 copilot vs plugin
-    /优化ai chat
-        /将 ConfigAI 的 remark字段填充掉到 AiChat 系统提示词对话框中
-        /配置 deepseek v4
-        /配置图片附件上传能力
-    /将mapbox工具栏位置下移，避免被head部分遮挡；
-    /使用高德地理位置查找接口，并用坐标转化库转化为gps坐标。优化地图地址检索能力：
-        - 实现高德地址查询接口
-            /apis/Gis.GetAddrs(string name)  获取地址列表，并将高德坐标转化为标准gps坐标；
-            /apis/Gis.GetAddr(string name)  获取单个地址
-            用到的可能是高德POI 搜索接口：https://lbs.amap.com/api/javascript-api-v2/guide/services/autocomplete
-            或 正向地理编码：https://lbs.amap.com/api/javascript-api-v2/guide/services/geocoder
-        - 更换 Gis/index 中的搜索功能，使用刚才创建的两个API
-        - 点击查找时，先列出清单供选择
-        - 点中一个后关闭清单，并在地图上定位
-
-2026.05.11
-    /优化驾驶舱
-        /优化驾驶舱标题文字字体（胡晓波男神体）
-        /可切换到统计面板视图
-        /实现驾驶舱统计面板，可配置报表或内容
-        /实现dashboard网页展示统计面板
-
-
-2026.05.09
-    /实现左侧菜单点击隐藏的逻辑
-    /修正index响应式布局能力
-    /globalThis.EleManager 全局对象
-    /实现暗黑模式的驾驶舱
-    /实现驾驶舱统计面板模式
-
-2026.05.08
-    /实现 EleTree
-        1、实现App.EleUI/EleUI/Forms/EleTree 控件（参考 https://element-plus.org/en-US/component/tree）
-        2、写测试网页 App.EleUI/EleUISamples/Controls/Tree.cshtml，测试EleTree 控件的各种功能；
-        3、写测试网页 App.EleUI/EleUISamples/Datas/DeptUsers，用EleSplitPanel，左侧放置 EleTree 显示部门树，右侧显示用户清单（可用iframe），点击左侧部门树节点，右侧用户清单页面做相应的刷新；
-    /Newtonsoft.Json  -> System.Text.Json 
-
-
-2026.05.07
-    /驾驶舱UI 设计
-    /*** 解析龙港区划
-        /社区（解析出错，未能展示。arcgis -> geojson)
-        /编辑工业园区图层
-    /重构优化
-        /GisMenu有责任组织，GisGeometry也有责任组织，感觉重复了，删除GisGemetry的责任组织字段，并修改相关的页面
-        /给 GisMenu 增加 Icon 属性，用于展示点位时显示相应的图标，图标可以上传svg或png图片
-        /修改相应的实体类、列表页面、表单页面、迁移数据库；
-        在 Files/Icons/ 目录下创建几个默认点位图标
-        优化驾驶舱页面（gis/index），若点位的gps数据不为空，则显示单个点位（用图标+文字的方式展示），点中后显示 GeometryForm的只读模式
-        /增加 IsDefaultShow 属性(是否默认显示)，若为true，首页相应图层中被勾选默认显示
-        /GisMenu 增加 Icon 属性，用于展示点位时显示相应的图标
-        /bug：点位编辑页面中的“菜单”下拉树数据不对，请修正
-        /优化地图图形设置窗口
-            /bug：经测试，选中点位再点“删除”时，应该删除点位，而不是多边形；另外删除操作后undo操作无效；
-    /创建/pages/Gis/GeometryInfo 页面
-        只展示必要字段（Id、名称、简称/别称、地址、经纬度、并解析DataJson为表格）；只读；
-        点击gis/index中的点位图形时，将原来的 GeometryForm 改为该页面
-    /bug：gis菜单管理》责任组织设置出错
-    /bug：gis菜单管理》上级菜单有问题显示不全 
-    /优化/pages/index 页面，左侧的菜单栏弄成可以手动点击隐藏，以扩大主区域显示面积。看是否能用 ele split bar 改造
-    /创建 /pages/gis/GeometryManager，融合菜单页面（Menus） 和点位（Geometies）页面：
-        用 EleSplitPanel 组织页面，左侧是菜单目录树，右侧是点位清单页面 Geometries（用iframe）；
-        点击左侧目录树，右侧的点位清单页面数据做相应变更（可用url参数带入）
-        点位清单页面工具栏上放一个“地图编辑”按钮，点击后切换到地图编辑模式
-        创建 GeometryMap 地图页面，可以在地图上增删改某种类型的点位（用elemanager drawer 打开编辑窗口 GeometryForm 进行编辑）
-        /优化点的渲染方式，把文本标签上移一点，避免遮挡
-    /驾驶舱
-        /展示图层
-        /点击某个图形后，显示drawer
-        /详见 《260402-龙港市应急驾驶舱规划方案v3》
-        图层数据均来自统一接口，可扩展字段并展示
-        支持暗黑模式的UI、用theme=dark/light切换
-        驾驶舱业务
-            图层目录：OrgID、ID、ParentID、Name、SortId、IconPath
-            点位信息：ID、LayerID、Name、Shape、JsonData、DisplayType
-        图层数据查询
-            图层参数dataUrl，dataSchemaUrl：自动构建查询窗口。或者合并结构为：{code:0, data: {schema:{….}, data:[….]}}
-            图层参数再增加一个statUrl，直接给个地址自由发挥，用面板或drawer展示
-            实现通用StatPanel，使用json配置数据来源、图表展示方式、点击元素后的跳转url等
-            实现一个统计报表页面：查询条件+结果表格或图表
-            实现暗黑模式及url参数（在驾驶舱使用时可以切换为暗黑模式）
-
-
-
-2026.05.06
-    /解析区域
-        /龙港市
-        /联勤工作站
-        /应急消防中心
-        /优化全屏、复位按钮
-    /驾驶舱及数据优化
-        /bug：Gisindex加载总会报错：
-        /复制
-        /优化选择
-        /redo, undo 功能
-        /通用的属性编辑窗口
-        /更名：
-            /pages/gis/MapGeometry -> GeometryEditor
-            /pages/gis/MapLocator -> Locator
-            /pages/gis/PropsEditor -> PropsEditor
-        /bug：点位的责任组织设置出错
-
-
-2026.04/30
-    /实现图层显示（示意）
-        /各种图形：从图形对象取，如省市县、园区、管道等
-        /企业：从检查对象表取
-        /合并点位和图形
-        /GisMenu  点位目录
-        /GisPoint 点位，可扩展编辑属性（GisGeometry）
-            在地图上标注后，点击可直接编辑属性，如救援队、取水点等
-            点击显示详情drawer
-            可扩展填写扩展信息
-        /要求
-            1、重构 GisGeometry（图形）
-                - 该其基类为 EntityBase<T>， 将树结构逻辑剥离为 GisMenu（我已创建）；
-                - 将老属性 JsonData 更新为 GeoJson；
-                - 增加属性 long? MenuId（Gis菜单ID）、string GPS（经纬度，结构 x,y）, string DataJson（字典json数据）；
-            2、完善管理页面
-                - 实现 /Pages/Gis/Menu 管理页面，可参照/pages/menus；
-                - 根据新的类定义，修改 GisGeometry 相关管理页面 /pages/gis/geometies 和 geometryform；其中只读页面中可以用表格方式展示DataJson字段。
-            3、修改展示页面
-                - 修改 /Pages/Gis/GisIndex 页面中菜单的展示，点击后显示该菜单的所有图形；
-                - 点击图形后，用drawer显示该图形的只读表单；底部放置一个编辑按钮（做权限和数据访问权限校验），点击后切换到编辑模式，保存后刷新图形；
-
-
-2026.04/28
-    /实现区域管理页面和展示：支持点、线、区域等
-
-2026.04.23
-    /将 EleUI 迁移为一个单独项目
-        目录迁移为
-            控件项目迁移：   App/EleUI  -> App.EleUI/EleUI
-            控件测试项目迁移：App/Pages/EleUISamples -> App.EleUI/EleUISamples
-        原先的内嵌资源方式如：<script src="/res/App.EleUI.EleUIJs.EleUI.js" type="module"></script> 方式虽然很方便，但是各js之间互相引用相当麻烦，且无法智能提示，如
-            import { EleTableAppBuilder } from "./App.EleUI.EleUIJs.EleTableAppBuilder.js";
-            import { EleFormAppBuilder } from "./App.EleUI.EleUIJs.EleFormAppBuilder.js";
-            相互之间的代码无法智能提示
-        现在想弄个合适的方式
-            js可以正常互相引用，正常智能编程提示
-            编译时会自动将多个js 和 css 合并成 eleui.js
-            使用时如：<script src="xxx/eleui.js"> 会自动引用相关js/css，且可以智能提示
-        做合理的重构，减小单一文件的大小，，做好必要的英文注释
-        将 EleUI 控件项目发布为 nuget 包
-    /系统做得很艰难
-        /建设方案文档写得不够（可以让AI辅助编写），返工很多。
-        /RazorPage  少代码开发框架、和强类型编码方式，耗费了太多的时间
-        /前后端接口、UI、接口测试未剥离，导致无法发挥AI的快速开发能力
-
-
-    
-
-
-2026.04.22
-    /考虑合并 EleItem, EleControl （没必要，有些容器继承自EleItem）
-    /剥离App
-        剥离 <EleFormApp>，修改所有相关页面
-        剥离 EleForm 中的App创建部分，拆分出 EleFormApp, 只管表单页面渲染
-        剥离 EleTable 中的App创建部分，拆分出 EleTableApp，只管网格页面渲染
-
-    /优化通用drawer弹窗
-        /实现右滑关闭逻辑（含提示）
-        /检查一下drawer，resizable的逻辑是否重复，用属性是否就能控制
-        /实现 EleListView/ListItem 控件，可指定 Url，可弹窗或drawer显示页面
-    /样式
-        /实现 Theme 逻辑：dark/light（容后）
-    /实现服务器端对控件的控制逻辑
-        现在这种vue 方式，控件都是没有ID的，如何实现服务器端动态控制客户端控件的可用性、可见性、数据？
-        考虑实现
-            实现 EleControl.OnChange 服务器端事件
-            实现 EleManager.SetControlEnable(fieldExpress/controlId, true/false) 
-            实现 EleManager.SetControlVisible(.....)
-            实现 EleManager.SetControlData(...)
-            实现相关的 EleManager.js 相关方法
-            EleManager.SetControl<T>(t=>t.filed, Enabled:true, Visible:true, ....)
-        写一个省市县联动下拉框示例：/pages/EleUISamples/Controls/CitySelect
-        请先做规划，我确定后再开发
-    /复杂页面*******
-        /实现Panel控件及测试，一个页面可以展示多个panel，可联动
-        /创建：角色、用户双列表混合视图测试页面 RoleUsers
-        /完善SpitPanel，支持px、百分比
-
-2026/04/21
-    /新增 CheckObject.IsUsing 在用字段
-    /EleSelect 支持bool
-    /数据导入（主要是对象表）
-        从141下载对象表，导入系统，枚举字段会自动匹配值
-        ID字段要重写考虑了，看是否开启snowflakeId
-        方案一：用python脚本手动导入
-        方案二：导入mysql临时表，用sql进行导入
-        测试Excel导入功能，各种Id字段无需导入
-        实现导入excel逻辑，将导入字段匹配信息存在json或数据库中，动态生成导入模版excel、自动导入excel、并提示错误的数据行，可考虑增加UIAttribute，增加Ignore
-        代码如
-            Install-Package Ganss.Excel
-            public classProduct
-            {    
-                public int id { get; set; }               // 产品编号
-                public string Name { get; set; }          // 产品名称    
-                public string category { get; set; }      // 类型     
-                public int qty { get; set; }              // 数量    
-                public decimal Price { get; set; }        // 价格    
-                [Column("创建日期")]
-                public DateTime createdate { get; set; }  // 创建日期
-                public override string ToString()
-                {        
-                    return$"{Name},{category},{Price},{qty},{createdate}";    
-                }
-            }
-        解析excel为对象
-            var products = new ExcelMapper("products.xlsx").Fetch<Product>();
-            var products = new ExcelMapper("products.xlsx"){HeaderRow = false}.Fetch<Product>();
-        备注
-            对于日期类型，一定在 Excel 中设置为 datetime 格式，否则可能解析失败。
-            该库使用 NPOI 类库
-
-2026/04/20
-    /优化element网页，在手机端不易那么被拖动；现在页面手机端操作感觉太飘，动不动就会滑屏返回的样子
-    /实现导入Excel逻辑，并实现CheckObject数据表数据的导入
-        创建Excel数据导入和解析类：
-            文件位置：/App/Components/ExcelParser.cs
-            使用 NPOI 包读写 Excel 文件
-                可将excel表格数据，匹配到类中的读写字段，匹配为类对象
-                支持 [UI] 标签及属性名匹配
-                支持枚举文本和值解析
-            可根据类定义读取excel文件并解析为对象列表，代码如
-                var objects = new ExcelParser<CheckObject>().Fetch("xxx.xlsx");
-            可根据类定义（或对象列表）生成 excel 文件，代码如：
-                new ExcelParser<CheckObject>().Save(stream, checkObjects);
-                new ExcelParser<CheckObject>().Save("xxx.xlsx", checkObjects);
-                new ExcelParser<CheckObject>().Save("xxx.xlsx");
-        完善/Pages/Checks/CheckObjects，增加导入Excel 文件功能：
-            创建通用的导入网页（参数为类名，如 /Pages/Shared/Importor?type=App.DAL.CheckObject）
-            页面显示：
-                “下载模版”链接或按钮: 点击后下载模版文件
-                Excel文件上传按钮：点击后选择excel文件，并找个地方显示文件名
-                开始导入按钮：开始导入excel到数据库，并显示导入进度
-                日志文本区：显示导入进度，以及错误信息
-            用elemanger.openDrawer显示导入网页
+2026.06.22
+    /把所有的XXXSelector （带弹窗选择器）更名为 XXXPicker
+    /实现隐患排查页面***
+        /实现复杂页面，能用 EleUI 就用，不能用就用 Elementplus 控件
+        /把隐患排查的数据接口写好
+    /GisMenus ：控制图层的显示顺序。可依赖GisMenu.SortId 倒序排序（如 zIndex=1000 - SortId）。算了已经排好序了。
+    /台风轨迹、预测、历史
 

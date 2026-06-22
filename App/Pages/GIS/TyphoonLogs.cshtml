@@ -1,0 +1,53 @@
+@page
+@model App.Pages.GIS.TyphoonLogsModel
+@using App.Utils
+@{
+    ViewData["Title"] = "台风轨迹清单";
+}
+
+@section body {
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="台风轨迹清单" EnableBatch="false">
+        <Toolbar>
+            <Filters>
+                <EleInput For="Item.Code" Width="150px" Label="编号" LabelWidth="60px"></EleInput>
+            </Filters>
+            <Buttons>
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+            </Buttons>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleColumn For="Item.Code" Label="编号" Width="110"></EleColumn>
+            <EleColumn For="Item.TimeUtc" Label="时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.Lng" Label="经度" Width="110"></EleColumn>
+            <EleColumn For="Item.Lat" Label="纬度" Width="110"></EleColumn>
+            <EleColumn For="Item.Pressure" Label="气压" Width="90"></EleColumn>
+            <EleColumn For="Item.WindMs" Label="风速" Width="90"></EleColumn>
+            <EleColumn For="Item.LevelCode" Label="等级码" Width="90"></EleColumn>
+            <EleColumn For="Item.LevelName" Label="等级" Width="140"></EleColumn>
+            <EleColumn For="Item.SortId" Label="序号" Width="80"></EleColumn>
+        </Columns>
+    </EleTable>
+}
+
+@section script {
+    <script>
+        (function bindTyphoonLogSearch() {
+            if (!window.tableMixin || !window.tableMixin.methods || !window.tableMixin.methods.load) {
+                setTimeout(bindTyphoonLogSearch, 120);
+                return;
+            }
+            var oldLoad = window.tableMixin.methods.load;
+            window.tableMixin.methods.load = function () {
+                var ps = new URLSearchParams(window.location.search);
+                var code = ps.get('code');
+                this.searchParams = this.searchParams || {};
+                if (code) {
+                    this.searchParams.code = code;
+                    this.extraParams = { code: code };
+                }
+                oldLoad.call(this);
+            };
+        })();
+    </script>
+}

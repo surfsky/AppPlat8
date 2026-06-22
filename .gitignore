@@ -24,6 +24,7 @@ Deploy/
 Doc/Data/
 Doc/Map/
 Doc/Specs/
+app/webtest/
 
 # Logs
 **/Logs/

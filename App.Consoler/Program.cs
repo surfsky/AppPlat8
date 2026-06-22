@@ -1,4 +1,4 @@
-﻿using App.DAL;
+using App.DAL;
 using App.Entities;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
@@ -39,6 +39,7 @@ if (!CanConnect(conn))
 	Console.WriteLine($"数据库连接失败: {conn}");
 	return;
 }
+ConfigureEntity(conn);
 
 // 检测直接启动任务参数
 if (args.Any(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase)))
@@ -77,6 +78,7 @@ IJob? GetJob(string? jobName)
 		"checkobjectstatusfixjob" => new CheckObjectStatusFixJob(),
 		"checkobjectgpsfixjob" => new CheckObjectGpsFixJob(),
 		"gismenustatjob" => new GisMenuStatJob(),
+		"typhoonimportjob" => new TyphoonImportJob(),
 		_ => null,
 	};
 }
@@ -159,13 +161,24 @@ static bool CanConnect(string conn)
 		.UseSqlite(conn)
 		.Options;
 	using var db = new AppPlatContext(options);
-	Func<DbContext> onGetDb = () => db;
-	Func<DataAccessScope> onGetScope = () => new DataAccessScope
+	return db.Database.CanConnect();
+}
+
+/// <summary>配置实体访问上下文</summary>
+static void ConfigureEntity(string conn)
+{
+	var options = new DbContextOptionsBuilder<AppPlatContext>()
+		.UseSqlite(conn)
+		.Options;
+	var db = new AppPlatContext(options);
+	EntityConfig.Instance.OnGetDb += () => db;
+	EntityConfig.Instance.OnGetDataAccessScope += () => new DataAccessScope
 	{
 		Enabled = false,
 		AllowAll = true,
 	};
-	EntityConfig.Instance.OnGetDb += onGetDb;
-	EntityConfig.Instance.OnGetDataAccessScope += onGetScope;
-	return db.Database.CanConnect();
+	EntityConfig.Instance.OnGetDataAuditScope += () => new DataAuditScope
+	{
+		Enabled = false,
+	};
 }

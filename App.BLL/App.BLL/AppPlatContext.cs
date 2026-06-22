@@ -60,6 +60,8 @@ namespace App.DAL
         public DbSet<App.DAL.GIS.GisScene> GisScenes { get; set; }
         public DbSet<App.DAL.GIS.GisSceneMenu> GisSceneMenus { get; set; }
         public DbSet<App.DAL.GIS.GisScenePanel> GisScenePanels { get; set; }
+        public DbSet<App.DAL.GIS.GisTyphoon> GisTyphoons { get; set; }
+        public DbSet<App.DAL.GIS.GisTyphoonLog> GisTyphoonLogs { get; set; }
 
 
         // Check 隐患排查

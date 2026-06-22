@@ -27,11 +27,12 @@ namespace App.DAL.GIS
         public static List<GisMapStyle> Styles = new List<GisMapStyle>
         {
             new("Streets", "mapbox://styles/mapbox/streets-v11"),
-            new("Satellite", "mapbox://styles/mapbox/satellite-streets-v12"),  // satellite-v9无标签
+            new("Satellite", "mapbox://styles/mapbox/satellite-v9"),  // 无标签
+            new("SatelliteStreets", "mapbox://styles/mapbox/satellite-streets-v12"),  // 带标签
             new("Dark", "mapbox://styles/mapbox/dark-v10"),
             new("Light", "mapbox://styles/mapbox/light-v10"),
             new("Outdoors", "mapbox://styles/mapbox/outdoors-v11"),
-            new("Navigation", "mapbox://styles/mapbox/navigation-v1"),
+            //new("Navigation", "mapbox://styles/mapbox/navigation-v1"),  // 导航。没看出和outdoors的区别
         };
 
         [UI("名称")] public string Name { get; set; }

@@ -29,11 +29,10 @@ export class PressureLayer extends MapLayer {
     this.contourLayerId = "pressure-contour-layer";
     this.labelLayerId = "pressure-label-layer";
     
-    // 缓存机制
-    this.cache = {
+    // 原始采样缓存
+    this.rawCache = {
       data: null,
       bounds: null,
-      zoom: 0,
       timestamp: 0
     };
   }
@@ -86,23 +85,21 @@ export class PressureLayer extends MapLayer {
     return nodes;
   }
 
+  /**获取原始采样场 */
   async fetchField() {
-    const { map } = this.runtime;
     const currentBounds = this.getSamplingBounds();
-    const currentZoom = map.getZoom();
     const now = Date.now();
 
-    // 检查缓存：如果范围变化不大且时间在5分钟内，则重用缓存
-    if (this.cache.data && (now - this.cache.timestamp < 300000)) {
-      const b = this.cache.bounds;
+    // 范围变化不大时复用采样，缩放变化也允许重建等压线
+    if (this.rawCache.data && (now - this.rawCache.timestamp < 300000)) {
+      const b = this.rawCache.bounds;
       const latDiff = Math.abs(currentBounds.north - b.north) + Math.abs(currentBounds.south - b.south);
       const lonDiff = Math.abs(currentBounds.east - b.east) + Math.abs(currentBounds.west - b.west);
-      
-      // 如果视角移动范围小于 10%，则不重新请求 API
-      const threshold = (currentBounds.north - currentBounds.south) * 0.1;
-      if (latDiff < threshold && lonDiff < threshold) {
-        console.log("PressureLayer: Using cached data to prevent 429");
-        return this.cache.data;
+
+      const latRange = Math.max(1, currentBounds.north - currentBounds.south);
+      const lonRange = Math.max(1, currentBounds.east - currentBounds.west);
+      if (latDiff < latRange * 0.12 && lonDiff < lonRange * 0.12) {
+        return this.rawCache.data;
       }
     }
 
@@ -117,9 +114,9 @@ export class PressureLayer extends MapLayer {
 
     const response = await fetchWithTimeout(`${this.api}?${query.toString()}`, {}, 12000);
     if (!response.ok) {
-      if (response.status === 429 && this.cache.data) {
+      if (response.status === 429 && this.rawCache.data) {
         console.warn("PressureLayer: 429 hit, falling back to cache");
-        return this.cache.data;
+        return this.rawCache.data;
       }
       throw new Error(`气压请求失败: ${response.status}`);
     }
@@ -168,11 +165,9 @@ export class PressureLayer extends MapLayer {
       totalCount: nodes.length
     };
 
-    // 更新缓存
-    this.cache = {
+    this.rawCache = {
       data: result,
       bounds: currentBounds,
-      zoom: currentZoom,
       timestamp: now
     };
 
@@ -204,6 +199,16 @@ export class PressureLayer extends MapLayer {
     return top + (bottom - top) * tr;
   }
 
+  /**根据缩放计算平滑倍率 */
+  getSmoothFactor() {
+    const zoom = Number(this.runtime?.map?.getZoom?.() || 4);
+    if (zoom <= 3.5) return 6;
+    if (zoom <= 5) return 5;
+    if (zoom <= 6.5) return 4;
+    return 3;
+  }
+
+  /**生成插值后的平滑网格 */
   buildSmoothedField(field, factor = 4) {
     const rows = (field.rows - 1) * factor + 1;
     const cols = (field.cols - 1) * factor + 1;
@@ -222,6 +227,7 @@ export class PressureLayer extends MapLayer {
     return { ...field, rows, cols, grid };
   }
 
+  /**构建等压值级别 */
   buildLevels(field, step = 2) {
     const values = [];
     for (let r = 0; r < field.rows; r++) {
@@ -239,6 +245,7 @@ export class PressureLayer extends MapLayer {
     return levels;
   }
 
+  /**计算边与等压值的交点 */
   interpolateEdge(a, b, level) {
     if (!a || !b) return null;
     const va = Number(a.pressure);
@@ -252,6 +259,22 @@ export class PressureLayer extends MapLayer {
     };
   }
 
+  /**根据中心值处理鞍点格子 */
+  getSaddleSegments(centerValue, level, top, right, bottom, left) {
+    if (![top, right, bottom, left].every(Boolean)) return [];
+    if (centerValue >= level) {
+      return [
+        [top, right],
+        [bottom, left]
+      ];
+    }
+    return [
+      [top, left],
+      [right, bottom]
+    ];
+  }
+
+  /**使用 marching squares 生成线段 */
   marchingSegments(field, level) {
     const segs = [];
     for (let r = 0; r < field.rows - 1; r++) {
@@ -266,58 +289,95 @@ export class PressureLayer extends MapLayer {
         const right = this.interpolateEdge(p10, p11, level);
         const down = this.interpolateEdge(p01, p11, level);
         const left = this.interpolateEdge(p00, p01, level);
-        const points = [up, right, down, left].filter(Boolean);
+        const mask =
+          (Number(p00.pressure) >= level ? 8 : 0) +
+          (Number(p10.pressure) >= level ? 4 : 0) +
+          (Number(p11.pressure) >= level ? 2 : 0) +
+          (Number(p01.pressure) >= level ? 1 : 0);
+        const centerValue = (Number(p00.pressure) + Number(p10.pressure) + Number(p11.pressure) + Number(p01.pressure)) / 4;
 
-        if (points.length === 2) segs.push([points[0], points[1]]);
-        else if (points.length === 4) {
-          segs.push([up, left]);
-          segs.push([right, down]);
+        switch (mask) {
+          case 0:
+          case 15:
+            break;
+          case 1:
+          case 14:
+            if (left && down) segs.push([left, down]);
+            break;
+          case 2:
+          case 13:
+            if (down && right) segs.push([down, right]);
+            break;
+          case 3:
+          case 12:
+            if (left && right) segs.push([left, right]);
+            break;
+          case 4:
+          case 11:
+            if (up && right) segs.push([up, right]);
+            break;
+          case 5:
+          case 10:
+            segs.push(...this.getSaddleSegments(centerValue, level, up, right, down, left));
+            break;
+          case 6:
+          case 9:
+            if (up && down) segs.push([up, down]);
+            break;
+          case 7:
+          case 8:
+            if (up && left) segs.push([up, left]);
+            break;
+          default:
+            break;
         }
       }
     }
     return segs;
   }
 
+  /**生成端点键 */
+  getPointKey(point) {
+    return `${point.lon.toFixed(6)},${point.lat.toFixed(6)}`;
+  }
+
+  /**连接等压线段 */
   stitchSegments(segs) {
     if (segs.length === 0) return [];
-    
-    // 使用哈希映射加速端点匹配，提高连接可靠性
-    // 降低精度到 4 位小数，增加对微小间隙的容忍度，减少断裂
-    const getKey = p => `${p.lon.toFixed(4)},${p.lat.toFixed(4)}`;
+
     const pointToSegs = new Map();
     const used = new Set();
-    
+
     for (let i = 0; i < segs.length; i++) {
       const s = segs[i];
-      const k1 = getKey(s[0]);
-      const k2 = getKey(s[1]);
+      const k1 = this.getPointKey(s[0]);
+      const k2 = this.getPointKey(s[1]);
       if (k1 === k2) continue;
-      
+
       if (!pointToSegs.has(k1)) pointToSegs.set(k1, []);
       if (!pointToSegs.has(k2)) pointToSegs.set(k2, []);
       pointToSegs.get(k1).push(i);
       pointToSegs.get(k2).push(i);
     }
-    
+
     const lines = [];
     for (let i = 0; i < segs.length; i++) {
       if (used.has(i)) continue;
-      
+
       let currentLine = [segs[i][0], segs[i][1]];
       used.add(i);
-      
-      // 向后增长
+
       let growing = true;
       while (growing) {
         growing = false;
         const tail = currentLine[currentLine.length - 1];
-        const tailKey = getKey(tail);
+        const tailKey = this.getPointKey(tail);
         const candidates = pointToSegs.get(tailKey) || [];
         for (const segIdx of candidates) {
           if (!used.has(segIdx)) {
             const s = segs[segIdx];
-            const sk1 = getKey(s[0]);
-            const sk2 = getKey(s[1]);
+            const sk1 = this.getPointKey(s[0]);
+            const sk2 = this.getPointKey(s[1]);
             if (sk1 === tailKey) {
               currentLine.push(s[1]);
             } else if (sk2 === tailKey) {
@@ -329,19 +389,18 @@ export class PressureLayer extends MapLayer {
           }
         }
       }
-      
-      // 向前增长
+
       growing = true;
       while (growing) {
         growing = false;
         const head = currentLine[0];
-        const headKey = getKey(head);
+        const headKey = this.getPointKey(head);
         const candidates = pointToSegs.get(headKey) || [];
         for (const segIdx of candidates) {
           if (!used.has(segIdx)) {
             const s = segs[segIdx];
-            const sk1 = getKey(s[0]);
-            const sk2 = getKey(s[1]);
+            const sk1 = this.getPointKey(s[0]);
+            const sk2 = this.getPointKey(s[1]);
             if (sk1 === headKey) {
               currentLine.unshift(s[1]);
             } else if (sk2 === headKey) {
@@ -353,7 +412,14 @@ export class PressureLayer extends MapLayer {
           }
         }
       }
-      lines.push(currentLine);
+      const cleaned = [];
+      for (const point of currentLine) {
+        const prev = cleaned[cleaned.length - 1];
+        if (!prev || prev.lon !== point.lon || prev.lat !== point.lat) {
+          cleaned.push(point);
+        }
+      }
+      lines.push(cleaned);
     }
     return lines;
   }
@@ -395,7 +461,7 @@ export class PressureLayer extends MapLayer {
 
   async refresh() {
     const rawField = await this.fetchField();
-    const field = this.buildSmoothedField(rawField, PressureLayer.GRID.smoothFactor);
+    const field = this.buildSmoothedField(rawField, this.getSmoothFactor());
     const contourGeo = this.buildContourGeo(field, PressureLayer.GRID.contourStep);
     const labelGeo = this.buildLabelGeoFromContours(contourGeo);
 

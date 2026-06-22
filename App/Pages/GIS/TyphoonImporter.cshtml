@@ -1,0 +1,111 @@
+@page
+@model App.Pages.GIS.TyphoonImporterModel
+@{
+    ViewData["Title"] = "台风数据导入";
+}
+
+@section body {
+    <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
+        <div class="mb-4 rounded border border-slate-200 p-3 bg-slate-50 text-slate-700 text-sm">
+            <div>导入类型: <span class="font-semibold">@Model.TypeTitle</span></div>
+            <div class="mt-1 text-slate-500">支持一次选择多个文件，自动识别 `@Model.MetaFileName` 与 `CHYYYYBST.txt` 轨迹文件。</div>
+            <div class="mt-1 text-slate-500">建议先选择台风清单，再选择年度轨迹文件；重复导入会按台风编号自动更新。</div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-3">
+            <el-button @@click="chooseFile">选择文件</el-button>
+            <el-button type="success" @@click="startImport" :loading="importing" :disabled="files.length === 0">开始导入</el-button>
+            <input id="typhoonFileInput" type="file" accept=".json,.txt" multiple style="display:none" @@change="onFileChange" />
+        </div>
+
+        <div class="mb-3 text-sm text-slate-600">
+            已选文件: <span class="font-medium">{{ fileNames || '未选择文件' }}</span>
+        </div>
+
+        <div class="mb-3">
+            <el-progress :percentage="progress" :status="progressStatus"></el-progress>
+        </div>
+
+        <div class="flex-1 overflow-hidden flex flex-col">
+            <div class="text-sm font-medium mb-2">导入日志:</div>
+            <div class="flex-1 border border-slate-200 rounded p-2 overflow-y-auto bg-slate-50 font-mono text-xs">
+                <div v-for="(log, index) in logs" :key="index">
+                    {{ log }}
+                </div>
+                <div v-if="logs.length === 0" class="text-slate-400">等待导入...</div>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    files: [],
+                    fileNames: '',
+                    importing: false,
+                    progress: 0,
+                    progressStatus: '',
+                    logs: []
+                }
+            },
+            methods: {
+                chooseFile() {
+                    document.getElementById('typhoonFileInput').click();
+                },
+                onFileChange(e) {
+                    const list = Array.from(e.target.files || []);
+                    this.files = list;
+                    this.fileNames = list.map(t => t.name).join(', ');
+                },
+                async startImport() {
+                    if (this.files.length === 0) return;
+
+                    this.importing = true;
+                    this.progress = 10;
+                    this.progressStatus = '';
+                    this.logs = ['准备开始导入...'];
+
+                    const formData = new FormData();
+                    this.files.forEach(file => formData.append('files', file));
+
+                    try {
+                        const res = await axios.post('?handler=Import', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            onUploadProgress: (evt) => {
+                                if (!evt.total) return;
+                                this.progress = Math.round((evt.loaded * 90) / evt.total);
+                            }
+                        });
+
+                        const data = res.data || {};
+                        if (data.code === 0) {
+                            this.progress = 100;
+                            this.progressStatus = 'success';
+                            this.logs = data.data?.logs || ['导入完成'];
+                            this.$message.success(data.msg || '导入成功');
+                        } else {
+                            this.progressStatus = 'exception';
+                            this.logs = data.data?.logs || [data.msg || '导入失败'];
+                            this.$message.error(data.msg || '导入失败');
+                        }
+                    } catch (err) {
+                        this.progressStatus = 'exception';
+                        const msg = err.response?.data?.msg || err.message || '网络请求错误';
+                        this.logs.push(msg);
+                        this.$message.error(msg);
+                    } finally {
+                        this.importing = false;
+                    }
+                }
+            }
+        });
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+}
