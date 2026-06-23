@@ -21,6 +21,8 @@ namespace App.DAL.GIS
         [UI("责任组织")]      public long? OrgId { get; set; }
         [UI("图标")]         public string Icon { get; set; }
         [UI("默认显示")]      public bool IsDefaultShow { get; set; }
+        [UI("显示级别")]      public double? Zoom { get; set; }
+        [UI("是否可选")]      public bool? Selectable { get; set; } = true;
         [UI("数据来源")]      public GisDataFrom? DataFrom { get; set; } = GisDataFrom.Geometry;
         [UI("点位数")]        public int? DataCnt { get; set; }
         [UI("最后数据时间")]   public DateTime? DataDt { get; set; }
@@ -39,6 +41,8 @@ namespace App.DAL.GIS
                 t.Icon = this.Icon;
                 t.CreatorId = this.CreatorId;
                 t.IsDefaultShow = this.IsDefaultShow;
+                t.Zoom = this.Zoom;
+                t.Selectable = this.Selectable;
                 t.DataCnt = this.DataCnt;
                 t.DataDt = this.DataDt;
                 t.DataFrom = this.DataFrom;
@@ -57,6 +61,8 @@ namespace App.DAL.GIS
                 Icon,
                 CreatorId,
                 IsDefaultShow,
+                Zoom,
+                Selectable,
                 Children,
                 DataCnt,
                 DataDt,

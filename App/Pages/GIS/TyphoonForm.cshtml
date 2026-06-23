@@ -1,0 +1,24 @@
+@page
+@model App.Pages.GIS.TyphoonFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "台风信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
+        <EleInput For="Item.Code" Label="编号" Required="true"></EleInput>
+        <EleInput For="Item.Name" Label="英文名"></EleInput>
+        <EleInput For="Item.ChineseName" Label="中文名"></EleInput>
+        <EleNumber For="Item.MaxLevel" Label="最高等级" Min="0" Max="99"></EleNumber>
+        <EleSwitch For="Item.IsLand" Label="是否登陆"></EleSwitch>
+        <EleDatePicker For="Item.BirthUtc" Label="生成时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+        <EleDatePicker For="Item.DeathUtc" Label="结束时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

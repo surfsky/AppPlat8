@@ -57,6 +57,12 @@ namespace App.EleUI
         [HtmlAttributeName("PageSize")]
         public int? PageSize { get; set; } = 20;
 
+        [HtmlAttributeName("SortFor")]
+        public string SortFor { get; set; }
+
+        [HtmlAttributeName("SortDirection")]
+        public string SortDirection { get; set; } = "ASC";
+
         public override void Init(TagHelperContext context)
         {
             base.Init(context);
@@ -94,6 +100,7 @@ namespace App.EleUI
             var rowKeyAttr = !string.IsNullOrEmpty(RowKey) ? $@"row-key=""{RowKey}""" : "";
             var highlightAttr = !EnableBatch ? "highlight-current-row" : "";
             var selectionEvent = EnableBatch ? @"v-on:selection-change=""onSelectionChange""" : @"v-on:current-change=""onCurrentChange""";
+            var defaultSortAttr = BuildDefaultSortAttr();
             var tableHtml = $@"
         <el-main class=""flex-1 p-0 bg-white overflow-hidden flex flex-col"">
             <el-table
@@ -105,6 +112,7 @@ namespace App.EleUI
                 style=""width: 100%; flex: 1;""
                 {rowKeyAttr}
                 {highlightAttr}
+                {defaultSortAttr}
                 default-expand-all
             >
                 {selectionCol}
@@ -149,6 +157,8 @@ namespace App.EleUI
         {
             var formDrawerSize = string.IsNullOrWhiteSpace(FormDrawerSize) ? "" : FormDrawerSize.Trim();
             var defaultPageSize = ResolveDefaultPageSize();
+            var defaultSortField = ResolveSortField();
+            var defaultSortDirection = ResolveSortDirection();
             return $@"
 <script>
     document.addEventListener('DOMContentLoaded', function() {{
@@ -158,11 +168,57 @@ namespace App.EleUI
             deleteHandler: '{DeleteHandler}',
             editPage: '{FormPage}',
             formDrawerSize: '{formDrawerSize}',
-            pageSize: {defaultPageSize}
+            pageSize: {defaultPageSize},
+            defaultSortField: '{defaultSortField}',
+            defaultSortDirection: '{defaultSortDirection}'
         }});
     }});
 </script>
 ";
+        }
+
+        /**构建默认排序属性 */
+        private string BuildDefaultSortAttr()
+        {
+            var prop = ResolveSortProp();
+            if (string.IsNullOrWhiteSpace(prop))
+                return "";
+
+            var order = ResolveSortDirection().Equals("DESC", StringComparison.OrdinalIgnoreCase)
+                ? "descending"
+                : "ascending";
+            return $@":default-sort=""{{ prop: '{prop}', order: '{order}' }}""";
+        }
+
+        /**解析服务端排序字段 */
+        private string ResolveSortField()
+        {
+            var field = string.IsNullOrWhiteSpace(SortFor) ? "" : SortFor.Trim();
+            if (string.IsNullOrWhiteSpace(field))
+                return "Id";
+
+            if (field.Contains("."))
+                field = field.Substring(field.LastIndexOf('.') + 1);
+
+            return field;
+        }
+
+        /**解析客户端列属性 */
+        private string ResolveSortProp()
+        {
+            var field = ResolveSortField();
+            if (string.IsNullOrWhiteSpace(field))
+                return "";
+            if (char.IsUpper(field[0]))
+                field = char.ToLowerInvariant(field[0]) + field.Substring(1);
+            return field;
+        }
+
+        /**解析排序方向 */
+        private string ResolveSortDirection()
+        {
+            var dir = string.IsNullOrWhiteSpace(SortDirection) ? "ASC" : SortDirection.Trim().ToUpperInvariant();
+            return dir == "DESC" ? "DESC" : "ASC";
         }
 
         private int ResolveDefaultPageSize()

@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="台风轨迹" EnableBatch="false" >
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="台风轨迹" EnableBatch="false" FormPage="TyphoonForm" SortFor="Item.Code" SortDirection="DESC">
         <Toolbar>
             <Filters>
                 <EleNumber For="Item.Year" Width="120px" Label="年份" LabelWidth="60px"></EleNumber>
@@ -19,8 +19,9 @@
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
-            <EleOpColumn Width="90" Fixed="right">
-                <Op Popup="/GIS/TyphoonLogs?code={code}&name={chineseName}" Icon="List" Text="轨迹"></Op>
+            <EleOpColumn Width="140" Fixed="right">
+                <Op Command="Edit" Icon="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.GisGeometryEdit)"></Op>
+                <Op Popup="/GIS/TyphoonLogs?code={code}&amp;name={chineseName}" Icon="List" Text="轨迹"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Code" Label="编号" Width="110" Sortable="true"></EleColumn>
             <EleColumn For="Item.Year" Label="年份" Width="80" Sortable="true"></EleColumn>

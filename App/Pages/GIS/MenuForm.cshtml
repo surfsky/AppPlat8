@@ -9,10 +9,12 @@
 @section body {
     <EleForm LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleTreeSelect For="Item.ParentId" Label="上级菜单" Api="/httpapi/gis/GetMenuTree?excludeId=@currentId&selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleTreeSelect For="Item.ParentId" Label="上级菜单" Api="/httpapi/gis/GetMenuTree?excludeId=@currentId&amp;selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
         <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetOrgTree"></EleTreeSelect>
         <EleImageUpload For="Item.Icon" Label="图标" FillRow="true" ItemWidth="64"></EleImageUpload>
         <EleSwitch For="Item.IsDefaultShow" Label="默认显示"></EleSwitch>
+        <EleNumber For="Item.Zoom" Label="显示级别" Min="0" Max="24" Step="0.1"></EleNumber>
+        <EleSwitch For="Item.Selectable" Label="是否可选"></EleSwitch>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
         <EleSelect For="Item.DataFrom" Label="数据来源"></EleSelect>
         <EleNumber For="Item.DataCnt" Label="点位数" Min="0" Max="10000000"></EleNumber>

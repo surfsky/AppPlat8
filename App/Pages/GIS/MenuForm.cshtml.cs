@@ -46,6 +46,8 @@ namespace App.Pages.GIS
             item.OrgId = req.OrgId;
             item.Icon = req.Icon;
             item.IsDefaultShow = req.IsDefaultShow;
+            item.Zoom = req.Zoom;
+            item.Selectable = req.Selectable;
             item.SortId = req.SortId;
             item.DataFrom = req.DataFrom;
             item.DataCnt = req.DataCnt;

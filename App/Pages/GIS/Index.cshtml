@@ -173,6 +173,7 @@
             statsPanels: [],
             activePointListMenuId: null,
             activePointListMenuName: '',
+            currentMapZoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
             mapStyles: [],
             scenes: [],
             currentSceneId: null,
@@ -238,6 +239,7 @@
             map,
             state,
             geometryDisplayLayerIds,
+            isGeometrySelectable: (menuId) => dataApi.isGeometrySelectable(menuId),
             onOpenGeometryDetail: (id) => openGeometryDetailPanel(id),
             onCloseGeometryDetail: () => closeGeometryDetailPanel(),
             onClosePointList: () => closePointListPanel(),
@@ -363,6 +365,15 @@
             closeGeometryDetailDrawer: () => closeGeometryDetailDrawer(),
             closePointListPanel: () => closePointListPanel()
         });
+
+        /**同步菜单缩放显示*/
+        function syncMenuZoomDisplay() {
+            state.currentMapZoom = typeof map.getZoom === 'function' ? map.getZoom() : state.currentMapZoom;
+            dataApi.applyGeometryVisibility();
+            dataApi.renderMenuTree();
+        }
+
+        map.on('zoomend', syncMenuZoomDisplay);
         window.__gisIndexContext = {
             map,
             state,

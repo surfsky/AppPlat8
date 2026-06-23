@@ -6,6 +6,8 @@
         const onGeometryMarkerClick = ctx.onGeometryMarkerClick || (() => {});
         const renderMenuTree = ctx.renderMenuTree || (() => {});
         const isGeometryDefaultVisible = ctx.isGeometryDefaultVisible || (() => false);
+        const isMenuZoomVisible = ctx.isMenuZoomVisible || (() => true);
+        const isGeometrySelectable = ctx.isGeometrySelectable || (() => true);
         const getGeometryKind = ctx.getGeometryKind;
         const getGeometryCenter = ctx.getGeometryCenter;
         const getGeometryIcon = ctx.getGeometryIcon;
@@ -22,11 +24,18 @@
         }
 
         function syncGeometryPointMarkerVisibility() {
+            const byId = new Map((state.geometries || []).map(item => [String(item?.id), item]));
             state.geometryPointMarkerMap.forEach((marker, id) => {
                 const markerEl = marker.getElement();
                 if (!markerEl) return;
+                const item = byId.get(String(id));
+                const isVisible = state.geometryVisibleMap.get(id) !== false && isMenuZoomVisible(item?.menuId);
+                const selectable = isGeometrySelectable(item?.menuId);
 
-                markerEl.style.display = state.geometryVisibleMap.get(id) === false ? 'none' : '';
+                markerEl.style.display = isVisible ? '' : 'none';
+                markerEl.style.pointerEvents = selectable ? 'auto' : 'none';
+                markerEl.style.cursor = selectable ? '' : 'default';
+                markerEl.style.opacity = selectable ? '' : '0.92';
 
                 const normalizedId = Number.isFinite(Number(id)) ? Number(id) : id;
                 const isSelected = String(state.selectedGeometryId ?? '') === String(normalizedId ?? '');
@@ -53,6 +62,7 @@
             `;
             el.addEventListener('click', evt => {
                 evt.stopPropagation();
+                if (!isGeometrySelectable(item?.menuId)) return;
                 onGeometryMarkerClick(item.id);
             });
             return new mapboxgl.Marker({ element: el, anchor: 'center' })
@@ -85,6 +95,7 @@
 
             el.addEventListener('click', evt => {
                 evt.stopPropagation();
+                if (!isGeometrySelectable(item?.menuId)) return;
                 onGeometryMarkerClick(item.id);
             });
 
@@ -119,6 +130,7 @@
 
             el.addEventListener('click', evt => {
                 evt.stopPropagation();
+                if (!isGeometrySelectable(item?.menuId)) return;
                 onGeometryMarkerClick(item.id);
             });
 
@@ -201,8 +213,9 @@
                 if (!map.getLayer(layerId)) return;
 
                 const isVisible = state.geometryVisibleMap.get(item.id) !== false;
+                const zoomVisible = isMenuZoomVisible(item.menuId);
                 try {
-                    map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
+                    map.setLayoutProperty(layerId, 'visibility', isVisible && zoomVisible ? 'visible' : 'none');
                 } catch {
                     // ignore layout errors
                 }
@@ -277,6 +290,7 @@
                         el.appendChild(label);
                         el.addEventListener('click', evt => {
                             evt.stopPropagation();
+                            if (!isGeometrySelectable(item?.menuId)) return;
                             onGeometryMarkerClick(item.id);
                         });
                         marker = new mapboxgl.Marker(el)
@@ -301,7 +315,7 @@
             geometryLayerManager.setVisible(true);
 
             const visibleIds = state.geometries
-                .filter(g => state.geometryVisibleMap.get(g.id) !== false)
+                .filter(g => state.geometryVisibleMap.get(g.id) !== false && isMenuZoomVisible(g.menuId))
                 .map(g => g.id);
             geometryLayerManager.setVisibleIds(visibleIds);
             syncGeometryPointMarkerVisibility();

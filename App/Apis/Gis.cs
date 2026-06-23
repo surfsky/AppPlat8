@@ -50,7 +50,7 @@ namespace App.API
             }
 
             var tree = visibleMap.Values.OrderBy(t => t.SortId).ThenBy(t => t.Id).ToList().ToTree();
-            return tree.ToResult();
+            return tree.Select(t => t.Export()).ToList().ToResult();
         }
 
 

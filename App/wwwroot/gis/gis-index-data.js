@@ -6,6 +6,7 @@
 
         menuApi = window.GisIndexDataMenu.create({
             state: ctx.state,
+            map: ctx.map,
             onMenuBadgeClick: ctx.onMenuBadgeClick,
             applyGeometryVisibility: () => geometryApi?.applyGeometryVisibility?.(),
             getGeometryCenter: utils.getGeometryCenter,
@@ -20,6 +21,8 @@
             onGeometryMarkerClick: ctx.onGeometryMarkerClick,
             renderMenuTree: () => menuApi?.renderMenuTree?.(),
             isGeometryDefaultVisible: menuApi.isGeometryDefaultVisible,
+            isMenuZoomVisible: menuApi.isMenuZoomVisible,
+            isGeometrySelectable: menuApi.isGeometrySelectable,
             getGeometryKind: utils.getGeometryKind,
             getGeometryCenter: utils.getGeometryCenter,
             getGeometryIcon: utils.getGeometryIcon,
@@ -36,6 +39,8 @@
             renderMenuTree: () => menuApi.renderMenuTree(),
             loadMenus: () => menuApi.loadMenus(),
             setBatchMenusChecked: menuIds => menuApi.setBatchMenusChecked(menuIds),
+            isMenuZoomVisible: menuApi.isMenuZoomVisible,
+            isGeometrySelectable: menuApi.isGeometrySelectable,
             applyGeometryVisibility: () => geometryApi.applyGeometryVisibility(),
             loadGeometries: () => geometryApi.loadGeometries(),
             rebuildGeometryPointMarkers: () => geometryApi.rebuildGeometryPointMarkers(),

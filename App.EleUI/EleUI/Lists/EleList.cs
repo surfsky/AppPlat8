@@ -44,6 +44,9 @@ namespace App.EleUI
         [HtmlAttributeName("DataHandler")]
         public string DataHandler { get; set; } = "?handler=Data";
 
+        [HtmlAttributeName("SortFor")]
+        public string SortFor { get; set; }
+
         [HtmlAttributeName("SortField")]
         public string SortField { get; set; } = "Id";
 
@@ -97,8 +100,8 @@ namespace App.EleUI
             output.Attributes.SetAttribute("data-ele-list-key", listKey);
             output.Attributes.SetAttribute("data-ele-list-handler", DataHandler);
             output.Attributes.SetAttribute("data-ele-list-page-size", ResolvePageSize().ToString());
-            output.Attributes.SetAttribute("data-ele-list-sort-field", SortField);
-            output.Attributes.SetAttribute("data-ele-list-sort-direction", SortDirection);
+            output.Attributes.SetAttribute("data-ele-list-sort-field", ResolveSortField());
+            output.Attributes.SetAttribute("data-ele-list-sort-direction", ResolveSortDirection());
 
             var hostClass = "h-full flex flex-col overflow-hidden";
             if (inForm)
@@ -180,8 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {{
         title: '{title}',
         dataHandler: '{DataHandler}',
         pageSize: {pageSize},
-        defaultSortField: '{SortField}',
-        defaultSortDirection: '{SortDirection}'
+        defaultSortField: '{ResolveSortField()}',
+        defaultSortDirection: '{ResolveSortDirection()}'
     }});
 }});
 </script>
@@ -194,6 +197,25 @@ document.addEventListener('DOMContentLoaded', function() {{
                 return PageSize.Value;
 
             return 10;
+        }
+
+        /// <summary>解析服务端排序字段</summary>
+        private string ResolveSortField()
+        {
+            var field = string.IsNullOrWhiteSpace(SortFor) ? SortField : SortFor;
+            field = string.IsNullOrWhiteSpace(field) ? "Id" : field.Trim();
+
+            if (field.Contains('.'))
+                field = field[(field.LastIndexOf('.') + 1)..];
+
+            return field;
+        }
+
+        /// <summary>解析排序方向</summary>
+        private string ResolveSortDirection()
+        {
+            var dir = string.IsNullOrWhiteSpace(SortDirection) ? "DESC" : SortDirection.Trim().ToUpperInvariant();
+            return dir == "ASC" ? "ASC" : "DESC";
         }
     }
 }

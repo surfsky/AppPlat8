@@ -16,6 +16,7 @@
         const onClosePointList = ctx.onClosePointList;
         const onStatsModeChanged = ctx.onStatsModeChanged;
         const onGeometrySelectedChanged = ctx.onGeometrySelectedChanged;
+        const isGeometrySelectable = ctx.isGeometrySelectable || (() => true);
 
         function toggleStatsMode() {
             const manager = resolveManager();
@@ -76,6 +77,13 @@
         function findGeometryById(id) {
             if (!Array.isArray(state.geometries) || !state.geometries.length) return null;
             return state.geometries.find(x => Number(x?.id) === Number(id)) || null;
+        }
+
+        /**图形是否允许点击*/
+        function canSelectGeometry(id) {
+            const item = findGeometryById(id);
+            if (!item) return true;
+            return isGeometrySelectable(item.menuId);
         }
 
         function splitMultiUrls(src) {
@@ -353,6 +361,7 @@
 
                 const rawId = feature.properties.__geometryId;
                 const geometryId = Number.isNaN(Number(rawId)) ? rawId : Number(rawId);
+                if (!canSelectGeometry(geometryId)) return;
                 focusGeometryCenter(geometryId, feature);
                 openGeometryDetailDrawer(geometryId);
             });
@@ -365,7 +374,13 @@
                 }
 
                 const hits = map.queryRenderedFeatures(e.point, { layers });
-                map.getCanvas().style.cursor = hits && hits.length > 0 ? 'pointer' : '';
+                const hit = (hits || []).find(f => {
+                    const rawId = f?.properties?.__geometryId;
+                    if (rawId === undefined) return false;
+                    const geometryId = Number.isNaN(Number(rawId)) ? rawId : Number(rawId);
+                    return canSelectGeometry(geometryId);
+                });
+                map.getCanvas().style.cursor = hit ? 'pointer' : '';
             });
         }
 

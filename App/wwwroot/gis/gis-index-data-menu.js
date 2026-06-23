@@ -1,11 +1,46 @@
 (function () {
     function create(ctx) {
         const state = ctx.state;
+        const map = ctx.map;
         const onMenuBadgeClick = ctx.onMenuBadgeClick || (() => {});
         const applyGeometryVisibility = ctx.applyGeometryVisibility || (() => {});
         const getGeometryCenter = ctx.getGeometryCenter;
         const getGeometryKind = ctx.getGeometryKind;
         const getGeometryIcon = ctx.getGeometryIcon;
+
+        /**获取当前缩放级别*/
+        function getCurrentZoom() {
+            if (!map || typeof map.getZoom !== 'function') return 0;
+            return Number(map.getZoom()) || 0;
+        }
+
+        /**获取菜单生效缩放级别*/
+        function getMenuZoom(menuId) {
+            if (!menuId || !state.menuNodeMap || state.menuNodeMap.size === 0) return null;
+            const current = state.menuNodeMap.get(Number(menuId));
+            const val = Number(current?.zoom);
+            return Number.isFinite(val) ? val : null;
+        }
+
+        /**菜单数据是否达到显示级别*/
+        function isMenuZoomVisible(menuId) {
+            const zoom = getMenuZoom(menuId);
+            if (zoom === null) return true;
+            return getCurrentZoom() >= zoom;
+        }
+
+        /**菜单数据是否允许点击*/
+        function isGeometrySelectable(menuId) {
+            if (!menuId || !state.menuNodeMap || state.menuNodeMap.size === 0) return true;
+
+            let current = state.menuNodeMap.get(Number(menuId));
+            while (current) {
+                if (current.selectable === false) return false;
+                if (!current.parentId) break;
+                current = state.menuNodeMap.get(current.parentId);
+            }
+            return true;
+        }
 
         function buildMenuNodes() {
             const nodes = state.menus.map(item => ({ ...item, children: [] }));
@@ -153,6 +188,8 @@
                 const visibleCount = ids.filter(id => state.geometryVisibleMap.get(id) !== false).length;
                 const menuCount = Number(node.dataCnt ?? 0);
                 const count = Number.isFinite(menuCount) && menuCount >= 0 ? menuCount : 0;
+                const zoom = getMenuZoom(node.id);
+                const zoomVisible = isMenuZoomVisible(node.id);
 
                 if (hasChildren) {
                     const shouldAnimate = state.lastMenuToggle && state.lastMenuToggle.nodeId === node.id;
@@ -183,12 +220,15 @@
                 checkbox.disabled = count === 0;
                 checkbox.checked = ids.length > 0 && visibleCount === ids.length;
                 checkbox.indeterminate = visibleCount > 0 && visibleCount < ids.length;
+                checkbox.title = !zoomVisible && zoom !== null ? `缩放到 ${zoom} 级后显示` : '';
                 checkbox.addEventListener('change', () => setMenuChecked(node, !!checkbox.checked, geometryCache));
 
                 const labelBtn = document.createElement('button');
                 labelBtn.type = 'button';
                 labelBtn.className = 'menu-node-label';
                 labelBtn.textContent = node.name || `菜单${node.id}`;
+                labelBtn.title = !zoomVisible && zoom !== null ? `当前缩放不足，需达到 ${zoom} 级后显示数据` : '';
+                labelBtn.style.opacity = !zoomVisible ? '0.72' : '';
                 labelBtn.addEventListener('click', () => {
                     if (checkbox.disabled) return;
                     checkbox.checked = !checkbox.checked;
@@ -207,6 +247,9 @@
                 badge.title = count > 0
                     ? `查看${nodeLabel}点位清单${dtText ? `（统计时间: ${dtText}）` : ''}`
                     : '无点位';
+                if (!zoomVisible && zoom !== null) {
+                    badge.title += `，显示级别 ${zoom}`;
+                }
                 badge.disabled = count === 0;
                 badge.addEventListener('click', evt => {
                     evt.stopPropagation();
@@ -268,6 +311,11 @@
                             sortId: Number(sortIdRaw || 0),
                             icon: n.icon ?? n.Icon,
                             isDefaultShow: !!(n.isDefaultShow ?? n.IsDefaultShow),
+                            zoom: (() => {
+                                const val = Number(n.zoom ?? n.Zoom);
+                                return Number.isFinite(val) ? val : null;
+                            })(),
+                            selectable: !!(n.selectable ?? n.Selectable ?? true),
                             dataCnt: Number(n.dataCnt ?? n.DataCnt ?? 0),
                             dataDt: n.dataDt ?? n.DataDt ?? null
                         });
@@ -308,7 +356,9 @@
             renderMenuTree,
             loadMenus,
             setBatchMenusChecked,
-            isGeometryDefaultVisible
+            isGeometryDefaultVisible,
+            isMenuZoomVisible,
+            isGeometrySelectable
         };
     }
 

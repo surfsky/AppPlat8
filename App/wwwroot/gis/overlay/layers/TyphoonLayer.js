@@ -48,6 +48,11 @@ export class TyphoonLayer extends MapLayer {
     this.popup = null;
     this.eventBound = false;
     this.legendBound = false;
+    this.legendDragBound = false;
+    this.legendDragId = 0;
+    this.legendDragMoving = false;
+    this.legendDragOffsetX = 0;
+    this.legendDragOffsetY = 0;
     this.currentStorms = [];
     this.typhoonSvgMarkup = "";
     this.centerIconMap = new Map();
@@ -81,13 +86,15 @@ export class TyphoonLayer extends MapLayer {
         z-index: 1002;
         min-width: 560px;
         max-width: min(92vw, 900px);
-        padding: 10px 14px;
+        padding: 8px 12px 10px;
         border-radius: 12px;
-        background: rgba(248,250,252,0.94);
-        border: 1px solid rgba(148,163,184,0.35);
-        box-shadow: 0 10px 28px rgba(15,23,42,0.25);
+        background: rgba(248,250,252,0.72);
+        border: 1px solid rgba(148,163,184,0.26);
+        box-shadow: 0 12px 32px rgba(15,23,42,0.22);
         color: #0f172a;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        overflow: hidden;
       }
       .typhoon-legend.is-hidden { display: none; }
       .typhoon-legend-title {
@@ -95,9 +102,36 @@ export class TyphoonLayer extends MapLayer {
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 8px;
+        margin: -8px -12px 8px;
+        padding: 8px 12px;
         font-size: 13px;
         font-weight: 700;
+        cursor: move;
+        user-select: none;
+        touch-action: none;
+        background: linear-gradient(180deg, rgba(255,255,255,0.36), rgba(255,255,255,0.12));
+        border-bottom: 1px solid rgba(148,163,184,0.2);
+      }
+      .typhoon-legend-title.is-dragging { cursor: grabbing; }
+      .typhoon-legend-title-text {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .typhoon-legend-drag {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        color: #64748b;
+        opacity: 0.85;
+      }
+      .typhoon-legend-drag i {
+        display: block;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: currentColor;
       }
       .typhoon-legend-tip {
         font-size: 11px;
@@ -173,6 +207,10 @@ export class TyphoonLayer extends MapLayer {
           right: 12px;
           bottom: 12px;
           transform: none;
+        }
+        .typhoon-legend-title {
+          flex-wrap: wrap;
+          gap: 6px 10px;
         }
         .typhoon-select {
           width: 100%;
@@ -446,7 +484,10 @@ export class TyphoonLayer extends MapLayer {
     `).join("");
     el.innerHTML = `
       <div class="typhoon-legend-title">
-        <span>台风路径</span>
+        <span class="typhoon-legend-title-text">
+          <span class="typhoon-legend-drag" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span>台风路径</span>
+        </span>
         <span class="typhoon-legend-tip">${liveCnt > 0 ? `当前活跃 ${liveCnt} 个，实时源：Digital Typhoon` : "数据源：本地台风数据库"}</span>
       </div>
       <div class="typhoon-legend-row">
@@ -489,7 +530,66 @@ export class TyphoonLayer extends MapLayer {
         await this.refresh(true);
       }
     });
+    this.bindLegendDrag();
     this.legendBound = true;
+  }
+
+  /**绑定图例拖动 */
+  bindLegendDrag() {
+    if (this.legendDragBound) return;
+    const el = this.ensureLegend();
+    const onMove = e => {
+      if (!this.legendDragId) return;
+      if (typeof e.pointerId === "number" && e.pointerId !== this.legendDragId) return;
+      const rect = el.getBoundingClientRect();
+      const ww = window.innerWidth || document.documentElement.clientWidth || 0;
+      const wh = window.innerHeight || document.documentElement.clientHeight || 0;
+      const left = Math.min(Math.max(8, e.clientX - this.legendDragOffsetX), Math.max(8, ww - rect.width - 8));
+      const top = Math.min(Math.max(8, e.clientY - this.legendDragOffsetY), Math.max(8, wh - rect.height - 8));
+      el.style.left = `${left}px`;
+      el.style.top = `${top}px`;
+      el.style.right = "auto";
+      el.style.bottom = "auto";
+      el.style.transform = "none";
+      const head = el.querySelector(".typhoon-legend-title");
+      if (head) head.classList.add("is-dragging");
+      this.legendDragMoving = true;
+    };
+    const onUp = e => {
+      if (!this.legendDragId) return;
+      if (typeof e.pointerId === "number" && e.pointerId !== this.legendDragId) return;
+      this.legendDragId = 0;
+      const head = el.querySelector(".typhoon-legend-title");
+      if (head) head.classList.remove("is-dragging");
+      try {
+        document.body.style.userSelect = "";
+      } catch (_e) { }
+    };
+    el.addEventListener("pointerdown", e => {
+      const head = e.target?.closest?.(".typhoon-legend-title");
+      if (!head) return;
+      if (e.target?.closest?.("select,option,input,button,a,label")) return;
+      const rect = el.getBoundingClientRect();
+      if (!this.legendDragMoving) {
+        el.style.left = `${rect.left}px`;
+        el.style.top = `${rect.top}px`;
+        el.style.right = "auto";
+        el.style.bottom = "auto";
+        el.style.transform = "none";
+      }
+      this.legendDragId = typeof e.pointerId === "number" ? e.pointerId : 1;
+      this.legendDragOffsetX = e.clientX - rect.left;
+      this.legendDragOffsetY = e.clientY - rect.top;
+      try {
+        head.setPointerCapture?.(e.pointerId);
+        document.body.style.userSelect = "none";
+      } catch (_e) { }
+      e.preventDefault();
+    });
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    this.legendDragBound = true;
   }
 
   /**获取台风详情 */
