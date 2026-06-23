@@ -1,0 +1,220 @@
+@page
+@model App.Pages.Shared.AutoFormModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "智能表单";
+    var fileJson = JsonSerializer.Serialize(Model.File ?? string.Empty);
+    var idJson = JsonSerializer.Serialize(Model.Id);
+    var modeJson = JsonSerializer.Serialize(Request.Query["md"].ToString());
+}
+
+@section body {
+    <div id="app" class="h-screen bg-white flex flex-col overflow-hidden">
+        <div class="flex-1 overflow-auto">
+            <div class="mx-auto max-w-6xl p-4 pb-0">
+                <div class="px-1 py-1 text-sm text-slate-500">
+                    文件：{{ meta.fileName || file || '未指定' }}
+                </div>
+
+                <div class="mt-3">
+                    <div class="px-5 py-3 text-sm text-slate-500">
+                        行号：{{ rowId || '新行' }}
+                    </div>
+                    <div class="px-5 pb-8">
+                        <el-form label-width="120px">
+                            <div class="grid gap-x-6 gap-y-4 md:grid-cols-2">
+                                <div v-for="col in meta.columns" :key="col.key">
+                                    <el-form-item :label="col.title">
+                                        <el-autocomplete v-if="hasOptions(col)"
+                                                         v-model="form[col.key]"
+                                                         clearable
+                                                         :fetch-suggestions="(txt, cb) => queryOptions(col, txt, cb)"
+                                                         placeholder="请选择或输入"
+                                                         class="w-full"></el-autocomplete>
+                                        <el-input v-else-if="isLongField(col)"
+                                                  v-model="form[col.key]"
+                                                  type="textarea"
+                                                  :rows="3"
+                                                  resize="vertical"
+                                                  placeholder="请输入"></el-input>
+                                        <el-input v-else
+                                                  v-model="form[col.key]"
+                                                  clearable
+                                                  placeholder="请输入"></el-input>
+                                    </el-form-item>
+                                </div>
+                            </div>
+                        </el-form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-slate-200 bg-white/96 px-6 py-4 shadow-[0_-6px_18px_rgba(15,23,42,0.06)] backdrop-blur">
+            <div class="mx-auto flex max-w-6xl justify-center gap-3">
+                <el-button @@click="closeForm()">
+                    <i class="fas fa-xmark mr-1"></i>
+                    <span>关闭</span>
+                </el-button>
+                <el-button type="primary" @@click="save" :loading="saving">
+                    <i class="fas fa-floppy-disk mr-1"></i>
+                    <span>保存</span>
+                </el-button>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, reactive, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const file = @Html.Raw(fileJson);
+                const rowId = ref(@Html.Raw(idJson));
+                const mode = @Html.Raw(modeJson);
+                const saving = ref(false);
+                const meta = reactive({
+                    fileName: '',
+                    columns: []
+                });
+                const form = reactive({});
+                const isNew = computed(() => mode === 'new' || !rowId.value);
+                const isDrawerPage = computed(() => window.parent !== window || window.top !== window);
+
+                /**读取元数据 */
+                const loadMeta = async () => {
+                    const res = await axios.get('?handler=Meta', { params: { file } });
+                    const body = res.data || {};
+                    if (body.code !== 0) {
+                        throw new Error(body.message || body.msg || body.info || '读取元数据失败');
+                    }
+
+                    const data = body.data || {};
+                    meta.fileName = data.fileName || '';
+                    meta.columns = Array.isArray(data.columns) ? data.columns : [];
+                    meta.columns.forEach(col => {
+                        form[col.key] = form[col.key] || '';
+                    });
+                };
+
+                /**读取单行 */
+                const loadRow = async () => {
+                    if (isNew.value) return;
+                    const res = await axios.get('?handler=Row', { params: { file, id: rowId.value } });
+                    const body = res.data || {};
+                    if (body.code !== 0) {
+                        throw new Error(body.message || body.msg || body.info || '读取数据失败');
+                    }
+
+                    const row = body.data || {};
+                    const cells = row.cells || {};
+                    Object.keys(cells).forEach(key => {
+                        form[key] = cells[key] || '';
+                    });
+                };
+
+                /**保存 */
+                const save = async () => {
+                    saving.value = true;
+                    try {
+                        const res = await axios.post('?handler=Save', {
+                            file,
+                            id: isNew.value ? null : rowId.value,
+                            values: form
+                        }, {
+                            headers: {
+                                'RequestVerificationToken': (window.Utils && Utils.getCsrfToken) ? Utils.getCsrfToken() : ''
+                            }
+                        });
+                        const body = res.data || {};
+                        if (body.code !== 0) {
+                            throw new Error(body.message || body.msg || body.info || '保存失败');
+                        }
+
+                        const row = body.data || {};
+                        rowId.value = row.id || rowId.value;
+                        EleManager.showSuccess?.('保存成功');
+                        setTimeout(() => closeForm(row), 300);
+                    } catch (e) {
+                        console.error(e);
+                        const msg = e?.response?.data?.message || e?.response?.data?.msg || e?.message || '保存失败';
+                        EleManager.showError?.(msg);
+                    } finally {
+                        saving.value = false;
+                    }
+                };
+
+                /**返回列表 */
+                const goBack = () => {
+                    window.location.href = `/Shared/AutoTable?file=${encodeURIComponent(file)}`;
+                };
+
+                /**关闭表单 */
+                const closeForm = (row) => {
+                    if (isDrawerPage.value && window.EleManager && typeof EleManager.closePage === 'function') {
+                        const msg = { __eleRefreshData: true, payload: row || null };
+                        try {
+                            window.parent && window.parent !== window && window.parent.postMessage(msg, '*');
+                        } catch {
+                        }
+                        try {
+                            window.top && window.top !== window && window.top.postMessage(msg, '*');
+                        } catch {
+                        }
+                        EleManager.closePage({ saved: true, row });
+                        return;
+                    }
+                    goBack();
+                };
+
+                /**是否下拉列 */
+                const hasOptions = (col) => Array.isArray(col?.options) && col.options.length > 0;
+
+                /**查询下拉建议 */
+                const queryOptions = (col, txt, cb) => {
+                    const key = String(txt || '').trim().toLowerCase();
+                    const list = (Array.isArray(col?.options) ? col.options : [])
+                        .filter(v => !key || String(v || '').toLowerCase().includes(key))
+                        .slice(0, 20)
+                        .map(v => ({ value: v }));
+                    cb(list);
+                };
+
+                /**是否长文本列 */
+                const isLongField = (col) => {
+                    const txt = String(col?.title || '');
+                    return /说明|描述|地址|位置|内容|措施|备注|情况/.test(txt);
+                };
+
+                onMounted(async () => {
+                    try {
+                        await loadMeta();
+                        await loadRow();
+                    } catch (e) {
+                        console.error(e);
+                        EleManager.showError?.(e.message || '页面初始化失败');
+                    }
+                });
+
+                return {
+                    file,
+                    rowId,
+                    saving,
+                    meta,
+                    form,
+                    isNew,
+                    isDrawerPage,
+                    hasOptions,
+                    queryOptions,
+                    isLongField,
+                    save,
+                    closeForm,
+                    goBack
+                };
+            }
+        })
+        .use(ElementPlus, { locale: ElementPlusLocaleZhCn })
+        .mount('#app');
+    </script>
+}

@@ -1,0 +1,309 @@
+@page
+@model App.Pages.Shared.AutoTableModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "智能表格";
+    var fileJson = JsonSerializer.Serialize(Model.File ?? string.Empty);
+    var labelPositionJson = JsonSerializer.Serialize(Model.LabelPosition ?? "left");
+}
+
+@section body {
+    <div id="app" class="h-screen overflow-hidden bg-slate-50">
+        <div class="h-full flex flex-col p-4 gap-4 box-border">
+            <div class="rounded-xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm">
+                <div class="mb-4 text-sm text-slate-500">文件：{{ meta.fileName || file || '未指定' }}</div>
+                <el-form :label-position="formLabelPosition"
+                         :label-width="formLabelWidth"
+                         class="auto-search-form">
+                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <div v-for="col in meta.columns" :key="col.key">
+                            <el-form-item :label="col.title" class="mb-0">
+                                <el-select v-if="hasOptions(col)"
+                                           v-model="filters[col.key]"
+                                           clearable
+                                           filterable
+                                           placeholder="请选择"
+                                           class="w-full">
+                                    <el-option v-for="opt in col.options" :key="opt" :label="opt" :value="opt"></el-option>
+                                </el-select>
+                                <el-input v-else
+                                          v-model="filters[col.key]"
+                                          clearable
+                                          placeholder="请输入"
+                                          @@keyup.enter="search"></el-input>
+                            </el-form-item>
+                        </div>
+                    </div>
+                </el-form>
+                <div class="mt-4 flex flex-wrap justify-start gap-2">
+                    <el-button type="primary" @@click="search" :loading="loading">
+                        <i class="fas fa-search mr-1"></i>
+                        <span>查询</span>
+                    </el-button>
+                    <el-button @@click="resetSearch">
+                        <i class="fas fa-rotate-left mr-1"></i>
+                        <span>重置</span>
+                    </el-button>
+                    <el-button @@click="downloadFile">
+                        <i class="fas fa-download mr-1"></i>
+                        <span>下载</span>
+                    </el-button>
+                    <el-button type="primary" plain @@click="openForm()">
+                        <i class="fas fa-plus mr-1"></i>
+                        <span>新增</span>
+                    </el-button>
+                </div>
+            </div>
+
+            <div class="min-h-0 flex-1 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <el-table :data="rows"
+                          stripe
+                          border
+                          v-loading="loading"
+                          height="100%"
+                          class="w-full">
+                    <el-table-column type="index" label="#" width="60"></el-table-column>
+                    <el-table-column prop="id" label="行号" width="90"></el-table-column>
+                    <el-table-column v-for="col in meta.columns"
+                                     :key="col.key"
+                                     :label="col.title"
+                                     min-width="160">
+                        <template #default="scope">
+                            {{ scope.row.cells?.[col.key] || '' }}
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" fixed="right" width="110">
+                        <template #default="scope">
+                            <div class="flex items-center justify-center gap-1">
+                                <el-button type="primary" link title="编辑" @@click="openForm(scope.row.id)">
+                                    <i class="fas fa-pen-to-square"></i>
+                                </el-button>
+                                <el-button type="danger" link title="删除" @@click="deleteRow(scope.row)">
+                                    <i class="fas fa-trash"></i>
+                                </el-button>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+
+            <div class="flex justify-end">
+                <el-pagination background
+                               layout="total, sizes, prev, pager, next"
+                               :current-page="pageIndex"
+                               :page-size="pageSize"
+                               :page-sizes="[10,20,50,100]"
+                               :total="total"
+                               @@current-change="onPageChange"
+                               @@size-change="onSizeChange"></el-pagination>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, reactive, onMounted, onUnmounted } = Vue;
+
+        createApp({
+            setup() {
+                const file = @Html.Raw(fileJson);
+                const labelPosition = @Html.Raw(labelPositionJson);
+                const loading = ref(false);
+                const pageIndex = ref(1);
+                const pageSize = ref(20);
+                const total = ref(0);
+                const formLabelPosition = ref(['left', 'right', 'top'].includes(labelPosition) ? labelPosition : 'left');
+                const rows = ref([]);
+                const meta = reactive({
+                    fileName: '',
+                    columns: []
+                });
+                const filters = reactive({});
+
+                /**读取元数据 */
+                const loadMeta = async () => {
+                    const res = await axios.get('?handler=Meta', { params: { file } });
+                    const body = res.data || {};
+                    if (body.code !== 0) {
+                        throw new Error(body.msg || body.info || '读取元数据失败');
+                    }
+
+                    const data = body.data || {};
+                    meta.fileName = data.fileName || '';
+                    meta.columns = Array.isArray(data.columns) ? data.columns : [];
+                    meta.columns.forEach(col => {
+                        if (!(col.key in filters)) {
+                            filters[col.key] = '';
+                        }
+                    });
+                };
+
+                /**读取数据 */
+                const loadData = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await axios.get('?handler=Data', {
+                            params: {
+                                file,
+                                filters: JSON.stringify(filters),
+                                pageIndex: pageIndex.value - 1,
+                                pageSize: pageSize.value
+                            }
+                        });
+                        const body = res.data || {};
+                        if (body.code !== 0) {
+                            throw new Error(body.msg || body.info || '读取数据失败');
+                        }
+
+                        const data = body.data || {};
+                        rows.value = Array.isArray(data.rows) ? data.rows : [];
+                        total.value = body.pager?.total || 0;
+                    } catch (e) {
+                        console.error(e);
+                        EleManager.showError?.(e.message || '读取数据失败');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                /**查询 */
+                const search = async () => {
+                    pageIndex.value = 1;
+                    await loadData();
+                };
+
+                /**重置 */
+                const resetSearch = async () => {
+                    Object.keys(filters).forEach(key => filters[key] = '');
+                    await search();
+                };
+
+                /**打开表单 */
+                const openForm = (id) => {
+                    const url = `/Shared/AutoForm?file=${encodeURIComponent(file)}${id ? `&id=${id}` : '&md=new'}`;
+                    const title = id ? '编辑数据' : '新增数据';
+                    if (window.EleManager && typeof EleManager.openDrawer === 'function') {
+                        EleManager.openDrawer({
+                            title,
+                            url,
+                            size: '50%',
+                            direction: 'rtl',
+                            closeAction: 'refreshdata'
+                        });
+                        return;
+                    }
+                    window.location.href = url;
+                };
+
+                /**下载文件 */
+                const downloadFile = () => {
+                    window.location.href = `?handler=Download&file=${encodeURIComponent(file)}`;
+                };
+
+                /**删除数据 */
+                const deleteRow = async (row) => {
+                    if (!row?.id) return;
+                    try {
+                        if (window.EleManager && typeof EleManager.confirm === 'function') {
+                            await EleManager.confirm(`确定删除第 ${row.id} 行数据吗？`, '提示');
+                        } else if (!window.confirm(`确定删除第 ${row.id} 行数据吗？`)) {
+                            return;
+                        }
+
+                        const res = await axios.post('?handler=Delete', {
+                            file,
+                            id: row.id
+                        }, {
+                            headers: {
+                                'RequestVerificationToken': (window.Utils && Utils.getCsrfToken) ? Utils.getCsrfToken() : ''
+                            }
+                        });
+                        const body = res.data || {};
+                        if (body.code !== 0) {
+                            throw new Error(body.message || body.msg || body.info || '删除失败');
+                        }
+
+                        EleManager.showSuccess?.('删除成功');
+                        if (rows.value.length <= 1 && pageIndex.value > 1) {
+                            pageIndex.value = 1;
+                        }
+                        await loadData();
+                    } catch (e) {
+                        if (e === 'cancel' || e?.message === 'cancel') return;
+                        console.error(e);
+                        const msg = e?.response?.data?.message || e?.response?.data?.msg || e?.message || '删除失败';
+                        EleManager.showError?.(msg);
+                    }
+                };
+
+                /**页码切换 */
+                const onPageChange = async (val) => {
+                    pageIndex.value = val;
+                    await loadData();
+                };
+
+                /**分页大小切换 */
+                const onSizeChange = async (val) => {
+                    pageSize.value = val;
+                    pageIndex.value = 1;
+                    await loadData();
+                };
+
+                /**是否下拉列 */
+                const hasOptions = (col) => Array.isArray(col?.options) && col.options.length > 0;
+
+                /**表单标签宽度 */
+                const formLabelWidth = Vue.computed(() => formLabelPosition.value === 'top' ? 'auto' : '110px');
+
+                /**处理抽屉刷新 */
+                const onRefreshData = async (e) => {
+                    if (!e?.data?.__eleRefreshData) return;
+                    if (rows.value.length <= 1 && pageIndex.value > 1) {
+                        pageIndex.value = 1;
+                    }
+                    await loadData();
+                };
+
+                onMounted(async () => {
+                    try {
+                        await loadMeta();
+                        await loadData();
+                        window.addEventListener('message', onRefreshData);
+                    } catch (e) {
+                        console.error(e);
+                        EleManager.showError?.(e.message || '页面初始化失败');
+                    }
+                });
+
+                onUnmounted(() => {
+                    window.removeEventListener('message', onRefreshData);
+                });
+
+                return {
+                    file,
+                    formLabelPosition,
+                    formLabelWidth,
+                    loading,
+                    pageIndex,
+                    pageSize,
+                    total,
+                    rows,
+                    meta,
+                    filters,
+                    hasOptions,
+                    loadData,
+                    search,
+                    resetSearch,
+                    downloadFile,
+                    deleteRow,
+                    openForm,
+                    onPageChange,
+                    onSizeChange
+                };
+            }
+        })
+        .use(ElementPlus, { locale: ElementPlusLocaleZhCn })
+        .mount('#app');
+    </script>
+}
