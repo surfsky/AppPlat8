@@ -68,7 +68,7 @@ namespace App.DAL.GIS
                 var prefix = year.Value.ToString();
                 q = q.Where(t => (t.Code ?? string.Empty).StartsWith(prefix));
             }
-            return q.OrderByDescending(t => t.Code);
+            return q;
         }
     }
 }

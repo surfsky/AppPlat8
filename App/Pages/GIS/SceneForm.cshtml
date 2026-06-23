@@ -7,7 +7,7 @@
 
 @section body {
     <EleForm>
-        <EleIconPicker For="Item.Icon" Label="图标" FillRow="true"></EleIconPicker>
+        <EleIconPicker For="Item.Icon" Label="图标" FillRow="true" Popup="/Shared/IconSelector" ></EleIconPicker>
         <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="9999"></EleNumber>
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
@@ -16,7 +16,7 @@
         <ElePicker For="Item.MapCenter" TextFor="Item.MapCenter" Label="地图中心坐标" PopupUrl="Locator" Icon="Location" Editable="true" Placeholder="lng, lat"></ElePicker>
         <EleNumber For="Item.MapPitch" Label="地图倾斜角" Min="0" Max="85"></EleNumber>
         <EleSelect For="Item.MapStyle" Label="地图样式" Items="Model.Styles"></EleSelect>
-        <EleSelect For="Item.MapProjection" Label="地图投影" Items="Model.Projections"></EleSelect>
+        <EleSelect For="Item.MapProjection" Label="地图投影" ></EleSelect>
         <EleSwitch For="Item.Map3D" Label="启用3D"></EleSwitch>
         
         <Bottom>

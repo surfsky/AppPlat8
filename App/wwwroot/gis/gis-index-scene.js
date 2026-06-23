@@ -37,6 +37,39 @@
             });
         }
 
+        function renderProjectionMenu() {
+            const host = document.getElementById('view-projection-list');
+            if (!host) return;
+
+            const projectionList = [
+                { name: '墨卡托投影', value: 'mercator' },
+                { name: '球形投影', value: 'globe' }
+            ];
+
+            host.innerHTML = '';
+            projectionList.forEach(item => {
+                const label = document.createElement('label');
+                label.className = 'view-menu-option view-menu-radio';
+
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = 'view-projection';
+                input.value = item.value;
+                input.dataset.viewProjection = item.value;
+                input.checked = String(state.currentProjection || 'mercator') === item.value;
+                input.addEventListener('change', () => {
+                    if (input.checked) viewApi.applyProjection(item.value);
+                });
+
+                const text = document.createElement('span');
+                text.textContent = item.name;
+
+                label.appendChild(input);
+                label.appendChild(text);
+                host.appendChild(label);
+            });
+        }
+
         async function loadMapStyles() {
             try {
                 const res = await axios.get('/httpapi/gis/GetMapStyles');
@@ -57,6 +90,8 @@
                 renderViewStyleMenu();
             } catch (err) {
                 console.error('加载地图样式失败', err);
+            } finally {
+                renderProjectionMenu();
             }
         }
 
@@ -92,6 +127,7 @@
                             adjustCamera: false
                         });
                         renderViewStyleMenu();
+                        renderProjectionMenu();
                     }
 
                     const centerStr = detail.mapCenter || detail.MapCenter;
@@ -151,6 +187,7 @@
 
         return {
             renderViewStyleMenu,
+            renderProjectionMenu,
             loadMapStyles,
             loadScenes,
             switchScene,

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 namespace App.Components
 {
     /// <summary>
-    /// App自定义权限验证过滤器
+    /// 权限验证过滤器
     /// </summary>
     public class CheckPowerAttribute : ResultFilterAttribute
     {
@@ -18,7 +18,7 @@ namespace App.Components
             Power = power;
         }
 
-
+        // 页面权限校验
         public override void OnResultExecuting(ResultExecutingContext filterContext)
         {
             HttpContext context = filterContext.HttpContext;
@@ -35,11 +35,7 @@ namespace App.Components
                 else if (context.Request.Method == "POST")
                 {
                     // return a simple JSON error
-                    filterContext.Result = new JsonResult(new
-                    {
-                        success = false,
-                        message = Auth.MSG_CHECK_POWER_FAIL_ACTION
-                    })
+                    filterContext.Result = new JsonResult(new {success = false, message = Auth.MSG_CHECK_POWER_FAIL_ACTION})
                     {
                         StatusCode = StatusCodes.Status403Forbidden
                     };

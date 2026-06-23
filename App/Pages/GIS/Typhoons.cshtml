@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="台风轨迹" EnableBatch="false">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="台风轨迹" EnableBatch="false" >
         <Toolbar>
             <Filters>
                 <EleNumber For="Item.Year" Width="120px" Label="年份" LabelWidth="60px"></EleNumber>
@@ -24,14 +24,12 @@
             </EleOpColumn>
             <EleColumn For="Item.Code" Label="编号" Width="110" Sortable="true"></EleColumn>
             <EleColumn For="Item.Year" Label="年份" Width="80" Sortable="true"></EleColumn>
-            <EleColumn For="Item.ChineseName" Label="中文名" Width="120"></EleColumn>
-            <EleColumn For="Item.Name" Label="英文名" Width="160"></EleColumn>
+            <EleColumn For="Item.Name" Label="英文名" Width="300"></EleColumn>
+            <EleColumn For="Item.ChineseName" Label="中文名" Width="200"></EleColumn>
             <EleColumn For="Item.MaxLevel" Label="最高等级" Width="100"></EleColumn>
-            <EleColumn For="Item.IsLandText" Label="登陆" Width="80"></EleColumn>
-            <EleColumn For="Item.LogCnt" Label="轨迹点" Width="90" Sortable="true"></EleColumn>
-            <EleColumn For="Item.BirthUtc" Label="生成时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
-            <EleColumn For="Item.DeathUtc" Label="结束时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
-            <EleColumn For="Item.LastTimeUtc" Label="最后轨迹" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.IsLand" Label="是否登陆" Width="80"></EleColumn>
+            <EleColumn For="Item.BirthUtc" Label="生成时间" Width="180" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.DeathUtc" Label="结束时间" Width="180" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
         </Columns>
     </EleTable>
 }

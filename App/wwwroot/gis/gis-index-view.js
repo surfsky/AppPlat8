@@ -92,6 +92,15 @@
             });
         }
 
+        function syncProjectionButtons() {
+            const current = resolveProjection(state.currentProjection);
+            document.querySelectorAll('[data-view-projection]').forEach(input => {
+                if (input.type === 'radio') {
+                    input.checked = resolveProjection(input.dataset.viewProjection) === current;
+                }
+            });
+        }
+
         function sync3DToggleButton() {
             const input = document.getElementById('btn-toggle-3d');
             if (input) input.checked = !!state.is3D;
@@ -124,12 +133,58 @@
             }
         }
 
+        function syncProjectionBackdrop(projectionName) {
+            const isGlobe = projectionName === 'globe';
+            document.body.classList.toggle('gis-projection-globe', isGlobe);
+            const mapEl = document.getElementById('map');
+            if (mapEl) mapEl.classList.toggle('gis-map-globe', isGlobe);
+            try {
+                const canvas = typeof map.getCanvas === 'function' ? map.getCanvas() : null;
+                if (canvas) {
+                    canvas.style.backgroundColor = isGlobe ? 'transparent' : '';
+                }
+            } catch {
+            }
+            if (!isGlobe) {
+                if (!state.is3D && typeof map.setFog === 'function') {
+                    try {
+                        map.setFog(null);
+                    } catch {
+                    }
+                }
+                return;
+            }
+            if (typeof map.setFog === 'function') {
+                try {
+                    map.setFog({
+                        color: 'rgb(186, 210, 235)',
+                        'high-color': 'rgb(36, 92, 223)',
+                        'horizon-blend': 0.08,
+                        'space-color': 'rgb(2, 6, 23)',
+                        'star-intensity': 0.35
+                    });
+                } catch {
+                }
+            }
+            try {
+                const style = map.getStyle();
+                const bgLayerId = style?.layers?.find(l => l?.type === 'background')?.id;
+                if (bgLayerId) {
+                    map.setPaintProperty(bgLayerId, 'background-color', '#020617');
+                    map.setPaintProperty(bgLayerId, 'background-opacity', 1);
+                }
+            } catch {
+            }
+        }
+
         function applyProjection(projection, options = {}) {
             const projectionName = resolveProjection(projection);
             state.currentProjection = projectionName;
             if (typeof map.setProjection === 'function') {
                 map.setProjection(projectionName);
             }
+            syncProjectionButtons();
+            syncProjectionBackdrop(projectionName);
             if (options.closeMenu !== false) {
                 closeViewMenu();
             }
@@ -342,6 +397,7 @@
             applyProjection,
             applyViewConfig,
             syncStyleButtons,
+            syncProjectionButtons,
             sync3DToggleButton,
             syncRotateToggleButton
         };

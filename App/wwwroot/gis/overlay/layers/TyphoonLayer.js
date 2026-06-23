@@ -13,6 +13,10 @@ export class TyphoonLayer extends MapLayer {
       refreshSeconds: 1800
     });
     this.sourceId = "typhoon-source";
+    this.wind7FillLayerId = "typhoon-wind7-fill-layer";
+    this.wind7LineLayerId = "typhoon-wind7-line-layer";
+    this.wind10FillLayerId = "typhoon-wind10-fill-layer";
+    this.wind10LineLayerId = "typhoon-wind10-line-layer";
     this.probFillLayerId = "typhoon-prob-fill-layer";
     this.probLayerId = "typhoon-prob-layer";
     this.historyLayerId = "typhoon-history-layer";
@@ -32,10 +36,14 @@ export class TyphoonLayer extends MapLayer {
     this.predictApi = "/httpapi/typhoon/predict";
     this.currentTrackApi = "https://agora.ex.nii.ac.jp/digital-typhoon/geojson/wnp/";
     this.currentForecastApi = "https://agora.ex.nii.ac.jp/digital-typhoon/json/jmaxml-forecast/wnp/";
+    this.currentListApi = "https://codh.ex.nii.ac.jp/digital-typhoon/latest/track/index.html.en";
     this.historyList = [];
+    this.currentList = [];
     this.selectedYear = "";
     this.selectedCode = "";
     this.currentStormMap = new Map();
+    this.currentListLoadedAt = 0;
+    this.initSelectionReady = false;
     this.legendEl = null;
     this.popup = null;
     this.eventBound = false;
@@ -210,6 +218,13 @@ export class TyphoonLayer extends MapLayer {
     return resp.json();
   }
 
+  /**读取文本 */
+  async fetchText(url) {
+    const resp = await fetchWithTimeout(url, {}, 12000);
+    if (!resp.ok) throw new Error(`台风文本请求失败: ${resp.status}`);
+    return resp.text();
+  }
+
   /**确保图标 */
   async ensureTyphoonSvg() {
     if (this.typhoonSvgMarkup) return;
@@ -318,6 +333,33 @@ export class TyphoonLayer extends MapLayer {
     return url.toString();
   }
 
+  /**按编号合并 */
+  mergeItemsByCode(...groups) {
+    const map = new Map();
+    for (const group of groups) {
+      for (const item of Array.isArray(group) ? group : []) {
+        const code = this.getItemCode(item);
+        if (!code) continue;
+        const prev = map.get(code) || {};
+        map.set(code, { ...prev, ...item, code });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => this.getItemCode(b).localeCompare(this.getItemCode(a)));
+  }
+
+  /**获取编号序号 */
+  getCodeSeq(code) {
+    const txt = String(code || "").trim();
+    const m = txt.match(/^(\d{4})(\d{2})$/);
+    return m ? Number(m[2]) : NaN;
+  }
+
+  /**是否当前年份 */
+  isCurrentYearCode(code) {
+    const year = /^\d{4}/.test(String(code || "")) ? Number(String(code).slice(0, 4)) : NaN;
+    return Number.isFinite(year) && year === new Date().getUTCFullYear();
+  }
+
   /**确保历史列表 */
   async ensureHistoryList() {
     if (this.historyList.length) return;
@@ -337,7 +379,7 @@ export class TyphoonLayer extends MapLayer {
   /**获取年份列表 */
   getYears() {
     const set = new Set();
-    for (const item of this.historyList) {
+    for (const item of this.mergeItemsByCode(this.historyList, this.currentList)) {
       const year = this.getYear(item);
       if (Number.isFinite(year) && year > 1900) set.add(year);
     }
@@ -346,13 +388,46 @@ export class TyphoonLayer extends MapLayer {
 
   /**获取指定年份台风 */
   getYearItems(year) {
-    if (!year) return this.historyList;
-    return this.historyList.filter(item => String(this.getYear(item)) === String(year));
+    const list = this.mergeItemsByCode(this.historyList, this.currentList);
+    if (!year) return list;
+    return list.filter(item => String(this.getYear(item)) === String(year));
+  }
+
+  /**查找台风项 */
+  findItemByCode(code) {
+    const key = String(code || "").trim();
+    if (!key) return null;
+    return this.mergeItemsByCode(this.historyList, this.currentList)
+      .find(item => this.getItemCode(item) === key) || null;
+  }
+
+  /**是否当前活跃台风 */
+  isCurrentCode(code) {
+    const key = String(code || "").trim();
+    if (!key) return false;
+    return this.currentList.some(item => this.getItemCode(item) === key);
+  }
+
+  /**确保默认选择 */
+  ensureDefaultSelection() {
+    if (this.initSelectionReady) return;
+    const years = this.getYears();
+    if (!this.selectedYear && years.length) {
+      this.selectedYear = String(years[0]);
+    }
+    const first = this.getYearItems(this.selectedYear)[0]
+      || this.mergeItemsByCode(this.historyList, this.currentList)[0]
+      || null;
+    if (first) {
+      this.selectedCode = this.getItemCode(first);
+    }
+    this.initSelectionReady = true;
   }
 
   /**渲染图例 */
   renderLegend() {
     const el = this.ensureLegend();
+    const liveCnt = this.currentList.length;
     const yearOptions = this.getYears()
       .map(year => `<option value="${year}" ${String(year) === String(this.selectedYear) ? "selected" : ""}>${year}</option>`)
       .join("");
@@ -371,8 +446,8 @@ export class TyphoonLayer extends MapLayer {
     `).join("");
     el.innerHTML = `
       <div class="typhoon-legend-title">
-        <span>历史台风轨迹</span>
-        <span class="typhoon-legend-tip">数据源：本地台风数据库</span>
+        <span>台风路径</span>
+        <span class="typhoon-legend-tip">${liveCnt > 0 ? `当前活跃 ${liveCnt} 个，实时源：Digital Typhoon` : "数据源：本地台风数据库"}</span>
       </div>
       <div class="typhoon-legend-row">
         <span class="typhoon-legend-label">年份</span>
@@ -608,11 +683,85 @@ export class TyphoonLayer extends MapLayer {
       forecastData = await this.fetchJson(this.getCurrentForecastUrl(key));
     } catch (_e) { }
     const data = {
+      meta: {
+        code: key,
+        name: String(trackData?.properties?.name || trackData?.properties?.display_name || "").trim()
+      },
       track: this.parseCurrentTrackGeoJson(trackData),
       forecast: this.parseCurrentForecastJson(forecastData)
     };
     this.currentStormMap.set(key, data);
     return data;
+  }
+
+  /**提取在线候选编号 */
+  extractCurrentCodes(text) {
+    const list = String(text || "").match(/\b\d{6}\b/g) || [];
+    return Array.from(new Set(list.filter(code => this.isCurrentYearCode(code))));
+  }
+
+  /**是否在线活跃 */
+  isLiveCurrentData(data) {
+    const track = Array.isArray(data?.track) ? data.track : [];
+    const current = data?.forecast?.current || null;
+    const latestTrack = track.length ? new Date(track[track.length - 1]?.time || "").getTime() : NaN;
+    const latestForecast = current
+      ? new Date(this.toUtcIsoFromUnix(current?.forecasttime) || this.toUtcIsoFromUnix(current?.basetime) || this.toUtcIsoFromJstText(current?.time)).getTime()
+      : NaN;
+    const latest = Math.max(Number.isFinite(latestTrack) ? latestTrack : 0, Number.isFinite(latestForecast) ? latestForecast : 0);
+    if (!latest) return false;
+    return latest >= Date.now() - 96 * 3600 * 1000;
+  }
+
+  /**确保当前活跃台风 */
+  async ensureCurrentList() {
+    const now = Date.now();
+    if (this.currentList.length && now - this.currentListLoadedAt < 15 * 60 * 1000) {
+      return this.currentList;
+    }
+
+    const curYear = new Date().getUTCFullYear();
+    const yearCodes = this.historyList
+      .map(item => this.getItemCode(item))
+      .filter(code => String(code).startsWith(String(curYear)));
+    let latestCodes = [];
+    try {
+      const text = await this.fetchText(this.currentListApi);
+      latestCodes = this.extractCurrentCodes(text);
+    } catch (_e) { }
+
+    const codeSet = new Set([...yearCodes, ...latestCodes]);
+    const seqList = Array.from(codeSet).map(code => this.getCodeSeq(code)).filter(Number.isFinite);
+    const maxSeq = seqList.length ? Math.max(...seqList) : 0;
+    for (let i = 1; i <= 4; i++) {
+      const seq = maxSeq + i;
+      if (seq <= 0 || seq > 99) continue;
+      codeSet.add(`${curYear}${String(seq).padStart(2, "0")}`);
+    }
+
+    const list = [];
+    const codes = Array.from(codeSet).sort((a, b) => b.localeCompare(a));
+    const rows = await Promise.all(codes.map(async code => {
+      const data = await this.ensureCurrentStormData(code).catch(() => null);
+      return { code, data };
+    }));
+
+    for (const row of rows) {
+      if (!this.isLiveCurrentData(row.data)) continue;
+      const local = this.historyList.find(item => this.getItemCode(item) === row.code) || null;
+      const item = {
+        ...(local || {}),
+        code: row.code,
+        name: String(local?.name || local?.Name || row.data?.meta?.name || "").trim(),
+        chineseName: this.getChineseName(local) || "",
+        isLive: true
+      };
+      list.push(item);
+    }
+
+    this.currentList = this.mergeItemsByCode(list);
+    this.currentListLoadedAt = now;
+    return this.currentList;
   }
 
   /**是否结束 */
@@ -685,6 +834,39 @@ export class TyphoonLayer extends MapLayer {
     });
   }
 
+  /**估算风圈半径 */
+  estimateWindCircleKm(windMs) {
+    const wind = Number(windMs) || 0;
+    if (wind >= 51) return { r7: 320, r10: 150 };
+    if (wind >= 41.5) return { r7: 280, r10: 120 };
+    if (wind >= 32.7) return { r7: 240, r10: 90 };
+    if (wind >= 24.5) return { r7: 200, r10: 60 };
+    if (wind >= 17.2) return { r7: 150, r10: 0 };
+    return { r7: 100, r10: 0 };
+  }
+
+  /**构建实时风圈 */
+  buildLiveWindCircleFeatures(center, windMs, stormId) {
+    if (!Array.isArray(center) || center.length < 2 || !center.every(Number.isFinite)) return [];
+    const size = this.estimateWindCircleKm(windMs);
+    const list = [];
+    if (size.r7 > 0) {
+      const item = this.buildCircleFeature("wind-7-circle", center, size.r7 * 1000, {
+        stormId: stormId || "",
+        label: "7级风圈"
+      });
+      if (item) list.push(item);
+    }
+    if (size.r10 > 0) {
+      const item = this.buildCircleFeature("wind-10-circle", center, size.r10 * 1000, {
+        stormId: stormId || "",
+        label: "10级风圈"
+      });
+      if (item) list.push(item);
+    }
+    return list;
+  }
+
   /**构建中心图标要素 */
   buildCenterFeature(storm) {
     const center = Array.isArray(storm?.center) ? storm.center : null;
@@ -697,7 +879,7 @@ export class TyphoonLayer extends MapLayer {
         kind: "storm-center",
         stormId: storm?.id || "",
         iconImage: this.getCenterIconId(color),
-        iconSize: 1.45
+        iconSize: 2
       }
     };
   }
@@ -748,7 +930,6 @@ export class TyphoonLayer extends MapLayer {
       const timeText = this.formatLocalTime(item?.timeUtc || item?.TimeUtc);
       const pressure = item?.pressure ?? item?.Pressure ?? "-";
       const levelName = item?.levelName || item?.LevelName || windMeta.name;
-      const label = timeText ? timeText.slice(5, 16).replace(" ", "-") : "";
       const popupTitle = `${code} ${name}`.trim();
       features.push({
         type: "Feature",
@@ -762,6 +943,7 @@ export class TyphoonLayer extends MapLayer {
           windColor: windMeta.color,
           pointRadius: i === points.length - 1 ? 5 : 3.8,
           isCurrent: i === points.length - 1 ? 1 : 0,
+          pointVisible: i === points.length - 1 ? 0 : 1,
           popupTitle,
           popupTime: timeText || "-",
           popupCoord: `${lng.toFixed(1)}, ${lat.toFixed(1)}`,
@@ -771,17 +953,6 @@ export class TyphoonLayer extends MapLayer {
           popupType: i === points.length - 1 ? "当前位置" : "历史点"
         }
       });
-      if (label) {
-        features.push({
-          type: "Feature",
-          geometry: { type: "Point", coordinates: [lng, lat] },
-          properties: {
-            kind: "track-label",
-            label,
-            labelColor: windMeta.color
-          }
-        });
-      }
     });
 
     if (coords.length > 1) {
@@ -894,6 +1065,7 @@ export class TyphoonLayer extends MapLayer {
           windColor: windMeta.color,
           pointRadius: this.getPointRadius(item.windMs, i === track.length - 1),
           isCurrent: i === track.length - 1 ? 1 : 0,
+          pointVisible: i === track.length - 1 ? 0 : 1,
           popupTitle: `${code} ${name}`.trim(),
           popupTime: item.timeText || this.formatLocalTime(item.time),
           popupCoord: this.formatCoord(coord),
@@ -903,17 +1075,6 @@ export class TyphoonLayer extends MapLayer {
           popupType: i === track.length - 1 ? "当前台风实况点" : "当前台风轨迹点"
         }
       });
-      if (item.shortLabel) {
-        features.push({
-          type: "Feature",
-          geometry: { type: "Point", coordinates: coord },
-          properties: {
-            kind: "track-label",
-            label: item.shortLabel,
-            labelColor: "#e2e8f0"
-          }
-        });
-      }
     });
 
     const historyLine = this.buildPathFeature("history-path", actualCoords, { color: "#fb7185" });
@@ -923,6 +1084,7 @@ export class TyphoonLayer extends MapLayer {
     const currentCenter = Array.isArray(currentItem?.coord) ? currentItem.coord : null;
     const agencyColor = "#7c3aed";
     if (currentCenter) {
+      features.push(...this.buildLiveWindCircleFeatures(currentCenter, currentItem?.windMs, stormId));
       const pathCoords = [currentCenter, ...predicts.map(x => x.coord).filter(x => Array.isArray(x) && x.length >= 2)];
       const line = this.buildPathFeature("forecast-path", pathCoords, {
         agencyId: "jma",
@@ -946,6 +1108,7 @@ export class TyphoonLayer extends MapLayer {
             windColor: windMeta.color,
             pointRadius: this.getPointRadius(item.windMs, false),
             isCurrent: 0,
+            pointVisible: 1,
             popupTitle: `${code} ${name}`.trim(),
             popupTime: item.timeText || this.formatLocalTime(item.time),
             popupCoord: this.formatCoord(coord),
@@ -955,17 +1118,6 @@ export class TyphoonLayer extends MapLayer {
             popupType: `${item.period || 0}小时预报点`
           }
         });
-        if (item.shortLabel) {
-          features.push({
-            type: "Feature",
-            geometry: { type: "Point", coordinates: coord },
-            properties: {
-              kind: "track-label",
-              label: item.shortLabel,
-              labelColor: agencyColor
-            }
-          });
-        }
         const circle = this.buildProbCircleFeature(item, agencyColor);
         if (circle) features.push(circle);
       });
@@ -1012,9 +1164,55 @@ export class TyphoonLayer extends MapLayer {
     return { features, summary, currentStorms };
   }
 
+  /**合并要素结果 */
+  mergeFeatureResults(rows) {
+    const features = [];
+    const summaries = [];
+    const currentStorms = [];
+    for (const row of Array.isArray(rows) ? rows : []) {
+      if (Array.isArray(row?.features) && row.features.length) {
+        features.push(...row.features);
+      }
+      if (row?.summary) {
+        summaries.push(row.summary);
+      }
+      if (Array.isArray(row?.currentStorms) && row.currentStorms.length) {
+        currentStorms.push(...row.currentStorms);
+      }
+    }
+    return { features, summaries, currentStorms };
+  }
+
+  /**构建全部活跃台风 */
+  async buildCurrentListFeatures(code) {
+    const key = String(code || "").trim();
+    const extras = this.currentList
+      .map(item => this.getItemCode(item))
+      .filter(itemCode => !!itemCode && itemCode !== key);
+    const codes = Array.from(new Set([key, ...extras].filter(Boolean)));
+    const rows = await Promise.all(codes.map(async itemCode => {
+      const item = this.findItemByCode(itemCode);
+      return this.buildCurrentFeatures(item, itemCode).catch(() => ({
+        features: [],
+        summary: null,
+        currentStorms: []
+      }));
+    }));
+    const merged = this.mergeFeatureResults(rows);
+    return {
+      ...merged,
+      summary: rows[0]?.summary || null,
+      activeCnt: merged.summaries.length
+    };
+  }
+
   /**生成图层 ID 列表 */
   getLayerIds() {
     return [
+      this.wind7FillLayerId,
+      this.wind7LineLayerId,
+      this.wind10FillLayerId,
+      this.wind10LineLayerId,
       this.probFillLayerId,
       this.probLayerId,
       this.historyLayerId,
@@ -1030,6 +1228,56 @@ export class TyphoonLayer extends MapLayer {
   /**确保图层 */
   ensureLayers() {
     const { map } = this.runtime;
+    if (!map.getLayer(this.wind7FillLayerId)) {
+      map.addLayer({
+        id: this.wind7FillLayerId,
+        type: "fill",
+        source: this.sourceId,
+        filter: ["==", ["get", "kind"], "wind-7-circle"],
+        paint: {
+          "fill-color": "#86efac",
+          "fill-opacity": 0.18
+        }
+      });
+    }
+    if (!map.getLayer(this.wind7LineLayerId)) {
+      map.addLayer({
+        id: this.wind7LineLayerId,
+        type: "line",
+        source: this.sourceId,
+        filter: ["==", ["get", "kind"], "wind-7-circle"],
+        paint: {
+          "line-color": "#4ade80",
+          "line-width": 1.5,
+          "line-opacity": 0.9
+        }
+      });
+    }
+    if (!map.getLayer(this.wind10FillLayerId)) {
+      map.addLayer({
+        id: this.wind10FillLayerId,
+        type: "fill",
+        source: this.sourceId,
+        filter: ["==", ["get", "kind"], "wind-10-circle"],
+        paint: {
+          "fill-color": "#67e8f9",
+          "fill-opacity": 0.2
+        }
+      });
+    }
+    if (!map.getLayer(this.wind10LineLayerId)) {
+      map.addLayer({
+        id: this.wind10LineLayerId,
+        type: "line",
+        source: this.sourceId,
+        filter: ["==", ["get", "kind"], "wind-10-circle"],
+        paint: {
+          "line-color": "#22d3ee",
+          "line-width": 1.4,
+          "line-opacity": 0.92
+        }
+      });
+    }
     if (!map.getLayer(this.probFillLayerId)) {
       map.addLayer({
         id: this.probFillLayerId,
@@ -1088,7 +1336,7 @@ export class TyphoonLayer extends MapLayer {
         id: this.pointLayerId,
         type: "circle",
         source: this.sourceId,
-        filter: ["==", ["get", "kind"], "track-point"],
+        filter: ["all", ["==", ["get", "kind"], "track-point"], ["==", ["coalesce", ["get", "pointVisible"], 1], 1]],
         paint: {
           "circle-color": ["get", "windColor"],
           "circle-radius": ["coalesce", ["get", "pointRadius"], 4],
@@ -1313,8 +1561,12 @@ export class TyphoonLayer extends MapLayer {
   async refresh() {
     await this.ensureTyphoonSvg();
     await this.ensureHistoryList();
+    await this.ensureCurrentList();
+    this.ensureDefaultSelection();
     if (!this.selectedCode) {
-      const first = this.getYearItems(this.selectedYear)[0] || this.historyList[0];
+      const first = this.getYearItems(this.selectedYear)[0]
+        || this.mergeItemsByCode(this.historyList, this.currentList)[0]
+        || this.historyList[0];
       this.selectedCode = this.getItemCode(first);
     }
     this.renderLegend();
@@ -1326,17 +1578,33 @@ export class TyphoonLayer extends MapLayer {
       return true;
     }
 
+    const selectedItem = this.findItemByCode(this.selectedCode);
     const [typhoon, logs, predicts] = await Promise.all([
-      this.fetchTyphoon(this.selectedCode).catch(() => null),
+      this.fetchTyphoon(this.selectedCode).catch(() => selectedItem),
       this.fetchLogs(this.selectedCode).catch(() => []),
       this.fetchPredict(this.selectedCode).catch(() => [])
     ]);
-    let result = this.buildFeatures(typhoon, logs, predicts);
-    if (this.shouldUseLiveData(typhoon, logs)) {
-      const liveResult = await this.buildCurrentFeatures(typhoon, this.selectedCode);
+    const baseTyphoon = typhoon || selectedItem;
+    let result = this.buildFeatures(baseTyphoon, logs, predicts);
+    let summary = result.summary || null;
+    let currentStorms = result.currentStorms || [];
+    let activeCnt = 0;
+    if (this.isCurrentCode(this.selectedCode)) {
+      const liveResult = await this.buildCurrentListFeatures(this.selectedCode);
+      if (liveResult?.features?.length) {
+        result = liveResult;
+        summary = liveResult.summary || null;
+        currentStorms = liveResult.currentStorms || [];
+        activeCnt = Number(liveResult.activeCnt) || 0;
+      }
+    } else if (this.shouldUseLiveData(baseTyphoon, logs)) {
+      const liveResult = await this.buildCurrentFeatures(baseTyphoon, this.selectedCode);
       if (liveResult?.features?.length) result = liveResult;
+      summary = liveResult?.summary || summary;
+      currentStorms = liveResult?.currentStorms || currentStorms;
+      activeCnt = liveResult?.summary ? 1 : 0;
     }
-    const { features, summary, currentStorms } = result;
+    const { features } = result;
     await this.ensureCenterImages(currentStorms);
     addOrUpdateGeoJsonSource(this.runtime.map, this.sourceId, { type: "FeatureCollection", features });
     this.ensureLayers();
@@ -1344,10 +1612,17 @@ export class TyphoonLayer extends MapLayer {
     this.syncCenterMarkers(currentStorms);
 
     if (!summary) {
-      setInfo("typhoonInfo", `台风：${this.selectedCode}，暂无轨迹数据`);
+      if (activeCnt > 0) {
+        setInfo("typhoonInfo", `台风 ${activeCnt} 个`);
+      } else {
+        setInfo("typhoonInfo", `台风：${this.selectedCode}`);
+      }
     } else {
       if (summary.mode === "current") {
-        setInfo("typhoonInfo", `当前台风：${summary.code} ${summary.name}，实况点 ${summary.pointCnt} 个，预测点 ${summary.predictCnt || 0} 个，最高风速 ${summary.maxWind}m/s，起止 ${summary.startText} ~ ${summary.endText}`);
+        const head = activeCnt > 1
+          ? `当前台风 ${activeCnt} 个，当前选中 ${summary.code} ${summary.name}`
+          : `当前台风：${summary.code} ${summary.name}`;
+        setInfo("typhoonInfo", `${head}，实况点 ${summary.pointCnt} 个，预测点 ${summary.predictCnt || 0} 个，最高风速 ${summary.maxWind}m/s，起止 ${summary.startText} ~ ${summary.endText}`);
       } else {
         setInfo("typhoonInfo", `历史台风：${summary.code} ${summary.name}，轨迹点 ${summary.pointCnt} 个，最高风速 ${summary.maxWind}m/s，起止 ${summary.startText} ~ ${summary.endText}`);
       }
@@ -1361,8 +1636,8 @@ export class TyphoonLayer extends MapLayer {
   /**设置透明度 */
   setOpacity(opacity) {
     const { map } = this.runtime;
-    const lineIds = [this.probLayerId, this.historyLayerId, this.forecastLayerId];
-    const fillIds = [this.probFillLayerId];
+    const lineIds = [this.wind7LineLayerId, this.wind10LineLayerId, this.probLayerId, this.historyLayerId, this.forecastLayerId];
+    const fillIds = [this.wind7FillLayerId, this.wind10FillLayerId, this.probFillLayerId];
     const circleIds = [this.pointLayerId];
     const textIds = [this.pointLabelLayerId, this.tailLabelLayerId, this.nameLayerId];
     const iconIds = [this.centerLayerId];
@@ -1370,7 +1645,11 @@ export class TyphoonLayer extends MapLayer {
       if (map.getLayer(id)) map.setPaintProperty(id, "line-opacity", opacity);
     });
     fillIds.forEach(id => {
-      if (map.getLayer(id)) map.setPaintProperty(id, "fill-opacity", opacity * 0.08);
+      if (!map.getLayer(id)) return;
+      let base = 0.08;
+      if (id === this.wind7FillLayerId) base = 0.18;
+      if (id === this.wind10FillLayerId) base = 0.2;
+      map.setPaintProperty(id, "fill-opacity", opacity * base);
     });
     circleIds.forEach(id => {
       if (map.getLayer(id)) map.setPaintProperty(id, "circle-opacity", opacity);

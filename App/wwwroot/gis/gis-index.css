@@ -2,6 +2,7 @@
 * Global base Styles
 *****************************************************/
 body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111827; }
+body.gis-projection-globe { background: #020617; }
 * {
     scrollbar-width: thin;
     scrollbar-color: rgba(125, 211, 252, 0.58) rgba(8, 21, 64, 0.18);
@@ -30,6 +31,9 @@ body { margin: 0; padding: 0; overflow: hidden; background: #eef2ff; color: #111
     font-display: swap;
 }
 #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+body.gis-projection-globe #map {
+    background: radial-gradient(circle at 30% 20%, rgba(148, 163, 184, 0.25), rgba(2, 6, 23, 0.88) 45%, #020617 100%);
+}
 .glass-panel {
     background: rgba(255, 255, 255, 0.88);
     -webkit-backdrop-filter: blur(10px);

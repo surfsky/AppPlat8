@@ -363,3 +363,78 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
 
           <div class="city-weather-popup-card"><span class="city-weather-popup-key">当前天气：</span>${meta.label}</div>
           <div class="city-weather-popup-card"><span class="city-weather-popup-key">城市级别：</span>${city.level || "--"}</div>
+
+
+    /// <summary>台风表格行</summary>
+    public class TyphoonGridItem : IExport
+    {
+        public long Id { get; set; }
+        public string Code { get; set; }
+        public int? Year { get; set; }
+        public string Name { get; set; }
+        public string ChineseName { get; set; }
+        public DateTime? BirthUtc { get; set; }
+        public DateTime? DeathUtc { get; set; }
+        public int? MaxLevel { get; set; }
+        public bool? IsLand { get; set; }
+        public int LogCnt { get; set; }
+        public DateTime? LastTimeUtc { get; set; }
+        public string IsLandText => IsLand == true ? "是" : "否";
+
+        /// <summary>导出对象</summary>
+        public object Export(ExportMode type = ExportMode.Normal)
+        {
+            return new
+            {
+                Id,
+                Code,
+                Year,
+                Name,
+                ChineseName,
+                BirthUtc,
+                DeathUtc,
+                MaxLevel,
+                IsLand,
+                IsLandText,
+                LogCnt,
+                LastTimeUtc
+            };
+        }
+    }
+                <EleColumn For="Item.LogCnt" Label="轨迹点" Width="90" Sortable="true"></EleColumn>
+            <EleColumn For="Item.LastTimeUtc" Label="最后轨迹" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+
+            Item = new TyphoonGridItem();
+                .ToList();
+            var codes = tyList.Select(t => t.Code).Where(t => t.IsNotEmpty()).Distinct().ToList();
+            var statMap = GisTyphoonLog.ValidSet
+                .Where(t => codes.Contains(t.Code))
+                .GroupBy(t => t.Code)
+                .Select(t => new
+                {
+                    Code = t.Key,
+                    LogCnt = t.Count(),
+                    StartUtc = t.Min(x => x.TimeUtc),
+                    EndUtc = t.Max(x => x.TimeUtc)
+                })
+                .ToDictionary(t => t.Code, t => t);
+
+            var rows = tyList.Select(t =>
+            {
+                statMap.TryGetValue(t.Code, out var stat);
+                return new TyphoonGridItem
+                {
+                    Id = t.Id,
+                    Code = t.Code,
+                    Year = t.Year,
+                    Name = t.Name,
+                    ChineseName = t.ChineseName,
+                    BirthUtc = t.BirthUtc ?? stat?.StartUtc,
+                    DeathUtc = t.DeathUtc ?? stat?.EndUtc,
+                    MaxLevel = t.MaxLevel,
+                    IsLand = t.IsLand,
+                    LogCnt = stat?.LogCnt ?? 0,
+                    LastTimeUtc = stat?.EndUtc
+                };
+            });
+            var list = rows.AsQueryable().SortPageExport(pi);

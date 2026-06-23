@@ -78,6 +78,15 @@ namespace App.EleUI
 
         // Other（官网分类）
         ChromeFilled, Eleme, ElemeFilled, ElementPlus, Shop, SwitchFilled, WindPower,
+
+        // Weather（语义别名）
+        WeatherSunrise, WeatherSunny, WeatherCloudy, WeatherMostlyCloudy, WeatherPartlyCloudy,
+        WeatherSunset, WeatherRain, WeatherLightRain, WeatherMoon, WeatherMoonNight,
+        WeatherLightning, WeatherWind, WeatherShip,
+
+        // Map（语义别名）
+        MapPin, MapPoint, MapGuide, MapCoordinate, MapPlace, MapArea,
+        MapBuilding, MapSchool, MapBike, MapCar, MapShip, MapFilled,
     }
 
     /// <summary>
@@ -90,6 +99,41 @@ namespace App.EleUI
     [HtmlTargetElement("EleIcon")]
     public class EleIcon : EleControl
     {
+        /// <summary>获取图标组件名</summary>
+        static string GetIconName(EleIcons name)
+        {
+            return name switch
+            {
+                EleIcons.WeatherSunrise => nameof(EleIcons.Sunrise),
+                EleIcons.WeatherSunny => nameof(EleIcons.Sunny),
+                EleIcons.WeatherCloudy => nameof(EleIcons.Cloudy),
+                EleIcons.WeatherMostlyCloudy => nameof(EleIcons.MostlyCloudy),
+                EleIcons.WeatherPartlyCloudy => nameof(EleIcons.PartlyCloudy),
+                EleIcons.WeatherSunset => nameof(EleIcons.Sunset),
+                EleIcons.WeatherRain => nameof(EleIcons.Pouring),
+                EleIcons.WeatherLightRain => nameof(EleIcons.Drizzling),
+                EleIcons.WeatherMoon => nameof(EleIcons.Moon),
+                EleIcons.WeatherMoonNight => nameof(EleIcons.MoonNight),
+                EleIcons.WeatherLightning => nameof(EleIcons.Lightning),
+                EleIcons.WeatherWind => nameof(EleIcons.WindPower),
+                EleIcons.WeatherShip => nameof(EleIcons.Ship),
+
+                EleIcons.MapPin => nameof(EleIcons.MapLocation),
+                EleIcons.MapPoint => nameof(EleIcons.Location),
+                EleIcons.MapGuide => nameof(EleIcons.Guide),
+                EleIcons.MapCoordinate => nameof(EleIcons.Coordinate),
+                EleIcons.MapPlace => nameof(EleIcons.Place),
+                EleIcons.MapArea => nameof(EleIcons.LocationInformation),
+                EleIcons.MapBuilding => nameof(EleIcons.OfficeBuilding),
+                EleIcons.MapSchool => nameof(EleIcons.School),
+                EleIcons.MapBike => nameof(EleIcons.Bicycle),
+                EleIcons.MapCar => nameof(EleIcons.Van),
+                EleIcons.MapShip => nameof(EleIcons.Ship),
+                EleIcons.MapFilled => nameof(EleIcons.LocationFilled),
+                _ => name.ToString()
+            };
+        }
+
         /// <summary>图标名称（Element Plus 图标枚举）。默认 None 时使用子内容。</summary>
         [HtmlAttributeName("Name")]
         public EleIcons Name { get; set; } = EleIcons.None;
@@ -120,7 +164,7 @@ namespace App.EleUI
             if (Name != EleIcons.None)
             {
                 // Use dynamic component to avoid conflicts with native tags like link/view/filter/switch.
-                output.Content.SetHtmlContent($"<component :is=\"'{Name}'\"></component>");
+                output.Content.SetHtmlContent($"<component :is=\"'{GetIconName(Name)}'\"></component>");
             }
             else
             {

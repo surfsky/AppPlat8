@@ -15,14 +15,14 @@ namespace App.Pages.GIS
     {
         public GisScene Item { get; set; }
         public List<SelectListItem> Styles { get; set; }
-        public List<SelectListItem> Projections { get; set; }
+        //public List<SelectListItem> Projections { get; set; }
 
         public void OnGet()
         {
             Styles = GisScene.Styles.Select(x => new SelectListItem(x.Name, x.Name)).ToList();
-            Projections = Enum.GetValues<GisMapProjection>()
-                .Select(x => new SelectListItem(x.GetTitle(), ((int)x).ToString()))
-                .ToList();
+            //Projections = Enum.GetValues<GisMapProjection>()
+                //.Select(x => new SelectListItem(x.GetTitle(), ((int)x).ToString()))
+                //.ToList();
         }
 
         public IActionResult OnGetData(long id)

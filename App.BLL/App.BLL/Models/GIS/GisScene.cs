@@ -15,9 +15,9 @@ namespace App.DAL.GIS
     {
         [UI("墨卡托")]   Mercator = 0,
         [UI("地球")]     Globe = 1,
-        [UI("等矩形")] Equirectangular = 2,
-        [UI("自然地球")]  NaturalEarth = 3,
-        [UI("温克尔三重")]  WinkelTripel = 4,
+        //[UI("等矩形")] Equirectangular = 2,
+        //[UI("自然地球")]  NaturalEarth = 3,
+        //[UI("温克尔三重")]  WinkelTripel = 4,
     }
     
     /// <summary>GIS 场景</summary>

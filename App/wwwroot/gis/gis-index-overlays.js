@@ -15,7 +15,7 @@ import { CityHumidityLayer } from "./overlay/layers/CityHumidityLayer.js";
 import { CityWeatherLayer } from "./overlay/layers/CityWeatherLayer.js";
 import { LatLonGridLayer } from "./overlay/layers/LatLonGridLayer.js";
 import { TidePanelLayer } from "./overlay/layers/TidePanelLayer.js";
-import { TyphoonLayer } from "./overlay/layers/TyphoonLayer.js";
+import { TyphoonLayer } from "./overlay/layers/TyphoonLayer.js?v=2";
 
 /**Cloud 图层配置 */
 const layerDefs = [

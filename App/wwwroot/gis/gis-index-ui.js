@@ -32,7 +32,7 @@
         if (toolbar) toolbar.classList.toggle('toolbar-collapsed', !!state.toolbarCollapsed);
         if (toggleBtn) {
             toggleBtn.classList.toggle('active', !state.toolbarCollapsed);
-            toggleBtn.title = state.toolbarCollapsed ? '展开工具栏' : '收起工具栏';
+            toggleBtn.title = state.toolbarCollapsed ? '工具栏' : '工具栏';
         }
     }
 
@@ -93,7 +93,7 @@
         if (menu) menu.classList.toggle('menu-visible', !!state.viewMenuOpen);
         if (toggleBtn) {
             toggleBtn.classList.toggle('active', !!state.viewMenuOpen);
-            toggleBtn.title = state.viewMenuOpen ? '收起视图菜单' : '展开视图菜单';
+            toggleBtn.title = state.viewMenuOpen ? '视图' : '视图';
         }
     }
 

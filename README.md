@@ -103,9 +103,19 @@ trae：
 Cursor：
     pro $20每月（500次请求）
 OpenAI Codex:
+
+CodeGraphy 代码图谱以减少token消耗
+  npm install -g @colbymchenry/codegraph
+
+- 测试
+  - 若有需要，请自动化测试，不限于以下方法
+  - 对于类库方法，创建对应的测试用例并进行单元测试；
+  - 对于网页：
+    - curl页面，保存临时文件运行调试；
+    - 创建或修改自动测试脚本（在目录 /AppPlat/WebTest/ 下）进行测试并截图验证
+    - 自动化网页测试工具不限于：Puppeteer、Playwright、Microsoft playright-mcp、Chrome DevTools MCP、Selenium
+    - 对于有授权的网页(AllowAttribute, AuthAttribute)，若绕不开登录页面，可先关闭页面授权进行测试，测试成功后再开启页面授权。
     
-
-
 
 ## 菜单及访问权限
 

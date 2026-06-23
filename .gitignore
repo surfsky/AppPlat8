@@ -1,13 +1,18 @@
 # OS
 .DS_Store
+Thumbs.db
+
+# hidden folders
 .trae/
 .codegraph/
 .venv/
-Thumbs.db
-
-# IDE / Editor
+.dbg/
+.codegraph/
+.github/
 .vs/
 .vscode/*
+
+# IDE / Editor
 !.vscode/extensions.json
 *.user
 *.suo
