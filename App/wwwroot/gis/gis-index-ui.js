@@ -3,6 +3,7 @@
  */
 (function () {
     let headerDatetimeTimer = null;
+    let floatingTooltipsMounted = false;
 
     /**更新顶部时间显示 */
     function startHeaderDatetime(outputId) {
@@ -25,6 +26,78 @@
         headerDatetimeTimer = setInterval(render, 1000);
     }
 
+    function ensureFloatingTooltips() {
+        if (floatingTooltipsMounted) return;
+        if (!window.Vue || !window.ElementPlus) return;
+
+        const items = [
+            { id: 'btn-site-toggle', content: '网站', placement: 'bottom' },
+            { id: 'btn-layer-toggle', content: '图层', placement: 'bottom' },
+            { id: 'btn-stats-toggle', content: '统计', placement: 'bottom' },
+            { id: 'btn-scene-toggle', content: '场景', placement: 'bottom' },
+            { id: 'btn-view-toggle', content: '视图', placement: 'bottom' },
+            { id: 'btn-toolbar-toggle', content: '工具栏', placement: 'bottom' }
+        ];
+
+        items.forEach(item => {
+            const el = document.getElementById(item.id);
+            if (el) el.removeAttribute('title');
+        });
+
+        const host = document.createElement('div');
+        host.id = 'gis-floating-tooltips-host';
+        host.style.position = 'fixed';
+        host.style.left = '-9999px';
+        host.style.top = '-9999px';
+        host.style.width = '0';
+        host.style.height = '0';
+        host.style.overflow = 'hidden';
+        document.body.appendChild(host);
+
+        const { createApp, h, ref, onMounted } = window.Vue;
+        const ElTooltip = window.ElementPlus.ElTooltip;
+
+        const app = createApp({
+            setup() {
+                const btnRefs = items.reduce((acc, item) => {
+                    acc[item.id] = ref(null);
+                    return acc;
+                }, {});
+
+                onMounted(() => {
+                    items.forEach(item => {
+                        btnRefs[item.id].value = document.getElementById(item.id);
+                    });
+                });
+
+                const renderTooltip = (item) => {
+                    return h(ElTooltip, {
+                        content: item.content,
+                        placement: item.placement || 'right',
+                        effect: 'dark',
+                        showAfter: 80,
+                        hideAfter: 0,
+                        enterable: false,
+                        teleported: true,
+                        popperClass: 'gis-toolbar-tooltip',
+                        virtualTriggering: true,
+                        virtualRef: btnRefs[item.id].value
+                    }, {
+                        default: () => h('span')
+                    });
+                };
+
+                return () => h('div', {}, items.map(renderTooltip));
+            }
+        });
+
+        if (window.ElementPlusLocaleZhCn) app.use(window.ElementPlus, { locale: window.ElementPlusLocaleZhCn });
+        else app.use(window.ElementPlus);
+
+        app.mount(host);
+        floatingTooltipsMounted = true;
+    }
+
     /**同步工具栏状态 */
     function syncToolbarUI(state) {
         const toolbar = document.querySelector('.map-toolbar');
@@ -32,7 +105,6 @@
         if (toolbar) toolbar.classList.toggle('toolbar-collapsed', !!state.toolbarCollapsed);
         if (toggleBtn) {
             toggleBtn.classList.toggle('active', !state.toolbarCollapsed);
-            toggleBtn.title = state.toolbarCollapsed ? '工具栏' : '工具栏';
         }
     }
 
@@ -49,7 +121,6 @@
         if (panel) panel.classList.toggle('panel-hidden', !!state.layerCollapsed);
         if (toggleBtn) {
             toggleBtn.classList.toggle('active', !state.layerCollapsed);
-            toggleBtn.title = state.layerCollapsed ? '展开图层列表' : '收起图层列表';
         }
     }
 
@@ -93,7 +164,6 @@
         if (menu) menu.classList.toggle('menu-visible', !!state.viewMenuOpen);
         if (toggleBtn) {
             toggleBtn.classList.toggle('active', !!state.viewMenuOpen);
-            toggleBtn.title = state.viewMenuOpen ? '视图' : '视图';
         }
     }
 
@@ -141,7 +211,7 @@
         state.scenes.forEach(scene => {
             const btn = document.createElement('button');
             btn.className = 'view-menu-item' + (state.currentSceneId === scene.id ? ' active' : '');
-            btn.innerHTML = (scene.icon ? `<i class="${scene.icon}"></i> ` : '') + scene.name;
+            btn.innerHTML = (scene.icon ? `<i class="${scene.icon}"></i>` : '') + `<span>${scene.name}</span>`;
             btn.onclick = () => onSelect(scene);
             menu.appendChild(btn);
         });
@@ -166,7 +236,6 @@
 
         if (statsBtn) {
             statsBtn.classList.toggle('stats-active', !!state.statsMode);
-            statsBtn.title = state.statsMode ? '关闭统计面板' : '统计';
         }
 
         if (state.statsMode) {
@@ -215,6 +284,7 @@
 
     window.GisIndexUI = {
         startHeaderDatetime,
+        ensureFloatingTooltips,
         toggleToolbar,
         syncToolbarUI,
         toggleLayerPanel,

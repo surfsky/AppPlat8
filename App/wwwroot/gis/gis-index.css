@@ -116,6 +116,7 @@ body.gis-projection-globe #map {
     display: flex;
     align-items: center;
     gap: 8px;
+    width: min(520px, calc(100vw - 24px));
     padding: 10px 12px;
     border-radius: 10px;
     background: rgba(3, 16, 80, 0.88);
@@ -279,6 +280,17 @@ body.gis-projection-globe #map {
     border-color: rgba(56, 189, 248, 0.8);
     color: #ecfeff;
 }
+
+#scene-menu .view-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#scene-menu .view-menu-item i {
+    width: 18px;
+    text-align: center;
+}
 .view-overlay-menu {
     max-height: min(54vh, 560px);
     overflow: auto;
@@ -335,10 +347,7 @@ body.gis-projection-globe #map {
     white-space: nowrap;
     cursor: pointer;
     box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.35);
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
+    flex: 0 0 auto;
 }
 .toolbar-btn:hover {
     background: rgba(14, 66, 146, 0.66);
@@ -349,7 +358,9 @@ body.gis-projection-globe #map {
     background: rgba(14, 66, 146, 0.78);
 }
 .toolbar-input {
-    width: 220px;
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
     border: 1px solid rgba(56, 189, 248, 0.5);
     border-radius: 6px;
     padding: 6px 10px;
@@ -1093,6 +1104,20 @@ gis-panel {
     border-color: #0ea5e9;
 }
 
+.el-popper.gis-toolbar-tooltip {
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(56, 189, 248, 0.55);
+    background: rgba(2, 6, 23, 0.92);
+    color: #e0f2fe;
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.55);
+}
+.el-popper.gis-toolbar-tooltip .el-popper__arrow::before {
+    border: 1px solid rgba(56, 189, 248, 0.55);
+    background: rgba(2, 6, 23, 0.92);
+}
+
 /*****************************************************
 * Stats Panel
 *****************************************************/
@@ -1456,21 +1481,14 @@ gis-panel {
         bottom: 16px;
         left: 10px;
     }
-    .map-toolbar {
-        --toolbar-shift-x: 0%;
-        width: calc(100% - 20px);
-        left: 10px;
-        justify-content: flex-start;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
+    .map-toolbar { width: min(520px, calc(100vw - 20px)); }
     .view-menu {
         left: 56px;
         top: 58px;
         width: min(320px, calc(100vw - 72px));
         max-width: calc(100vw - 72px);
     }
-    .toolbar-input { width: 180px; }
+    .toolbar-input { width: auto; }
     .floating-toggle-group {
         left: 10px;
         top: 12px;
@@ -1562,14 +1580,7 @@ gis-panel {
         min-width: 0;
         flex: 1 1 auto;
     }
-    .toolbar-btn {
-        position: static;
-        top: auto;
-        right: auto;
-        transform: none;
-        flex: 0 0 auto;
-        padding: 8px 12px;
-    }
+    .toolbar-btn { padding: 8px 12px; }
     .address-suggest-list {
         left: 0;
         right: 0;

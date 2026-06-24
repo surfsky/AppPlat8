@@ -47,6 +47,7 @@
     <script src="/gis/gis-index-detail.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-panel-element.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-ui.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-index-sites.js?v=@DateTime.Now.Ticks"></script>
     <script type="module" src="/gis/gis-index-overlays.js?v=@DateTime.Now.Ticks"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
@@ -69,19 +70,22 @@
     </div>
 
     <div class="floating-toggle-group">
-        <button id="btn-layer-toggle" class="floating-toggle" title="图层" aria-label="显示/隐藏图层列表">
+        <button id="btn-layer-toggle" class="floating-toggle" aria-label="显示/隐藏图层列表">
             <i class="fa-solid fa-layer-group toggle-icon"></i>
         </button>
-        <button id="btn-stats-toggle" class="floating-toggle" title="统计" aria-label="显示/隐藏统计面板">
+        <button id="btn-stats-toggle" class="floating-toggle" aria-label="显示/隐藏统计面板">
             <i class="fa-solid fa-chart-column toggle-icon"></i>
         </button>
-        <button id="btn-scene-toggle" class="floating-toggle" title="场景" aria-label="切换场景">
+        <button id="btn-scene-toggle" class="floating-toggle" aria-label="切换场景">
             <i class="fa-solid fa-mountain-sun toggle-icon"></i>
         </button>
-        <button id="btn-view-toggle" class="floating-toggle" title="视图" aria-label="显示/隐藏视图工具栏">
+        <button id="btn-view-toggle" class="floating-toggle" aria-label="显示/隐藏视图工具栏">
             <i class="fa-solid fa-eye toggle-icon"></i>
         </button>
-        <button id="btn-toolbar-toggle" class="floating-toggle" title="工具栏" aria-label="显示/隐藏工具栏">
+        <button id="btn-site-toggle" class="floating-toggle" aria-label="显示参考网站">
+            <i class="fa-solid fa-globe toggle-icon"></i>
+        </button>
+        <button id="btn-toolbar-toggle" class="floating-toggle" aria-label="显示/隐藏工具栏">
             <i class="fa-solid fa-magnifying-glass toggle-icon"></i>
         </button>
     </div>
@@ -100,7 +104,7 @@
         </label>
     </div>
 
-    <div id="scene-menu" class="view-menu" style="left: 60px; top: 10px; display:none" aria-label="场景菜单">
+    <div id="scene-menu" class="view-menu" style="display:none" aria-label="场景菜单">
     </div>
 
     <div id="layer-panel" class="panel-left">

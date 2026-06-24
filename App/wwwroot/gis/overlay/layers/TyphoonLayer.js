@@ -485,7 +485,6 @@ export class TyphoonLayer extends MapLayer {
     el.innerHTML = `
       <div class="typhoon-legend-title">
         <span class="typhoon-legend-title-text">
-          <span class="typhoon-legend-drag" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
           <span>台风路径</span>
         </span>
         <span class="typhoon-legend-tip">${liveCnt > 0 ? `当前活跃 ${liveCnt} 个，实时源：Digital Typhoon` : "数据源：本地台风数据库"}</span>
@@ -1720,11 +1719,12 @@ export class TyphoonLayer extends MapLayer {
     } else {
       if (summary.mode === "current") {
         const head = activeCnt > 1
-          ? `当前台风 ${activeCnt} 个，当前选中 ${summary.code} ${summary.name}`
+          ? `当前台风 ${activeCnt} 个`
           : `当前台风：${summary.code} ${summary.name}`;
-        setInfo("typhoonInfo", `${head}，实况点 ${summary.pointCnt} 个，预测点 ${summary.predictCnt || 0} 个，最高风速 ${summary.maxWind}m/s，起止 ${summary.startText} ~ ${summary.endText}`);
+        //setInfo("typhoonInfo", `${head}，实况点 ${summary.pointCnt} 个，预测点 ${summary.predictCnt || 0} 个，最高风速 ${summary.maxWind}m/s，起止 ${summary.startText} ~ ${summary.endText}`);
+        setInfo("typhoonInfo", `${head}`);
       } else {
-        setInfo("typhoonInfo", `历史台风：${summary.code} ${summary.name}，轨迹点 ${summary.pointCnt} 个，最高风速 ${summary.maxWind}m/s，起止 ${summary.startText} ~ ${summary.endText}`);
+        setInfo("typhoonInfo", `历史台风：${summary.code} ${summary.name}`);
       }
     }
     this.setOpacity(this.runtime.getOpacity(this.name));

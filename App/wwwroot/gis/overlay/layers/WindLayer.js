@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { fetchWithTimeout, setInfo } from "../core/utils.js";
+import { chunkArray, fetchWithTimeout, setInfo } from "../core/utils.js";
 
 
 /****************************************************************
@@ -7,9 +7,11 @@ import { fetchWithTimeout, setInfo } from "../core/utils.js";
  ****************************************************************/
 export class WindLayer extends MapLayer {
   static GRID = {
-    rows: 18,
-    cols: 22
+    rows: 20,
+    cols: 24
   };
+  static QUERY_NODE_LIMIT = 32;
+  static QUERY_GROUP_LIMIT = 4;
 
 
   constructor() {
@@ -121,13 +123,17 @@ export class WindLayer extends MapLayer {
     const east = Math.ceil(b.getEast());
     const south = Math.floor(b.getSouth());
     const north = Math.ceil(b.getNorth());
+    const lngSpan = Math.max(1, east - west);
+    const latSpan = Math.max(1, north - south);
+    const lngPad = Math.max(12, Math.min(32, Math.round(lngSpan * 0.18)));
+    const latPad = Math.max(10, Math.min(24, Math.round(latSpan * 0.22)));
 
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
     return {
-      west: clamp(west, -180, 180),
-      east: clamp(east, -180, 180),
-      south: clamp(south, -85, 85),
-      north: clamp(north, -85, 85)
+      west: clamp(west - lngPad, -180, 180),
+      east: clamp(east + lngPad, -180, 180),
+      south: clamp(south - latPad, -88, 88),
+      north: clamp(north + latPad, -88, 88)
     };
   }
 
@@ -158,6 +164,30 @@ export class WindLayer extends MapLayer {
     return nodes;
   }
 
+  buildChunkQuery(nodes) {
+    return new URLSearchParams({
+      latitude: nodes.map(n => n.lat.toFixed(1)).join(","),
+      longitude: nodes.map(n => n.lon.toFixed(1)).join(","),
+      hourly: "wind_speed_10m,wind_direction_10m",
+      timezone: "Asia/Shanghai",
+      forecast_days: "1"
+    });
+  }
+
+  async fetchFieldChunk(nodes) {
+    const query = this.buildChunkQuery(nodes);
+    const response = await fetchWithTimeout(`${this.api}?${query.toString()}`, {}, 12000);
+    const respDate = response.headers.get("last-modified") || response.headers.get("date") || "";
+    if (response.status === 429) throw Object.assign(new Error("请求频率过快"), { code: 429 });
+    if (response.status === 414) throw Object.assign(new Error("风场请求参数过长"), { code: 414 });
+    if (!response.ok) throw new Error(`风场请求失败: ${response.status}`);
+    const data = await response.json();
+    return {
+      list: Array.isArray(data) ? data : [data],
+      respDate
+    };
+  }
+
   async fetchField() {
     const bounds = this.getSamplingBounds();
     const cacheKey = `${bounds.west},${bounds.east},${bounds.south},${bounds.north}`;
@@ -171,27 +201,20 @@ export class WindLayer extends MapLayer {
     }
 
     const nodes = this.buildSamplingNodes(bounds);
-
-    const query = new URLSearchParams({
-      latitude: nodes.map(n => n.lat.toFixed(2)).join(","),
-      longitude: nodes.map(n => n.lon.toFixed(2)).join(","),
-      hourly: "wind_speed_10m,wind_direction_10m",
-      timezone: "Asia/Shanghai",
-      forecast_days: "1"
-    });
+    const nodeChunks = chunkArray(nodes, WindLayer.QUERY_NODE_LIMIT);
+    const chunkGroups = chunkArray(nodeChunks, WindLayer.QUERY_GROUP_LIMIT);
 
     try {
-      const response = await fetchWithTimeout(`${this.api}?${query.toString()}`, {}, 12000);
-      const respDate = response.headers.get("last-modified") || response.headers.get("date") || "";
-      if (response.status === 429) {
-        console.warn("Open-Meteo 限制请求频率，使用旧数据");
-        if (this.field) return this.field;
-        throw new Error("请求频率过快且无缓存数据");
+      const list = [];
+      let respDate = "";
+      for (const group of chunkGroups) {
+        const results = await Promise.all(group.map(chunk => this.fetchFieldChunk(chunk)));
+        for (const result of results) {
+          if (!respDate && result.respDate) respDate = result.respDate;
+          list.push(...result.list);
+        }
       }
-      if (!response.ok) throw new Error(`风场请求失败: ${response.status}`);
-      
-      const data = await response.json();
-      const list = Array.isArray(data) ? data : [data];
+
       const grid = Array.from({ length: WindLayer.GRID.rows }, () => Array(WindLayer.GRID.cols).fill(null));
       let okCount = 0;
       let dataTime = "";
@@ -237,6 +260,10 @@ export class WindLayer extends MapLayer {
 
       return result;
     } catch (e) {
+      if (e?.code === 429) {
+        console.warn("Open-Meteo 限制请求频率，使用旧数据");
+        if (this.field) return this.field;
+      }
       if (this.field) return this.field; // 报错则降级使用旧数据
       throw e;
     }
@@ -306,15 +333,27 @@ export class WindLayer extends MapLayer {
 
   createParticles() {
     if (!this.canvas) return;
-    const { map } = this.runtime;
-    const bounds = map.getBounds();
+    const bounds = this.getParticleBounds();
     const area = this.canvas.width * this.canvas.height;
-    // 增加粒子数量以获得更好的覆盖感
-    const count = Math.max(2000, Math.min(4500, Math.floor(area / 600)));
+    // 覆盖范围扩大后，适度降低粒子密度避免过于拥挤。
+    const count = Math.max(1400, Math.min(3000, Math.floor(area / 900)));
     this.particles = [];
     for (let i = 0; i < count; i++) {
       this.particles.push(this.initParticle(bounds));
     }
+  }
+
+  getParticleBounds() {
+    const fieldBounds = this.field?.bounds;
+    if (fieldBounds) {
+      return {
+        getWest: () => fieldBounds.west,
+        getEast: () => fieldBounds.east,
+        getSouth: () => fieldBounds.south,
+        getNorth: () => fieldBounds.north
+      };
+    }
+    return this.runtime.map.getBounds();
   }
 
   initParticle(bounds) {
@@ -348,7 +387,7 @@ export class WindLayer extends MapLayer {
 
     const { map } = this.runtime;
     const opacity = this.runtime.getOpacity(this.name);
-    const bounds = map.getBounds();
+    const bounds = this.getParticleBounds();
     
     // 设置绘图样式
     this.ctx.lineWidth = 1.1;
@@ -376,10 +415,11 @@ export class WindLayer extends MapLayer {
 
       const latRad = p.lat * Math.PI / 180;
       const dLat = (v_noise * dt); 
-      const dLng = (u * dt) / Math.cos(latRad);
+      const cosLat = Math.max(0.2, Math.abs(Math.cos(latRad)));
+      const dLng = (u * dt) / cosLat;
 
       const nextLng = p.lng + dLng;
-      const nextLat = p.lat + dLat;
+      const nextLat = Math.max(-88, Math.min(88, p.lat + dLat));
       
       // 4. 获取下一位置的屏幕坐标
       const nextPos = map.project([nextLng, nextLat]);
@@ -425,6 +465,7 @@ export class WindLayer extends MapLayer {
     this.ensureCanvasOrder();
     try {
       this.field = await this.fetchField();
+      this.createParticles();
       this.startAnimation();
       const timeText = this.formatDataTime(this.field);
       //setInfo("windInfo", `风场粒子: ${this.particles.length}，采样点: ${this.field.okCount}/${this.field.totalCount}${timeText ? `，更新时间: ${timeText}` : ""}`);

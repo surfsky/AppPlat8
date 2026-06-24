@@ -115,6 +115,7 @@
                     state.currentSceneId = detail.id;
                     const styleName = detail.mapStyle || detail.MapStyle || '';
                     const enable3D = detail.enable3D ?? detail.Enable3D;
+                    const autoRotate = detail.autoRotate ?? detail.AutoRotate;
                     const projection = detail.mapProjection ?? detail.MapProjection;
                     const scenePitch = detail.mapPitch ?? detail.MapPitch;
 
@@ -128,6 +129,12 @@
                         });
                         renderViewStyleMenu();
                         renderProjectionMenu();
+                    }
+
+                    if (autoRotate !== null && autoRotate !== undefined) {
+                        const enabled = autoRotate === true || autoRotate === 'true' || autoRotate === 1 || autoRotate === '1';
+                        if (enabled) viewApi.enableRotate({ closeMenu: false });
+                        else viewApi.disableRotate({ closeMenu: false });
                     }
 
                     const centerStr = detail.mapCenter || detail.MapCenter;

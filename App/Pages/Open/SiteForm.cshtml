@@ -1,0 +1,22 @@
+@page
+@model App.Pages.Open.SiteFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "参考网站";
+}
+
+@section body {
+<EleForm Model="form" LabelWidth="120px">
+    <EleInput For="Item.Type" Label="分组" Required="true"></EleInput>
+    <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+    <EleInput For="Item.Url" Label="网址" Required="true"></EleInput>
+    <EleImageUpload For="Item.Icon" Label="图标"></EleImageUpload>
+    <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
+    <EleInput For="Item.Desc" Label="描述" Type="@EleInputType.TextArea" Rows="4"></EleInput>
+
+    <Bottom>
+        <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+        <EleButton Command="Close">关闭</EleButton>
+    </Bottom>
+</EleForm>
+}

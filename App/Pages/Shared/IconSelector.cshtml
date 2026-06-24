@@ -81,7 +81,7 @@
             grid.innerHTML = '';
             icons.forEach(icon => {
                 if (icon.toLowerCase().includes(filter.toLowerCase())) {
-                    iconCls = 'fas fa-' + icon;
+                    const iconCls = 'fas fa-' + icon;
                     const div = document.createElement('div');
                     div.className = 'icon-item flex flex-col items-center justify-center p-3 border border-gray-100 rounded hover:shadow-sm';
                     div.innerHTML = `

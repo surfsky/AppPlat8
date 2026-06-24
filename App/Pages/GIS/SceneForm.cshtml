@@ -18,6 +18,7 @@
         <EleSelect For="Item.MapStyle" Label="地图样式" Items="Model.Styles"></EleSelect>
         <EleSelect For="Item.MapProjection" Label="地图投影" ></EleSelect>
         <EleSwitch For="Item.Map3D" Label="启用3D"></EleSwitch>
+        <EleSwitch For="Item.AutoRotate" Label="自动旋转"></EleSwitch>
         
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

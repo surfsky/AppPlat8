@@ -89,6 +89,7 @@ namespace App.API
                 scene.MapCenter,
                 scene.MapPitch,
                 Enable3D = scene.Map3D,
+                AutoRotate = scene.AutoRotate,
                 scene.MapStyle,
                 scene.MapProjection,
                 menuIds = scene.SceneMenus.Select(m => m.MenuId).ToList(),

@@ -22,7 +22,7 @@ namespace App.DAL.GIS
     
     /// <summary>GIS 场景</summary>
     [UI("GIS", "GIS场景")]
-    public class GisScene : EntityBase<GisScene>
+    public class GisScene : EntityBase<GisScene>, ISort
     {
         public static List<GisMapStyle> Styles = new List<GisMapStyle>
         {
@@ -43,6 +43,7 @@ namespace App.DAL.GIS
         [UI("中心点")] public string MapCenter { get; set; }
         [UI("倾斜角")] public int? MapPitch { get; set; } = 0;
         [UI("启用3D")] public bool? Map3D { get; set; } = false;
+        [UI("自动旋转")] public bool? AutoRotate { get; set; } = false;
         [UI("地图样式")] public string MapStyle { get; set; } = Styles[0].Name;
         [UI("地图投影")] public GisMapProjection MapProjection { get; set; } = GisMapProjection.Mercator;
 
@@ -65,6 +66,7 @@ namespace App.DAL.GIS
                 MapPitch,
                 Icon,
                 Map3D,
+                AutoRotate,
                 MapStyle,
                 MapProjection,
                 CreatorId,

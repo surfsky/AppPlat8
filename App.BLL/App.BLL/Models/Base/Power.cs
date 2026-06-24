@@ -193,6 +193,10 @@ namespace App.DAL
         [UI("GIS", "场景查看")]             GisSceneView = 275,
         [UI("GIS", "场景修改")]             GisSceneEdit = 276,
         [UI("GIS", "场景删除")]             GisSceneDelete = 277,
+        [UI("网站", "参考网站新增")]          SiteNew = 278,
+        [UI("网站", "参考网站查看")]          SiteView = 279,
+        [UI("网站", "参考网站修改")]          SiteEdit = 280,
+        [UI("网站", "参考网站删除")]          SiteDelete = 281,
 
 
         //---------------------------------------------

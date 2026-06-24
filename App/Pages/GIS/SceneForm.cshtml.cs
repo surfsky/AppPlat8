@@ -59,6 +59,7 @@ namespace App.Pages.GIS
             item.Icon = req.Icon;
             item.MapStyle = req.MapStyle;
             item.Map3D = req.Map3D;
+            item.AutoRotate = req.AutoRotate;
             item.MapProjection = req.MapProjection;
 
             item.Save();

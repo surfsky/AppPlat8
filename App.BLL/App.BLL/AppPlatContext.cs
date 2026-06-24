@@ -42,6 +42,7 @@ namespace App.DAL
 
         // open
         public DbSet<Application> Applications {get; set; }
+        public DbSet<Site> Sites { get; set; }
 
         // maintains
         public DbSet<Log> Logs { get; set; }

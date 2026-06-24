@@ -48,6 +48,7 @@
         }
 
         function bindPageEvents() {
+            window.GisIndexUI.ensureFloatingTooltips();
             document.getElementById('btn-search').addEventListener('click', ctx.searchAddress);
             document.getElementById('btn-scene-toggle').addEventListener('click', e => {
                 e.stopPropagation();
@@ -149,6 +150,8 @@
                 viewApi.applyProjection(state.currentProjection, { closeMenu: false });
                 map.once('idle', () => ctx.applyGeometryVisibility());
                 if (state.is3D) viewApi.enable3D({ closeMenu: false, adjustCamera: false });
+                if (state.isAutoRotate) viewApi.enableRotate({ closeMenu: false });
+                else viewApi.disableRotate({ closeMenu: false });
 
                 objectApi.setLayerVisible(true);
                 ctx.renderMenuTree();
