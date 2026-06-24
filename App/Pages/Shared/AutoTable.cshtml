@@ -10,8 +10,7 @@
 @section body {
     <div id="app" class="h-screen overflow-hidden bg-slate-50">
         <div class="h-full flex flex-col p-4 gap-4 box-border">
-            <div class="rounded-xl border border-slate-200 bg-white/80 px-4 py-4 shadow-sm">
-                <div class="mb-4 text-sm text-slate-500">文件：{{ meta.fileName || file || '未指定' }}</div>
+            <div class="px-0 py-0">
                 <el-form :label-position="formLabelPosition"
                          :label-width="formLabelWidth"
                          class="auto-search-form">
@@ -40,22 +39,22 @@
                         <i class="fas fa-search mr-1"></i>
                         <span>查询</span>
                     </el-button>
-                    <el-button @@click="resetSearch">
-                        <i class="fas fa-rotate-left mr-1"></i>
-                        <span>重置</span>
+                    <el-button type="primary" plain @@click="openForm()">
+                        <i class="fas fa-plus mr-1"></i>
+                        <span>新增</span>
                     </el-button>
                     <el-button @@click="downloadFile">
                         <i class="fas fa-download mr-1"></i>
                         <span>下载</span>
                     </el-button>
-                    <el-button type="primary" plain @@click="openForm()">
-                        <i class="fas fa-plus mr-1"></i>
-                        <span>新增</span>
+                    <el-button @@click="resetSearch">
+                        <i class="fas fa-rotate-left mr-1"></i>
+                        <span>重置</span>
                     </el-button>
                 </div>
             </div>
 
-            <div class="min-h-0 flex-1 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="min-h-0 flex-1 border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <el-table :data="rows"
                           stripe
                           border
@@ -256,6 +255,44 @@
                 /**表单标签宽度 */
                 const formLabelWidth = Vue.computed(() => formLabelPosition.value === 'top' ? 'auto' : '110px');
 
+                /**获取刷新监听窗口 */
+                const getRefreshTargets = () => {
+                    const list = [window];
+                    try {
+                        if (window.parent && window.parent !== window) {
+                            list.push(window.parent);
+                        }
+                    } catch {
+                    }
+                    try {
+                        if (window.top && window.top !== window && !list.includes(window.top)) {
+                            list.push(window.top);
+                        }
+                    } catch {
+                    }
+                    return list;
+                };
+
+                /**绑定刷新监听 */
+                const bindRefreshListeners = () => {
+                    getRefreshTargets().forEach(win => {
+                        try {
+                            win.addEventListener('message', onRefreshData);
+                        } catch {
+                        }
+                    });
+                };
+
+                /**解绑刷新监听 */
+                const unbindRefreshListeners = () => {
+                    getRefreshTargets().forEach(win => {
+                        try {
+                            win.removeEventListener('message', onRefreshData);
+                        } catch {
+                        }
+                    });
+                };
+
                 /**处理抽屉刷新 */
                 const onRefreshData = async (e) => {
                     if (!e?.data?.__eleRefreshData) return;
@@ -269,7 +306,7 @@
                     try {
                         await loadMeta();
                         await loadData();
-                        window.addEventListener('message', onRefreshData);
+                        bindRefreshListeners();
                     } catch (e) {
                         console.error(e);
                         EleManager.showError?.(e.message || '页面初始化失败');
@@ -277,7 +314,7 @@
                 });
 
                 onUnmounted(() => {
-                    window.removeEventListener('message', onRefreshData);
+                    unbindRefreshListeners();
                 });
 
                 return {

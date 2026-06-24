@@ -438,3 +438,12 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
                 };
             });
             var list = rows.AsQueryable().SortPageExport(pi);
+
+                            <div class="mb-4 text-sm text-slate-500">文件：{{ meta.fileName || file || '未指定' }}</div>
+                <div class="px-1 py-1 text-sm text-slate-500">
+                    文件：{{ meta.fileName || file || '未指定' }}
+                </div>
+
+                    <div class="px-5 py-3 text-sm text-slate-500">
+                        行号：{{ rowId || '新行' }}
+                    </div>
