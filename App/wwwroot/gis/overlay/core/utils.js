@@ -15,15 +15,44 @@ export async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
 export function findNearestHourlyIndex(times) {
   const now = Date.now();
   let bestIdx = 0;
-  let bestGap = Infinity;
+  let latestTs = Number.NEGATIVE_INFINITY;
   for (let i = 0; i < times.length; i++) {
-    const gap = Math.abs(new Date(times[i]).getTime() - now);
-    if (gap < bestGap) {
-      bestGap = gap;
+    const ts = new Date(times[i]).getTime();
+    if (!Number.isFinite(ts)) continue;
+    if (ts <= now && ts >= latestTs) {
+      latestTs = ts;
       bestIdx = i;
     }
   }
-  return bestIdx;
+  if (latestTs > Number.NEGATIVE_INFINITY) return bestIdx;
+  let firstValid = 0;
+  let firstTs = Infinity;
+  for (let i = 0; i < times.length; i++) {
+    const ts = new Date(times[i]).getTime();
+    if (!Number.isFinite(ts)) continue;
+    if (ts < firstTs) {
+      firstTs = ts;
+      firstValid = i;
+    }
+  }
+  return firstValid;
+}
+
+/**获取时间序列步长（秒） */
+export function getTimeSeriesStepSeconds(times) {
+  const list = Array.isArray(times) ? times : [];
+  if (list.length < 2) return 0;
+  let prevTs = Number.NaN;
+  for (let i = 0; i < list.length; i++) {
+    const ts = new Date(list[i]).getTime();
+    if (!Number.isFinite(ts)) continue;
+    if (Number.isFinite(prevTs)) {
+      const sec = Math.round(Math.abs(ts - prevTs) / 1000);
+      if (sec > 0) return sec;
+    }
+    prevTs = ts;
+  }
+  return 0;
 }
 
 export function addOrUpdateGeoJsonSource(map, sourceId, data) {

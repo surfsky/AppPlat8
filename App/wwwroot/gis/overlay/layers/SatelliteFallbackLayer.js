@@ -10,7 +10,8 @@ export class SatelliteFallbackLayer extends MapLayer {
       name: "satellite",
       title: "卫星云图兜底",
       api: "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default",
-      refreshSeconds: 3600
+      refreshSeconds: 3600,
+      dataInterval: "24小时"
     });
     this.sourceId = "satellite-source";
     this.layerId = "satellite-layer";

@@ -10,7 +10,8 @@ export class LatLonGridLayer extends MapLayer {
       name: "latlonGrid",
       title: "经纬网格线",
       descript: "按缩放自动密度的经纬网格",
-      refreshSeconds: 30
+      refreshSeconds: 30,
+      dataInterval: "实时"
     });
     this.sourceId = "latlon-grid-source";
     this.lineLayerId = "latlon-grid-line-layer";

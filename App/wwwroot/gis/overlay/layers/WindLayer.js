@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { chunkArray, fetchWithTimeout } from "../core/utils.js";
+import { chunkArray, fetchWithTimeout, findNearestHourlyIndex, getTimeSeriesStepSeconds } from "../core/utils.js";
 
 
 /****************************************************************
@@ -19,7 +19,8 @@ export class WindLayer extends MapLayer {
       name: "wind",
       title: "风场粒子动画",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 360
+      refreshSeconds: 360,
+      dataInterval: "1小时"
     });
     this.canvasId = "windCanvas";
     this.styleId = "wind-canvas-style";
@@ -156,21 +157,6 @@ export class WindLayer extends MapLayer {
     };
   }
 
-  findNearestHourlyIndex(times) {
-    const now = Date.now();
-    let bestIdx = 0;
-    let bestGap = Infinity;
-    for (let i = 0; i < times.length; i++) {
-      const t = new Date(times[i]).getTime();
-      const gap = Math.abs(t - now);
-      if (gap < bestGap) {
-        bestGap = gap;
-        bestIdx = i;
-      }
-    }
-    return bestIdx;
-  }
-
   buildSamplingNodes(bounds) {
     const nodes = [];
     for (let r = 0; r < WindLayer.GRID.rows; r++) {
@@ -237,12 +223,17 @@ export class WindLayer extends MapLayer {
       const grid = Array.from({ length: WindLayer.GRID.rows }, () => Array(WindLayer.GRID.cols).fill(null));
       let okCount = 0;
       let dataTime = "";
+      let dataInterval = this.dataInterval;
 
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const item = list[i] || {};
         const times = Array.isArray(item?.hourly?.time) ? item.hourly.time : [];
-        const idx = times.length ? this.findNearestHourlyIndex(times) : 0;
+        if (times.length > 1 && (!dataInterval || dataInterval === this.dataInterval)) {
+          const sec = getTimeSeriesStepSeconds(times);
+          if (sec > 0) dataInterval = this.formatSecondsAsText(sec);
+        }
+        const idx = times.length ? findNearestHourlyIndex(times) : 0;
         if (!dataTime && times.length) dataTime = String(times[idx] || "");
         const speed = Number(item?.hourly?.wind_speed_10m?.[idx]);
         const dir = Number(item?.hourly?.wind_direction_10m?.[idx]);
@@ -265,6 +256,7 @@ export class WindLayer extends MapLayer {
         okCount,
         totalCount: nodes.length,
         dataTime,
+        dataInterval,
         fetchedAt: Date.now(),
         respDate
       };
@@ -493,6 +485,7 @@ export class WindLayer extends MapLayer {
     this.ensureCanvasOrder();
     try {
       this.field = await this.fetchField();
+      if (this.field?.dataInterval) this.setDataInterval(this.field.dataInterval);
       this.createParticles();
       this.startAnimation();
       const timeText = this.formatDataTime(this.field);

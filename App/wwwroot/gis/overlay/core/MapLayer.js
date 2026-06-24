@@ -10,6 +10,7 @@ export class MapLayer {
     this.api = opts.api || "";
     this.key = opts.key || "";
     this.refreshSeconds = opts.refreshSeconds || 0;
+    this.dataInterval = String(opts.dataInterval || "").trim();
     this.lastTime = 0;
     this.lastStatus = false;
     this.dataTimeValue = null;
@@ -38,6 +39,10 @@ export class MapLayer {
     this.dataTimeText = "";
   }
 
+  setDataInterval(text) {
+    this.dataInterval = String(text || "").trim();
+  }
+
   setInfoExtra(text) {
     this.infoExtra = String(text || "").trim();
   }
@@ -61,12 +66,22 @@ export class MapLayer {
     return `${y}-${m}-${d} ${hh}:${mm}`;
   }
 
-  formatRefreshFrequency() {
+  formatAutoRefreshFrequency() {
     const sec = Number(this.refreshSeconds) || 0;
     if (sec <= 0) return "手动";
-    if (sec % 3600 === 0) return `${sec / 3600}小时`;
-    if (sec % 60 === 0) return `${sec / 60}分钟`;
-    return `${sec}秒`;
+    return this.formatSecondsAsText(sec);
+  }
+
+  formatSecondsAsText(sec) {
+    const n = Number(sec) || 0;
+    if (n <= 0) return "";
+    if (n % 3600 === 0) return `${n / 3600}小时`;
+    if (n % 60 === 0) return `${n / 60}分钟`;
+    return `${n}秒`;
+  }
+
+  getDataIntervalDisplay() {
+    return String(this.dataInterval || "").trim();
   }
 
   getDataTimeDisplay() {
@@ -93,7 +108,8 @@ export class MapLayer {
       visible: this.visible,
       status: this.lastStatus === false ? "error" : (this.visible ? "on" : "off"),
       dataTime: this.getDataTimeDisplay(),
-      refresh: this.formatRefreshFrequency(),
+      dataInterval: this.getDataIntervalDisplay(),
+      autoRefresh: this.formatAutoRefreshFrequency(),
       extra: this.infoExtra || "",
       lastRefresh: this.formatLocalTime(this.lastTime)
     };
@@ -105,8 +121,8 @@ export class MapLayer {
     const parts = [];
     const dataText = this.getDataTimeShortDisplay();
     if (dataText) parts.push(dataText);
-    const freq = this.formatRefreshFrequency();
-    if (freq) parts.push(freq);
+    const interval = this.getDataIntervalDisplay();
+    if (interval) parts.push(interval);
     return parts.length ? parts.join(" | ") : "已开启";
   }
 

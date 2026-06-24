@@ -24,7 +24,8 @@ export class CityWeatherLayer extends MapLayer {
       title: "城市综合天气",
       descript: "综合展示城市天气、温度、湿度，并支持查看 5 日天气预报",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 600
+      refreshSeconds: 600,
+      dataInterval: "1小时"
     });
     this.cache = new Map();
     this.markerMap = new Map();

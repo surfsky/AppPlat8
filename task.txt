@@ -414,6 +414,8 @@ Done
     /gis/index 顶部的工具栏tooltip又慢又小不好看（图1），看能否用element plus的tooltip 控件（参考图2）
     /给GisSecne 场景增加“AutoRotate” 自动旋转属性，对应到gis/index视图下拉框中的“自动旋转”（图4）
     /优化查找图层UI
+    /修正图层的时间间隔问题；
+    /修正台风图层数据；补足台风登陆状态；
     实现gismenu 通过api 获取数据的方式
     gis/index 顶部实现流光动画效果
     gis/index 页面遮住左下角的“mapbox”标签

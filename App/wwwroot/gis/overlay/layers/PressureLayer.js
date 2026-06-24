@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, fetchWithTimeout } from "../core/utils.js";
+import { addOrUpdateGeoJsonSource, fetchWithTimeout, findNearestHourlyIndex, getTimeSeriesStepSeconds } from "../core/utils.js";
 
 
 
@@ -22,7 +22,8 @@ export class PressureLayer extends MapLayer {
       name: "pressure",
       title: "气压等压线",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 900
+      refreshSeconds: 900,
+      dataInterval: "1小时"
     });
     this.contourSourceId = "pressure-contour-source";
     this.labelSourceId = "pressure-label-source";
@@ -126,26 +127,18 @@ export class PressureLayer extends MapLayer {
     const grid = Array.from({ length: PressureLayer.GRID.rows }, () => Array(PressureLayer.GRID.cols).fill(null));
     let okCount = 0;
     let sampleTime = null;
+    let dataInterval = this.dataInterval;
 
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const item = list[i] || {};
       const times = Array.isArray(item?.hourly?.time) ? item.hourly.time : [];
       const values = Array.isArray(item?.hourly?.pressure_msl) ? item.hourly.pressure_msl : [];
-      let idx = 0;
-      if (times.length > 1) {
-        const nowMs = Date.now();
-        let best = 0;
-        let bestGap = Infinity;
-        for (let t = 0; t < times.length; t++) {
-          const gap = Math.abs(new Date(times[t]).getTime() - nowMs);
-          if (gap < bestGap) {
-            bestGap = gap;
-            best = t;
-          }
-        }
-        idx = best;
+      if (times.length > 1 && (!dataInterval || dataInterval === this.dataInterval)) {
+        const sec = getTimeSeriesStepSeconds(times);
+        if (sec > 0) dataInterval = this.formatSecondsAsText(sec);
       }
+      const idx = times.length > 1 ? findNearestHourlyIndex(times) : 0;
       const p = Number(values[idx]);
       if (!Number.isFinite(p)) continue;
       if (!sampleTime && times[idx]) sampleTime = times[idx];
@@ -161,6 +154,7 @@ export class PressureLayer extends MapLayer {
       cols: PressureLayer.GRID.cols,
       grid,
       sampleTime,
+      dataInterval,
       okCount,
       totalCount: nodes.length
     };
@@ -522,6 +516,7 @@ export class PressureLayer extends MapLayer {
       ageText = ageMin >= 0 ? `${ageMin}分钟前` : `预报${Math.abs(ageMin)}分钟后`;
     }
     if (rawField.sampleTime) this.setDataTime(rawField.sampleTime);
+    if (rawField.dataInterval) this.setDataInterval(rawField.dataInterval);
     this.setInfoExtra(`时效: ${ageText}`);
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;

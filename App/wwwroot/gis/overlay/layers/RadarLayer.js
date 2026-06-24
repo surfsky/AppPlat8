@@ -11,7 +11,8 @@ export class RadarLayer extends MapLayer {
       name: "radar",
       title: "实时降水雷达图",
       api: "https://api.rainviewer.com/public/weather-maps.json",
-      refreshSeconds: 300
+      refreshSeconds: 300,
+      dataInterval: "10分钟"
     });
     this.sourceId = "radar-source";
     this.layerId = "radar-layer";
@@ -29,15 +30,18 @@ export class RadarLayer extends MapLayer {
     const latest = frames[frames.length - 1];
     if (!latest?.path) throw new Error("RainViewer 未返回可用雷达帧");
     const ts = Number(latest.time) || 0;
+    const prev = frames.length > 1 ? Number(frames[frames.length - 2]?.time) || 0 : 0;
+    const intervalSec = ts > 0 && prev > 0 ? Math.abs(ts - prev) : 0;
     return {
       tileUrl: `${host}${latest.path}/256/{z}/{x}/{y}/2/1_1.png`,
-      time: ts > 0 ? new Date(ts * 1000) : null
+      time: ts > 0 ? new Date(ts * 1000) : null,
+      dataInterval: intervalSec > 0 ? this.formatSecondsAsText(intervalSec) : this.dataInterval
     };
   }
 
   async refresh() {
     const { map } = this.runtime;
-    const { tileUrl, time } = await this.getRadarTileUrlAndInfo();
+    const { tileUrl, time, dataInterval } = await this.getRadarTileUrlAndInfo();
     const source = map.getSource(this.sourceId);
     if (!source) {
       map.addSource(this.sourceId, { type: "raster", tiles: [tileUrl], tileSize: 256 });
@@ -46,6 +50,7 @@ export class RadarLayer extends MapLayer {
       source.setTiles([tileUrl]);
     }
     if (time) this.setDataTime(time);
+    if (dataInterval) this.setDataInterval(dataInterval);
     this.setInfoExtra("");
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;

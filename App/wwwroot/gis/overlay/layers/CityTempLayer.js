@@ -47,7 +47,8 @@ export class CityTempLayer extends MapLayer {
       title: "城市温度标签",
       descript: "按缩放级别显示城市温度",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 600
+      refreshSeconds: 600,
+      dataInterval: "1小时"
     });
     this.sourceId = "city-temp-source";
     this.layerId = "city-temp-layer";

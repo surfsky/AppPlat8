@@ -12,7 +12,8 @@ export class CityHumidityLayer extends MapLayer {
       title: "城市湿度标签",
       descript: "按缩放级别显示城市相对湿度",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 600
+      refreshSeconds: 600,
+      dataInterval: "1小时"
     });
     this.sourceId = "city-humidity-source";
     this.layerId = "city-humidity-layer";

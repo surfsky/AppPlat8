@@ -10,7 +10,8 @@ export class TyphoonLayer extends MapLayer {
       name: "typhoon",
       title: "台风路径",
       api: "/httpapi/typhoon/list",
-      refreshSeconds: 300
+      refreshSeconds: 300,
+      dataInterval: "3小时"
     });
     this.sourceId = "typhoon-source";
     this.wind7FillLayerId = "typhoon-wind7-fill-layer";
@@ -342,6 +343,11 @@ export class TyphoonLayer extends MapLayer {
     return String(item?.chineseName || item?.ChineseName || "").trim();
   }
 
+  /**是否登陆 */
+  isLandfall(item) {
+    return item?.isLand === true || item?.IsLand === true;
+  }
+
   /**获取年份 */
   getYear(item) {
     const code = this.getItemCode(item);
@@ -354,7 +360,8 @@ export class TyphoonLayer extends MapLayer {
     const name = this.getChineseName(item) || String(item?.name || item?.Name || "").trim() || "台风";
     const maxLevel = Number(item?.maxLevel || item?.MaxLevel);
     const tail = Number.isFinite(maxLevel) && maxLevel > 0 ? ` ${maxLevel}` : "";
-    return `${code} ${name}${tail}`.trim();
+    const landText = this.isLandfall(item) ? "（登陆）" : "";
+    return `${code} ${name}${tail}${landText}`.trim();
   }
 
   /**获取风力颜色 */

@@ -16,7 +16,8 @@ export class AdminBoundaryLayer extends MapLayer {
       name: "adminBoundary",
       title: "行政边界",
       api: `${ADMIN_COUNTRY_GEOJSON}, ${ADMIN_PROVINCE_GEOJSON}`,
-      refreshSeconds: 0
+      refreshSeconds: 0,
+      dataInterval: "静态"
     });
     this.countrySource = "admin-country-source";
     this.provinceSource = "admin-province-source";
