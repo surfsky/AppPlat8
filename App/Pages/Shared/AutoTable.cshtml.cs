@@ -47,11 +47,11 @@ namespace App.Pages.Shared
         }
 
         /**读取分页数据 */
-        public IActionResult OnGetData(string file, string filters, int pageIndex = 0, int pageSize = 20)
+        public IActionResult OnGetData(string file, string filters, int pageIndex = 0, int pageSize = 20, string sortKey = "", string sortOrder = "")
         {
             try
             {
-                var query = _store.Query(file, ParseFilters(filters), pageIndex, pageSize);
+                var query = _store.Query(file, ParseFilters(filters), pageIndex, pageSize, sortKey, sortOrder);
                 return BuildResult(0, "ok", new
                 {
                     file = query.File,

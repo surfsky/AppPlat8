@@ -60,12 +60,15 @@
                           border
                           v-loading="loading"
                           height="100%"
+                          @@sort-change="onSortChange"
                           class="w-full">
                     <el-table-column type="index" label="#" width="60"></el-table-column>
-                    <el-table-column prop="id" label="行号" width="90"></el-table-column>
+                    <el-table-column prop="id" label="行号" width="90" sortable="custom"></el-table-column>
                     <el-table-column v-for="col in meta.columns"
                                      :key="col.key"
+                                     :prop="col.key"
                                      :label="col.title"
+                                     sortable="custom"
                                      min-width="160">
                         <template #default="scope">
                             {{ scope.row.cells?.[col.key] || '' }}
@@ -112,6 +115,8 @@
                 const pageIndex = ref(1);
                 const pageSize = ref(20);
                 const total = ref(0);
+                const sortKey = ref('');
+                const sortOrder = ref('');
                 const formLabelPosition = ref(['left', 'right', 'top'].includes(labelPosition) ? labelPosition : 'left');
                 const rows = ref([]);
                 const meta = reactive({
@@ -147,7 +152,9 @@
                                 file,
                                 filters: JSON.stringify(filters),
                                 pageIndex: pageIndex.value - 1,
-                                pageSize: pageSize.value
+                                pageSize: pageSize.value,
+                                sortKey: sortKey.value,
+                                sortOrder: sortOrder.value
                             }
                         });
                         const body = res.data || {};
@@ -176,6 +183,14 @@
                 const resetSearch = async () => {
                     Object.keys(filters).forEach(key => filters[key] = '');
                     await search();
+                };
+
+                /**处理排序 */
+                const onSortChange = async ({ prop, order }) => {
+                    sortKey.value = String(prop || '').trim();
+                    sortOrder.value = String(order || '').trim();
+                    pageIndex.value = 1;
+                    await loadData();
                 };
 
                 /**打开表单 */
@@ -325,6 +340,8 @@
                     pageIndex,
                     pageSize,
                     total,
+                    sortKey,
+                    sortOrder,
                     rows,
                     meta,
                     filters,
@@ -335,6 +352,7 @@
                     downloadFile,
                     deleteRow,
                     openForm,
+                    onSortChange,
                     onPageChange,
                     onSizeChange
                 };

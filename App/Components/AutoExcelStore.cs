@@ -49,12 +49,14 @@ namespace App.Components
         }
 
         /**分页查询 */
-        public AutoExcelQueryResult Query(string file, IDictionary<string, string> filters, int pageIndex, int pageSize)
+        public AutoExcelQueryResult Query(string file, IDictionary<string, string> filters, int pageIndex, int pageSize, string sortKey = "", string sortOrder = "")
         {
             var model = ReadSheet(file);
             var all = model.Rows
                 .Where(r => MatchFilters(r, model.Columns, filters))
                 .ToList();
+
+            all = SortRows(all, model.Columns, sortKey, sortOrder);
 
             var safeSize = pageSize <= 0 ? 20 : pageSize;
             var safeIndex = pageIndex < 0 ? 0 : pageIndex;
@@ -438,6 +440,63 @@ namespace App.Components
         //------------------------------------------------------
         // Match / normalize
         //------------------------------------------------------
+        /**排序数据行 */
+        private static List<AutoExcelRow> SortRows(List<AutoExcelRow> rows, List<AutoExcelColumn> cols, string sortKey, string sortOrder)
+        {
+            if (rows == null || rows.Count <= 1)
+                return rows ?? new List<AutoExcelRow>();
+
+            var key = (sortKey ?? string.Empty).Trim();
+            var dir = (sortOrder ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(key) || (dir != "ascending" && dir != "descending"))
+                return rows;
+
+            Func<AutoExcelRow, AutoSortValue> getter = key.Equals("id", StringComparison.OrdinalIgnoreCase)
+                ? row => BuildSortValue(row?.Id.ToString())
+                : row => BuildSortValue(GetCellValue(row, cols, key));
+
+            var ordered = dir == "descending"
+                ? rows.OrderByDescending(getter, AutoSortValueComparer.Instance).ThenByDescending(r => r.Id)
+                : rows.OrderBy(getter, AutoSortValueComparer.Instance).ThenBy(r => r.Id);
+            return ordered.ToList();
+        }
+
+        /**读取单元格文本 */
+        private static string GetCellValue(AutoExcelRow row, List<AutoExcelColumn> cols, string key)
+        {
+            if (row == null || string.IsNullOrWhiteSpace(key))
+                return string.Empty;
+
+            if (key.Equals("id", StringComparison.OrdinalIgnoreCase))
+                return row.Id.ToString();
+
+            var col = cols?.FirstOrDefault(c => c.Key == key);
+            if (col == null)
+                return string.Empty;
+
+            row.Cells.TryGetValue(col.Key, out var val);
+            return val ?? string.Empty;
+        }
+
+        /**构建排序值 */
+        private static AutoSortValue BuildSortValue(string txt)
+        {
+            var val = (txt ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(val))
+                return new AutoSortValue();
+
+            if (double.TryParse(val, NumberStyles.Any, CultureInfo.InvariantCulture, out var num))
+                return new AutoSortValue { Kind = 1, Number = num, Text = val };
+
+            if (double.TryParse(val, NumberStyles.Any, CultureInfo.CurrentCulture, out num))
+                return new AutoSortValue { Kind = 1, Number = num, Text = val };
+
+            if (DateTime.TryParse(val, out var dt))
+                return new AutoSortValue { Kind = 2, Date = dt, Text = val };
+
+            return new AutoSortValue { Kind = 3, Text = val };
+        }
+
         /**判断行是否匹配筛选 */
         private static bool MatchFilters(AutoExcelRow row, List<AutoExcelColumn> cols, IDictionary<string, string> filters)
         {
@@ -567,5 +626,48 @@ namespace App.Components
     {
         public int Id { get; set; }
         public Dictionary<string, string> Cells { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>排序值</summary>
+    internal class AutoSortValue
+    {
+        public int Kind { get; set; }
+        public double Number { get; set; }
+        public DateTime Date { get; set; }
+        public string Text { get; set; } = string.Empty;
+    }
+
+    /// <summary>排序值比较器</summary>
+    internal class AutoSortValueComparer : IComparer<AutoSortValue>
+    {
+        public static readonly AutoSortValueComparer Instance = new();
+
+        /**比较排序值 */
+        public int Compare(AutoSortValue x, AutoSortValue y)
+        {
+            x ??= new AutoSortValue();
+            y ??= new AutoSortValue();
+
+            var xEmpty = string.IsNullOrWhiteSpace(x.Text);
+            var yEmpty = string.IsNullOrWhiteSpace(y.Text);
+            if (xEmpty && yEmpty)
+                return 0;
+            if (xEmpty)
+                return 1;
+            if (yEmpty)
+                return -1;
+
+            var kindCmp = x.Kind.CompareTo(y.Kind);
+            if (kindCmp != 0)
+                return kindCmp;
+
+            if (x.Kind == 1)
+                return x.Number.CompareTo(y.Number);
+
+            if (x.Kind == 2)
+                return x.Date.CompareTo(y.Date);
+
+            return string.Compare(x.Text, y.Text, StringComparison.CurrentCultureIgnoreCase);
+        }
     }
 }
