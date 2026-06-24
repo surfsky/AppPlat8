@@ -33,13 +33,21 @@ export class WindLayer extends MapLayer {
     this.refreshTimer = null;
     this.fieldCache = new Map(); // 简单的内存缓存，key 为经纬度边界的字符串
     this.hostEl = null;
+    this.dpr = 1;
+    this.isMapMoving = false;
   }
 
   bind(runtime) {
     super.bind(runtime);
     this.ensureCanvas();
     const { map } = runtime;
+    map.on("movestart", () => {
+      this.isMapMoving = true;
+      this.clearCanvas();
+    });
     map.on("moveend", () => {
+      this.isMapMoving = false;
+      this.clearCanvas();
       if (this.visible) {
         this.debouncedRefresh();
       }
@@ -102,16 +110,27 @@ export class WindLayer extends MapLayer {
         pointer-events: none;
         z-index: 3;
         opacity: 0.8;
+        image-rendering: optimizeQuality;
       }
     `;
+  }
+
+  clearCanvas() {
+    if (this.ctx && this.canvas) this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   resizeCanvas() {
     if (!this.canvas) return;
     const host = this.hostEl || this.runtime?.map?.getContainer?.();
     const rect = host?.getBoundingClientRect?.();
-    this.canvas.width = Math.max(1, Math.round(rect?.width || window.innerWidth));
-    this.canvas.height = Math.max(1, Math.round(rect?.height || window.innerHeight));
+    const cssW = Math.max(1, Math.round(rect?.width || window.innerWidth));
+    const cssH = Math.max(1, Math.round(rect?.height || window.innerHeight));
+    this.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    this.canvas.width = Math.max(1, Math.round(cssW * this.dpr));
+    this.canvas.height = Math.max(1, Math.round(cssH * this.dpr));
+    this.canvas.style.width = `${cssW}px`;
+    this.canvas.style.height = `${cssH}px`;
+    if (this.ctx) this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     this.createParticles(); // 窗口大小改变时重置粒子
   }
 
@@ -334,7 +353,9 @@ export class WindLayer extends MapLayer {
   createParticles() {
     if (!this.canvas) return;
     const bounds = this.getParticleBounds();
-    const area = this.canvas.width * this.canvas.height;
+    const cssW = this.canvas.width / this.dpr;
+    const cssH = this.canvas.height / this.dpr;
+    const area = cssW * cssH;
     // 覆盖范围扩大后，适度降低粒子密度避免过于拥挤。
     const count = Math.max(1400, Math.min(3000, Math.floor(area / 900)));
     this.particles = [];
@@ -372,12 +393,19 @@ export class WindLayer extends MapLayer {
 
   drawFrame(now = 0) {
     if (!this.visible || !this.ctx || !this.canvas) return;
+    const cssW = this.canvas.width / this.dpr;
+    const cssH = this.canvas.height / this.dpr;
     
-    // Windy 风格：使用 destination-in 实现渐隐尾迹
-    this.ctx.globalCompositeOperation = "destination-in";
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.97)"; // 尾迹长度控制
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.globalCompositeOperation = "source-over";
+    if (this.isMapMoving) {
+      // 地图拖动时不保留残影，避免尾迹与底图相对滑动造成“模糊拖花”。
+      this.clearCanvas();
+    } else {
+      // Windy 风格：使用 destination-in 实现渐隐尾迹
+      this.ctx.globalCompositeOperation = "destination-in";
+      this.ctx.fillStyle = "rgba(0, 0, 0, 0.97)";
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.globalCompositeOperation = "source-over";
+    }
 
     if (now - this.lastFrameAt < 30) {
       this.animId = requestAnimationFrame(t => this.drawFrame(t));
@@ -425,7 +453,7 @@ export class WindLayer extends MapLayer {
       const nextPos = map.project([nextLng, nextLat]);
 
       // 5. 检查是否在屏幕内且移动有效
-      if (pos.x < 0 || pos.x > this.canvas.width || pos.y < 0 || pos.y > this.canvas.height) {
+      if (pos.x < 0 || pos.x > cssW || pos.y < 0 || pos.y > cssH) {
         this.resetParticle(p, bounds);
         continue;
       }
