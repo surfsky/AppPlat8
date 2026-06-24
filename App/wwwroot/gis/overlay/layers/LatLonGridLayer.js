@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, setInfo } from "../core/utils.js";
+import { addOrUpdateGeoJsonSource } from "../core/utils.js";
 
 /****************************************************************
  * 经纬网格线图层
@@ -234,7 +234,8 @@ export class LatLonGridLayer extends MapLayer {
     }
 
     this.setOpacity(this.runtime.getOpacity(this.name));
-    setInfo("gridInfo", `经纬网步长: ${step}°，标签密度: ${this.getLabelStrideByZoom(zoom)}分之一`);
+    this.setDataTimeText("实时");
+    this.setInfoExtra(`步长: ${step}°`);
     this.lastStatus = true;
     this.lastTime = Date.now();
     return true;
@@ -255,7 +256,8 @@ export class LatLonGridLayer extends MapLayer {
     if (map.getLayer(this.lineLayerId)) map.setLayoutProperty(this.lineLayerId, "visibility", "none");
     if (map.getLayer(this.lonLabelLayerId)) map.setLayoutProperty(this.lonLabelLayerId, "visibility", "none");
     if (map.getLayer(this.latLabelLayerId)) map.setLayoutProperty(this.latLabelLayerId, "visibility", "none");
-    setInfo("gridInfo", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

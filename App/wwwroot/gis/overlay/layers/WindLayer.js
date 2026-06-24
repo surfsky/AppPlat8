@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { chunkArray, fetchWithTimeout, setInfo } from "../core/utils.js";
+import { chunkArray, fetchWithTimeout } from "../core/utils.js";
 
 
 /****************************************************************
@@ -468,13 +468,16 @@ export class WindLayer extends MapLayer {
       this.createParticles();
       this.startAnimation();
       const timeText = this.formatDataTime(this.field);
-      //setInfo("windInfo", `风场粒子: ${this.particles.length}，采样点: ${this.field.okCount}/${this.field.totalCount}${timeText ? `，更新时间: ${timeText}` : ""}`);
-      setInfo("windInfo", `更新时间: ${timeText}`);
+      this.setDataTimeText(timeText);
+      this.setInfoExtra("");
+      this.lastStatus = true;
     } catch (e) {
       console.error("刷新风场失败", e);
-      setInfo("windInfo", "加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
     }
-    this.lastStatus = true;
     this.lastTime = Date.now();
     return true;
   }
@@ -487,7 +490,8 @@ export class WindLayer extends MapLayer {
     super.hide();
     this.stopAnimation();
     if (this.canvas) this.canvas.style.display = "none";
-    setInfo("windInfo", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

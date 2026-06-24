@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, fetchWithTimeout, setInfo } from "../core/utils.js";
+import { addOrUpdateGeoJsonSource, fetchWithTimeout } from "../core/utils.js";
 
 
 
@@ -521,8 +521,8 @@ export class PressureLayer extends MapLayer {
       const ageMin = Math.round((Date.now() - sampleTs) / 60000);
       ageText = ageMin >= 0 ? `${ageMin}分钟前` : `预报${Math.abs(ageMin)}分钟后`;
     }
-    //setInfo("pressureInfo", `等压线段: ${contourGeo.features.length}，采样: ${rawField.okCount}/${rawField.totalCount}，数据时效: ${ageText}`);
-    setInfo("pressureInfo", `数据时效: ${ageText}`);
+    if (rawField.sampleTime) this.setDataTime(rawField.sampleTime);
+    this.setInfoExtra(`时效: ${ageText}`);
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
     this.lastTime = Date.now();
@@ -540,7 +540,8 @@ export class PressureLayer extends MapLayer {
     const { map } = this.runtime;
     if (map.getLayer(this.contourLayerId)) map.setLayoutProperty(this.contourLayerId, "visibility", "none");
     if (map.getLayer(this.labelLayerId)) map.setLayoutProperty(this.labelLayerId, "visibility", "none");
-    setInfo("pressureInfo", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

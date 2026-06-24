@@ -1,5 +1,4 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { setInfo } from "../core/utils.js";
 
 
 /****************************************************************
@@ -64,7 +63,8 @@ export class SatelliteWorldMosaicLayer extends MapLayer {
     } else {
       source.setTiles([tileUrl]);
     }
-    setInfo("satelliteWorldTime", this.formatTimeLabel(timeIso));
+    this.setDataTime(timeIso);
+    this.setInfoExtra("");
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
     this.lastTime = Date.now();
@@ -84,7 +84,8 @@ export class SatelliteWorldMosaicLayer extends MapLayer {
     if (map.getLayer(this.layerId)) {
       map.setLayoutProperty(this.layerId, "visibility", "none");
     }
-    setInfo("satelliteWorldTime", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

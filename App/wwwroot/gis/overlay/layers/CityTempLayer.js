@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, chunkArray, fetchWithTimeout, setInfo } from "../core/utils.js";
+import { addOrUpdateGeoJsonSource, chunkArray, fetchWithTimeout } from "../core/utils.js";
 
 
 
@@ -218,8 +218,8 @@ export class CityTempLayer extends MapLayer {
     }
 
     const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
-    //setInfo("cityTempInfo", `温度标签城市: ${features.length}（Zoom ${zoom.toFixed(1)}），更新时间: ${timeText}`);
-    setInfo("cityTempInfo", `更新时间: ${timeText}`);
+    this.setDataTimeText(timeText);
+    this.setInfoExtra("");
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
     this.lastTime = now;
@@ -239,7 +239,8 @@ export class CityTempLayer extends MapLayer {
     if (!this.runtime) return true;
     const { map } = this.runtime;
     if (map.getLayer(this.layerId)) map.setLayoutProperty(this.layerId, "visibility", "none");
-    setInfo("cityTempInfo", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

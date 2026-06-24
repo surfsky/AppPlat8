@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { fetchWithTimeout, setInfo } from "../core/utils.js";
+import { fetchWithTimeout } from "../core/utils.js";
 
 
 /****************************************************************
@@ -28,15 +28,16 @@ export class RadarLayer extends MapLayer {
     ];
     const latest = frames[frames.length - 1];
     if (!latest?.path) throw new Error("RainViewer 未返回可用雷达帧");
+    const ts = Number(latest.time) || 0;
     return {
       tileUrl: `${host}${latest.path}/256/{z}/{x}/{y}/2/1_1.png`,
-      label: `雷达帧时间: ${new Date(latest.time * 1000).toLocaleString()}`
+      time: ts > 0 ? new Date(ts * 1000) : null
     };
   }
 
   async refresh() {
     const { map } = this.runtime;
-    const { tileUrl, label } = await this.getRadarTileUrlAndInfo();
+    const { tileUrl, time } = await this.getRadarTileUrlAndInfo();
     const source = map.getSource(this.sourceId);
     if (!source) {
       map.addSource(this.sourceId, { type: "raster", tiles: [tileUrl], tileSize: 256 });
@@ -44,7 +45,8 @@ export class RadarLayer extends MapLayer {
     } else {
       source.setTiles([tileUrl]);
     }
-    setInfo("radarTime", label);
+    if (time) this.setDataTime(time);
+    this.setInfoExtra("");
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
     this.lastTime = Date.now();
@@ -60,7 +62,8 @@ export class RadarLayer extends MapLayer {
     super.hide();
     const { map } = this.runtime;
     if (map.getLayer(this.layerId)) map.setLayoutProperty(this.layerId, "visibility", "none");
-    setInfo("radarTime", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

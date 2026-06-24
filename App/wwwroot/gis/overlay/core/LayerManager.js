@@ -16,10 +16,24 @@ export class LayerManager {
       isEnabled: name => {
         const el = document.getElementById(name);
         return !!(el && el.checked);
+      },
+      getInfoId: name => this.getInfoId(name),
+      setLayerInfo: (name, text) => {
+        const infoId = this.getInfoId(name);
+        if (infoId) setInfo(infoId, text);
       }
     };
 
     for (const layer of layers) layer.bind(this.runtime);
+  }
+
+  updateLayerInfo(layer) {
+    if (!layer) return;
+    const text = typeof layer.buildInfoText === "function" ? layer.buildInfoText() : "已开启";
+    this.runtime.setLayerInfo(layer.name, text);
+    if (typeof layer.buildDebugInfo === "function") {
+      console.debug("[MapLayerInfo]", layer.buildDebugInfo());
+    }
   }
 
   /**
@@ -32,8 +46,13 @@ export class LayerManager {
       if (!force && !layer.shouldRefresh()) continue;
       try {
         await layer.refresh(force);
+        this.updateLayerInfo(layer);
       } catch (error) {
         console.error(`刷新图层 ${layer.name} 失败`, error);
+        try {
+          layer.lastStatus = false;
+          this.updateLayerInfo(layer);
+        } catch (_e) { }
       }
     }
   }
@@ -52,11 +71,17 @@ export class LayerManager {
       if (enabled) {
         if (infoId) setInfo(infoId, "加载中...");
         await layer.show(1);
+        this.updateLayerInfo(layer);
       } else {
         layer.hide();
+        this.runtime.setLayerInfo(name, "未开启");
       }
     } catch (error) {
       console.error(`切换图层 ${name} 失败`, error);
+      try {
+        layer.lastStatus = false;
+        this.updateLayerInfo(layer);
+      } catch (_e) { }
     }
   }
 

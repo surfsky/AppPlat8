@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { chunkArray, fetchWithTimeout, setInfo } from "../core/utils.js";
+import { chunkArray, fetchWithTimeout } from "../core/utils.js";
 import { CityTempLayer } from "./CityTempLayer.js";
 
 /****************************************************************
@@ -534,7 +534,8 @@ export class CityWeatherLayer extends MapLayer {
     this.rebuildMarkers(cities);
     this.setOpacity(this.runtime.getOpacity(this.name));
     const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
-    setInfo("cityWeatherInfo", `更新时间: ${timeText}`);
+    this.setDataTimeText(timeText);
+    this.setInfoExtra("");
     this.lastStatus = true;
     this.lastTime = now;
     return true;
@@ -555,7 +556,8 @@ export class CityWeatherLayer extends MapLayer {
       this.popup.remove();
       this.popup = null;
     }
-    setInfo("cityWeatherInfo", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

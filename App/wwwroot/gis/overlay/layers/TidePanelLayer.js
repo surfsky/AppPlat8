@@ -507,7 +507,8 @@ export class TidePanelLayer extends MapLayer {
     this.drawTideChart(curveTimes, curveValues);
     setInfo("tidePeak", `${Math.max(...curveValues).toFixed(2)} m`);
     setInfo("tideInfo", `站点 ${station.name}，更新: ${new Date().toLocaleString()}`);
-    setInfo("tidePanelInfo", `潮汐面板已开启，站点: ${station.name}`);
+    this.setDataTime(times[idx] || "");
+    this.setInfoExtra(`站点: ${station.name}`);
     this.syncStationSource();
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
@@ -528,7 +529,8 @@ export class TidePanelLayer extends MapLayer {
     const panel = this.getPanelEl();
     if (panel) panel.style.display = "none";
     this.setStationVisibility(false);
-    setInfo("tidePanelInfo", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

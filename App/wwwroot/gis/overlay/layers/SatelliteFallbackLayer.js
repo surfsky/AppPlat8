@@ -1,5 +1,4 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { setInfo } from "../core/utils.js";
 
 
 /****************************************************************
@@ -37,7 +36,8 @@ export class SatelliteFallbackLayer extends MapLayer {
     } else {
       source.setTiles([tileUrl]);
     }
-    setInfo("satelliteTime", `卫星云图日期(UTC): ${date}`);
+    this.setDataTimeText(`${date} UTC`);
+    this.setInfoExtra("");
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
     this.lastTime = Date.now();
@@ -53,7 +53,8 @@ export class SatelliteFallbackLayer extends MapLayer {
     super.hide();
     const { map } = this.runtime;
     if (map.getLayer(this.layerId)) map.setLayoutProperty(this.layerId, "visibility", "none");
-    setInfo("satelliteTime", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

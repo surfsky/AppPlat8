@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, fetchWithTimeout, setInfo } from "../core/utils.js";
+import { addOrUpdateGeoJsonSource, fetchWithTimeout } from "../core/utils.js";
 
 /****************************************************************
  * 台风路径图层
@@ -10,7 +10,7 @@ export class TyphoonLayer extends MapLayer {
       name: "typhoon",
       title: "台风路径",
       api: "/httpapi/typhoon/list",
-      refreshSeconds: 1800
+      refreshSeconds: 300
     });
     this.sourceId = "typhoon-source";
     this.wind7FillLayerId = "typhoon-wind7-fill-layer";
@@ -42,6 +42,8 @@ export class TyphoonLayer extends MapLayer {
     this.selectedYear = "";
     this.selectedCode = "";
     this.currentStormMap = new Map();
+    this.currentStormTtlMs = 6 * 60 * 1000;
+    this.liveRefreshAt = 0;
     this.currentListLoadedAt = 0;
     this.initSelectionReady = false;
     this.legendEl = null;
@@ -70,6 +72,9 @@ export class TyphoonLayer extends MapLayer {
     this.onPointMove = this.onPointMove.bind(this);
     this.onPointLeave = this.onPointLeave.bind(this);
     this.onPointClick = this.onPointClick.bind(this);
+    this.onCenterMove = this.onCenterMove.bind(this);
+    this.onCenterLeave = this.onCenterLeave.bind(this);
+    this.onCenterClick = this.onCenterClick.bind(this);
   }
 
   /**确保样式 */
@@ -701,15 +706,86 @@ export class TyphoonLayer extends MapLayer {
 
   /**获取当前台风等级 */
   getCurrentLevelName(cls, windMs) {
-    const map = {
-      1: "热带低压(TD)",
-      2: "热带风暴(TS)",
-      3: "强热带风暴(STS)",
-      4: "台风(TY)",
-      5: "强台风(STY)",
-      6: "超强台风(Super TY)"
+    return this.getWindMeta(windMs).name;
+  }
+
+  msToBeaufortLevel(ms) {
+    const v = Number(ms) || 0;
+    const table = [
+      { min: 0, max: 0.3, lvl: 0 },
+      { min: 0.3, max: 1.6, lvl: 1 },
+      { min: 1.6, max: 3.4, lvl: 2 },
+      { min: 3.4, max: 5.5, lvl: 3 },
+      { min: 5.5, max: 8.0, lvl: 4 },
+      { min: 8.0, max: 10.8, lvl: 5 },
+      { min: 10.8, max: 13.9, lvl: 6 },
+      { min: 13.9, max: 17.2, lvl: 7 },
+      { min: 17.2, max: 20.8, lvl: 8 },
+      { min: 20.8, max: 24.5, lvl: 9 },
+      { min: 24.5, max: 28.5, lvl: 10 },
+      { min: 28.5, max: 32.7, lvl: 11 },
+      { min: 32.7, max: 37.0, lvl: 12 },
+      { min: 37.0, max: 41.5, lvl: 13 },
+      { min: 41.5, max: 46.2, lvl: 14 },
+      { min: 46.2, max: 51.0, lvl: 15 },
+      { min: 51.0, max: 56.1, lvl: 16 },
+      { min: 56.1, max: 61.3, lvl: 17 },
+      { min: 61.3, max: Infinity, lvl: 18 }
+    ];
+    for (const item of table) {
+      if (v >= item.min && v < item.max) return item.lvl;
+    }
+    return 0;
+  }
+
+  bearingToDirText(deg) {
+    const v = ((Number(deg) || 0) % 360 + 360) % 360;
+    const dirs = ["北", "北东北", "东北", "东东北", "东", "东东南", "东南", "南东南", "南", "南西南", "西南", "西西南", "西", "西西北", "西北", "北西北"];
+    const idx = Math.round(v / 22.5) % 16;
+    return dirs[idx] || "北";
+  }
+
+  haversineKm(a, b) {
+    const lng1 = Number(a?.[0]), lat1 = Number(a?.[1]);
+    const lng2 = Number(b?.[0]), lat2 = Number(b?.[1]);
+    if (![lng1, lat1, lng2, lat2].every(Number.isFinite)) return 0;
+    const toRad = d => d * Math.PI / 180;
+    const R = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const s1 = Math.sin(dLat / 2);
+    const s2 = Math.sin(dLng / 2);
+    const x = s1 * s1 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * s2 * s2;
+    const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+    return R * c;
+  }
+
+  bearingDeg(a, b) {
+    const lng1 = Number(a?.[0]), lat1 = Number(a?.[1]);
+    const lng2 = Number(b?.[0]), lat2 = Number(b?.[1]);
+    if (![lng1, lat1, lng2, lat2].every(Number.isFinite)) return 0;
+    const toRad = d => d * Math.PI / 180;
+    const toDeg = r => r * 180 / Math.PI;
+    const y = Math.sin(toRad(lng2 - lng1)) * Math.cos(toRad(lat2));
+    const x = Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) - Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(toRad(lng2 - lng1));
+    const brng = toDeg(Math.atan2(y, x));
+    return ((brng % 360) + 360) % 360;
+  }
+
+  getMoveInfo(prevCoord, prevTime, coord, time) {
+    const t1 = new Date(prevTime || "").getTime();
+    const t2 = new Date(time || "").getTime();
+    if (!Number.isFinite(t1) || !Number.isFinite(t2) || t2 <= t1) return null;
+    const distKm = this.haversineKm(prevCoord, coord);
+    const hours = (t2 - t1) / 3600000;
+    if (!hours) return null;
+    const speedKmh = distKm / hours;
+    const bearing = this.bearingDeg(prevCoord, coord);
+    return {
+      speedKmh: Math.round(speedKmh),
+      dirText: this.bearingToDirText(bearing),
+      bearing: Math.round(bearing)
     };
-    return map[Number(cls)] || this.getWindMeta(windMs).name;
   }
 
   /**解析实时轨迹 */
@@ -756,7 +832,7 @@ export class TyphoonLayer extends MapLayer {
           shortLabel: `${item?.period || 0}H`,
           pressure: Number.isFinite(Number(item?.pressure)) ? Number(item.pressure) : "-",
           windMs: Number.isFinite(windMs) ? Math.round(windMs) : 0,
-          levelName: String(item?.class || "").trim() || this.getWindMeta(windMs).name,
+          levelName: this.getWindMeta(windMs).name,
           probKm: Number(item?.radius_km) || 0,
           period: Number(item?.period) || 0,
           agencyId: "jma",
@@ -772,7 +848,15 @@ export class TyphoonLayer extends MapLayer {
   async ensureCurrentStormData(code) {
     const key = String(code || "").trim();
     if (!key) return null;
-    if (this.currentStormMap.has(key)) return this.currentStormMap.get(key);
+    const now = Date.now();
+    if (this.currentStormMap.has(key)) {
+      const cached = this.currentStormMap.get(key);
+      if (cached && cached.__fetchedAt && cached.data) {
+        if (now - Number(cached.__fetchedAt) < this.currentStormTtlMs) return cached.data;
+      } else if (cached && (cached.track || cached.forecast)) {
+        return cached;
+      }
+    }
     let trackData = null;
     let forecastData = null;
     try {
@@ -789,7 +873,7 @@ export class TyphoonLayer extends MapLayer {
       track: this.parseCurrentTrackGeoJson(trackData),
       forecast: this.parseCurrentForecastJson(forecastData)
     };
-    this.currentStormMap.set(key, data);
+    this.currentStormMap.set(key, { __fetchedAt: now, data });
     return data;
   }
 
@@ -1029,6 +1113,12 @@ export class TyphoonLayer extends MapLayer {
       const timeText = this.formatLocalTime(item?.timeUtc || item?.TimeUtc);
       const pressure = item?.pressure ?? item?.Pressure ?? "-";
       const levelName = item?.levelName || item?.LevelName || windMeta.name;
+      const bf = this.msToBeaufortLevel(windMs);
+      const prev = i > 0 ? points[i - 1] : null;
+      const prevCoord = prev ? [Number(prev?.lng || prev?.Lng), Number(prev?.lat || prev?.Lat)] : null;
+      const move = prevCoord && prevCoord.every(Number.isFinite)
+        ? this.getMoveInfo(prevCoord, prev?.timeUtc || prev?.TimeUtc, [lng, lat], item?.timeUtc || item?.TimeUtc)
+        : null;
       const popupTitle = `${code} ${name}`.trim();
       features.push({
         type: "Feature",
@@ -1042,13 +1132,16 @@ export class TyphoonLayer extends MapLayer {
           windColor: windMeta.color,
           pointRadius: i === points.length - 1 ? 5 : 3.8,
           isCurrent: i === points.length - 1 ? 1 : 0,
-          pointVisible: i === points.length - 1 ? 0 : 1,
+          pointVisible: 1,
           popupTitle,
           popupTime: timeText || "-",
           popupCoord: `${lng.toFixed(1)}, ${lat.toFixed(1)}`,
           popupPressure: pressure,
           popupWind: windMs,
+          popupBeaufort: bf,
           popupLevel: levelName,
+          popupMoveSpeed: move?.speedKmh ?? "",
+          popupMoveDir: move?.dirText ?? "",
           popupType: i === points.length - 1 ? "当前位置" : "历史点"
         }
       });
@@ -1138,7 +1231,7 @@ export class TyphoonLayer extends MapLayer {
         shortLabel: "实况",
         pressure: Number.isFinite(Number(currentForecast?.pressure)) ? Number(currentForecast?.pressure) : "-",
         windMs: Number.isFinite(windMs) ? Math.round(windMs) : 0,
-        levelName: String(currentForecast?.class || "").trim() || this.getWindMeta(windMs).name
+        levelName: this.getWindMeta(windMs).name
       });
     }
     if (!track.length) return { features: [], summary: null, currentStorms: [] };
@@ -1152,6 +1245,11 @@ export class TyphoonLayer extends MapLayer {
       if (!coord || coord.length < 2 || !coord.every(Number.isFinite)) return;
       actualCoords.push(coord);
       const windMeta = this.getWindMeta(item.windMs);
+      const bf = this.msToBeaufortLevel(item.windMs);
+      const prev = i > 0 ? track[i - 1] : null;
+      const move = prev?.coord && Array.isArray(prev.coord)
+        ? this.getMoveInfo(prev.coord, prev.time, coord, item.time)
+        : null;
       features.push({
         type: "Feature",
         geometry: { type: "Point", coordinates: coord },
@@ -1164,13 +1262,16 @@ export class TyphoonLayer extends MapLayer {
           windColor: windMeta.color,
           pointRadius: this.getPointRadius(item.windMs, i === track.length - 1),
           isCurrent: i === track.length - 1 ? 1 : 0,
-          pointVisible: i === track.length - 1 ? 0 : 1,
+          pointVisible: 1,
           popupTitle: `${code} ${name}`.trim(),
           popupTime: item.timeText || this.formatLocalTime(item.time),
           popupCoord: this.formatCoord(coord),
           popupPressure: item.pressure ?? "-",
           popupWind: Number(item.windMs) || 0,
+          popupBeaufort: bf,
           popupLevel: item.levelName || windMeta.name,
+          popupMoveSpeed: move?.speedKmh ?? "",
+          popupMoveDir: move?.dirText ?? "",
           popupType: i === track.length - 1 ? "当前台风实况点" : "当前台风轨迹点"
         }
       });
@@ -1183,6 +1284,7 @@ export class TyphoonLayer extends MapLayer {
     const currentCenter = Array.isArray(currentItem?.coord) ? currentItem.coord : null;
     const agencyColor = "#7c3aed";
     if (currentCenter) {
+      const circleSize = this.estimateWindCircleKm(currentItem?.windMs);
       features.push(...this.buildLiveWindCircleFeatures(currentCenter, currentItem?.windMs, stormId));
       const pathCoords = [currentCenter, ...predicts.map(x => x.coord).filter(x => Array.isArray(x) && x.length >= 2)];
       const line = this.buildPathFeature("forecast-path", pathCoords, {
@@ -1213,7 +1315,9 @@ export class TyphoonLayer extends MapLayer {
             popupCoord: this.formatCoord(coord),
             popupPressure: item.pressure ?? "-",
             popupWind: Number(item.windMs) || 0,
-            popupLevel: item.levelName || windMeta.name,
+            popupBeaufort: this.msToBeaufortLevel(item.windMs),
+            popupLevel: windMeta.name,
+            popupProbKm: item.probKm ?? 0,
             popupType: `${item.period || 0}小时预报点`
           }
         });
@@ -1240,6 +1344,13 @@ export class TyphoonLayer extends MapLayer {
           label: `${code} ${name}`.trim()
         }
       });
+
+      const currentPoint = features.find(f => f?.properties?.kind === "track-point" && f?.properties?.stormId === stormId && f?.properties?.isCurrent === 1);
+      if (currentPoint?.properties) {
+        currentPoint.properties.popupWindCircleEst = 1;
+        currentPoint.properties.popupWind7Km = circleSize?.r7 ?? 0;
+        currentPoint.properties.popupWind10Km = circleSize?.r10 ?? 0;
+      }
     }
 
     const maxWind = Math.max(...track.map(item => Number(item?.windMs) || 0));
@@ -1532,6 +1643,15 @@ export class TyphoonLayer extends MapLayer {
 
   /**生成弹窗 HTML */
   getPopupHtml(props) {
+    const windMs = props.popupWind ?? "-";
+    const bf = props.popupBeaufort !== undefined && props.popupBeaufort !== null && props.popupBeaufort !== "" ? props.popupBeaufort : "";
+    const windText = bf !== "" ? `${windMs} m/s，${bf}级` : `${windMs} m/s`;
+    const moveText = (props.popupMoveSpeed && props.popupMoveDir) ? `${props.popupMoveSpeed} 公里/小时，${props.popupMoveDir}` : "";
+    const hasCircle = (Number(props.popupWind7Km) || 0) > 0 || (Number(props.popupWind10Km) || 0) > 0;
+    const circleText = hasCircle
+      ? `7级≈${Number(props.popupWind7Km) || 0} 公里，10级≈${Number(props.popupWind10Km) || 0} 公里${props.popupWindCircleEst ? "（估算）" : ""}`
+      : "";
+    const probText = (Number(props.popupProbKm) || 0) > 0 ? `${props.popupProbKm} 公里` : "";
     return `
       <div class="typhoon-popup-card">
         <div class="typhoon-popup-head">${props.popupTitle || "台风点位"}</div>
@@ -1539,8 +1659,11 @@ export class TyphoonLayer extends MapLayer {
           <div><b>时间：</b>${props.popupTime || "-"}</div>
           <div><b>坐标：</b>${props.popupCoord || "-"}</div>
           <div><b>中心气压：</b>${props.popupPressure || "-"} hPa</div>
-          <div><b>最大风速：</b>${props.popupWind || "-"} m/s</div>
+          <div><b>风速风力：</b>${windText}</div>
           <div><b>等级：</b>${props.popupLevel || "-"}</div>
+          ${moveText ? `<div><b>移速移向：</b>${moveText}</div>` : ``}
+          ${circleText ? `<div><b>风圈：</b>${circleText}</div>` : ``}
+          ${probText ? `<div><b>预测圈：</b>${probText}</div>` : ``}
           <div><b>类型：</b>${props.popupType || "-"}</div>
         </div>
       </div>
@@ -1584,10 +1707,72 @@ export class TyphoonLayer extends MapLayer {
   }
 
   /**点击点位 */
-  onPointClick(e) {
+  async onPointClick(e) {
     const feature = e?.features?.[0];
     if (!feature) return;
+    const props = feature?.properties || {};
+    if (Number(props.isCurrent) === 1) {
+      const code = String(props.code || "").trim();
+      const stormId = String(props.stormId || "").trim();
+      await this.refreshCurrentStormIfNeeded(code);
+      const pointFeature = stormId ? this.getCurrentPointByStormId(stormId) : null;
+      if (pointFeature) {
+        this.showPopup(pointFeature, pointFeature.geometry?.coordinates || e.lngLat);
+        return;
+      }
+    }
     this.showPopup(feature, e.lngLat);
+  }
+
+  getCurrentPointByStormId(stormId) {
+    const { map } = this.runtime;
+    const list = map.querySourceFeatures(this.sourceId) || [];
+    const found = list.find(f => f?.properties?.kind === "track-point" && f?.properties?.stormId === stormId && Number(f?.properties?.isCurrent) === 1);
+    return found || null;
+  }
+
+  getCodeFromStormId(stormId) {
+    const s = String(stormId || "").trim();
+    if (!s) return "";
+    if (s.startsWith("current-")) return s.slice("current-".length);
+    return s;
+  }
+
+  async refreshCurrentStormIfNeeded(code) {
+    const key = String(code || "").trim();
+    if (!key) return;
+    const now = Date.now();
+    if (this.liveRefreshAt && now - this.liveRefreshAt < 15000) return;
+    this.liveRefreshAt = now;
+    this.currentStormMap.delete(key);
+    this.currentListLoadedAt = 0;
+    await this.refresh();
+  }
+
+  onCenterMove(e) {
+    const feature = e?.features?.[0];
+    if (!feature) return;
+    const stormId = feature?.properties?.stormId;
+    const pointFeature = this.getCurrentPointByStormId(stormId);
+    if (!pointFeature) return;
+    this.showPopup(pointFeature, e.lngLat);
+  }
+
+  onCenterLeave() {
+    const { map } = this.runtime;
+    map.getCanvas().style.cursor = "";
+    this.hidePopup();
+  }
+
+  async onCenterClick(e) {
+    const centerFeature = e?.features?.[0];
+    if (!centerFeature) return;
+    const stormId = centerFeature?.properties?.stormId;
+    const code = this.getCodeFromStormId(stormId);
+    await this.refreshCurrentStormIfNeeded(code);
+    const pointFeature = this.getCurrentPointByStormId(stormId);
+    if (!pointFeature) return;
+    this.showPopup(pointFeature, pointFeature.geometry?.coordinates || e.lngLat);
   }
 
   /**确保交互 */
@@ -1600,6 +1785,14 @@ export class TyphoonLayer extends MapLayer {
     map.on("mousemove", this.pointLayerId, this.onPointMove);
     map.on("mouseleave", this.pointLayerId, this.onPointLeave);
     map.on("click", this.pointLayerId, this.onPointClick);
+
+    map.on("mouseenter", this.centerLayerId, () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+    map.on("mousemove", this.centerLayerId, this.onCenterMove);
+    map.on("mouseleave", this.centerLayerId, this.onCenterLeave);
+    map.on("click", this.centerLayerId, this.onCenterClick);
+
     this.eventBound = true;
   }
 
@@ -1673,7 +1866,8 @@ export class TyphoonLayer extends MapLayer {
 
     if (!this.selectedCode) {
       addOrUpdateGeoJsonSource(this.runtime.map, this.sourceId, { type: "FeatureCollection", features: [] });
-      setInfo("typhoonInfo", "暂无台风数据");
+      this.clearDataTime();
+      this.setInfoExtra("暂无台风数据");
       return true;
     }
 
@@ -1711,21 +1905,14 @@ export class TyphoonLayer extends MapLayer {
     this.syncCenterMarkers(currentStorms);
 
     if (!summary) {
-      if (activeCnt > 0) {
-        setInfo("typhoonInfo", `台风 ${activeCnt} 个`);
-      } else {
-        setInfo("typhoonInfo", `台风：${this.selectedCode}`);
-      }
+      this.clearDataTime();
+      this.setInfoExtra(activeCnt > 0 ? `活跃:${activeCnt}` : `台风:${this.selectedCode}`);
+    } else if (summary.mode === "current") {
+      this.setDataTimeText(summary.endText || "");
+      this.setInfoExtra(activeCnt > 1 ? `活跃:${activeCnt}` : `${summary.code}`);
     } else {
-      if (summary.mode === "current") {
-        const head = activeCnt > 1
-          ? `当前台风 ${activeCnt} 个`
-          : `当前台风：${summary.code} ${summary.name}`;
-        //setInfo("typhoonInfo", `${head}，实况点 ${summary.pointCnt} 个，预测点 ${summary.predictCnt || 0} 个，最高风速 ${summary.maxWind}m/s，起止 ${summary.startText} ~ ${summary.endText}`);
-        setInfo("typhoonInfo", `${head}`);
-      } else {
-        setInfo("typhoonInfo", `历史台风：${summary.code} ${summary.name}`);
-      }
+      this.setDataTimeText(summary.endText || "");
+      this.setInfoExtra(`${summary.code}`);
     }
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
@@ -1773,7 +1960,8 @@ export class TyphoonLayer extends MapLayer {
     this.stopCenterAnimation();
     this.hideLegend();
     this.hidePopup();
-    setInfo("typhoonInfo", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 

@@ -1,5 +1,5 @@
 import { MapLayer } from "../core/MapLayer.js";
-import { fetchWithTimeout, setInfo } from "../core/utils.js";
+import { fetchWithTimeout } from "../core/utils.js";
 
 const ADMIN_COUNTRY_GEOJSON = "https://geo.datav.aliyun.com/areas_v3/bound/100000.json";
 const ADMIN_PROVINCE_GEOJSON = "https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json";
@@ -251,8 +251,8 @@ export class AdminBoundaryLayer extends MapLayer {
     const adcode = this.pickNearestProvinceAdcode(this.runtime.map.getCenter());
     await this.ensureCityDistrictSource(adcode);
     this.setOpacity(this.runtime.getOpacity(this.name));
-    //setInfo("adminBoundaryInfo", `已开启（国/省/市/区县），省份码: ${this.loadedProvinceAdcode || "--"}`);
-    setInfo("adminBoundaryInfo", `已开启`);
+    this.setDataTimeText("静态");
+    this.setInfoExtra("");
     this.lastStatus = true;
     this.lastTime = Date.now();
     return true;
@@ -271,7 +271,8 @@ export class AdminBoundaryLayer extends MapLayer {
     for (const id of this.layers) {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none");
     }
-    setInfo("adminBoundaryInfo", "未开启");
+    this.clearDataTime();
+    this.setInfoExtra("");
     return true;
   }
 
