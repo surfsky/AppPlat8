@@ -217,7 +217,7 @@ namespace App.DAL
             string socialCreditCode = "",
             string address = "",
             string dutyUserName = "",
-            long? orgId = null,
+            long? dutyOrgId = null,
             List<long> tagIds = null,
             long? checkerId = null,
             CheckObjectType? objectType = null,
@@ -245,7 +245,7 @@ namespace App.DAL
             IQueryable<CheckObject> q = CheckObject.IncludeSet;
             if (includeTags)                   q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
             if (includeContacts)               q = q.Include(o => o.Contacts);
-            if (orgId.IsNotEmpty())            q = q.Where(o => o.DutyOrgId == orgId.Value);
+            if (dutyOrgId.IsNotEmpty())        q = q.Where(o => o.DutyOrgId == dutyOrgId.Value);  // TODO：支持递归查找子网格
             if (checkerId.IsNotEmpty())        q = q.Where(o => o.CheckerId == checkerId.Value);
             if (name.IsNotEmpty())             q = q.Where(o => o.Name.Contains(name.Trim()));
             if (code.IsNotEmpty())             q = q.Where(o => o.Code.Contains(code.Trim()));

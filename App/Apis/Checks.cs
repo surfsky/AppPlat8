@@ -55,7 +55,7 @@ namespace App.API
             return CheckObject.Search(
                 name: name,
                 socialCreditCode: socialCreditCode,
-                orgId: orgId,
+                dutyOrgId: orgId,
                 checkerId: checkerId,
                 objectType: objectType,
                 scale: scale

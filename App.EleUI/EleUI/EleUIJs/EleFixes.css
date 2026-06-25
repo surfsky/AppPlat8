@@ -134,6 +134,48 @@ html, body {
     max-width: 260px;
 }
 
+/* EleTable filter labels: bold on both desktop toolbar and mobile drawer */
+.ele-table-filters-block .el-form-item__label,
+.ele-table-filters-block .el-form-item__label > span {
+    font-weight: 700 !important;
+}
+
+/* EleTable mobile filter drawer: make title bold */
+.el-drawer__header .el-drawer__title {
+    font-weight: 700 !important;
+}
+
+/* EleTable mobile filter drawer: stretch controls to full width */
+@media (max-width: 767.98px) {
+    .ele-table-filters-drawer .el-form-item {
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    .ele-table-filters-drawer .el-form-item__content {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    .ele-table-filters-drawer .el-input,
+    .ele-table-filters-drawer .el-input-number,
+    .ele-table-filters-drawer .el-select,
+    .ele-table-filters-drawer .el-date-editor,
+    .ele-table-filters-drawer .el-cascader,
+    .ele-table-filters-drawer .ele-tree-picker-wrapper,
+    .ele-table-filters-drawer .ele-picker-wrapper,
+    .ele-table-filters-drawer .el-textarea {
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    .ele-table-filters-drawer .el-input__wrapper,
+    .ele-table-filters-drawer .el-select__wrapper,
+    .ele-table-filters-drawer .el-textarea__inner {
+        width: 100% !important;
+    }
+}
+
 .ele-table-buttons-block {
     gap: 6px !important;
 }
