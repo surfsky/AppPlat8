@@ -66,8 +66,8 @@ namespace App
             services.AddRazorPages(options =>
             {
                 // GIS: 新路由语义化，同时兼容旧页面路径
-                options.Conventions.AddPageRoute("/GIS/Regions", "GIS/Geometries");
-                options.Conventions.AddPageRoute("/GIS/RegionForm", "GIS/GeometryForm");
+                //options.Conventions.AddPageRoute("/GIS/Regions", "GIS/Geometries");
+                //options.Conventions.AddPageRoute("/GIS/RegionForm", "GIS/GeometryForm");
             });
             services.AddServerSideBlazor();                     // Blazor
             services.AddBootstrapBlazor();                      // BootstrapBlazor

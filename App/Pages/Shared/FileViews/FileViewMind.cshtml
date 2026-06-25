@@ -1,4 +1,4 @@
-@page
+@page "/Shared/FileViews/Mind"
 @using System.Text.Json
 @{
     Layout = null;
@@ -243,7 +243,7 @@
                 return Array.isArray(matched) && matched.length > 0 ? matched[0] : null;
             };
 
-            const jsonEntry = findByPattern(/(^|\/)content\.json$/i);
+            const jsonEntry = findByPattern(/(^|\\/)content\\.json$/i);
             if (jsonEntry) {
                 const text = await jsonEntry.async('text');
                 const root = parseXmindJsonText(text);
@@ -252,7 +252,7 @@
                 return;
             }
 
-            const xmlEntry = findByPattern(/(^|\/)content\.xml$/i);
+            const xmlEntry = findByPattern(/(^|\\/)content\\.xml$/i);
             if (xmlEntry) {
                 const text = await xmlEntry.async('text');
                 const root = parseXmindXmlText(text);

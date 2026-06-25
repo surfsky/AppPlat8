@@ -1,4 +1,4 @@
-@page
+@page "/Shared/FileViews/Image"
 @{
     Layout = null;
     var src = Request.Query["src"].ToString();
@@ -10,10 +10,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
         html, body { margin: 0; height: 100%; background: #0f172a; }
-        iframe { width: 100%; height: 100%; border: 0; }
+        .wrap { height: 100%; display: flex; align-items: center; justify-content: center; }
+        img { max-width: 100%; max-height: 100%; object-fit: contain; }
     </style>
 </head>
 <body>
-    <iframe src="@src"></iframe>
+    <div class="wrap"><img src="@src" alt="image" /></div>
 </body>
 </html>

@@ -1,5 +1,5 @@
-@page
-@model App.Pages.Shared.FileViewerModel
+@page "/Shared/FileViews/Viewer"
+@model App.Pages.Shared.FileViews.FileViewerModel
 @using System.Text.Json
 @{
     Layout = "_Layout";
@@ -166,7 +166,7 @@
         function getFileNameFromDisposition(disposition) {
             if (!disposition) return '';
 
-            const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+            const utf8 = disposition.match(/filename\\*=UTF-8''([^;]+)/i);
             if (utf8 && utf8[1]) {
                 try {
                     return decodeURIComponent(utf8[1]);
@@ -175,7 +175,7 @@
                 }
             }
 
-            const plain = disposition.match(/filename="?([^";]+)"?/i);
+            const plain = disposition.match(/filename=\"?([^\";]+)\"?/i);
             return plain && plain[1] ? plain[1] : '';
         }
 

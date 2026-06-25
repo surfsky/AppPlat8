@@ -148,7 +148,7 @@ namespace App.Pages.GIS
                     name = string.IsNullOrWhiteSpace(t.FileName) ? Path.GetFileName(t.Url ?? string.Empty) : t.FileName,
                     sizeText = t.FileSizeText,
                     createDtText = t.CreateDt?.ToString("yyyy-MM-dd HH:mm"),
-                    previewUrl = $"/Shared/FileViewer?uniId={Uri.EscapeDataString(uniId)}&id={t.Id}"
+                    previewUrl = $"/Shared/FileViews/Viewer?uniId={Uri.EscapeDataString(uniId)}&id={t.Id}"
                 })
                 .ToList();
 

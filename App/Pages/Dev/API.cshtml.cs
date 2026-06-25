@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace App.Pages.Dev
 {
-    [Auth(Power.Web)]
+    [Auth(AuthLogin = true)]
     public class APIModel : PageModel
     {
         public void OnGet()

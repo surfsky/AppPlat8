@@ -1,4 +1,4 @@
-@page
+@page "/Shared/FileViews/Markdown"
 @using System.Text.Json
 @{
     Layout = null;
@@ -81,28 +81,32 @@
         const host = document.getElementById('mdHost');
         const hint = document.getElementById('mdHint');
 
-        function createMarkdownRenderer() {
-            return window.markdownit({
-                html: true,
+        function setHint(text) {
+            hint.textContent = text;
+        }
+
+        function render(content) {
+            const md = window.markdownit({
+                html: false,
                 linkify: true,
-                typographer: true,
-                highlight: function (str, lang) {
+                breaks: true,
+                highlight: function(str, lang) {
                     if (lang && window.hljs && window.hljs.getLanguage(lang)) {
                         try {
                             return window.hljs.highlight(str, { language: lang }).value;
-                        } catch {}
+                        } catch {
+                        }
                     }
-                    if (window.hljs) {
-                        try {
-                            return window.hljs.highlightAuto(str).value;
-                        } catch {}
-                    }
-                    return str
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;');
+                    return '';
                 }
             });
+
+            host.innerHTML = md.render(content || '');
+            if (window.hljs) {
+                host.querySelectorAll('pre code').forEach((block) => {
+                    try { window.hljs.highlightElement(block); } catch {}
+                });
+            }
         }
 
         async function run() {
@@ -110,17 +114,15 @@
                 host.textContent = '文件地址不存在';
                 return;
             }
-            hint.textContent = `Markdown 预览 · ${name || ''}`;
-
+            setHint(`Markdown 预览 · ${name || ''}`);
             try {
                 const resp = await fetch(src);
-                if (!resp.ok) throw new Error('请求失败');
+                if (!resp.ok) throw new Error('加载失败');
                 const text = await resp.text();
-                const md = createMarkdownRenderer();
-                host.innerHTML = md.render(text || '');
+                render(text);
             } catch (e) {
-                const msg = e && e.message ? e.message : '未知错误';
-                host.innerHTML = `预览失败：${msg}`;
+                console.error(e);
+                host.textContent = '预览失败：' + (e && e.message ? e.message : '未知错误');
             }
         }
 

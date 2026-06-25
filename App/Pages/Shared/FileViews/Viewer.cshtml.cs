@@ -7,9 +7,9 @@ using App.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 
-namespace App.Pages.Shared
+namespace App.Pages.Shared.FileViews
 {
-    [CheckPower(Power.CheckObjectView)]
+    [Auth(AuthLogin = true)]
     public class FileViewerModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]
@@ -65,7 +65,7 @@ namespace App.Pages.Shared
                 ? Path.GetFileName(item.Url ?? string.Empty)
                 : item.FileName;
             FileExt = (item.FileExtension ?? string.Empty).Trim().TrimStart('.').ToLower();
-            SourceUrl = $"/Shared/FileViewer?handler=Content&uniId={Uri.EscapeDataString(UniId)}&id={id}";
+            SourceUrl = $"/Shared/FileViews/Viewer?handler=Content&uniId={Uri.EscapeDataString(UniId)}&id={id}";
             ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
             DownloadUrl = $"/Shared/Atts?handler=Download&uniId={Uri.EscapeDataString(UniId)}&id={id}";
         }
@@ -88,7 +88,7 @@ namespace App.Pages.Shared
 
         public IActionResult OnGetStaticContent(string file, bool download = false)
         {
-            if (!TryResolveStaticFile(file, out var safePath, out var fullPath, out var err))
+            if (!TryResolveStaticFile(file, out _, out var fullPath, out var err))
                 return BuildResult(404, err);
 
             var ext = Path.GetExtension(fullPath);
@@ -174,9 +174,9 @@ namespace App.Pages.Shared
 
             FileName = Path.GetFileName(fullPath);
             FileExt = Path.GetExtension(fullPath).TrimStart('.').ToLower();
-            SourceUrl = $"/Shared/FileViewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}";
+            SourceUrl = $"/Shared/FileViews/Viewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}";
             ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
-            DownloadUrl = $"/Shared/FileViewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}&download=true";
+            DownloadUrl = $"/Shared/FileViews/Viewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}&download=true";
         }
 
         private void InitFromSourceUrl(string sourceUrl, string name)
@@ -237,36 +237,36 @@ namespace App.Pages.Shared
             var likelyPanorama = nameText.Contains("pano") || nameText.Contains("panorama") || nameText.Contains("360");
 
             if (ext == "pdf")
-                return $"/Shared/FileViewPdf?src={src}&name={name}";
+                return $"/Shared/FileViews/Pdf?src={src}&name={name}";
 
             if (ext == "doc" || ext == "docx")
-                return $"/Shared/FileViewWord?src={src}&name={name}";
+                return $"/Shared/FileViews/Word?src={src}&name={name}";
 
             if (ext == "xls" || ext == "xlsx")
-                return $"/Shared/FileViewExcel?src={src}&name={name}";
+                return $"/Shared/FileViews/Excel?src={src}&name={name}";
 
             if (ext == "glb" || ext == "gltf" || ext == "usdz")
-                return $"/Shared/FileViewModel?src={src}&name={name}";
+                return $"/Shared/FileViews/Model?src={src}&name={name}";
 
             if (ext == "md" || ext == "markdown")
-                return $"/Shared/FileViewMarkdown?src={src}&name={name}";
+                return $"/Shared/FileViews/Markdown?src={src}&name={name}";
 
             if (mindmapExts.Contains(ext))
-                return $"/Shared/FileViewMind?src={src}&name={name}";
+                return $"/Shared/FileViews/Mind?src={src}&name={name}";
 
             if (videoExts.Contains(ext))
-                return $"/Shared/FileViewVideo?src={src}&name={name}";
+                return $"/Shared/FileViews/Video?src={src}&name={name}";
 
             if (imageExts.Contains(ext) && likelyPanorama)
-                return $"/Shared/FileViewPanorama?src={src}&name={name}";
+                return $"/Shared/FileViews/Panorama?src={src}&name={name}";
 
             if (imageExts.Contains(ext))
-                return $"/Shared/FileViewImage?src={src}&name={name}";
+                return $"/Shared/FileViews/Image?src={src}&name={name}";
 
             if (textExts.Contains(ext))
-                return $"/Shared/FileViewText?src={src}&name={name}";
+                return $"/Shared/FileViews/Text?src={src}&name={name}";
 
-            return $"/Shared/FileViewPdf?src={src}&name={name}";
+            return $"/Shared/FileViews/Pdf?src={src}&name={name}";
         }
 
         private static string ResolveMimeType(string filePath, string ext)
@@ -290,7 +290,6 @@ namespace App.Pages.Shared
             if (string.IsNullOrWhiteSpace(value))
                 return string.Empty;
 
-            // 历史数据中可能出现 application/application/* 的重复前缀。
             if (value.StartsWith("application/application/", StringComparison.OrdinalIgnoreCase))
                 value = value.Substring("application/".Length);
 

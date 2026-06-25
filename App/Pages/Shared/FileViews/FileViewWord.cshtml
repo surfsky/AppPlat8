@@ -1,4 +1,4 @@
-@page
+@page "/Shared/FileViews/Word"
 @using System.Text.Json
 @{
     Layout = null;
@@ -176,7 +176,6 @@
                 hideHint();
             };
 
-            // Office在线页在localhost场景常显示内部报错页，给出兜底提示。
             window.setTimeout(() => {
                 if (hint.style.display !== 'none') {
                     showHint('微软 Office 预览可能不可用（本地地址常被拦截）。<br/>可点击右上角“兼容模式”。');
@@ -218,7 +217,6 @@
                     className: 'docx-preview'
                 });
 
-                // 有些文档在特定浏览器环境里 renderAsync 不报错但不会产出可见内容。
                 const hasPage = host.querySelector('section.docx, .docx-wrapper section, .docx') !== null;
                 const hasText = (host.textContent || '').trim().length > 0;
                 if (!hasPage && !hasText) {
@@ -302,7 +300,6 @@
                     return [document.createElement('p')];
                 }
 
-                // mammoth 通常会输出一个外层 div 包裹全部正文，展开后再分页。
                 if (topLevel.length === 1 && topLevel[0].nodeType === Node.ELEMENT_NODE) {
                     const only = topLevel[0];
                     const children = toNodeArray(only.childNodes)
@@ -337,7 +334,6 @@
                     const nextBody = createPage();
                     nextBody.appendChild(node);
 
-                    // 单节点超高时允许该页溢出，避免死循环
                     if (nextBody.scrollHeight > BODY_LIMIT) {
                         nextBody.style.overflow = 'visible';
                     }

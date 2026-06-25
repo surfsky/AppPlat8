@@ -197,7 +197,7 @@
             const first = parts[0];
             if (!first) return '';
 
-            if (first.indexOf('/Shared/FileViewer') >= 0) {
+            if (first.indexOf('/Shared/FileViews/Viewer') >= 0) {
                 try {
                     const base = window.location && window.location.origin ? window.location.origin : 'http://localhost';
                     const u = new URL(first, base);

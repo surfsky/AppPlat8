@@ -95,7 +95,7 @@ namespace App.Pages.GIS
         /// <summary>
         /// 解析图片URL，支持以下格式：
         /// 1. 直接的URL，如"http://example.com/image.png"或"/image.png"
-        /// 2. 文件查看器URL，如"/Shared/FileViewer?src=http://example.com/image.png"
+        /// 2. 文件查看器URL，如"/Shared/FileViews/Viewer?src=http://example.com/image.png"
         /// </summary>
         private static string ResolveImageUrl(string att)
         {
@@ -115,7 +115,7 @@ namespace App.Pages.GIS
                 return string.Empty;
 
             // 文件查看器URL
-            if (raw.StartsWith("/Shared/FileViewer", StringComparison.OrdinalIgnoreCase))
+            if (raw.StartsWith("/Shared/FileViews/Viewer", StringComparison.OrdinalIgnoreCase))
             {
                 try
                 {

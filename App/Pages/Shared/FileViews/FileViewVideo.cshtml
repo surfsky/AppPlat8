@@ -1,4 +1,4 @@
-@page
+@page "/Shared/FileViews/Video"
 @using System.Text.Json
 @{
     Layout = null;
@@ -82,7 +82,6 @@
             const playPromise = player.play?.();
             if (playPromise && typeof playPromise.catch === 'function') {
                 playPromise.catch(() => {
-                    // 自动播放被浏览器策略拦截时，用户仍可手动点击播放
                 });
             }
             player.addEventListener('error', () => {

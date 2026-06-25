@@ -258,7 +258,7 @@ namespace App.Pages.GIS
                 type = t.Type,
                 fileSizeText = t.FileSizeText,
                 ext = (t.FileExtension ?? string.Empty).Trim().TrimStart('.').ToLower(),
-                previewUrl = $"/Shared/FileViewer?uniId={Uri.EscapeDataString(uniId)}&id={t.Id}",
+                previewUrl = $"/Shared/FileViews/Viewer?uniId={Uri.EscapeDataString(uniId)}&id={t.Id}",
                 downloadUrl = $"/Shared/Atts?handler=Download&uniId={Uri.EscapeDataString(uniId)}&id={t.Id}"
             }).ToList();
         }

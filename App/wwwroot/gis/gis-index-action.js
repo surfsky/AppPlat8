@@ -123,7 +123,7 @@
             if (!src) return '';
             const encodedSrc = encodeURIComponent(src);
             const encodedName = encodeURIComponent(String(name || '附件预览'));
-            return `/Shared/FileViewer?src=${encodedSrc}&name=${encodedName}`;
+            return `/Shared/FileViews/Viewer?src=${encodedSrc}&name=${encodedName}`;
         }
 
         function openFileDrawer(previewUrl, title) {

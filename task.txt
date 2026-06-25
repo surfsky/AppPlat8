@@ -404,7 +404,21 @@ AI辅助
 Done
 --------------------------------------------------------
 2026.2.25
+    /修正AuthAttribute，可以校验多种授权机制（如登录、权限等）
+    把pages/checks/checkobjectform 
+        标签改为drawer方式 ElePicker
+        把相关附属资源（如联系人、事件、隐患等）全部改为列表方式附在下面，并可以”更多“跳出列表drawer窗口可编辑
+    把气象图层也弄得可配置
     实现gismenu 通过api 获取数据的方式
+        api类型的数据
+            - 批量打标签
+            - 写接口，根据标签查询
+            - 配置gis菜单，根据接口获取数据
+            - gisindex获取api数据并展示，并更新统计数据
+
+        实时数据
+            - gismenu设置一个signalr 的hub地址就行
+            - gis/index实现对signalr的支持
     gis/index 顶部实现流光动画效果
     gis/index 页面遮住左下角的“mapbox”标签
 

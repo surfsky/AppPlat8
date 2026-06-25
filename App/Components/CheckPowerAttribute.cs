@@ -26,7 +26,7 @@ namespace App.Components
             {
                 if (context.Request.Method == "GET")
                 {
-                    Auth.CheckPowerFailWithPage(context);
+                    Auth.WritePowerFailPage(context);
 
                     //http://stackoverflow.com/questions/9837180/how-to-skip-action-execution-from-an-actionfilter
                     // -修正越权访问页面时会报错[服务器无法在发送 HTTP 标头之后追加标头]（龙涛软件-9374）。
@@ -41,11 +41,6 @@ namespace App.Components
                     };
                 }
             }
-
         }
-
-
-
-
     }
 }

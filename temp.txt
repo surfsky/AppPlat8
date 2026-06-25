@@ -447,3 +447,31 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
                     <div class="px-5 py-3 text-sm text-slate-500">
                         行号：{{ rowId || '新行' }}
                     </div>
+
+
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewer", "Shared/FileViewer");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewPdf", "Shared/FileViewPdf");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewWord", "Shared/FileViewWord");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewExcel", "Shared/FileViewExcel");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewModel", "Shared/FileViewModel");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewMarkdown", "Shared/FileViewMarkdown");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewMind", "Shared/FileViewMind");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewVideo", "Shared/FileViewVideo");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewPanorama", "Shared/FileViewPanorama");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewImage", "Shared/FileViewImage");
+                options.Conventions.AddPageRoute("/Shared/FileViews/FileViewText", "Shared/FileViewText");
+
+
+        public AuthAttribute(bool? authLogin = null, bool? authSign = null, bool? isSafe = null)
+        {
+            if (authLogin != null) this.AuthLogin = authLogin.Value;
+            if (authSign != null)  this.AuthSign = authSign.Value;
+            if (isSafe != null)    this.IsSafe = isSafe.Value;
+        }
+
+        public bool CheckSafe()
+        {
+            IsSafe = ViewPower != null || AuthLogin == true || AuthSign == true || Ignore == true;
+            return IsSafe;
+        }
+

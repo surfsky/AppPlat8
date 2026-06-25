@@ -114,7 +114,13 @@ namespace App.Components
             var userId = context.User.Claims.Where(x => x.Type == "UserId").FirstOrDefault().Value;
             return Convert.ToInt32(userId);
         }
-
+        
+        /// <summary>当前用户是否已登录</summary>
+        public static bool IsLogin(HttpContext context=null)
+        {
+            context = context ?? Asp.Current;
+            return context.User.Identity.IsAuthenticated;
+        }
 
 
         /// <summary>当前登录用户名</summary>
@@ -201,14 +207,14 @@ namespace App.Components
         /// <summary>检查权限失败（页面回发）
         /// 把错误发到客户端，客户端弹出提示框
         /// </summary>
-        public static void CheckPowerFailWithAlert()
+        public static void WritePowerFailAlert()
         {
             var script = $"<script>alert('{MSG_CHECK_POWER_FAIL_ACTION}');</script>";
             Asp.Current.Response.WriteAsync(script); // 考虑改成 EleManager.Alert
         }
 
         /// <summary>检查权限失败（页面第一次加载）</summary>
-        public static void CheckPowerFailWithPage(HttpContext context)
+        public static void WritePowerFailPage(HttpContext context)
         {
             string PageTemplate = "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"/><head><body>{0}</body></html>";
             context.Response.WriteAsync(string.Format(PageTemplate, MSG_CHECK_POWER_FAIL_PAGE));
