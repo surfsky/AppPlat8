@@ -1,12 +1,9 @@
 using System.Linq;
 using App.Entities;
 using App.Utils;
-using Z.EntityFramework.Plus;
-
 
 /*
-检查对象CheckObject --(1:n)-- 检查对象联系人CheckObjectContact
-                  --(1:n)-- 检查对象标签CheckTag
+检查对象CheckObject --(1:n)-- 检查对象标签CheckTag
 */
 namespace App.DAL
 {

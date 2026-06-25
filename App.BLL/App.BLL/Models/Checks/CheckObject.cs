@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using App.Entities;
 using App.Utils;
-using Z.EntityFramework.Plus;
-using App.Components;
 using Microsoft.EntityFrameworkCore;
-
+using Z.EntityFramework.Plus;
 
 /*
 检查对象CheckObject --(1:n)-- 检查对象联系人CheckObjectContact
@@ -17,7 +13,6 @@ using Microsoft.EntityFrameworkCore;
 */
 namespace App.DAL
 {
-
     /// <summary>检查对象</summary>
     [UI("检查", "检查对象")]
     public class CheckObject : EntityBase<CheckObject>, IDeleteLogic, IFixAll
@@ -106,19 +101,38 @@ namespace App.DAL
         [UI("基础", "技术检查员")] public string CheckerName => Checker?.Name;
         [UI("基础", "社区网格员")] public string SocialCheckerName => SocialChecker?.Name;
         [UI("基础", "检查周期")]   public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
+
+
+        // Tag 相关信息
+        private List<long> _tagIds;
+
         [UI("基础", "标签")]      public List<string> TagNames => Tags?.Select(t => t.Tag?.Name).ToList() ?? new List<string>();
-        [UI("基础", "标签")]      public List<long> TagIds => Tags?.Select(t => t.TagId).ToList() ?? new List<long>();
+        [NotMapped, UI("基础", "标签")]
+        public List<long> TagIds
+        {
+            get
+            {
+                if (_tagIds != null)
+                    return _tagIds;
+                if (Tags != null && Tags.Count > 0)
+                    return Tags.Select(t => t.TagId).ToList();
+                return new List<long>();
+            }
+            set => _tagIds = value ?? new List<long>();
+        }
+
 
         /// <summary>设置匹配的标签列表</summary>
         /// <param name="tagIds">标签ID列表</param>
         public void SetTags(List<long> tagIds)
         {
-            tagIds = tagIds.Distinct().ToList();
-            foreach (var tagId in tagIds){
+            var ids = (tagIds ?? new List<long>()).Distinct().Where(x => x > 0).ToList();
+            CheckObjectTag.Set.Where(t => t.CheckObjectId == Id).Delete();
+            foreach (var tagId in ids)
+            {
                 var tag = CheckTag.Set.Find(tagId);
-                if (tag != null){
-                    new CheckObjectTag{TagId = tag.Id, CheckObjectId = Id}.Save();
-                }
+                if (tag != null)
+                    new CheckObjectTag { TagId = tag.Id, CheckObjectId = Id }.Save();
             }
         }
 
@@ -182,9 +196,19 @@ namespace App.DAL
                 HasSprinklerSystem,
                 IndustryType,
                 IndustryRisk,
+                TagIds,
                 TagNames,
-                Tags,
+                Tags = Tags?.Select(t => t.Export(mode)).ToList(),
             };
+        }
+
+        /// <summary>获取详情（包含 Tags/Contacts 等集合导航属性）</summary>
+        public new static CheckObject GetDetail(long id)
+        {
+            return IncludeSet
+                .Include(o => o.Tags).ThenInclude(t => t.Tag)
+                .Include(o => o.Contacts)
+                .FirstOrDefault(o => o.Id == id);
         }
 
         public static IQueryable<CheckObject> Search(
@@ -213,11 +237,14 @@ namespace App.DAL
             bool? isDemonstration = null,
             bool? isKeySupervision = null,
             bool? isProductInNight = null,
-            bool? isThreePlacesThreeEnterprises = null
+            bool? isThreePlacesThreeEnterprises = null,
+            bool includeTags = false,
+            bool includeContacts = false
         )
         {
             IQueryable<CheckObject> q = CheckObject.IncludeSet;
-
+            if (includeTags)                   q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
+            if (includeContacts)               q = q.Include(o => o.Contacts);
             if (orgId.IsNotEmpty())            q = q.Where(o => o.DutyOrgId == orgId.Value);
             if (checkerId.IsNotEmpty())        q = q.Where(o => o.CheckerId == checkerId.Value);
             if (name.IsNotEmpty())             q = q.Where(o => o.Name.Contains(name.Trim()));

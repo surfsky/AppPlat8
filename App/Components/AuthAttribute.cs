@@ -60,7 +60,7 @@ namespace App.Components
             HttpContext context = filterContext.HttpContext;
             if (Ignore)
                 return;
-            if (AuthLogin && !Auth.IsLogin(context))
+            if (AuthLogin && Auth.IsLogin(context))
                 return;
             if (ViewPower != null && !Auth.CheckPower(context, ViewPower.Value))
                 return;

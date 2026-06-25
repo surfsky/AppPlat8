@@ -1,9 +1,6 @@
 using System.Linq;
-using System.ComponentModel.DataAnnotations.Schema;
 using App.Entities;
 using App.Utils;
-using Z.EntityFramework.Plus;
-
 
 /**
 检查标签（CheckTag） --(n:n)-- 检查表（CheckSheet）--(1:n)-- 检查项（CheckSheetItem）

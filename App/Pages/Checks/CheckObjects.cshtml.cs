@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
-using App.HttpApi;
-using App.Utils;
 using App.Entities;
+using App.Utils;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using App.EleUI;
 using App.Web;
 
@@ -48,7 +44,7 @@ namespace App.Pages.Checks
             bool? isDel=null
             )
         {
-            var list = CheckObject.Search(
+            var q = CheckObject.Search(
                 name: name, 
                 code: code,
                 isChecked: isChecked,
@@ -70,8 +66,10 @@ namespace App.Pages.Checks
                 updateEndDt: updateEndDt,
                 latestCheckStartDt: latestCheckStartDt,
                 latestCheckEndDt: latestCheckEndDt,
-                isDel: isDel
-                ).SortPageExport(pi);
+                isDel: isDel,
+                includeTags: true
+                );
+            var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
@@ -100,7 +98,7 @@ namespace App.Pages.Checks
             bool? isDel=null)
         {
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
-            var list = CheckObject.Search(
+            var q = CheckObject.Search(
                 name: name, 
                 code: code,
                 isChecked: isChecked,
@@ -122,8 +120,11 @@ namespace App.Pages.Checks
                 updateEndDt: updateEndDt,
                 latestCheckStartDt: latestCheckStartDt,
                 latestCheckEndDt: latestCheckEndDt,
-                isDel: isDel
-                ).SortPageExport(exportPi);
+                isDel: isDel,
+                includeTags: true
+                );
+
+            var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"检查对象列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             return new EmptyResult();
         }

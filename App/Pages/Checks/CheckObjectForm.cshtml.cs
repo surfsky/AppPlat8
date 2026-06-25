@@ -94,6 +94,7 @@ namespace App.Pages.Checks
             item.LicenseImage = Uploader.SaveFile(nameof(CheckObject), req.LicenseImage);
 
             item.Save();
+            item.SetTags(req.TagIds);
             return BuildResult(0, "保存成功");
         }
 

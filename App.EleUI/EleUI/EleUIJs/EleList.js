@@ -16,6 +16,25 @@ export class EleList {
         this.dataHandler = options.dataHandler || '?handler=Data';
     }
 
+    serializeParams(params) {
+        const list = [];
+        const obj = params || {};
+        for (const key of Object.keys(obj)) {
+            const value = obj[key];
+            if (value === undefined || value === null || value === '') continue;
+            const k = encodeURIComponent(key);
+            if (Array.isArray(value)) {
+                for (const item of value) {
+                    if (item === undefined || item === null || item === '') continue;
+                    list.push(`${k}=${encodeURIComponent(item)}`);
+                }
+                continue;
+            }
+            list.push(`${k}=${encodeURIComponent(value)}`);
+        }
+        return list.join('&');
+    }
+
     async loadData(reset = false) {
         if (this.loading.value) return;
 
@@ -37,7 +56,8 @@ export class EleList {
                     sortDirection: this.sortDirection.value,
                     ...this.config.extraParams,
                     ...this.filters.value
-                }
+                },
+                paramsSerializer: (params) => this.serializeParams(params)
             });
 
             if (res.data.code !== 0 && res.data.code !== '0') {

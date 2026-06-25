@@ -15,6 +15,9 @@ export class DrawerHelper {
             content: '',
             html: false,
             url: '',
+            custom: false,
+            bodyClass: '',
+            mountHandler: null,
             size: '',
             direction: 'rtl',
             withHeader: true,
@@ -136,6 +139,18 @@ export class DrawerHelper {
     align-items: center;
     gap: 4px;
 }
+
+.el-drawer.ele-manager-drawer.is-custom-body .el-drawer__body {
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.ele-manager-drawer-body-host {
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+    overflow: hidden;
+}
 `;
         hostWindow.document.head.appendChild(style);
     }
@@ -200,12 +215,16 @@ export class DrawerHelper {
             const { createApp, reactive } = hostWindow.Vue;
             const manager = this.manager;
             const helper = this;
+            const bodyId = `ele-manager-drawer-body-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
             const state = reactive({
                 visible: false,
                 title: Utils.safeText(merged.title, 80) || '服务端 Drawer',
                 content: Utils.safeText(merged.content, 2000),
                 html: Utils.toBool(merged.html, false),
                 url: Utils.safeText(merged.url, 500),
+                custom: Utils.toBool(merged.custom, typeof merged.mountHandler === 'function'),
+                bodyClass: Utils.safeText(merged.bodyClass, 200),
+                bodyId,
                 size: this.normalizeSize(merged.size, hostWindow),
                 direction: Utils.safeType(merged.direction, ['ltr', 'rtl', 'ttb', 'btt'], 'rtl'),
                 withHeader: Utils.toBool(merged.withHeader, true),
@@ -239,7 +258,8 @@ export class DrawerHelper {
                 app: null,
                 mountEl,
                 hostWindow,
-                closeMessageHandler: null
+                closeMessageHandler: null,
+                customCleanup: null
             };
 
             const app = createApp({
@@ -300,10 +320,31 @@ export class DrawerHelper {
                         state.visible = false;
                     },
                     onFooterClick(btn) {
+                        const close = (payload = null) => {
+                            if (payload !== null && typeof payload !== 'undefined') {
+                                state.closePayload = helper.normalizeClosePayload(payload);
+                            }
+                            state.visible = false;
+                        };
+                        const context = {
+                            action: btn?.action || 'click',
+                            button: btn || null,
+                            state,
+                            instance,
+                            hostWindow,
+                            close,
+                            setPayload: (payload) => {
+                                state.closePayload = helper.normalizeClosePayload(payload);
+                            },
+                            setFooterButtons: (items) => {
+                                state.footerButtons = Array.isArray(items) ? items : [];
+                                state.showFooter = state.footerButtons.length > 0;
+                            }
+                        };
                         if (btn && btn.handler) {
                             const fn = Utils.resolveHandler(btn.handler);
                             if (fn) {
-                                try { fn(btn.action || 'click', btn); } catch (error) { console.error(error); }
+                                try { fn(context.action, btn, context); } catch (error) { console.error(error); }
                             }
                         }
                         if (!btn || !btn.action || btn.action === 'close') {
@@ -326,7 +367,7 @@ export class DrawerHelper {
                 template: `
 <el-drawer
     v-model="state.visible"
-    class="ele-manager-drawer"
+    :class="['ele-manager-drawer', state.custom ? 'is-custom-body' : '']"
     v-bind="state.resizable ? { resizable: '' } : {}"
     :direction="state.direction"
     :before-close="state.beforeCloseHandler ? beforeClose : undefined"
@@ -363,6 +404,7 @@ export class DrawerHelper {
         :src="state.url"
         style="width:100%;height:100%;border:0;min-height:280px;"
     ></iframe>
+    <div v-else-if="state.custom" :id="state.bodyId" :class="['ele-manager-drawer-body-host', state.bodyClass]"></div>
     <div v-else-if="state.html" v-html="state.content"></div>
     <div v-else class="space-y-3">
         <p>{{ state.content || '暂无内容' }}</p>
@@ -405,6 +447,44 @@ export class DrawerHelper {
             app.mount(mountEl);
             instance.app = app;
 
+            const mountHandler = typeof merged.mountHandler === 'function'
+                ? merged.mountHandler
+                : Utils.resolveHandler(merged.mountHandler);
+            if (state.custom && mountHandler) {
+                hostWindow.Vue.nextTick(() => {
+                    try {
+                        const bodyEl = hostWindow.document.getElementById(state.bodyId);
+                        if (!bodyEl) return;
+                        const context = {
+                            hostWindow,
+                            bodyEl,
+                            state,
+                            instance,
+                            app,
+                            close: (payload = null) => {
+                                if (payload !== null && typeof payload !== 'undefined') {
+                                    state.closePayload = helper.normalizeClosePayload(payload);
+                                }
+                                state.visible = false;
+                            },
+                            setPayload: (payload) => {
+                                state.closePayload = helper.normalizeClosePayload(payload);
+                            },
+                            setFooterButtons: (items) => {
+                                state.footerButtons = Array.isArray(items) ? items : [];
+                                state.showFooter = state.footerButtons.length > 0;
+                            }
+                        };
+                        const cleanup = mountHandler(context);
+                        if (typeof cleanup === 'function') {
+                            instance.customCleanup = cleanup;
+                        }
+                    } catch (error) {
+                        console.error('drawer mountHandler failed:', error);
+                    }
+                });
+            }
+
             try {
                 instance.closeMessageHandler = (e) => {
                     if (!e) return;
@@ -443,6 +523,14 @@ export class DrawerHelper {
             }
         } catch (err) {
             console.error('drawer message listener cleanup failed:', err);
+        }
+
+        try {
+            if (typeof instance.customCleanup === 'function') {
+                instance.customCleanup();
+            }
+        } catch (err) {
+            console.error('drawer custom cleanup failed:', err);
         }
 
         try {

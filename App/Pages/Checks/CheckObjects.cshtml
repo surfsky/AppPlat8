@@ -27,7 +27,7 @@
                 <EleDatePicker Prop="latestCheckEndDt" Width="250px" Label="巡查时间止" Type="DateTime" ></EleDatePicker>
                 <EleSelect For="Item.IndustryRisk" Width="250px" Label="行业风险类型" Clearable="true"></EleSelect>
 
-                <EleTreeSelect Prop="tagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Clearable="true"></EleTreeSelect>
+                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Clearable="true"></EleTreePicker>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
@@ -51,7 +51,7 @@
                 <Op Popup="/Checks/CheckFlow?objectId={id}&objectName={name}"   Icon="DocumentChecked" Text="开始排查" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Id" Label="Id" Link="true" Width="60" Sortable="true"></EleColumn>
-            <EleColumn For="Item.Code" Label="主键ID" Width="120" Sortable="true"></EleColumn>
+            <EleColumn For="Item.Code" Label="编码" Width="120" Sortable="true"></EleColumn>
             <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="250" Sortable="true"></EleColumn>
             <EleColumn For="Item.ObjectType" Label="类型" Width="100" Format="Enum"></EleColumn>
             <EleColumn For="Item.IndustryType" Label="行业" Width="110" Format="Enum"></EleColumn>

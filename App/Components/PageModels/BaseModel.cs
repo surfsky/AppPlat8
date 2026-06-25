@@ -65,9 +65,9 @@ namespace App
         // 构建API结果
         //-------------------------------------------------
         /// <summary>构建API结果</summary>
-        public static JsonResult BuildResult(int code, string msg, object data = null, Paging pager = null)
+        public static JsonResult BuildResult(int code, string message, object data = null, Paging pager = null)
         {
-            return new JsonResult(new APIResult(code, msg, data, pager), _jsonOptions);
+            return new JsonResult(new APIResult(code, message, data, pager), _jsonOptions);
         }
 
 

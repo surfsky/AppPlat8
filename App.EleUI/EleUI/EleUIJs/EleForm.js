@@ -1,6 +1,7 @@
 import { initSelectorState, selectorMethods } from './form/selectorMethods.js';
 import { initUploadState, uploadMethods } from './form/uploadMethods.js';
 import { initControlState, controlStateMethods } from './form/controlStateMethods.js';
+import { initTreePickerState, treePickerMethods } from './form/treePickerMethods.js';
 
 // Encapsulates common logic for Form pages using Vue 3 + Element Plus
 export class EleForm {
@@ -30,6 +31,7 @@ export class EleForm {
         initSelectorState(this, Vue);
         initUploadState(this, Vue);
         initControlState(this, Vue);
+        initTreePickerState(this, Vue);
     }
 
     eleListState(key) {
@@ -341,4 +343,4 @@ export class EleForm {
     }
 }
 
-Object.assign(EleForm.prototype, selectorMethods, uploadMethods, controlStateMethods);
+Object.assign(EleForm.prototype, selectorMethods, uploadMethods, controlStateMethods, treePickerMethods);

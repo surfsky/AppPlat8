@@ -12,7 +12,7 @@
         <EleImageUpload For="Item.OutlookImage" Label="外观图片" FillRow="true"></EleImageUpload>
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleInput For="Item.SocialCreditCode" Label="社会信用代码"></EleInput>
-        <EleInput For="Item.Code" Label="主键ID"></EleInput>
+        <EleInput For="Item.Code" Label="编码"></EleInput>
         <EleInput For="Item.AreaCode" Label="地块号"></EleInput>
         <EleInput For="Item.Address" Label="地址"></EleInput>
         <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location"></ElePicker>
@@ -73,7 +73,7 @@
         <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
 
         <EleLabel Label="更多" FillRow="true"></EleLabel>
-        <EleTreeSelect For="Item.TagIds" Label="匹配标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreeSelect>
+        <EleTreePicker For="Item.TagIds" Label="匹配标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreePicker>
         <EleButton Type="Primary" Look="Text" Icon="User" Handler="ShowContacts" EnabledFor="Item.Id">联系人</EleButton>
         <EleButton Type="Primary" Look="Text" Icon="Calendar" Handler="ShowObjectEvents" EnabledFor="Item.Id">对象事件</EleButton>
         <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">文件</EleButton>

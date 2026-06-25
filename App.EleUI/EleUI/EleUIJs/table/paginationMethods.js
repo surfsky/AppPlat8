@@ -20,6 +20,25 @@ export function initPaginationState(table, vueApi, options = {}) {
     table.options = ref({});
 }
 
+function serializeParams(params) {
+    const list = [];
+    const obj = params || {};
+    for (const key of Object.keys(obj)) {
+        const value = obj[key];
+        if (value === undefined || value === null || value === '') continue;
+        const k = encodeURIComponent(key);
+        if (Array.isArray(value)) {
+            for (const item of value) {
+                if (item === undefined || item === null || item === '') continue;
+                list.push(`${k}=${encodeURIComponent(item)}`);
+            }
+            continue;
+        }
+        list.push(`${k}=${encodeURIComponent(value)}`);
+    }
+    return list.join('&');
+}
+
 export const paginationMethods = {
     async loadData() {
         try {
@@ -31,7 +50,8 @@ export const paginationMethods = {
                     sortDirection: this.sortDirection.value,
                     ...this.config.extraParams,
                     ...this.filters.value
-                }
+                },
+                paramsSerializer: serializeParams
             });
 
             if (res.data.code === 0 || res.data.code === '0') {

@@ -222,7 +222,7 @@ namespace App
                 o.OnAuth += args =>
                 {
                     var token = args.Context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();  // 如：Bearer token
-                    Logger.Warn("[API-AUTH] {0} {1} from {2} token={3}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress, token);
+                    //Logger.Warn("[API-AUTH] {0} {1} from {2} token={3}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress, token);
                 };
             });
 

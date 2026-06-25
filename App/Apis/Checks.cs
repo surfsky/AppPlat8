@@ -189,7 +189,7 @@ namespace App.API
         [HttpApi("获取某个对象的检查表", AuthLogin=true)]
         public static APIResult GetObjectCheckSheets(long objectId)
         {
-            var tagIds = CheckObject.GetDetail(objectId).Tags.Select(t => t.Id).ToList();
+            var tagIds = CheckObject.GetDetail(objectId).Tags.Select(t => t.TagId).ToList();
             return CheckSheet.Search(tagIds:tagIds).ToList().ToResult();
         }
 
