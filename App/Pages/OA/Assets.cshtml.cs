@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.AssetView)]
+    [Auth(Power.AssetView)]
     public class AssetsModel : AdminModel
     {
         public Asset Item { get; set; }

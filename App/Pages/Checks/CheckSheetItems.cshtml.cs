@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckSheetView)]
+    [Auth(Power.CheckSheetView)]
     public class CheckSheetItemsModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

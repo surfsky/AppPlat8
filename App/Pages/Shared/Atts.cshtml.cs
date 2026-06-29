@@ -12,7 +12,7 @@ using System.IO;
 
 namespace App.Pages.Shared
 {
-    [CheckPower(Power.CheckObjectView)]
+    [Auth(Power.CheckObjectView)]
     public class AttsModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

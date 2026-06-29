@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.ProjectEdit)]
+    [Auth(Power.ProjectEdit)]
     public class ProjectFormModel : AdminModel
     {
         public Project Item { get; set; }

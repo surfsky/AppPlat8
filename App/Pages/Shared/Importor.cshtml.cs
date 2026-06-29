@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Shared
 {
-    [CheckPower(Power.CheckObjectEdit)]
+    [Auth(Power.CheckObjectEdit)]
     public class ImportorModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

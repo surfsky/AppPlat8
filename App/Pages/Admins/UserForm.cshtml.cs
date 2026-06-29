@@ -15,7 +15,7 @@ using App.Entities;
 
 namespace App.Pages.Admins
 {
-    [CheckPower(Power.UserView)]
+    [Auth(Power.UserView)]
     public class UserFormModel : AdminModel
     {
         public List<SelectListItem> RoleList { get; set; }  // 角色列表

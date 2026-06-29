@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckObjectEdit)]
+    [Auth(Power.CheckObjectEdit)]
     public class CheckObjectEventFormModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

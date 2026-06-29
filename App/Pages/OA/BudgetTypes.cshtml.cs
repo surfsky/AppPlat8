@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.BudgetView)]
+    [Auth(Power.BudgetView)]
     public class BudgetTypesModel : AdminModel
     {
         public BudgetType Item { get; set; }

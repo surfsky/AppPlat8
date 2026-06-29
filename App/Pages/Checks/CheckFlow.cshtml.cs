@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckNew)]
+    [Auth(Power.CheckNew)]
     public class CheckFlowModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

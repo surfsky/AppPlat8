@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckObjectView)]
+    [Auth(Power.CheckObjectView)]
     public class CheckPointsModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

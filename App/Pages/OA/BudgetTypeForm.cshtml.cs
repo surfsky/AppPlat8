@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.BudgetEdit)]
+    [Auth(Power.BudgetEdit)]
     public class BudgetTypeFormModel : AdminModel
     {
         public BudgetType Item { get; set; }

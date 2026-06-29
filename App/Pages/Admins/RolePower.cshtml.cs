@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace App.Pages.Admin
 {
-    [CheckPower(Power.RolePowerEdit)]
+    [Auth(Power.RolePowerEdit)]
     public class RolePowerModel : AdminModel
     {
         public void OnGet()

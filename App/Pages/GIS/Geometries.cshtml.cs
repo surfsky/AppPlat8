@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.GIS
 {
-    [CheckPower(Power.GisGeometryView)]
+    [Auth(Power.GisGeometryView)]
     public class GeometriesModel : AdminModel
     {
         public GisGeometry Item { get; set; }

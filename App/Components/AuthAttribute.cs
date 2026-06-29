@@ -62,7 +62,7 @@ namespace App.Components
                 return;
             if (AuthLogin && Auth.IsLogin(context))
                 return;
-            if (ViewPower != null && !Auth.CheckPower(context, ViewPower.Value))
+            if (ViewPower != null && Auth.CheckPower(context, ViewPower.Value))
                 return;
 
             //  校验失败的情况，根据请求方法返回不同的结果，GET 请求返回页面，POST 请求返回 JSON 错误结果

@@ -9,7 +9,7 @@ using App.Utils;
 
 namespace App.Pages.Maintains
 {
-    [CheckPower(Power.ConfigSite)]
+    [Auth(Power.ConfigSite)]
     public class SiteConfigFormModel : AdminModel
     {
         [BindProperty]

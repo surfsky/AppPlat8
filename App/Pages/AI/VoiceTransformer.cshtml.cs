@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace App.Pages.AI
 {
     [IgnoreAntiforgeryToken]
-    [CheckPower(Power.AIChat)]
+    [Auth(Power.AIChat)]
     public class VoiceTransformerModel : AdminModel
     {
         public void OnGet()

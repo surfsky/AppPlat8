@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.CompanyView)]
+    [Auth(Power.CompanyView)]
     public class CompaniesModel : AdminModel
     {
         [BindProperty]

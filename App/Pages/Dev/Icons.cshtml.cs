@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace App.Pages.Dev
 {
-    // [CheckPower(Power.Backend)]
+    // [Auth(Power.Backend)]
     public class IconsModel : AdminModel
     {
         public void OnGet()

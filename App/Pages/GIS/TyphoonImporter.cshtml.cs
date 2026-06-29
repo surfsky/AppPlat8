@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [CheckPower(Power.GisGeometryEdit)]
+    [Auth(Power.GisGeometryEdit)]
     public class TyphoonImporterModel : AdminModel
     {
         public string TypeTitle { get; set; } = "台风数据文件";

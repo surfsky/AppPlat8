@@ -14,7 +14,7 @@ namespace App.Pages.GIS
         public List<ApiNavNode> Children { get; set; } = new();
     }
 
-    [CheckPower(Power.GisGeometryView)]
+    [Auth(Power.GisGeometryView)]
     public class ApiManagerModel : AdminModel
     {
         public List<ApiNavNode> NavMenus { get; set; } = new();

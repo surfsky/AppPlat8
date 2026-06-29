@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [CheckPower(Power.GisGeometryView)]
+    [Auth(Power.GisGeometryView)]
     public class ApisModel : AdminModel
     {
         public GisApi Item { get; set; }

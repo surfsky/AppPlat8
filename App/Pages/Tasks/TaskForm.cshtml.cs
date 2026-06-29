@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.TaskEdit)]
+    [Auth(Power.TaskEdit)]
     public class TaskFormModel : AdminModel
     {
         public AssignTask Item { get; set; }

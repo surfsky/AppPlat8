@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.GIS
 {
-    [CheckPower(Power.GisGeometryEdit)]
+    [Auth(Power.GisGeometryEdit)]
     public class SceneFormModel : AdminModel
     {
         public GisScene Item { get; set; }

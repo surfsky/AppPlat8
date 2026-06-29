@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.EventEdit)]
+    [Auth(Power.EventEdit)]
     public class EventTypeFormModel : AdminModel
     {
         public EventType Item { get; set; }

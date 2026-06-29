@@ -12,7 +12,7 @@ using App.Entities;
 
 namespace App.Pages.Admins
 {
-    [CheckPower(Power.OrgView)]
+    [Auth(Power.OrgView)]
     public class OrgsModel : AdminModel
     {
         public App.DAL.Org Item { get; set; }

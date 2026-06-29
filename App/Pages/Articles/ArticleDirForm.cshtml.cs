@@ -15,7 +15,7 @@ using App.EleUI;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.ArticleEdit)]
+    [Auth(Power.ArticleEdit)]
     public class ArticleDirFormModel : AdminModel
     {
         public ArticleDir Item { get; set; }

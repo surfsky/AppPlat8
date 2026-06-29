@@ -7,7 +7,7 @@ using App.Components;
 
 namespace App.Pages.Maintains
 {
-    [CheckPower(Power.MonitorLog)]
+    [Auth(Power.MonitorLog)]
     public class LogFormModel : AdminModel
     {
         [BindProperty]

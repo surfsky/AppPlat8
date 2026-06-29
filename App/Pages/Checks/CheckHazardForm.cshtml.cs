@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckHazardEdit)]
+    [Auth(Power.CheckHazardEdit)]
     public class CheckHazardFormModel : AdminModel
     {
         public CheckHazard Item { get; set; }

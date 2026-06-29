@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 
 namespace App.Pages.GIS
 {
-    //[CheckPower(Power.GisGeometryView)]  // 暂时先关闭权限校验
+    //[Auth(Power.GisGeometryView)]  // 暂时先关闭权限校验
     public class IndexModel : BaseModel
     {
         public void OnGet()

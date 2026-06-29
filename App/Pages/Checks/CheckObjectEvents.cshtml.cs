@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckObjectView)]
+    [Auth(Power.CheckObjectView)]
     public class CheckObjectEventsModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

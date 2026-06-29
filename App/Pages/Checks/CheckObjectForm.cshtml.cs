@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckObjectEdit)]
+    [Auth(Power.CheckObjectEdit)]
     public class CheckObjectFormModel : AdminModel
     {
         public CheckObject Item { get; set; }

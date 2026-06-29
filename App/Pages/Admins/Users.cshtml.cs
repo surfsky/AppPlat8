@@ -17,7 +17,7 @@ namespace App.Pages.Admins
 {
     using User = App.DAL.User; // Fix conflict with PageModel.User
 
-    [CheckPower(Power.UserView)]
+    [Auth(Power.UserView)]
     public class UsersModel : AdminModel
     {
         public App.DAL.User Item { get; set; }

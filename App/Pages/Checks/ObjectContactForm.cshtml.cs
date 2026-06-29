@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckObjectEdit)]
+    [Auth(Power.CheckObjectEdit)]
     public class ObjectContactFormModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]  public long ObjectId { get; set; }

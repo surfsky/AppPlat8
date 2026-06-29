@@ -18,7 +18,7 @@ namespace App.Pages.OA
     using App.EleUI;
     using App.Entities;
 
-    [CheckPower(Power.EventEdit)]
+    [Auth(Power.EventEdit)]
     public class EventFormModel : AdminModel
     {
         public Event Item { get; set; }

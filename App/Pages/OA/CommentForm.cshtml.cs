@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.CommentEdit)]
+    [Auth(Power.CommentEdit)]
     public class CommentFormModel : AdminModel
     {
         public Comment Item { get; set; }

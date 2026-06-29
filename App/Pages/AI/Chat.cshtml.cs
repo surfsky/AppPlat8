@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.AI
 {
     [IgnoreAntiforgeryToken]
-    [CheckPower(Power.AIChat)]
+    [Auth(Power.AIChat)]
     public class ChatModel : AdminModel
     {
         public List<AIConfigOption> Configs { get; set; } = new();

@@ -11,7 +11,7 @@ using App.Web;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckObjectView)]
+    [Auth(Power.CheckObjectView)]
     public class CheckObjectsModel : AdminModel
     {
         public CheckObject Item { get; set; }

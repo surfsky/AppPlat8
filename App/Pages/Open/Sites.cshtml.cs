@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Open
 {
     /// <summary>参考网站管理</summary>
-    [CheckPower(Power.SiteView)]
+    [Auth(Power.SiteView)]
     public class SitesModel : AdminModel
     {
         [BindProperty]

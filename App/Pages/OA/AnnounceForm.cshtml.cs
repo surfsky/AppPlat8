@@ -12,7 +12,7 @@ using App.HttpApi;
 namespace App.Pages.Admin
 {
     [Auth(Power.AnnounceView)]
-    //[CheckPower(Power.AnnounceView)]
+    //[Auth(Power.AnnounceView)]
     [IgnoreAntiforgeryToken]
     public class AnnounceFormModel : AdminModel
     {

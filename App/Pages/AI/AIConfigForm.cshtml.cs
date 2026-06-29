@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.AI
 {
-    [CheckPower(Power.ConfigAI)]
+    [Auth(Power.ConfigAI)]
     public class AIConfigFormModel : AdminModel
     {
         public AIConfig Item { get; set; }

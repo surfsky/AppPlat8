@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.Checks
 {
-    [CheckPower(Power.CheckEdit)]
+    [Auth(Power.CheckEdit)]
     public class CheckFormModel : AdminModel
     {
         public Check Item { get; set; }

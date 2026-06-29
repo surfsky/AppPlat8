@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [CheckPower(Power.ArticleView)]
+    [Auth(Power.ArticleView)]
     public class ArticleDirsModel : AdminModel
     {
         public ArticleDir Item { get; set; }
