@@ -541,3 +541,6 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
             base.BeforeSave(op);
         }
         [UI("基础", "责任单位")]    public long? DutyUnitOrgId { get; set; }
+
+            <EleColumn For="Item.DutyDistrictName" Label="责任区县" Width="200"></EleColumn>
+            <EleColumn For="Item.DutyCommunityName" Label="责任社区" Width="200"></EleColumn>
