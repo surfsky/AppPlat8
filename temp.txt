@@ -475,3 +475,42 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
             return IsSafe;
         }
 
+
+            // Generate a random token
+            string token = Guid.NewGuid().ToString("N");
+            HttpContext.Session.SetString("SliderVerified", token);
+            
+            // Set the expected code in Auth for this session
+            // We also need to tell the client this code? No, client doesn't need it.
+            // Client just needs to know it passed.
+            // But OnPost needs to know what code to pass to Auth.Login.
+            // We can store it in session.            
+            // Let's use a random verify code for Auth.Login too
+
+
+            HttpContext.Session.SetString("LoginVerifyCode", verifyCode);
+            // 1. Check if slider was verified via backend session
+            var verifiedToken = HttpContext.Session.GetString("SliderVerified");
+            if (string.IsNullOrEmpty(verifiedToken))
+                return BuildResult(-1, "请先完成滑块验证");
+
+            // 2. Clear verification status to prevent replay
+            // 3. Get the code we set for Auth.Login
+            HttpContext.Session.Remove("SliderVerified");
+            string verifyCode = HttpContext.Session.GetString("LoginVerifyCode");
+            HttpContext.Session.Remove("LoginVerifyCode");            
+            if (string.IsNullOrEmpty(verifyCode))
+                 return BuildResult(-1, "验证码已过期，请刷新重试");
+
+            // 1. Check if slider was verified via backend session
+            var verifiedToken = HttpContext.Session.GetString("SliderVerified");
+            if (string.IsNullOrEmpty(verifiedToken))
+                return BuildResult(-1, "请先完成滑块验证");
+
+            // 2. Clear verification status to prevent replay
+            // 3. Get the code we set for Auth.Login
+            HttpContext.Session.Remove("SliderVerified");
+            string verifyCode = HttpContext.Session.GetString("LoginVerifyCode");
+            HttpContext.Session.Remove("LoginVerifyCode");
+
+

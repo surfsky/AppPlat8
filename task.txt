@@ -407,7 +407,8 @@ Done
     /实现登录协议，并优化登录页面
         - 在按钮下面添加 checkbox 同意服务条款；
         - 勾中checkbox后才能点击“登录“按钮，否则会提示；
-        - 点击”服务条款“文本后，右滑drawer显示服务条款内容（来自  SiteConfig.Terms），以markdown格式进行解析；    
+        - 点击”服务条款“文本后，右滑drawer显示服务条款内容（来自  SiteConfig.Terms），以markdown格式进行解析；   
+    /优化登录页面中的滑块校验器：代码封装、防御机器人操作；
     UI
         filter增加隐藏展开功能
     检查对象
