@@ -30,7 +30,10 @@ namespace App.Pages
         {
             var (ok, msg) = SliderVerifier.Validate(data);
             if (!ok)
+            {
+                Auth.SetVerifyCode("");
                 return BuildResult(-1, msg);
+            }
             else
             {
                 string verifyCode = Random.Shared.Next(1000, 9999).ToString();
