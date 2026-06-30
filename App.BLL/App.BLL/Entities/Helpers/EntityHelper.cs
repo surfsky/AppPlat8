@@ -45,6 +45,16 @@ namespace App.Entities
             return list;
         }
 
+        /// <summary>从缓存树中查找上级元素</summary>
+        public static ITree<T> GetAncestor<T>(this T item, List<T> all, Func<T, bool> predicate)
+            where T : ITree<T>
+        {
+            if (predicate(item))
+                return item;
+            var p =  all.AsQueryable().FirstOrDefault(t => t.Id == item.ParentId);
+            return (p != null) ? GetAncestor(p, all, predicate) : null;
+        }
+
         /// <summary>递归获取子节点（包含自身）</summary>
         /// <param name="all">所有元素</param>
         /// <param name="rootId">根元素Id</param>

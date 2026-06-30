@@ -301,7 +301,6 @@ html, body {
 }
 
 /* EleTable mobile filter drawer: stretch controls to full width */
-@media (max-width: 767.98px) {
     .ele-table-filters-drawer .el-form-item {
         width: 100% !important;
         max-width: none !important;
@@ -326,10 +325,12 @@ html, body {
 
     .ele-table-filters-drawer .el-input__wrapper,
     .ele-table-filters-drawer .el-select__wrapper,
-    .ele-table-filters-drawer .el-textarea__inner {
+    .ele-table-filters-drawer .el-textarea__inner,
+    .ele-table-filters-drawer .el-date-editor.el-input,
+    .ele-table-filters-drawer .el-date-editor--daterange,
+    .ele-table-filters-drawer .el-date-editor--datetimerange {
         width: 100% !important;
     }
-}
 
 .ele-table-buttons-block {
     gap: 6px !important;

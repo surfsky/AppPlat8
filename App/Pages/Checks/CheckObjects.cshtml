@@ -11,7 +11,6 @@
                 <EleInput For="Item.Name" Width="250px" Label="检查对象名称" ></EleInput>
                 <EleSelect For="Item.ObjectType" Width="250px" Label="类型" Clearable="true"></EleSelect>
                 <EleSelect For="Item.Scope" Width="250px" Label="所属领域" Clearable="true"></EleSelect>
-                <EleSelect For="Item.IsDel" Width="250px" Label="已删除"  Clearable="true"></EleSelect>
                 <EleSelect For="Item.IsChecked" Width="250px" Label="是否检查" Clearable="true"></EleSelect>
                 <EleTreePicker For="Item.DutyOrgId" Width="250px" Label="所属网格" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true"></EleTreePicker>
                 <EleInput For="Item.Address" Width="250px" Label="详细地址" ></EleInput>
@@ -26,8 +25,8 @@
                 <EleDatePicker Prop="latestCheckStartDt" Width="250px" Label="巡查时间起" Type="DateTime" ></EleDatePicker>
                 <EleDatePicker Prop="latestCheckEndDt" Width="250px" Label="巡查时间止" Type="DateTime" ></EleDatePicker>
                 <EleSelect For="Item.IndustryRisk" Width="250px" Label="行业风险类型" Clearable="true"></EleSelect>
-
                 <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Clearable="true"></EleTreePicker>
+                <EleSelect For="Item.IsDel" Width="250px" Label="已删除"  Clearable="true" Value="false"></EleSelect>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
@@ -55,7 +54,10 @@
             <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="250" Sortable="true"></EleColumn>
             <EleColumn For="Item.ObjectType" Label="类型" Width="100" Format="Enum"></EleColumn>
             <EleColumn For="Item.IndustryType" Label="行业" Width="110" Format="Enum"></EleColumn>
-            <EleColumn For="Item.DutyOrgName" Label="责任组织" Width="200"></EleColumn>
+            <EleColumn For="Item.DutyOrgName" Label="责任网格" Width="200"></EleColumn>
+            <EleColumn For="Item.DutyUnitName" Label="责任单位" Width="200"></EleColumn>
+            <EleColumn For="Item.DutyDistrictName" Label="责任区县" Width="200"></EleColumn>
+            <EleColumn For="Item.DutyCommunityName" Label="责任社区乡镇" Width="200"></EleColumn>
             <EleColumn For="Item.SocialCreditCode" Label="社会信用代码" Width="180"></EleColumn>
             <EleColumn For="Item.DutyUserName" Label="负责人" Width="120"></EleColumn>
             <EleColumn For="Item.RiskLevel" Label="风险等级" Width="100"></EleColumn>

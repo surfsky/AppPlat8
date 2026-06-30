@@ -12,23 +12,23 @@
         <EleImageUpload For="Item.OutlookImage" Label="外观图片" FillRow="true"></EleImageUpload>
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleInput For="Item.SocialCreditCode" Label="社会信用代码"></EleInput>
-        <EleInput For="Item.Code" Label="编码"></EleInput>
+        <EleInput For="Item.Code" Label="对象标志"></EleInput>
         <EleInput For="Item.AreaCode" Label="地块号"></EleInput>
         <EleInput For="Item.Address" Label="地址"></EleInput>
         <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location"></ElePicker>
-        <EleSwitch For="Item.IsDel" Label="是否失效"></EleSwitch>
-        <EleSwitch For="Item.HasHarzard" Label="是否存在隐患"></EleSwitch>
-        <div v-show="form.isDel === true">
-            <EleInput For="Item.FailReason" Label="失效原因" FillRow="true"></EleInput>
-        </div>
         <EleDatePicker For="Item.ArchieveDt" Label="建档日期"></EleDatePicker>
-        <EleDatePicker For="Item.LatestCheckDt" Label="最新巡查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+        <EleDatePicker For="Item.LatestCheckDt" Label="最后巡查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+        <EleSwitch For="Item.HasHarzard" Label="是否存在隐患"></EleSwitch>
+        <EleSwitch For="Item.IsDel" Label="是否失效"></EleSwitch>
+        <div v-show="form.isDel === true">
+            <EleSelect For="Item.FailReason" Label="失效原因" FillRow="true" Items='new[]{"停业","搬迁","虚拟注册","注销","无实体经营","数据重复","其他原因"}'></EleSelect>
+        </div>
 
         <EleLabel Label="责任信息" FillRow="true"></EleLabel>
         <EleInput For="Item.DutyUserName" Label="负责人信息"></EleInput>
         <EleInput For="Item.SafetyAdminName" Label="安全管理员"></EleInput>
         <EleInput For="Item.ThirdPartySafetyAgency" Label="三方机构"></EleInput>
-        <EleTreeSelect For="Item.DutyOrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+        <EleTreeSelect For="Item.DutyOrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
         <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Label="技术检查员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
         <ElePicker For="Item.SocialCheckerId" TextFor="Item.SocialCheckerName" Label="社区网格员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
 

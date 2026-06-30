@@ -24,18 +24,22 @@
 
 ## 常用缩写及单词
 
+
 | 缩写      | 全称            |  说明    |
 |----------|----------------|------------
 | Id       | identify       | 主键
 | Uid      | user id        | 如SaleUid, CreateUid
 | Dt       | date           | 日期时间
-| IsEnabled | is enabled   | 是否启用
+| IsDel    | is deleted     | 是否删除
 | SortId   | sort id        | 排序Id
 | Seq      | sequence       | 序列号
 | Cert     | centificate    | 认证
 | No       | number         | 编号
 | Pic      | picture        | 图片统一用Pic
 | Tel      | telphone       | 电话
+|----------|----------------|------------
+| Name     | name           | 名称
+| Desc     | description    | 描述
 | Remark   | remark         | 备注
 | Info     | information    | 信息
 | Sts      | status         | 状态

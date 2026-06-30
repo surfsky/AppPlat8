@@ -66,3 +66,16 @@ codegraph serve --mcp
 
 ---
 *生成的索引数据库存储在 `.codegraph/` 目录中，建议将其加入 `.gitignore`。*
+
+## 6. 常用命令示例
+
+``` bash
+npm install -g @colbymchenry/codegraph
+
+codegraph --version
+codegraph --help
+codegraph init
+codegraph index
+codegraph files
+codegraph query 'xxx'
+```

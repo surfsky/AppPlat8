@@ -13,6 +13,7 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增组织</EleButton>
+                <EleButton Type="Warning" Icon="Refresh" VClick="postHandler('FixAll').then(() => loadData())" Visible="@Auth.CheckPower(Power.OrgEdit)">补全全称</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
@@ -22,7 +23,6 @@
             </EleOpColumn>
             <EleColumn For="Item.Name" Label="名称" Width="300"></EleColumn>
             <EleColumn For="Item.Level" Label="级别" Width="300"></EleColumn>
-            <EleColumn For="Item.IsSolo" Label="是否独立主体" Width="100"></EleColumn>
             <EleColumn For="Item.Id" Label="ID" Width="100"></EleColumn>
             <EleColumn For="Item.FullName" Label="全称"></EleColumn>
             <EleColumn For="Item.Remark" Label="备注"></EleColumn>
@@ -30,5 +30,4 @@
         </Columns>
     </EleTable>
 }
-
 

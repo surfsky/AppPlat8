@@ -60,7 +60,6 @@ namespace App.Pages.Admins
             item.ParentId = req.ParentId;
             item.SortId = req.SortId;
             item.Level = req.Level;
-            item.IsSolo = req.IsSolo;
             item.Remark = req.Remark;
             item.Save();
             App.DAL.Org.ClearCache(); // Refresh cache

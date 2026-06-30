@@ -124,7 +124,7 @@ namespace App.API
                     t.RiskLevel,
                     t.ObjectType,
                     t.Scale,
-                    t.DutyOrgId,
+                    DutyOrgId = t.DutyOrgId,
                     t.DutyUserName,
                 })
                 .ToList();

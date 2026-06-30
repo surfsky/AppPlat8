@@ -58,5 +58,15 @@ namespace App.Pages.Admins
             App.DAL.Org.ClearCache();
             return BuildResult(0, "删除成功");
         }
+
+        /// <summary>补全所有组织全称</summary>
+        public IActionResult OnPostFixAll()
+        {
+            if (!CheckPower(Power.OrgEdit))
+                return BuildResult(403, "无权操作");
+
+            var cnt = App.DAL.Org.FixAll();
+            return BuildResult(0, $"已补全 {cnt} 条组织全称");
+        }
     }
 }

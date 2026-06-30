@@ -41,12 +41,23 @@ namespace App.EleUI
             if (AllowCreate)                        output.Attributes.SetAttribute("allow-create", "true");
             if (Filterable)                         output.Attributes.SetAttribute("filterable", "true");
 
-            // 支持 Value 属性，优先级高于 v-model
-            if (Value != null)
+            var modelKey = GetPropName();
+            var vModel = GetVModel(context);
+            if (Value != null && !string.IsNullOrWhiteSpace(vModel))
             {
-                // 兼容 bool/数字/字符串
-                var valueStr = Value is bool ? Value.ToString().ToLower() : Value.ToString();
-                output.Attributes.SetAttribute(":value", valueStr);
+                var defaultRaw = GetDefaultRaw(Value);
+                var defaultExpr = GetDefaultValueExpression(Value);
+
+                if (!context.Items.ContainsKey("IsEleForm") && vModel.StartsWith("filters.", StringComparison.Ordinal))
+                {
+                    output.Attributes.SetAttribute("data-filter-default", defaultRaw);
+                    if (!string.IsNullOrWhiteSpace(modelKey))
+                        output.Attributes.SetAttribute("data-filter-model", modelKey);
+                }
+
+                output.Attributes.RemoveAll("v-model");
+                output.Attributes.SetAttribute(":model-value", $"({vModel} ?? {defaultExpr})");
+                output.Attributes.SetAttribute("@update:model-value", $"{vModel} = $event");
             }
 
             // Build unified options list for runtime override (SetControlData)
@@ -63,7 +74,6 @@ namespace App.EleUI
             if (Items == null && string.IsNullOrWhiteSpace(manualOptions) && IsBooleanSelectTarget())
                 options = AppendFromBool(options);
 
-            var modelKey = GetPropName();
             var target = ResolveControlTarget(context) ?? (string.IsNullOrWhiteSpace(modelKey) ? null : $"field:{modelKey}");
             var defaultOptionsJson = BuildDefaultOptionsJson(options);
 
@@ -93,6 +103,56 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("v-on:change", onChangeExpr);
 
             await RenderWrapper(output);
+        }
+
+        private static string GetDefaultRaw(object value)
+        {
+            if (value == null)
+                return string.Empty;
+
+            if (value is string s1 && bool.TryParse(s1, out var sBool1))
+                return sBool1 ? "true" : "false";
+
+            if (value is bool b)
+                return b ? "true" : "false";
+
+            var t = value.GetType();
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            if (t.IsEnum)
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            if (value is sbyte or byte or short or ushort or int or uint or long or ulong)
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            if (value is float or double or decimal)
+                return Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            return value.ToString();
+        }
+
+        private static string GetDefaultValueExpression(object value)
+        {
+            if (value == null)
+                return "null";
+
+            if (value is string s1 && bool.TryParse(s1, out var sBool1))
+                return sBool1 ? "true" : "false";
+
+            if (value is bool b)
+                return b ? "true" : "false";
+
+            var t = value.GetType();
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            if (t.IsEnum)
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            if (value is sbyte or byte or short or ushort or int or uint or long or ulong)
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            if (value is float or double or decimal)
+                return Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            return JsonSerializer.Serialize(value.ToString());
         }
 
         private bool IsBooleanSelectTarget()

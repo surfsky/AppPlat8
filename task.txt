@@ -40,9 +40,12 @@
     这样便于统计某个检查归属在哪个专项任务下面；
     任务可以设置起止时间、受理部门；
     通用任务以及业务表单的融合
-增加风险点 Check 对象，用于保存风险点，可关联到企业，也可以独立存在，并关联到企业责任人、政府监管人
 
-标签下拉框太高，考虑用 ElePopup 替代
+增加风险点 Check 对象，用于保存风险点，可关联到对象，也可以独立存在，并关联到企业责任人、政府监管人
+    CheckRisk: Id, CheckObjectId, RiskLevel, Pic, Name, Desc
+    是否需要这个表？直接在 CheckObject 用tag标注，用附件存储即可？
+    先搁置，并实现 SearchObject(....Tag....) 方法，可根据标签搜索对象
+
 
 bug：新建标签时，组织老是自动设置为“新城应消中心”
 将检查对象 checkobject 的风险类标签合并到 Tags（原风险类别字段尚未删除）
@@ -86,6 +89,7 @@ CheckSheet 中有两个特别大的检查表，预计要删除；
 --------------------------------------------------------
 - UI框架
 --------------------------------------------------------
+
 智能表格
     - Excel 编辑：可直接在页面编辑表格，可直接黏贴数据，
     - 完成通用数据维护界面（可考虑用UIConfignfig类），体模型类自动生成对应的列表和表单页面
@@ -93,8 +97,9 @@ CheckSheet 中有两个特别大的检查表，预计要删除；
 
 EleUI
     - 所有页面都加上 Loading 效果；
-    - 实现列的数据跳转，给EleColumn增加属性 PopupUrl=""
-    - 实现所有EleUI控件的亮暗双色模式（如 elemanger drawer 在驾驶舱使用暗色系）；
+    - 实现所有EleUI控件的亮暗双色模式（如 elemanger drawer 在驾驶舱使用暗色系）；先用json定义样式表 Theme{...}，另所有控件都支持 SetTheme(theme) 方法；
+    - EleTable.Filter 增加展示方式属性：Tool（全部显示在工具区）、Drawer（显示过滤按钮，点击后用抽屉展示）、FirstRow（仅展示首行并显示过滤按钮，更多用drawer显示）
+    - EleTable 实现列的数据跳转，给EleColumn增加属性 PopupUrl=""
 
 
 文档预览技术方案备案：
@@ -180,6 +185,25 @@ EleUI
 --------------------------------------------------------
 驾驶舱框架
 --------------------------------------------------------
+rtsp 监控查看方案：
+    https://github.com/flyfish-dev/rtsp
+        https://rtsp-roan.vercel.app[
+        <rtsp-player
+          url="rtsp://user:pass@192.168.1.64:554/Streaming/Channels/101"
+          width="960"
+          height="540"
+          autoplay
+          controls>
+        </rtsp-player>
+        rtsp://9627b0bf2a7b.entrypoint.cloud.wowza.com:1935/app-p5260J38/66abe4b9_stream1
+
+前端文档查看方案：
+    FlyfishFileViewer：
+
+
+图片变三维模型：
+    https://github.com/huangserva/3DCellForge
+
 优先
     实现index/gis 点位面板范围检索，在点位图层中增加过滤条件：几公里、名称
     实现接口方式获取点位数据
@@ -375,6 +399,7 @@ AI 融合
 AI 对软件的重构
     AI来引导用户，而不是用户去用软件；
     根据用户需求，调用cli或者api服务，自动生成交互界面或根据问答，自动展示结果
+    数据挖掘决策
 
 AI聊天
     /普通对话
@@ -403,22 +428,10 @@ AI辅助
 --------------------------------------------------------
 Done
 --------------------------------------------------------
-2026.2.30
-    /实现登录协议，并优化登录页面
-        - 在按钮下面添加 checkbox 同意服务条款；
-        - 勾中checkbox后才能点击“登录“按钮，否则会提示；
-        - 点击”服务条款“文本后，右滑drawer显示服务条款内容（来自  SiteConfig.Terms），以markdown格式进行解析；   
-    /优化登录页面中的滑块校验器：代码封装、防御机器人操作；
-    UI
-        filter增加隐藏展开功能
+2026.7.1
     检查对象
-        修正对象失效原因，用枚举
-        保存DutyOrgId时（归属网格）
-            自动填写责任单位id（往上推溯到IsSolo的第一个org）
-            增加行政区划Id，也自动填写，Org增加IsRegion属性
-            或者加个类别：独立机构、行政区划、网格
+        实现支持Gis接口的对象检索接口，可查找tag
         “是否认领”字段是否需要
-        CheckObject 支持递归查找子网格
         对象标志：3303830000000535405，看是如何编码的
         把相关附属资源（如联系人、事件、隐患等）全部改为列表方式附在下面，并可以”更多“跳出列表drawer窗口可编辑：EleList 优化，增加更多按钮，点击后可调到编辑页面；
         批量修改能力：多选后点击编辑，弹出批量修改窗口；其中
@@ -433,13 +446,33 @@ Done
                 - 写接口，根据标签查询
                 - 配置gis菜单，根据接口获取数据
                 - gisindex获取api数据并展示，并更新统计数据
-
             实时数据
                 - gismenu设置一个signalr 的hub地址就行
                 - gis/index实现对signalr的支持
         gis/index 顶部实现流光动画效果
         gis/index 页面遮住左下角的“mapbox”标签
     gis/index/panel 用chart.js 来实现图表
+
+2026.2.30
+    /实现登录协议，并优化登录页面
+        - 在按钮下面添加 checkbox 同意服务条款；
+        - 勾中checkbox后才能点击“登录“按钮，否则会提示；
+        - 点击”服务条款“文本后，右滑drawer显示服务条款内容（来自  SiteConfig.Terms），以markdown格式进行解析；  
+        - 实现SliderVerifier 滑块验证器 
+    /优化登录页面中的滑块校验器：代码封装、防御机器人操作；
+    /标签下拉框太高，考虑用 ElePopup 替代
+    /检查对象
+        /修正对象失效原因，用枚举
+        /实现CheckRisk 风险表：CheckObject --(1:n)--- CheckRisk。先搁置
+        /显示归属地级市、区县、乡镇、社区、网格、单位
+            /Org表增加一个类别字段(OrgType): Uni独立机构、Region行政区划、Net网格
+            /自动填写责任单位id（往上推溯到IsSolo的第一个org）
+            /增加行政区划Id，也自动填写，Org增加IsRegion属性
+            /感觉都不用添加字段，临时计算就行了（采用）
+        /优化查找
+            /修正查找“已删除”对象找不到的错误:Item = new CheckObject(){IsDel = false}; 
+            /CheckObject 支持递归查找子网格
+            /支持递归查找标签对象
 
 
 2026.2.29

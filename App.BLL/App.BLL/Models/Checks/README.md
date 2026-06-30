@@ -69,6 +69,7 @@
   ├── 1:n Tags (CheckObjectTag) - 拥有的标签
   ├── 1:n Contacts (CheckObjectContact) - 人员清单
   └── 1:n Checks - 检查记录
+  └── 1:n Risk(CheckRisk) - 风险
 ```
 
 ### 3. CheckSheet & CheckItem（检查表与检查项）
@@ -144,6 +145,12 @@ CheckItem（检查项）：
 CheckObjectTag：连接 CheckObject 和 CheckTag（多对多）
 CheckObjectContact：CheckObject 的人员清单（证件、执证日期等）
 ```
+
+### 9. CheckRisk 风险点
+
+字段：Id, long? ObjectId, RiskLevel, Name, Desc, Pic
+是否需要这个表？直接在 CheckObject 用tag标注，用附件存储即可？
+
 
 ## 关键枚举（Enums.cs）
 

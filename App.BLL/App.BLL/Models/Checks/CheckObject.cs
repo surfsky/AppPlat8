@@ -36,7 +36,9 @@ namespace App.DAL
         [UI("基础", "规模")]       public CheckObjectScale? Scale { get; set; }
         [UI("基础", "类型")]       public CheckObjectType? ObjectType { get; set; }
 
-        [UI("基础", "责任组织")]    public long? DutyOrgId { get; set; }
+        [UI("基础", "责任网格")]    public long? DutyOrgId { get; set; }
+
+
         [UI("基础", "技术检查员")] public long? CheckerId { get; set; }
         [UI("基础", "社区网格员")] public long? SocialCheckerId { get; set; }
         [UI("基础", "电表号")] public string EleMeeterNum { get; set; }
@@ -97,7 +99,11 @@ namespace App.DAL
         public virtual User SocialChecker { get; set; }
 
         // 扩展字段，供列表展示
-        [UI("基础", "责任组织")]   public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name ?? "";
+        [UI("基础", "责任网格")]   public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name;
+        [UI("基础", "责任单位")]   public string DutyUnitName => this.DutyOrg?.GetAncestor(OrgLevel.Unit)?.Name;         // 责任单位
+        [UI("基础", "责任区县")]   public string DutyDistrictName => this.DutyOrg?.GetAncestor(OrgLevel.District)?.Name;         // 责任区县
+        [UI("基础", "责任社区乡镇")]   public string DutyCommunityName => this.DutyOrg?.GetAncestor(OrgLevel.Community)?.Name;         // 责任社区乡镇
+
         [UI("基础", "技术检查员")] public string CheckerName => Checker?.Name;
         [UI("基础", "社区网格员")] public string SocialCheckerName => SocialChecker?.Name;
         [UI("基础", "检查周期")]   public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
@@ -161,8 +167,14 @@ namespace App.DAL
                 Scope,
                 Scale,
                 ObjectType,
+
+                // 责任网格相关字段
                 DutyOrgId,
-                DutyOrgName,
+                DutyOrgName,        // 责任网格
+                DutyUnitName,       // 责任单位
+                DutyDistrictName,   // 责任区县
+                DutyCommunityName,  // 责任社区乡镇
+                
                 CheckerId,
                 CheckerName,
                 SocialCheckerId,
@@ -242,38 +254,69 @@ namespace App.DAL
             bool includeContacts = false
         )
         {
-            IQueryable<CheckObject> q = CheckObject.IncludeSet;
-            if (includeTags)                   q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
-            if (includeContacts)               q = q.Include(o => o.Contacts);
-            if (dutyOrgId.IsNotEmpty())        q = q.Where(o => o.DutyOrgId == dutyOrgId.Value);  // TODO：支持递归查找子网格
-            if (checkerId.IsNotEmpty())        q = q.Where(o => o.CheckerId == checkerId.Value);
-            if (name.IsNotEmpty())             q = q.Where(o => o.Name.Contains(name.Trim()));
-            if (code.IsNotEmpty())             q = q.Where(o => o.Code.Contains(code.Trim()));
-            if (address.IsNotEmpty())          q = q.Where(o => o.Address.Contains(address.Trim()));
-            if (dutyUserName.IsNotEmpty())     q = q.Where(o => o.DutyUserName.Contains(dutyUserName.Trim()));
-            if (tagIds != null && tagIds.Count > 0)
-                q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && tagIds.Contains(t.TagId)));
-            if (objectType.IsNotEmpty())       q = q.Where(o => o.ObjectType == objectType.Value);
-            if (scope.IsNotEmpty())            q = q.Where(o => o.Scope == scope.Value);
-            if (scale.IsNotEmpty())            q = q.Where(o => o.Scale == scale.Value);
-            if (riskLevel.IsNotEmpty())        q = q.Where(o => o.RiskLevel == riskLevel.Value);
-            if (industryType.IsNotEmpty())     q = q.Where(o => o.IndustryType == industryType.Value);
-            if (socialCreditCode.IsNotEmpty()) q = q.Where(o => o.SocialCreditCode.Contains(socialCreditCode.Trim()));
-            if (createStartDt.IsNotEmpty())    q = q.Where(o => o.CreateDt >= createStartDt.Value);
-            if (createEndDt.IsNotEmpty())      q = q.Where(o => o.CreateDt <= createEndDt.Value);
-            if (updateStartDt.IsNotEmpty())    q = q.Where(o => o.UpdateDt >= updateStartDt.Value);
-            if (updateEndDt.IsNotEmpty())      q = q.Where(o => o.UpdateDt <= updateEndDt.Value);
-            if (latestCheckStartDt.IsNotEmpty()) q = q.Where(o => o.LatestCheckDt >= latestCheckStartDt.Value);
-            if (latestCheckEndDt.IsNotEmpty())   q = q.Where(o => o.LatestCheckDt <= latestCheckEndDt.Value);
-            if (hasHarzard.IsNotEmpty())        q = q.Where(o => o.HasHarzard == hasHarzard.Value);
-            if (isChecked.IsNotEmpty())        q = q.Where(o => o.IsChecked == isChecked.Value);
-            if (isDel.IsNotEmpty())            q = q.Where(o => o.IsDel == isDel.Value);
-            if (isDemonstration.IsNotEmpty())  q = q.Where(o => o.IsDemonstration == isDemonstration.Value);
-            if (isKeySupervision.IsNotEmpty()) q = q.Where(o => o.IsKeySupervision == isKeySupervision.Value);
-            if (isProductInNight.IsNotEmpty()) q = q.Where(o => o.IsProductInNight == isProductInNight.Value);
+            IQueryable<CheckObject> q = CheckObject.Set
+                .Include(o => o.DutyOrg)
+                .Include(o => o.Checker)
+                .Include(o => o.SocialChecker)
+                ;
+            var dutyNetOrgIds = GetOrgIds(dutyOrgId);
+            var allTagIds = GetTagIds(tagIds);
+            if (includeTags)                          q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
+            if (includeContacts)                      q = q.Include(o => o.Contacts);
+            if (dutyNetOrgIds.Count > 0)              q = q.Where(o => o.DutyOrgId.HasValue && dutyNetOrgIds.Contains(o.DutyOrgId.Value));
+            if (checkerId.IsNotEmpty())               q = q.Where(o => o.CheckerId == checkerId.Value);
+            if (name.IsNotEmpty())                    q = q.Where(o => o.Name.Contains(name.Trim()));
+            if (code.IsNotEmpty())                    q = q.Where(o => o.Code.Contains(code.Trim()));
+            if (address.IsNotEmpty())                 q = q.Where(o => o.Address.Contains(address.Trim()));
+            if (dutyUserName.IsNotEmpty())            q = q.Where(o => o.DutyUserName.Contains(dutyUserName.Trim()));
+            if (allTagIds.Count > 0)                  q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && allTagIds.Contains(t.TagId)));
+            if (objectType.IsNotEmpty())              q = q.Where(o => o.ObjectType == objectType.Value);
+            if (scope.IsNotEmpty())                   q = q.Where(o => o.Scope == scope.Value);
+            if (scale.IsNotEmpty())                   q = q.Where(o => o.Scale == scale.Value);
+            if (riskLevel.IsNotEmpty())               q = q.Where(o => o.RiskLevel == riskLevel.Value);
+            if (industryType.IsNotEmpty())            q = q.Where(o => o.IndustryType == industryType.Value);
+            if (socialCreditCode.IsNotEmpty())        q = q.Where(o => o.SocialCreditCode.Contains(socialCreditCode.Trim()));
+            if (createStartDt.IsNotEmpty())           q = q.Where(o => o.CreateDt >= createStartDt.Value);
+            if (createEndDt.IsNotEmpty())             q = q.Where(o => o.CreateDt <= createEndDt.Value);
+            if (updateStartDt.IsNotEmpty())           q = q.Where(o => o.UpdateDt >= updateStartDt.Value);
+            if (updateEndDt.IsNotEmpty())             q = q.Where(o => o.UpdateDt <= updateEndDt.Value);
+            if (latestCheckStartDt.IsNotEmpty())      q = q.Where(o => o.LatestCheckDt >= latestCheckStartDt.Value);
+            if (latestCheckEndDt.IsNotEmpty())        q = q.Where(o => o.LatestCheckDt <= latestCheckEndDt.Value);
+            if (hasHarzard.IsNotEmpty())              q = q.Where(o => o.HasHarzard == hasHarzard.Value);
+            if (isChecked.IsNotEmpty())               q = q.Where(o => o.IsChecked == isChecked.Value);
+            if (isDel.IsNotEmpty())                   q = q.Where(o => o.IsDel == isDel.Value);
+            if (isDemonstration.IsNotEmpty())         q = q.Where(o => o.IsDemonstration == isDemonstration.Value);
+            if (isKeySupervision.IsNotEmpty())        q = q.Where(o => o.IsKeySupervision == isKeySupervision.Value);
+            if (isProductInNight.IsNotEmpty())        q = q.Where(o => o.IsProductInNight == isProductInNight.Value);
             if (isThreePlacesThreeEnterprises.IsNotEmpty()) q = q.Where(o => o.IsThreePlacesThreeEnterprises == isThreePlacesThreeEnterprises.Value);
 
             return q;
+        }
+
+        /// <summary>递归获取网格及其子网格Id。</summary>
+        private static List<long> GetOrgIds(long? orgId)
+        {
+            if (!orgId.IsNotEmpty())
+                return new List<long>();
+
+            return Org.All
+                .GetDescendants(orgId.Value)
+                .Select(t => t.Id)
+                .Distinct()
+                .ToList();
+        }
+
+        /// <summary>递归获取标签及其子标签Id。</summary>
+        private static List<long> GetTagIds(List<long> tagIds)
+        {
+            if (tagIds == null || tagIds.Count == 0)
+                return new List<long>();
+
+            return CheckTag.All
+                .GetDescendants(tagIds.Distinct().ToList())
+                .Select(t => t.Id)
+                .Distinct()
+                .ToList();
         }
 
         /// <summary>修复所有检查对象的IsChecked字段</summary>

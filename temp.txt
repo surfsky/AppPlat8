@@ -514,3 +514,30 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
             HttpContext.Session.Remove("LoginVerifyCode");
 
 
+        [UI("是否独立主体")] public bool? IsSolo { get; set; }
+                .SetValue(t => t.IsSolo, this.IsSolo)
+        <EleSelect For="Item.IsSolo" Label="是否独立主体"></EleSelect>
+            item.IsSolo = req.IsSolo;
+            <EleColumn For="Item.IsSolo" Label="是否独立主体" Width="100"></EleColumn>
+
+        /// <summary>获取独立主体组织</summary>
+        public Org GetSoloOrg()
+        {
+            return GetParent(OrgLevel.Unit);
+        }
+
+        public virtual Org DutyUnitOrg { get; set; }
+        [UI("基础", "责任单位")]   public string DutyUnitOrgName => DutyUnitOrg?.FullName ?? DutyUnitOrg?.Name ?? "";
+                .Include(o => o.DutyUnitOrg)
+            long? dutyUnitOrgId = null,
+            var dutyUnitOrgIds = GetOrgIds(dutyUnitOrgId);
+            if (dutyUnitOrgIds.Count > 0)             q = q.Where(o => o.DutyUnitOrgId.HasValue && dutyUnitOrgIds.Contains(o.DutyUnitOrgId.Value));
+            if (DutyNetOrgId.HasValue)
+                DutyUnitOrgId = Org.Get(DutyNetOrgId.Value)?.GetAncestor(OrgLevel.Unit)?.ParentId;  // 自动填写责任单位ID
+
+        /// <summary>保存前处理</summary>
+        public override void BeforeSave(EntityOp op)
+        {
+            base.BeforeSave(op);
+        }
+        [UI("基础", "责任单位")]    public long? DutyUnitOrgId { get; set; }

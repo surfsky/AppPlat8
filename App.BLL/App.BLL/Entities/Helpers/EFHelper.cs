@@ -117,13 +117,11 @@ namespace App.Entities
         }
 
         /// <summary>排序分页导出</summary>
-        public static List<object> SortPageExport<T>(this IQueryable<T> q, Paging pi) where T : IExport
+        public static List<object> SortPageExport<T>(this IQueryable<T> q, Paging pi, ExportMode exportMode = ExportMode.Normal) where T : IExport
         {
-            //pi.Total = q.Count();
             pi.SetTotal(q.Count());  // 会自动设置分页数量
             q = q.SortAndPage(pi);
-            var list = q.Select(o => o.Export(ExportMode.Normal)).ToList();
-            return list;
+            return q.Select(o => o.Export(exportMode)).ToList();
         }
 
 

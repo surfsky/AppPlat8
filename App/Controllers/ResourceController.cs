@@ -8,6 +8,9 @@ using App.EleUI;
 
 namespace App.Controllers
 {
+    /// <summary>
+    /// 内嵌资源获取控制器。如 /res/eleui.js 或 /res/eleui.css
+    /// </summary>
     [Route("res")]
     public class ResourceController : Controller
     {
