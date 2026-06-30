@@ -19,7 +19,7 @@ namespace App.API
         //--------------------------------------------
         // 网站信息
         //--------------------------------------------
-        [HttpApi("网站信息", CacheSeconds = 60 * 60, AuthLogin=true)]
+        [HttpApi("网站信息", CacheSeconds = 60 * 60, AuthLogin=false)]
         public static APIResult GetSiteInfo()
         {
             var site = SiteConfig.Instance;
@@ -28,6 +28,7 @@ namespace App.API
                 site.Title,
                 site.Icon,
                 site.BeiAnNo,
+                Protocol = site.Terms,
                 site.LoginBg,
             }.ToResult();
         }

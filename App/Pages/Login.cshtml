@@ -33,6 +33,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/element-plus"></script>
     <script src="https://unpkg.com/@@element-plus/icons-vue"></script>
+    <script src="/js/editor.md/lib/marked.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
     <style>
@@ -178,6 +179,33 @@
             animation: shine 2s linear infinite;
         }
 
+        .terms-md {
+            line-height: 1.7;
+            color: #303133;
+            word-break: break-word;
+        }
+        .terms-md h1, .terms-md h2, .terms-md h3 {
+            font-weight: 700;
+            margin: 12px 0 8px;
+        }
+        .terms-md p {
+            margin: 8px 0;
+        }
+        .terms-md ul, .terms-md ol {
+            padding-left: 18px;
+            margin: 8px 0;
+        }
+        .terms-md a {
+            color: #2563eb;
+        }
+        .terms-link {
+            color: #2563eb;
+            cursor: pointer;
+            user-select: none;
+        }
+        .terms-link:hover {
+            text-decoration: underline;
+        }
 
     </style>
 </head>
@@ -210,13 +238,32 @@
                         </div>
                     </div>
 
-                    <el-button type="primary" size="large" :loading="loading" @@click="handleLogin" style="width: 100%; margin-top: 10px;">
-                        登录
-                    </el-button>
+                    <div style="width: 100%; margin-top: 10px; position: relative;">
+                        <el-button type="primary" size="large" :loading="loading" :disabled="!agreed" @@click="handleLogin" style="width: 100%;">
+                            登录
+                        </el-button>
+                        <div v-if="!agreed" style="position:absolute;inset:0;cursor:not-allowed;" @@click="onDisabledLoginClick"></div>
+                    </div>
+
+                    <div class="mt-3 flex items-center" style="gap: 8px;">
+                        <el-checkbox v-model="agreed">同意</el-checkbox>
+                        <span class="terms-link" @@click="openTermsDrawer">服务条款</span>
+                    </div>
                 </el-form>
             </div>
         </div>
         
+        <el-drawer
+            v-model="termsDrawerVisible"
+            title="服务条款"
+            direction="rtl"
+            size="33%"
+            append-to-body
+            destroy-on-close
+        >
+            <div class="terms-md" v-html="termsHtml"></div>
+        </el-drawer>
+
         <div class="copyright">
             <div>COPYRIGHT 2026©</div>
             <div>@Model.Site?.BeiAnNo</div>
@@ -240,8 +287,9 @@
             return;
         }
 
-        const { createApp, reactive, ref } = Vue;
+        const { createApp, reactive, ref, computed } = Vue;
         const { ElMessage } = ElementPlus;
+        const termsText = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Site?.Terms ?? ""));
 
         const app = createApp({
             setup() {
@@ -266,6 +314,21 @@
                 let startX = 0;
                 let startTime = 0;
                 let points = [];
+
+                const agreed = ref(false);
+                const termsDrawerVisible = ref(false);
+                const termsHtml = computed(() => {
+                    const md = termsText || '';
+                    if (typeof marked === 'function') {
+                        try {
+                            marked.setOptions({ gfm: true, breaks: true, sanitize: true });
+                            return marked(md);
+                        } catch (e) {
+                            return `<pre style="white-space:pre-wrap;">${md.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))}</pre>`;
+                        }
+                    }
+                    return `<pre style="white-space:pre-wrap;">${md.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))}</pre>`;
+                });
 
                 const startDrag = (e) => {
                     if (isVerified.value) return;
@@ -386,7 +449,19 @@
                     }
                 };
 
+                const openTermsDrawer = () => {
+                    termsDrawerVisible.value = true;
+                };
+
+                const onDisabledLoginClick = () => {
+                    ElMessage.warning('请先阅读并同意服务条款');
+                };
+
                 const handleLogin = async () => {
+                    if (!agreed.value) {
+                        ElMessage.warning('请先阅读并同意服务条款');
+                        return;
+                    }
                     if (!formRef.value) return;
                     await formRef.value.validate(async (valid) => {
                         if (valid) {
@@ -442,7 +517,12 @@
                     sliderX,
                     isVerified,
                     startDrag,
-                    onMouseLeave
+                    onMouseLeave,
+                    agreed,
+                    termsDrawerVisible,
+                    termsHtml,
+                    openTermsDrawer,
+                    onDisabledLoginClick
                 };
             }
         });

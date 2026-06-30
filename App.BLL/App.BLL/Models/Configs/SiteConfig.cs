@@ -16,6 +16,7 @@ namespace App.DAL
         // 基础
         [UI("基础", "网站标题")]           public string Title { get; set; }
         [UI("基础", "备案号")]             public string BeiAnNo { get; set; }
+        [UI("基础", "服务条款")]             public string Terms { get; set; }
 
         // UI
         [UI("UI", "网站主题")]             public string Theme { get; set; }

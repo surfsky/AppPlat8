@@ -37,6 +37,7 @@ namespace App.Pages.Maintains
             cfg.Icon = Uploader.SaveFile(nameof(SiteConfig), req.Icon);
             cfg.LoginBg = Uploader.SaveFile(nameof(SiteConfig), req.LoginBg);
             cfg.PageSize = req.PageSize;
+            cfg.Terms = req.Terms;
             cfg.DefaultPassword = req.DefaultPassword;
             cfg.UpFileTypes = req.UpFileTypes;
             cfg.UpFileSize = req.UpFileSize;
