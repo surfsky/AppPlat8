@@ -544,3 +544,63 @@ curl https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions \
 
             <EleColumn For="Item.DutyDistrictName" Label="责任区县" Width="200"></EleColumn>
             <EleColumn For="Item.DutyCommunityName" Label="责任社区" Width="200"></EleColumn>
+
+
+删除社区网格员，一个对象只能有一个责任网格员
+        [UI("基础", "社区网格员")] public long? SocialCheckerId { get; set; }  // 考虑删除
+                SocialCheckerId,
+                SocialCheckerName,
+        <ElePicker For="Item.SocialCheckerId" TextFor="Item.SocialCheckerName" Label="社区网格员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
+            item.SocialCheckerId = req.SocialCheckerId;
+        public virtual User SocialChecker { get; set; }
+        [UI("基础", "社区网格员")] public string SocialCheckerName => SocialChecker?.Name;
+
+
+删除对象相关属性，用标签替代
+
+
+        //
+        // 以下计划删除，用 Tag 替代
+        //
+        [UI("风险", "亿元企业")] public bool? IsYiEnterprise { get; set; }
+        [UI("风险", "夜间生产")] public bool? IsProductInNight { get; set; }
+        [UI("风险", "春节生产")] public bool? IsProductInSpringFestival { get; set; }
+        [UI("风险", "三场所三企业")] public bool? IsThreePlacesThreeEnterprises { get; set; }
+        [UI("风险", "园中园厂中厂")] public bool? IsParkFactoryOverlayRisk { get; set; }
+        [UI("风险", "涉及电气焊")] public bool? HasWelding { get; set; }
+        [UI("设备", "有环保设备")] public bool? HasEnvironmentalEquipment { get; set; }
+        [UI("设备", "有喷淋系统")] public bool HasSprinklerSystem { get; set; }
+        [UI("标准化", "标准化创建")] public string StandardizationStatus { get; set; }
+
+                IsProductInNight,
+                IsProductInSpringFestival,
+                IsThreePlacesThreeEnterprises,
+                IsParkFactoryOverlayRisk,
+                HasWelding,
+                HasEnvironmentalEquipment,
+                StandardizationStatus,
+                HasSprinklerSystem,
+                .Include(o => o.SocialChecker)
+            if (isProductInNight.IsNotEmpty())        q = q.Where(o => o.IsProductInNight == isProductInNight.Value);
+            if (isThreePlacesThreeEnterprises.IsNotEmpty()) q = q.Where(o => o.IsThreePlacesThreeEnterprises == isThreePlacesThreeEnterprises.Value);
+
+            item.IsProductInNight = req.IsProductInNight;
+            item.IsProductInSpringFestival = req.IsProductInSpringFestival;
+            item.IsYiEnterprise = req.IsYiEnterprise;
+            item.IsThreePlacesThreeEnterprises = req.IsThreePlacesThreeEnterprises;
+            item.IsParkFactoryOverlayRisk = req.IsParkFactoryOverlayRisk;
+            item.HasWelding = req.HasWelding;
+            item.HasEnvironmentalEquipment = req.HasEnvironmentalEquipment;
+            item.StandardizationStatus = req.StandardizationStatus;
+            item.HasSprinklerSystem = req.HasSprinklerSystem;
+
+        <EleInput For="Item.StandardizationStatus" Label="标准化创建"></EleInput>
+        <EleSwitch For="Item.IsProductInNight" Label="夜间生产"></EleSwitch>
+        <EleSwitch For="Item.IsProductInSpringFestival" Label="春节生产"></EleSwitch>
+        <EleSwitch For="Item.IsThreePlacesThreeEnterprises" Label="三场所三企业"></EleSwitch>
+        <EleSwitch For="Item.IsParkFactoryOverlayRisk" Label="园中园厂中厂"></EleSwitch>
+        <EleSwitch For="Item.HasWelding" Label="涉及电气焊"></EleSwitch>
+        <EleSwitch For="Item.HasSprinklerSystem" Label="喷淋系统"></EleSwitch>
+        <EleSwitch For="Item.HasEnvironmentalEquipment" Label="环保设备"></EleSwitch>
+        <EleSwitch For="Item.IsYiEnterprise" Label="亿元企业"></EleSwitch>
+            <EleColumn For="Item.SocialCheckerName" Label="网格员" Width="120"></EleColumn>

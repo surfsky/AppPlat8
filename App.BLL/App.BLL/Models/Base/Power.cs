@@ -206,6 +206,7 @@ namespace App.DAL
         [UI("检查", "检查对象查看")]           CheckObjectView = 301,
         [UI("检查", "检查对象修改")]           CheckObjectEdit = 302,
         [UI("检查", "检查对象删除")]           CheckObjectDelete = 303,
+        [UI("检查", "检查对象导出")]           CheckObjectExport = 304,
 
         [UI("检查", "检查任务新增")]           CheckTaskNew = 310,
         [UI("检查", "检查任务查看")]           CheckTaskView = 311,

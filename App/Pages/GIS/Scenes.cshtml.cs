@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using App.Components;
 using App.DAL;
@@ -20,6 +21,14 @@ namespace App.Pages.GIS
 
         public IActionResult OnGetData(Paging pi, string name)
         {
+            if (!GisScene.Set.Any())
+            {
+                var scene = GisScene.GetDefaultScene();
+                scene.CreateDt = DateTime.Now;
+                scene.CreatorId = GetUserId();
+                scene.Save();
+            }
+
             if (pi.SortField.IsEmpty())
                 pi.SortField = "SortId";
             var list = GisScene.Search(name)

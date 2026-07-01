@@ -26,9 +26,9 @@ namespace App.DAL.GIS
     {
         public static List<GisMapStyle> Styles = new List<GisMapStyle>
         {
+            new("SatelliteStreets", "mapbox://styles/mapbox/satellite-streets-v12"),  // 带标签
             new("Streets", "mapbox://styles/mapbox/streets-v11"),
             new("Satellite", "mapbox://styles/mapbox/satellite-v9"),  // 无标签
-            new("SatelliteStreets", "mapbox://styles/mapbox/satellite-streets-v12"),  // 带标签
             new("Dark", "mapbox://styles/mapbox/dark-v10"),
             new("Light", "mapbox://styles/mapbox/light-v10"),
             new("Outdoors", "mapbox://styles/mapbox/outdoors-v11"),
@@ -81,6 +81,37 @@ namespace App.DAL.GIS
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty()) q = q.Where(t => t.Name.Contains(name.Trim()));
             return q.OrderBy(t => t.SortId);
+        }
+
+        public static GisScene GetDefaultScene()
+        {
+            return new GisScene
+            {
+                Name = "默认场景",
+                Icon = "icon-default",
+                SortId = -1,
+                Desc = "默认场景",
+                MapZoom = 12,
+                MapCenter = "120.6034,27.5686",
+                MapPitch = 0,
+                Map3D = false,
+                AutoRotate = false,
+                MapStyle = Styles[0].Name,
+                MapProjection = GisMapProjection.Mercator,
+            };
+        }
+
+        public static GisScene GetOrCreateDefaultScene()
+        {
+            var scene = Set.OrderBy(t => t.SortId).FirstOrDefault();
+            if (scene != null)
+                return scene;
+
+            scene = GetDefaultScene();
+            scene.CreateDt = DateTime.Now;
+            scene.CreatorId = 0;
+            scene.Save();
+            return scene;
         }
     }
 }

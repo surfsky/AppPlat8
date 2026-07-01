@@ -9,6 +9,48 @@
         const dataApi = ctx.dataApi;
         const panelApi = ctx.panelApi;
 
+        function isTruthyFlag(val) {
+            return val === true || val === 'true' || val === 1 || val === '1';
+        }
+
+        function parseCenter(centerStr) {
+            const raw = String(centerStr || '').trim();
+            if (!raw) return null;
+
+            const parts = raw.split(/[,，\s]+/).filter(Boolean);
+            if (parts.length < 2) return null;
+            const lng = parseFloat(parts[0]);
+            const lat = parseFloat(parts[1]);
+            if (Number.isNaN(lng) || Number.isNaN(lat)) return null;
+            return [lng, lat];
+        }
+
+        function parseNumberOrNull(val) {
+            if (val === null || val === undefined || val === '') return null;
+            const num = Number(val);
+            return Number.isFinite(num) ? num : null;
+        }
+
+        function resolveScenePitch(enable3D, scenePitch) {
+            const pitchNum = parseNumberOrNull(scenePitch);
+            if (isTruthyFlag(enable3D)) {
+                return pitchNum && pitchNum > 0 ? pitchNum : 72;
+            }
+            return pitchNum;
+        }
+
+        function buildSceneView(detail) {
+            const centerStr = detail?.mapCenter || detail?.MapCenter;
+            const zoomVal = detail?.mapZoom ?? detail?.MapZoom;
+            const enable3D = detail?.enable3D ?? detail?.Enable3D;
+            const scenePitch = detail?.mapPitch ?? detail?.MapPitch;
+
+            const center = parseCenter(centerStr);
+            const zoom = parseNumberOrNull(zoomVal);
+            const pitch = resolveScenePitch(enable3D, scenePitch);
+            return { center, zoom, pitch, bearing: 0 };
+        }
+
         function renderViewStyleMenu() {
             const host = document.getElementById('view-style-list');
             if (!host) return;
@@ -113,6 +155,8 @@
                 if (res.data.code === 0) {
                     const detail = res.data.data;
                     state.currentSceneId = detail.id;
+                    state.currentSceneDetail = detail;
+                    state.currentSceneView = buildSceneView(detail);
                     const styleName = detail.mapStyle || detail.MapStyle || '';
                     const enable3D = detail.enable3D ?? detail.Enable3D;
                     const autoRotate = detail.autoRotate ?? detail.AutoRotate;
@@ -132,30 +176,24 @@
                     }
 
                     if (autoRotate !== null && autoRotate !== undefined) {
-                        const enabled = autoRotate === true || autoRotate === 'true' || autoRotate === 1 || autoRotate === '1';
+                        const enabled = isTruthyFlag(autoRotate);
                         if (enabled) viewApi.enableRotate({ closeMenu: false });
                         else viewApi.disableRotate({ closeMenu: false });
                     }
 
                     const centerStr = detail.mapCenter || detail.MapCenter;
                     const zoomVal = detail.mapZoom ?? detail.MapZoom;
-                    const pitchVal = (enable3D === true || enable3D === 'true')
-                        ? (scenePitch !== null && scenePitch !== undefined ? scenePitch : 72)
-                        : scenePitch;
+                    const pitchVal = resolveScenePitch(enable3D, scenePitch);
 
                     if (centerStr) {
-                        const parts = centerStr.split(/[,，\s]+/).filter(Boolean);
-                        if (parts.length >= 2) {
-                            const lng = parseFloat(parts[0]);
-                            const lat = parseFloat(parts[1]);
-                            if (!isNaN(lng) && !isNaN(lat)) {
-                                map.flyTo({
-                                    center: [lng, lat],
-                                    zoom: (zoomVal !== null && zoomVal !== undefined) ? zoomVal : map.getZoom(),
-                                    pitch: (pitchVal !== null && pitchVal !== undefined) ? pitchVal : map.getPitch(),
-                                    duration: 2000
-                                });
-                            }
+                        const center = parseCenter(centerStr);
+                        if (center) {
+                            map.flyTo({
+                                center,
+                                zoom: (zoomVal !== null && zoomVal !== undefined) ? zoomVal : map.getZoom(),
+                                pitch: (pitchVal !== null && pitchVal !== undefined) ? pitchVal : map.getPitch(),
+                                duration: 2000
+                            });
                         }
                     } else if (zoomVal !== null && zoomVal !== undefined) {
                         map.flyTo({
@@ -184,6 +222,51 @@
             }
         }
 
+        function resetCurrentSceneView() {
+            const detail = state.currentSceneDetail;
+            const view = detail ? buildSceneView(detail) : (state.currentSceneView || null);
+            const fallback = state.defaultSceneView || null;
+
+            if (detail) {
+                const styleName = detail.mapStyle || detail.MapStyle || '';
+                const enable3D = detail.enable3D ?? detail.Enable3D;
+                const autoRotate = detail.autoRotate ?? detail.AutoRotate;
+                const projection = detail.mapProjection ?? detail.MapProjection;
+                viewApi.applyViewConfig({
+                    style: styleName,
+                    projection,
+                    enable3D,
+                    closeMenu: false,
+                    adjustCamera: false
+                });
+                if (autoRotate !== null && autoRotate !== undefined) {
+                    const enabled = isTruthyFlag(autoRotate);
+                    if (enabled) viewApi.enableRotate({ closeMenu: false });
+                    else viewApi.disableRotate({ closeMenu: false });
+                }
+            }
+
+            const targetCenter = view?.center || fallback?.center || null;
+            const targetZoom = (view?.zoom !== null && view?.zoom !== undefined) ? view.zoom : (fallback?.zoom ?? null);
+            const targetPitch = (view?.pitch !== null && view?.pitch !== undefined)
+                ? view.pitch
+                : (fallback?.pitch ?? 0);
+            const targetBearing = (view?.bearing !== null && view?.bearing !== undefined)
+                ? view.bearing
+                : (fallback?.bearing ?? 0);
+
+            const easeOptions = {
+                pitch: targetPitch,
+                bearing: targetBearing,
+                duration: 650
+            };
+
+            if (targetCenter) easeOptions.center = targetCenter;
+            if (targetZoom !== null && targetZoom !== undefined) easeOptions.zoom = targetZoom;
+
+            map.easeTo(easeOptions);
+        }
+
         function toggleSceneMenu() {
             window.GisIndexUI.toggleSceneMenu(state);
         }
@@ -198,6 +281,7 @@
             loadMapStyles,
             loadScenes,
             switchScene,
+            resetCurrentSceneView,
             toggleSceneMenu,
             closeSceneMenu
         };

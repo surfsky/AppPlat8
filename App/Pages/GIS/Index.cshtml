@@ -1,13 +1,15 @@
 @page
 @model App.Pages.GIS.IndexModel
 @using System.Globalization
+@using App.DAL.GIS
 @{
     Layout = "_Layout";
     ViewData["Title"] = "数据驾驶舱";
 
     // 地图中心和缩放级别
-    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
-    var mapCenterText = (SiteConfig.Instance.MapCenter ?? string.Empty).Replace("，", ",").Trim();
+    var defaultScene = GisScene.GetOrCreateDefaultScene();
+    var mapZoom = (defaultScene.MapZoom ?? 0) > 0 ? defaultScene.MapZoom.Value : 11;
+    var mapCenterText = (defaultScene.MapCenter ?? string.Empty).Replace("，", ",").Trim();
     var mapCenterLng = 120.6034;
     var mapCenterLat = 27.5686;
     if (!string.IsNullOrWhiteSpace(mapCenterText))
@@ -137,6 +139,14 @@
 
     <div id="geo-detail-panel" class="geo-detail-panel" aria-label="图形详情">
         <gis-panel id="geo-detail-gis-panel" class="geo-detail-gis-panel" title="点位信息" width="100%" height="100%" closable="true" close-label="关闭">
+            <div data-panel-actions>
+                @if (Auth.CheckPower(Power.GisGeometryEdit))
+                {
+                    <button class="gis-panel-close" type="button" title="编辑" aria-label="编辑" data-panel-edit-geometry>
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+                }
+            </div>
             <div id="geo-detail-body" class="geo-detail-body">请选择图形</div>
         </gis-panel>
     </div>
@@ -181,6 +191,14 @@
             mapStyles: [],
             scenes: [],
             currentSceneId: null,
+            defaultSceneView: {
+                center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
+                zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
+                pitch: 0,
+                bearing: 0
+            },
+            currentSceneDetail: null,
+            currentSceneView: null,
             sceneMenuOpen: false,
             activeLayerTab: 'resource',
             collapsedMenuIds: new Set()
@@ -367,7 +385,8 @@
             syncViewMenuUI: () => syncViewMenuUI(),
             syncStatsModeUI: () => syncStatsModeUI(),
             closeGeometryDetailDrawer: () => closeGeometryDetailDrawer(),
-            closePointListPanel: () => closePointListPanel()
+            closePointListPanel: () => closePointListPanel(),
+            openGeometryEditDrawer: () => actionApi.openGeometryEditDrawer()
         });
 
         /**同步菜单缩放显示*/
@@ -392,11 +411,44 @@
         };
         bootstrapApi.initialize();
 
+        async function refreshGeometryViews() {
+            await loadGeometries();
+            rebuildGeometryPointMarkers();
+            applyGeometryVisibility();
+            syncGeometryPointMarkerVisibility();
+            renderMenuTree();
+
+            const detailPanel = document.getElementById('geo-detail-panel');
+            if (detailPanel && detailPanel.classList.contains('open') && state.selectedGeometryId) {
+                detailApi.open(state.selectedGeometryId);
+            }
+
+            const pointListPanel = document.getElementById('geo-point-list-panel');
+            if (pointListPanel && pointListPanel.classList.contains('open') && state.activePointListMenuId) {
+                const keyNum = Number(state.activePointListMenuId);
+                const menuNode = state.menuNodeMap.get(state.activePointListMenuId)
+                    || state.menuNodeMap.get(keyNum)
+                    || null;
+                const items = (state.geometries || []).filter(g => String(g?.menuId ?? '') === String(state.activePointListMenuId));
+                if (menuNode) {
+                    pointListApi.open(menuNode, items);
+                }
+            }
+        }
+
+        window.addEventListener('message', e => {
+            const payload = e?.data;
+            if (!payload || typeof payload !== 'object') return;
+            if (payload.__eleRefreshData === true) {
+                refreshGeometryViews();
+            }
+        });
+
         //---------------------------------------------------------------
         // 样式与视图
         //---------------------------------------------------------------
         function switchStyle(type) { viewApi.switchStyle(type); }
-        function resetView() { mapApi.resetView(); }
+        function resetView() { sceneApi.resetCurrentSceneView(); }
         async function searchAddress() { return mapApi.searchAddress(); }
 
         //--------------------------------------------------------------

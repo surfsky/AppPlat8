@@ -65,6 +65,13 @@
             document.getElementById('btn-layer-tab-weather').addEventListener('click', () => ctx.switchLayerTab('weather'));
             document.getElementById('btn-layer-tab-iot').addEventListener('click', () => ctx.switchLayerTab('iot'));
             document.getElementById('geo-detail-gis-panel').addEventListener('panel-close', ctx.closeGeometryDetailDrawer);
+            document.getElementById('geo-detail-gis-panel').addEventListener('click', e => {
+                const btn = e.target && e.target.closest ? e.target.closest('[data-panel-edit-geometry]') : null;
+                if (!btn) return;
+                if (typeof ctx.openGeometryEditDrawer === 'function') {
+                    ctx.openGeometryEditDrawer();
+                }
+            });
             document.getElementById('geo-point-list-gis-panel').addEventListener('panel-close', ctx.closePointListPanel);
             document.getElementById('address-input').addEventListener('keydown', e => {
                 if (e.key === 'Enter') ctx.searchAddress();

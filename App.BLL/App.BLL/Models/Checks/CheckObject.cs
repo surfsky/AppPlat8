@@ -39,8 +39,7 @@ namespace App.DAL
         [UI("基础", "责任网格")]    public long? DutyOrgId { get; set; }
 
 
-        [UI("基础", "技术检查员")] public long? CheckerId { get; set; }
-        [UI("基础", "社区网格员")] public long? SocialCheckerId { get; set; }
+        [UI("基础", "检查员")] public long? CheckerId { get; set; }
         [UI("基础", "电表号")] public string EleMeeterNum { get; set; }
         [UI("基础", "员工人数")] public int? EmployeeCount { get; set; }
 
@@ -76,27 +75,11 @@ namespace App.DAL
         [UI("建筑", "房屋结构")] public CheckBuildingStructure? BuildingStructure { get; set; }   // 需枚举
 
 
-
-        //
-        // 以下计划删除，用 Tag 替代
-        //
-        [UI("风险", "亿元企业")] public bool? IsYiEnterprise { get; set; }
-        [UI("风险", "夜间生产")] public bool? IsProductInNight { get; set; }
-        [UI("风险", "春节生产")] public bool? IsProductInSpringFestival { get; set; }
-        [UI("风险", "三场所三企业")] public bool? IsThreePlacesThreeEnterprises { get; set; }
-        [UI("风险", "园中园厂中厂")] public bool? IsParkFactoryOverlayRisk { get; set; }
-        [UI("风险", "涉及电气焊")] public bool? HasWelding { get; set; }
-        [UI("设备", "有环保设备")] public bool? HasEnvironmentalEquipment { get; set; }
-        [UI("设备", "有喷淋系统")] public bool HasSprinklerSystem { get; set; }
-        [UI("标准化", "标准化创建")] public string StandardizationStatus { get; set; }
-
-
         // Relations
         public virtual List<CheckObjectTag> Tags { get; set; }  // 标签列表（1:n 关系）
         public virtual List<CheckObjectContact> Contacts { get; set; }  // 联系人列表（1:n 关系）
         public virtual Org DutyOrg { get; set; }
         public virtual User Checker { get; set; }
-        public virtual User SocialChecker { get; set; }
 
         // 扩展字段，供列表展示
         [UI("基础", "责任网格")]   public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name;
@@ -106,7 +89,6 @@ namespace App.DAL
         [UI("基础", "责任社区")]   public string DutyCommunityName => this.DutyOrg?.GetAncestor(OrgLevel.Community)?.Name;         // 责任社区
 
         [UI("基础", "技术检查员")] public string CheckerName => Checker?.Name;
-        [UI("基础", "社区网格员")] public string SocialCheckerName => SocialChecker?.Name;
         [UI("基础", "检查周期")]   public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
 
 
@@ -179,8 +161,6 @@ namespace App.DAL
                 
                 CheckerId,
                 CheckerName,
-                SocialCheckerId,
-                SocialCheckerName,
                 EleMeeterNum,
                 EmployeeCount,
                 ProductContent,
@@ -190,24 +170,16 @@ namespace App.DAL
                 IsIn141Platform,
                 IsKeySupervision,
                 IsDemonstration,
-                IsProductInNight,
-                IsProductInSpringFestival,
-                IsThreePlacesThreeEnterprises,
-                IsParkFactoryOverlayRisk,
-                HasWelding,
-                HasEnvironmentalEquipment,
                 ThirdPartySafetyAgency,
                 DutyUserName,
                 SafetyAdminName,
                 SafetySteward,
                 InternalRewardMechanism,
-                StandardizationStatus,
                 BuildingType,
                 LandArea,
                 BuildingArea,
                 FactoryUsageType,
                 BuildingStructure,
-                HasSprinklerSystem,
                 IndustryType,
                 IndustryRisk,
                 TagIds,
@@ -259,7 +231,6 @@ namespace App.DAL
             IQueryable<CheckObject> q = CheckObject.Set
                 .Include(o => o.DutyOrg)
                 .Include(o => o.Checker)
-                .Include(o => o.SocialChecker)
                 ;
             var dutyNetOrgIds = GetOrgIds(dutyOrgId);
             var allTagIds = GetTagIds(tagIds);
@@ -289,8 +260,6 @@ namespace App.DAL
             if (isDel.IsNotEmpty())                   q = q.Where(o => o.IsDel == isDel.Value);
             if (isDemonstration.IsNotEmpty())         q = q.Where(o => o.IsDemonstration == isDemonstration.Value);
             if (isKeySupervision.IsNotEmpty())        q = q.Where(o => o.IsKeySupervision == isKeySupervision.Value);
-            if (isProductInNight.IsNotEmpty())        q = q.Where(o => o.IsProductInNight == isProductInNight.Value);
-            if (isThreePlacesThreeEnterprises.IsNotEmpty()) q = q.Where(o => o.IsThreePlacesThreeEnterprises == isThreePlacesThreeEnterprises.Value);
 
             return q;
         }

@@ -240,6 +240,28 @@
             }
         }
 
+        function openGeometryEditDrawer(id) {
+            const geometryId = id || state.selectedGeometryId;
+            if (!geometryId) return;
+
+            const manager = resolveManager();
+            const url = `/GIS/GeometryForm?md=edit&id=${encodeURIComponent(geometryId)}`;
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open(url, '_blank');
+                return;
+            }
+
+            manager.openDrawer({
+                title: '编辑点位',
+                url,
+                direction: 'rtl',
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true,
+                closeAction: 'refreshdata'
+            });
+        }
+
         function getActiveGeometryDisplayLayerIds() {
             return geometryDisplayLayerIds.filter(id => map.getLayer(id));
         }
@@ -389,6 +411,7 @@
             openCheckObjectDrawer,
             openGeometryDetailDrawer,
             closeGeometryDetailDrawer,
+            openGeometryEditDrawer,
             getActiveGeometryDisplayLayerIds,
             bindGeometryMapInteractions
         };

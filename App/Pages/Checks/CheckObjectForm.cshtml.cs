@@ -64,32 +64,22 @@ namespace App.Pages.Checks
             item.BuildingArea = req.BuildingArea;
             item.IsInOnlinePlatform = req.IsInOnlinePlatform;
             item.IsKeySupervision = req.IsKeySupervision;
-            item.IsProductInNight = req.IsProductInNight;
-            item.IsProductInSpringFestival = req.IsProductInSpringFestival;
             item.ThirdPartySafetyAgency = req.ThirdPartySafetyAgency;
-            item.IsYiEnterprise = req.IsYiEnterprise;
 
             item.RiskLevel = req.RiskLevel;
             item.Scope = req.Scope;
             item.CheckerId = req.CheckerId;
-            item.SocialCheckerId = req.SocialCheckerId;
             item.OutlookImage = req.OutlookImage;
             item.LicenseImage = req.LicenseImage;
             item.IsIn141Platform = req.IsIn141Platform;
             item.IsDemonstration = req.IsDemonstration;
             item.IndustryType = req.IndustryType;
             item.IndustryRisk = req.IndustryRisk;
-            item.IsThreePlacesThreeEnterprises = req.IsThreePlacesThreeEnterprises;
-            item.IsParkFactoryOverlayRisk = req.IsParkFactoryOverlayRisk;
-            item.HasWelding = req.HasWelding;
-            item.HasEnvironmentalEquipment = req.HasEnvironmentalEquipment;
             item.InternalRewardMechanism = req.InternalRewardMechanism;
             item.SafetySteward = req.SafetySteward;
-            item.StandardizationStatus = req.StandardizationStatus;
             item.BuildingType = req.BuildingType;
             item.FactoryUsageType = req.FactoryUsageType;
             item.BuildingStructure = req.BuildingStructure;
-            item.HasSprinklerSystem = req.HasSprinklerSystem;
             item.OutlookImage = Uploader.SaveFile(nameof(CheckObject), req.OutlookImage);
             item.LicenseImage = Uploader.SaveFile(nameof(CheckObject), req.LicenseImage);
 

@@ -32,7 +32,7 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.CheckObjectNew)">新增</EleButton>
                 <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">导入</EleButton>
-                <EleButton Type="Primary" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.CheckObjectView)">导出</EleButton>
+                <EleButton Type="Primary" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.CheckObjectExport)">导出</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckObjectDelete)">删除</EleButton>
             </Buttons>
         </Toolbar>
@@ -55,8 +55,8 @@
             <EleColumn For="Item.ObjectType" Label="类型" Width="100" Format="Enum"></EleColumn>
             <EleColumn For="Item.IndustryType" Label="行业" Width="110" Format="Enum"></EleColumn>
             <EleColumn For="Item.DutyOrgName" Label="责任网格" Width="200"></EleColumn>
-            <EleColumn For="Item.DutyUnitName" Label="责任单位" Width="200"></EleColumn>
-            <EleColumn For="Item.DutyTownName" Label="责任乡镇" Width="200"></EleColumn>
+            <EleColumn For="Item.DutyUnitName" Label="责任单位" Width="200" Sortable="false"></EleColumn>
+            <EleColumn For="Item.DutyTownName" Label="责任乡镇" Width="200" Sortable="false"></EleColumn>
             <EleColumn For="Item.SocialCreditCode" Label="社会信用代码" Width="180"></EleColumn>
             <EleColumn For="Item.DutyUserName" Label="负责人" Width="120"></EleColumn>
             <EleColumn For="Item.RiskLevel" Label="风险等级" Width="100"></EleColumn>
@@ -69,7 +69,6 @@
             <EleColumn For="Item.IsDel" Label="是否失效" Width="100" Format="Switch"></EleColumn>
             <EleColumn For="Item.FailReason" Label="失效原因" Width="180"></EleColumn>
             <EleColumn For="Item.CheckerName" Label="检查人" Width="120"></EleColumn>
-            <EleColumn For="Item.SocialCheckerName" Label="网格员" Width="120"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="建档日期" Width="110" FormatString="yyyy-MM-dd"></EleColumn>
             <EleColumn For="Item.LatestCheckDt" Label="最新巡查时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleColumn For="Item.TagNames" Label="标签列表" MinWidth="220"></EleColumn>

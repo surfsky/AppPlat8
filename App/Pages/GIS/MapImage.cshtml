@@ -1,10 +1,12 @@
 @page
 @model App.Pages.GIS.MapImageModel
 @using System.Globalization
+@using App.DAL.GIS
 @{
     Layout = "_Layout";
 
-    var mapCenterText = (SiteConfig.Instance.MapCenter ?? string.Empty).Replace("，", ",").Trim();
+    var defaultScene = GisScene.GetOrCreateDefaultScene();
+    var mapCenterText = (defaultScene.MapCenter ?? string.Empty).Replace("，", ",").Trim();
     var mapCenterLng = 120.6034;
     var mapCenterLat = 27.5686;
     if (!string.IsNullOrWhiteSpace(mapCenterText))
@@ -25,7 +27,7 @@
     var bry = Model.Bry ?? (mapCenterLat - 0.003);
     var initCenterLng = (tlx + brx) / 2d;
     var initCenterLat = (tly + bry) / 2d;
-    var mapZoom = SiteConfig.Instance.MapZoom > 0 ? SiteConfig.Instance.MapZoom : 11;
+    var mapZoom = (defaultScene.MapZoom ?? 0) > 0 ? defaultScene.MapZoom.Value : 11;
     var imageUrlJson = System.Text.Json.JsonSerializer.Serialize(Model.ImageUrl ?? string.Empty);
 }
 

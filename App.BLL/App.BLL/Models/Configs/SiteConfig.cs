@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -25,8 +25,6 @@ namespace App.DAL
 
         // 地图
         [UI("地图", "MapKey")]            public string MapKey { get; set; }
-        [UI("地图", "地图中心点")]         public string MapCenter { get; set; } = "120.6034,27.5686";
-        [UI("地图", "地图缩放")]           public double MapZoom { get; set; } = 11;
 
         // 数据
         [UI("数据", "分页大小")]            public int    PageSize              { get; set; } = 50;
