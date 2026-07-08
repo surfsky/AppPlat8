@@ -28,14 +28,15 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <script src="/gis/maphelper.js?v=3.1"></script>
-    <link rel="stylesheet" href="~/Pages/GIS/GeometryEditor.cshtml.css?v=2.8" asp-append-version="true" />
+    <script src="/gis/maphelper.js?v=3.3"></script>
+    <link rel="stylesheet" href="~/Pages/GIS/GeometryEditor.cshtml.css?v=3.3" asp-append-version="true" />
 }
 
 @section body {
     <div id="app">
         <div class="panel">
             <div class="toolbar-row">
+                <div class="toolbar-tools">
                 <el-tooltip placement="bottom" content="浏览/选择：拖动地图，点击选择图形，双击可编辑标签">
                     <span class="draw-tool-tip">
                         <el-button type="primary" plain  class="draw-tool-btn" :class="{ 'is-active': activeTool === 'browse' }" @@click="enterBrowseMode">
@@ -96,11 +97,9 @@
                         </el-button>
                     </span>
                 </el-tooltip>
-                <span class="style-label">点色</span>
-                <el-color-picker class="style-color-picker" v-model="pointColor" @@change="onPointColorChange" size="small" :show-alpha="false"></el-color-picker>
-                <span class="style-label">线色</span>
-                <el-color-picker class="style-color-picker" v-model="lineColor" @@change="onLineColorChange" size="small" :show-alpha="false"></el-color-picker>
-                <span class="style-label">面色</span>
+                <span class="style-label">边框色</span>
+                <el-color-picker class="style-color-picker" v-model="strokeColor" @@change="onStrokeColorChange" size="small" :show-alpha="false"></el-color-picker>
+                <span class="style-label">填充色</span>
                 <el-color-picker class="style-color-picker" v-model="fillColor" @@change="onFillColorChange" size="small" :show-alpha="false"></el-color-picker>
                 <span class="opacity-wrap" @@click.stop>
                     <span class="style-label">透明</span>
@@ -118,6 +117,8 @@
                         <span class="opacity-pop-text">{{ fillOpacityPercent }}%</span>
                     </div>
                 </span>
+                </div>
+                <div class="toolbar-actions">
                 <el-tooltip placement="bottom" content="属性">
                     <span class="draw-tool-tip">
                         <el-button type="primary" plain circle class="toolbar-action-btn" @@click="openPropsDrawer">
@@ -132,13 +133,6 @@
                         </el-button>
                     </span>
                 </el-tooltip>
-                <el-tooltip placement="bottom" content="清空全部">
-                    <span class="draw-tool-tip">
-                        <el-button type="danger" circle class="toolbar-action-btn" @@click="clearAll">
-                            <i class="fa-solid fa-broom"></i>
-                        </el-button>
-                    </span>
-                </el-tooltip>
                 <el-tooltip placement="bottom" content="保存">
                     <span class="draw-tool-tip">
                         <el-button type="primary" circle class="toolbar-action-btn" @@click="confirmGeometry">
@@ -146,6 +140,7 @@
                         </el-button>
                     </span>
                 </el-tooltip>
+                </div>
             </div>
         </div>
 

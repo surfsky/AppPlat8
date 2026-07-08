@@ -25,7 +25,7 @@ export class EleFormAppBuilder extends EleAppBuilder {
 
                 // Register message handlers for cross-origin communication
                 const msgHandler = (e) => form.messageHandler(e);
-                const selHandler = (e) => form.handleSelectorMessage(e);
+                const pickerHandler = (e) => form.handlePickerMessage(e);
                 let listWindowScrollHandler = null;
                 onMounted(async () => {
                     if (config.autoLoad === false) {
@@ -88,13 +88,13 @@ export class EleFormAppBuilder extends EleAppBuilder {
                     window.addEventListener('scroll', listWindowScrollHandler, { passive: true });
 
                     window.addEventListener('message', msgHandler);
-                    window.addEventListener('message', selHandler);
+                    window.addEventListener('message', pickerHandler);
                 });
                 onUnmounted(() => {
                     if (listWindowScrollHandler)
                         window.removeEventListener('scroll', listWindowScrollHandler);
                     window.removeEventListener('message', msgHandler);
-                    window.removeEventListener('message', selHandler);
+                    window.removeEventListener('message', pickerHandler);
                 });
 
                 // Expose EleForm members to template

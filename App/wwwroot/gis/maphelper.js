@@ -547,7 +547,7 @@
             var params = new URLSearchParams(global.location.search || '');
             var key = (params.get('dk') || params.get('dataKey') || params.get('selectorKey') || params.get('geojsonKey') || '').trim();
             var direct = (params.get('data') || params.get('geojson') || '').trim();
-            var selectorValue = (params.get('selectorValue') || '').trim();
+            var pickerValue = (params.get('pickerValue') || params.get('selectorValue') || '').trim();
 
             function readFromStorage(storage, k) {
                 if (!storage || !k) return '';
@@ -571,7 +571,7 @@
             }
 
             if (direct) return direct;
-            if (selectorValue) return selectorValue;
+            if (pickerValue) return pickerValue;
             return (initGeoJson || '').trim();
         }
 
@@ -2066,6 +2066,15 @@
             },
             setPointColor: function (color) { if (isHexColor(color)) palette.pointColor = color; applyStyleToTargets('point'); notifyPalette(); },
             setLineColor: function (color) { if (isHexColor(color)) palette.lineColor = color; applyStyleToTargets('line'); notifyPalette(); },
+            setStrokeColor: function (color) {
+                if (!isHexColor(color)) return;
+                palette.pointColor = color;
+                palette.lineColor = color;
+                applyStyleToTargets('point');
+                applyStyleToTargets('line');
+                applyStyleToTargets('fill');
+                notifyPalette();
+            },
             setFillColor: function (color) { if (isHexColor(color)) palette.fillColor = color; applyStyleToTargets('fill'); notifyPalette(); },
             setFillOpacityPercent: function (percent) {
                 var n = Number(percent);
@@ -2080,6 +2089,22 @@
                 var selected = draw.getSelectedIds() || [];
                 if (Array.isArray(selected) && selected.length > 0) return selected.length;
                 return lastPickedFeatureId ? 1 : 0;
+            },
+            selectAll: function () {
+                if (!draw || typeof draw.changeMode !== 'function') return 0;
+                var all = getAllFeatures();
+                var ids = all
+                    .map(function (f) { return f && f.id !== undefined && f.id !== null ? String(f.id) : ''; })
+                    .filter(Boolean);
+                if (ids.length === 0) return 0;
+                try {
+                    draw.changeMode('simple_select', { featureIds: ids });
+                    lastPickedFeatureId = ids[ids.length - 1];
+                    queueLabelSync();
+                    return ids.length;
+                } catch {
+                    return 0;
+                }
             },
             hasActiveSelection: function () {
                 if (!draw || typeof draw.getSelectedIds !== 'function') return !!lastPickedFeatureId;

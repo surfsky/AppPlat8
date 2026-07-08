@@ -109,7 +109,7 @@ namespace App.EleUI
                     content = $@"
                     <div class=""ele-picker-wrapper ele-picker-editable"" style=""width: 100%; position: relative;"">
                         <el-input v-model=""{formModel}.{textProp}"" {inputTypeHtml} {rowHtml} clearable placeholder=""{placeHolderText}"" :disabled=""{finalDisabledExpr}""></el-input>
-                        <span class=""ele-picker-icon-wrap"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'cursor-not-allowed': ({finalDisabledExpr}) }}"" style=""position:absolute;top:8px;right:10px;z-index:2;pointer-events:auto;background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 3px;"" @click.stop=""!({finalDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
+                        <span class=""ele-picker-icon-wrap"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'cursor-not-allowed': ({finalDisabledExpr}) }}"" style=""position:absolute;top:8px;right:10px;z-index:2;pointer-events:auto;background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 3px;"" @click.stop=""!({finalDisabledExpr}) && openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
                             <el-icon><component :is=""({finalDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                         </span>
                     </div>
@@ -121,7 +121,7 @@ namespace App.EleUI
                     <div class=""ele-picker-wrapper ele-picker-editable"" style=""width: 100%;"">
                         <el-input v-model=""{formModel}.{textProp}"" {inputTypeHtml} {rowHtml} clearable placeholder=""{placeHolderText}"" :disabled=""{finalDisabledExpr}"">
                             <template #suffix>
-                                <span class=""ele-picker-icon-wrap"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'cursor-not-allowed': ({finalDisabledExpr}) }}"" style=""pointer-events:auto;"" @click.stop=""!({finalDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
+                                <span class=""ele-picker-icon-wrap"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'cursor-not-allowed': ({finalDisabledExpr}) }}"" style=""pointer-events:auto;"" @click.stop=""!({finalDisabledExpr}) && openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
                                     <el-icon><component :is=""({finalDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                                 </span>
                             </template>
@@ -133,11 +133,11 @@ namespace App.EleUI
             else
             {
                 content = $@"
-                <div class=""el-input el-input--suffix"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'is-disabled': ({finalDisabledExpr}) }}"" style=""width: 100%;"" @click=""!({finalDisabledExpr}) && openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"">
+                <div class=""el-input el-input--suffix"" :class=""{{ 'cursor-pointer': !({finalDisabledExpr}), 'is-disabled': ({finalDisabledExpr}) }}"" style=""width: 100%;"" @click=""!({finalDisabledExpr}) && openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"">
                     <div class=""el-input__wrapper"" style=""width: 100%;"">
                         <div class=""flex flex-wrap gap-1 items-center w-full py-1"" style=""min-height: 30px;"">
                             <template v-if=""{formModel}.{textProp}"">
-                                <el-tag type=""info"" class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap"" disable-transitions v-if=""!({finalDisabledExpr})"" closable @close.stop=""clearSelector('{propName}', '{textProp}')"">
+                                <el-tag type=""info"" class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap"" disable-transitions v-if=""!({finalDisabledExpr})"" closable @close.stop=""clearPicker('{propName}', '{textProp}')"">
                                     {{{{ {formModel}.{textProp} }}}}
                                 </el-tag>
                                 <el-tag type=""info"" class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap"" disable-transitions v-else>

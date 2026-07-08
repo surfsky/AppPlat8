@@ -39,8 +39,7 @@ createApp({
         const initialCenter = referenceCenter || (Array.isArray(cfg.initialCenter) ? cfg.initialCenter : [120.6034, 27.5686]);
         const initialZoom = Number.isFinite(Number(cfg.initialZoom)) ? Number(cfg.initialZoom) : 11;
 
-        const pointColor = ref('#dc2626');
-        const lineColor = ref('#1e3a8a');
+        const strokeColor = ref('#1e3a8a');
         const fillColor = ref('#1d4ed8');
         const fillOpacityPercent = ref(35);
         const activeTool = ref('browse');
@@ -72,7 +71,7 @@ createApp({
         })();
         const isViewMode = pageMode === 'view' || pageMode === 'readonly' || pageMode === 'read';
 
-        const getManager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+        const getManager = () => window.EleManager || ((window.top && window.top.EleManager) ? window.top.EleManager : null);
 
         const showError = (msg) => {
             const manager = getManager();
@@ -122,8 +121,7 @@ createApp({
             activeTool.value = 'circle';
             editor?.drawCircle?.();
         };
-        const onPointColorChange = (color) => editor?.setPointColor(color || pointColor.value);
-        const onLineColorChange = (color) => editor?.setLineColor(color || lineColor.value);
+        const onStrokeColorChange = (color) => editor?.setStrokeColor(color || strokeColor.value);
         const onFillColorChange = (color) => editor?.setFillColor(color || fillColor.value);
         const onFillOpacityChange = (value) => editor?.setFillOpacityPercent(value ?? fillOpacityPercent.value);
         const onOpacitySliderInput = (evt) => {
@@ -138,7 +136,6 @@ createApp({
         };
 
         const removeSelected = () => editor?.removeSelected();
-        const clearAll = () => editor?.clearAll();
         const hideMenu = () => {
             menuVisible.value = false;
             showOpacitySlider.value = false;
@@ -436,9 +433,14 @@ createApp({
                 const geojson = editor?.getExportGeoJson?.();
                 if (!geojson) throw new Error('请先绘制图形');
 
+                const key = geojson.length > 1200 ? writePayloadToStorage(geojson) : '';
+                const payloadItem = key
+                    ? { id: key, name: geojson, dataKey: key }
+                    : { id: geojson, name: geojson };
+
                 const payload = {
                     type: 'ElePicker',
-                    data: [{ id: geojson, name: geojson }]
+                    data: [payloadItem]
                 };
 
                 const manager = getManager();
@@ -488,8 +490,7 @@ createApp({
                     editSelectedLabel();
                 },
                 onPaletteChange: (v) => {
-                    pointColor.value = v.pointColor;
-                    lineColor.value = v.lineColor;
+                    strokeColor.value = v.lineColor || v.pointColor;
                     fillColor.value = v.fillColor;
                     fillOpacityPercent.value = v.fillOpacityPercent;
                 },
@@ -521,6 +522,13 @@ createApp({
                 if (isRedoShortcut) {
                     evt.preventDefault();
                     redoEdit();
+                    hideMenu();
+                    return;
+                }
+
+                if (cmdOrCtrl && key === 'a') {
+                    evt.preventDefault();
+                    editor?.selectAll?.();
                     hideMenu();
                     return;
                 }
@@ -675,8 +683,7 @@ createApp({
         });
 
         return {
-            pointColor,
-            lineColor,
+            strokeColor,
             fillColor,
             fillOpacityPercent,
             activeTool,
@@ -690,8 +697,7 @@ createApp({
             drawPolygon,
             drawRectangle,
             drawCircle,
-            onPointColorChange,
-            onLineColorChange,
+            onStrokeColorChange,
             onFillColorChange,
             onFillOpacityChange,
             onOpacitySliderInput,
@@ -704,7 +710,6 @@ createApp({
             setLabelFromMenu,
             openPropsDrawerFromMenu,
             openPropsDrawer,
-            clearAll,
             closeOnly,
             confirmGeometry
         };

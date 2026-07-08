@@ -1,4 +1,4 @@
-import { initSelectorState, selectorMethods } from './form/selectorMethods.js';
+import { initPickerState, pickerMethods } from './form/pickerMethods.js';
 import { initUploadState, uploadMethods } from './form/uploadMethods.js';
 import { initControlState, controlStateMethods } from './form/controlStateMethods.js';
 import { initTreePickerState, treePickerMethods } from './form/treePickerMethods.js';
@@ -27,8 +27,8 @@ export class EleForm {
         // Embedded EleList controls in form context
         this.eleLists = ref({});
 
-        // Split domains: selector, upload, control linkage
-        initSelectorState(this, Vue);
+        // Split domains: picker, upload, control linkage
+        initPickerState(this, Vue);
         initUploadState(this, Vue);
         initControlState(this, Vue);
         initTreePickerState(this, Vue);
@@ -347,4 +347,4 @@ export class EleForm {
     }
 }
 
-Object.assign(EleForm.prototype, selectorMethods, uploadMethods, controlStateMethods, treePickerMethods);
+Object.assign(EleForm.prototype, pickerMethods, uploadMethods, controlStateMethods, treePickerMethods);

@@ -1,15 +1,15 @@
-export function initSelectorState(form, vueApi) {
+export function initPickerState(form, vueApi) {
     const { ref } = vueApi;
-    form.selectorVisible = ref(false);
-    form.selectorUrl = ref('');
-    form.selectorTitle = ref('');
-    form.selectorTargetId = ref('');
-    form.selectorTargetText = ref('');
-    form.selectorMulti = ref(false);
+    form.pickerVisible = ref(false);
+    form.pickerUrl = ref('');
+    form.pickerTitle = ref('');
+    form.pickerTargetId = ref('');
+    form.pickerTargetText = ref('');
+    form.pickerMulti = ref(false);
 }
 
-export const selectorMethods = {
-    normalizeSelectorField(field) {
+export const pickerMethods = {
+    normalizePickerField(field) {
         if (!field) return '';
         return field.charAt(0).toLowerCase() + field.slice(1);
     },
@@ -19,7 +19,7 @@ export const selectorMethods = {
         try {
             const absolute = new URL(urlBase, window.location.href);
             return `${absolute.pathname}${absolute.search}${absolute.hash}`;
-        } catch (e) {
+        } catch {
             return urlBase;
         }
     },
@@ -33,10 +33,13 @@ export const selectorMethods = {
         return `sk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     },
 
-    cleanupSelectorStorage(maxKeep = 120) {
+    cleanupPickerStorage(maxKeep = 120) {
         if (typeof window === 'undefined') return;
         const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
-        const shouldManage = (k) => typeof k === 'string' && (k.startsWith('sk_') || k.startsWith('ele_selector_'));
+        const shouldManage = (k) => typeof k === 'string' && (
+            k.startsWith('sk_')
+            || k.startsWith('ele_picker_')
+        );
 
         storages.forEach((storage) => {
             try {
@@ -65,7 +68,7 @@ export const selectorMethods = {
         });
     },
 
-    writeSelectorPayloadToStorage(value) {
+    writePickerPayloadToStorage(value) {
         if (typeof window === 'undefined') return null;
         const token = this.createStorageToken();
         const text = value == null ? '' : String(value);
@@ -78,7 +81,7 @@ export const selectorMethods = {
                 storage.setItem(`${token}__t`, String(Date.now()));
                 return token;
             } catch {
-                this.cleanupSelectorStorage(80);
+                this.cleanupPickerStorage(80);
                 try {
                     storage.setItem(token, text);
                     storage.setItem(`${token}__t`, String(Date.now()));
@@ -91,10 +94,24 @@ export const selectorMethods = {
         return null;
     },
 
-    // Append reference gps for geometry editor
+    readPickerPayloadFromStorage(key) {
+        if (typeof window === 'undefined' || !key) return '';
+        const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+        for (let i = 0; i < storages.length; i += 1) {
+            const storage = storages[i];
+            try {
+                const value = storage.getItem(key) || '';
+                if (String(value).trim()) return String(value);
+            } catch {
+                // ignore storage errors
+            }
+        }
+        return '';
+    },
+
     appendGeometryReferenceGps(url, propId) {
         if (!url) return url;
-        const keyId = this.normalizeSelectorField(propId);
+        const keyId = this.normalizePickerField(propId);
         if (keyId !== 'geoJson') return url;
 
         const rawGps = this.form?.value
@@ -105,30 +122,29 @@ export const selectorMethods = {
         return this.appendQuery(url, 'gps', gps);
     },
 
-    buildSelectorUrl(urlBase, propId, keyMode) {
+    buildPickerUrl(urlBase, propId, keyMode) {
         let url = this.resolveDrawerUrlBase(urlBase);
         const modeRaw = (keyMode || 'Url').toString().trim().toLowerCase();
         const mode = modeRaw === 'url/storage' ? 'auto' : modeRaw;
 
-        const keyId = this.normalizeSelectorField(propId);
+        const keyId = this.normalizePickerField(propId);
         const rawValue = this.form?.value ? (this.form.value[keyId] ?? '') : '';
         const value = rawValue == null ? '' : String(rawValue);
 
         const useStorage = mode === 'storage' || (mode === 'auto' && value.length > 1200);
         if (useStorage) {
-            const k = this.writeSelectorPayloadToStorage(value);
+            const k = this.writePickerPayloadToStorage(value);
             if (k) {
                 url = this.appendQuery(url, 'dk', k);
                 return this.appendGeometryReferenceGps(url, keyId);
             }
         }
 
-        url = this.appendQuery(url, 'selectorValue', value);
+        url = this.appendQuery(url, 'pickerValue', value);
         url = this.appendQuery(url, keyId, value);
         url = this.appendQuery(url, 'data', value);
         url = this.appendQuery(url, 'geojson', value);
 
-        // GIS: region editor also needs current attachment/image path.
         if (keyId === 'region') {
             const attValue = this.form?.value ? (this.form.value.att ?? '') : '';
             url = this.appendQuery(url, 'att', attValue == null ? '' : String(attValue));
@@ -136,32 +152,32 @@ export const selectorMethods = {
         return this.appendGeometryReferenceGps(url, keyId);
     },
 
-    openSelector(propId, propText, url, multi, title, keyMode = 'Url') {
-        this.selectorTargetId.value = propId;
-        this.selectorTargetText.value = propText;
-        this.selectorUrl.value = this.buildSelectorUrl(url, propId, keyMode);
-        this.selectorMulti.value = multi;
-        this.selectorTitle.value = title || '选择';
-        this.selectorVisible.value = true;
+    openPicker(propId, propText, url, multi, title, keyMode = 'Url') {
+        this.pickerTargetId.value = propId;
+        this.pickerTargetText.value = propText;
+        this.pickerUrl.value = this.buildPickerUrl(url, propId, keyMode);
+        this.pickerMulti.value = multi;
+        this.pickerTitle.value = title || '选择';
+        this.pickerVisible.value = true;
 
         EleManager.openDrawer({
-            title: this.selectorTitle.value,
-            url: this.selectorUrl.value,
+            title: this.pickerTitle.value,
+            url: this.pickerUrl.value,
             direction: 'rtl',
             resizable: true,
             closeOnClickModal: false,
             destroyOnClose: true,
             closeHandler: (payload) => {
                 if (payload && payload.data && payload.data.type === 'ElePicker') {
-                    this.handleSelectorMessage({ data: payload.data });
+                    this.handlePickerMessage({ data: payload.data });
                     return;
                 }
-                this.selectorVisible.value = false;
+                this.pickerVisible.value = false;
             }
         });
     },
 
-    handleSelectorMessage(event) {
+    handlePickerMessage(event) {
         if (!event.data) return;
 
         const msgType = event.data.type;
@@ -174,31 +190,35 @@ export const selectorMethods = {
         else if (data.id) rows = [data];
         else if (data.data && data.data.id) rows = [data.data];
 
-        if (!this.selectorVisible.value) return;
-        const keyId = this.normalizeSelectorField(this.selectorTargetId.value);
-        let keyText = this.normalizeSelectorField(this.selectorTargetText.value);
+        if (!this.pickerVisible.value) return;
+        const keyId = this.normalizePickerField(this.pickerTargetId.value);
+        let keyText = this.normalizePickerField(this.pickerTargetText.value);
         if (!keyText) keyText = keyId;
 
-        if (this.selectorMulti.value) {
+        if (this.pickerMulti.value) {
             this.form.value[keyId] = rows.map(r => r.id).join(',');
             this.form.value[keyText] = rows.map(r => r.name).join(',');
         } else if (rows.length > 0) {
-            this.form.value[keyId] = rows[0].id;
-            this.form.value[keyText] = rows[0].name;
+            const first = rows[0] || {};
+            const dataKey = first.dataKey || first.dk || '';
+            const storedValue = dataKey ? this.readPickerPayloadFromStorage(String(dataKey)) : '';
+            const nextValue = storedValue || first.id;
+            const nextText = storedValue || first.name || first.id;
+            this.form.value[keyId] = nextValue;
+            this.form.value[keyText] = nextText;
 
-            // Optional extra field synchronization for custom selectors.
-            if (Object.prototype.hasOwnProperty.call(rows[0], 'att') && this.form?.value && Object.prototype.hasOwnProperty.call(this.form.value, 'att')) {
-                this.form.value.att = rows[0].att;
+            if (Object.prototype.hasOwnProperty.call(first, 'att') && this.form?.value && Object.prototype.hasOwnProperty.call(this.form.value, 'att')) {
+                this.form.value.att = first.att;
             }
         }
 
-        this.selectorVisible.value = false;
+        this.pickerVisible.value = false;
         EleManager.closeDrawer();
     },
 
-    clearSelector(propId, propText) {
-        const keyId = this.normalizeSelectorField(propId);
-        let keyText = this.normalizeSelectorField(propText);
+    clearPicker(propId, propText) {
+        const keyId = this.normalizePickerField(propId);
+        let keyText = this.normalizePickerField(propText);
         if (!keyText) keyText = keyId;
         this.form.value[keyId] = null;
         this.form.value[keyText] = null;

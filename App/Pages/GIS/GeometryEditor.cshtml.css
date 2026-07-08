@@ -17,6 +17,21 @@ html, body, #app { height: 100%; margin: 0; }
     column-gap: 8px;
     row-gap: 6px;
 }
+.toolbar-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex: 0 0 auto;
+}
 .toolbar-row .el-button {
     margin: 0 !important;
     min-height: 30px;
