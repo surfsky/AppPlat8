@@ -78,6 +78,10 @@
             return sortGeometryRowsForLayerRender(rows);
         }
 
+        function getGeometryRowsForMarkerRender() {
+            return sortGeometryRowsForLayerRender(state.geometries || []);
+        }
+
         function clearGeometryPointMarkers() {
             state.geometryPointMarkerMap.forEach(marker => marker.remove());
             state.geometryPointMarkerMap.clear();
@@ -305,8 +309,9 @@
 
         function rebuildGeometryPointMarkers() {
             clearGeometryPointMarkers();
+            const renderRows = getGeometryRowsForMarkerRender();
 
-            state.geometries.forEach(item => {
+            (state.geometries || []).forEach(item => {
                 if (!item) return;
                 const gk = getGeometryKind(item);
                 if (gk === 'image') {
@@ -317,9 +322,10 @@
                 }
             });
 
-            state.geometries.forEach(item => {
+            renderRows.forEach((item, index) => {
                 if (!item) return;
                 const geometryType = getGeometryKind(item);
+                const markerZIndex = 1000 + index * 2;
 
                 if (geometryType === 'image') {
                     createImageLayer(item);
@@ -349,6 +355,7 @@
                             item,
                             gps,
                             iconPath: getGeometryIcon(item),
+                            zIndex: markerZIndex,
                             onClick: () => {
                                 if (!isGeometrySelectable(item?.menuId)) return;
                                 onGeometryMarkerClick(item.id);

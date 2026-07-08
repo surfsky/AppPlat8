@@ -63,6 +63,7 @@
                 : [0, 14 * scale];
             const labelAnchor = ctx.labelAnchor || 'top';
             const clickHandler = typeof ctx.onClick === 'function' ? ctx.onClick : null;
+            const zIndex = Number.isFinite(Number(ctx.zIndex)) ? Number(ctx.zIndex) : null;
             const markerSize = 20 * scale;
             const dotSize = 12 * scale;
             const dotBorderWidth = Math.max(1, Math.min(3, 2 * scale));
@@ -73,6 +74,7 @@
             if (title) iconEl.title = title;
             iconEl.style.width = `${markerSize}px`;
             iconEl.style.height = `${markerSize}px`;
+            if (zIndex !== null) iconEl.style.zIndex = String(zIndex);
             if (iconPath) {
                 const img = document.createElement('img');
                 img.className = 'marker-icon';
@@ -109,6 +111,7 @@
                 labelEl.style.fontSize = `${labelFontSize}px`;
                 labelEl.style.color = labelColor;
                 labelEl.style.whiteSpace = 'pre-line';
+                if (zIndex !== null) labelEl.style.zIndex = String(zIndex + 1);
             }
 
             const onClick = evt => {

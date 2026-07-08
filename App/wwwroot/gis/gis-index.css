@@ -60,7 +60,7 @@ body.gis-projection-globe #map {
     opacity: 0.95;
 
 
-    z-index: 10;
+    z-index: 4000;
     pointer-events: none;
 }
 .header-title {
@@ -112,7 +112,7 @@ body.gis-projection-globe #map {
     bottom: 20px;
     left: 50%;
     transform: translateX(var(--toolbar-shift-x)) translateY(0);
-    z-index: 11;
+    z-index: 4010;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -145,7 +145,7 @@ body.gis-projection-globe #map {
     background: rgba(2, 11, 56, 0.96);
     box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.3), 0 12px 22px rgba(2, 6, 23, 0.5);
     display: none;
-    z-index: 14;
+    z-index: 4011;
 }
 .address-suggest-list.visible {
     display: block;
@@ -196,7 +196,7 @@ body.gis-projection-globe #map {
     position: absolute;
     top: 68px;
     left: 70px;
-    z-index: 24;
+    z-index: 4013;
     width: 300px;
     max-width: calc(100vw - 90px);
     padding: 8px;
@@ -386,7 +386,7 @@ body.gis-projection-globe #map {
     left: 20px;
     bottom: 20px;
     width: 320px;
-    z-index: 10;
+    z-index: 4012;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -793,7 +793,7 @@ gis-panel {
     right: 10px;
     bottom: 10px;
     width: 440px;
-    z-index: 32;
+    z-index: 4031;
     display: block;
     visibility: hidden;
     opacity: 0;
@@ -825,7 +825,7 @@ gis-panel {
 * Point List Panel
 *****************************************************/
 .geo-point-list-panel {
-    z-index: 31;
+    z-index: 4030;
 }
 .geo-detail-body {
     padding: 2px;
@@ -1150,7 +1150,7 @@ gis-panel {
     position: absolute;
     top: 18px;
     left: 20px;
-    z-index: 24;
+    z-index: 4005;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1191,6 +1191,7 @@ gis-panel {
 }
 
 .el-popper.gis-toolbar-tooltip {
+    z-index: 4014 !important;
     font-size: 14px;
     padding: 8px 12px;
     border-radius: 10px;
@@ -1213,7 +1214,7 @@ gis-panel {
     left: 14px;
     right: 14px;
     bottom: 16px;
-    z-index: 16;
+    z-index: 4020;
     display: grid;
     grid-template-columns: clamp(320px, 28vw, 420px) clamp(320px, 28vw, 420px);
     justify-content: space-between;
@@ -1266,7 +1267,7 @@ gis-panel {
 * Map Controls
 *****************************************************/
 .mapboxgl-control-container {
-    z-index: 22;
+    z-index: 4015;
 }
 
 .mapboxgl-ctrl-top-right {
