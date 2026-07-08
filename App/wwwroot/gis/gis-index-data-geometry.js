@@ -21,6 +21,63 @@
             ? window.GisPointMarker.create()
             : null;
 
+        function buildMenuLayerOrderMap() {
+            const orderMap = new Map();
+            let order = 0;
+            const visit = nodes => {
+                (Array.isArray(nodes) ? nodes : []).forEach(node => {
+                    if (!node || !Number.isFinite(Number(node.id))) return;
+                    orderMap.set(Number(node.id), order++);
+                    visit(node.children || []);
+                });
+            };
+
+            if (Array.isArray(state.menuRoots) && state.menuRoots.length > 0) {
+                visit(state.menuRoots);
+                return orderMap;
+            }
+
+            const menus = Array.isArray(state.menus) ? [...state.menus] : [];
+            menus
+                .sort((a, b) => (Number(a?.sortId || 0) - Number(b?.sortId || 0)) || (Number(a?.id || 0) - Number(b?.id || 0)))
+                .forEach(node => {
+                    if (!node || !Number.isFinite(Number(node.id))) return;
+                    orderMap.set(Number(node.id), order++);
+                });
+            return orderMap;
+        }
+
+        function sortGeometryRowsForLayerRender(rows) {
+            const list = Array.isArray(rows) ? [...rows] : [];
+            const menuOrderMap = buildMenuLayerOrderMap();
+            const defaultMenuOrder = Number.MAX_SAFE_INTEGER;
+            return list.sort((a, b) => {
+                const aMenuId = Number(a?.menuId);
+                const bMenuId = Number(b?.menuId);
+                const aMenuOrder = menuOrderMap.has(aMenuId) ? menuOrderMap.get(aMenuId) : defaultMenuOrder;
+                const bMenuOrder = menuOrderMap.has(bMenuId) ? menuOrderMap.get(bMenuId) : defaultMenuOrder;
+                if (aMenuOrder !== bMenuOrder) return bMenuOrder - aMenuOrder;
+
+                const aSortId = Number(a?.sortId || 0);
+                const bSortId = Number(b?.sortId || 0);
+                if (aSortId !== bSortId) return bSortId - aSortId;
+
+                const aId = Number(a?.id || 0);
+                const bId = Number(b?.id || 0);
+                return bId - aId;
+            });
+        }
+
+        function getGeometryRowsForLayerRender() {
+            const allRows = Array.isArray(state.geometries) ? state.geometries : [];
+            const geoRows = allRows.filter(g => {
+                const geo = normalizeGeoJson(g?.geoJson);
+                return !!geo && Array.isArray(geo.features) && geo.features.length > 0;
+            });
+            const rows = geoRows.length > 0 ? geoRows : allRows;
+            return sortGeometryRowsForLayerRender(rows);
+        }
+
         function clearGeometryPointMarkers() {
             state.geometryPointMarkerMap.forEach(marker => marker.remove());
             state.geometryPointMarkerMap.clear();
@@ -357,11 +414,7 @@
 
                 const geometryLayerManager = getGeometryLayerManager();
                 if (geometryLayerManager) {
-                    const geoRows = state.geometries.filter(g => {
-                        const geo = normalizeGeoJson(g?.geoJson);
-                        return !!geo && Array.isArray(geo.features) && geo.features.length > 0;
-                    });
-                    geometryLayerManager.setDataFromRows(geoRows.length > 0 ? geoRows : state.geometries);
+                    geometryLayerManager.setDataFromRows(getGeometryRowsForLayerRender());
                     geometryLayerManager.render();
                 }
                 rebuildGeometryPointMarkers();
@@ -378,7 +431,8 @@
             syncGeometryPointMarkerVisibility,
             rebuildGeometryPointMarkers,
             applyGeometryVisibility,
-            loadGeometries
+            loadGeometries,
+            getGeometryRowsForLayerRender
         };
     }
 

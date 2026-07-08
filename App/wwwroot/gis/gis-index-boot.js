@@ -147,7 +147,11 @@
                 objectApi.buildMarkers(state.objects);
                 const geometryLayerManager = ctx.getGeometryLayerManager();
                 if (geometryLayerManager) {
-                    geometryLayerManager.setDataFromRows(state.geometries || []);
+                    geometryLayerManager.setDataFromRows(
+                        typeof ctx.getGeometryRowsForDisplay === 'function'
+                            ? ctx.getGeometryRowsForDisplay()
+                            : (state.geometries || [])
+                    );
                     geometryLayerManager.render();
                     ctx.applyGeometryVisibility();
                 }

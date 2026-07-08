@@ -398,6 +398,7 @@
             objectApi,
             panelApi,
             getGeometryLayerManager: () => geometryLayerManager,
+            getGeometryRowsForDisplay: () => dataApi.getGeometryRowsForLayerRender(),
             createGeometryLayerManager: () => {
                 geometryLayerManager = window.MapGeometryHelper.createDisplayLayerManager({
                     map,

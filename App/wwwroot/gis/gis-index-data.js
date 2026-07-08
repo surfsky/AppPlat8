@@ -43,6 +43,7 @@
             isGeometrySelectable: menuApi.isGeometrySelectable,
             applyGeometryVisibility: () => geometryApi.applyGeometryVisibility(),
             loadGeometries: () => geometryApi.loadGeometries(),
+            getGeometryRowsForLayerRender: () => geometryApi.getGeometryRowsForLayerRender(),
             rebuildGeometryPointMarkers: () => geometryApi.rebuildGeometryPointMarkers(),
             syncGeometryPointMarkerVisibility: () => geometryApi.syncGeometryPointMarkerVisibility()
         };
