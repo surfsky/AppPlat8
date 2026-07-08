@@ -20,7 +20,8 @@
             pointColor: '#9ca3af',
             lineColor: '#1e3a8a',
             fillColor: '#1d4ed8',
-            fillOpacityPercent: 35
+            fillOpacityPercent: 35,
+            lineWidth: 2
         };
 
         var map = null;
@@ -54,8 +55,15 @@
                 pointColor: palette.pointColor,
                 lineColor: palette.lineColor,
                 fillColor: palette.fillColor,
-                fillOpacityPercent: palette.fillOpacityPercent
+                fillOpacityPercent: palette.fillOpacityPercent,
+                lineWidth: palette.lineWidth
             });
+        }
+
+        function normalizeLineWidth(value, fallback) {
+            var n = Number(value);
+            if (!Number.isFinite(n)) return fallback;
+            return Math.max(1, Math.min(12, Math.round(n)));
         }
 
         function notifyToolState(status) {
@@ -185,15 +193,19 @@
             setFeaturePropertySafe(featureId, 'pointColor', color);
         }
 
-        function applyLineStyle(featureId, color) {
+        function applyLineStyle(featureId, color, width) {
             setFeaturePropertySafe(featureId, 'stroke', color);
             setFeaturePropertySafe(featureId, 'lineColor', color);
+            setFeaturePropertySafe(featureId, 'stroke-width', width);
+            setFeaturePropertySafe(featureId, 'lineWidth', width);
         }
 
-        function applyPolygonStyle(featureId, stroke, fill) {
+        function applyPolygonStyle(featureId, stroke, fill, width) {
             var opacity = palette.fillOpacityPercent / 100;
             setFeaturePropertySafe(featureId, 'stroke', stroke);
             setFeaturePropertySafe(featureId, 'lineColor', stroke);
+            setFeaturePropertySafe(featureId, 'stroke-width', width);
+            setFeaturePropertySafe(featureId, 'lineWidth', width);
             setFeaturePropertySafe(featureId, 'fill', fill);
             setFeaturePropertySafe(featureId, 'fillColor', fill);
             setFeaturePropertySafe(featureId, 'fill-opacity', opacity);
@@ -214,17 +226,21 @@
 
             if (type === 'LineString') {
                 var lExisting = props.stroke || props.lineColor;
+                var lWidthExisting = props['stroke-width'] || props.lineWidth;
                 var lColor = overwrite ? palette.lineColor : normalizeColor(lExisting, palette.lineColor);
-                applyLineStyle(feature.id, lColor);
+                var lWidth = overwrite ? palette.lineWidth : normalizeLineWidth(lWidthExisting, palette.lineWidth);
+                applyLineStyle(feature.id, lColor, lWidth);
                 return;
             }
 
             if (type === 'Polygon') {
                 var sExisting = props.stroke || props.lineColor;
                 var fExisting = props.fill || props.fillColor;
+                var sWidthExisting = props['stroke-width'] || props.lineWidth;
                 var stroke = overwrite ? palette.lineColor : normalizeColor(sExisting, palette.lineColor);
                 var fill = overwrite ? palette.fillColor : normalizeColor(fExisting, palette.fillColor);
-                applyPolygonStyle(feature.id, stroke, fill);
+                var width = overwrite ? palette.lineWidth : normalizeLineWidth(sWidthExisting, palette.lineWidth);
+                applyPolygonStyle(feature.id, stroke, fill, width);
             }
         }
 
@@ -261,16 +277,19 @@
                 var lProps = firstLine.properties || {};
                 var lColor = lProps.stroke || lProps.lineColor;
                 if (isHexColor(lColor)) palette.lineColor = lColor;
+                palette.lineWidth = normalizeLineWidth(lProps['stroke-width'] || lProps.lineWidth, palette.lineWidth);
             }
             if (firstPolygon) {
                 var fProps = firstPolygon.properties || {};
                 var stroke = fProps.stroke || fProps.lineColor;
                 var fill = fProps.fill || fProps.fillColor;
                 var opacity = fProps['fill-opacity'];
+                var width = fProps['stroke-width'] || fProps.lineWidth;
                 if (opacity === undefined || opacity === null) opacity = fProps.fillOpacity;
 
                 if (isHexColor(stroke)) palette.lineColor = stroke;
                 if (isHexColor(fill)) palette.fillColor = fill;
+                palette.lineWidth = normalizeLineWidth(width, palette.lineWidth);
 
                 var n = Number(opacity);
                 if (Number.isFinite(n)) {
@@ -673,6 +692,7 @@
             }
 
             var lineColorExpr = ['coalesce', ['get', 'stroke'], ['get', 'lineColor'], palette.lineColor];
+            var lineWidthExpr = ['to-number', ['coalesce', ['get', 'stroke-width'], ['get', 'lineWidth'], palette.lineWidth]];
             var fillColorExpr = ['coalesce', ['get', 'fill'], ['get', 'fillColor'], palette.fillColor];
             var fillOpacityExpr = ['to-number', ['coalesce', ['get', 'fill-opacity'], ['get', 'fillOpacity'], palette.fillOpacityPercent / 100]];
             var pointColorExpr = [
@@ -687,7 +707,7 @@
                 try {
                     if (id.includes('gl-draw-line')) {
                         map.setPaintProperty(id, 'line-color', lineColorExpr);
-                        map.setPaintProperty(id, 'line-width', 3);
+                        map.setPaintProperty(id, 'line-width', lineWidthExpr);
                     }
                     if (id.includes('gl-draw-polygon-fill')) {
                         map.setPaintProperty(id, 'fill-color', fillColorExpr);
@@ -695,7 +715,7 @@
                     }
                     if (id.includes('gl-draw-polygon-stroke')) {
                         map.setPaintProperty(id, 'line-color', lineColorExpr);
-                        map.setPaintProperty(id, 'line-width', 3);
+                        map.setPaintProperty(id, 'line-width', lineWidthExpr);
                     }
                     if (id.includes('gl-draw-point') && layer.type === 'circle') {
                         map.setPaintProperty(id, 'circle-color', pointColorExpr);
@@ -1256,7 +1276,7 @@
                     filter: ['==', ['geometry-type'], 'Polygon'],
                     paint: {
                         'line-color': palette.lineColor,
-                        'line-width': 2
+                        'line-width': palette.lineWidth
                     }
                 });
             }
@@ -1441,6 +1461,8 @@
                 properties: {
                     stroke: palette.lineColor,
                     lineColor: palette.lineColor,
+                    'stroke-width': palette.lineWidth,
+                    lineWidth: palette.lineWidth,
                     fill: palette.fillColor,
                     fillColor: palette.fillColor,
                     'fill-opacity': opacity,
@@ -1470,6 +1492,7 @@
                         properties: {
                             stroke: palette.lineColor,
                             lineColor: palette.lineColor,
+                            lineWidth: palette.lineWidth,
                             fill: palette.fillColor,
                             fillColor: palette.fillColor,
                             fillOpacity: palette.fillOpacityPercent / 100
@@ -1532,6 +1555,8 @@
                 properties: {
                     stroke: palette.lineColor,
                     lineColor: palette.lineColor,
+                    'stroke-width': palette.lineWidth,
+                    lineWidth: palette.lineWidth,
                     fill: palette.fillColor,
                     fillColor: palette.fillColor,
                     'fill-opacity': opacity,
@@ -1564,6 +1589,7 @@
                         properties: {
                             stroke: palette.lineColor,
                             lineColor: palette.lineColor,
+                            lineWidth: palette.lineWidth,
                             fill: palette.fillColor,
                             fillColor: palette.fillColor,
                             fillOpacity: opacity,
@@ -2074,6 +2100,16 @@
                 applyStyleToTargets('line');
                 applyStyleToTargets('fill');
                 notifyPalette();
+            },
+            setLineWidth: function (width) {
+                palette.lineWidth = normalizeLineWidth(width, palette.lineWidth);
+                applyStyleToTargets('line');
+                applyStyleToTargets('fill');
+                if (map && map.getLayer(rectanglePreviewLineLayerId)) {
+                    map.setPaintProperty(rectanglePreviewLineLayerId, 'line-width', palette.lineWidth);
+                }
+                notifyPalette();
+                refresh();
             },
             setFillColor: function (color) { if (isHexColor(color)) palette.fillColor = color; applyStyleToTargets('fill'); notifyPalette(); },
             setFillOpacityPercent: function (percent) {

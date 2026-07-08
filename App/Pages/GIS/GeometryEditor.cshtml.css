@@ -38,6 +38,7 @@ html, body, #app { height: 100%; margin: 0; }
 }
 .draw-tool-btn {
     min-width: 36px;
+    height: 36px;
     padding: 0 10px;
 }
 .toolbar-action-btn {
@@ -85,47 +86,103 @@ html, body, #app { height: 100%; margin: 0; }
     white-space: pre-wrap;
     word-break: break-all;
 }
+.style-control-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.style-card {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 0 8px;
+    border: 1px solid #93c5fd;
+    border-radius: 4px;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+.style-card-label {
+    font-size: 13px;
+    color: #334155;
+    white-space: nowrap;
+}
+.style-card .style-color-picker {
+    display: inline-flex;
+    align-items: center;
+}
 .style-color-picker .el-color-picker__trigger {
-    width: 22px;
-    height: 22px;
-    border-radius: 5px;
-    border: 1px solid #ececed;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid #93c5fd;
     padding: 0;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+.style-color-picker .el-color-picker__color {
+    width: 18px;
+    height: 18px;
+    border: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.style-color-picker .el-color-picker__color-inner {
+    border: 0;
+    border-radius: 3px;
 }
 .style-color-picker .el-color-picker__icon {
     display: none;
 }
-.style-label {
-    font-size: 12px;
+.style-card-select {
+    cursor: pointer;
+}
+.style-value-select {
+    min-width: 48px;
+    height: 24px;
+    border: 0;
+    background: transparent;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    padding-right: 10px;
+}
+.style-value-btn {
+    min-width: 48px;
+    height: 24px;
+    border: 0;
+    border-radius: 4px;
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
     color: #334155;
-}
-.opacity-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    position: relative;
-}
-.opacity-value-btn {
-    min-width: 52px;
-    min-height: 30px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    background: #fff;
-    font-size: 12px;
-    color: #475569;
     padding: 0 8px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
-.opacity-value-btn:hover {
-    border-color: #93c5fd;
+.style-value-btn:hover,
+.style-value-select:hover {
     color: #1d4ed8;
+}
+.style-card:hover {
+    border-color: #60a5fa;
+}
+.opacity-card {
+    position: relative;
 }
 .opacity-slider-pop {
     position: absolute;
-    top: 30px;
+    top: 40px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 22;

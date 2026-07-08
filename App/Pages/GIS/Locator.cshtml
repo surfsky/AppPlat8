@@ -27,6 +27,7 @@
 @section head {
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
+    <script src="/gis/gis-address-search.js?v=@DateTime.Now.Ticks"></script>
     <style>
         html, body, #app { height: 100%; margin: 0; }
         #map { width: 100%; height: calc(100% - 50px); top: 50px; }
@@ -57,13 +58,14 @@
     <div id="app">
         <div class="panel">
             <div style="display:flex; gap:8px; align-items:center;">
-                <el-input v-model="keyword" placeholder="输入地名搜索定位" clearable @@keyup.enter="searchPlace"></el-input>
+                <el-input v-model="keyword" placeholder="输入地址或经纬度搜索定位" clearable @@keyup.enter="searchPlace"></el-input>
                 <el-button type="primary" @@click="searchPlace" :loading="searching">搜索</el-button>
                 <el-button type="primary" @@click="confirmLocation">保存</el-button>
             </div>
             <div v-if="searchResults.length > 0" style="margin-top:8px; max-height:180px; overflow:auto; border:1px solid #e5e7eb; border-radius:6px;">
                 <div v-for="item in searchResults" :key="item.id" @@click="chooseSearchResult(item)" style="padding:8px 10px; cursor:pointer; border-bottom:1px solid #f3f4f6;">
-                    <div style="font-size:13px; color:#111827;">{{ item.place_name }}</div>
+                    <div style="font-size:13px; color:#111827;">{{ item.title }}</div>
+                    <div v-if="item.district || item.address" style="font-size:12px; color:#6b7280; margin-top:2px;">{{ [item.district, item.address].filter(Boolean).join(' ') }}</div>
                 </div>
             </div>
         </div>
@@ -93,6 +95,7 @@
 
                 let map = null;
                 let marker = null;
+                const addressSearch = window.GisAddressSearch?.create?.() || null;
                 //const accessToken = (new URLSearchParams(window.location.search).get('token') || window.MAPBOX_ACCESS_TOKEN || '').trim();
                 const accessToken = "@SiteConfig.Instance.MapKey";
 
@@ -164,36 +167,51 @@
                         searchResults.value = [];
                         return;
                     }
-                    if (!accessToken) {
-                        showError('缺少 Mapbox Token，无法搜索地名');
+                    if (!addressSearch) {
+                        showError('地址搜索模块加载失败');
                         return;
                     }
 
                     searching.value = true;
                     try {
-                        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json`;
-                        const res = await axios.get(url, {
-                            params: {
-                                access_token: accessToken,
-                                limit: 8,
-                                language: 'zh'
-                            }
-                        });
-                        searchResults.value = Array.isArray(res.data?.features) ? res.data.features : [];
+                        const result = await addressSearch.searchKeyword(q);
+                        if (result.mode === 'coord' && result.coord) {
+                            setPoint(result.coord.lng, result.coord.lat, true);
+                            keyword.value = result.normalizedText || addressSearch.formatCoordText(result.coord.lng, result.coord.lat);
+                            searchResults.value = [];
+                            return;
+                        }
+
+                        const list = Array.isArray(result.list) ? result.list : [];
+                        if (list.length === 0) {
+                            searchResults.value = [];
+                            showError('未找到该地址');
+                            return;
+                        }
+                        searchResults.value = list.map((item, i) => ({
+                            id: item?.id || item?.Id || `${i}`,
+                            title: item?.name || item?.Name || '未命名地址',
+                            district: item?.district || item?.District || '',
+                            address: item?.address || item?.Address || '',
+                            raw: item
+                        }));
                     } catch (e) {
                         console.error(e);
-                        showError('地名搜索失败');
+                        showError(e?.message || '地址搜索失败');
                     } finally {
                         searching.value = false;
                     }
                 };
 
-                const chooseSearchResult = (item) => {
-                    const center = item?.center || [];
-                    if (center.length >= 2) {
-                        setPoint(center[0], center[1], true);
+                const chooseSearchResult = async (item) => {
+                    const resolved = await addressSearch.resolveAddressItem(item?.raw || item);
+                    if (resolved?.ok) {
+                        setPoint(resolved.lng, resolved.lat, true);
+                        keyword.value = resolved.name || resolved.normalizedText || keyword.value;
                         searchResults.value = [];
+                        return;
                     }
+                    showError(resolved?.reason || '未找到该地址坐标');
                 };
 
                 const locateMe = () => {

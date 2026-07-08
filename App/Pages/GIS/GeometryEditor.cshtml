@@ -28,8 +28,8 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <script src="/gis/maphelper.js?v=3.3"></script>
-    <link rel="stylesheet" href="~/Pages/GIS/GeometryEditor.cshtml.css?v=3.3" asp-append-version="true" />
+    <script src="/gis/maphelper.js?v=3.5"></script>
+    <link rel="stylesheet" href="~/Pages/GIS/GeometryEditor.cshtml.css?v=3.5" asp-append-version="true" />
 }
 
 @section body {
@@ -97,26 +97,45 @@
                         </el-button>
                     </span>
                 </el-tooltip>
-                <span class="style-label">边框色</span>
-                <el-color-picker class="style-color-picker" v-model="strokeColor" @@change="onStrokeColorChange" size="small" :show-alpha="false"></el-color-picker>
-                <span class="style-label">填充色</span>
-                <el-color-picker class="style-color-picker" v-model="fillColor" @@change="onFillColorChange" size="small" :show-alpha="false"></el-color-picker>
-                <span class="opacity-wrap" @@click.stop>
-                    <span class="style-label">透明</span>
-                    <button type="button" class="opacity-value-btn" @@click="toggleOpacitySlider">{{ fillOpacityPercent }}%</button>
-                    <div v-show="showOpacitySlider" class="opacity-slider-pop">
-                        <input
-                            class="number-slider-vertical"
-                            type="range"
-                            :value="fillOpacityPercent"
-                            min="0"
-                            max="100"
-                            step="5"
-                            @@input="onOpacitySliderInput"
-                        />
-                        <span class="opacity-pop-text">{{ fillOpacityPercent }}%</span>
+                <div class="style-control-group">
+                    <div class="style-card">
+                        <span class="style-card-label">框色</span>
+                        <el-color-picker class="style-color-picker" v-model="strokeColor" @@change="onStrokeColorChange" :show-alpha="false"></el-color-picker>
                     </div>
-                </span>
+                    <div class="style-card">
+                        <span class="style-card-label">填色</span>
+                        <el-color-picker class="style-color-picker" v-model="fillColor" @@change="onFillColorChange" :show-alpha="false"></el-color-picker>
+                    </div>
+                    <label class="style-card style-card-select">
+                        <span class="style-card-label">框宽</span>
+                        <select class="style-value-select" :value="lineWidth" @@change="onLineWidthChange($event.target.value)">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="8">8</option>
+                            <option value="10">10</option>
+                        </select>
+                    </label>
+                    <span class="style-card opacity-card" @@click.stop>
+                        <span class="style-card-label">透明</span>
+                        <button type="button" class="style-value-btn" @@click="toggleOpacitySlider">{{ fillOpacityPercent }}%</button>
+                        <div v-show="showOpacitySlider" class="opacity-slider-pop">
+                            <input
+                                class="number-slider-vertical"
+                                type="range"
+                                :value="fillOpacityPercent"
+                                min="0"
+                                max="100"
+                                step="5"
+                                @@input="onOpacitySliderInput"
+                            />
+                            <span class="opacity-pop-text">{{ fillOpacityPercent }}%</span>
+                        </div>
+                    </span>
+                </div>
                 </div>
                 <div class="toolbar-actions">
                 <el-tooltip placement="bottom" content="属性">

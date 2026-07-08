@@ -41,6 +41,7 @@ createApp({
 
         const strokeColor = ref('#1e3a8a');
         const fillColor = ref('#1d4ed8');
+        const lineWidth = ref(2);
         const fillOpacityPercent = ref(35);
         const activeTool = ref('browse');
         const showOpacitySlider = ref(false);
@@ -123,6 +124,12 @@ createApp({
         };
         const onStrokeColorChange = (color) => editor?.setStrokeColor(color || strokeColor.value);
         const onFillColorChange = (color) => editor?.setFillColor(color || fillColor.value);
+        const onLineWidthChange = (value) => {
+            const n = Number(value ?? lineWidth.value);
+            if (!Number.isFinite(n)) return;
+            lineWidth.value = Math.max(1, Math.min(12, Math.round(n)));
+            editor?.setLineWidth?.(lineWidth.value);
+        };
         const onFillOpacityChange = (value) => editor?.setFillOpacityPercent(value ?? fillOpacityPercent.value);
         const onOpacitySliderInput = (evt) => {
             const v = Number(evt?.target?.value ?? fillOpacityPercent.value);
@@ -493,6 +500,7 @@ createApp({
                     strokeColor.value = v.lineColor || v.pointColor;
                     fillColor.value = v.fillColor;
                     fillOpacityPercent.value = v.fillOpacityPercent;
+                    lineWidth.value = Number.isFinite(Number(v.lineWidth)) ? Number(v.lineWidth) : lineWidth.value;
                 },
                 onToolStateChange: (info) => {
                     const tool = String(info?.tool || '').trim().toLowerCase();
@@ -685,6 +693,7 @@ createApp({
         return {
             strokeColor,
             fillColor,
+            lineWidth,
             fillOpacityPercent,
             activeTool,
             showOpacitySlider,
@@ -699,6 +708,7 @@ createApp({
             drawCircle,
             onStrokeColorChange,
             onFillColorChange,
+            onLineWidthChange,
             onFillOpacityChange,
             onOpacitySliderInput,
             toggleOpacitySlider,
