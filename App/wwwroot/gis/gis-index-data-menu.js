@@ -311,6 +311,8 @@
                             sortId: Number(sortIdRaw || 0),
                             icon: n.icon ?? n.Icon,
                             isDefaultShow: !!(n.isDefaultShow ?? n.IsDefaultShow),
+                            dataFrom: n.dataFrom ?? n.DataFrom ?? null,
+                            dataUrl: n.dataUrl ?? n.DataUrl ?? '',
                             zoom: (() => {
                                 const val = Number(n.zoom ?? n.Zoom);
                                 return Number.isFinite(val) ? val : null;

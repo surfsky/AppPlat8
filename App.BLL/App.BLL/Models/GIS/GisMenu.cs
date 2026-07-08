@@ -24,6 +24,7 @@ namespace App.DAL.GIS
         [UI("显示级别")]      public double? Zoom { get; set; }
         [UI("是否可选")]      public bool? Selectable { get; set; } = true;
         [UI("数据来源")]      public GisDataFrom? DataFrom { get; set; } = GisDataFrom.Geometry;
+        [UI("数据地址")]      public string DataUrl { get; set; }
         [UI("点位数")]        public int? DataCnt { get; set; }
         [UI("最后数据时间")]   public DateTime? DataDt { get; set; }
 
@@ -43,6 +44,7 @@ namespace App.DAL.GIS
                 t.IsDefaultShow = this.IsDefaultShow;
                 t.Zoom = this.Zoom;
                 t.Selectable = this.Selectable;
+                t.DataUrl = this.DataUrl;
                 t.DataCnt = this.DataCnt;
                 t.DataDt = this.DataDt;
                 t.DataFrom = this.DataFrom;
@@ -64,6 +66,7 @@ namespace App.DAL.GIS
                 Zoom,
                 Selectable,
                 Children,
+                DataUrl,
                 DataCnt,
                 DataDt,
                 DataFrom,
@@ -104,11 +107,6 @@ namespace App.DAL.GIS
                 .GroupBy(t => t.MenuId.Value)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            var apiCntMap = GisApi.Set
-                .Where(t => t.MenuId != null)
-                .GroupBy(t => t.MenuId.Value)
-                .ToDictionary(g => g.Key, g => g.Sum(x => x.DataCnt ?? 0));
-
             var menuMap = menus.ToDictionary(t => t.Id);
             var childLookup = menus.ToLookup(t => t.ParentId);
             var now = DateTime.Now;
@@ -116,7 +114,7 @@ namespace App.DAL.GIS
             int SumCnt(long menuId)
             {
                 var geoCnt = dataCntMap.TryGetValue(menuId, out var directGeoCnt) ? directGeoCnt : 0;
-                var apiCnt = apiCntMap.TryGetValue(menuId, out var directApiCnt) ? directApiCnt : 0;
+                var apiCnt = GetApiDirectCnt(menuId, menuMap, childLookup);
                 var own = geoCnt + apiCnt;
                 var childCnt = childLookup[menuId].Sum(child => SumCnt(child.Id));
                 var total = own + childCnt;
@@ -138,6 +136,18 @@ namespace App.DAL.GIS
             ClearCache();
 
             return menus.Count;
+        }
+
+        /// <summary>获取 API 菜单自身点位数</summary>
+        static int GetApiDirectCnt(long menuId, Dictionary<long, GisMenu> menuMap, ILookup<long?, GisMenu> childLookup)
+        {
+            if (!menuMap.TryGetValue(menuId, out var menu))
+                return 0;
+            if (menu.DataFrom != GisDataFrom.API)
+                return 0;
+            if (childLookup[menuId].Any())
+                return 0;
+            return menu.DataCnt ?? 0;
         }
     }
 }

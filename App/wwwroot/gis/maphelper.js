@@ -11,6 +11,8 @@
         var onToolStateChange = typeof options.onToolStateChange === 'function' ? options.onToolStateChange : function () { };
         var onFeatureCreated = typeof options.onFeatureCreated === 'function' ? options.onFeatureCreated : function () { };
         var labelPriorityFields = normalizeLabelPriorityFields(options.labelPriorityFields);
+        var referenceGps = options.referenceGps || '';
+        var referenceLngLat = normalizeGpsText(referenceGps);
         var initialCenter = normalizeCenter(options.initialCenter, [120.6034, 27.5686]);
         var initialZoom = normalizeZoom(options.initialZoom, 11);
 
@@ -23,6 +25,7 @@
 
         var map = null;
         var draw = null;
+        var referenceMarker = null;
         var labelSyncQueued = false;
         var interactionBound = false;
         var lastPickedFeatureId = null;
@@ -37,6 +40,7 @@
         var pendingRectMouseUpHandler = null;
         var rectangleDragging = false;
         var rectangleStartPoint = null;
+        var circleStartPoint = null;
         var rectangleDragPanWasEnabled = false;
         var pendingRectWindowMouseUpHandler = null;
         var currentTool = 'browse';
@@ -107,6 +111,21 @@
             if (!Number.isFinite(value)) return fallback;
             if (value < 0 || value > 22) return fallback;
             return value;
+        }
+
+        function normalizeGpsText(text) {
+            var raw = text === null || text === undefined ? '' : String(text);
+            raw = raw.replace(/，|；|;/g, ',').trim();
+            if (!raw) return null;
+
+            var parts = raw.split(',').map(function (item) { return item.trim(); }).filter(Boolean);
+            if (parts.length < 2) return null;
+
+            var lng = Number(parts[0]);
+            var lat = Number(parts[1]);
+            if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+            if (lng < -180 || lng > 180 || lat < -90 || lat > 90) return null;
+            return [lng, lat];
         }
 
         function isHexColor(v) {
@@ -619,6 +638,10 @@
             }
 
             features.forEach(function (f) { collect(f.geometry && f.geometry.coordinates); });
+            // Keep the reference point in viewport while editing existing geometry.
+            if (Array.isArray(referenceLngLat) && referenceLngLat.length >= 2) {
+                points.push(referenceLngLat);
+            }
             if (points.length === 0) return;
 
             var minLng = points[0][0], maxLng = points[0][0], minLat = points[0][1], maxLat = points[0][1];
@@ -1317,11 +1340,28 @@
             }
             rectangleDragging = false;
             rectangleStartPoint = null;
+            circleStartPoint = null;
             if (map.dragPan && rectangleDragPanWasEnabled) {
                 map.dragPan.enable();
             }
             rectangleDragPanWasEnabled = false;
             clearRectanglePreviewData();
+        }
+
+        function ensureReferenceMarker() {
+            if (!map || !referenceLngLat) return;
+            if (referenceMarker) return;
+
+            var el = document.createElement('div');
+            el.className = 'geometry-reference-marker';
+            el.title = '定位参考点';
+
+            referenceMarker = new mapboxgl.Marker({
+                element: el,
+                anchor: 'bottom'
+            })
+                .setLngLat(referenceLngLat)
+                .addTo(map);
         }
 
         function normalizeLngLatPair(value) {
@@ -1348,6 +1388,46 @@
                 [minLng, minLat],
                 [minLng, maxLat]
             ];
+        }
+
+        function getDistanceMeters(start, end) {
+            if (!Array.isArray(start) || !Array.isArray(end)) return 0;
+            var lng1 = Number(start[0]);
+            var lat1 = Number(start[1]);
+            var lng2 = Number(end[0]);
+            var lat2 = Number(end[1]);
+            if (!Number.isFinite(lng1) || !Number.isFinite(lat1) || !Number.isFinite(lng2) || !Number.isFinite(lat2)) return 0;
+
+            var toRad = Math.PI / 180;
+            var dLat = (lat2 - lat1) * toRad;
+            var dLng = (lng2 - lng1) * toRad;
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+            return 6378137 * c;
+        }
+
+        function buildCircleRing(center, radiusM, steps) {
+            if (!Array.isArray(center) || center.length < 2) return null;
+            var lng = Number(center[0]);
+            var lat = Number(center[1]);
+            var radius = Number(radiusM);
+            var count = Number.isFinite(Number(steps)) ? Math.max(24, Math.round(Number(steps))) : 72;
+            if (!Number.isFinite(lng) || !Number.isFinite(lat) || !Number.isFinite(radius) || radius <= 0) return null;
+
+            var km = radius / 1000;
+            var latDeg = km / 111.32;
+            var lonScale = Math.max(0.15, Math.cos(lat * Math.PI / 180));
+            var lonDeg = km / (111.32 * lonScale);
+            var ring = [];
+            for (var i = 0; i <= count; i++) {
+                var rad = Math.PI * 2 * i / count;
+                ring.push([
+                    lng + lonDeg * Math.cos(rad),
+                    lat + latDeg * Math.sin(rad)
+                ]);
+            }
+            return ring;
         }
 
         function createRectangleFromCorners(start, end) {
@@ -1408,6 +1488,103 @@
             return null;
         }
 
+        function setCirclePreviewData(center, edge) {
+            if (!map) return;
+            ensureRectanglePreviewLayers();
+            var source = map.getSource(rectanglePreviewSourceId);
+            if (!source || typeof source.setData !== 'function') return;
+
+            var features = [];
+            if (Array.isArray(center)) {
+                features.push({
+                    type: 'Feature',
+                    properties: {},
+                    geometry: { type: 'Point', coordinates: center }
+                });
+            }
+            if (Array.isArray(center) && Array.isArray(edge)) {
+                var radiusM = getDistanceMeters(center, edge);
+                var ring = buildCircleRing(center, radiusM, 72);
+                if (ring) {
+                    features.push({
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'Polygon',
+                            coordinates: [ring]
+                        }
+                    });
+                }
+            }
+
+            source.setData({ type: 'FeatureCollection', features: features });
+        }
+
+        function createCircleFromCenter(center, edge) {
+            if (!draw) return null;
+            var radiusM = getDistanceMeters(center, edge);
+            var ring = buildCircleRing(center, radiusM, 72);
+            if (!ring) return null;
+
+            var opacity = palette.fillOpacityPercent / 100;
+            var feature = {
+                type: 'Feature',
+                properties: {
+                    stroke: palette.lineColor,
+                    lineColor: palette.lineColor,
+                    fill: palette.fillColor,
+                    fillColor: palette.fillColor,
+                    'fill-opacity': opacity,
+                    fillOpacity: opacity,
+                    shapeType: 'circle',
+                    circleCenter: center.join(','),
+                    radiusM: Math.round(radiusM)
+                },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [ring]
+                }
+            };
+
+            var added = draw.add(feature);
+            var addedIds = Array.isArray(added) ? added : (added ? [added] : []);
+            if (addedIds.length > 0) {
+                try {
+                    draw.changeMode('simple_select', { featureIds: [addedIds[0]] });
+                    lastPickedFeatureId = String(addedIds[0]);
+                } catch {
+                    // ignore
+                }
+
+                try {
+                    onFeatureCreated({
+                        tool: 'circle',
+                        featureId: addedIds[0],
+                        geometryType: 'Polygon',
+                        properties: {
+                            stroke: palette.lineColor,
+                            lineColor: palette.lineColor,
+                            fill: palette.fillColor,
+                            fillColor: palette.fillColor,
+                            fillOpacity: opacity,
+                            shapeType: 'circle',
+                            circleCenter: center.join(','),
+                            radiusM: Math.round(radiusM)
+                        }
+                    });
+                } catch {
+                    // ignore callback errors
+                }
+
+                refresh();
+                commitHistorySnapshot(false);
+                return addedIds[0];
+            }
+            refresh();
+            commitHistorySnapshot(false);
+            return null;
+        }
+
         function enterBrowseMode() {
             clearRectanglePickHandlers();
             if (map && map.dragPan) {
@@ -1435,7 +1612,7 @@
                 mode = '';
             }
 
-            if (currentTool === 'rectangle' || rectangleStartPoint) {
+            if (currentTool === 'rectangle' || currentTool === 'circle' || rectangleStartPoint || circleStartPoint) {
                 clearRectanglePickHandlers();
                 enterBrowseMode();
                 return true;
@@ -1549,14 +1726,14 @@
             map.on('draw.modechange', function (evt) {
                 queueLabelSync();
                 var mode = String(evt && evt.mode || '').toLowerCase();
-                if (currentTool !== 'browse' && currentTool !== 'rectangle' && mode === 'simple_select') {
+                if (currentTool !== 'browse' && currentTool !== 'rectangle' && currentTool !== 'circle' && mode === 'simple_select') {
                     setTool('browse', 'idle');
                     applyCursorByTool();
                 }
             });
             map.on('draw.render', queueLabelSync);
             map.on('click', function (evt) {
-                if (currentTool === 'rectangle') return;
+                if (currentTool === 'rectangle' || currentTool === 'circle') return;
                 if (!draw || typeof draw.getMode !== 'function') return;
                 var mode = draw.getMode();
                 if (mode === 'direct_select') {
@@ -1586,6 +1763,7 @@
                 enhanceDrawLayerColors();
                 ensureLabelLayer();
                 ensureRectanglePreviewLayers();
+                ensureReferenceMarker();
 
                 var parsed = parseInitial(readInitialRaw());
                 if (parsed.features.length > 0) {
@@ -1691,6 +1869,58 @@
                     } else {
                         rectangleStartPoint = clickPoint;
                         setRectanglePreviewData(rectangleStartPoint, null);
+                    }
+                };
+
+                map.on('click', pendingRectFirstHandler);
+            },
+            drawCircle: function () {
+                if (!map || !draw) return;
+
+                clearRectanglePickHandlers();
+                try {
+                    draw.changeMode('simple_select');
+                } catch {
+                    // ignore mode switch errors
+                }
+                setTool('circle', 'drawing');
+                applyCursorByTool();
+
+                pendingRectFirstHandler = function (evt) {
+                    if (!map || !draw) return;
+                    if (evt && evt.originalEvent && evt.originalEvent.button !== undefined && evt.originalEvent.button !== 0) return;
+                    if (evt && evt.originalEvent && typeof evt.originalEvent.preventDefault === 'function') {
+                        evt.originalEvent.preventDefault();
+                    }
+
+                    var clickPoint = normalizeLngLatPair(evt && evt.lngLat);
+                    if (!clickPoint) return;
+
+                    if (!circleStartPoint) {
+                        circleStartPoint = clickPoint;
+                        rectangleDragging = true;
+                        setCirclePreviewData(circleStartPoint, null);
+
+                        if (!pendingRectMouseMoveHandler) {
+                            pendingRectMouseMoveHandler = function (moveEvt) {
+                                if (!circleStartPoint) return;
+                                var movingPoint = normalizeLngLatPair(moveEvt && moveEvt.lngLat);
+                                if (!movingPoint) return;
+                                setCirclePreviewData(circleStartPoint, movingPoint);
+                            };
+                            map.on('mousemove', pendingRectMouseMoveHandler);
+                        }
+                        return;
+                    }
+
+                    var createdCircleId = createCircleFromCenter(circleStartPoint, clickPoint);
+                    if (createdCircleId) {
+                        clearRectanglePickHandlers();
+                        setTool('browse', 'idle');
+                        applyCursorByTool();
+                    } else {
+                        circleStartPoint = clickPoint;
+                        setCirclePreviewData(circleStartPoint, null);
                     }
                 };
 

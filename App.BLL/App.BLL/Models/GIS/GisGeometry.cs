@@ -23,7 +23,7 @@ namespace App.DAL.GIS
 
     /// <summary>GIS点位（包括点、几何、文字、图片、视频、文件等）</summary>
     [UI("GIS", "GIS点位")]
-    public class GisGeometry : EntityBase<GisGeometry>
+    public class GisGeometry : EntityBase<GisGeometry>, IGeometry
     {
         [UI("类型")]        public GeometryType? Type { get; set; } = GeometryType.Point;
         [UI("名称")]        public string Name { get; set; }
@@ -38,6 +38,7 @@ namespace App.DAL.GIS
         [UI("区域矩形")]    public string Region { get; set; }      // 图片显示区域：tlx,tly,brx,bry
         [UI("图形数据")]    public string GeoJson { get; set; }
         [UI("扩展数据")]    public string DataJson { get; set; }
+        [UI("是否可见")]    public bool? IsVisible { get; set; }
         [UI("备注")]        public string Remark { get; set; }
 
         //
@@ -48,6 +49,9 @@ namespace App.DAL.GIS
         public string MenuName => Menu?.Name;
         public string MenuIcon => Menu?.Icon;
         public string CreatorName => Creator?.Name;
+        public long RawId => Id;
+        public string Icon => Menu?.Icon;
+        public GisDataFrom DataFrom => GisDataFrom.Geometry;
 
         public virtual GisGeometry Clone()
         {
@@ -66,6 +70,7 @@ namespace App.DAL.GIS
                 t.Url = this.Url;
                 t.File = this.File;
                 t.DataJson = this.DataJson;
+                t.IsVisible = this.IsVisible;
             });
         }
 
@@ -74,6 +79,7 @@ namespace App.DAL.GIS
             return new
             {
                 Id,
+                RawId,
                 Type,
                 Name,
                 Alias,
@@ -87,10 +93,41 @@ namespace App.DAL.GIS
                 Url,
                 File,
                 DataJson,
+                IsVisible,
+                Remark,
+                Icon,
+                DataFrom,
 
                 MenuName,
                 MenuIcon,
                 CreatorName,
+            };
+        }
+
+        /// <summary>导出统一点位数据</summary>
+        public GeometryItem ToGeometryItem()
+        {
+            return new GeometryItem
+            {
+                Id = Id,
+                RawId = Id,
+                Type = Type,
+                MenuId = MenuId,
+                SortId = SortId,
+                Name = Name,
+                Alias = Alias,
+                Addr = Addr,
+                Gps = Gps,
+                Region = Region,
+                Url = Url,
+                File = File,
+                GeoJson = GeoJson,
+                DataJson = DataJson,
+                Remark = Remark,
+                IsVisible = IsVisible,
+                Icon = Icon,
+                MenuName = MenuName,
+                DataFrom = GisDataFrom.Geometry
             };
         }
 
@@ -107,6 +144,7 @@ namespace App.DAL.GIS
             long? creatorId=null, 
             GeometryType? type = null, 
             bool? isValid = null,
+            bool? isVisible = null,
             long? menuId=null, 
             bool recursive = false
         )
@@ -132,6 +170,13 @@ namespace App.DAL.GIS
                     q = q.Where(o => !string.IsNullOrWhiteSpace(o.GeoJson) || !string.IsNullOrWhiteSpace(o.Gps));  // 有效点位，有GeoJson或Gps数据
                 else
                     q = q.Where(o => string.IsNullOrWhiteSpace(o.GeoJson) && string.IsNullOrWhiteSpace(o.Gps));    // 无效点位，GeoJson或Gps数据为空
+            }
+            if (isVisible.IsNotEmpty())
+            {
+                if (isVisible.Value)
+                    q = q.Where(o => o.IsVisible != false);
+                else
+                    q = q.Where(o => o.IsVisible == false);
             }
             return q;
         }

@@ -91,6 +91,20 @@ export const selectorMethods = {
         return null;
     },
 
+    // Append reference gps for geometry editor
+    appendGeometryReferenceGps(url, propId) {
+        if (!url) return url;
+        const keyId = this.normalizeSelectorField(propId);
+        if (keyId !== 'geoJson') return url;
+
+        const rawGps = this.form?.value
+            ? (this.form.value.gps ?? this.form.value.Gps ?? '')
+            : '';
+        const gps = rawGps == null ? '' : String(rawGps).trim();
+        if (!gps) return url;
+        return this.appendQuery(url, 'gps', gps);
+    },
+
     buildSelectorUrl(urlBase, propId, keyMode) {
         let url = this.resolveDrawerUrlBase(urlBase);
         const modeRaw = (keyMode || 'Url').toString().trim().toLowerCase();
@@ -105,7 +119,7 @@ export const selectorMethods = {
             const k = this.writeSelectorPayloadToStorage(value);
             if (k) {
                 url = this.appendQuery(url, 'dk', k);
-                return url;
+                return this.appendGeometryReferenceGps(url, keyId);
             }
         }
 
@@ -119,7 +133,7 @@ export const selectorMethods = {
             const attValue = this.form?.value ? (this.form.value.att ?? '') : '';
             url = this.appendQuery(url, 'att', attValue == null ? '' : String(attValue));
         }
-        return url;
+        return this.appendGeometryReferenceGps(url, keyId);
     },
 
     openSelector(propId, propText, url, multi, title, keyMode = 'Url') {

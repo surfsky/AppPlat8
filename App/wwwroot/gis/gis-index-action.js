@@ -243,6 +243,14 @@
         function openGeometryEditDrawer(id) {
             const geometryId = id || state.selectedGeometryId;
             if (!geometryId) return;
+            const geometry = findGeometryById(geometryId);
+            if (String(geometry?.dataFrom || geometry?.DataFrom || '').toLowerCase() === 'api' || Number(geometry?.dataFrom || geometry?.DataFrom) === 2) {
+                const manager = resolveManager();
+                if (manager && typeof manager.showWarning === 'function') {
+                    manager.showWarning('API 数据点位请通过接口维护，不能在此直接编辑');
+                }
+                return;
+            }
 
             const manager = resolveManager();
             const url = `/GIS/GeometryForm?md=edit&id=${encodeURIComponent(geometryId)}`;

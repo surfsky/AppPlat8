@@ -8,7 +8,9 @@
     <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
         <div class="mb-4 rounded border border-slate-200 p-3 bg-slate-50 text-slate-700 text-sm">
             <div>导入类型: <span class="font-semibold">@Model.TypeTitle</span></div>
-            <div class="mt-1 text-slate-500">支持中英文标题，支持多种经纬度格式，额外列将自动存入扩展数据。</div>
+            <div class="mt-1 text-slate-500">支持中英文标题，支持多种经纬度格式；除核心列外，其它任意列都会合并后保存到 `DataJson`。</div>
+            <div class="mt-1 text-slate-500">扩展列支持两种写法：`风险等级` 或 `风险等级(RiskLevel)`；第二种会用 `RiskLevel` 作为 json 键名。</div>
+            <div class="mt-1 text-slate-500">`是否可见(IsVisible)` 支持 `true/false`、`是/否`、`1/0` 等布尔写法；留空按可见处理。</div>
         </div>
 
         <div class="flex flex-wrap gap-2 mb-3">

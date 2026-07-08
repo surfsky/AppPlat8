@@ -26,9 +26,9 @@ namespace App.Pages.GIS
                 Item.MenuId = menuId.Value;
         }
 
-        public IActionResult OnGetData(Paging pi, string name, GeometryType? type, long? menuId)
+        public IActionResult OnGetData(Paging pi, string name, GeometryType? type, bool? isVisible, long? menuId)
         {
-            var list = GisGeometry.Search(name:name, type:type, menuId:menuId, recursive:false).SortPageExport(pi);
+            var list = GisGeometry.Search(name:name, type:type, isVisible:isVisible, menuId:menuId, recursive:false).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

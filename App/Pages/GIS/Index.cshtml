@@ -36,6 +36,7 @@
     <script src="/gis/gis-index-point-list.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-public-cameras.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data-utils.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-point-marker.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data-menu.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data-geometry.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data.js?v=@DateTime.Now.Ticks"></script>
@@ -187,6 +188,8 @@
             statsPanels: [],
             activePointListMenuId: null,
             activePointListMenuName: '',
+            pointListFilterMenuId: null,
+            pointListFilterIds: null,
             currentMapZoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
             mapStyles: [],
             scenes: [],
@@ -222,6 +225,10 @@
                 return 'dark';
             }
         })();
+        function getCsrfToken() {
+            const input = document.querySelector('input[name="__RequestVerificationToken"]');
+            return input ? input.value : '';
+        }
 
 
         //--------------------------------------------------------------
@@ -254,7 +261,7 @@
             state,
             map,
             getGeometryLayerManager: () => geometryLayerManager,
-            onGeometryMarkerClick: (id) => openGeometryDetailDrawer(id),
+            onGeometryMarkerClick: (id) => showGeometryDetail(id),
             onMenuBadgeClick: (menuNode, geometryItems) => openPointListPanel(menuNode, geometryItems)
         });
         const actionApi = GisIndexAction.create({
@@ -297,11 +304,28 @@
             bodyId: 'geo-point-list-body',
             map,
             state,
+            onLoadMenuItems: async ({ menuId, keyword, isVisible, pageIndex, pageSize }) => {
+                const q = new URLSearchParams();
+                q.set('handler', 'MenuItems');
+                q.set('menuId', menuId);
+                q.set('pageIndex', pageIndex ?? 0);
+                q.set('pageSize', pageSize ?? 20);
+                if (keyword) q.set('keyword', keyword);
+                if (isVisible !== undefined && isVisible !== null && String(isVisible) !== '') q.set('isVisible', isVisible);
+
+                const resp = await fetch(`?${q.toString()}`);
+                if (!resp.ok) {
+                    const msg = `加载点位失败(${resp.status})`;
+                    return { code: -1, message: msg };
+                }
+                return await resp.json();
+            },
             onRefreshMenuData: async (menuId) => {
                 const resp = await fetch('?handler=RefreshMenuData', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getCsrfToken()
                     },
                     body: JSON.stringify({ menuId })
                 });
@@ -333,6 +357,25 @@
                 }
 
                 return { code: 0, data: res?.data ?? res?.Data };
+            },
+            onItemsChanged: ({ menuId, mapIds }) => {
+                const hasMenuId = menuId !== null && menuId !== undefined && menuId !== '';
+                state.pointListFilterMenuId = hasMenuId ? Number(menuId) : null;
+                state.pointListFilterIds = Array.isArray(mapIds)
+                    ? new Set(mapIds.map(id => String(id)))
+                    : null;
+                if (dataApi && typeof dataApi.applyGeometryVisibility === 'function') {
+                    dataApi.applyGeometryVisibility();
+                }
+            },
+            onOpenDetail: (id) => showGeometryDetail(id),
+            onClose: ({ preserveFilter } = {}) => {
+                if (preserveFilter) return;
+                state.pointListFilterMenuId = null;
+                state.pointListFilterIds = null;
+                if (dataApi && typeof dataApi.applyGeometryVisibility === 'function') {
+                    dataApi.applyGeometryVisibility();
+                }
             }
         });
         const panelApi = GisIndexPanels.create({
@@ -429,9 +472,8 @@
                 const menuNode = state.menuNodeMap.get(state.activePointListMenuId)
                     || state.menuNodeMap.get(keyNum)
                     || null;
-                const items = (state.geometries || []).filter(g => String(g?.menuId ?? '') === String(state.activePointListMenuId));
                 if (menuNode) {
-                    pointListApi.open(menuNode, items);
+                    pointListApi.open(menuNode);
                 }
             }
         }
@@ -480,7 +522,6 @@
         // 图形详情面板
         //--------------------------------------------------------------
         function openGeometryDetailPanel(id) {
-            closePointListPanel();
             return detailApi.open(id);
         }
         function closeGeometryDetailPanel() { return detailApi.close(); }
@@ -488,7 +529,7 @@
             closeGeometryDetailPanel();
             return pointListApi.open(menuNode, geometryItems);
         }
-        function closePointListPanel() { return pointListApi.close(); }
+        function closePointListPanel(options) { return pointListApi.close(options); }
 
 
         //--------------------------------------------------------------
@@ -509,9 +550,9 @@
         function getActiveGeometryDisplayLayerIds() { return actionApi.getActiveGeometryDisplayLayerIds(); }
         async function loadGeometries() { return dataApi.loadGeometries(); }
         function bindGeometryMapInteractions() { actionApi.bindGeometryMapInteractions(); }
+        function showGeometryDetail(id) { actionApi.openGeometryDetailDrawer(id); }
         function openGeometryDetailDrawer(id) {
-            closePointListPanel();
-            actionApi.openGeometryDetailDrawer(id);
+            showGeometryDetail(id);
         }
         function closeGeometryDetailDrawer() { actionApi.closeGeometryDetailDrawer(); }
 

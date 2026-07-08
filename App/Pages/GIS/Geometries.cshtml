@@ -18,6 +18,7 @@
             <Filters>
                 <EleInput For="Item.Name" Width="200px" Label="名称" ></EleInput>
                 <EleSelect For="Item.Type" Width="160px" Label="类别" Clearable="true"></EleSelect>
+                <EleSelect For="Item.IsVisible" Width="160px" Label="是否可见" Clearable="true"></EleSelect>
                 <EleTreeSelect For="Item.MenuId"
                                Width="220px"
                                Label="所属菜单"
@@ -45,6 +46,7 @@
             <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="150" Sortable="true"></EleColumn>
             <EleColumn For="Item.Alias" Label="简称" Width="200"></EleColumn>
             <EleColumn For="Item.MenuName" Label="所属菜单" Width="160"></EleColumn>
+            <EleColumn For="Item.IsVisible" Label="是否可见" Width="100" Format="Switch"></EleColumn>
             <EleColumn For="Item.Addr" Label="地址" MinWidth="220"></EleColumn>
             <EleColumn For="Item.Gps" Label="经纬度" Width="180"></EleColumn>
             <EleColumn For="Item.Url" Label="网址" Width="180"></EleColumn>
@@ -54,4 +56,3 @@
         </Columns>
     </EleTable>
 }
-

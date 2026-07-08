@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
+using App.DAL.GIS;
 using App.Entities;
 using App.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -185,6 +187,47 @@ namespace App.DAL
                 TagIds,
                 TagNames,
                 Tags = Tags?.Select(t => t.Export(mode)).ToList(),
+            };
+        }
+
+        /// <summary>导出统一 GIS 点位数据</summary>
+        public GeometryItem ToGeometryItem()
+        {
+            return new GeometryItem
+            {
+                Id = Id,
+                RawId = Id,
+                Type = GeometryType.Point,
+                MenuId = null,
+                SortId = 0,
+                Name = Name,
+                Alias = null,
+                Addr = Address,
+                Gps = Gps,
+                Region = null,
+                Url = null,
+                File = null,
+                GeoJson = null,
+                Remark = FailReason,
+                DataJson = JsonSerializer.Serialize(new
+                {
+                    SocialCreditCode,
+                    RiskLevel,
+                    Scope,
+                    Scale,
+                    ObjectType,
+                    DutyOrgId,
+                    DutyOrgName,
+                    CheckerId,
+                    CheckerName,
+                    DutyUserName,
+                    TagNames,
+                    IsDel
+                }),
+                IsVisible = true,
+                Icon = null,
+                MenuName = null,
+                DataFrom = GisDataFrom.API
             };
         }
 

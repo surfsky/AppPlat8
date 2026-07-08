@@ -429,15 +429,49 @@ AI辅助
 Done
 --------------------------------------------------------
 2026.7.2
+    Gis
+        绘制应急图标库
+        解决点位坐标偏移的问题
+        点位 GisGeometry 增加IsVisible属性（是否可见）
+            可以控制是否在地图上展示，若为false则不显示，为空为true都可见；
+            gis/index中的点位清单面板中，增加“是否可见”筛选条件，查询后刷新列表和地图上的点位；
+            修改相关的点位实体类、接口、列表、表单管理页面
+        /导入避灾点点位
+        /优化点位 GisGeometry 设置和展示
+            对象类别为“点”时，也可以同时显示图形，如给某个点位设置辐射光圈
+            Gis/GeometryEditor 页面增加对“圆形图形”的支持；
+            Gis/Index 页面完善点位的绘制，若geometry类型为point时，即绘制点位图标，又同时绘制图形；
+        /创建统一的Gis数据返回接口
+            创建接口IGeometry（包含GisGeometry大部分业务字段），让GisGeometry类继承它；
+            创建或修改Gis/GetCheckObjects() API接口
+                参数tagNames、PageInfo；
+                用IGeometry接口来返回检查对象的数据清单，数据中包括无坐标的；
+                无坐标的点位不用显示在地图上，但要在数据面板中可以展示；
+            数据面板支持数据分页逻辑（用列表，可检索，可上滑换页）；
+            设置“化工及危化企业”的gis菜单
+                数据来源为“API”
+                数据地址为：GetCheckObjects?tagNames=危化品
+                检测一下接口数据返回是否正确
+        /备注：
+            Gis/index中数据图层的数据只来自GisMenu，若数据来源为Api则使用DataUrl获取数据，若为 Geometry则访问 GieGemetry表获取数据
+            GisApi逻辑调整，现在只作为api维护的表，不作为Gis/index获取数据的来源；
+    角色与Gis菜单管理
+        - 删除gismenu.org 属性
+        - 创建角色和gismenu管理页面和相关实体（ RoleGismenu）：左侧是角色列表，右侧是gismenu菜单树表，并显示“可查看”、“可编辑”两个checkbox；
+        - 某个用户登录后，会根据该用户的角色，在gis/index中显示可见的gismenu，在gis/geometrymanager左侧的菜单树中显示授权编辑的菜单；
+        - 点位导入时会检查 gismenuid 是否被当前用户角色授权（gis/GeometryImporter）
+
+    增加地图服务商，也用MapLayer接口实现，点击后切换地图服务源（如高德地图）
+    地图底部显示滚动告警；
+
     检查对象
-        实现支持Gis接口的对象检索接口，可查找tag
+        批量给数据打标签
         把相关附属资源（如联系人、事件、隐患等）全部改为列表方式附在下面
             并显示”更多“图标，点击后跳出完整的列表窗口：
             需对 EleList 控件进行优化，增加更多按钮，点击后可跳到编辑页面；
         批量修改能力：多选后点击编辑，弹出批量修改窗口；其中
             优化EleForm，可批量编辑，可指定编辑字段，如 CheckObjectForm?id=xxx,xxx,xxx&field=xxx,xxxx,xxx ，采纳
             在CheckObjects页面，增加“批量失效”工具栏按钮
-        批量给数据打标签
         对象标志：3303830000000535405，看是如何编码的：温州已答复。我们需要创建一个编码方法，并给org设置编码
     gis/index
         把气象图层（也可叫 MapLayer 图层），也弄得可配置

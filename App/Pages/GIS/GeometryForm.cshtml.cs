@@ -35,6 +35,7 @@ namespace App.Pages.GIS
             if (id == 0)
             {
                 item.MenuId = selectedMenuId;
+                item.IsVisible = true;
                 if (!string.IsNullOrWhiteSpace(gps))
                     item.Gps = gps;
                 if (!string.IsNullOrWhiteSpace(geoJson))
@@ -85,6 +86,7 @@ namespace App.Pages.GIS
             item.File = Uploader.SaveFile(nameof(GisGeometry), req.File);
             item.GeoJson = req.GeoJson;
             item.DataJson = req.DataJson;
+            item.IsVisible = req.IsVisible != false;
             item.Region = NormalizeRegion(req.Region);
             if (string.IsNullOrWhiteSpace(item.Region))
                 item.Region = TryBuildRegionFromGeoJson(req.GeoJson);

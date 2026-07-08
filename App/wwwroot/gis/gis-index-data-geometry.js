@@ -17,6 +17,9 @@
         const toImageSourceCoordinatesFromRegion = ctx.toImageSourceCoordinatesFromRegion;
         const toImageSourceCoordinatesFromRing = ctx.toImageSourceCoordinatesFromRing;
         const toImageSourceCoordinatesFromGeoJson = ctx.toImageSourceCoordinatesFromGeoJson;
+        const pointMarkerHelper = window.GisPointMarker && typeof window.GisPointMarker.create === 'function'
+            ? window.GisPointMarker.create()
+            : null;
 
         function clearGeometryPointMarkers() {
             state.geometryPointMarkerMap.forEach(marker => marker.remove());
@@ -26,21 +29,42 @@
         function syncGeometryPointMarkerVisibility() {
             const byId = new Map((state.geometries || []).map(item => [String(item?.id), item]));
             state.geometryPointMarkerMap.forEach((marker, id) => {
-                const markerEl = marker.getElement();
-                if (!markerEl) return;
                 const item = byId.get(String(id));
-                const isVisible = state.geometryVisibleMap.get(id) !== false && isMenuZoomVisible(item?.menuId);
+                const isVisible = state.geometryVisibleMap.get(id) !== false
+                    && isMenuZoomVisible(item?.menuId)
+                    && isGeometryMatchedByPointList(item);
                 const selectable = isGeometrySelectable(item?.menuId);
-
-                markerEl.style.display = isVisible ? '' : 'none';
-                markerEl.style.pointerEvents = selectable ? 'auto' : 'none';
-                markerEl.style.cursor = selectable ? '' : 'default';
-                markerEl.style.opacity = selectable ? '' : '0.92';
+                if (marker && typeof marker.setVisible === 'function') {
+                    marker.setVisible(isVisible);
+                } else {
+                    const markerEl = marker?.getElement?.();
+                    if (markerEl) markerEl.style.display = isVisible ? '' : 'none';
+                }
+                if (marker && typeof marker.setSelectable === 'function') {
+                    marker.setSelectable(selectable);
+                }
 
                 const normalizedId = Number.isFinite(Number(id)) ? Number(id) : id;
                 const isSelected = String(state.selectedGeometryId ?? '') === String(normalizedId ?? '');
-                markerEl.classList.toggle('is-selected', !!isSelected);
+                if (marker && typeof marker.setSelected === 'function') {
+                    marker.setSelected(!!isSelected);
+                } else {
+                    const markerEl = marker?.getElement?.();
+                    if (markerEl) markerEl.classList.toggle('is-selected', !!isSelected);
+                }
             });
+        }
+
+        function isGeometryMatchedByPointList(item) {
+            if (!item) return true;
+            const filterMenuId = state.pointListFilterMenuId;
+            const filterIds = state.pointListFilterIds;
+            if (filterMenuId === null || !(filterIds instanceof Set)) return true;
+            const itemMenuId = item.menuId === null || item.menuId === undefined || item.menuId === ''
+                ? null
+                : Number(item.menuId);
+            if (itemMenuId !== filterMenuId) return true;
+            return filterIds.has(String(item.id));
         }
 
         function createTextMarker(item, gps) {
@@ -212,7 +236,7 @@
                 const layerId = 'gis-image-layer-' + item.id;
                 if (!map.getLayer(layerId)) return;
 
-                const isVisible = state.geometryVisibleMap.get(item.id) !== false;
+                const isVisible = state.geometryVisibleMap.get(item.id) !== false && isGeometryMatchedByPointList(item);
                 const zoomVisible = isMenuZoomVisible(item.menuId);
                 try {
                     map.setLayoutProperty(layerId, 'visibility', isVisible && zoomVisible ? 'visible' : 'none');
@@ -263,39 +287,17 @@
                         marker = createFileMarker(item, gps);
                         break;
                     default: {
-                        const el = document.createElement('div');
-                        el.className = 'geometry-point-marker';
-                        const iconPath = getGeometryIcon(item);
-                        if (iconPath) {
-                            const iconEl = document.createElement('img');
-                            iconEl.className = 'marker-icon';
-                            iconEl.src = iconPath;
-                            iconEl.alt = item.name || item.alias || '点位图标';
-                            iconEl.onerror = () => {
-                                iconEl.remove();
-                                const fallbackDot = document.createElement('span');
-                                fallbackDot.className = 'dot-fallback';
-                                el.appendChild(fallbackDot);
-                            };
-                            el.appendChild(iconEl);
-                        }
-                        if (!iconPath) {
-                            const fallbackDot = document.createElement('span');
-                            fallbackDot.className = 'dot-fallback';
-                            el.appendChild(fallbackDot);
-                        }
-                        const label = document.createElement('span');
-                        label.className = 'marker-label';
-                        label.textContent = item.alias || item.name || `点位${item.id}`;
-                        el.appendChild(label);
-                        el.addEventListener('click', evt => {
-                            evt.stopPropagation();
-                            if (!isGeometrySelectable(item?.menuId)) return;
-                            onGeometryMarkerClick(item.id);
+                        marker = pointMarkerHelper?.createPointMarker({
+                            map,
+                            gps,
+                            iconPath: getGeometryIcon(item),
+                            labelText: item.alias || item.name || `点位${item.id}`,
+                            title: item.name || item.alias || `点位${item.id}`,
+                            onClick: () => {
+                                if (!isGeometrySelectable(item?.menuId)) return;
+                                onGeometryMarkerClick(item.id);
+                            }
                         });
-                        marker = new mapboxgl.Marker(el)
-                            .setLngLat([gps.lng, gps.lat])
-                            .addTo(map);
                         break;
                     }
                 }
@@ -315,7 +317,7 @@
             geometryLayerManager.setVisible(true);
 
             const visibleIds = state.geometries
-                .filter(g => state.geometryVisibleMap.get(g.id) !== false && isMenuZoomVisible(g.menuId))
+                .filter(g => state.geometryVisibleMap.get(g.id) !== false && isMenuZoomVisible(g.menuId) && isGeometryMatchedByPointList(g))
                 .map(g => g.id);
             geometryLayerManager.setVisibleIds(visibleIds);
             syncGeometryPointMarkerVisibility();
@@ -356,11 +358,11 @@
 
                 const geometryLayerManager = getGeometryLayerManager();
                 if (geometryLayerManager) {
-                    const shapeRows = state.geometries.filter(g => {
-                        const kind = getGeometryKind(g);
-                        return kind === 'shape' || kind === 'region' || kind === 'line';
+                    const geoRows = state.geometries.filter(g => {
+                        const geo = normalizeGeoJson(g?.geoJson);
+                        return !!geo && Array.isArray(geo.features) && geo.features.length > 0;
                     });
-                    geometryLayerManager.setDataFromRows(shapeRows.length > 0 ? shapeRows : state.geometries);
+                    geometryLayerManager.setDataFromRows(geoRows.length > 0 ? geoRows : state.geometries);
                     geometryLayerManager.render();
                 }
                 rebuildGeometryPointMarkers();

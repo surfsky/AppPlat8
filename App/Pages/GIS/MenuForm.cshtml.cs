@@ -1,7 +1,10 @@
 using App.Components;
+using App.API;
 using App.DAL;
 using App.DAL.GIS;
+using App.EleUI;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace App.Pages.GIS
 {
@@ -50,12 +53,44 @@ namespace App.Pages.GIS
             item.Selectable = req.Selectable;
             item.SortId = req.SortId;
             item.DataFrom = req.DataFrom;
+            item.DataUrl = req.DataUrl?.Trim();
             item.DataCnt = req.DataCnt;
             item.DataDt = req.DataDt;
             item.Save();
 
             GisMenu.ClearCache();
             return BuildResult(0, "保存成功");
+        }
+
+        public IActionResult OnPostTestDataUrl([FromBody] GisMenu req)
+        {
+            if (req == null)
+                return BuildResult(400, "参数错误");
+
+            try
+            {
+                var from = req.DataFrom ?? GisDataFrom.Geometry;
+                if (from == GisDataFrom.API && string.IsNullOrWhiteSpace(req.DataUrl))
+                    return BuildResult(400, "请先填写数据地址");
+
+                var cnt = Gis.GetMenuGeometryCount(
+                    menuId: req.Id > 0 ? req.Id : null,
+                    dataFrom: from,
+                    dataUrl: req.DataUrl?.Trim(),
+                    menuName: req.Name?.Trim(),
+                    icon: req.Icon);
+
+                var now = DateTime.Now;
+                var msg = $"测试成功，共 {cnt} 条数据";
+                return EleManager
+                    .SetControl<GisMenu>(t => t.DataCnt, Value: cnt)
+                    .SetControl<GisMenu>(t => t.DataDt, Value: now.ToString("yyyy-MM-dd HH:mm:ss"))
+                    .ToActionResult(msg);
+            }
+            catch (Exception ex)
+            {
+                return BuildResult(400, ex.Message);
+            }
         }
     }
 }

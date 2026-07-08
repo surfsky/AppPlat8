@@ -5,7 +5,38 @@ createApp({
         const cfg = window.__geometryEditorConfig || {};
         const accessToken = cfg.accessToken || '';
         const initGeoJson = cfg.initGeoJson || '';
-        const initialCenter = Array.isArray(cfg.initialCenter) ? cfg.initialCenter : [120.6034, 27.5686];
+        const storageKey = '__gis_geometry_editor_reference_gps';
+        const parseGpsText = (text) => {
+            const raw = String(text || '').replace(/，|；|;/g, ',').trim();
+            if (!raw) return null;
+            const parts = raw.split(',').map(t => t.trim()).filter(Boolean);
+            if (parts.length < 2) return null;
+            const lng = Number(parts[0]);
+            const lat = Number(parts[1]);
+            if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null;
+            return [lng, lat];
+        };
+        const search = new URLSearchParams(window.location.search || '');
+        const readRefGpsFromStorage = () => {
+            const wins = [window, window.parent, window.top].filter(Boolean);
+            for (let i = 0; i < wins.length; i += 1) {
+                const win = wins[i];
+                try {
+                    const storages = [win.sessionStorage, win.localStorage].filter(Boolean);
+                    for (let j = 0; j < storages.length; j += 1) {
+                        const v = storages[j].getItem(storageKey) || '';
+                        if (String(v).trim()) return String(v).trim();
+                    }
+                } catch {
+                    // ignore cross-frame or storage errors
+                }
+            }
+            return '';
+        };
+        const referenceGps = search.get('gps')
+            || readRefGpsFromStorage();
+        const referenceCenter = parseGpsText(referenceGps);
+        const initialCenter = referenceCenter || (Array.isArray(cfg.initialCenter) ? cfg.initialCenter : [120.6034, 27.5686]);
         const initialZoom = Number.isFinite(Number(cfg.initialZoom)) ? Number(cfg.initialZoom) : 11;
 
         const pointColor = ref('#dc2626');
@@ -84,6 +115,12 @@ createApp({
             showOpacitySlider.value = false;
             activeTool.value = 'rectangle';
             editor?.drawRectangle?.();
+        };
+
+        const drawCircle = () => {
+            showOpacitySlider.value = false;
+            activeTool.value = 'circle';
+            editor?.drawCircle?.();
         };
         const onPointColorChange = (color) => editor?.setPointColor(color || pointColor.value);
         const onLineColorChange = (color) => editor?.setLineColor(color || lineColor.value);
@@ -292,7 +329,7 @@ createApp({
         const promptLabelForCreatedFeature = async (info) => {
             const tool = String(info?.tool || '').trim().toLowerCase();
             const geometryType = String(info?.geometryType || '').trim().toLowerCase();
-            const shouldPrompt = tool === 'rectangle' || geometryType === 'point' || geometryType === 'linestring';
+            const shouldPrompt = tool === 'rectangle' || tool === 'circle' || geometryType === 'point' || geometryType === 'linestring';
             if (!shouldPrompt) return;
 
             const featureId = info?.featureId;
@@ -426,6 +463,7 @@ createApp({
                 initGeoJson,
                 initialCenter,
                 initialZoom,
+                referenceGps,
                 mapContainerId: 'map',
                 labelPriorityFields: ['NAME', 'name', 'label', 'SZSQ', 'SZZ', 'SZQX', 'title', 'alias', 'text'],
                 onError: showError,
@@ -651,6 +689,7 @@ createApp({
             drawLine,
             drawPolygon,
             drawRectangle,
+            drawCircle,
             onPointColorChange,
             onLineColorChange,
             onFillColorChange,

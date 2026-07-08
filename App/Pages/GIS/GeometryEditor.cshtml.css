@@ -25,6 +25,14 @@ html, body, #app { height: 100%; margin: 0; }
     min-width: 36px;
     padding: 0 10px;
 }
+.toolbar-action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+}
+.toolbar-action-btn i {
+    font-size: 13px;
+}
 .draw-tool-tip {
     display: inline-flex;
 }
@@ -166,4 +174,14 @@ html, body, #app { height: 100%; margin: 0; }
 }
 .map-context-menu .menu-item.danger {
     color: #dc2626;
+}
+.geometry-reference-marker {
+    width: 26px;
+    height: 38px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 44'%3E%3Cpath fill='%23ef4444' d='M16 2C8.82 2 3 7.82 3 15c0 9.79 11.28 24.89 12.56 26.58a.56.56 0 0 0 .88 0C17.72 39.89 29 24.79 29 15 29 7.82 23.18 2 16 2z'/%3E%3Ccircle cx='16' cy='15' r='5.2' fill='%23ffffff'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    filter: drop-shadow(0 2px 5px rgba(15, 23, 42, 0.35));
+    pointer-events: none;
 }

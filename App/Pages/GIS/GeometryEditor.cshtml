@@ -28,7 +28,7 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <script src="/gis/maphelper.js?v=2.8"></script>
+    <script src="/gis/maphelper.js?v=3.1"></script>
     <link rel="stylesheet" href="~/Pages/GIS/GeometryEditor.cshtml.css?v=2.8" asp-append-version="true" />
 }
 
@@ -86,6 +86,16 @@
                         </el-button>
                     </span>
                 </el-tooltip>
+                <el-tooltip placement="bottom" content="绘制圆形：点击圆心，再点击半径位置完成，并弹出标签输入">
+                    <span class="draw-tool-tip">
+                        <el-button type="primary" plain class="draw-tool-btn" :class="{ 'is-active': activeTool === 'circle' }" @@click="drawCircle">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="7"></circle>
+                                <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"></circle>
+                            </svg>
+                        </el-button>
+                    </span>
+                </el-tooltip>
                 <span class="style-label">点色</span>
                 <el-color-picker class="style-color-picker" v-model="pointColor" @@change="onPointColorChange" size="small" :show-alpha="false"></el-color-picker>
                 <span class="style-label">线色</span>
@@ -108,10 +118,34 @@
                         <span class="opacity-pop-text">{{ fillOpacityPercent }}%</span>
                     </div>
                 </span>
-                <el-button type="primary" plain @@click="openPropsDrawer">属性</el-button>
-                <el-button type="warning" @@click="removeSelected">删除</el-button>
-                <el-button type="danger" @@click="clearAll">清空</el-button>
-                <el-button type="primary" @@click="confirmGeometry">保存</el-button>
+                <el-tooltip placement="bottom" content="属性">
+                    <span class="draw-tool-tip">
+                        <el-button type="primary" plain circle class="toolbar-action-btn" @@click="openPropsDrawer">
+                            <i class="fa-regular fa-rectangle-list"></i>
+                        </el-button>
+                    </span>
+                </el-tooltip>
+                <el-tooltip placement="bottom" content="删除选中">
+                    <span class="draw-tool-tip">
+                        <el-button type="warning" circle class="toolbar-action-btn" @@click="removeSelected">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </el-button>
+                    </span>
+                </el-tooltip>
+                <el-tooltip placement="bottom" content="清空全部">
+                    <span class="draw-tool-tip">
+                        <el-button type="danger" circle class="toolbar-action-btn" @@click="clearAll">
+                            <i class="fa-solid fa-broom"></i>
+                        </el-button>
+                    </span>
+                </el-tooltip>
+                <el-tooltip placement="bottom" content="保存">
+                    <span class="draw-tool-tip">
+                        <el-button type="primary" circle class="toolbar-action-btn" @@click="confirmGeometry">
+                            <i class="fa-regular fa-floppy-disk"></i>
+                        </el-button>
+                    </span>
+                </el-tooltip>
             </div>
         </div>
 
@@ -138,5 +172,5 @@
             initialZoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
         };
     </script>
-    <script src="~/Pages/GIS/GeometryEditor.cshtml.js?v=2.9" asp-append-version="true"></script>
+    <script src="~/Pages/GIS/GeometryEditor.cshtml.js?v=3.1" asp-append-version="true"></script>
 }

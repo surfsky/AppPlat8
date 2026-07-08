@@ -326,6 +326,10 @@ export class EleForm {
                 headers: { 'RequestVerificationToken': EleManager.getCsrfToken() }
             });
             if (res && (res.data && (res.data.code === 0 || res.data.code === '0'))) {
+                const payload = res.data.data;
+                if (payload && typeof payload === 'object' && payload.command) {
+                    EleManager.executeServerCommand(payload);
+                }
                 this.success.value = res.data.msg || '操作成功';
                 EleManager.showSuccess(res.data.msg || '操作成功');
             } else {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Text.Json;
+using App.API;
 using App.DAL;
 using App.DAL.GIS;
 using App.Entities;
@@ -30,7 +31,7 @@ namespace App.Pages.GIS
         public JsonResult OnPostRefreshMenuData([FromBody] RefreshMenuDataReq req)
         {
             var menuId = req?.MenuId;
-            var (okCount, failCount) = GisApi.RefreshStats(menuId);
+            var (okCount, failCount) = RefreshMenuStats(menuId);
             var menuFixCnt = GisMenu.FixAll();
 
             return BuildResult(0, "刷新完成", new
@@ -92,64 +93,127 @@ namespace App.Pages.GIS
             return new JsonResult(new { code = 0, data = list });
         }
 
-        public JsonResult OnGetGeometryLayerData(long? menuId)
+        public JsonResult OnGetGeometryLayerData(long? menuId, bool? isVisible = null)
         {
-            var query = GisGeometry.Search(menuId: menuId, isValid: true);  // 当前菜单下的有效点位（不递归）
-            var list = query
-                .OrderBy(g => g.SortId)
-                .ThenBy(g => g.Id)
-                //.SortPageExport(new Paging { PageSize = int.MaxValue })  // 导出版本，查询时就排序分页
-                .Select(g => new
+            var menus = GetTargetMenus(menuId);
+            var list = new List<object>();
+            foreach (var menu in menus)
+            {
+                try
                 {
-                    id = g.Id,
-                    type = g.Type,
-                    menuId = g.MenuId,
-                    name = g.Name,
-                    alias = g.Alias,
-                    sortId = g.SortId,
-                    addr = g.Addr,
-                    gps = g.Gps,
-                    region = g.Region,
-                    url = g.Url,
-                    file = g.File,
-                    geoJson = g.GeoJson,
-                    dataJson = g.DataJson,
-                    icon = g.Menu != null ? g.Menu.Icon : null
-                })
-                .ToList();
+                    var items = Gis.GetMenuGeometryItems(menu.Id, isVisible: isVisible);
+                    list.AddRange(items.Select(BuildGeometryRow));
+                }
+                catch
+                {
+                    // 单个菜单失败不影响整页其它菜单数据
+                }
+            }
 
-            return new JsonResult(new { code = 0, data = list });
+            return new JsonResult(new { code = 0, data = list.OrderBy(t => GetSortId(t)).ThenBy(t => GetId(t)).ToList() });
+        }
+
+        public JsonResult OnGetMenuItems(long menuId, string keyword = null, bool? isVisible = null, int pageIndex = 0, int pageSize = 20)
+        {
+            if (pageSize <= 0) pageSize = 20;
+            if (pageSize > 200) pageSize = 200;
+            if (pageIndex < 0) pageIndex = 0;
+
+            var menu = GisMenu.Get(menuId);
+            if (menu == null)
+                return BuildResult(404, "菜单不存在");
+
+            var pi = new Paging { PageIndex = pageIndex, PageSize = pageSize };
+            var list = Gis.GetMenuGeometryItems(menuId, pi, keyword, isVisible)
+                .Select(BuildGeometryRow)
+                .ToList();
+            var mapIds = new List<long>();
+
+            if (menu.DataFrom == GisDataFrom.API)
+            {
+                var total = menu.DataCnt ?? list.Count;
+                pi.SetTotal(total);
+            }
+            else
+            {
+                var query = GisGeometry.Search(menuId: menuId, recursive: true, isVisible: isVisible);
+                if (!string.IsNullOrWhiteSpace(keyword))
+                {
+                    var kw = keyword.Trim();
+                    query = query.Where(t => (t.Name ?? "").Contains(kw) || (t.Alias ?? "").Contains(kw) || (t.Addr ?? "").Contains(kw));
+                }
+                mapIds = query
+                    .OrderBy(t => t.SortId)
+                    .ThenBy(t => t.Id)
+                    .Select(t => t.Id)
+                    .ToList();
+                pi.SetTotal(query.Count());
+            }
+
+            return BuildResult(0, "success", new { items = list, pageInfo = pi, mapIds });
         }
 
         public JsonResult OnGetGeometryDetail(long id)
         {
-            var item = GisGeometry.DataSet
+            if (id < 0)
+            {
+                var item = GetApiGeometryDetail(id);
+                if (item == null)
+                    return BuildResult(404, "点位不存在或数据已变化");
+
+                return BuildResult(0, "success", new
+                {
+                    id = item.Id,
+                    rawId = item.RawId,
+                    type = item.Type,
+                    menuId = item.MenuId,
+                    menuName = item.MenuName,
+                    name = item.Name,
+                    alias = item.Alias,
+                    addr = item.Addr,
+                    gps = item.Gps,
+                    region = item.Region,
+                    url = item.Url,
+                    file = item.File,
+                    geoJson = item.GeoJson,
+                    dataJson = item.DataJson,
+                    dataRows = ParseDataRows(item.DataJson),
+                    atts = new List<object>(),
+                    canEdit = false,
+                    isVisible = item.IsVisible,
+                    dataFrom = item.DataFrom
+                });
+            }
+
+            var geo = GisGeometry.DataSet
                 .Include(g => g.Menu)
                 .FirstOrDefault(g => g.Id == id);
-            if (item == null)
+            if (geo == null)
                 return BuildResult(404, "图形不存在或无权访问");
 
             var canEdit = Auth.CheckPower(HttpContext, Power.GisGeometryEdit) && GisGeometry.Get(id) != null;
-            var atts = BuildGeometryAtts(item.UniId);
+            var atts = BuildGeometryAtts(geo.UniId);
 
             return BuildResult(0, "success", new
             {
-                id = item.Id,
-                type = item.Type,
-                menuId = item.MenuId,
-                menuName = item.MenuName,
-                name = item.Name,
-                alias = item.Alias,
-                addr = item.Addr,
-                gps = item.Gps,
-                region = item.Region,
-                url = item.Url,
-                file = item.File,
-                geoJson = item.GeoJson,
-                dataJson = item.DataJson,
-                dataRows = ParseDataRows(item.DataJson),
+                id = geo.Id,
+                type = geo.Type,
+                menuId = geo.MenuId,
+                menuName = geo.MenuName,
+                name = geo.Name,
+                alias = geo.Alias,
+                addr = geo.Addr,
+                gps = geo.Gps,
+                region = geo.Region,
+                url = geo.Url,
+                file = geo.File,
+                geoJson = geo.GeoJson,
+                dataJson = geo.DataJson,
+                dataRows = ParseDataRows(geo.DataJson),
                 atts,
-                canEdit
+                canEdit,
+                isVisible = geo.IsVisible,
+                dataFrom = GisDataFrom.Geometry
             });
         }
 
@@ -221,6 +285,104 @@ namespace App.Pages.GIS
             }
 
             return rows;
+        }
+
+        static List<GisMenu> GetTargetMenus(long? menuId)
+        {
+            if (menuId.HasValue && menuId.Value > 0)
+            {
+                var menu = GisMenu.Get(menuId.Value);
+                return menu == null ? new List<GisMenu>() : new List<GisMenu> { menu };
+            }
+
+            var all = GisMenu.Set.AsNoTracking()
+                .OrderBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .ToList();
+            var parentIds = all.Where(t => t.ParentId.HasValue).Select(t => t.ParentId.Value).ToHashSet();
+            return all.Where(t => !parentIds.Contains(t.Id)).ToList();
+        }
+
+        static object BuildGeometryRow(GeometryItem item)
+        {
+            return new
+            {
+                id = item.Id,
+                rawId = item.RawId,
+                type = item.Type,
+                menuId = item.MenuId,
+                name = item.Name,
+                alias = item.Alias,
+                sortId = item.SortId,
+                addr = item.Addr,
+                gps = item.Gps,
+                region = item.Region,
+                url = item.Url,
+                file = item.File,
+                geoJson = item.GeoJson,
+                dataJson = item.DataJson,
+                isVisible = item.IsVisible,
+                icon = item.Icon,
+                menuName = item.MenuName,
+                dataFrom = item.DataFrom
+            };
+        }
+
+        static int GetSortId(object row)
+        {
+            var prop = row.GetType().GetProperty("sortId");
+            return prop == null ? 0 : Convert.ToInt32(prop.GetValue(row) ?? 0);
+        }
+
+        static long GetId(object row)
+        {
+            var prop = row.GetType().GetProperty("id");
+            return prop == null ? 0 : Convert.ToInt64(prop.GetValue(row) ?? 0);
+        }
+
+        static GeometryItem GetApiGeometryDetail(long id)
+        {
+            var apiId = Math.Abs(id);
+            var menuId = apiId / 1_000_000_000L;
+            var rawId = apiId % 1_000_000_000L;
+            if (menuId <= 0 || rawId <= 0)
+                return null;
+
+            var menu = GisMenu.Get(menuId);
+            if (menu == null)
+                return null;
+
+            var pageSize = menu.DataCnt ?? 200;
+            if (pageSize <= 0) pageSize = 200;
+            if (pageSize > 5000) pageSize = 5000;
+            var list = Gis.GetMenuGeometryItems(menuId, new Paging { PageIndex = 0, PageSize = pageSize }, null);
+            return list.FirstOrDefault(t => t.RawId == rawId || t.Id == id);
+        }
+
+        static (int okCount, int failCount) RefreshMenuStats(long? menuId)
+        {
+            var menus = GetTargetMenus(menuId)
+                .Where(t => t.DataFrom == GisDataFrom.API)
+                .ToList();
+
+            var okCount = 0;
+            var failCount = 0;
+            foreach (var menu in menus)
+            {
+                try
+                {
+                    var list = Gis.GetMenuGeometryItems(menu.Id);
+                    menu.DataCnt = list.Count;
+                    menu.DataDt = DateTime.Now;
+                    menu.Save();
+                    okCount++;
+                }
+                catch
+                {
+                    failCount++;
+                }
+            }
+            return (okCount, failCount);
         }
 
         public class RefreshMenuDataReq

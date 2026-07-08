@@ -94,6 +94,7 @@ namespace App.Pages.GIS
                 file = g.File,
                 geoJson = g.GeoJson,
                 dataJson = g.DataJson,
+                isVisible = g.IsVisible,
                 icon = g.Menu != null ? g.Menu.Icon : null
             };
         }

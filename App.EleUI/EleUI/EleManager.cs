@@ -199,9 +199,9 @@ namespace App.EleUI
             return SetControl(fieldExpress, Data: data, Value: value);
         }
 
-        public IActionResult ToActionResult()
+        public IActionResult ToActionResult(string msg = "success")
         {
-            return EleManager.SetControl(_items);
+            return EleManager.SetControl(_items, msg);
         }
     }
 
@@ -436,7 +436,7 @@ namespace App.EleUI
         }
 
         /// <summary>批量设置控件状态（底层入口）</summary>
-        public static IActionResult SetControl(IEnumerable<ControlPatchArgs> items)
+        public static IActionResult SetControl(IEnumerable<ControlPatchArgs> items, string msg = "success")
         {
             var list = (items ?? Enumerable.Empty<ControlPatchArgs>())
                 .Select(i => new ControlPatchArgs(
@@ -449,7 +449,8 @@ namespace App.EleUI
 
             return BuildClientCommandResult(
                 ClientCommandType.SetControl,
-                new SetControlArgs(list));
+                new SetControlArgs(list),
+                msg);
         }
 
         //--------------------------------------------------------------
