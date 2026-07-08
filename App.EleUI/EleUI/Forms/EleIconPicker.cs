@@ -60,11 +60,11 @@ namespace App.EleUI
                 <div v-if=""{formModel}.{textProp}"" class=""relative inline-block group overflow-visible"">
                      <!-- 图标预览框 -->
                             <div style=""{boxStyle}"" class=""border border-gray-200 rounded flex flex-col justify-center items-center cursor-pointer hover:bg-gray-50 transition-colors""
-                          @click=""openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
+                          @click=""openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
                                 <i :class=""{formModel}.{textProp}"" style=""font-size: {iconFontSize}px; color: #333; margin-bottom: 8px;""></i>
                      </div>
                      <!-- 删除按钮：橙色填充 + 白色线风格 -->
-                     <div class=""absolute -top-3 -right-3 z-20"" @click.stop=""clearSelector('{propName}', '{textProp}')"">
+                     <div class=""absolute -top-3 -right-3 z-20"" @click.stop=""clearPicker('{propName}', '{textProp}')"">
                         <div class=""ele-corner-close-btn"" title=""清除图标"">
                             <el-icon class=""ele-corner-close-elicon""><Close /></el-icon>
                         </div>
@@ -73,7 +73,7 @@ namespace App.EleUI
 
                 <!-- 添加按钮 -->
                  <div v-else style=""{boxStyle}"" class=""border border-dashed border-gray-300 rounded flex flex-col justify-center items-center cursor-pointer hover:border-blue-400 hover:text-blue-400 transition-colors""
-                     @click=""openSelector('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
+                     @click=""openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
                     <el-icon class=""text-3xl text-gray-400""><Plus /></el-icon>
                     <span class=""text-xs text-gray-400 mt-2"">选择图标</span>
                 </div>

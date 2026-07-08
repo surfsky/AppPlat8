@@ -24,6 +24,22 @@ namespace App.Pages.Me
             if (id == null)
                 return BuildResult(401, "请先登录");
 
+            if (Item == null)
+                return BuildResult(400, "参数错误");
+
+            Item.OldPassword = Item.OldPassword?.Trim();
+            Item.NewPassword = Item.NewPassword?.Trim();
+            Item.ConfirmPassword = Item.ConfirmPassword?.Trim();
+
+            if (string.IsNullOrWhiteSpace(Item.OldPassword))
+                return BuildResult(400, "当前密码不能为空！");
+
+            if (string.IsNullOrWhiteSpace(Item.NewPassword))
+                return BuildResult(400, "新密码不能为空！");
+
+            if (string.IsNullOrWhiteSpace(Item.ConfirmPassword))
+                return BuildResult(400, "确认密码不能为空！");
+
             if (Item.NewPassword != Item.ConfirmPassword)
                 return BuildResult(400, "确认密码和新密码不一致！");
 

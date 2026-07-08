@@ -18,6 +18,9 @@ namespace App.Components
         /// <returns>如果密码匹配则返回true，否则返回false</returns>
 		public static bool ComparePasswords(string dbPassword,string userPassword)
 		{
+			if (string.IsNullOrWhiteSpace(dbPassword) || string.IsNullOrEmpty(userPassword))
+				return false;
+
 			byte[] dbPwd = Convert.FromBase64String(dbPassword);
 			byte[] hashedPwd = HashString(userPassword);
 			if(dbPwd.Length ==0 || hashedPwd.Length ==0 || dbPwd.Length !=hashedPwd.Length + saltLength)

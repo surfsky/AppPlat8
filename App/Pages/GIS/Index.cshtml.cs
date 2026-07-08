@@ -256,34 +256,41 @@ namespace App.Pages.GIS
             if (string.IsNullOrWhiteSpace(dataJson))
                 return rows;
 
-            try
+            foreach (var candidate in EnumerateJsonCandidates(dataJson))
             {
-                using var doc = JsonDocument.Parse(dataJson);
-                var root = doc.RootElement;
-                if (root.ValueKind == JsonValueKind.Object)
+                try
                 {
-                    foreach (var p in root.EnumerateObject())
-                        rows.Add(new { key = p.Name, value = FormatElement(p.Value) });
-                }
-                else if (root.ValueKind == JsonValueKind.Array)
-                {
-                    var i = 0;
-                    foreach (var item in root.EnumerateArray())
+                    using var doc = JsonDocument.Parse(candidate);
+                    var root = doc.RootElement;
+                    if (root.ValueKind == JsonValueKind.Object)
                     {
-                        rows.Add(new { key = $"[{i}]", value = FormatElement(item) });
-                        i++;
+                        foreach (var p in root.EnumerateObject())
+                            rows.Add(new { key = p.Name, value = FormatElement(p.Value) });
                     }
+                    else if (root.ValueKind == JsonValueKind.Array)
+                    {
+                        var i = 0;
+                        foreach (var item in root.EnumerateArray())
+                        {
+                            rows.Add(new { key = $"[{i}]", value = FormatElement(item) });
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        rows.Add(new { key = "value", value = FormatElement(root) });
+                    }
+
+                    if (rows.Count > 0)
+                        return rows;
                 }
-                else
+                catch
                 {
-                    rows.Add(new { key = "value", value = FormatElement(root) });
+                    // ignore and continue trying normalized candidates
                 }
-            }
-            catch
-            {
-                rows.Add(new { key = "raw", value = dataJson });
             }
 
+            rows.Add(new { key = "原文", value = dataJson.Trim() });
             return rows;
         }
 
@@ -399,6 +406,88 @@ namespace App.Pages.GIS
                 JsonValueKind.Undefined => string.Empty,
                 _ => JsonSerializer.Serialize(element)
             };
+        }
+
+        private static IEnumerable<string> EnumerateJsonCandidates(string dataJson)
+        {
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var text = (dataJson ?? string.Empty).Trim();
+            for (var i = 0; i < 4 && !string.IsNullOrWhiteSpace(text); i++)
+            {
+                if (seen.Add(text))
+                    yield return text;
+
+                var normalized = NormalizeJsonLikeText(text);
+                if (!string.IsNullOrWhiteSpace(normalized) && seen.Add(normalized))
+                    yield return normalized;
+
+                var next = TryUnwrapJsonText(text);
+                if (string.IsNullOrWhiteSpace(next) || string.Equals(next, text, StringComparison.Ordinal))
+                    yield break;
+
+                text = next;
+            }
+        }
+
+        private static string TryUnwrapJsonText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text ?? string.Empty;
+
+            var normalized = NormalizeJsonLikeText(text);
+            try
+            {
+                if ((normalized.StartsWith("\"") && normalized.EndsWith("\""))
+                    || (normalized.StartsWith("'") && normalized.EndsWith("'")))
+                {
+                    var decoded = JsonSerializer.Deserialize<string>(normalized.Replace('\'', '"'));
+                    if (!string.IsNullOrWhiteSpace(decoded))
+                        return decoded.Trim();
+                }
+            }
+            catch
+            {
+                // ignore and fallback to manual unescape
+            }
+
+            var manual = NormalizeQuotedText(normalized);
+            if (!string.Equals(manual, normalized, StringComparison.Ordinal))
+                return manual;
+
+            var unescaped = normalized.Replace("\\\"", "\"").Replace("\\\\", "\\").Trim();
+            return unescaped;
+        }
+
+        private static string NormalizeJsonLikeText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text ?? string.Empty;
+
+            return text.Trim()
+                .Replace('“', '"')
+                .Replace('”', '"')
+                .Replace('‘', '\'')
+                .Replace('’', '\'');
+        }
+
+        private static string NormalizeQuotedText(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return input ?? string.Empty;
+
+            var text = input.Trim();
+            for (var i = 0; i < 3; i++)
+            {
+                if ((text.StartsWith("\"") && text.EndsWith("\"")) || (text.StartsWith("'") && text.EndsWith("'")))
+                    text = text.Substring(1, text.Length - 2).Trim();
+
+                if (text.StartsWith("\\\"") && text.EndsWith("\\\"") && text.Length >= 4)
+                    text = text.Substring(2, text.Length - 4).Trim();
+                else
+                    break;
+            }
+
+            return text;
         }
 
         private static List<object> BuildGeometryAtts(string uniId)

@@ -38,34 +38,41 @@ namespace App.Pages.GIS
             if (string.IsNullOrWhiteSpace(dataJson))
                 return rows;
 
-            try
+            foreach (var candidate in EnumerateJsonCandidates(dataJson))
             {
-                using var doc = JsonDocument.Parse(dataJson);
-                var root = doc.RootElement;
-                if (root.ValueKind == JsonValueKind.Object)
+                try
                 {
-                    foreach (var p in root.EnumerateObject())
-                        rows.Add((p.Name, FormatToken(p.Value)));
-                }
-                else if (root.ValueKind == JsonValueKind.Array)
-                {
-                    var i = 0;
-                    foreach (var item in root.EnumerateArray())
+                    using var doc = JsonDocument.Parse(candidate);
+                    var root = doc.RootElement;
+                    if (root.ValueKind == JsonValueKind.Object)
                     {
-                        rows.Add(($"[{i}]", FormatToken(item)));
-                        i++;
+                        foreach (var p in root.EnumerateObject())
+                            rows.Add((p.Name, FormatToken(p.Value)));
                     }
+                    else if (root.ValueKind == JsonValueKind.Array)
+                    {
+                        var i = 0;
+                        foreach (var item in root.EnumerateArray())
+                        {
+                            rows.Add(($"[{i}]", FormatToken(item)));
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        rows.Add(("value", FormatToken(root)));
+                    }
+
+                    if (rows.Count > 0)
+                        return rows;
                 }
-                else
+                catch
                 {
-                    rows.Add(("value", FormatToken(root)));
+                    // ignore and continue trying normalized candidates
                 }
-            }
-            catch
-            {
-                rows.Add(("raw", dataJson));
             }
 
+            rows.Add(("原文", dataJson.Trim()));
             return rows;
         }
 
@@ -102,6 +109,67 @@ namespace App.Pages.GIS
             }
 
             return text;
+        }
+
+        private static IEnumerable<string> EnumerateJsonCandidates(string dataJson)
+        {
+            var seen = new HashSet<string>();
+            var text = (dataJson ?? string.Empty).Trim();
+            for (var i = 0; i < 4 && !string.IsNullOrWhiteSpace(text); i++)
+            {
+                if (seen.Add(text))
+                    yield return text;
+
+                var normalized = NormalizeJsonLikeText(text);
+                if (!string.IsNullOrWhiteSpace(normalized) && seen.Add(normalized))
+                    yield return normalized;
+
+                var next = TryUnwrapJsonText(text);
+                if (string.IsNullOrWhiteSpace(next) || string.Equals(next, text))
+                    yield break;
+
+                text = next;
+            }
+        }
+
+        private static string TryUnwrapJsonText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text ?? "";
+
+            var normalized = NormalizeJsonLikeText(text);
+            try
+            {
+                if ((normalized.StartsWith("\"") && normalized.EndsWith("\""))
+                    || (normalized.StartsWith("'") && normalized.EndsWith("'")))
+                {
+                    var decoded = JsonSerializer.Deserialize<string>(normalized.Replace('\'', '"'));
+                    if (!string.IsNullOrWhiteSpace(decoded))
+                        return decoded.Trim();
+                }
+            }
+            catch
+            {
+                // ignore and fallback to manual unescape
+            }
+
+            var manual = NormalizeQuotedText(normalized);
+            if (!string.Equals(manual, normalized))
+                return manual;
+
+            return normalized.Replace("\\\"", "\"").Replace("\\\\", "\\").Trim();
+        }
+
+        private static string NormalizeJsonLikeText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return text ?? "";
+
+            return text.Trim()
+                .Replace('“', '"')
+                .Replace('”', '"')
+                .Replace('‘', '\'')
+                .Replace('’', '\'');
         }
     }
 }
