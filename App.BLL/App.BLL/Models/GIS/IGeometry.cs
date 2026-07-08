@@ -21,6 +21,8 @@ namespace App.DAL.GIS
         string DataJson { get; }
         string Remark { get; }
         bool? IsVisible { get; }
+        double? Scale { get; }
+        string LabelColor { get; }
         string Icon { get; }
         string MenuName { get; }
         GisDataFrom DataFrom { get; }
@@ -47,6 +49,8 @@ namespace App.DAL.GIS
         public string DataJson { get; set; }
         public string Remark { get; set; }
         public bool? IsVisible { get; set; }
+        public double? Scale { get; set; }
+        public string LabelColor { get; set; }
         public string Icon { get; set; }
         public string MenuName { get; set; }
         public GisDataFrom DataFrom { get; set; } = GisDataFrom.Geometry;
@@ -81,6 +85,8 @@ namespace App.DAL.GIS
                 DataJson = DataJson,
                 Remark = Remark,
                 IsVisible = IsVisible,
+                Scale = Scale,
+                LabelColor = LabelColor,
                 Icon = icon.IsNotEmpty() ? icon : Icon,
                 MenuName = menuName.IsNotEmpty() ? menuName : MenuName,
                 DataFrom = DataFrom

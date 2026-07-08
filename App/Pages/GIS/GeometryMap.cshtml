@@ -153,7 +153,7 @@
             font-weight: 600;
             color: #0f172a;
             text-align: center;
-            white-space: nowrap;
+            white-space: pre-line;
             pointer-events: auto;
             text-shadow:
                 -1px -1px 0 #fff,
@@ -595,18 +595,30 @@
                     return [c.lng, c.lat];
                 };
 
+                const getGeoJsonLabel = (fc) => {
+                    if (!fc || !Array.isArray(fc.features) || fc.features.length === 0) return '';
+                    for (let i = 0; i < fc.features.length; i += 1) {
+                        const props = fc.features[i]?.properties || {};
+                        const text = String(props.label ?? props.Label ?? '').trim();
+                        if (text) return text;
+                    }
+                    return '';
+                };
+
                 /**恢复单个图形标签 */
                 const restoreItemLabel = (id) => {
                     const item = items.value.find(x => x.id === id);
                     if (!item || markerMap.has(id)) return;
-                    const center = getLabelCenter(normalizeGeoJson(item.geoJson));
+                    const fc = normalizeGeoJson(item.geoJson);
+                    const labelText = getGeoJsonLabel(fc);
+                    const center = getLabelCenter(fc);
                     labelFeatureMap.set(
                         id,
-                        center
+                        center && labelText
                             ? {
                                 type: 'Feature',
                                 geometry: { type: 'Point', coordinates: center },
-                                properties: { id, label: item.alias || item.name || (`点位${id}`) }
+                                properties: { id, label: labelText }
                             }
                             : null
                     );
@@ -617,14 +629,18 @@
                 const syncEditingLabel = () => {
                     const id = editingId.value;
                     if (!id || markerMap.has(id) || !draw.value) return;
-                    const item = items.value.find(x => x.id === id);
-                    if (!item) return;
-                    const center = getLabelCenter(draw.value.getAll());
-                    if (!center) return;
+                    const fc = draw.value.getAll();
+                    const labelText = getGeoJsonLabel(fc);
+                    const center = getLabelCenter(fc);
+                    if (!center || !labelText) {
+                        labelFeatureMap.set(id, null);
+                        syncTextLabels();
+                        return;
+                    }
                     labelFeatureMap.set(id, {
                         type: 'Feature',
                         geometry: { type: 'Point', coordinates: center },
-                        properties: { id, label: item.alias || item.name || (`点位${id}`) }
+                        properties: { id, label: labelText }
                     });
                     syncTextLabels();
                 };
@@ -849,9 +865,9 @@
                     if (!map.value || !item || !item.id) return;
                     clearRenderedItem(item.id);
 
-                    const labelText = item.alias || item.name || (`点位${item.id}`);
                     const fc = normalizeGeoJson(item.geoJson);
                     const hasGeoJson = !!(fc && Array.isArray(fc.features) && fc.features.length > 0);
+                    const shapeLabelText = getGeoJsonLabel(fc);
                     const gps = parseGps(item.gps);
                     const shouldRenderMarker = !!gps && !hasGeoJson;
                     let polygonLabelLngLat = null;
@@ -859,12 +875,11 @@
 
                     if (shouldRenderMarker) {
                         polygonLabelLngLat = [gps.lng, gps.lat];
-                        const marker = pointMarkerHelper?.createPointMarker({
+                        const marker = pointMarkerHelper?.createGeometryPointMarker({
                             map: map.value,
+                            item,
                             gps,
                             iconPath: normalizeIcon(item.icon),
-                            labelText,
-                            title: item.name || ('点位#' + item.id),
                             draggable: false,
                             onClick: () => activateItem(item.id)
                         });
@@ -947,11 +962,11 @@
                     itemRenderMap.set(item.id, renderInfo);
                     labelFeatureMap.set(
                         item.id,
-                        !shouldRenderMarker && polygonLabelLngLat
+                        !shouldRenderMarker && polygonLabelLngLat && shapeLabelText
                             ? {
                                 type: 'Feature',
                                 geometry: { type: 'Point', coordinates: polygonLabelLngLat },
-                                properties: { id: item.id, label: labelText }
+                                properties: { id: item.id, label: shapeLabelText }
                             }
                             : null
                     );

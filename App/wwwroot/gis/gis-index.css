@@ -1437,7 +1437,7 @@ gis-panel {
     line-height: 1.35;
     font-weight: 600;
     text-align: center;
-    white-space: nowrap;
+    white-space: pre-line;
     pointer-events: auto;
     text-shadow:
         -1px -1px 0 #fff,

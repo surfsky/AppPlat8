@@ -92,6 +92,15 @@
             <EleInput For="Item.Url" Label="链接" FillRow="false" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
             <EleInput For="Item.Addr" Label="地址" FillRow="true"></EleInput>
             <ElePicker For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-picker datajson-picker" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>
+            <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleLabel Label="样式" FillRow="true"></EleLabel>
+            </div>
+            <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleNumber For="Item.Scale" Label="缩放" Min="0.1" Max="10" Step="0.1" Precision="2"></EleNumber>
+            </div>
+            <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleInput For="Item.LabelColor" Label="色彩" Placeholder="#000000"></EleInput>
+            </div>
 
             <EleLabel Label="更多" FillRow="true"></EleLabel>
             <div class="geo-field-toggle" v-show="!form.type || ['1','点','point','3','文字','text','5','监控','video','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">

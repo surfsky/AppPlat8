@@ -36,6 +36,8 @@ namespace App.Pages.GIS
             {
                 item.MenuId = selectedMenuId;
                 item.IsVisible = true;
+                item.Scale = 1.0;
+                item.LabelColor = "#000000";
                 if (!string.IsNullOrWhiteSpace(gps))
                     item.Gps = gps;
                 if (!string.IsNullOrWhiteSpace(geoJson))
@@ -48,6 +50,11 @@ namespace App.Pages.GIS
                     else if (type == "形状" || type.ToLower() == "shape")
                         item.Type = GeometryType.Shape;
                 }
+            }
+            else
+            {
+                item.Scale = NormalizeScale(item.Scale);
+                item.LabelColor = NormalizeLabelColor(item.LabelColor);
             }
             return BuildResult(0, "success", item);
         }
@@ -87,6 +94,8 @@ namespace App.Pages.GIS
             item.GeoJson = req.GeoJson;
             item.DataJson = req.DataJson;
             item.IsVisible = req.IsVisible != false;
+            item.Scale = NormalizeScale(req.Scale);
+            item.LabelColor = NormalizeLabelColor(req.LabelColor);
             item.Region = NormalizeRegion(req.Region);
             if (string.IsNullOrWhiteSpace(item.Region))
                 item.Region = TryBuildRegionFromGeoJson(req.GeoJson);
@@ -246,6 +255,22 @@ namespace App.Pages.GIS
                 return string.Empty;
 
             return string.Create(CultureInfo.InvariantCulture, $"{minLng:0.######},{maxLat:0.######},{maxLng:0.######},{minLat:0.######}");
+        }
+
+        private static double NormalizeScale(double? scale)
+        {
+            var value = scale.GetValueOrDefault(1d);
+            if (!double.IsFinite(value) || value <= 0)
+                value = 1d;
+            return Math.Max(0.1d, Math.Min(10d, Math.Round(value, 2)));
+        }
+
+        private static string NormalizeLabelColor(string color)
+        {
+            var text = string.IsNullOrWhiteSpace(color) ? "#000000" : color.Trim();
+            if (text.Length == 6 && !text.StartsWith("#", StringComparison.Ordinal))
+                text = "#" + text;
+            return text;
         }
 
         private static string TryBuildRegionFromGeoJson(string geoJson)

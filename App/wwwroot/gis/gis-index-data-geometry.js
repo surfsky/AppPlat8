@@ -287,12 +287,11 @@
                         marker = createFileMarker(item, gps);
                         break;
                     default: {
-                        marker = pointMarkerHelper?.createPointMarker({
+                        marker = pointMarkerHelper?.createGeometryPointMarker({
                             map,
+                            item,
                             gps,
                             iconPath: getGeometryIcon(item),
-                            labelText: item.alias || item.name || `点位${item.id}`,
-                            title: item.name || item.alias || `点位${item.id}`,
                             onClick: () => {
                                 if (!isGeometrySelectable(item?.menuId)) return;
                                 onGeometryMarkerClick(item.id);

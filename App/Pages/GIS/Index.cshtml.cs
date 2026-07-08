@@ -181,6 +181,8 @@ namespace App.Pages.GIS
                     atts = new List<object>(),
                     canEdit = false,
                     isVisible = item.IsVisible,
+                    scale = item.Scale,
+                    labelColor = item.LabelColor,
                     dataFrom = item.DataFrom
                 });
             }
@@ -213,6 +215,8 @@ namespace App.Pages.GIS
                 atts,
                 canEdit,
                 isVisible = geo.IsVisible,
+                scale = geo.Scale,
+                labelColor = geo.LabelColor,
                 dataFrom = GisDataFrom.Geometry
             });
         }
@@ -329,6 +333,8 @@ namespace App.Pages.GIS
                 geoJson = item.GeoJson,
                 dataJson = item.DataJson,
                 isVisible = item.IsVisible,
+                scale = item.Scale,
+                labelColor = item.LabelColor,
                 icon = item.Icon,
                 menuName = item.MenuName,
                 dataFrom = item.DataFrom

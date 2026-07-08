@@ -2331,10 +2331,8 @@
 
         function rowToFeatures(row) {
             var geometryId = row.id;
-            var fallbackName = row.alias || row.name || ('图形' + geometryId);
             var fallbackProperties = {
-                __geometryId: geometryId,
-                __name: fallbackName
+                __geometryId: geometryId
             };
 
             var obj;
@@ -2358,10 +2356,11 @@
             return features.map(function (f) {
                 var props = normalizeProperties(f.properties);
                 props.__geometryId = geometryId;
-                var labelText = props.label || props.name || props.NAME || props.title || props.Title || props.alias || props.Alias;
-                if (labelText === undefined || labelText === null || String(labelText).trim() === '') {
-                    props.label = fallbackName;
+                var labelText = props.label;
+                if ((labelText === undefined || labelText === null || String(labelText).trim() === '') && props.Label !== undefined && props.Label !== null) {
+                    labelText = props.Label;
                 }
+                props.label = labelText === undefined || labelText === null ? '' : String(labelText).trim();
                 return {
                     type: 'Feature',
                     properties: props,
@@ -2433,7 +2432,7 @@
                     source: sourceId,
                     filter: ['any', ['==', ['geometry-type'], 'Point'], ['==', ['geometry-type'], 'MultiPoint'], ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']],
                     layout: {
-                        'text-field': ['coalesce', ['get', 'label'], ['get', 'NAME'], ['get', 'name'], ['get', 'Title'], ['get', 'title'], ['get', 'Alias'], ['get', 'alias'], ['get', '__name'], ''],
+                        'text-field': ['coalesce', ['get', 'label'], ''],
                         'text-size': 14,
                         'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
                         'text-anchor': 'center',
@@ -2457,7 +2456,7 @@
                     filter: ['any', ['==', ['geometry-type'], 'LineString'], ['==', ['geometry-type'], 'MultiLineString']],
                     layout: {
                         'symbol-placement': 'line',
-                        'text-field': ['coalesce', ['get', 'label'], ['get', 'NAME'], ['get', 'name'], ['get', 'Title'], ['get', 'title'], ['get', 'Alias'], ['get', 'alias'], ['get', '__name'], ''],
+                        'text-field': ['coalesce', ['get', 'label'], ''],
                         'text-size': 14,
                         'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
                         'text-keep-upright': true,

@@ -39,6 +39,8 @@ namespace App.DAL.GIS
         [UI("图形数据")]    public string GeoJson { get; set; }
         [UI("扩展数据")]    public string DataJson { get; set; }
         [UI("是否可见")]    public bool? IsVisible { get; set; }
+        [UI("缩放")]        public double? Scale { get; set; } = 1.0;
+        [UI("标签颜色")]    public string LabelColor { get; set; } = "#000000";
         [UI("备注")]        public string Remark { get; set; }
 
         //
@@ -71,6 +73,8 @@ namespace App.DAL.GIS
                 t.File = this.File;
                 t.DataJson = this.DataJson;
                 t.IsVisible = this.IsVisible;
+                t.Scale = this.Scale;
+                t.LabelColor = this.LabelColor;
             });
         }
 
@@ -94,6 +98,8 @@ namespace App.DAL.GIS
                 File,
                 DataJson,
                 IsVisible,
+                Scale,
+                LabelColor,
                 Remark,
                 Icon,
                 DataFrom,
@@ -125,6 +131,8 @@ namespace App.DAL.GIS
                 DataJson = DataJson,
                 Remark = Remark,
                 IsVisible = IsVisible,
+                Scale = Scale,
+                LabelColor = LabelColor,
                 Icon = Icon,
                 MenuName = MenuName,
                 DataFrom = GisDataFrom.Geometry

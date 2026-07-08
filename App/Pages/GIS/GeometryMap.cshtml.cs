@@ -95,6 +95,8 @@ namespace App.Pages.GIS
                 geoJson = g.GeoJson,
                 dataJson = g.DataJson,
                 isVisible = g.IsVisible,
+                scale = g.Scale,
+                labelColor = g.LabelColor,
                 icon = g.Menu != null ? g.Menu.Icon : null
             };
         }

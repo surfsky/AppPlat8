@@ -310,6 +310,8 @@ namespace App.API
                     DataJson = t.DataJson,
                     Remark = t.Remark,
                     IsVisible = t.IsVisible,
+                    Scale = t.Scale,
+                    LabelColor = t.LabelColor,
                     Icon = t.MenuIcon,
                     MenuName = t.MenuName,
                     DataFrom = GisDataFrom.Geometry

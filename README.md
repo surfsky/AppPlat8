@@ -53,7 +53,7 @@
 
 其它
 
-1. 数据库迁移: 运行 `dotnet ef migrations add SiteConfigMapCenter --project App/App.csproj --startup-project App/App.csproj`.
+1. 数据库迁移: 运行 `dotnet ef migrations add GisGeometryStyle --project App/App.csproj --startup-project App/App.csproj`.
 2. 若端口被占用，查找占用 6060 的进程，然后kill
 
 ```bash
@@ -235,13 +235,13 @@ OA
     - [X] 标签数据导入
     - [X] 检查表数据导入
   - [ ] 排查
-    - [x] 排查：清单、详情
-    - [x] 隐患：清单、详情
-    - [x] 任务：清单、详情
-    - [x] 检查表：检查表、标签、检查项
-    - [x] 风险点：清单、详情
+    - [X] 排查：清单、详情
+    - [X] 隐患：清单、详情
+    - [X] 任务：清单、详情
+    - [X] 检查表：检查表、标签、检查项
+    - [X] 风险点：清单、详情
     - [ ] 日常排查流程：
-    - [x] 选取一个企业、点击排查、选择检查任务、选择检查表、显示检查项、填写检查信息、生成隐患记录、提交
+    - [X] 选取一个企业、点击排查、选择检查任务、选择检查表、显示检查项、填写检查信息、生成隐患记录、提交
     - [ ] 查看隐患记录、复查登记
     - [ ] 任务排查流程：
     - [ ] 创建任务，筛选企业、检查表、承接单位
