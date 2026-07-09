@@ -12,6 +12,7 @@
         const bodyId = ctx.bodyId || 'geo-detail-body';
         const endpointBuilder = ctx.endpointBuilder || ((id) => `?handler=GeometryDetail&id=${encodeURIComponent(id)}`);
         let closeTimer = null;
+        let currentDetailId = null;
 
         function getPanel() {
             return document.getElementById(panelId);
@@ -173,8 +174,15 @@
             });
         }
 
+        function buildDetailUrl(id) {
+            const base = endpointBuilder(id);
+            const sep = String(base).includes('?') ? '&' : '?';
+            return `${base}${sep}_ts=${Date.now()}`;
+        }
+
         async function open(id) {
             if (!id) return;
+            currentDetailId = id;
             const panel = getPanel();
             const body = getBody();
             if (!panel || !body) return;
@@ -188,7 +196,7 @@
             body.innerHTML = '正在加载点位信息...';
 
             try {
-                const resp = await fetch(endpointBuilder(id));
+                const resp = await fetch(buildDetailUrl(id), { cache: 'no-store' });
                 if (!resp.ok) {
                     body.innerHTML = `加载失败(${resp.status})`;
                     return;
@@ -209,6 +217,11 @@
             }
         }
 
+        function reload() {
+            if (!currentDetailId) return;
+            return open(currentDetailId);
+        }
+
         function close() {
             const panel = getPanel();
             if (!panel) return;
@@ -223,6 +236,7 @@
 
         return {
             open,
+            reload,
             close,
             renderGeometryDetailHtml,
             escapeHtml

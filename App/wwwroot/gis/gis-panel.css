@@ -44,6 +44,13 @@ gis-panel {
     border-bottom: 1px solid rgba(37, 159, 255, 0.35);
 }
 
+.gis-panel-title-wrap {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+}
+
 .gis-panel-title {
     margin: 0;
     display: inline-flex;
@@ -53,6 +60,13 @@ gis-panel {
     font-size: 18px;
     font-weight: 700;
     letter-spacing: .01em;
+}
+
+.gis-panel-subtitle {
+    color: #93c5fd;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .gis-panel-title::before {

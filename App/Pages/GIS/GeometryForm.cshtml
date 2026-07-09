@@ -86,12 +86,14 @@
             <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreeSelect>
             <EleSelect For="Item.Type" Label="类型" Clearable="true" ></EleSelect>
             <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-            <EleInput For="Item.Alias" Label="别称"></EleInput>
-            <EleSwitch For="Item.IsVisible" Label="是否可见"></EleSwitch>
-            <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
-            <EleInput For="Item.Url" Label="链接" FillRow="false" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
+            <EleInput For="Item.Alias" Label="简称"></EleInput>
             <EleInput For="Item.Addr" Label="地址" FillRow="true"></EleInput>
             <ElePicker For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-picker datajson-picker" PopupUrl="PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>
+
+            <EleInput For="Item.Url" Label="链接" FillRow="true" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
+            <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
+            <EleSwitch For="Item.IsVisible" Label="是否可见"></EleSwitch>
+
             <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
                 <EleLabel Label="样式" FillRow="true"></EleLabel>
             </div>

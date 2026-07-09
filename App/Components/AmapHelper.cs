@@ -151,6 +151,11 @@ namespace App.Components
 
             if (list.Count > 0)
                 return list.Take(12).ToList();
+
+            var exact = GetAddr(name);
+            if (exact != null)
+                return new List<GisAddrItem> { exact };
+
             return new List<GisAddrItem>();
         }
 

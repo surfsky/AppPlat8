@@ -23,7 +23,9 @@ namespace App.Pages.GIS
     public class GeometryImporterModel : AdminModel
     {
         public string TypeTitle { get; set; } = "GIS简单点位";
-        public List<string> ColumnHeaders { get; set; } = new List<string> { "名称(Name)", "别称(Alias)", "GIS菜单ID(MenuId)", "地址(Addr)", "经纬度(Gps)", "备注(Remark)", "是否可见(IsVisible)" };
+        public List<string> ColumnHeaders { get; set; } = new List<string> { "名称(Name)", "别称(Alias)", "菜单ID(MenuId)", "地址(Addr)", "经纬度(Gps)", "备注(Remark)", "是否可见(IsVisible)" };
+        public long? DefaultMenuId { get; set; }
+        public string DefaultCoordType { get; set; } = GisHelper.CoordTypeWgs84;
 
         private static readonly HashSet<string> NameFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "name", "名称" };
         private static readonly HashSet<string> AliasFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "alias", "别称" };
@@ -38,8 +40,10 @@ namespace App.Pages.GIS
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
-        public void OnGet()
+        public void OnGet(long? menuId)
         {
+            DefaultMenuId = menuId;
+            DefaultCoordType = GisHelper.CoordTypeWgs84;
         }
 
         /// <summary>下载模板</summary>
@@ -113,7 +117,7 @@ namespace App.Pages.GIS
         }
 
         /// <summary>执行导入</summary>
-        public IActionResult OnPostImport()
+        public IActionResult OnPostImport(long? menuId, string coordType = null)
         {
             var logs = new List<string>();
             var file = Request?.Form?.Files?.FirstOrDefault();
@@ -122,10 +126,12 @@ namespace App.Pages.GIS
 
             var success = 0;
             var fail = 0;
+            var sourceCoordType = GisHelper.NormalizeCoordType(coordType);
 
             try
             {
                 logs.Add($"开始解析文件: {file.FileName}");
+                logs.Add($"导入源坐标系: {sourceCoordType}，保存时统一转换为 {GisHelper.CoordTypeWgs84}");
                 using var stream = file.OpenReadStream();
                 IWorkbook workbook = WorkbookFactory.Create(stream);
                 ISheet sheet = workbook.GetSheetAt(0);
@@ -159,6 +165,7 @@ namespace App.Pages.GIS
                         {
                             Type = GeometryType.Point,
                             IsVisible = true,
+                            MenuId = menuId,
                             CreatorId = userId,
                             CreateDt = DateTime.Now
                         };
@@ -186,14 +193,12 @@ namespace App.Pages.GIS
                         if (string.IsNullOrWhiteSpace(item.Name))
                             throw new Exception("名称不能为空");
 
-                        // 验证经纬度
+                        // 验证经纬度，并统一转为 WGS84
                         if (!string.IsNullOrEmpty(item.Gps))
                         {
-                            var lngLat = LngLat.Parse(item.Gps);
-                            if (lngLat == null)
-                                throw new Exception($"经纬度格式错误: {item.Gps}");
-                            // 统一转为标准格式
-                            item.Gps = lngLat.ToString();
+                            if (!GisHelper.TryConvertToWgs84(item.Gps, sourceCoordType, out var gpsWgs84, out var error))
+                                throw new Exception(error);
+                            item.Gps = gpsWgs84;
                         }
 
                         item.Save();

@@ -38,7 +38,7 @@
             buildMenuNodes: () => menuApi.buildMenuNodes(),
             renderMenuTree: () => menuApi.renderMenuTree(),
             loadMenus: () => menuApi.loadMenus(),
-            setBatchMenusChecked: menuIds => menuApi.setBatchMenusChecked(menuIds),
+            setBatchMenusChecked: (menuIds, options) => menuApi.setBatchMenusChecked(menuIds, options),
             isMenuZoomVisible: menuApi.isMenuZoomVisible,
             isGeometrySelectable: menuApi.isGeometrySelectable,
             applyGeometryVisibility: () => geometryApi.applyGeometryVisibility(),

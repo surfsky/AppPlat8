@@ -13,6 +13,9 @@ namespace App.Utils.Gis
     /// </summary>
     public class GisHelper
     {
+        public const string CoordTypeWgs84 = "WGS84";
+        public const string CoordTypeGcj02 = "GCJ02";
+        public const string CoordTypeBd09 = "BD09";
 
         public static bool IsInRegion(string gps, string geoRegion)
         {
@@ -46,6 +49,63 @@ namespace App.Utils.Gis
                 && double.TryParse(arr[1], NumberStyles.Float, CultureInfo.InvariantCulture, out lat);
         }
 
+        public static string NormalizeCoordType(string coordType)
+        {
+            var text = (coordType ?? string.Empty)
+                .Trim()
+                .Replace("-", string.Empty)
+                .Replace("_", string.Empty)
+                .Replace(" ", string.Empty)
+                .ToUpperInvariant();
+
+            if (text == "GCJ02" || text == "GCJ" || text == "MARS" || text == "火星坐标")
+                return CoordTypeGcj02;
+
+            if (text == "BD09" || text == "BD" || text == "BAIDU" || text == "百度坐标")
+                return CoordTypeBd09;
+
+            return CoordTypeWgs84;
+        }
+
+        public static LngLat Bd09ToGcj02(double lng, double lat)
+        {
+            const double xPi = Math.PI * 3000.0 / 180.0;
+            var x = lng - 0.0065;
+            var y = lat - 0.006;
+            var z = Math.Sqrt(x * x + y * y) - 0.00002 * Math.Sin(y * xPi);
+            var theta = Math.Atan2(y, x) - 0.000003 * Math.Cos(x * xPi);
+            var gcjLng = z * Math.Cos(theta);
+            var gcjLat = z * Math.Sin(theta);
+            return new LngLat(gcjLng, gcjLat);
+        }
+
+        public static bool TryConvertToWgs84(string gps, string coordType, out string normalizedGps, out string error)
+        {
+            normalizedGps = string.Empty;
+            error = string.Empty;
+
+            var point = LngLat.Parse(gps);
+            if (point == null)
+            {
+                error = $"经纬度格式错误: {gps}";
+                return false;
+            }
+
+            var sourceType = NormalizeCoordType(coordType);
+            LngLat wgs = point;
+            if (sourceType == CoordTypeGcj02)
+            {
+                wgs = Gcj02ToWgs84(point.Lng, point.Lat);
+            }
+            else if (sourceType == CoordTypeBd09)
+            {
+                var gcj = Bd09ToGcj02(point.Lng, point.Lat);
+                wgs = Gcj02ToWgs84(gcj.Lng, gcj.Lat);
+            }
+
+            normalizedGps = string.Create(CultureInfo.InvariantCulture, $"{wgs.Lng:0.######},{wgs.Lat:0.######}");
+            return true;
+        }
 
 
         public static LngLat Gcj02ToWgs84(double lng, double lat)

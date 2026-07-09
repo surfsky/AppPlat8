@@ -117,9 +117,10 @@
             applyGeometryVisibility();
         }
 
-        function setBatchMenusChecked(menuIds) {
+        function setBatchMenusChecked(menuIds, options = {}) {
+            const includeDescendants = options.includeDescendants === true;
             const cache = new Map();
-            const checkedSet = new Set(menuIds.map(Number));
+            const checkedSet = new Set((Array.isArray(menuIds) ? menuIds : []).map(Number).filter(Number.isFinite));
 
             if (state.geometries) {
                 state.geometries.forEach(g => state.geometryVisibleMap.set(g.id, false));
@@ -127,10 +128,12 @@
 
             checkedSet.forEach(menuId => {
                 const node = state.menuNodeMap.get(menuId);
-                if (node) {
-                    const ids = getMenuGeometryIds(node, cache);
-                    ids.forEach(id => state.geometryVisibleMap.set(id, true));
-                }
+                if (!node) return;
+
+                const ids = includeDescendants
+                    ? getMenuGeometryIds(node, cache)
+                    : (state.geometryByMenuId.get(menuId) || []);
+                ids.forEach(id => state.geometryVisibleMap.set(id, true));
             });
 
             applyGeometryVisibility();

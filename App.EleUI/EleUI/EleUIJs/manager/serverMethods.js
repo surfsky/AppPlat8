@@ -48,14 +48,16 @@ export const serverMethods = {
         if (isAlert) {
             return this.ElMessageBox.alert(text, title, {
                 type,
-                confirmButtonText: comfirmButtonText
+                confirmButtonText: comfirmButtonText,
+                zIndex: 6002
             }).then(onConfirm);
         }
 
         return this.ElMessageBox.confirm(text, title, {
             type,
             confirmButtonText: comfirmButtonText,
-            cancelButtonText
+            cancelButtonText,
+            zIndex: 6002
         }).then(onConfirm).catch(onCancel);
     },
 
@@ -115,7 +117,8 @@ export const serverMethods = {
             confirmButtonText: comfirmButtonText,
             cancelButtonText,
             inputPlaceholder,
-            inputValue
+            inputValue,
+            zIndex: 6002
         };
         if (inputPattern) {
             promptOptions.inputPattern = new RegExp(inputPattern);

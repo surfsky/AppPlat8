@@ -3,7 +3,7 @@
 *****************************************************/
 class GisPanelElement extends HTMLElement {
     static get observedAttributes() {
-        return ['title', 'info', 'content', 'width', 'height', 'closable', 'close-label'];
+        return ['title', 'subtitle', 'info', 'content', 'width', 'height', 'closable', 'close-label'];
     }
 
     connectedCallback() {
@@ -91,6 +91,7 @@ class GisPanelElement extends HTMLElement {
 
     render() {
         const title = this.getAttribute('title') || '';
+        const subtitle = this.getAttribute('subtitle') || '';
         const info = this.getAttribute('info') || '';
         const content = this.getAttribute('content') || '';
         const width = this.getAttribute('width') || '900px';
@@ -102,6 +103,7 @@ class GisPanelElement extends HTMLElement {
         this.style.setProperty('--gis-panel-height', height);
 
         const escapedTitle = this.escapeHtml(title);
+        const escapedSubtitle = this.escapeHtml(subtitle);
         const escapedInfo = this.escapeHtml(info);
         const escapedContent = this.escapeHtml(content);
 
@@ -130,7 +132,10 @@ class GisPanelElement extends HTMLElement {
                 <img class="gis-panel-corner bl" src="/gis/bl.svg" alt="" onerror="this.style.display='none'" />
                 <img class="gis-panel-corner br" src="/gis/br.svg" alt="" onerror="this.style.display='none'" />
                 <div class="gis-panel-header">
-                    <h3 class="gis-panel-title">${escapedTitle}</h3>
+                    <div class="gis-panel-title-wrap">
+                        <h3 class="gis-panel-title">${escapedTitle}</h3>
+                        ${escapedSubtitle ? `<span class="gis-panel-subtitle">${escapedSubtitle}</span>` : ''}
+                    </div>
                     ${rightPart}
                 </div>
                 ${tooltipPart}

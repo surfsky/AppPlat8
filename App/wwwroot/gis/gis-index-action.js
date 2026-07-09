@@ -16,6 +16,7 @@
         const onClosePointList = ctx.onClosePointList;
         const onStatsModeChanged = ctx.onStatsModeChanged;
         const onGeometrySelectedChanged = ctx.onGeometrySelectedChanged;
+        const onGeometryEdited = ctx.onGeometryEdited;
         const isGeometrySelectable = ctx.isGeometrySelectable || (() => true);
 
         function toggleStatsMode() {
@@ -266,6 +267,11 @@
                 resizable: true,
                 closeOnClickModal: false,
                 destroyOnClose: true,
+                closeHandler: () => {
+                    if (typeof onGeometryEdited === 'function') {
+                        onGeometryEdited(geometryId);
+                    }
+                },
                 closeAction: 'refreshdata'
             });
         }

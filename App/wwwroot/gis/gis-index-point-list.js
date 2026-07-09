@@ -11,7 +11,6 @@
         const onSelectGeometry = ctx.onSelectGeometry || (() => {});
         const onOpenDetail = ctx.onOpenDetail || (() => {});
         const onLoadMenuItems = ctx.onLoadMenuItems || null;
-        const onRefreshMenuData = ctx.onRefreshMenuData || (async () => ({ code: -1, message: '未实现刷新' }));
         const onItemsChanged = ctx.onItemsChanged || (() => {});
         const onClose = ctx.onClose || (() => {});
         let closeTimer = null;
@@ -121,16 +120,6 @@
             return true;
         }
 
-        function hasCoord(item) {
-            if (!item) return false;
-            if (typeof item.hasCoord === 'boolean') return item.hasCoord;
-            const gps = String(item.gps || '').trim();
-            if (!gps) return false;
-            const parts = gps.replace(/，|；|;/g, ',').split(',').map(x => x.trim()).filter(Boolean);
-            if (parts.length < 2) return false;
-            return Number.isFinite(Number(parts[0])) && Number.isFinite(Number(parts[1]));
-        }
-
         function parseGps(item) {
             if (!item) return null;
             const gps = String(item.gps || '').trim();
@@ -157,34 +146,22 @@
             });
         }
 
+        function buildPanelSubtitle(loadedCount, totalCount) {
+            const loaded = Math.max(0, Number(loadedCount) || 0);
+            const total = Math.max(0, Number(totalCount) || 0);
+            return `已加载 ${loaded} / ${total || loaded} 个点位`;
+        }
+
+        function syncPanelHeader(menuName, loadedCount, totalCount) {
+            const panelComponent = getPanelComponent();
+            if (!panelComponent) return;
+            panelComponent.setAttribute('title', menuName || '点位清单');
+            panelComponent.setAttribute('subtitle', buildPanelSubtitle(loadedCount, totalCount));
+        }
+
         function bindListItemEvents() {
             const body = getBody();
             if (!body) return;
-
-            const refreshBtn = body.querySelector('[data-command="refresh-menu-data"]');
-            if (refreshBtn) {
-                refreshBtn.addEventListener('click', async () => {
-                    const menuId = Number(refreshBtn.getAttribute('data-menu-id'));
-                    refreshBtn.disabled = true;
-                    const oldText = refreshBtn.textContent;
-                    refreshBtn.textContent = '刷新中...';
-                    try {
-                        const res = await onRefreshMenuData(Number.isFinite(menuId) ? menuId : null);
-                        if ((res?.code ?? -1) !== 0) {
-                            const msg = res?.message || res?.msg || '刷新失败';
-                            if (window.EleManager && typeof window.EleManager.showError === 'function') {
-                                window.EleManager.showError(msg);
-                            }
-                            return;
-                        }
-                        currentPageIndex = 0;
-                        await loadItems(true);
-                    } finally {
-                        refreshBtn.disabled = false;
-                        refreshBtn.textContent = oldText;
-                    }
-                });
-            }
 
             const searchBtn = body.querySelector('[data-command="search-menu-items"]');
             const searchInput = body.querySelector('[data-role="point-list-search"]');
@@ -254,6 +231,7 @@
         }
 
         function renderList(menuName, items) {
+            syncPanelHeader(menuName, Array.isArray(items) ? items.length : 0, currentTotal || (Array.isArray(items) ? items.length : 0));
             const body = getBody();
             if (!body) return;
             const visibleOptions = `
@@ -280,7 +258,6 @@
                     const title = item.alias || item.name || `点位${item.id}`;
                     const subtitle = item.name && item.alias && item.name !== item.alias ? item.name : '';
                     const addr = item.addr || '暂无地址';
-                    const gps = item.gps || '无经纬度';
                     const icon = normalizeIconPath(item.icon);
                     const disableClass = item.hasCoord ? '' : ' no-coord';
                     const tip = item.hasCoord ? '点击定位到地图中心' : '该点位缺少经纬度';
@@ -305,17 +282,12 @@
                             </div>
                             ${subtitle ? `<div class="point-list-subtitle">${escapeHtml(subtitle)}</div>` : ''}
                             <div class="point-list-meta">${escapeHtml(addr)}</div>
-                            <div class="point-list-meta">${escapeHtml(gps)}</div>
                         </div>
                     `;
                 })
                 .join('');
 
             body.innerHTML = `
-                <div class="point-list-summary">
-                    <span>${escapeHtml(menuName)} 已加载 ${items.length} / ${currentTotal || items.length} 个点位</span>
-                    <button type="button" class="point-list-refresh-btn" data-command="refresh-menu-data" data-menu-id="${escapeHtml(state.activePointListMenuId ?? '')}" title="刷新接口数据并更新统计">⟳ 刷新</button>
-                </div>
                 <div class="point-list-tools">
                     <input class="point-list-search" data-role="point-list-search" value="${escapeHtml(currentKeyword)}" placeholder="检索名称、地址、坐标" />
                     <select class="point-list-visible" data-role="point-list-visible">${visibleOptions}</select>
@@ -412,8 +384,7 @@
             state.activePointListMenuId = menuNode?.id ?? null;
             state.activePointListMenuName = menuName;
             state.pointListItems = [];
-
-            panelComponent.setAttribute('title', menuName);
+            syncPanelHeader(menuName, 0, currentTotal || items.length);
 
             if (closeTimer) {
                 clearTimeout(closeTimer);
@@ -427,9 +398,13 @@
 
         function close(options) {
             const panel = getPanel();
+            const panelComponent = getPanelComponent();
             if (!panel) return;
             if (!panel.classList.contains('open')) return;
             onClose(options || {});
+            if (panelComponent) {
+                panelComponent.setAttribute('subtitle', '');
+            }
             panel.classList.remove('open');
             panel.classList.add('closing');
             if (closeTimer) clearTimeout(closeTimer);

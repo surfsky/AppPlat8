@@ -32,8 +32,9 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
+                <EleButton Type="Warning" Icon="Refresh" VClick="openCoordBatchDrawer" Visible="@Auth.CheckPower(Power.GisGeometryEdit)">批量修改坐标系</EleButton>
                 <EleButton Type="Success" Icon="Location" NavigateUrl="@mapUrl" Visible="false">地图编辑</EleButton>
-                <EleButton Type="Warning" Icon="Upload" PopupTitle="导入点位" PopupUrl="/GIS/GeometryImporter" >导入</EleButton>
+                <EleButton Type="Warning" Icon="Upload" PopupTitle="导入点位" PopupUrl="@(queryMenuId.IsEmpty() ? "/GIS/GeometryImporter" : $"/GIS/GeometryImporter?menuId={queryMenuId}")" >导入</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
@@ -43,16 +44,45 @@
                 <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.GisGeometryDelete)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Type" Label="类型" Width="100" Sortable="true"></EleColumn>
-            <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="150" Sortable="true"></EleColumn>
-            <EleColumn For="Item.Alias" Label="简称" Width="200"></EleColumn>
+            <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="250" Sortable="true"></EleColumn>
+            <EleColumn For="Item.Alias" Label="简称" Width="150"></EleColumn>
             <EleColumn For="Item.MenuName" Label="所属菜单" Width="160"></EleColumn>
             <EleColumn For="Item.IsVisible" Label="是否可见" Width="100" Format="Switch"></EleColumn>
             <EleColumn For="Item.Addr" Label="地址" MinWidth="220"></EleColumn>
             <EleColumn For="Item.Gps" Label="经纬度" Width="180"></EleColumn>
             <EleColumn For="Item.Url" Label="网址" Width="180"></EleColumn>
             <EleColumn For="Item.File" Label="文件" Width="180"></EleColumn>
+            <EleColumn For="Item.DataJson" Label="属性" Width="220"></EleColumn>
             <EleColumn For="Item.CreatorName" Label="编辑者" Width="100" ></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="100" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
         </Columns>
     </EleTable>
+}
+
+@section script {
+    <script>
+        const userMixin = {
+            methods: {
+                openCoordBatchDrawer() {
+                    const ids = Array.isArray(this.selectedIds?.value) ? this.selectedIds.value : [];
+                    if (ids.length === 0) {
+                        EleManager.showWarning('请先选择要处理的点位');
+                        return;
+                    }
+
+                    const url = '/GIS/GeometryCoordBatch?ids=' + encodeURIComponent(ids.join(','));
+                    EleManager.openDrawer({
+                        title: '批量修改坐标系',
+                        url,
+                        direction: 'rtl',
+                        size: window.innerWidth < 768 ? '100%' : '520px',
+                        resizable: true,
+                        closeOnClickModal: false,
+                        destroyOnClose: true,
+                        closeHandler: () => this.loadData()
+                    });
+                }
+            }
+        };
+    </script>
 }

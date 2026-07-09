@@ -1,0 +1,111 @@
+@page
+@model App.Pages.GIS.GeometryCoordBatchModel
+@{
+    ViewData["Title"] = "批量修改坐标系";
+}
+
+@section body {
+    <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
+        <input type="hidden" v-model="idsCsv" />
+
+        <div class="mb-4 rounded border border-slate-200 p-3 bg-slate-50 text-slate-700 text-sm">
+            <div>已选点位: <span class="font-semibold">@Model.SelectedIds.Count</span> 条</div>
+            <div class="mt-1 text-slate-500">指定当前所选点位的源坐标系，点击“转换为 WGS84”后会统一保存为 WGS84 坐标。</div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 items-end mb-3">
+            <div class="w-[220px]">
+                <div class="text-xs text-slate-500 mb-1">源坐标系</div>
+                <el-select v-model="coordType" class="w-full">
+                    <el-option label="WGS84" value="WGS84"></el-option>
+                    <el-option label="GCJ-02(火星)" value="GCJ02"></el-option>
+                    <el-option label="BD-09(百度)" value="BD09"></el-option>
+                </el-select>
+            </div>
+            <el-button type="primary" @@click="startConvert" :loading="converting" :disabled="!ids.length">转换为WGS84</el-button>
+        </div>
+
+        <div class="mb-3 text-sm text-slate-600">
+            已选ID: <span class="font-medium break-all">{{ idsCsv || '无' }}</span>
+        </div>
+
+        <div class="mb-3">
+            <el-progress :percentage="progress" :status="progressStatus"></el-progress>
+        </div>
+
+        <div class="flex-1 overflow-hidden flex flex-col">
+            <div class="text-sm font-medium mb-2">处理日志:</div>
+            <div class="flex-1 border border-slate-200 rounded p-2 overflow-y-auto bg-slate-50 font-mono text-xs">
+                <div v-for="(log, index) in logs" :key="index" :class="{'text-red-500': log.includes('失败'), 'text-green-600': log.includes('成功')}">
+                    {{ log }}
+                </div>
+                <div v-if="logs.length === 0" class="text-slate-400">等待执行...</div>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    ids: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SelectedIds)),
+                    idsCsv: '@string.Join(",", Model.SelectedIds.Select(x => x.ToString()))',
+                    coordType: '@Model.DefaultCoordType',
+                    converting: false,
+                    progress: 0,
+                    progressStatus: '',
+                    logs: []
+                };
+            },
+            methods: {
+                async startConvert() {
+                    if (!Array.isArray(this.ids) || this.ids.length === 0) {
+                        this.$message.warning('请先选择点位');
+                        return;
+                    }
+
+                    this.converting = true;
+                    this.progress = 10;
+                    this.progressStatus = '';
+                    this.logs = ['准备开始转换...'];
+
+                    try {
+                        const res = await axios.post('?handler=Convert', {
+                            ids: this.ids,
+                            coordType: this.coordType || 'WGS84'
+                        }, {
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+
+                        const data = res.data;
+                        if (data.code === 0) {
+                            this.progress = 100;
+                            this.progressStatus = 'success';
+                            this.logs = (data.data && data.data.logs) ? data.data.logs : [];
+                            this.$message.success(data.msg || '转换成功');
+                        } else {
+                            this.progress = 100;
+                            this.progressStatus = 'exception';
+                            this.logs = (data.data && data.data.logs) ? data.data.logs : [data.msg || '转换失败'];
+                            this.$message.error(data.msg || '转换失败');
+                        }
+                    } catch (err) {
+                        this.progress = 100;
+                        this.progressStatus = 'exception';
+                        const errMsg = err.response?.data?.msg || err.message || '网络请求错误';
+                        this.logs.push('网络请求错误: ' + errMsg);
+                        this.$message.error(errMsg);
+                    } finally {
+                        this.converting = false;
+                    }
+                }
+            }
+        });
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+}

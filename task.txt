@@ -438,11 +438,18 @@ Done
             优化EleForm，可批量编辑，可指定编辑字段，如 CheckObjectForm?id=xxx,xxx,xxx&field=xxx,xxxx,xxx ，采纳
             在CheckObjects页面，增加“批量失效”工具栏按钮
         对象标志：3303830000000535405，看是如何编码的：温州已答复。我们需要创建一个编码方法，并给org设置编码
+    弄个页面，导入各种表格，根据AI对话，梳理出一个展示页面，并固化展示方式；
 
 
 2026.7.8
     gis/index
-        把气象图层（也可叫 MapLayer 图层），也弄得可配置；
+        优化场景GisScene，参照 GisMapStyle ，把相关MapLayer图层（台风、雷达、气压、经纬度这些），也弄得可配置；
+            现在我们区分定义一下， GisSceneMenu 管理的是简单的点位和图形，GisSceneLayer 管理的是具有丰富表现能力的展示图层（如气流、气压等继承自MapLayer的js类）
+            找个record定义图层名称-图层类型的对应关系；
+            实现gis/SceneLayer 实体；
+            在Gis/Scenes 中增加设置图层设置的入口，并实现图层多选页面（实现EleListPicker，接口与EleSelect一致）；
+            优化gis/index 中切换场景逻辑，会自动勾选相关MapLayer并展示对应的图层，如“台风”场景就会自动打开“台风”图层；
+
         增加视图服务图层（如高德地图），也用MapLayer接口实现，点击后切换地图服务源；
         实现gismenu 通过api 获取数据的方式
             实时数据

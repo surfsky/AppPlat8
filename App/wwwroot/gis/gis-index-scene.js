@@ -8,6 +8,8 @@
         const viewApi = ctx.viewApi;
         const dataApi = ctx.dataApi;
         const panelApi = ctx.panelApi;
+        const closeGeometryDetailPanel = ctx.closeGeometryDetailPanel || (() => {});
+        const closePointListPanel = ctx.closePointListPanel || (() => {});
 
         function isTruthyFlag(val) {
             return val === true || val === 'true' || val === 1 || val === '1';
@@ -209,7 +211,17 @@
                     }
 
                     const menuIds = detail.menuIds || detail.MenuIds || [];
-                    dataApi.setBatchMenusChecked(menuIds);
+
+                    // 切场景时先清空旧场景的临时选择和面板状态，再叠加当前场景显式关联的图层。
+                    state.pointListFilterMenuId = null;
+                    state.pointListFilterIds = null;
+                    state.activePointListMenuId = null;
+                    state.activePointListMenuName = '';
+                    state.selectedGeometryId = null;
+                    state.preservedVisibleGeometryIds = new Set();
+                    closeGeometryDetailPanel();
+                    closePointListPanel();
+                    dataApi.setBatchMenusChecked(menuIds, { includeDescendants: false });
 
                     await panelApi.loadPanels(detail.id);
 

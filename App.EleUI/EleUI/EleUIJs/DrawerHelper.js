@@ -34,7 +34,8 @@ export class DrawerHelper {
             closeHandler: null,
             beforeCloseHandler: null,
             serverCloseHandler: '',
-            closeAction: 'none'
+            closeAction: 'none',
+            zIndex: 5000
         };
     }
 
@@ -231,6 +232,7 @@ export class DrawerHelper {
                 showClose: Utils.toBool(merged.showClose, true),
                 showMaximize: Utils.toBool(merged.showMaximize, true),
                 resizable: Utils.toBool(merged.resizable, true),
+                zIndex: Number.isFinite(Number(merged.zIndex)) ? Math.max(2000, Math.round(Number(merged.zIndex))) : 5000,
                 modal: this._instances.length === 0 ? Utils.toBool(merged.modal, true) : false,
                 closeOnClickModal: Utils.toBool(merged.closeOnClickModal, true),
                 destroyOnClose: Utils.toBool(merged.destroyOnClose, false),
@@ -370,6 +372,7 @@ export class DrawerHelper {
     :class="['ele-manager-drawer', state.custom ? 'is-custom-body' : '']"
     v-bind="state.resizable ? { resizable: '' } : {}"
     :direction="state.direction"
+    :z-index="state.zIndex"
     :before-close="state.beforeCloseHandler ? beforeClose : undefined"
     :size="state.size"
     :with-header="state.withHeader"

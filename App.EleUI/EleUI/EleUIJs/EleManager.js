@@ -88,6 +88,7 @@ class EleManagerCore {
                     content: Utils.safeText(args?.content, 2000),
                     url: Utils.safeText(args?.url, 300),
                     size: Utils.safeText(args?.size, 20),
+                    zIndex: Number.isFinite(Number(args?.zIndex)) ? Number(args.zIndex) : undefined,
                     direction: Utils.safeText(args?.direction, 10),
                     showFooter: args?.showFooter,
                     footerButtons: Array.isArray(args?.footerButtons) ? args.footerButtons : undefined,

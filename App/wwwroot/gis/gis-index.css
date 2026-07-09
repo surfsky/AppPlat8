@@ -348,6 +348,9 @@ body.gis-projection-globe #map {
     cursor: pointer;
     box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.35);
     flex: 0 0 auto;
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1;
 }
 .toolbar-btn:hover {
     background: rgba(14, 66, 146, 0.66);
@@ -356,6 +359,16 @@ body.gis-projection-globe #map {
     border-color: rgba(56, 189, 248, 0.78);
     color: #e0f2fe;
     background: rgba(14, 66, 146, 0.78);
+}
+.toolbar-icon-btn {
+    width: 34px;
+    min-width: 34px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
 }
 .toolbar-input {
     width: auto;

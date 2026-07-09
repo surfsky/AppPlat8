@@ -69,7 +69,9 @@
 
     <div class="map-toolbar">
         <input id="address-input" class="toolbar-input" placeholder="搜索地址或经纬度，如：120.62915,27.517297" />
-        <button id="btn-search" class="toolbar-btn">查找</button>
+        <button id="btn-search" class="toolbar-btn toolbar-icon-btn" title="搜索" aria-label="搜索">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
         <div id="address-suggest-list" class="address-suggest-list"></div>
     </div>
 
@@ -182,7 +184,7 @@
             currentProjection: 'mercator',
             is3D: false,
             isAutoRotate: false,
-            toolbarCollapsed: true,
+            toolbarCollapsed: false,
             layerCollapsed: false,
             viewMenuOpen: false,
             statsMode: false,
@@ -273,6 +275,7 @@
             onOpenGeometryDetail: (id) => openGeometryDetailPanel(id),
             onCloseGeometryDetail: () => closeGeometryDetailPanel(),
             onClosePointList: () => closePointListPanel(),
+            onGeometryEdited: () => refreshGeometryViews(),
             onGeometrySelectedChanged: () => syncGeometryPointMarkerVisibility(),
             onStatsModeChanged: () => {
                 setTimeout(() => panelApi.resizeCharts(), 260);
@@ -388,7 +391,9 @@
             map,
             viewApi,
             dataApi,
-            panelApi
+            panelApi,
+            closeGeometryDetailPanel: () => closeGeometryDetailPanel(),
+            closePointListPanel: () => closePointListPanel({ preserveFilter: false })
         });
         const bootstrapApi = GisIndexBootstrap.create({
             map,
@@ -465,7 +470,7 @@
 
             const detailPanel = document.getElementById('geo-detail-panel');
             if (detailPanel && detailPanel.classList.contains('open') && state.selectedGeometryId) {
-                detailApi.open(state.selectedGeometryId);
+                detailApi.reload();
             }
 
             const pointListPanel = document.getElementById('geo-point-list-panel');
