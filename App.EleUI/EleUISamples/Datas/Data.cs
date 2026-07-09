@@ -37,6 +37,8 @@ namespace App.Pages.EleUISamples
         [Display(Name = "单选(Radio)")]       public string Gender { get; set; }
         [Display(Name = "下拉(Select)")]      public string City { get; set; }
         [Display(Name = "多选(MultiSelect)")] public List<string> Types { get; set; }
+        [Display(Name = "抽屉单选(ListPicker)")] public string ListCity { get; set; }
+        [Display(Name = "抽屉多选(ListPicker)")] public List<long> ListRoleIds { get; set; }
         [Display(Name = "多行文本")]           public string Description { get; set; }
         [Display(Name = "图片")]               public string Photo { get; set; }
         [Display(Name = "多图片")]             public List<string> Photos { get; set; }

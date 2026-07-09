@@ -10,6 +10,9 @@ namespace App.DAL.GIS
     /// <summary>GIS 场景样式</summary>
     public record GisMapStyle(string Name, string Path);
 
+    /// <summary>GIS 场景展示图层定义</summary>
+    public record GisSceneLayerDef(string Name, string Title, string LayerType);
+
     /// <summary>GIS 地图投影</summary>
     public enum GisMapProjection
     {
@@ -35,6 +38,22 @@ namespace App.DAL.GIS
             //new("Navigation", "mapbox://styles/mapbox/navigation-v1"),  // 导航。没看出和outdoors的区别
         };
 
+        public static List<GisSceneLayerDef> Layers = new List<GisSceneLayerDef>
+        {
+            new("typhoon", "台风", "TyphoonLayer"),
+            new("radar", "雷达图", "RadarLayer"),
+            new("satellite", "卫星云图", "SatelliteFallbackLayer"),
+            new("satelliteWorld", "红外云图", "SatelliteWorldMosaicLayer"),
+            new("pressure", "气压", "PressureLayer"),
+            new("wind", "气流", "WindLayer"),
+            new("cityWeather", "城市综合天气", "CityWeatherLayer"),
+            new("cityTemp", "城市温度", "CityTempLayer"),
+            new("cityHumidity", "城市湿度", "CityHumidityLayer"),
+            new("latlonGrid", "经纬度", "LatLonGridLayer"),
+            new("tidePanel", "海况与潮汐", "TidePanelLayer"),
+            new("adminBoundary", "行政边界", "AdminBoundaryLayer"),
+        };
+
         [UI("名称")] public string Name { get; set; }
         [UI("图标")] public string Icon { get; set; }
         [UI("排序")] public int SortId { get; set; }
@@ -52,6 +71,7 @@ namespace App.DAL.GIS
 
         public virtual List<GisSceneMenu> SceneMenus { get; set; }
         public virtual List<GisScenePanel> ScenePanels { get; set; }
+        public virtual List<GisSceneLayer> SceneLayers { get; set; }
 
         public override object Export(ExportMode type = ExportMode.Normal)
         {

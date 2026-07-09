@@ -19,19 +19,19 @@ import { TyphoonLayer } from "./overlay/layers/TyphoonLayer.js?v=2";
 
 /**Cloud 图层配置 */
 const layerDefs = [
-  { name: "typhoon", title: "台风", infoId: "typhoonInfo" },
-  { name: "radar", title: "雷达图", infoId: "radarTime" },
+  { name: "typhoon", title: "台风", layerType: "TyphoonLayer", infoId: "typhoonInfo" },
+  { name: "radar", title: "雷达图", layerType: "RadarLayer", infoId: "radarTime" },
   //{ name: "satelliteLive", title: "卫星云图", infoId: "satelliteLiveTime" },
-  { name: "satellite", title: "卫星云图", infoId: "satelliteTime" },
-  { name: "satelliteWorld", title: "红外云图", infoId: "satelliteWorldTime" },
-  { name: "pressure", title: "气压", infoId: "pressureInfo" },
-  { name: "wind", title: "气流", infoId: "windInfo" },
-  { name: "cityWeather", title: "城市综合天气", infoId: "cityWeatherInfo" },
-  { name: "cityTemp", title: "城市温度", infoId: "cityTempInfo" },
-  { name: "cityHumidity", title: "城市湿度", infoId: "cityHumidityInfo" },
-  { name: "latlonGrid", title: "经纬度", infoId: "gridInfo" },
-  { name: "tidePanel", title: "海况与潮汐", infoId: "tidePanelInfo" },
-  { name: "adminBoundary", title: "行政边界", infoId: "adminBoundaryInfo" },
+  { name: "satellite", title: "卫星云图", layerType: "SatelliteFallbackLayer", infoId: "satelliteTime" },
+  { name: "satelliteWorld", title: "红外云图", layerType: "SatelliteWorldMosaicLayer", infoId: "satelliteWorldTime" },
+  { name: "pressure", title: "气压", layerType: "PressureLayer", infoId: "pressureInfo" },
+  { name: "wind", title: "气流", layerType: "WindLayer", infoId: "windInfo" },
+  { name: "cityWeather", title: "城市综合天气", layerType: "CityWeatherLayer", infoId: "cityWeatherInfo" },
+  { name: "cityTemp", title: "城市温度", layerType: "CityTempLayer", infoId: "cityTempInfo" },
+  { name: "cityHumidity", title: "城市湿度", layerType: "CityHumidityLayer", infoId: "cityHumidityInfo" },
+  { name: "latlonGrid", title: "经纬度", layerType: "LatLonGridLayer", infoId: "gridInfo" },
+  { name: "tidePanel", title: "海况与潮汐", layerType: "TidePanelLayer", infoId: "tidePanelInfo" },
+  { name: "adminBoundary", title: "行政边界", layerType: "AdminBoundaryLayer", infoId: "adminBoundaryInfo" },
 ];
 
 /**创建图层实例 */
@@ -113,8 +113,12 @@ function initOverlayManager() {
   window.__gisIndexOverlayApi = {
     manager,
     layers,
+    defs: layerDefs.map(item => ({ ...item })),
     refreshVisible(force = false) {
       return manager.refreshVisible(force);
+    },
+    setActiveLayers(layerNames = []) {
+      return manager.setActiveLayers(layerNames);
     }
   };
 }

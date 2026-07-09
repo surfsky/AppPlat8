@@ -1,0 +1,101 @@
+@page
+@model App.Pages.GIS.SceneLayersModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "场景展示图层";
+}
+
+@section body {
+    <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
+        <div class="mb-3">
+            <el-input v-model="keyword" clearable placeholder="请输入图层名称或类型"></el-input>
+        </div>
+
+        <div class="flex-1 overflow-auto mb-4 bg-white border border-slate-200 rounded">
+            <el-checkbox-group v-model="checkedNames" class="bg-white">
+                <label
+                    v-for="item in filteredLayers"
+                    :key="item.name"
+                    class="flex items-start gap-3 px-4 py-3 border-b border-slate-200 last:border-b-0 cursor-pointer select-none hover:bg-slate-50">
+                    <el-checkbox :label="item.name" class="pt-0.5">
+                        <span></span>
+                    </el-checkbox>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm font-medium text-slate-800 leading-6">{{ item.title }}</div>
+                        <div class="text-xs text-slate-400 leading-5">{{ item.layerType }}</div>
+                    </div>
+                </label>
+            </el-checkbox-group>
+            <div class="py-10">
+                <el-empty v-if="filteredLayers.length === 0" description="暂无匹配图层"></el-empty>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+            <el-button type="primary" @@click="save" :loading="saving">保存</el-button>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    keyword: '',
+                    layers: [],
+                    checkedNames: [],
+                    saving: false
+                };
+            },
+            computed: {
+                filteredLayers() {
+                    const keyword = String(this.keyword || '').trim().toLowerCase();
+                    if (!keyword) return this.layers;
+                    return this.layers.filter(item => {
+                        const title = String(item.title || '').toLowerCase();
+                        const type = String(item.layerType || '').toLowerCase();
+                        const name = String(item.name || '').toLowerCase();
+                        return title.includes(keyword) || type.includes(keyword) || name.includes(keyword);
+                    });
+                }
+            },
+            mounted() {
+                this.loadData();
+            },
+            methods: {
+                async loadData() {
+                    const res = await axios.get('?handler=Data&sceneId=@Model.SceneId');
+                    if (res.data.code === 0) {
+                        this.layers = res.data.data.layers || [];
+                        this.checkedNames = res.data.data.checkedNames || [];
+                    }
+                },
+                async save() {
+                    this.saving = true;
+                    try {
+                        const res = await axios.post('?handler=Save&sceneId=@Model.SceneId', this.checkedNames, {
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name=\"__RequestVerificationToken\"]').value
+                            }
+                        });
+                        if (res.data.code === 0) {
+                            this.$message.success('保存成功');
+                            setTimeout(() => {
+                                if (window.top && window.top.manager) window.top.manager.closeDrawer();
+                            }, 500);
+                        } else {
+                            this.$message.error(res.data.msg);
+                        }
+                    } catch {
+                        this.$message.error('请求失败');
+                    } finally {
+                        this.saving = false;
+                    }
+                }
+            }
+        });
+        app.use(ElementPlus);
+        app.mount('#app');
+    </script>
+}

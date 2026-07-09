@@ -58,6 +58,45 @@ export class LayerManager {
   }
 
   /**
+   * 批量设置激活图层
+   * @param {string[]} names 图层名称列表
+   */
+  async setActiveLayers(names = []) {
+    const activeSet = new Set(
+      (Array.isArray(names) ? names : [])
+        .map(name => String(name || "").trim())
+        .filter(Boolean)
+    );
+
+    for (const layer of this.layers) {
+      const toggleEl = document.getElementById(layer.name);
+      const shouldEnable = activeSet.has(layer.name);
+      const wasEnabled = this.runtime.isEnabled(layer.name) || !!layer.visible;
+
+      if (toggleEl) toggleEl.checked = shouldEnable;
+
+      try {
+        if (shouldEnable) {
+          const infoId = this.getInfoId(layer.name);
+          if (infoId) setInfo(infoId, "加载中...");
+          if (!wasEnabled) await layer.show(1);
+          else await layer.refresh(true);
+          this.updateLayerInfo(layer);
+        } else {
+          if (wasEnabled) layer.hide();
+          this.runtime.setLayerInfo(layer.name, "未开启");
+        }
+      } catch (error) {
+        console.error(`设置图层 ${layer.name} 失败`, error);
+        try {
+          layer.lastStatus = false;
+          this.updateLayerInfo(layer);
+        } catch (_e) { }
+      }
+    }
+  }
+
+  /**
    * 切换图层可见性
    * @param {string} name 图层名称
    */

@@ -68,9 +68,11 @@ namespace App.Pages.EleUISamples
                 Gender = "男",
                 City = "Beijing",
                 Types = new List<string> { "A", "C" },
+                ListCity = "Shanghai",
                 Icon = "fas fa-user", // Initial icon value for testing
                 Description = "这是一个测试表单",
-                RoleIds = new List<long> { 1, 3 } // Assign some role IDs for testing
+                RoleIds = new List<long> { 1, 3 }, // Assign some role IDs for testing
+                ListRoleIds = new List<long> { 2, 3 }
             };
             return new JsonResult(new { code = 0, msg = "", data = Item });
         }

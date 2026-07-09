@@ -2,6 +2,7 @@ import { initPickerState, pickerMethods } from './form/pickerMethods.js';
 import { initUploadState, uploadMethods } from './form/uploadMethods.js';
 import { initControlState, controlStateMethods } from './form/controlStateMethods.js';
 import { initTreePickerState, treePickerMethods } from './form/treePickerMethods.js';
+import { listPickerMethods } from './form/listPickerMethods.js';
 
 // Encapsulates common logic for Form pages using Vue 3 + Element Plus
 export class EleForm {
@@ -347,4 +348,4 @@ export class EleForm {
     }
 }
 
-Object.assign(EleForm.prototype, pickerMethods, uploadMethods, controlStateMethods, treePickerMethods);
+Object.assign(EleForm.prototype, pickerMethods, uploadMethods, controlStateMethods, treePickerMethods, listPickerMethods);

@@ -78,6 +78,7 @@ namespace App.API
         {
             var scene = GisScene.Set.AsNoTracking()
                 .Include(t => t.SceneMenus)
+                .Include(t => t.SceneLayers)
                 .Include(t => t.ScenePanels)
                 .FirstOrDefault(t => t.Id == id);
             
@@ -96,6 +97,7 @@ namespace App.API
                 scene.MapStyle,
                 scene.MapProjection,
                 menuIds = scene.SceneMenus.Select(m => m.MenuId).ToList(),
+                layerNames = scene.SceneLayers.Select(m => m.LayerName).ToList(),
                 panelIds = scene.ScenePanels.Select(p => p.PanelId).ToList()
             }.ToResult();
         }

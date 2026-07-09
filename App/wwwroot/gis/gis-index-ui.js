@@ -212,7 +212,10 @@
             const btn = document.createElement('button');
             btn.className = 'view-menu-item' + (state.currentSceneId === scene.id ? ' active' : '');
             btn.innerHTML = (scene.icon ? `<i class="${scene.icon}"></i>` : '') + `<span>${scene.name}</span>`;
-            btn.onclick = () => onSelect(scene);
+            btn.onclick = () => {
+                closeSceneMenu(state);
+                onSelect(scene);
+            };
             menu.appendChild(btn);
         });
     }

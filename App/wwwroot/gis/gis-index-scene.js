@@ -211,6 +211,7 @@
                     }
 
                     const menuIds = detail.menuIds || detail.MenuIds || [];
+                    const layerNames = detail.layerNames || detail.LayerNames || [];
 
                     // 切场景时先清空旧场景的临时选择和面板状态，再叠加当前场景显式关联的图层。
                     state.pointListFilterMenuId = null;
@@ -222,6 +223,11 @@
                     closeGeometryDetailPanel();
                     closePointListPanel();
                     dataApi.setBatchMenusChecked(menuIds, { includeDescendants: false });
+
+                    const overlayApi = window.__gisIndexOverlayApi;
+                    if (overlayApi && typeof overlayApi.setActiveLayers === 'function') {
+                        await overlayApi.setActiveLayers(layerNames);
+                    }
 
                     await panelApi.loadPanels(detail.id);
 
