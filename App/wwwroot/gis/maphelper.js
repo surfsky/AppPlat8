@@ -969,7 +969,11 @@
                     map.setLayoutProperty(layer.id, 'text-field', [
                         'coalesce',
                         ['get', 'name_zh-Hans'],
+                        ['get', 'name_zh-Hans-CN'],
                         ['get', 'name_zh'],
+                        ['get', 'name_zh_CN'],
+                        ['get', 'name_zh_TW'],
+                        ['get', 'local_name'],
                         ['get', 'name'],
                         ['get', 'NAME'],
                         ''

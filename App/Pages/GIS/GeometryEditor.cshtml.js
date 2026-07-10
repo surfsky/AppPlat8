@@ -72,7 +72,11 @@ createApp({
         })();
         const isViewMode = pageMode === 'view' || pageMode === 'readonly' || pageMode === 'read';
 
-        const getManager = () => window.EleManager || ((window.top && window.top.EleManager) ? window.top.EleManager : null);
+        const getManager = () => {
+            if (window.top && window.top.EleManager) return window.top.EleManager;
+            if (window.parent && window.parent !== window && window.parent.EleManager) return window.parent.EleManager;
+            return window.EleManager || null;
+        };
 
         const showError = (msg) => {
             const manager = getManager();
@@ -288,7 +292,8 @@ createApp({
                     inputValue: initialValue || '',
                     inputPlaceholder: '例如: 龙港大道',
                     confirmButtonText: '确定',
-                    cancelButtonText: '取消'
+                    cancelButtonText: '取消',
+                    zIndex: 9002
                 });
                 return (result && typeof result.value === 'string') ? result.value : '';
             }
@@ -301,7 +306,7 @@ createApp({
             const manager = getManager();
             if (manager && typeof manager.confirm === 'function') {
                 try {
-                    await manager.confirm('标签将被清空，是否继续？', '确认清空');
+                    await manager.confirm('标签将被清空，是否继续？', '确认清空', { zIndex: 9002 });
                     return true;
                 } catch {
                     return false;

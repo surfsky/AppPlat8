@@ -17,7 +17,7 @@
                 :props="defaultProps">
             </el-tree>
         </div>
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-center pt-1">
             <el-button type="primary" @@click="save" :loading="saving">保存</el-button>
         </div>
     </div>
@@ -66,8 +66,8 @@
                         if (res.data.code === 0) {
                             this.$message.success('保存成功');
                             setTimeout(() => {
-                                if (window.top && window.top.manager) window.top.manager.closeDrawer();
-                            }, 500);
+                                this.close();
+                            }, 300);
                         } else {
                             this.$message.error(res.data.msg);
                         }
@@ -78,7 +78,10 @@
                     }
                 },
                 close() {
-                    if (window.top && window.top.manager) window.top.manager.closeDrawer();
+                    const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                    if (manager && typeof manager.closeDrawer === 'function') {
+                        manager.closeDrawer();
+                    }
                 }
             }
         });

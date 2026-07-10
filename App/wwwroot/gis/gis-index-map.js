@@ -13,16 +13,23 @@
             const style = map.getStyle();
             if (!style || !Array.isArray(style.layers)) return;
             style.layers.forEach(layer => {
-                if (layer.type !== 'symbol') return;
+                if (!layer || layer.type !== 'symbol') return;
+                if ((layer.id || '').startsWith('draw-label-')) return;
+                if ((layer.id || '').includes('gl-draw-')) return;
+                if (layer.source && layer.source !== 'composite') return;
                 const textField = map.getLayoutProperty(layer.id, 'text-field');
                 if (!textField) return;
-                if (typeof textField !== 'string') return;
                 try {
                     map.setLayoutProperty(layer.id, 'text-field', [
                         'coalesce',
                         ['get', 'name_zh-Hans'],
+                        ['get', 'name_zh-Hans-CN'],
                         ['get', 'name_zh'],
+                        ['get', 'name_zh_CN'],
+                        ['get', 'name_zh_TW'],
+                        ['get', 'local_name'],
                         ['get', 'name'],
+                        ['get', 'NAME'],
                         ''
                     ]);
                 } catch {

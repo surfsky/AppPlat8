@@ -135,6 +135,25 @@ export class DrawerHelper {
     color: #303133;
 }
 
+.ele-manager-drawer-refresh-btn {
+    border: 0;
+    background: transparent;
+    color: #606266;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ele-manager-drawer-refresh-btn:hover {
+    color: #303133;
+}
+
 .ele-manager-drawer-actions {
     display: inline-flex;
     align-items: center;
@@ -362,6 +381,20 @@ export class DrawerHelper {
                         state.normalSize = state.size || helper.getDefaultSize(hostWindow);
                         state.size = '100%';
                         state.isMaximized = true;
+                    },
+                    reloadFrame() {
+                        if (!state.url) return;
+                        try {
+                            const iframe = hostWindow.document.querySelector(`#${id} iframe[data-ele-drawer-iframe="1"]`);
+                            if (!iframe) return;
+                            try {
+                                iframe.contentWindow?.location?.reload();
+                            } catch {
+                                iframe.src = iframe.src;
+                            }
+                        } catch (error) {
+                            console.error('reload drawer iframe failed:', error);
+                        }
                     }
                 },
 
@@ -388,10 +421,18 @@ export class DrawerHelper {
                 <span>←</span>
             </button>
             <span class="ele-manager-drawer-title">{{ state.title }}</span>
+            <span class="ele-manager-drawer-actions" v-if="state.url">
+                <button class="ele-manager-drawer-refresh-btn" type="button" @click="reloadFrame()" aria-label="Refresh">
+                    <span>↻</span>
+                </button>
+            </span>
         </div>
         <div v-else class="ele-manager-drawer-header">
             <span class="ele-manager-drawer-title">{{ state.title }}</span>
             <span class="ele-manager-drawer-actions">
+                <button v-if="state.url" class="ele-manager-drawer-refresh-btn" type="button" @click="reloadFrame()" aria-label="Refresh">
+                    <span>↻</span>
+                </button>
                 <button v-if="state.showMaximize" class="ele-manager-drawer-max-btn" type="button" @click="toggleMaximize()" :aria-label="state.isMaximized ? 'Restore' : 'Maximize'">
                     <span>{{ state.isMaximized ? '❐' : '□' }}</span>
                 </button>
@@ -405,6 +446,7 @@ export class DrawerHelper {
     <iframe
         v-if="state.url"
         :src="state.url"
+        data-ele-drawer-iframe="1"
         style="width:100%;height:100%;border:0;min-height:280px;"
     ></iframe>
     <div v-else-if="state.custom" :id="state.bodyId" :class="['ele-manager-drawer-body-host', state.bodyClass]"></div>
