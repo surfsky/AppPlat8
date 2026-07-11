@@ -330,6 +330,12 @@ body.gis-projection-globe #map {
     color: #93c5fd;
     text-align: right;
     white-space: nowrap;
+    max-width: 92px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.view-layer-info[title] {
+    cursor: help;
 }
 
 
@@ -937,74 +943,54 @@ gis-panel {
 .point-list-wrap {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
 }
 .point-list-item {
     width: 100%;
-    border: 1px solid rgba(147, 197, 253, 0.26);
-    border-radius: 8px;
-    background: rgba(15, 23, 42, 0.35);
+    border: none;
+    border-bottom: 1px solid rgba(147, 197, 253, 0.18);
+    border-radius: 0;
+    background: transparent;
     color: #e2e8f0;
-    padding: 8px 10px;
+    padding: 10px 2px 10px 0;
     text-align: left;
     cursor: pointer;
 }
 .point-list-item:hover {
-    border-color: rgba(56, 189, 248, 0.72);
-    background: rgba(30, 58, 138, 0.45);
+    background: rgba(255, 255, 255, 0.04);
 }
 .point-list-item.no-coord {
     opacity: 0.62;
 }
 .point-list-item.no-coord:hover {
-    border-color: rgba(147, 197, 253, 0.26);
-    background: rgba(15, 23, 42, 0.35);
+    background: transparent;
+}
+.point-list-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.point-list-no {
+    flex: 0 0 38px;
+    color: #93c5fd;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: right;
+    padding-top: 1px;
+}
+.point-list-texts {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
 }
 .point-list-title-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-}
-.point-list-title-ops {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    flex: 0 0 auto;
-}
-.point-list-title-main {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
-.point-list-icon-wrap {
-    width: 18px;
-    height: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-}
-.point-list-icon {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-    filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.35));
-}
-.point-list-icon-fallback {
-    width: 9px;
-    height: 9px;
-    border-radius: 999px;
-    background: #60a5fa;
-    border: 1px solid rgba(255, 255, 255, 0.85);
-}
-.point-list-icon-wrap.no-icon .point-list-icon-fallback,
-.point-list-icon-wrap.img-error .point-list-icon-fallback {
-    display: inline-block;
-}
-.point-list-icon-wrap .point-list-icon-fallback {
-    display: none;
+    gap: 10px;
 }
 .point-list-title {
     font-size: 14px;
@@ -1015,16 +1001,12 @@ gis-panel {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.point-list-id {
-    font-size: 11px;
-    color: #93c5fd;
-}
 .point-list-detail-btn {
     width: 22px;
     height: 22px;
-    border: 1px solid rgba(147, 197, 253, 0.24);
-    border-radius: 6px;
-    background: rgba(15, 23, 42, 0.38);
+    border: none;
+    border-radius: 999px;
+    background: transparent;
     color: #93c5fd;
     display: inline-flex;
     align-items: center;
@@ -1033,19 +1015,18 @@ gis-panel {
     padding: 0;
 }
 .point-list-detail-btn:hover {
-    border-color: rgba(56, 189, 248, 0.72);
     color: #e2e8f0;
-    background: rgba(30, 58, 138, 0.45);
+    background: rgba(255, 255, 255, 0.06);
 }
 .point-list-subtitle {
-    margin-top: 3px;
     color: #cbd5e1;
     font-size: 12px;
+    line-height: 1.35;
 }
 .point-list-meta {
-    margin-top: 3px;
-    color: #a5b4fc;
+    color: #94a3b8;
     font-size: 12px;
+    line-height: 1.4;
     word-break: break-all;
 }
 .point-list-empty {
@@ -1411,6 +1392,11 @@ gis-panel {
 
 .mapboxgl-ctrl-bottom-right .map-center-ctrl {
     order: 0;
+    cursor: text;
+    white-space: nowrap;
+    pointer-events: auto;
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {

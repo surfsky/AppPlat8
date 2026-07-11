@@ -109,6 +109,20 @@ export const pickerMethods = {
         return '';
     },
 
+    resolvePickerCloseData(payload) {
+        if (!payload || typeof payload !== 'object') return null;
+        if (payload.type === 'ElePicker' || payload.type === 'user-selected') return payload;
+
+        const nested = payload.data;
+        if (!nested || typeof nested !== 'object') return null;
+        if (nested.type === 'ElePicker' || nested.type === 'user-selected') return nested;
+        if (nested.data && typeof nested.data === 'object') {
+            const inner = nested.data;
+            if (inner.type === 'ElePicker' || inner.type === 'user-selected') return inner;
+        }
+        return null;
+    },
+
     appendGeometryReferenceGps(url, propId) {
         if (!url) return url;
         const keyId = this.normalizePickerField(propId);
@@ -168,8 +182,9 @@ export const pickerMethods = {
             closeOnClickModal: false,
             destroyOnClose: true,
             closeHandler: (payload) => {
-                if (payload && payload.data && payload.data.type === 'ElePicker') {
-                    this.handlePickerMessage({ data: payload.data });
+                const pickerData = this.resolvePickerCloseData(payload);
+                if (pickerData) {
+                    this.handlePickerMessage({ data: pickerData }, { force: true });
                     return;
                 }
                 this.pickerVisible.value = false;
@@ -177,9 +192,10 @@ export const pickerMethods = {
         });
     },
 
-    handlePickerMessage(event) {
+    handlePickerMessage(event, options = {}) {
         if (!event.data) return;
 
+        const force = options.force === true;
         const msgType = event.data.type;
         if (msgType !== 'ElePicker' && msgType !== 'user-selected') return;
         const data = event.data.data || event.data;
@@ -190,7 +206,7 @@ export const pickerMethods = {
         else if (data.id) rows = [data];
         else if (data.data && data.data.id) rows = [data.data];
 
-        if (!this.pickerVisible.value) return;
+        if (!force && !this.pickerVisible.value) return;
         const keyId = this.normalizePickerField(this.pickerTargetId.value);
         let keyText = this.normalizePickerField(this.pickerTargetText.value);
         if (!keyText) keyText = keyId;

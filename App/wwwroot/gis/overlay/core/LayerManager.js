@@ -18,9 +18,9 @@ export class LayerManager {
         return !!(el && el.checked);
       },
       getInfoId: name => this.getInfoId(name),
-      setLayerInfo: (name, text) => {
+      setLayerInfo: (name, text, tooltip = "") => {
         const infoId = this.getInfoId(name);
-        if (infoId) setInfo(infoId, text);
+        if (infoId) setInfo(infoId, text, tooltip);
       }
     };
 
@@ -30,7 +30,8 @@ export class LayerManager {
   updateLayerInfo(layer) {
     if (!layer) return;
     const text = typeof layer.buildInfoText === "function" ? layer.buildInfoText() : "已开启";
-    this.runtime.setLayerInfo(layer.name, text);
+    const tooltip = typeof layer.buildInfoTooltip === "function" ? layer.buildInfoTooltip() : "";
+    this.runtime.setLayerInfo(layer.name, text, tooltip);
     if (typeof layer.buildDebugInfo === "function") {
       console.debug("[MapLayerInfo]", layer.buildDebugInfo());
     }
@@ -46,11 +47,13 @@ export class LayerManager {
       if (!force && !layer.shouldRefresh()) continue;
       try {
         await layer.refresh(force);
+        if (typeof layer.clearLastError === "function") layer.clearLastError();
         this.updateLayerInfo(layer);
       } catch (error) {
         console.error(`刷新图层 ${layer.name} 失败`, error);
         try {
-          layer.lastStatus = false;
+          if (typeof layer.setLastError === "function") layer.setLastError(error);
+          else layer.lastStatus = false;
           this.updateLayerInfo(layer);
         } catch (_e) { }
       }
@@ -81,6 +84,7 @@ export class LayerManager {
           if (infoId) setInfo(infoId, "加载中...");
           if (!wasEnabled) await layer.show(1);
           else await layer.refresh(true);
+          if (typeof layer.clearLastError === "function") layer.clearLastError();
           this.updateLayerInfo(layer);
         } else {
           if (wasEnabled) layer.hide();
@@ -89,7 +93,8 @@ export class LayerManager {
       } catch (error) {
         console.error(`设置图层 ${layer.name} 失败`, error);
         try {
-          layer.lastStatus = false;
+          if (typeof layer.setLastError === "function") layer.setLastError(error);
+          else layer.lastStatus = false;
           this.updateLayerInfo(layer);
         } catch (_e) { }
       }
@@ -110,6 +115,7 @@ export class LayerManager {
       if (enabled) {
         if (infoId) setInfo(infoId, "加载中...");
         await layer.show(1);
+        if (typeof layer.clearLastError === "function") layer.clearLastError();
         this.updateLayerInfo(layer);
       } else {
         layer.hide();
@@ -118,7 +124,8 @@ export class LayerManager {
     } catch (error) {
       console.error(`切换图层 ${name} 失败`, error);
       try {
-        layer.lastStatus = false;
+        if (typeof layer.setLastError === "function") layer.setLastError(error);
+        else layer.lastStatus = false;
         this.updateLayerInfo(layer);
       } catch (_e) { }
     }

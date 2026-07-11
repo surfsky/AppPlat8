@@ -41,17 +41,75 @@
         /**创建中心坐标控制按钮*/
         function createCenterCoordControl() {
             let container = null;
+            let lastText = '';
+
+            /**复制文本 */
+            async function copyText(text) {
+                const value = String(text || '').trim();
+                if (!value) return false;
+
+                try {
+                    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                        await navigator.clipboard.writeText(value);
+                        return true;
+                    }
+                } catch {
+                    // ignore and fallback
+                }
+
+                try {
+                    const input = document.createElement('textarea');
+                    input.value = value;
+                    input.setAttribute('readonly', 'readonly');
+                    input.style.position = 'fixed';
+                    input.style.left = '-9999px';
+                    input.style.top = '-9999px';
+                    document.body.appendChild(input);
+                    input.focus();
+                    input.select();
+                    const ok = document.execCommand('copy');
+                    document.body.removeChild(input);
+                    return !!ok;
+                } catch {
+                    return false;
+                }
+            }
+
+            /**显示复制结果 */
+            function showCopyMessage(ok) {
+                const msg = ok ? '坐标已复制' : '复制失败';
+                const manager = window.top?.EleManager || window.EleManager;
+                if (manager && typeof manager.showSuccess === 'function' && ok) {
+                    manager.showSuccess(msg);
+                    return;
+                }
+                if (manager && typeof manager.showWarning === 'function' && !ok) {
+                    manager.showWarning(msg);
+                    return;
+                }
+                if (!ok) console.warn(msg);
+            }
+
             const setText = () => {
                 if (!container) return;
                 const mapCenter = map.getCenter();
                 const mapZoom = map.getZoom().toFixed(2);
-                container.textContent = `${mapZoom}: ${mapCenter.lng.toFixed(6)}， ${mapCenter.lat.toFixed(6)}`;
+                lastText = `${mapZoom}: ${mapCenter.lng.toFixed(6)}， ${mapCenter.lat.toFixed(6)}`;
+                container.textContent = lastText;
+                container.setAttribute('title', '双击复制坐标');
             };
 
             return {
                 onAdd() {
                     container = document.createElement('div');
                     container.className = 'mapboxgl-ctrl map-center-ctrl';
+                    container.setAttribute('aria-label', '地图中心坐标');
+                    container.addEventListener('dblclick', async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const ok = await copyText(lastText);
+                        showCopyMessage(ok);
+                    });
                     setText();
                     return container;
                 },

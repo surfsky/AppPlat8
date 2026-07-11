@@ -16,6 +16,7 @@ export class MapLayer {
     this.dataTimeValue = null;
     this.dataTimeText = "";
     this.infoExtra = "";
+    this.lastErrorMessage = "";
     this.visible = false;
     this.runtime = null;
   }
@@ -45,6 +46,18 @@ export class MapLayer {
 
   setInfoExtra(text) {
     this.infoExtra = String(text || "").trim();
+  }
+
+  setLastError(error) {
+    const msg = error instanceof Error
+      ? error.message
+      : String(error || "").trim();
+    this.lastErrorMessage = msg || "图层加载失败";
+    this.lastStatus = false;
+  }
+
+  clearLastError() {
+    this.lastErrorMessage = "";
   }
 
   formatShortTime(value) {
@@ -111,6 +124,7 @@ export class MapLayer {
       dataInterval: this.getDataIntervalDisplay(),
       autoRefresh: this.formatAutoRefreshFrequency(),
       extra: this.infoExtra || "",
+      error: this.lastErrorMessage || "",
       lastRefresh: this.formatLocalTime(this.lastTime)
     };
   }
@@ -126,6 +140,19 @@ export class MapLayer {
     return parts.length ? parts.join(" | ") : "已开启";
   }
 
+  buildInfoTooltip() {
+    if (!this.visible) return "";
+    if (this.lastStatus === false) return this.lastErrorMessage || "图层加载失败";
+
+    const parts = [];
+    const timeText = this.getDataTimeDisplay();
+    if (timeText) parts.push(`数据时间: ${timeText}`);
+    const interval = this.getDataIntervalDisplay();
+    if (interval) parts.push(`更新频率: ${interval}`);
+    if (this.infoExtra) parts.push(this.infoExtra);
+    return parts.join("\n");
+  }
+
   /**
    * 
    * @param {*} opacity 
@@ -133,6 +160,7 @@ export class MapLayer {
    */
   async show(opacity = 1) {
     this.visible = true;
+    this.clearLastError();
     this.setOpacity(opacity);
     const ok = await this.refresh(true);
     this.lastStatus = ok;
@@ -142,6 +170,7 @@ export class MapLayer {
 
   hide() {
     this.visible = false;
+    this.clearLastError();
     return true;
   }
 
@@ -156,6 +185,7 @@ export class MapLayer {
 
   async refresh(_force = false) {
     this.lastTime = Date.now();
+    this.clearLastError();
     this.lastStatus = true;
     return true;
   }

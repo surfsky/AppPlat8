@@ -61,9 +61,13 @@ export function addOrUpdateGeoJsonSource(map, sourceId, data) {
   else src.setData(data);
 }
 
-export function setInfo(id, text) {
+export function setInfo(id, text, tooltip = "") {
   const el = document.getElementById(id);
-  if (el) el.innerText = text;
+  if (!el) return;
+  el.innerText = text;
+  const title = String(tooltip || "").trim();
+  if (title) el.setAttribute("title", title);
+  else el.removeAttribute("title");
 }
 
 export function chunkArray(arr, size) {

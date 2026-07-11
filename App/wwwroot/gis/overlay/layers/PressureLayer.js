@@ -418,16 +418,56 @@ export class PressureLayer extends MapLayer {
     return lines;
   }
 
+  /**使用 Chaikin 算法平滑折线 */
+  smoothLineCoords(coords, iterations = 2) {
+    let points = Array.isArray(coords) ? coords.slice() : [];
+    if (points.length < 3) return points;
+
+    const times = Math.max(0, Math.min(3, Math.round(Number(iterations) || 0)));
+    for (let n = 0; n < times; n++) {
+      if (points.length < 3) break;
+      const next = [points[0]];
+      for (let i = 0; i < points.length - 1; i++) {
+        const a = points[i];
+        const b = points[i + 1];
+        if (!Array.isArray(a) || !Array.isArray(b)) continue;
+        const q = [
+          a[0] * 0.75 + b[0] * 0.25,
+          a[1] * 0.75 + b[1] * 0.25
+        ];
+        const r = [
+          a[0] * 0.25 + b[0] * 0.75,
+          a[1] * 0.25 + b[1] * 0.75
+        ];
+        next.push(q, r);
+      }
+      next.push(points[points.length - 1]);
+      points = next;
+    }
+    return points;
+  }
+
+  /**获取折线平滑次数 */
+  getLineSmoothIterations() {
+    const zoom = Number(this.runtime?.map?.getZoom?.() || 4);
+    if (zoom <= 3.5) return 3;
+    if (zoom <= 5.5) return 2;
+    return 1;
+  }
+
   buildContourGeo(field, step = 2) {
     const features = [];
+    const smoothTimes = this.getLineSmoothIterations();
     for (const level of this.buildLevels(field, step)) {
       const segs = this.marchingSegments(field, level);
       const stitched = this.stitchSegments(segs);
       for (const seg of stitched) {
         if (!Array.isArray(seg) || seg.length < 2) continue;
+        const coords = this.smoothLineCoords(seg.map(p => [p.lon, p.lat]), smoothTimes);
+        if (!Array.isArray(coords) || coords.length < 2) continue;
         features.push({
           type: "Feature",
-          geometry: { type: "LineString", coordinates: seg.map(p => [p.lon, p.lat]) },
+          geometry: { type: "LineString", coordinates: coords },
           properties: { level }
         });
       }
@@ -440,13 +480,10 @@ export class PressureLayer extends MapLayer {
     for (const f of contourGeo.features) {
       const coords = f?.geometry?.coordinates;
       const level = Number(f?.properties?.level);
-      // 过滤掉过短的线段，避免标签过于拥挤
-      if (!Array.isArray(coords) || coords.length < 12 || !Number.isFinite(level)) continue;
-      
-      const mid = coords[Math.floor(coords.length / 2)];
+      if (!Array.isArray(coords) || coords.length < 8 || !Number.isFinite(level)) continue;
       features.push({
         type: "Feature",
-        geometry: { type: "Point", coordinates: [mid[0], mid[1]] },
+        geometry: { type: "LineString", coordinates: coords },
         properties: { text: `${Math.round(level)}hPa` }
       });
     }
@@ -491,19 +528,23 @@ export class PressureLayer extends MapLayer {
         id: this.labelLayerId,
         type: "symbol",
         source: this.labelSourceId,
-        // 移除 minzoom，使其始终显示
         layout: {
+          "symbol-placement": "line-center",
           "text-field": ["get", "text"],
           "text-size": 11,
+          "text-letter-spacing": 0.02,
+          "text-max-angle": 15,
+          "text-rotation-alignment": "map",
+          "text-keep-upright": false,
           "text-allow-overlap": true,
           "text-ignore-placement": true,
-          "text-padding": 2 // 减小间距，让标签更易出现
+          "text-padding": 1
         },
         paint: {
           "text-color": "#ffffff",
-          "text-halo-color": "rgba(2,6,23,.96)",
-          "text-halo-width": 1.35,
-          "text-halo-blur": 0.2,
+          "text-halo-color": "rgba(0,0,0,0.96)",
+          "text-halo-width": 1.9,
+          "text-halo-blur": 0.35,
           "text-opacity": 0.95
         }
       });

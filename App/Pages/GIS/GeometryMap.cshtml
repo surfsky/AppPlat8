@@ -29,6 +29,7 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css" rel="stylesheet" />
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css" rel="stylesheet" />
+    <script src="/gis/gis-geojson-helper.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-point-marker.js?v=@DateTime.Now.Ticks"></script>
     <style>
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
@@ -534,6 +535,14 @@
                 };
 
                 const normalizeGeoJson = (raw) => {
+                    const helper = window.GisGeoJsonHelper;
+                    if (helper && typeof helper.parseGeoJson === 'function') {
+                        const obj = helper.parseGeoJson(raw);
+                        if (!obj || typeof obj !== 'object' || !obj.type) return null;
+                        if (obj.type === 'FeatureCollection') return obj;
+                        if (obj.type === 'Feature') return { type: 'FeatureCollection', features: [obj] };
+                        return { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: obj }] };
+                    }
                     if (!raw) return null;
                     let obj = raw;
                     for (let i = 0; i < 3 && typeof obj === 'string'; i++) {

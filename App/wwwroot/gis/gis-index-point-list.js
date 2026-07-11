@@ -44,40 +44,6 @@
                 .replace(/'/g, '&#39;');
         }
 
-        function normalizeDataUrl(url) {
-            if (!url || typeof url !== 'string') return '';
-            const text = url.trim().replace(/\s+/g, '');
-            if (!text.toLowerCase().startsWith('data:')) return text;
-
-            const commaIndex = text.indexOf(',');
-            if (commaIndex < 0) return text;
-
-            const head = text.substring(0, commaIndex);
-            const payload = text.substring(commaIndex + 1);
-            if (!/;base64/i.test(head)) return text;
-
-            const normalizedPayload = payload
-                .replace(/-/g, '+')
-                .replace(/_/g, '/');
-            const padLength = normalizedPayload.length % 4;
-            const paddedPayload = padLength === 0
-                ? normalizedPayload
-                : normalizedPayload + '='.repeat(4 - padLength);
-
-            return `${head},${paddedPayload}`;
-        }
-
-        function normalizeIconPath(path) {
-            if (!path || typeof path !== 'string') return '';
-            const text = path.trim().replace(/\\/g, '/');
-            if (!text) return '';
-            if (text.startsWith('data:')) return normalizeDataUrl(text);
-            if (text.startsWith('blob:')) return text;
-            if (text.startsWith('~/')) return `/${text.substring(2).replace(/^\/+/, '')}`;
-            if (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('/')) return text;
-            return `/${text.replace(/^\/+/, '')}`;
-        }
-
         function flyToPoint(item) {
             if (!map || !item || !item.hasCoord) return;
             map.flyTo({
@@ -149,7 +115,7 @@
         function buildPanelSubtitle(loadedCount, totalCount) {
             const loaded = Math.max(0, Number(loadedCount) || 0);
             const total = Math.max(0, Number(totalCount) || 0);
-            return `已加载 ${loaded} / ${total || loaded} 个点位`;
+            return `(${loaded}/${total || loaded})`;
         }
 
         function syncPanelHeader(menuName, loadedCount, totalCount) {
@@ -258,30 +224,25 @@
                     const title = item.alias || item.name || `点位${item.id}`;
                     const subtitle = item.name && item.alias && item.name !== item.alias ? item.name : '';
                     const addr = item.addr || '暂无地址';
-                    const icon = normalizeIconPath(item.icon);
                     const disableClass = item.hasCoord ? '' : ' no-coord';
                     const tip = item.hasCoord ? '点击定位到地图中心' : '该点位缺少经纬度';
+                    const seq = escapeHtml(item.seq ?? '');
 
                     return `
                         <div class="point-list-item${disableClass}" data-geometry-id="${item.id}" title="${escapeHtml(tip)}">
-                            <div class="point-list-title-row">
-                                <span class="point-list-title-main">
-                                    <span class="point-list-icon-wrap${icon ? '' : ' no-icon'}">
-                                        ${icon
-                                            ? `<img class="point-list-icon" src="${escapeHtml(icon)}" alt="图标" onerror="this.style.display='none'; this.parentElement && this.parentElement.classList.add('img-error');"><span class="point-list-icon-fallback"></span>`
-                                            : '<span class="point-list-icon-fallback"></span>'}
+                            <div class="point-list-main">
+                                <span class="point-list-no">${seq}</span>
+                                <span class="point-list-texts">
+                                    <span class="point-list-title-row">
+                                        <span class="point-list-title">${escapeHtml(title)}</span>
+                                        <button type="button" class="point-list-detail-btn" data-geometry-id="${item.id}" title="查看详情">
+                                            <i class="fa-regular fa-file-lines"></i>
+                                        </button>
                                     </span>
-                                    <span class="point-list-title">${escapeHtml(title)}</span>
-                                </span>
-                                <span class="point-list-title-ops">
-                                    <button type="button" class="point-list-detail-btn" data-geometry-id="${item.id}" title="查看详情">
-                                        <i class="fa-regular fa-file-lines"></i>
-                                    </button>
-                                    <span class="point-list-id">#${escapeHtml(item.seq ?? '')}</span>
+                                    ${subtitle ? `<span class="point-list-subtitle">${escapeHtml(subtitle)}</span>` : ''}
+                                    <span class="point-list-meta">${escapeHtml(addr)}</span>
                                 </span>
                             </div>
-                            ${subtitle ? `<div class="point-list-subtitle">${escapeHtml(subtitle)}</div>` : ''}
-                            <div class="point-list-meta">${escapeHtml(addr)}</div>
                         </div>
                     `;
                 })

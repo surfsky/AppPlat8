@@ -42,7 +42,7 @@
 #${this.hostId} {
     position: fixed;
     inset: 0;
-    z-index: 80;
+    z-index: 5008;
     pointer-events: none;
 }
 #${this.hostId} .site-mask {

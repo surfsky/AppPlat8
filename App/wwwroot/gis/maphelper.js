@@ -144,7 +144,7 @@
             return isHexColor(v) ? v.trim() : fallback;
         }
 
-        function normalizeProperties(props) {
+        function toPlainObject(props) {
             if (!props) return {};
             if (typeof props === 'object') {
                 try {
@@ -163,6 +163,43 @@
             } catch {
                 return {};
             }
+        }
+
+        function canonicalizeGeometryProperties(obj) {
+            var source = toPlainObject(obj);
+            var result = {};
+
+            Object.keys(source).forEach(function (key) {
+                if (key === 'pointColor' || key === 'lineColor' || key === 'lineWidth' || key === 'fillColor' || key === 'fillOpacity' || key === 'Label') {
+                    return;
+                }
+                result[key] = source[key];
+            });
+
+            if ((result['marker-color'] === undefined || result['marker-color'] === null || String(result['marker-color']).trim() === '') && source.pointColor !== undefined && source.pointColor !== null && String(source.pointColor).trim() !== '') {
+                result['marker-color'] = source.pointColor;
+            }
+            if ((result.stroke === undefined || result.stroke === null || String(result.stroke).trim() === '') && source.lineColor !== undefined && source.lineColor !== null && String(source.lineColor).trim() !== '') {
+                result.stroke = source.lineColor;
+            }
+            if ((result['stroke-width'] === undefined || result['stroke-width'] === null || String(result['stroke-width']).trim() === '') && source.lineWidth !== undefined && source.lineWidth !== null && String(source.lineWidth).trim() !== '') {
+                result['stroke-width'] = source.lineWidth;
+            }
+            if ((result.fill === undefined || result.fill === null || String(result.fill).trim() === '') && source.fillColor !== undefined && source.fillColor !== null && String(source.fillColor).trim() !== '') {
+                result.fill = source.fillColor;
+            }
+            if ((result['fill-opacity'] === undefined || result['fill-opacity'] === null || String(result['fill-opacity']).trim() === '') && source.fillOpacity !== undefined && source.fillOpacity !== null && String(source.fillOpacity).trim() !== '') {
+                result['fill-opacity'] = source.fillOpacity;
+            }
+            if ((result.label === undefined || result.label === null || String(result.label).trim() === '') && source.Label !== undefined && source.Label !== null && String(source.Label).trim() !== '') {
+                result.label = source.Label;
+            }
+
+            return result;
+        }
+
+        function normalizeProperties(props) {
+            return canonicalizeGeometryProperties(props);
         }
 
         function getAllFeatures() {
@@ -190,26 +227,26 @@
 
         function applyPointStyle(featureId, color) {
             setFeaturePropertySafe(featureId, 'marker-color', color);
-            setFeaturePropertySafe(featureId, 'pointColor', color);
+            setFeaturePropertySafe(featureId, 'pointColor', '');
         }
 
         function applyLineStyle(featureId, color, width) {
             setFeaturePropertySafe(featureId, 'stroke', color);
-            setFeaturePropertySafe(featureId, 'lineColor', color);
             setFeaturePropertySafe(featureId, 'stroke-width', width);
-            setFeaturePropertySafe(featureId, 'lineWidth', width);
+            setFeaturePropertySafe(featureId, 'lineColor', '');
+            setFeaturePropertySafe(featureId, 'lineWidth', '');
         }
 
         function applyPolygonStyle(featureId, stroke, fill, width) {
             var opacity = palette.fillOpacityPercent / 100;
             setFeaturePropertySafe(featureId, 'stroke', stroke);
-            setFeaturePropertySafe(featureId, 'lineColor', stroke);
             setFeaturePropertySafe(featureId, 'stroke-width', width);
-            setFeaturePropertySafe(featureId, 'lineWidth', width);
             setFeaturePropertySafe(featureId, 'fill', fill);
-            setFeaturePropertySafe(featureId, 'fillColor', fill);
             setFeaturePropertySafe(featureId, 'fill-opacity', opacity);
-            setFeaturePropertySafe(featureId, 'fillOpacity', opacity);
+            setFeaturePropertySafe(featureId, 'lineColor', '');
+            setFeaturePropertySafe(featureId, 'lineWidth', '');
+            setFeaturePropertySafe(featureId, 'fillColor', '');
+            setFeaturePropertySafe(featureId, 'fillOpacity', '');
         }
 
         function applyStyleToFeature(feature, overwrite) {
@@ -218,15 +255,15 @@
             var type = feature.geometry.type;
 
             if (type === 'Point') {
-                var pExisting = props['marker-color'] || props.pointColor || props.stroke;
+                var pExisting = props['marker-color'] || props.stroke;
                 var pColor = overwrite ? palette.pointColor : normalizeColor(pExisting, palette.pointColor);
                 applyPointStyle(feature.id, pColor);
                 return;
             }
 
             if (type === 'LineString') {
-                var lExisting = props.stroke || props.lineColor;
-                var lWidthExisting = props['stroke-width'] || props.lineWidth;
+                var lExisting = props.stroke;
+                var lWidthExisting = props['stroke-width'];
                 var lColor = overwrite ? palette.lineColor : normalizeColor(lExisting, palette.lineColor);
                 var lWidth = overwrite ? palette.lineWidth : normalizeLineWidth(lWidthExisting, palette.lineWidth);
                 applyLineStyle(feature.id, lColor, lWidth);
@@ -234,9 +271,9 @@
             }
 
             if (type === 'Polygon') {
-                var sExisting = props.stroke || props.lineColor;
-                var fExisting = props.fill || props.fillColor;
-                var sWidthExisting = props['stroke-width'] || props.lineWidth;
+                var sExisting = props.stroke;
+                var fExisting = props.fill;
+                var sWidthExisting = props['stroke-width'];
                 var stroke = overwrite ? palette.lineColor : normalizeColor(sExisting, palette.lineColor);
                 var fill = overwrite ? palette.fillColor : normalizeColor(fExisting, palette.fillColor);
                 var width = overwrite ? palette.lineWidth : normalizeLineWidth(sWidthExisting, palette.lineWidth);
@@ -270,22 +307,21 @@
 
             if (firstPoint) {
                 var pProps = firstPoint.properties || {};
-                var pColor = pProps['marker-color'] || pProps.pointColor || pProps.stroke;
+                var pColor = pProps['marker-color'] || pProps.stroke;
                 if (isHexColor(pColor)) palette.pointColor = pColor;
             }
             if (firstLine) {
                 var lProps = firstLine.properties || {};
-                var lColor = lProps.stroke || lProps.lineColor;
+                var lColor = lProps.stroke;
                 if (isHexColor(lColor)) palette.lineColor = lColor;
-                palette.lineWidth = normalizeLineWidth(lProps['stroke-width'] || lProps.lineWidth, palette.lineWidth);
+                palette.lineWidth = normalizeLineWidth(lProps['stroke-width'], palette.lineWidth);
             }
             if (firstPolygon) {
                 var fProps = firstPolygon.properties || {};
-                var stroke = fProps.stroke || fProps.lineColor;
-                var fill = fProps.fill || fProps.fillColor;
+                var stroke = fProps.stroke;
+                var fill = fProps.fill;
                 var opacity = fProps['fill-opacity'];
-                var width = fProps['stroke-width'] || fProps.lineWidth;
-                if (opacity === undefined || opacity === null) opacity = fProps.fillOpacity;
+                var width = fProps['stroke-width'];
 
                 if (isHexColor(stroke)) palette.lineColor = stroke;
                 if (isHexColor(fill)) palette.fillColor = fill;
@@ -595,35 +631,21 @@
         }
 
         function normalizeRawGeoJson(raw) {
+            if (global.GisGeoJsonHelper && typeof global.GisGeoJsonHelper.normalizeRawGeoJson === 'function') {
+                return global.GisGeoJsonHelper.normalizeRawGeoJson(raw);
+            }
             if (!raw) return '';
             var text = raw.trim();
             if (!text) return '';
-
-            if ((text.startsWith("'") && text.endsWith("'")) || (text.startsWith('"') && text.endsWith('"'))) {
-                text = text.substring(1, text.length - 1).trim();
-            }
-
-            if (text.includes('%7B') || text.includes('%7D') || text.includes('%22')) {
-                try {
-                    text = decodeURIComponent(text);
-                } catch {
-                    // ignore
-                }
-            }
             return text;
         }
 
         function parseInitial(raw) {
             if (!raw) return { features: [] };
             try {
-                var obj = JSON.parse(normalizeRawGeoJson(raw));
-                if (typeof obj === 'string') {
-                    try {
-                        obj = JSON.parse(normalizeRawGeoJson(obj));
-                    } catch {
-                        return { features: [] };
-                    }
-                }
+                var obj = global.GisGeoJsonHelper && typeof global.GisGeoJsonHelper.parseGeoJson === 'function'
+                    ? global.GisGeoJsonHelper.parseGeoJson(raw)
+                    : JSON.parse(normalizeRawGeoJson(raw));
                 if (!obj || !obj.type) return { features: [] };
 
                 if (obj.type === 'FeatureCollection') {
@@ -691,15 +713,15 @@
                 return id.indexOf('vertex') >= 0 && id.indexOf('active') >= 0 && id.indexOf('inactive') < 0;
             }
 
-            var lineColorExpr = ['coalesce', ['get', 'stroke'], ['get', 'lineColor'], palette.lineColor];
-            var lineWidthExpr = ['to-number', ['coalesce', ['get', 'stroke-width'], ['get', 'lineWidth'], palette.lineWidth]];
-            var fillColorExpr = ['coalesce', ['get', 'fill'], ['get', 'fillColor'], palette.fillColor];
-            var fillOpacityExpr = ['to-number', ['coalesce', ['get', 'fill-opacity'], ['get', 'fillOpacity'], palette.fillOpacityPercent / 100]];
+            var lineColorExpr = ['coalesce', ['get', 'stroke'], palette.lineColor];
+            var lineWidthExpr = ['to-number', ['coalesce', ['get', 'stroke-width'], palette.lineWidth]];
+            var fillColorExpr = ['coalesce', ['get', 'fill'], palette.fillColor];
+            var fillOpacityExpr = ['to-number', ['coalesce', ['get', 'fill-opacity'], palette.fillOpacityPercent / 100]];
             var pointColorExpr = [
                 'case',
                 ['==', ['to-string', ['coalesce', ['get', 'active'], false]], 'true'],
                 '#ef4444',
-                ['coalesce', ['get', 'marker-color'], ['get', 'pointColor'], ['get', 'stroke'], palette.pointColor]
+                ['coalesce', ['get', 'marker-color'], ['get', 'stroke'], palette.pointColor]
             ];
 
             layers.forEach(function (layer) {
@@ -1080,6 +1102,51 @@
                 if (String(all[i] && all[i].id) === String(featureId)) return all[i];
             }
             return null;
+        }
+
+        function replaceFeatureProperties(featureId, nextProps) {
+            if (!draw || !featureId) return false;
+
+            var all = getAllFeatures().map(sanitizeFeature).filter(Boolean);
+            if (all.length === 0) return false;
+
+            var targetId = String(featureId);
+            var found = false;
+            var nextFeatures = all.map(function (feature) {
+                if (String(feature && feature.id) !== targetId) return feature;
+                found = true;
+                return {
+                    type: 'Feature',
+                    id: feature.id,
+                    properties: normalizeProperties(nextProps),
+                    geometry: feature.geometry
+                };
+            });
+
+            if (!found) return false;
+
+            var selectedIds = draw && typeof draw.getSelectedIds === 'function'
+                ? (draw.getSelectedIds() || []).map(function (id) { return String(id); })
+                : [];
+
+            all.forEach(function (feature) {
+                if (feature && feature.id !== undefined && feature.id !== null) {
+                    draw.delete(feature.id);
+                }
+            });
+
+            draw.add({ type: 'FeatureCollection', features: nextFeatures });
+
+            var restoreIds = selectedIds.length > 0 ? selectedIds : [targetId];
+            try {
+                draw.changeMode('simple_select', { featureIds: restoreIds });
+            } catch {
+                // ignore selection restore failures
+            }
+
+            lastPickedFeatureId = targetId;
+            refresh();
+            return true;
         }
 
         function enumerateFeatureCoordCandidates(feature) {
@@ -1464,13 +1531,9 @@
                 type: 'Feature',
                 properties: {
                     stroke: palette.lineColor,
-                    lineColor: palette.lineColor,
                     'stroke-width': palette.lineWidth,
-                    lineWidth: palette.lineWidth,
                     fill: palette.fillColor,
-                    fillColor: palette.fillColor,
-                    'fill-opacity': opacity,
-                    fillOpacity: opacity
+                    'fill-opacity': opacity
                 },
                 geometry: {
                     type: 'Polygon',
@@ -1495,11 +1558,9 @@
                         geometryType: 'Polygon',
                         properties: {
                             stroke: palette.lineColor,
-                            lineColor: palette.lineColor,
-                            lineWidth: palette.lineWidth,
+                            'stroke-width': palette.lineWidth,
                             fill: palette.fillColor,
-                            fillColor: palette.fillColor,
-                            fillOpacity: palette.fillOpacityPercent / 100
+                            'fill-opacity': palette.fillOpacityPercent / 100
                         }
                     });
                 } catch {
@@ -1558,13 +1619,9 @@
                 type: 'Feature',
                 properties: {
                     stroke: palette.lineColor,
-                    lineColor: palette.lineColor,
                     'stroke-width': palette.lineWidth,
-                    lineWidth: palette.lineWidth,
                     fill: palette.fillColor,
-                    fillColor: palette.fillColor,
                     'fill-opacity': opacity,
-                    fillOpacity: opacity,
                     shapeType: 'circle',
                     circleCenter: center.join(','),
                     radiusM: Math.round(radiusM)
@@ -1592,11 +1649,9 @@
                         geometryType: 'Polygon',
                         properties: {
                             stroke: palette.lineColor,
-                            lineColor: palette.lineColor,
-                            lineWidth: palette.lineWidth,
+                            'stroke-width': palette.lineWidth,
                             fill: palette.fillColor,
-                            fillColor: palette.fillColor,
-                            fillOpacity: opacity,
+                            'fill-opacity': opacity,
                             shapeType: 'circle',
                             circleCenter: center.join(','),
                             radiusM: Math.round(radiusM)
@@ -2177,9 +2232,11 @@
                 if (!selected || selected.length === 0) return;
                 var text = label === null || label === undefined ? '' : String(label).trim();
                 selected.forEach(function (id) {
-                    setFeaturePropertySafe(id, 'label', text);
+                    var feature = findFeatureById(id);
+                    var nextProps = normalizeProperties(feature && feature.properties);
+                    nextProps.label = text;
+                    replaceFeatureProperties(id, nextProps);
                 });
-                refresh();
                 commitHistorySnapshot(false);
             },
             getSelectedProperties: function () {
@@ -2203,18 +2260,8 @@
 
                 var sanitized = normalizeProperties(nextProps);
                 selected.forEach(function (id) {
-                    var feature = findFeatureById(id);
-                    var existing = normalizeProperties(feature && feature.properties);
-                    Object.keys(existing).forEach(function (k) {
-                        if (!Object.prototype.hasOwnProperty.call(sanitized, k)) {
-                            setFeaturePropertySafe(id, k, '');
-                        }
-                    });
-                    Object.keys(sanitized).forEach(function (k) {
-                        setFeaturePropertySafe(id, k, sanitized[k]);
-                    });
+                    replaceFeatureProperties(id, sanitized);
                 });
-                refresh();
                 commitHistorySnapshot(false);
             },
             canUndo: function () {
@@ -2255,7 +2302,7 @@
 
         var data = { type: 'FeatureCollection', features: [] };
 
-        function normalizeProperties(props) {
+        function toPlainObject(props) {
             if (!props) return {};
             if (typeof props === 'object') {
                 try {
@@ -2276,24 +2323,49 @@
             }
         }
 
-        function normalizeRawGeoJson(raw) {
-            if (!raw || typeof raw !== 'string') return '';
-            var text = raw.trim();
-            if (!text) return '';
+        function canonicalizeGeometryProperties(obj) {
+            var source = toPlainObject(obj);
+            var result = {};
 
-            if ((text.startsWith("'") && text.endsWith("'")) || (text.startsWith('"') && text.endsWith('"'))) {
-                text = text.substring(1, text.length - 1).trim();
-            }
-
-            if (text.includes('%7B') || text.includes('%7D') || text.includes('%22')) {
-                try {
-                    text = decodeURIComponent(text);
-                } catch {
-                    // ignore malformed uri component
+            Object.keys(source).forEach(function (key) {
+                if (key === 'pointColor' || key === 'lineColor' || key === 'lineWidth' || key === 'fillColor' || key === 'fillOpacity' || key === 'Label') {
+                    return;
                 }
+                result[key] = source[key];
+            });
+
+            if ((result['marker-color'] === undefined || result['marker-color'] === null || String(result['marker-color']).trim() === '') && source.pointColor !== undefined && source.pointColor !== null && String(source.pointColor).trim() !== '') {
+                result['marker-color'] = source.pointColor;
+            }
+            if ((result.stroke === undefined || result.stroke === null || String(result.stroke).trim() === '') && source.lineColor !== undefined && source.lineColor !== null && String(source.lineColor).trim() !== '') {
+                result.stroke = source.lineColor;
+            }
+            if ((result['stroke-width'] === undefined || result['stroke-width'] === null || String(result['stroke-width']).trim() === '') && source.lineWidth !== undefined && source.lineWidth !== null && String(source.lineWidth).trim() !== '') {
+                result['stroke-width'] = source.lineWidth;
+            }
+            if ((result.fill === undefined || result.fill === null || String(result.fill).trim() === '') && source.fillColor !== undefined && source.fillColor !== null && String(source.fillColor).trim() !== '') {
+                result.fill = source.fillColor;
+            }
+            if ((result['fill-opacity'] === undefined || result['fill-opacity'] === null || String(result['fill-opacity']).trim() === '') && source.fillOpacity !== undefined && source.fillOpacity !== null && String(source.fillOpacity).trim() !== '') {
+                result['fill-opacity'] = source.fillOpacity;
+            }
+            if ((result.label === undefined || result.label === null || String(result.label).trim() === '') && source.Label !== undefined && source.Label !== null && String(source.Label).trim() !== '') {
+                result.label = source.Label;
             }
 
-            return text;
+            return result;
+        }
+
+        function normalizeProperties(props) {
+            return canonicalizeGeometryProperties(props);
+        }
+
+        function normalizeRawGeoJson(raw) {
+            if (global.GisGeoJsonHelper && typeof global.GisGeoJsonHelper.normalizeRawGeoJson === 'function') {
+                return global.GisGeoJsonHelper.normalizeRawGeoJson(raw);
+            }
+            if (!raw || typeof raw !== 'string') return '';
+            return raw.trim();
         }
 
         function explodeGeometryToFeatures(geometry, properties) {
@@ -2341,7 +2413,9 @@
 
             var obj;
             try {
-                obj = JSON.parse(normalizeRawGeoJson(row.geoJson || row.jsonData));
+                obj = global.GisGeoJsonHelper && typeof global.GisGeoJsonHelper.parseGeoJson === 'function'
+                    ? global.GisGeoJsonHelper.parseGeoJson(row.geoJson || row.jsonData)
+                    : JSON.parse(normalizeRawGeoJson(row.geoJson || row.jsonData));
             } catch {
                 return [];
             }
@@ -2361,9 +2435,6 @@
                 var props = normalizeProperties(f.properties);
                 props.__geometryId = geometryId;
                 var labelText = props.label;
-                if ((labelText === undefined || labelText === null || String(labelText).trim() === '') && props.Label !== undefined && props.Label !== null) {
-                    labelText = props.Label;
-                }
                 props.label = labelText === undefined || labelText === null ? '' : String(labelText).trim();
                 return {
                     type: 'Feature',
@@ -2393,8 +2464,8 @@
                     source: sourceId,
                     filter: ['any', ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']],
                     paint: {
-                        'fill-color': ['coalesce', ['get', 'fill'], ['get', 'fillColor'], '#60a5fa'],
-                        'fill-opacity': ['to-number', ['coalesce', ['get', 'fill-opacity'], ['get', 'fillOpacity'], 0.25]]
+                        'fill-color': ['coalesce', ['get', 'fill'], '#60a5fa'],
+                        'fill-opacity': ['to-number', ['coalesce', ['get', 'fill-opacity'], 0.25]]
                     }
                 });
             }
@@ -2406,8 +2477,8 @@
                     source: sourceId,
                     filter: ['any', ['==', ['geometry-type'], 'LineString'], ['==', ['geometry-type'], 'MultiLineString'], ['==', ['geometry-type'], 'Polygon'], ['==', ['geometry-type'], 'MultiPolygon']],
                     paint: {
-                        'line-color': ['coalesce', ['get', 'stroke'], ['get', 'lineColor'], '#2563eb'],
-                        'line-width': ['to-number', ['coalesce', ['get', 'stroke-width'], ['get', 'lineWidth'], 2.5]],
+                        'line-color': ['coalesce', ['get', 'stroke'], '#2563eb'],
+                        'line-width': ['to-number', ['coalesce', ['get', 'stroke-width'], 2.5]],
                         'line-opacity': 0.95
                     }
                 });
@@ -2420,7 +2491,7 @@
                     source: sourceId,
                     filter: ['any', ['==', ['geometry-type'], 'Point'], ['==', ['geometry-type'], 'MultiPoint']],
                     paint: {
-                        'circle-color': ['coalesce', ['get', 'marker-color'], ['get', 'pointColor'], '#ef4444'],
+                        'circle-color': ['coalesce', ['get', 'marker-color'], '#ef4444'],
                         'circle-radius': 5,
                         'circle-stroke-color': '#ffffff',
                         'circle-stroke-width': 1.2,

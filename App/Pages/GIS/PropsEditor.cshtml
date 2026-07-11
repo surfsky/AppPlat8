@@ -174,6 +174,55 @@
                     }
                 };
 
+                const createStorageToken = () => `sk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+                const cleanupPickerStorage = (maxKeep = 120) => {
+                    const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+                    const shouldManage = (k) => typeof k === 'string' && (k.startsWith('sk_') || k.startsWith('ele_picker_'));
+                    storages.forEach((storage) => {
+                        try {
+                            const keys = [];
+                            for (let i = 0; i < storage.length; i += 1) {
+                                const k = storage.key(i);
+                                if (shouldManage(k)) keys.push(k);
+                            }
+                            if (keys.length <= maxKeep) return;
+                            keys.sort((a, b) => Number(storage.getItem(`${a}__t`) || '0') - Number(storage.getItem(`${b}__t`) || '0'));
+                            const removeCount = keys.length - maxKeep;
+                            for (let i = 0; i < removeCount; i += 1) {
+                                const k = keys[i];
+                                storage.removeItem(k);
+                                storage.removeItem(`${k}__t`);
+                            }
+                        } catch {
+                            // ignore cleanup failures
+                        }
+                    });
+                };
+
+                const writePayloadToStorage = (text) => {
+                    const token = createStorageToken();
+                    const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+                    for (let i = 0; i < storages.length; i += 1) {
+                        const storage = storages[i];
+                        try {
+                            storage.setItem(token, text);
+                            storage.setItem(`${token}__t`, String(Date.now()));
+                            return token;
+                        } catch {
+                            cleanupPickerStorage(80);
+                            try {
+                                storage.setItem(token, text);
+                                storage.setItem(`${token}__t`, String(Date.now()));
+                                return token;
+                            } catch {
+                                // try next storage
+                            }
+                        }
+                    }
+                    return '';
+                };
+
                 const parseQuery = () => {
                     const search = new URLSearchParams(window.location.search || '');
                     const md = String(search.get('md') || '').trim().toLowerCase();
@@ -268,10 +317,13 @@
 
                     const jsonText = JSON.stringify(nextProps);
                     const manager = getManager();
+                    const dataKey = jsonText.length > 1200 ? writePayloadToStorage(jsonText) : '';
 
                     const selectorPayload = {
                         type: 'ElePicker',
-                        data: [{ id: jsonText, name: jsonText }]
+                        data: [dataKey
+                            ? { id: dataKey, name: jsonText, dataKey }
+                            : { id: jsonText, name: jsonText }]
                     };
 
                     if (manager && typeof manager.closePage === 'function') {

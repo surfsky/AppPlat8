@@ -292,6 +292,20 @@
         }
 
         function normalizeGeoJson(raw) {
+            const helper = window.GisGeoJsonHelper;
+            if (helper && typeof helper.parseGeoJson === 'function') {
+                const obj = helper.parseGeoJson(raw);
+                if (!obj || typeof obj !== 'object') return null;
+                if (obj.type === 'FeatureCollection') return obj;
+                if (obj.type === 'Feature') return { type: 'FeatureCollection', features: [obj] };
+                if (obj.type) {
+                    return {
+                        type: 'FeatureCollection',
+                        features: [{ type: 'Feature', properties: {}, geometry: obj }]
+                    };
+                }
+                return null;
+            }
             if (!raw) return null;
             let obj = raw;
             for (let i = 0; i < 3 && typeof obj === 'string'; i += 1) {

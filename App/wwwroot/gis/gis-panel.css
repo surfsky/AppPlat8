@@ -46,7 +46,7 @@ gis-panel {
 
 .gis-panel-title-wrap {
     display: inline-flex;
-    align-items: flex-end;
+    align-items: baseline;
     gap: 10px;
     min-width: 0;
 }
@@ -59,16 +59,17 @@ gis-panel {
     color: #22d3ee;
     font-size: 18px;
     font-weight: 700;
+    line-height: 1.1;
     letter-spacing: .01em;
 }
 
 .gis-panel-subtitle {
     display: inline-flex;
-    align-items: flex-end;
+    align-items: baseline;
     color: #93c5fd;
     font-size: 13px;
     font-weight: 600;
-    line-height: 1;
+    line-height: 1.1;
     white-space: nowrap;
 }
 

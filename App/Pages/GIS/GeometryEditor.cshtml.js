@@ -215,6 +215,21 @@ createApp({
             return '';
         };
 
+        const readPayloadFromStorage = (key) => {
+            if (!key) return '';
+            const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+            for (let i = 0; i < storages.length; i += 1) {
+                const storage = storages[i];
+                try {
+                    const value = storage.getItem(key) || '';
+                    if (String(value).trim()) return String(value);
+                } catch {
+                    // ignore storage errors
+                }
+            }
+            return '';
+        };
+
         const openPropsDrawer = () => {
             if (!editor || !editor.hasActiveSelection?.()) {
                 showWarning('请先选中一个图形');
@@ -240,7 +255,10 @@ createApp({
                 if (!selectorData || selectorData.type !== 'ElePicker') return;
                 const list = Array.isArray(selectorData.data) ? selectorData.data : [];
                 if (list.length === 0) return;
-                const raw = list[0] && list[0].id !== undefined ? String(list[0].id) : '';
+                const firstItem = list[0] || {};
+                const dataKey = firstItem.dataKey || firstItem.dk || '';
+                const raw = readPayloadFromStorage(String(dataKey || ''))
+                    || (firstItem.id !== undefined ? String(firstItem.id) : '');
                 if (!raw) return;
                 let parsed = {};
                 try {
@@ -267,8 +285,11 @@ createApp({
                     closeOnClickModal: false,
                     destroyOnClose: true,
                     closeHandler: (payload) => {
-                        if (payload && payload.data && payload.data.type === 'ElePicker') {
-                            applySelectorPayload(payload.data);
+                        const selectorData = payload?.type === 'ElePicker'
+                            ? payload
+                            : (payload?.data?.type === 'ElePicker' ? payload.data : null);
+                        if (selectorData) {
+                            applySelectorPayload(selectorData);
                         }
                     }
                 });

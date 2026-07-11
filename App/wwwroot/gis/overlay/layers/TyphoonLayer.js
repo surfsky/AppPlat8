@@ -28,6 +28,7 @@ export class TyphoonLayer extends MapLayer {
     this.nameLayerId = "typhoon-name-layer";
     this.centerLayerId = "typhoon-center-layer";
     this.legendId = "typhoonLegend";
+    this.legendMiniId = "typhoonLegendMini";
     this.styleId = "typhoonStyle";
     this.selectId = "typhoonSelect";
     this.yearSelectId = "typhoonYearSelect";
@@ -48,6 +49,8 @@ export class TyphoonLayer extends MapLayer {
     this.currentListLoadedAt = 0;
     this.initSelectionReady = false;
     this.legendEl = null;
+    this.legendMiniEl = null;
+    this.legendCollapsed = false;
     this.popup = null;
     this.eventBound = false;
     this.legendBound = false;
@@ -89,7 +92,7 @@ export class TyphoonLayer extends MapLayer {
         left: 50%;
         bottom: 18px;
         transform: translateX(-50%);
-        z-index: 1002;
+        z-index: 4014;
         min-width: 560px;
         max-width: min(92vw, 900px);
         padding: 8px 12px 10px;
@@ -103,10 +106,53 @@ export class TyphoonLayer extends MapLayer {
         overflow: hidden;
       }
       .typhoon-legend.is-hidden { display: none; }
+      .typhoon-legend-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+      .typhoon-legend-toggle {
+        width: 28px;
+        height: 28px;
+        border: 1px solid rgba(148,163,184,0.24);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.72);
+        color: #334155;
+        cursor: pointer;
+        transition: all .16s ease;
+      }
+      .typhoon-legend-toggle:hover {
+        color: #0f172a;
+        border-color: rgba(14,165,233,0.5);
+        background: rgba(255,255,255,0.92);
+      }
+      .typhoon-legend-mini {
+        position: fixed;
+        right: 18px;
+        bottom: 132px;
+        z-index: 4015;
+        width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(56,189,248,0.4);
+        border-radius: 10px;
+        background: rgba(3,16,80,0.9);
+        color: #e0f2fe;
+        box-shadow: 0 10px 24px rgba(2,6,23,0.34);
+        cursor: pointer;
+      }
+      .typhoon-legend-mini.is-hidden { display: none; }
+      .typhoon-legend-mini:hover {
+        background: rgba(14,66,146,0.82);
+        border-color: rgba(56,189,248,0.7);
+      }
       .typhoon-legend-title {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 12px;
         margin: -8px -12px 8px;
         padding: 8px 12px;
@@ -221,6 +267,10 @@ export class TyphoonLayer extends MapLayer {
         .typhoon-select {
           width: 100%;
         }
+        .typhoon-legend-mini {
+          right: 12px;
+          bottom: 118px;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -238,21 +288,54 @@ export class TyphoonLayer extends MapLayer {
       document.body.appendChild(el);
     }
     this.legendEl = el;
+    this.ensureMiniButton();
     return el;
+  }
+
+  /**确保迷你按钮 */
+  ensureMiniButton() {
+    if (this.legendMiniEl) return this.legendMiniEl;
+    let btn = document.getElementById(this.legendMiniId);
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.type = "button";
+      btn.id = this.legendMiniId;
+      btn.className = "typhoon-legend-mini is-hidden";
+      btn.setAttribute("title", "展开台风面板");
+      btn.setAttribute("aria-label", "展开台风面板");
+      btn.innerHTML = '<i class="fa-solid fa-hurricane"></i>';
+      document.body.appendChild(btn);
+    }
+    this.legendMiniEl = btn;
+    return btn;
+  }
+
+  /**同步图例显隐 */
+  syncLegendDisplay() {
+    const el = this.ensureLegend();
+    const mini = this.ensureMiniButton();
+    const panelHidden = !this.visible || this.legendCollapsed;
+    const miniHidden = !this.visible || !this.legendCollapsed;
+    el.classList.toggle("is-hidden", panelHidden);
+    mini.classList.toggle("is-hidden", miniHidden);
+  }
+
+  /**切换图例折叠 */
+  toggleLegendCollapsed(collapsed) {
+    this.legendCollapsed = typeof collapsed === "boolean"
+      ? collapsed
+      : !this.legendCollapsed;
+    this.syncLegendDisplay();
   }
 
   /**显示图例 */
   showLegend() {
-    const el = this.ensureLegend();
-    if (!el) return;
-    el.classList.remove("is-hidden");
+    this.syncLegendDisplay();
   }
 
   /**隐藏图例 */
   hideLegend() {
-    const el = this.ensureLegend();
-    if (!el) return;
-    el.classList.add("is-hidden");
+    this.syncLegendDisplay();
   }
 
   /**读取 JSON */
@@ -499,7 +582,12 @@ export class TyphoonLayer extends MapLayer {
         <span class="typhoon-legend-title-text">
           <span>台风路径</span>
         </span>
-        <span class="typhoon-legend-tip">${liveCnt > 0 ? `当前活跃 ${liveCnt} 个，实时源：Digital Typhoon` : "数据源：本地台风数据库"}</span>
+        <span class="typhoon-legend-actions">
+          <span class="typhoon-legend-tip">${liveCnt > 0 ? `当前活跃 ${liveCnt} 个，实时源：Digital Typhoon` : "数据源：本地台风数据库"}</span>
+          <button type="button" class="typhoon-legend-toggle" data-legend-action="collapse" title="收起台风面板" aria-label="收起台风面板">
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+        </span>
       </div>
       <div class="typhoon-legend-row">
         <span class="typhoon-legend-label">年份</span>
@@ -525,6 +613,7 @@ export class TyphoonLayer extends MapLayer {
   bindLegend() {
     if (this.legendBound) return;
     const el = this.ensureLegend();
+    const mini = this.ensureMiniButton();
     el.addEventListener("change", async e => {
       const target = e.target;
       if (!target) return;
@@ -541,6 +630,14 @@ export class TyphoonLayer extends MapLayer {
         await this.refresh(true);
       }
     });
+    el.addEventListener("click", e => {
+      const actionEl = e.target?.closest?.("[data-legend-action]");
+      if (!actionEl) return;
+      if (actionEl.dataset.legendAction === "collapse") {
+        this.toggleLegendCollapsed(true);
+      }
+    });
+    mini.addEventListener("click", () => this.toggleLegendCollapsed(false));
     this.bindLegendDrag();
     this.legendBound = true;
   }
