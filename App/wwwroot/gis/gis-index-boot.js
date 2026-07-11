@@ -37,7 +37,6 @@
                 trackUserLocation: true,
                 showUserHeading: true
             }), 'top-right');
-            map.addControl(new mapboxgl.ScaleControl({ unit: 'metric' }), 'bottom-left');
             map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
 
             const centerCoordControl = mapApi.createCenterCoordControl();
