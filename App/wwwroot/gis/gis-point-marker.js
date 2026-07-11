@@ -181,11 +181,11 @@
                 },
                 setSelectable(value) {
                     const enabled = !!value;
-                    iconEl.style.pointerEvents = enabled ? 'auto' : 'none';
+                    iconEl.style.pointerEvents = 'auto';
                     iconEl.style.cursor = enabled ? '' : 'default';
                     iconEl.style.opacity = enabled ? '' : '0.92';
                     if (labelEl) {
-                        labelEl.style.pointerEvents = enabled ? 'auto' : 'none';
+                        labelEl.style.pointerEvents = 'auto';
                         labelEl.style.cursor = enabled ? '' : 'default';
                         labelEl.style.opacity = enabled ? '' : '0.92';
                     }

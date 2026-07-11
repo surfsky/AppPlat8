@@ -87,6 +87,16 @@
             state.geometryPointMarkerMap.clear();
         }
 
+        function isForceDetailEvent(evt) {
+            return !!(evt && (evt.metaKey || evt.ctrlKey));
+        }
+
+        function canOpenGeometryDetail(item, evt) {
+            if (!item) return false;
+            if (isForceDetailEvent(evt)) return true;
+            return isGeometrySelectable(item?.menuId);
+        }
+
         function syncGeometryPointMarkerVisibility() {
             const byId = new Map((state.geometries || []).map(item => [String(item?.id), item]));
             state.geometryPointMarkerMap.forEach((marker, id) => {
@@ -147,8 +157,8 @@
             `;
             el.addEventListener('click', evt => {
                 evt.stopPropagation();
-                if (!isGeometrySelectable(item?.menuId)) return;
-                onGeometryMarkerClick(item.id);
+                if (!canOpenGeometryDetail(item, evt)) return;
+                onGeometryMarkerClick(item.id, evt);
             });
             return new mapboxgl.Marker({ element: el, anchor: 'center' })
                 .setLngLat([gps.lng, gps.lat])
@@ -180,8 +190,8 @@
 
             el.addEventListener('click', evt => {
                 evt.stopPropagation();
-                if (!isGeometrySelectable(item?.menuId)) return;
-                onGeometryMarkerClick(item.id);
+                if (!canOpenGeometryDetail(item, evt)) return;
+                onGeometryMarkerClick(item.id, evt);
             });
 
             return new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -215,8 +225,8 @@
 
             el.addEventListener('click', evt => {
                 evt.stopPropagation();
-                if (!isGeometrySelectable(item?.menuId)) return;
-                onGeometryMarkerClick(item.id);
+                if (!canOpenGeometryDetail(item, evt)) return;
+                onGeometryMarkerClick(item.id, evt);
             });
 
             return new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -356,9 +366,9 @@
                             gps,
                             iconPath: getGeometryIcon(item),
                             zIndex: markerZIndex,
-                            onClick: () => {
-                                if (!isGeometrySelectable(item?.menuId)) return;
-                                onGeometryMarkerClick(item.id);
+                            onClick: (evt) => {
+                                if (!canOpenGeometryDetail(item, evt)) return;
+                                onGeometryMarkerClick(item.id, evt);
                             }
                         });
                         break;

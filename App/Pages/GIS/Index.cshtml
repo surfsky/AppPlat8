@@ -266,7 +266,7 @@
             state,
             map,
             getGeometryLayerManager: () => geometryLayerManager,
-            onGeometryMarkerClick: (id) => showGeometryDetail(id),
+            onGeometryMarkerClick: (id, evt) => showGeometryDetail(id, evt),
             onMenuBadgeClick: (menuNode, geometryItems) => openPointListPanel(menuNode, geometryItems)
         });
         const actionApi = GisIndexAction.create({
@@ -559,7 +559,7 @@
         function getActiveGeometryDisplayLayerIds() { return actionApi.getActiveGeometryDisplayLayerIds(); }
         async function loadGeometries() { return dataApi.loadGeometries(); }
         function bindGeometryMapInteractions() { actionApi.bindGeometryMapInteractions(); }
-        function showGeometryDetail(id) { actionApi.openGeometryDetailDrawer(id); }
+        function showGeometryDetail(id, evt) { actionApi.openGeometryDetailDrawer(id, evt); }
         function openGeometryDetailDrawer(id) {
             showGeometryDetail(id);
         }

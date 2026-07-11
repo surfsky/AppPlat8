@@ -80,10 +80,16 @@
             return state.geometries.find(x => Number(x?.id) === Number(id)) || null;
         }
 
+        /**是否强制打开详情事件 */
+        function isForceDetailEvent(evt) {
+            return !!(evt && (evt.metaKey || evt.ctrlKey));
+        }
+
         /**图形是否允许点击*/
-        function canSelectGeometry(id) {
+        function canSelectGeometry(id, evt) {
             const item = findGeometryById(id);
             if (!item) return true;
+            if (isForceDetailEvent(evt)) return true;
             return isGeometrySelectable(item.menuId);
         }
 
@@ -179,8 +185,9 @@
             });
         }
 
-        function openGeometryDetailDrawer(id) {
+        function openGeometryDetailDrawer(id, evt) {
             if (!id) return;
+            if (!canSelectGeometry(id, evt)) return;
             state.selectedGeometryId = id;
             if (typeof onGeometrySelectedChanged === 'function') {
                 onGeometrySelectedChanged(id);
@@ -392,9 +399,7 @@
         function focusGeometryCenter(geometryId, feature) {
             const center = getCenterFromFeature(feature) || getCenterFromStateGeometry(geometryId);
             if (!center) return;
-            const currentZoom = typeof map.getZoom === 'function' ? map.getZoom() : 12;
-            const zoom = Math.max(currentZoom, 13.5);
-            map.easeTo({ center: [center.lng, center.lat], zoom, duration: 520 });
+            map.easeTo({ center: [center.lng, center.lat], duration: 520 });
         }
 
         function bindGeometryMapInteractions() {
@@ -411,9 +416,9 @@
 
                 const rawId = feature.properties.__geometryId;
                 const geometryId = Number.isNaN(Number(rawId)) ? rawId : Number(rawId);
-                if (!canSelectGeometry(geometryId)) return;
+                if (!canSelectGeometry(geometryId, e?.originalEvent || e)) return;
                 focusGeometryCenter(geometryId, feature);
-                openGeometryDetailDrawer(geometryId);
+                openGeometryDetailDrawer(geometryId, e?.originalEvent || e);
             });
 
             map.on('mousemove', (e) => {
