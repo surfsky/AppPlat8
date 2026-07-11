@@ -13,6 +13,7 @@ namespace App.DAL.GIS
         [UI("标题")] public string Title { get; set; }
         [UI("提示信息")] public string Info { get; set; }
         [UI("位置/排序")] public int Position { get; set; }
+        [UI("面板高度")] public int PanelHeight { get; set; } = 260;
         [UI("普通内容")]
         public string Content { get; set; }
         [UI("图表配置JSON")]
@@ -33,6 +34,7 @@ namespace App.DAL.GIS
                 Title,
                 Info,
                 Position,
+                PanelHeight,
                 Content,
                 ChartJson,
                 InGis,

@@ -446,18 +446,23 @@ Done
 
 2026.07.11
     /按住 cmd+点击（mac系统）或ctrl+点击（windows系统）某个点位时，即使图层（GisMenu）被设置为不可选，还是能激活点位详情面板的。
-    /优化潮位面板
+    /优化潮位面板，用echarts控件
+    /彻底解决地图lable不能全中文的问题；
+    /gis/index/panel 用chart.js 来实现图表
+    /优化一下统计面板布局和数据结构（如果需要调整）：
+        - 左右两侧各放一个容器，内部放统计面板，可以上下滚动，以展示更多面板；
+        - 统计面板可以手动设置高度（设置一个合适的默认值），内部内容可以滚动，不要根据窗口高度自动计算；
+        - 若左右两侧容器内的统计面板过多显示不下，底部显示一个淡淡的下箭头，提示用户下面还有东西，可以滚动查看
+
     融合搜索：支持地图服务搜索、系统点位搜索
     gis/index
         增加视图服务图层（如高德地图），也用MapLayer接口实现，点击后切换地图服务源；
-        /彻底解决地图lable不能全中文的问题；
         实现gismenu 实时数据
             - gismenu设置一个signalr 的hub地址就行
             - gis/index实现对signalr的支持
         UI
             gis/index 顶部实现流光动画效果
             gis/index 页面遮住左下角的“mapbox”标签
-            gis/index/panel 用chart.js 来实现图表
     角色与Gis菜单管理
         - 删除gismenu.org 属性
         - 创建角色和gismenu管理页面和相关实体（ RoleGismenu）：左侧是角色列表，右侧是gismenu菜单树表，并显示“可查看”、“可编辑”两个checkbox；

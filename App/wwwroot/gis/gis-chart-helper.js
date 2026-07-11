@@ -30,12 +30,38 @@
             }
             if (item && typeof item === 'object') {
                 return {
+                    ...item,
                     name: item.name || `系列${idx + 1}`,
                     data: Array.isArray(item.data) ? item.data : []
                 };
             }
             return { name: `系列${idx + 1}`, data: [] };
         });
+    }
+
+    function isPlainObject(obj) {
+        return !!obj && typeof obj === 'object' && !Array.isArray(obj);
+    }
+
+    function deepMerge(target, source) {
+        if (Array.isArray(source)) return source.slice();
+        if (!isPlainObject(source)) return source;
+        const base = isPlainObject(target) ? { ...target } : {};
+        Object.keys(source).forEach(key => {
+            const src = source[key];
+            const old = base[key];
+            if (src === undefined) return;
+            if (Array.isArray(src)) {
+                base[key] = src.slice();
+                return;
+            }
+            if (isPlainObject(src)) {
+                base[key] = deepMerge(old, src);
+                return;
+            }
+            base[key] = src;
+        });
+        return base;
     }
 
     function buildOption(chartCfg, theme) {
@@ -51,11 +77,21 @@
         const tooltipBg = isDark ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.96)';
         const tooltipText = isDark ? '#f8fafc' : '#0f172a';
         const tooltipBorder = isDark ? 'rgba(148,163,184,0.45)' : 'rgba(148,163,184,0.35)';
+        const palette = Array.isArray(cfg.palette) ? cfg.palette.slice() : undefined;
+        const legendCfg = isPlainObject(cfg.legend) ? cfg.legend : {};
+        const titleCfg = isPlainObject(cfg.titleOptions) ? cfg.titleOptions : {};
+        const gridCfg = isPlainObject(cfg.grid) ? cfg.grid : {};
+        const xAxisCfg = isPlainObject(cfg.xAxis) ? cfg.xAxis : {};
+        const yAxisCfg = isPlainObject(cfg.yAxis) ? cfg.yAxis : {};
+        const tooltipCfg = isPlainObject(cfg.tooltip) ? cfg.tooltip : {};
+        const seriesDefaults = isPlainObject(cfg.seriesDefaults) ? cfg.seriesDefaults : {};
+        const pieCfg = isPlainObject(cfg.pie) ? cfg.pie : {};
 
         if (type === 'pie') {
             const pieData = Array.isArray(json.data) ? json.data : [];
-            return {
+            return deepMerge({
                 title: { text: cfg.title || '', left: 'center', textStyle: { color: textColor, fontSize: 14 } },
+                color: palette,
                 tooltip: {
                     trigger: 'item',
                     backgroundColor: tooltipBg,
@@ -63,26 +99,32 @@
                     textStyle: { color: tooltipText }
                 },
                 legend: { bottom: 0, textStyle: { color: subTextColor } },
-                series: [{
+                series: [deepMerge({
                     type: 'pie',
                     radius: ['38%', '68%'],
                     center: ['50%', '44%'],
                     data: pieData,
                     label: { color: textColor }
-                }]
-            };
+                }, pieCfg)]
+            }, {
+                title: titleCfg,
+                legend: legendCfg,
+                tooltip: tooltipCfg,
+                series: Array.isArray(cfg.series) ? cfg.series : undefined
+            });
         }
 
         const categories = Array.isArray(json.categories) ? json.categories : [];
-        const series = normalizeSeries(json.series).map(s => ({
+        const series = normalizeSeries(json.series).map(s => deepMerge({
             name: s.name,
-            type,
+            type: s.type || type,
             data: s.data,
-            smooth: type === 'line'
-        }));
+            smooth: (s.type || type) === 'line'
+        }, deepMerge(seriesDefaults, s)));
 
-        return {
+        return deepMerge({
             title: { text: cfg.title || '', left: 'center', textStyle: { color: textColor, fontSize: 14 } },
+            color: palette,
             tooltip: {
                 trigger: 'axis',
                 backgroundColor: tooltipBg,
@@ -106,7 +148,14 @@
                 splitLine: { lineStyle: { color: splitLineColor } }
             },
             series
-        };
+        }, {
+            title: titleCfg,
+            tooltip: tooltipCfg,
+            legend: legendCfg,
+            grid: gridCfg,
+            xAxis: xAxisCfg,
+            yAxis: yAxisCfg
+        });
     }
 
     async function resolveSourceJson(chartCfg) {
@@ -146,13 +195,15 @@
         };
         const option = buildOption(runtimeCfg, theme);
         if (cfg.options && typeof cfg.options === 'object') {
-            Object.assign(option, cfg.options);
+            const merged = deepMerge(option, cfg.options);
+            Object.keys(option).forEach(key => delete option[key]);
+            Object.assign(option, merged);
         }
 
         if (container.__chartInstance && typeof container.__chartInstance.dispose === 'function') {
             container.__chartInstance.dispose();
         }
-        const chart = echarts.init(container, theme === 'light' ? null : 'dark');
+        const chart = window.echarts.init(container, theme === 'light' ? null : 'dark');
         chart.setOption(option, true);
         container.__chartInstance = chart;
         return true;
@@ -160,6 +211,7 @@
 
     window.GisChartHelper = {
         safeParseJson,
+        deepMerge,
         buildOption,
         renderChart,
     };

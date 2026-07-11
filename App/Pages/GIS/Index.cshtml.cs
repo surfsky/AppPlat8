@@ -243,6 +243,7 @@ namespace App.Pages.GIS
                     title = t.Title,
                     info = t.Info,
                     position = t.Position,
+                    panelHeight = t.PanelHeight <= 0 ? 260 : t.PanelHeight,
                     content = t.Content,
                     chartJson = t.ChartJson,
                     inGis = t.InGis,

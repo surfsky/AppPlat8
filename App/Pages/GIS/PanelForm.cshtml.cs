@@ -22,6 +22,7 @@ namespace App.Pages.GIS
                 InGis = true,
                 InDashboard = true,
                 Position = 0,
+                PanelHeight = 260,
             };
             return BuildResult(0, "success", item);
         }
@@ -48,6 +49,7 @@ namespace App.Pages.GIS
             item.Title = req.Title;
             item.Info = req.Info;
             item.Position = req.Position;
+            item.PanelHeight = Math.Clamp(req.PanelHeight <= 0 ? 260 : req.PanelHeight, 160, 960);
             item.Content = req.Content;
             item.ChartJson = req.ChartJson;
             item.InGis = req.InGis;

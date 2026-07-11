@@ -7,6 +7,7 @@
         const theme = ctx.theme || 'dark';
         let resizeTimer = null;
         const narrowMql = window.matchMedia('(max-width: 900px)');
+        const defaultPanelHeight = 260;
 
         function splitColumns(panels, isNarrow) {
             const left = [];
@@ -20,6 +21,34 @@
                 else right.push(item);
             });
             return { left, right };
+        }
+
+        function getPanelHeight(item) {
+            const value = Number(item.panelHeight || item.PanelHeight || 0);
+            if (!Number.isFinite(value) || value <= 0) return defaultPanelHeight;
+            return Math.min(960, Math.max(160, Math.round(value)));
+        }
+
+        function getColumnShell(id) {
+            const shell = document.getElementById(id);
+            if (!shell) return null;
+            const body = shell.querySelector('.stats-column-scroll');
+            const hint = shell.querySelector('.stats-scroll-hint');
+            return { shell, body, hint };
+        }
+
+        function updateScrollHint(shell) {
+            if (!shell || !shell.body) return;
+            const canScroll = shell.body.scrollHeight - shell.body.clientHeight > 6;
+            const nearEnd = shell.body.scrollTop + shell.body.clientHeight >= shell.body.scrollHeight - 6;
+            shell.shell.classList.toggle('can-scroll', !!canScroll);
+            shell.shell.classList.toggle('scroll-end', !canScroll || nearEnd);
+        }
+
+        function bindScrollHint(shell) {
+            if (!shell || !shell.body || shell.body.__statsScrollBound) return;
+            shell.body.addEventListener('scroll', () => updateScrollHint(shell), { passive: true });
+            shell.body.__statsScrollBound = true;
         }
 
         function buildBodyHtml(item) {
@@ -43,28 +72,36 @@
             panel.setAttribute('title', item.title || item.Title || '未命名面板');
             panel.setAttribute('info', item.info || item.Info || '');
             panel.setAttribute('width', '100%');
-            panel.setAttribute('height', '100%');
+            panel.setAttribute('height', `${getPanelHeight(item)}px`);
             panel.innerHTML = buildBodyHtml(item);
             parent.appendChild(panel);
             return panel;
         }
 
         async function renderPanels() {
-            const leftCol = document.getElementById('stats-column-left');
-            const rightCol = document.getElementById('stats-column-right');
-            if (!leftCol || !rightCol) return;
+            const leftShell = getColumnShell('stats-column-left');
+            const rightShell = getColumnShell('stats-column-right');
+            if (!leftShell?.body || !rightShell?.body) return;
 
-            leftCol.innerHTML = '';
-            rightCol.innerHTML = '';
+            bindScrollHint(leftShell);
+            bindScrollHint(rightShell);
+
+            leftShell.body.innerHTML = '';
+            rightShell.body.innerHTML = '';
 
             const data = Array.isArray(state.statsPanels) ? state.statsPanels : [];
             const sorted = data.slice().sort((a, b) => (a.position || a.Position || 0) - (b.position || b.Position || 0));
             const grouped = splitColumns(sorted, narrowMql.matches);
 
-            grouped.left.forEach(item => appendPanel(leftCol, item));
-            grouped.right.forEach(item => appendPanel(rightCol, item));
+            grouped.left.forEach(item => appendPanel(leftShell.body, item));
+            grouped.right.forEach(item => appendPanel(rightShell.body, item));
 
-            rightCol.style.display = grouped.right.length > 0 ? '' : 'none';
+            rightShell.shell.style.display = grouped.right.length > 0 ? '' : 'none';
+
+            requestAnimationFrame(() => {
+                updateScrollHint(leftShell);
+                updateScrollHint(rightShell);
+            });
 
             const chartTargets = document.querySelectorAll('.gis-panel-chart[data-panel-id]');
             for (let i = 0; i < chartTargets.length; i += 1) {
@@ -125,6 +162,7 @@
             loadPanels,
             renderPanels,
             resizeCharts,
+            updateScrollHint,
         };
     }
 
