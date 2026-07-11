@@ -54,14 +54,11 @@
                 e.stopPropagation();
                 ctx.toggleSceneMenu();
             });
-            document.getElementById('btn-view-toggle').addEventListener('click', e => {
-                e.stopPropagation();
-                ctx.toggleViewMenu();
-            });
             document.getElementById('btn-toolbar-toggle').addEventListener('click', ctx.toggleToolbar);
             document.getElementById('btn-layer-toggle').addEventListener('click', ctx.toggleLayerPanel);
             document.getElementById('btn-stats-toggle').addEventListener('click', ctx.toggleStatsMode);
             document.getElementById('btn-layer-tab-resource').addEventListener('click', () => ctx.switchLayerTab('resource'));
+            document.getElementById('btn-layer-tab-view').addEventListener('click', () => ctx.switchLayerTab('view'));
             document.getElementById('btn-layer-tab-weather').addEventListener('click', () => ctx.switchLayerTab('weather'));
             document.getElementById('btn-layer-tab-iot').addEventListener('click', () => ctx.switchLayerTab('iot'));
             document.getElementById('geo-detail-gis-panel').addEventListener('panel-close', ctx.closeGeometryDetailDrawer);
@@ -79,23 +76,13 @@
             document.getElementById('btn-toggle-3d').addEventListener('change', e => {
                 if (e.target.checked) viewApi.enable3D();
                 else viewApi.disable3D();
-                ctx.closeViewMenu();
             });
             document.getElementById('btn-toggle-rotate').addEventListener('change', e => {
                 if (e.target.checked) viewApi.enableRotate();
                 else viewApi.disableRotate();
-                ctx.closeViewMenu();
             });
 
             document.addEventListener('click', e => {
-                if (state.viewMenuOpen) {
-                    const menu = document.getElementById('view-menu');
-                    const trigger = document.getElementById('btn-view-toggle');
-                    const target = e.target;
-                    if (!(menu && menu.contains(target)) && !(trigger && trigger.contains(target))) {
-                        ctx.closeViewMenu();
-                    }
-                }
                 if (state.sceneMenuOpen) {
                     const menu = document.getElementById('scene-menu');
                     const trigger = document.getElementById('btn-scene-toggle');
@@ -113,8 +100,10 @@
             ctx.syncToolbarUI();
             ctx.syncLayerPanelUI();
             ctx.syncLayerTabsUI();
-            ctx.syncViewMenuUI();
             ctx.syncStatsModeUI();
+            if (typeof window.GisIndexUI.initLayerPanelResize === 'function') {
+                window.GisIndexUI.initLayerPanelResize();
+            }
         }
 
         function bindMapLifecycle() {

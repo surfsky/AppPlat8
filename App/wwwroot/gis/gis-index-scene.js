@@ -41,6 +41,74 @@
             return pitchNum;
         }
 
+        function isCloseNumber(a, b, tolerance = 0.01) {
+            if (a === null || a === undefined || b === null || b === undefined) return true;
+            return Math.abs(Number(a) - Number(b)) <= tolerance;
+        }
+
+        function isCloseCenter(target, tolerance = 0.0008) {
+            if (!Array.isArray(target) || target.length < 2) return true;
+            try {
+                const center = map.getCenter();
+                return Math.abs(Number(center.lng) - Number(target[0])) <= tolerance
+                    && Math.abs(Number(center.lat) - Number(target[1])) <= tolerance;
+            } catch {
+                return false;
+            }
+        }
+
+        function isSceneViewSettled(targetView) {
+            const target = targetView || {};
+            return isCloseCenter(target.center)
+                && isCloseNumber(map.getZoom(), target.zoom, 0.05)
+                && isCloseNumber(map.getPitch(), target.pitch, 0.6)
+                && isCloseNumber(map.getBearing(), target.bearing, 0.8);
+        }
+
+        function waitForSceneViewSettled(targetView, timeoutMs = 4800) {
+            if (!targetView || isSceneViewSettled(targetView)) {
+                return Promise.resolve(true);
+            }
+
+            return new Promise(resolve => {
+                let done = false;
+                let timer = null;
+                let poller = null;
+
+                const cleanup = () => {
+                    if (done) return;
+                    done = true;
+                    map.off('moveend', onCheck);
+                    map.off('zoomend', onCheck);
+                    map.off('pitchend', onCheck);
+                    map.off('rotateend', onCheck);
+                    map.off('idle', onCheck);
+                    if (timer) clearTimeout(timer);
+                    if (poller) clearInterval(poller);
+                };
+
+                const finish = ok => {
+                    cleanup();
+                    resolve(ok);
+                };
+
+                const onCheck = () => {
+                    if (isSceneViewSettled(targetView)) {
+                        finish(true);
+                    }
+                };
+
+                map.on('moveend', onCheck);
+                map.on('zoomend', onCheck);
+                map.on('pitchend', onCheck);
+                map.on('rotateend', onCheck);
+                map.on('idle', onCheck);
+                timer = setTimeout(() => finish(isSceneViewSettled(targetView)), timeoutMs);
+                poller = setInterval(onCheck, 120);
+                onCheck();
+            });
+        }
+
         function buildSceneView(detail) {
             const centerStr = detail?.mapCenter || detail?.MapCenter;
             const zoomVal = detail?.mapZoom ?? detail?.MapZoom;
@@ -186,28 +254,50 @@
                     const centerStr = detail.mapCenter || detail.MapCenter;
                     const zoomVal = detail.mapZoom ?? detail.MapZoom;
                     const pitchVal = resolveScenePitch(enable3D, scenePitch);
+                    let sceneViewPromise = Promise.resolve(true);
 
                     if (centerStr) {
                         const center = parseCenter(centerStr);
                         if (center) {
-                            map.flyTo({
+                            const targetView = {
                                 center,
                                 zoom: (zoomVal !== null && zoomVal !== undefined) ? zoomVal : map.getZoom(),
                                 pitch: (pitchVal !== null && pitchVal !== undefined) ? pitchVal : map.getPitch(),
+                                bearing: map.getBearing()
+                            };
+                            map.flyTo({
+                                center,
+                                zoom: targetView.zoom,
+                                pitch: targetView.pitch,
                                 duration: 2000
                             });
+                            sceneViewPromise = waitForSceneViewSettled(targetView);
                         }
                     } else if (zoomVal !== null && zoomVal !== undefined) {
-                        map.flyTo({
+                        const targetView = {
+                            center: [map.getCenter().lng, map.getCenter().lat],
                             zoom: zoomVal,
                             pitch: (pitchVal !== null && pitchVal !== undefined) ? pitchVal : map.getPitch(),
+                            bearing: map.getBearing()
+                        };
+                        map.flyTo({
+                            zoom: zoomVal,
+                            pitch: targetView.pitch,
                             duration: 2000
                         });
+                        sceneViewPromise = waitForSceneViewSettled(targetView);
                     } else if (pitchVal !== null && pitchVal !== undefined) {
+                        const targetView = {
+                            center: [map.getCenter().lng, map.getCenter().lat],
+                            zoom: map.getZoom(),
+                            pitch: pitchVal,
+                            bearing: map.getBearing()
+                        };
                         map.flyTo({
                             pitch: pitchVal,
                             duration: 2000
                         });
+                        sceneViewPromise = waitForSceneViewSettled(targetView);
                     }
 
                     const menuIds = detail.menuIds || detail.MenuIds || [];
@@ -223,6 +313,8 @@
                     closeGeometryDetailPanel();
                     closePointListPanel();
                     dataApi.setBatchMenusChecked(menuIds, { includeDescendants: false });
+
+                    await sceneViewPromise;
 
                     const overlayApi = window.__gisIndexOverlayApi;
                     if (overlayApi && typeof overlayApi.setActiveLayers === 'function') {

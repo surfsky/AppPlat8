@@ -4,6 +4,9 @@
 (function () {
     let headerDatetimeTimer = null;
     let floatingTooltipsMounted = false;
+    const layerPanelWidthKey = 'gis:index:layer-panel-width';
+    const layerPanelMinWidth = 280;
+    const layerPanelMaxWidth = 640;
 
     /**更新顶部时间显示 */
     function startHeaderDatetime(outputId) {
@@ -35,7 +38,6 @@
             { id: 'btn-layer-toggle', content: '图层', placement: 'bottom' },
             { id: 'btn-stats-toggle', content: '统计', placement: 'bottom' },
             { id: 'btn-scene-toggle', content: '场景', placement: 'bottom' },
-            { id: 'btn-view-toggle', content: '视图', placement: 'bottom' },
             { id: 'btn-toolbar-toggle', content: '工具栏', placement: 'bottom' }
         ];
 
@@ -128,9 +130,7 @@
     function toggleLayerPanel(state) {
         if (state.statsMode) {
             state.statsMode = false;
-            state.viewMenuOpen = false;
             syncStatsModeUI(state);
-            syncViewMenuUI(state);
         }
         state.layerCollapsed = !state.layerCollapsed;
         syncLayerPanelUI(state);
@@ -159,18 +159,16 @@
 
     /**同步视图菜单状态 */
     function syncViewMenuUI(state) {
-        const menu = document.getElementById('view-menu');
-        const toggleBtn = document.getElementById('btn-view-toggle');
-        if (menu) menu.classList.toggle('menu-visible', !!state.viewMenuOpen);
-        if (toggleBtn) {
-            toggleBtn.classList.toggle('active', !!state.viewMenuOpen);
+        if (state && state.activeLayerTab === 'view') {
+            syncLayerTabsUI(state);
         }
     }
 
     /**切换视图菜单状态 */
     function toggleViewMenu(state) {
-        state.viewMenuOpen = !state.viewMenuOpen;
-        syncViewMenuUI(state);
+        state.layerCollapsed = false;
+        syncLayerPanelUI(state);
+        switchLayerTab(state, 'view');
     }
 
     /**同步场景菜单状态 */
@@ -222,8 +220,10 @@
 
     /**关闭视图菜单 */
     function closeViewMenu(state) {
-        state.viewMenuOpen = false;
-        syncViewMenuUI(state);
+        if (!state) return;
+        if ((state.activeLayerTab || 'resource') === 'view') {
+            switchLayerTab(state, 'resource');
+        }
     }
 
     /**同步统计模式状态 */
@@ -253,18 +253,100 @@
         if (state.statsMode) {
             state.toolbarCollapsed = true;
             state.layerCollapsed = true;
-            state.viewMenuOpen = false;
             if (options && typeof options.onCloseDrawer === 'function') {
                 options.onCloseDrawer();
             }
         }
         syncToolbarUI(state);
         syncLayerPanelUI(state);
-        syncViewMenuUI(state);
         syncStatsModeUI(state);
         if (options && typeof options.onStatsModeChanged === 'function') {
             options.onStatsModeChanged(state.statsMode);
         }
+    }
+
+    /**读取图层面板宽度 */
+    function getSavedLayerPanelWidth() {
+        try {
+            const raw = window.localStorage.getItem(layerPanelWidthKey);
+            const value = Number(raw || 0);
+            return Number.isFinite(value) && value > 0 ? value : 0;
+        } catch {
+            return 0;
+        }
+    }
+
+    /**应用图层面板宽度 */
+    function applyLayerPanelWidth(width) {
+        const panel = document.getElementById('layer-panel');
+        if (!panel) return;
+        if (window.innerWidth <= 900) {
+            panel.style.width = '';
+            return;
+        }
+        const next = Math.min(layerPanelMaxWidth, Math.max(layerPanelMinWidth, Math.round(Number(width) || 320)));
+        panel.style.width = `${next}px`;
+    }
+
+    /**初始化图层面板拖拽宽度 */
+    function initLayerPanelResize(options = {}) {
+        const panel = document.getElementById('layer-panel');
+        const handle = document.getElementById('layer-panel-resize-handle');
+        if (!panel || !handle || handle.dataset.resizeReady === 'true') {
+            applyLayerPanelWidth(getSavedLayerPanelWidth() || 320);
+            return;
+        }
+
+        const savedWidth = getSavedLayerPanelWidth();
+        if (savedWidth > 0) {
+            applyLayerPanelWidth(savedWidth);
+        }
+
+        const onResizeDone = typeof options.onResizeDone === 'function' ? options.onResizeDone : null;
+        let startX = 0;
+        let startWidth = 0;
+        let dragging = false;
+
+        const onMove = (evt) => {
+            if (!dragging) return;
+            const next = startWidth + (evt.clientX - startX);
+            applyLayerPanelWidth(next);
+            document.body.classList.add('layer-panel-resizing');
+        };
+
+        const onUp = () => {
+            if (!dragging) return;
+            dragging = false;
+            document.body.classList.remove('layer-panel-resizing');
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            window.removeEventListener('pointercancel', onUp);
+            const width = Math.round(panel.getBoundingClientRect().width || 320);
+            try {
+                window.localStorage.setItem(layerPanelWidthKey, String(width));
+            } catch {
+            }
+            if (onResizeDone) onResizeDone(width);
+        };
+
+        handle.addEventListener('pointerdown', (evt) => {
+            if (window.innerWidth <= 900) return;
+            evt.preventDefault();
+            evt.stopPropagation();
+            startX = evt.clientX;
+            startWidth = panel.getBoundingClientRect().width || 320;
+            dragging = true;
+            handle.setPointerCapture?.(evt.pointerId);
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+            window.addEventListener('pointercancel', onUp);
+        });
+
+        window.addEventListener('resize', () => {
+            applyLayerPanelWidth(getSavedLayerPanelWidth() || panel.getBoundingClientRect().width || 320);
+        });
+
+        handle.dataset.resizeReady = 'true';
     }
 
     /**重置视图 */
@@ -297,6 +379,8 @@
         toggleViewMenu,
         closeViewMenu,
         syncViewMenuUI,
+        applyLayerPanelWidth,
+        initLayerPanelResize,
         toggleSceneMenu,
         closeSceneMenu,
         syncSceneMenuUI,

@@ -86,29 +86,14 @@
         <button id="btn-scene-toggle" class="floating-toggle" aria-label="切换场景">
             <i class="fa-solid fa-mountain-sun toggle-icon"></i>
         </button>
-        <button id="btn-view-toggle" class="floating-toggle" aria-label="显示/隐藏视图工具栏">
-            <i class="fa-solid fa-eye toggle-icon"></i>
-        </button>
+    </div>
+    <div class="floating-toggle-group floating-toggle-group-right">
         <button id="btn-site-toggle" class="floating-toggle" aria-label="显示参考网站">
             <i class="fa-solid fa-globe toggle-icon"></i>
         </button>
         <button id="btn-toolbar-toggle" class="floating-toggle" aria-label="显示/隐藏工具栏">
             <i class="fa-solid fa-magnifying-glass toggle-icon"></i>
         </button>
-    </div>
-    <div id="view-menu" class="view-menu" aria-label="视图菜单">
-        <div id="view-style-list" class="view-menu-options" role="radiogroup" aria-label="底图样式"></div>
-        <div class="view-menu-divider" role="separator"></div>
-        <div id="view-projection-list" class="view-menu-options" role="radiogroup" aria-label="投影方式"></div>
-        <div class="view-menu-divider" role="separator"></div>
-        <label class="view-menu-option view-menu-checkbox">
-            <input type="checkbox" id="btn-toggle-3d">
-            <span>3D地形</span>
-        </label>
-        <label class="view-menu-option view-menu-checkbox">
-            <input type="checkbox" id="btn-toggle-rotate">
-            <span>自动旋转</span>
-        </label>
     </div>
 
     <div id="scene-menu" class="view-menu" style="display:none" aria-label="场景菜单">
@@ -118,6 +103,7 @@
         <gis-panel class="layer-gis-panel" title="图层" width="100%" height="100%">
             <div class="layer-tabs" data-panel-actions role="tablist" aria-label="图层分类">
                 <button type="button" id="btn-layer-tab-resource" class="layer-tab-btn active" data-tab="resource" role="tab" aria-selected="true">资源</button>
+                <button type="button" id="btn-layer-tab-view" class="layer-tab-btn" data-tab="view" role="tab" aria-selected="false">视图</button>
                 <button type="button" id="btn-layer-tab-weather" class="layer-tab-btn" data-tab="weather" role="tab" aria-selected="false">图层</button>
                 <button type="button" id="btn-layer-tab-iot" class="layer-tab-btn" data-tab="iot" role="tab" aria-selected="false">物联</button>
             </div>
@@ -125,6 +111,24 @@
                 <div id="layer-tab-panel-resource" class="layer-tab-panel active" data-tab-panel="resource" role="tabpanel">
                     <div class="layer-tree">
                         <div id="menu-tree" class="menu-tree-wrap"></div>
+                    </div>
+                </div>
+                <div id="layer-tab-panel-view" class="layer-tab-panel" data-tab-panel="view" role="tabpanel" aria-hidden="true">
+                    <div class="layer-view-panel">
+                        <div class="view-menu-section-title">底图样式</div>
+                        <div id="view-style-list" class="view-menu-options" role="radiogroup" aria-label="底图样式"></div>
+                        <div class="view-menu-divider" role="separator"></div>
+                        <div class="view-menu-section-title">地图投影</div>
+                        <div id="view-projection-list" class="view-menu-options" role="radiogroup" aria-label="投影方式"></div>
+                        <div class="view-menu-divider" role="separator"></div>
+                        <label class="view-menu-option view-menu-checkbox">
+                            <input type="checkbox" id="btn-toggle-3d">
+                            <span>3D地形</span>
+                        </label>
+                        <label class="view-menu-option view-menu-checkbox">
+                            <input type="checkbox" id="btn-toggle-rotate">
+                            <span>自动旋转</span>
+                        </label>
                     </div>
                 </div>
                 <div id="layer-tab-panel-weather" class="layer-tab-panel" data-tab-panel="weather" role="tabpanel" aria-hidden="true">
@@ -135,6 +139,7 @@
                 </div>
             </div>
         </gis-panel>
+        <div id="layer-panel-resize-handle" class="layer-panel-resize-handle" aria-hidden="true"></div>
     </div>
 
     <div id="stats-overlay" class="stats-overlay" aria-label="统计面板">
@@ -192,8 +197,7 @@
             is3D: false,
             isAutoRotate: false,
             toolbarCollapsed: true,
-            layerCollapsed: false,
-            viewMenuOpen: false,
+            layerCollapsed: true,
             statsMode: false,
             statsPanels: [],
             activePointListMenuId: null,
@@ -293,7 +297,7 @@
             map,
             state,
             terrainSourceId,
-            closeViewMenu: () => closeViewMenu()
+            closeViewMenu: () => {}
         });
         const mapApi = GisIndexMap.create({
             map,
