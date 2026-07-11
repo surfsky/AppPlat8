@@ -37,6 +37,11 @@ export class TidePanelLayer extends MapLayer {
     this.dotLayerId = "tide-station-dot-layer";
     this.labelLayerId = "tide-station-label-layer";
     this.boundStationMapEvents = false;
+    this.boundChartEvents = false;
+    this.chartData = { times: [], values: [] };
+    this.selectedChartIndex = -1;
+    this.chart = null;
+    this.boundWindowResize = false;
   }
 
   /**绑定运行时并确保面板 UI 已创建 */
@@ -86,6 +91,8 @@ export class TidePanelLayer extends MapLayer {
     panel.className = "tide-panel";
     panel.innerHTML = this.getPanelHtml();
     document.body.appendChild(panel);
+    this.ensureChart();
+    this.bindChartEvents();
   }
 
   /**确保潮汐面板样式已注入 */
@@ -166,10 +173,28 @@ export class TidePanelLayer extends MapLayer {
       }
       #${this.panelId} #tideChart {
         width: 100%;
-        height: 200px;
+        height: 220px;
         border-radius: 10px;
         background: linear-gradient(180deg, #ffffff, #e2e8f0);
         border: 1px solid #cbd5e1;
+        cursor: crosshair;
+        display: block;
+        overflow: hidden;
+      }
+      #${this.panelId} .tide-cursor-info {
+        margin-top: 6px;
+        min-height: 20px;
+        font-size: 12px;
+        color: #334155;
+      }
+      #${this.panelId} .tide-cursor-time {
+        font-weight: 600;
+        color: #0f172a;
+        margin-right: 10px;
+      }
+      #${this.panelId} .tide-cursor-height {
+        color: #0369a1;
+        font-weight: 600;
       }
       #${this.panelId} #tideInfo {
         margin-top: 8px;
@@ -389,60 +414,116 @@ export class TidePanelLayer extends MapLayer {
           ${options}
         </select>
       </div>
-      <canvas id="tideChart" width="350" height="200"></canvas>
+      <div id="tideChart"></div>
+      <div id="tideCursorInfo" class="tide-cursor-info">点击曲线查看时间和潮位</div>
       <div id="tideInfo" class="info">加载中...</div>
       <div class="legend">
         <span><i class="dot-tide"></i>潮位曲线</span>
-        <span><i class="dot-now"></i>当前时刻</span>
-        <span><i class="dot-peak"></i>峰值标记</span>
       </div>
     `;
   }
 
-  /**绘制潮位趋势图 */
-  drawTideChart(times, values) {
-    const canvas = document.getElementById("tideChart");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width;
-    const h = canvas.height;
-    const pad = { left: 38, right: 10, top: 12, bottom: 32 };
-    const innerW = w - pad.left - pad.right;
-    const innerH = h - pad.top - pad.bottom;
+  /**获取图表容器 */
+  getChartEl() {
+    return document.getElementById("tideChart");
+  }
 
-    ctx.clearRect(0, 0, w, h);
-    if (!values.length) return;
+  /**确保图表实例已创建 */
+  ensureChart() {
+    const el = this.getChartEl();
+    if (!el || !window.echarts) return null;
+    if (!this.chart || this.chart.isDisposed?.()) {
+      this.chart = window.echarts.init(el, null, { renderer: "canvas" });
+    }
+    if (!this.boundWindowResize) {
+      window.addEventListener("resize", () => this.resizeChart());
+      this.boundWindowResize = true;
+    }
+    return this.chart;
+  }
 
+  /**调整图表尺寸 */
+  resizeChart() {
+    const chart = this.ensureChart();
+    chart?.resize?.();
+  }
+
+  /**绑定图表交互 */
+  bindChartEvents() {
+    if (this.boundChartEvents) return;
+    const chart = this.ensureChart();
+    if (!chart) return;
+
+    chart.getZr().on("click", (evt) => {
+      const idx = this.getChartIndexFromEvent(evt);
+      if (idx < 0) return;
+      this.selectedChartIndex = idx;
+      this.drawTideChart();
+      chart.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: idx });
+      this.renderSelectedTideInfo(idx);
+    });
+
+    this.boundChartEvents = true;
+  }
+
+  /**格式化图表时间 */
+  formatChartTime(value) {
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return String(value || "");
+    const mm = String(dt.getMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getDate()).padStart(2, "0");
+    const hh = String(dt.getHours()).padStart(2, "0");
+    const mi = String(dt.getMinutes()).padStart(2, "0");
+    return `${mm}-${dd} ${hh}:${mi}`;
+  }
+
+  /**格式化小时标签 */
+  formatChartHour(value) {
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return "";
+    return `${String(dt.getHours()).padStart(2, "0")}:00`;
+  }
+
+  /**获取图表命中索引 */
+  getChartIndexFromEvent(evt) {
+    const chart = this.ensureChart();
+    if (!chart || !this.chartData.values.length) return -1;
+    const point = [evt.offsetX, evt.offsetY];
+    if (!chart.containPixel({ gridIndex: 0 }, point)) return -1;
+    const raw = chart.convertFromPixel({ xAxisIndex: 0 }, point[0]);
+    const idx = Math.round(Number(raw));
+    return clamp(idx, 0, this.chartData.values.length - 1);
+  }
+
+  /**渲染当前选中潮位信息 */
+  renderSelectedTideInfo(idx) {
+    const host = document.getElementById("tideCursorInfo");
+    if (!host) return;
+    const times = this.chartData.times || [];
+    const values = this.chartData.values || [];
+    if (idx < 0 || idx >= times.length || idx >= values.length) {
+      host.textContent = "点击曲线查看时间和潮位";
+      return;
+    }
+    host.innerHTML = `
+      <span class="tide-cursor-time">${this.formatChartTime(times[idx])}</span>
+      <span class="tide-cursor-height">潮位 ${Number(values[idx]).toFixed(2)} m</span>
+    `;
+  }
+
+  /**构建潮位图表配置 */
+  buildTideChartOption() {
+    const times = this.chartData.times || [];
+    const values = this.chartData.values || [];
     const min = Math.min(...values);
     const max = Math.max(...values);
     const span = Math.max(0.6, max - min);
-    const toX = i => pad.left + (innerW * i / Math.max(1, values.length - 1));
-    const toY = v => pad.top + innerH * (1 - (v - min) / span);
+    const yMin = Number((min - span * 0.1).toFixed(2));
+    const yMax = Number((max + span * 0.1).toFixed(2));
 
-    ctx.strokeStyle = "#cbd5e1";
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 4; i++) {
-      const y = pad.top + (innerH * i / 4);
-      ctx.beginPath();
-      ctx.moveTo(pad.left, y);
-      ctx.lineTo(w - pad.right, y);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = "#0ea5e9";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    values.forEach((v, i) => {
-      const x = toX(i);
-      const y = toY(v);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    const now = Date.now();
     let nowIdx = 0;
     let bestGap = Infinity;
+    const now = Date.now();
     times.forEach((t, i) => {
       const gap = Math.abs(new Date(t).getTime() - now);
       if (gap < bestGap) {
@@ -450,26 +531,111 @@ export class TidePanelLayer extends MapLayer {
         nowIdx = i;
       }
     });
+    const activeIdx = this.selectedChartIndex >= 0 && this.selectedChartIndex < values.length
+      ? this.selectedChartIndex
+      : nowIdx;
 
-    const peak = Math.max(...values);
-    const peakIdx = values.findIndex(v => v === peak);
-    const drawDot = (idx, color, r = 4) => {
-      const x = toX(idx);
-      const y = toY(values[idx]);
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
+    const selectedTime = times[activeIdx] || "";
+    const selectedValue = Number(values[activeIdx] ?? 0);
+
+    return {
+      animation: false,
+      grid: { left: 44, right: 16, top: 16, bottom: 50, containLabel: false },
+      tooltip: {
+        trigger: "axis",
+        triggerOn: "click",
+        axisPointer: {
+          type: "line",
+          snap: true,
+          lineStyle: { color: "#ef4444", width: 2 }
+        },
+        backgroundColor: "rgba(15,23,42,0.82)",
+        borderWidth: 0,
+        textStyle: { color: "#ffffff", fontSize: 11 },
+        formatter: (params) => {
+          const row = Array.isArray(params) ? params[0] : params;
+          const idx = row?.dataIndex ?? activeIdx;
+          const val = Number(values[idx] ?? 0).toFixed(2);
+          return `${this.formatChartTime(times[idx])}<br/>潮位 ${val} m`;
+        }
+      },
+      xAxis: {
+        type: "category",
+        boundaryGap: false,
+        data: times,
+        axisTick: {
+          show: true,
+          interval: 0,
+          alignWithLabel: false,
+          lineStyle: { color: "rgba(148,163,184,0.55)" }
+        },
+        axisLabel: {
+          color: "#475569",
+          fontSize: 10,
+          margin: 14,
+          interval: (index) => index % 6 === 0,
+          formatter: (value) => this.formatChartHour(value)
+        },
+        axisLine: { lineStyle: { color: "rgba(148,163,184,0.55)" } },
+        splitLine: {
+          show: true,
+          interval: 0,
+          lineStyle: { color: "rgba(148,163,184,0.18)" }
+        }
+      },
+      yAxis: {
+        type: "value",
+        min: yMin,
+        max: yMax,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          color: "#475569",
+          formatter: (value) => `${Number(value).toFixed(1)}m`
+        },
+        splitNumber: 4,
+        splitLine: { lineStyle: { color: "rgba(148,163,184,0.25)" } }
+      },
+      series: [
+        {
+          name: "潮位曲线",
+          type: "line",
+          smooth: 0.35,
+          showSymbol: false,
+          symbol: "circle",
+          symbolSize: 7,
+          lineStyle: { width: 3, color: "#0ea5e9" },
+          itemStyle: { color: "#0ea5e9" },
+          data: values
+        },
+        {
+          name: "选中点",
+          type: "scatter",
+          data: selectedTime ? [[selectedTime, selectedValue]] : [],
+          symbolSize: 11,
+          itemStyle: { color: "#ffffff", borderColor: "#ef4444", borderWidth: 3 },
+          z: 6
+        }
+      ]
     };
-    drawDot(nowIdx, "#ef4444");
-    if (peakIdx >= 0) drawDot(peakIdx, "#22c55e", 3.4);
+  }
 
-    ctx.fillStyle = "#334155";
-    ctx.font = "11px sans-serif";
-    ctx.fillText(`${min.toFixed(1)}m`, 2, h - pad.bottom + 4);
-    ctx.fillText(`${max.toFixed(1)}m`, 2, pad.top + 4);
-    ctx.fillText("现在", clamp(toX(nowIdx) - 11, pad.left, w - 55), h - 18);
-    ctx.fillText("+48h", w - 36, h - 18);
+  /**绘制潮位趋势图 */
+  drawTideChart(times = this.chartData.times, values = this.chartData.values) {
+    if (Array.isArray(times) && Array.isArray(values) && times.length && values.length) {
+      this.chartData = { times: times.slice(), values: values.slice() };
+    }
+    const dataValues = this.chartData.values || [];
+    const chart = this.ensureChart();
+    if (!chart) return;
+    if (!dataValues.length) return;
+    chart.setOption(this.buildTideChartOption(), true);
+    this.resizeChart();
+    const activeIdx = this.selectedChartIndex >= 0 && this.selectedChartIndex < dataValues.length
+      ? this.selectedChartIndex
+      : 0;
+    chart.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: activeIdx });
+    this.renderSelectedTideInfo(activeIdx);
   }
 
   /**刷新海况与潮汐数据 */
@@ -507,6 +673,7 @@ export class TidePanelLayer extends MapLayer {
 
     const curveTimes = times.slice(0, 49);
     const curveValues = sea.slice(0, 49).map(v => Number(v));
+    this.selectedChartIndex = findNearestHourlyIndex(curveTimes);
     this.drawTideChart(curveTimes, curveValues);
     setInfo("tidePeak", `${Math.max(...curveValues).toFixed(2)} m`);
     setInfo("tideInfo", `站点 ${station.name}，更新: ${new Date().toLocaleString()}`);
@@ -545,6 +712,7 @@ export class TidePanelLayer extends MapLayer {
     if (panel) panel.style.display = "block";
     this.setStationVisibility(true);
     const ok = await super.show(opacity);
+    this.resizeChart();
     this.setOpacity(opacity);
     return ok;
   }

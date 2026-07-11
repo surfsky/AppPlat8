@@ -72,7 +72,7 @@ namespace App.Pages.GIS
                 }
             }
 
-            rows.Add(("原文", dataJson.Trim()));
+            rows.Add(("属性", dataJson.Trim()));
             return rows;
         }
 

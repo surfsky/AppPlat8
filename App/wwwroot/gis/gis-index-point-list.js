@@ -44,6 +44,49 @@
                 .replace(/'/g, '&#39;');
         }
 
+        function normalizeDataJsonText(raw) {
+            let text = String(raw || '').trim();
+            if (!text) return '';
+            if ((text.startsWith("'") && text.endsWith("'")) || (text.startsWith('"') && text.endsWith('"'))) {
+                text = text.substring(1, text.length - 1).trim();
+            }
+            return text;
+        }
+
+        function isStyleDataKey(key) {
+            const name = String(key || '').trim().toLowerCase();
+            if (!name) return true;
+            return [
+                'stroke', 'strock', 'stroke-width', 'fill', 'fill-opacity', 'marker-color',
+                'linecolor', 'linewidth', 'fillcolor', 'fillopacity', 'pointcolor',
+                'label', 'labelcolor', 'scale', 'icon', 'iconpath',
+                'color', 'opacity'
+            ].includes(name);
+        }
+
+        function getDataJsonValueText(item) {
+            const text = normalizeDataJsonText(item?.dataJson);
+            if (!text) return '';
+            let obj = null;
+            try {
+                obj = JSON.parse(text);
+            } catch {
+                return '';
+            }
+            if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return '';
+
+            const values = Object.entries(obj)
+                .filter(([key, value]) => !isStyleDataKey(key) && value !== null && value !== undefined)
+                .map(([, value]) => {
+                    if (typeof value === 'string') return value.trim();
+                    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+                    return '';
+                })
+                .filter(Boolean);
+
+            return values.join(' / ');
+        }
+
         function flyToPoint(item) {
             if (!map || !item || !item.hasCoord) return;
             map.flyTo({
@@ -223,7 +266,9 @@
                 .map(item => {
                     const title = item.alias || item.name || `点位${item.id}`;
                     const subtitle = item.name && item.alias && item.name !== item.alias ? item.name : '';
-                    const addr = item.addr || '暂无地址';
+                    const addr = item.addr || '';
+                    const dataText = getDataJsonValueText(item);
+                    const metaText = [addr, dataText].filter(Boolean).join(' / ') || '暂无地址';
                     const disableClass = item.hasCoord ? '' : ' no-coord';
                     const tip = item.hasCoord ? '点击定位到地图中心' : '该点位缺少经纬度';
                     const seq = escapeHtml(item.seq ?? '');
@@ -240,7 +285,7 @@
                                         </button>
                                     </span>
                                     ${subtitle ? `<span class="point-list-subtitle">${escapeHtml(subtitle)}</span>` : ''}
-                                    <span class="point-list-meta">${escapeHtml(addr)}</span>
+                                    <span class="point-list-meta">${escapeHtml(metaText)}</span>
                                 </span>
                             </div>
                         </div>
