@@ -18,7 +18,6 @@ namespace App.DAL.GIS
     [UI("GIS", "GIS菜单")]
     public class GisMenu : TreeEntity<GisMenu>, IFix<GisMenu>, IFixAll
     {
-        [UI("责任组织")]      public long? OrgId { get; set; }
         [UI("图标")]         public string Icon { get; set; }
         [UI("默认显示")]      public bool IsDefaultShow { get; set; }
         [UI("显示级别")]      public double? Zoom { get; set; }
@@ -29,16 +28,13 @@ namespace App.DAL.GIS
         [UI("最后数据时间")]   public DateTime? DataDt { get; set; }
 
         //
-        public virtual Org Org { get; set; }
         public virtual User Creator { get; set; }
-        public string OrgName => Org?.Name;
         public string CreatorName => Creator?.Name;
 
         // ITree 接口
         public override GisMenu Clone()
         {
             return base.Clone().Let(t => {
-                t.OrgId = this.OrgId;
                 t.Icon = this.Icon;
                 t.CreatorId = this.CreatorId;
                 t.IsDefaultShow = this.IsDefaultShow;
@@ -59,7 +55,6 @@ namespace App.DAL.GIS
                 ParentId,
                 Name,
                 SortId,
-                OrgId,
                 Icon,
                 CreatorId,
                 IsDefaultShow,
@@ -71,18 +66,16 @@ namespace App.DAL.GIS
                 DataDt,
                 DataFrom,
 
-                OrgName,
                 CreatorName,
             };
         }
 
 
-        public static IQueryable<GisMenu> Search(string name=null, long? creatorId=null, long? orgId=null, long? parentId=null)
+        public static IQueryable<GisMenu> Search(string name=null, long? creatorId=null, long? parentId=null)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty())         q = q.Where(o => o.Name.Contains(name.Trim()));
             if (creatorId.IsNotEmpty())    q = q.Where(o => o.CreatorId == creatorId.Value);
-            if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value);
             if (parentId.IsNotEmpty())     q = q.Where(o => o.ParentId == parentId.Value);
             return q;
         }

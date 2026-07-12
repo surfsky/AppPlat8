@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Shared
 {
-    [Auth(Power.GisGeometryView)]
+    [Auth(AuthLogin = true)]
     public class PropsEditorModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

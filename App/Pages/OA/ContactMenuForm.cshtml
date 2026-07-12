@@ -1,0 +1,21 @@
+@page
+@model App.Pages.OA.ContactMenuFormModel
+@{
+    ViewData["Title"] = "联系人目录";
+    var currentId = Request.Query["id"].ToString();
+    var selectedId = Request.Query["selectId"].ToString();
+}
+
+@section body {
+    <EleForm LabelWidth="120px">
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleTreeSelect For="Item.ParentId" Label="上级目录" Api="/httpapi/oa/GetContactMenuTree?excludeId=@currentId&amp;selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Type="Primary" Command="SaveNew" Visible="@(Model.Mode != PageMode.View)">保存并新增</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

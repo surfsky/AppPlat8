@@ -27,7 +27,13 @@
             <EleColumn For="Item.Type" Label="分组" Width="120"></EleColumn>
             <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="180" Sortable="true"></EleColumn>
             <EleColumn For="Item.Desc" Label="描述" MinWidth="220"></EleColumn>
-            <EleColumn For="Item.Url" Label="网址" MinWidth="260"></EleColumn>
+            <EleColumn For="Item.Url" Label="网址" MinWidth="260">
+                <template #default="scope">
+                    <a :href="scope.row.url || '#'" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 hover:underline">
+                        {{ scope.row.url || '' }}
+                    </a>
+                </template>
+            </EleColumn>
             <EleColumn For="Item.SortId" Label="排序" Width="90"></EleColumn>
         </Columns>
     </EleTable>

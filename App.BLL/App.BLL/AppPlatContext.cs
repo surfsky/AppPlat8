@@ -104,6 +104,8 @@ namespace App.DAL
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Budget> Budgets { get; set; }
         public DbSet<BudgetType> BudgetTypes { get; set; }
+        public DbSet<ContactMenu> ContactMenus { get; set; }
+        public DbSet<Contact> Contacts { get; set; }
 
 
         //---------------------------------------------------

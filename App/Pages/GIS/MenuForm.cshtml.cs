@@ -46,7 +46,6 @@ namespace App.Pages.GIS
 
             item.Name = req.Name;
             item.ParentId = req.ParentId;
-            item.OrgId = req.OrgId;
             item.Icon = req.Icon;
             item.IsDefaultShow = req.IsDefaultShow;
             item.Zoom = req.Zoom;

@@ -171,6 +171,11 @@ namespace App.DAL
         [UI("预算", "预算删除")]               BudgetDelete = 243,
         [UI("预算", "预算类别管理")]           BudgetTypeEdit = 245,
 
+        [UI("联系人目录", "联系人目录新增")]     ContactMenuNew = 246,
+        [UI("联系人目录", "联系人目录查看")]     ContactMenuView = 247,
+        [UI("联系人目录", "联系人目录修改")]     ContactMenuEdit = 248,
+        [UI("联系人目录", "联系人目录删除")]     ContactMenuDelete = 249,
+
         [UI("文档", "文档新增")]               ArticleNew = 250,
         [UI("文档", "文档查看")]               ArticleView = 251,
         [UI("文档", "文档修改")]               ArticleEdit = 252,
@@ -181,6 +186,11 @@ namespace App.DAL
         [UI("任务", "任务查看")]               TaskView = 261,
         [UI("任务", "任务修改")]               TaskEdit = 262,
         [UI("任务", "任务删除")]               TaskDelete = 263,
+
+        [UI("联系人", "联系人新增")]           ContactNew = 264,
+        [UI("联系人", "联系人查看")]           ContactView = 265,
+        [UI("联系人", "联系人修改")]           ContactEdit = 266,
+        [UI("联系人", "联系人删除")]           ContactDelete = 267,
 
         //---------------------------------------------
         // GIS (270)

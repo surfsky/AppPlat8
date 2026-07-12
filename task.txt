@@ -453,12 +453,43 @@ Done
         UI
             gis/index 顶部实现流光动画效果
             gis/index 页面遮住左下角的“mapbox”标签
-    角色与Gis菜单管理
-        - 删除gismenu.org 属性
-        - 创建角色和gismenu管理页面和相关实体（ RoleGismenu）：左侧是角色列表，右侧是gismenu菜单树表，并显示“可查看”、“可编辑”两个checkbox；
-        - 某个用户登录后，会根据该用户的角色，在gis/index中显示可见的gismenu，在gis/geometrymanager左侧的菜单树中显示授权编辑的菜单；
-        - 点位导入时会检查 gismenuid 是否被当前用户角色授权（gis/GeometryImporter）
-    地图底部显示滚动告警；
+    优化数据授权管理
+        角色与Gis菜单管理
+            - 创建角色和gismenu管理页面和相关实体（ RoleGisMenu）：左侧是角色列表，右侧是gismenu菜单树表，并显示“可查看”、“可编辑”两个checkbox；
+            - 某个用户登录后，会根据该用户的角色，在gis/index中显示可见的gismenu，在gis/geometrymanager左侧的菜单树中显示授权编辑的菜单；
+            - 点位导入时会检查 gismenuid 是否被当前用户角色授权（gis/GeometryImporter）
+            - 修改相关的数据接口
+        角色和contactmenu管理（RoleContactMenu）
+            参考RoleGisMenu
+
+    地图顶部（或底部）显示滚动告警；
+
+2026.07.12
+    /修改gis/index，调整入口
+        在gis/index顶部上侧增加“事件”图标入口（可用闪电图标），点击后用elemanager drawer弹出 /tasks/events 页面
+        删除原“网址”图标入口
+        创建“信息”图标入口（可用info图标），点击后用drawer弹出，内嵌两个tab页面（标签放在标题栏上）：
+            常用网址：/open/sites
+            联系人：/oa/contacts
+    /实现联系人：/oa/contacts 及联系人目录 /oa/contactMenu 管理
+        创建ContactMenu （联系人目录）实体（树状）
+            可参考gismenu
+            创建相关的列表（contactMenus)、表单管理页面（contactForm）
+            相关的数据接口
+        创建通用的联系人 oa/contact （联系人）实体和管理页面,
+            字段：id, name, tel, orgid（单位）, title（职务）, jsondata（属性）
+            创建对应的列表页面 /oa/contacts 
+                注意号码要脱敏后展示 tel.Mask()
+                提供批量导入功能（可考虑使用 /shared/importor）
+            创建对应的表单页面 contactForm 页面
+                号码不用脱敏
+                将 /gis/PropsEditor 迁移到 shared/PropsEditor 
+                jsondata字段用 ElePicker + PropsEditor 编辑
+        做好数据库更新，编译通过
+    - 创建 EleUI/Tables/EleLinkColumn 控件，实现超链接列的功能，并应用到 pages/open/Sites.Url 列
+    优化下拉框
+        我把 MenuForm.Power 用的控件从 EleSelect 改为 EleListPicker，但是页面报错了显示不出来，完善一下该控件，接口与EleSelect完全一致
+        检查所有的EleSelect，如果数据较多（如大于10条），都替换为 EleListPicker，便于移动端查看
 
 
 2026.07.11

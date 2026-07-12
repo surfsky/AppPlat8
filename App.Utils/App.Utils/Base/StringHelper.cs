@@ -382,7 +382,7 @@ namespace App.Utils
         }
 
 
-        /// <summary>按“从右向左（base-0）”定位并遮罩文本。</summary>
+        /// <summary>按“从右向左（base-0）”定位并遮罩文本（数据脱敏）。</summary>
         /// <param name="lastIndex">从右往左数的索引（base-0，0表示最后一个字符）。</param>
         /// <param name="length">需要连续遮罩的字符个数（向左延展）。</param>
         /// <param name="maskChar">遮罩字符。</param>

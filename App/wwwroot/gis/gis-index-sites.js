@@ -1,35 +1,47 @@
 /**
- * 参考网站抽屉
+ * GIS 顶部入口：事件抽屉 + 信息抽屉
  */
 (function () {
-    class GisSiteDrawer {
+    class GisInfoDrawer {
         /**构造 */
         constructor() {
-            this.btnId = 'btn-site-toggle';
-            this.hostId = 'gis-site-drawer-host';
-            this.styleId = 'gis-site-drawer-style';
-            this.api = '/httpapi/sites/GetSiteGroups';
+            this.btnId = 'btn-info-toggle';
+            this.eventBtnId = 'btn-event-toggle';
+            this.hostId = 'gis-info-drawer-host';
+            this.styleId = 'gis-info-drawer-style';
             this.inited = false;
-            this.loading = false;
-            this.loaded = false;
             this.opened = false;
-            this.groups = [];
+            this.activeTab = 'sites';
+            this.tabs = [
+                { key: 'sites', label: '常用网址', url: '/Open/Sites' },
+                { key: 'contacts', label: '联系人', url: '/OA/Contacts' }
+            ];
             this.btn = null;
+            this.eventBtn = null;
             this.host = null;
             this.panel = null;
-            this.body = null;
+            this.iframe = null;
+            this.tabEls = [];
         }
 
         /**初始化 */
         init() {
             if (this.inited) return;
+
             this.btn = document.getElementById(this.btnId);
-            if (!this.btn) return;
+            this.eventBtn = document.getElementById(this.eventBtnId);
+            if (!this.btn && !this.eventBtn) return;
 
             this.ensureStyle();
             this.ensureHost();
-            this.bindEvents();
+            this.bindInfoEvents();
+            this.bindEventButton();
             this.inited = true;
+        }
+
+        /**获取管理器 */
+        getManager() {
+            return (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
         }
 
         /**注入样式 */
@@ -45,18 +57,21 @@
     z-index: 5008;
     pointer-events: none;
 }
-#${this.hostId} .site-mask {
+#${this.hostId}.is-open {
+    pointer-events: auto;
+}
+#${this.hostId} .info-mask {
     position: absolute;
     inset: 0;
     background: rgba(2, 6, 23, 0.36);
     opacity: 0;
     transition: opacity .22s ease;
 }
-#${this.hostId} .site-drawer {
+#${this.hostId} .info-drawer {
     position: absolute;
     top: 0;
     right: 0;
-    width: min(420px, calc(100vw - 26px));
+    width: min(860px, calc(100vw - 24px));
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -65,196 +80,218 @@
     box-shadow: -16px 0 40px rgba(2, 6, 23, 0.46);
     transform: translateX(100%);
     transition: transform .22s ease;
+    overflow: hidden;
 }
-#${this.hostId}.is-open {
-    pointer-events: auto;
-}
-#${this.hostId}.is-open .site-mask {
+#${this.hostId}.is-open .info-mask {
     opacity: 1;
 }
-#${this.hostId}.is-open .site-drawer {
+#${this.hostId}.is-open .info-drawer {
     transform: translateX(0);
 }
-#${this.hostId} .site-head {
-    padding: 18px 18px 14px;
-    border-bottom: 1px solid rgba(56, 189, 248, 0.18);
-}
-#${this.hostId} .site-title {
+#${this.hostId} .info-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    color: #f8fafc;
+    gap: 12px;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid rgba(56, 189, 248, 0.18);
 }
-#${this.hostId} .site-title-text {
+#${this.hostId} .info-head-main {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+#${this.hostId} .info-title {
+    color: #f8fafc;
     font-size: 18px;
     font-weight: 700;
     letter-spacing: .02em;
+    white-space: nowrap;
 }
-#${this.hostId} .site-close {
-    width: 32px;
-    height: 32px;
+#${this.hostId} .info-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+#${this.hostId} .info-tab {
+    min-width: 92px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.46);
+    color: rgba(226, 232, 240, 0.9);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s ease;
+}
+#${this.hostId} .info-tab:hover {
+    border-color: rgba(56, 189, 248, 0.5);
+    background: rgba(14, 66, 146, 0.42);
+    color: #fff;
+}
+#${this.hostId} .info-tab.active {
+    border-color: rgba(56, 189, 248, 0.8);
+    background: rgba(14, 116, 144, 0.56);
+    color: #f8fafc;
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.18);
+}
+#${this.hostId} .info-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+#${this.hostId} .info-action-btn {
+    width: 34px;
+    height: 34px;
     border: 1px solid rgba(56, 189, 248, 0.26);
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.55);
     color: #cbd5e1;
     cursor: pointer;
 }
-#${this.hostId} .site-close:hover {
+#${this.hostId} .info-action-btn:hover {
     color: #fff;
     border-color: rgba(56, 189, 248, 0.58);
     background: rgba(14, 66, 146, 0.6);
 }
-#${this.hostId} .site-tip {
-    margin-top: 8px;
-    color: rgba(191, 219, 254, 0.82);
-    font-size: 12px;
-}
-#${this.hostId} .site-body {
+#${this.hostId} .info-body {
     flex: 1;
     min-height: 0;
-    overflow: auto;
-    padding: 16px 14px 20px;
+    background: rgba(2, 6, 23, 0.3);
 }
-#${this.hostId} .site-empty,
-#${this.hostId} .site-loading {
-    padding: 22px 14px;
-    color: rgba(191, 219, 254, 0.78);
-    text-align: center;
-    font-size: 13px;
-}
-#${this.hostId} .site-group + .site-group {
-    margin-top: 16px;
-}
-#${this.hostId} .site-group-title {
-    margin-bottom: 10px;
-    padding-left: 2px;
-    color: #7dd3fc;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: .08em;
-}
-#${this.hostId} .site-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-#${this.hostId} .site-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    width: 100%;
-    padding: 12px;
-    border: 1px solid rgba(56, 189, 248, 0.16);
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.46);
-    color: #e2e8f0;
-    text-align: left;
-    cursor: pointer;
-    transition: transform .16s ease, border-color .16s ease, background .16s ease;
-}
-#${this.hostId} .site-item:hover {
-    transform: translateX(-2px);
-    border-color: rgba(56, 189, 248, 0.56);
-    background: rgba(14, 66, 146, 0.42);
-}
-#${this.hostId} .site-icon {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(8, 145, 178, 0.16);
-    color: #7dd3fc;
-    font-size: 18px;
-    overflow: hidden;
-}
-#${this.hostId} .site-icon img {
+#${this.hostId} .info-frame {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    border: 0;
+    background: #fff;
 }
-#${this.hostId} .site-main {
-    min-width: 0;
-    flex: 1;
-}
-#${this.hostId} .site-name {
-    color: #f8fafc;
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.35;
-}
-#${this.hostId} .site-desc {
-    margin-top: 4px;
-    color: white;
-    opacity: 0.5;
-    font-size: 12px;
-    line-height: 1.45;
-}
-#${this.hostId} .site-url {
-    margin-top: 6px;
-    color: white;
-    opacity: 0.5;
-    font-size: 12px;
-    line-height: 1.3;
-    word-break: break-all;
-    /*太长缩略显示*/
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-@media (max-width: 640px) {
-    #${this.hostId} .site-drawer {
+@media (max-width: 900px) {
+    #${this.hostId} .info-drawer {
         width: calc(100vw - 12px);
+    }
+    #${this.hostId} .info-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    #${this.hostId} .info-head-main,
+    #${this.hostId} .info-actions {
+        width: 100%;
+    }
+    #${this.hostId} .info-head-main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
 }
 `;
             document.head.appendChild(style);
         }
 
-        /**构造宿主 */
+        /**创建宿主 */
         ensureHost() {
             if (this.host) return;
 
             const host = document.createElement('div');
             host.id = this.hostId;
             host.innerHTML = `
-<div class="site-mask"></div>
-<aside class="site-drawer" aria-label="参考网站抽屉">
-    <div class="site-head">
-        <div class="site-title">
-            <span class="site-title-text">参考网站</span>
-            <button type="button" class="site-close" aria-label="关闭网站抽屉">
+<div class="info-mask"></div>
+<aside class="info-drawer" aria-label="信息抽屉">
+    <div class="info-head">
+        <div class="info-head-main">
+            <span class="info-title">信息</span>
+            <div class="info-tabs" role="tablist" aria-label="信息分类"></div>
+        </div>
+        <div class="info-actions">
+            <button type="button" class="info-action-btn info-refresh" aria-label="刷新当前页面" title="刷新">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+            <button type="button" class="info-action-btn info-close" aria-label="关闭信息抽屉" title="关闭">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
     </div>
-    <div class="site-body">
-        <div class="site-loading">正在加载网站...</div>
+    <div class="info-body">
+        <iframe class="info-frame" title="信息内容"></iframe>
     </div>
 </aside>`;
 
             document.body.appendChild(host);
             this.host = host;
-            this.panel = host.querySelector('.site-drawer');
-            this.body = host.querySelector('.site-body');
+            this.panel = host.querySelector('.info-drawer');
+            this.iframe = host.querySelector('.info-frame');
+            this.renderTabs();
         }
 
-        /**绑定事件 */
-        bindEvents() {
-            this.btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.toggle();
-            });
+        /**渲染页签 */
+        renderTabs() {
+            const tabsHost = this.host?.querySelector('.info-tabs');
+            if (!tabsHost) return;
 
-            this.host.querySelector('.site-mask').addEventListener('click', () => this.close());
-            this.host.querySelector('.site-close').addEventListener('click', () => this.close());
+            tabsHost.innerHTML = this.tabs.map(tab => `
+<button type="button" class="info-tab" data-tab-key="${tab.key}" role="tab" aria-selected="false">${tab.label}</button>
+            `).join('');
+
+            this.tabEls = Array.from(tabsHost.querySelectorAll('.info-tab'));
+        }
+
+        /**绑定信息按钮事件 */
+        bindInfoEvents() {
+            if (this.btn) {
+                this.btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggle();
+                });
+            }
+
+            this.host.querySelector('.info-mask').addEventListener('click', () => this.close());
+            this.host.querySelector('.info-close').addEventListener('click', () => this.close());
+            this.host.querySelector('.info-refresh').addEventListener('click', () => this.reloadActiveFrame());
             this.panel.addEventListener('click', (e) => e.stopPropagation());
+
+            this.tabEls.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.dataset.tabKey || 'sites';
+                    this.switchTab(key);
+                });
+            });
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') this.close();
+            });
+        }
+
+        /**绑定事件入口 */
+        bindEventButton() {
+            if (!this.eventBtn) return;
+
+            this.eventBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.openEventDrawer();
+            });
+        }
+
+        /**打开事件抽屉 */
+        openEventDrawer() {
+            const manager = this.getManager();
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open('/Tasks/Events', '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            manager.openDrawer({
+                title: '事件',
+                url: '/Tasks/Events',
+                size: '50%',
+                direction: 'rtl',
+                showFooter: false,
+                closeAction: 'none'
             });
         }
 
@@ -268,11 +305,11 @@
         }
 
         /**打开 */
-        async open() {
+        open(tabKey = 'sites') {
             this.host.classList.add('is-open');
-            this.btn.classList.add('active');
+            if (this.btn) this.btn.classList.add('active');
             this.opened = true;
-            await this.load();
+            this.switchTab(tabKey);
         }
 
         /**关闭 */
@@ -283,152 +320,35 @@
             this.opened = false;
         }
 
-        /**加载 */
-        async load() {
-            if (this.loaded || this.loading) return;
+        /**切换标签 */
+        switchTab(tabKey) {
+            const next = this.tabs.find(t => t.key === tabKey) || this.tabs[0];
+            if (!next) return;
 
-            this.loading = true;
-            this.renderLoading();
-
-            try {
-                const res = await axios.get(this.api);
-                const body = res?.data || {};
-                if (body.code !== 0) {
-                    this.renderEmpty(body.message || '网站加载失败');
-                    return;
-                }
-
-                this.groups = this.normalizeGroups(body.data);
-                this.loaded = true;
-                this.render();
-            } catch (err) {
-                console.error('加载参考网站失败', err);
-                this.renderEmpty('网站加载失败');
-            } finally {
-                this.loading = false;
-            }
-        }
-
-        /**标准化 */
-        normalizeGroups(list) {
-            if (!Array.isArray(list)) return [];
-
-            return list.map(group => ({
-                type: group.type || group.Type || '其它',
-                items: Array.isArray(group.items || group.Items) ? (group.items || group.Items) : []
-            })).filter(group => group.items.length > 0);
-        }
-
-        /**渲染加载中 */
-        renderLoading() {
-            if (!this.body) return;
-            this.body.innerHTML = '<div class="site-loading">正在加载网站...</div>';
-        }
-
-        /**渲染空态 */
-        renderEmpty(msg) {
-            if (!this.body) return;
-            this.body.innerHTML = `<div class="site-empty">${this.escapeHtml(msg || '暂无网站')}</div>`;
-        }
-
-        /**渲染 */
-        render() {
-            if (!this.body) return;
-            if (!this.groups.length) {
-                this.renderEmpty('暂无网站');
-                return;
-            }
-
-            this.body.innerHTML = this.groups.map(group => this.renderGroup(group)).join('');
-            this.bindItemEvents();
-        }
-
-        /**渲染分组 */
-        renderGroup(group) {
-            return `
-<section class="site-group">
-    <div class="site-group-title">${this.escapeHtml(group.type)}</div>
-    <div class="site-list">
-        ${group.items.map(item => this.renderItem(item)).join('')}
-    </div>
-</section>`;
-        }
-
-        /**渲染站点 */
-        renderItem(item) {
-            const id = item.id ?? item.Id ?? 0;
-            const name = item.name || item.Name || '';
-            const desc = item.desc || item.Desc || '';
-            const url = item.url || item.Url || '';
-            const icon = item.icon || item.Icon || '';
-
-            return `
-<button type="button" class="site-item" data-site-id="${id}" data-site-url="${this.escapeAttr(url)}">
-    <span class="site-icon">${this.renderIcon(icon, name)}</span>
-    <span class="site-main">
-        <span class="site-name">${this.escapeHtml(name)}</span>
-        <br>
-        ${desc ? `<span class="site-desc">${this.escapeHtml(desc)}</span>` : ''}
-        ${url ? `<span class="site-url">${this.escapeHtml(url)}</span>` : ''}
-    </span>
-</button>`;
-        }
-
-        /**渲染图标 */
-        renderIcon(icon, name) {
-            const text = this.escapeHtml((name || '?').trim().slice(0, 1).toUpperCase());
-            if (!icon) return text;
-
-            if (this.isIconClass(icon)) {
-                return `<i class="${this.escapeAttr(icon)}"></i>`;
-            }
-
-            if (this.isImageUrl(icon)) {
-                return `<img src="${this.escapeAttr(icon)}" alt="${this.escapeAttr(name || 'icon')}">`;
-            }
-
-            return this.escapeHtml(icon.trim().slice(0, 1).toUpperCase());
-        }
-
-        /**绑定列表事件 */
-        bindItemEvents() {
-            if (!this.body) return;
-
-            this.body.querySelectorAll('.site-item').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const url = btn.dataset.siteUrl || '';
-                    if (!url) return;
-                    window.open(url, '_blank', 'noopener,noreferrer');
-                });
+            this.activeTab = next.key;
+            this.tabEls.forEach(btn => {
+                const isActive = btn.dataset.tabKey === next.key;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
             });
+
+            if (this.iframe && this.iframe.getAttribute('src') !== next.url) {
+                this.iframe.setAttribute('src', next.url);
+            }
         }
 
-        /**是否图标类 */
-        isIconClass(icon) {
-            return /(^|\s)(fa[srbld]?|fa-[\w-]+)/i.test(icon || '');
-        }
-
-        /**是否图片地址 */
-        isImageUrl(icon) {
-            return /(\.png|\.jpg|\.jpeg|\.gif|\.svg|\.webp)(\?|$)/i.test(icon || '') || /^(https?:\/\/|\/)/i.test(icon || '');
-        }
-
-        /**转义 html */
-        escapeHtml(text) {
-            return String(text || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        /**转义属性 */
-        escapeAttr(text) {
-            return this.escapeHtml(text).replace(/`/g, '&#96;');
+        /**刷新当前页 */
+        reloadActiveFrame() {
+            if (!this.iframe) return;
+            try {
+                this.iframe.contentWindow?.location?.reload();
+            } catch {
+                const src = this.iframe.getAttribute('src') || '';
+                this.iframe.setAttribute('src', src);
+            }
         }
     }
 
-    const drawer = new GisSiteDrawer();
+    const drawer = new GisInfoDrawer();
     window.addEventListener('gis:index-ready', () => drawer.init());
 })();

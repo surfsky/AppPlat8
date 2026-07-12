@@ -155,6 +155,22 @@ namespace App.DAL
                         },
                         new Menu
                         {
+                            Name = "联系人目录",
+                            SortId = 5,
+                            NavigateUrl = "OA/ContactMenus",
+                            ImageUrl = "fas fa-folder-tree",
+                            Power = (Power?)247,
+                        },
+                        new Menu
+                        {
+                            Name = "联系人",
+                            SortId = 6,
+                            NavigateUrl = "OA/Contacts",
+                            ImageUrl = "fas fa-address-book",
+                            Power = (Power?)265,
+                        },
+                        new Menu
+                        {
                             Name = "资产",
                             SortId = 10,
                             NavigateUrl = "OA/Assets",

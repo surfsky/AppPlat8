@@ -1,0 +1,21 @@
+@page
+@model App.Pages.OA.ContactFormModel
+@{
+    ViewData["Title"] = "联系人信息";
+}
+
+@section body {
+    <EleForm Model="form" LabelWidth="120px">
+        <EleInput For="Item.Name" Label="姓名" Required="true"></EleInput>
+        <EleInput For="Item.Tel" Label="电话"></EleInput>
+        <EleInput For="Item.Title" Label="职务"></EleInput>
+        <EleTreeSelect For="Item.MenuId" Label="联系人目录" Api="/httpapi/oa/GetContactMenuTree" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <ElePicker For="Item.JsonData" TextFor="Item.JsonData" Label="属性" PopupUrl="/Shared/PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Shared
 {
-    [Auth(Power.CheckObjectEdit)]
+    [Auth(AuthLogin = true)]
     public class ImportorModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]
@@ -236,7 +236,7 @@ namespace App.Pages.Shared
                 return false;
             }
 
-            if (!string.Equals(type.Namespace, "App.DAL", StringComparison.Ordinal))
+            if (string.IsNullOrWhiteSpace(type.Namespace) || !type.Namespace.StartsWith("App.DAL", StringComparison.Ordinal))
             {
                 error = "出于安全考虑，仅允许导入App.DAL命名空间下实体";
                 return false;

@@ -239,7 +239,7 @@ createApp({
             const manager = getManager();
             const md = isViewMode ? 'view' : 'edit';
             const serialized = JSON.stringify(props || {});
-            let url = `/GIS/PropsEditor?md=${md}`;
+            let url = `/Shared/PropsEditor?md=${md}`;
             if (typeof window !== 'undefined') {
                 const key = writePayloadToStorage(serialized);
                 if (key) {
