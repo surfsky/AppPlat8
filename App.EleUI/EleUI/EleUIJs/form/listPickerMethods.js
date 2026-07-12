@@ -1,4 +1,64 @@
 export const listPickerMethods = {
+    /**Pick better option when duplicate values exist */
+    preferListPickerOption(current, next) {
+        if (!current) return next;
+        if (!next) return current;
+
+        const currentLabel = current?.label === null || current?.label === undefined ? '' : String(current.label);
+        const nextLabel = next?.label === null || next?.label === undefined ? '' : String(next.label);
+        const currentHasGroup = currentLabel.includes('/');
+        const nextHasGroup = nextLabel.includes('/');
+
+        if (currentHasGroup !== nextHasGroup) {
+            return currentHasGroup ? next : current;
+        }
+
+        if (nextLabel.length > 0 && (currentLabel.length === 0 || nextLabel.length < currentLabel.length)) {
+            return next;
+        }
+
+        return current;
+    },
+
+    /**Remove duplicate options by value */
+    dedupeListPickerOptions(options = []) {
+        const map = new Map();
+        for (const item of (Array.isArray(options) ? options : [])) {
+            const key = item?.value === null || item?.value === undefined ? '' : String(item.value);
+            if (!key) continue;
+
+            const prev = map.get(key);
+            map.set(key, this.preferListPickerOption(prev, item));
+        }
+        return Array.from(map.values());
+    },
+
+    /**Read static list picker options from current page */
+    getListPickerFallbackOptions(modelKey, target) {
+        if (typeof document === 'undefined') return [];
+
+        const selectors = [];
+        if (modelKey && target) {
+            selectors.push(`.ele-list-picker-wrapper[data-ele-field="${String(modelKey)}"][data-select-target="${String(target)}"]`);
+        }
+        if (modelKey) {
+            selectors.push(`.ele-list-picker-wrapper[data-select-model="${String(modelKey)}"]`);
+        }
+
+        for (const selector of selectors) {
+            try {
+                const el = document.querySelector(selector);
+                const raw = el?.getAttribute('data-static-options') || '';
+                if (!raw) continue;
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+            } catch {
+            }
+        }
+
+        return [];
+    },
+
     /**Normalize list picker model value */
     normalizeListPickerValue(value, multiple = false) {
         if (multiple) {
@@ -23,12 +83,16 @@ export const listPickerMethods = {
         const model = this.form?.value ? this.form.value[modelKey] : null;
         const normalized = this.normalizeListPickerValue(model, multiple);
         const values = Array.isArray(normalized) ? normalized : (normalized ? [normalized] : []);
+        const fallback = Array.isArray(fallbackOptions) && fallbackOptions.length > 0
+            ? fallbackOptions
+            : this.getListPickerFallbackOptions(modelKey, target);
         const options = typeof this.getControlOptions === 'function'
-            ? this.getControlOptions(target, fallbackOptions)
-            : (Array.isArray(fallbackOptions) ? fallbackOptions : []);
+            ? this.getControlOptions(target, fallback)
+            : fallback;
+        const finalOptions = this.dedupeListPickerOptions(options);
 
         const labelMap = new Map(
-            (Array.isArray(options) ? options : []).map(item => [
+            finalOptions.map(item => [
                 item?.value === null || item?.value === undefined ? '' : String(item.value),
                 item?.label === null || item?.label === undefined ? '' : String(item.label)
             ])
@@ -74,11 +138,15 @@ export const listPickerMethods = {
         const modelKey = config.modelKey;
         const target = config.target || `field:${modelKey}`;
         const multiple = !!config.multiple;
+        const allowCreate = !!config.allowCreate;
+        const filterable = config.filterable !== false;
         const collapseTags = !!config.collapseTags;
         const title = config.title || config.label || '选择';
         const size = config.size || '';
         const placeholder = config.placeholder || '请输入关键字过滤';
-        const fallbackOptions = Array.isArray(config.fallbackOptions) ? config.fallbackOptions : [];
+        const fallbackOptions = Array.isArray(config.fallbackOptions) && config.fallbackOptions.length > 0
+            ? config.fallbackOptions
+            : this.getListPickerFallbackOptions(modelKey, target);
         const currentValue = this.normalizeListPickerValue(this.form.value[modelKey], multiple);
         const selectedValues = Array.isArray(currentValue)
             ? [...currentValue]
@@ -88,9 +156,10 @@ export const listPickerMethods = {
         const sourceOptions = typeof this.getControlOptions === 'function'
             ? this.getControlOptions(target, fallbackOptions)
             : fallbackOptions;
+        const finalOptions = this.dedupeListPickerOptions(sourceOptions);
 
         const getRawValue = (raw) => {
-            const match = (Array.isArray(sourceOptions) ? sourceOptions : [])
+            const match = finalOptions
                 .find(item => String(item?.value) === String(raw));
             return match ? match.value : raw;
         };
@@ -98,7 +167,8 @@ export const listPickerMethods = {
         EleManager.openDrawer({
             title,
             direction: 'rtl',
-            size: size || (window.innerWidth < 768 ? '100%' : '420px'),
+            size: size || (window.innerWidth < 768 ? '100%' : '50%'),
+            footerAlign: 'center',
             resizable: true,
             closeOnClickModal: false,
             destroyOnClose: true,
@@ -110,22 +180,44 @@ export const listPickerMethods = {
 
                 const state = reactive({
                     keyword: '',
-                    options: Array.isArray(sourceOptions) ? sourceOptions : [],
+                    options: finalOptions,
                     values: [...selectedValues],
                     current: !multiple && selectedValues.length > 0 ? selectedValues[0] : '',
-                    collapseTags
+                    collapseTags,
+                    allowCreate,
+                    filterable
                 });
 
                 const app = createApp({
                     setup() {
                         const filteredOptions = computed(() => {
                             const keyword = String(state.keyword || '').trim().toLowerCase();
-                            if (!keyword) return state.options;
-                            return state.options.filter(item => {
+                            const baseOptions = !keyword
+                                ? state.options
+                                : state.options.filter(item => {
+                                    const label = item?.label === null || item?.label === undefined ? '' : String(item.label);
+                                    const value = item?.value === null || item?.value === undefined ? '' : String(item.value);
+                                    return label.toLowerCase().includes(keyword) || value.toLowerCase().includes(keyword);
+                                });
+
+                            if (!state.allowCreate) return baseOptions;
+                            if (!keyword) return baseOptions;
+
+                            const exists = state.options.some(item => {
                                 const label = item?.label === null || item?.label === undefined ? '' : String(item.label);
                                 const value = item?.value === null || item?.value === undefined ? '' : String(item.value);
-                                return label.toLowerCase().includes(keyword) || value.toLowerCase().includes(keyword);
+                                return label.toLowerCase() === keyword || value.toLowerCase() === keyword;
                             });
+                            if (exists) return baseOptions;
+
+                            return [
+                                {
+                                    label: String(state.keyword || '').trim(),
+                                    value: String(state.keyword || '').trim(),
+                                    __custom: true
+                                },
+                                ...baseOptions
+                            ];
                         });
 
                         const selectedText = computed(() => {
@@ -175,6 +267,7 @@ export const listPickerMethods = {
 <div class="h-full flex flex-col bg-white">
     <div class="px-4 pt-4 pb-3 border-b border-slate-200 bg-white">
         <el-input
+            v-if="state.filterable"
             v-model="state.keyword"
             clearable
             :placeholder="${JSON.stringify(placeholder)}">
@@ -186,27 +279,35 @@ export const listPickerMethods = {
             已选：{{ selectedText.text }}
         </div>
     </div>
-    <div class="flex-1 min-h-0 overflow-auto p-3 bg-slate-50">
-        <div class="flex flex-col gap-2">
+    <div class="flex-1 min-h-0 overflow-auto bg-white">
+        <div class="divide-y divide-slate-200">
             <button
-                v-for="item in filteredOptions"
+                v-for="(item, idx) in filteredOptions"
                 :key="String(item.value)"
                 type="button"
-                class="w-full text-left bg-white border rounded px-3 py-3 transition flex items-center justify-between hover:border-blue-300"
+                class="relative w-full text-left px-4 py-3 transition flex items-center gap-3 bg-white hover:bg-slate-50"
                 :class="multiple
-                    ? (isChecked(item.value) ? 'border-blue-500 bg-blue-50' : 'border-slate-200')
-                    : (String(state.current) === String(item.value) ? 'border-blue-500 bg-blue-50' : 'border-slate-200')"
+                    ? (isChecked(item.value) ? 'bg-blue-50/90 shadow-[inset_4px_0_0_0_#2563eb]' : '')
+                    : (String(state.current) === String(item.value) ? 'bg-blue-50/90 shadow-[inset_4px_0_0_0_#2563eb]' : '')"
                 @click="toggleItem(item)">
-                <div class="min-w-0">
-                    <div class="text-sm text-slate-800 truncate">{{ item.label }}</div>
-                    <div class="text-xs text-slate-400 truncate" v-if="String(item.value) !== String(item.label)">{{ item.value }}</div>
+                <div class="w-8 shrink-0 text-sm font-semibold text-center"
+                    :class="multiple
+                        ? (isChecked(item.value) ? 'text-blue-700' : 'text-slate-400')
+                        : (String(state.current) === String(item.value) ? 'text-blue-700' : 'text-slate-400')">
+                    {{ idx + 1 }}
                 </div>
-                <el-icon class="text-blue-500" v-if="multiple ? isChecked(item.value) : (String(state.current) === String(item.value))">
+                <div class="min-w-0 flex-1">
+                    <div class="text-sm truncate font-medium"
+                        :class="multiple
+                            ? (isChecked(item.value) ? 'text-blue-900' : 'text-slate-800')
+                            : (String(state.current) === String(item.value) ? 'text-blue-900' : 'text-slate-800')">{{ item.label }}</div>
+                </div>
+                <el-icon class="shrink-0 text-blue-600" v-if="multiple ? isChecked(item.value) : (String(state.current) === String(item.value))">
                     <Check />
                 </el-icon>
             </button>
-            <el-empty v-if="filteredOptions.length === 0" description="暂无数据"></el-empty>
         </div>
+        <el-empty v-if="filteredOptions.length === 0" description="暂无数据" class="py-12"></el-empty>
     </div>
 </div>`
                 });

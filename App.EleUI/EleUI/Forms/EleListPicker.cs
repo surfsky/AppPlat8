@@ -18,8 +18,11 @@ namespace App.EleUI
     {
         [HtmlAttributeName("Items")] public object Items { get; set; }
         [HtmlAttributeName("Multiple")] public bool Multiple { get; set; }
+        [HtmlAttributeName("AllowCreate")] public bool AllowCreate { get; set; }
+        [HtmlAttributeName("Filterable")] public bool Filterable { get; set; } = true;
         [HtmlAttributeName("KeyField")] public string KeyField { get; set; }
         [HtmlAttributeName("TextField")] public string TextField { get; set; }
+        [HtmlAttributeName("Value")] public object Value { get; set; }
         [HtmlAttributeName("Clearable")] public new bool? Clearable { get; set; } = true;
         [HtmlAttributeName("CollapseTags")] public bool? CollapseTags { get; set; } = true;
         [HtmlAttributeName("DrawerTitle")] public string DrawerTitle { get; set; }
@@ -51,6 +54,22 @@ namespace App.EleUI
 
             var defaultOptionsJson = BuildDefaultOptionsJson(options);
 
+            var vModel = GetVModel(context);
+            if (Value != null && !string.IsNullOrWhiteSpace(vModel))
+            {
+                var defaultRaw = GetDefaultRaw(Value);
+                var defaultExpr = GetDefaultValueExpression(Value);
+
+                if (!context.Items.ContainsKey("IsEleForm") && vModel.StartsWith("filters.", StringComparison.Ordinal))
+                {
+                    output.Attributes.SetAttribute("data-filter-default", defaultRaw);
+                    if (!string.IsNullOrWhiteSpace(propName))
+                        output.Attributes.SetAttribute("data-filter-model", propName);
+                }
+
+                output.Attributes.SetAttribute(":data-default-value", defaultExpr);
+            }
+
             output.TagName = "div";
             output.Attributes.SetAttribute("style", "width: 100%;");
             output.Attributes.SetAttribute("class", "ele-list-picker-wrapper");
@@ -78,7 +97,7 @@ namespace App.EleUI
 
             var visibleExpr = $"(typeof resolveControlVisible === 'function' ? resolveControlVisible('{targetSafe}', true) : true)";
             var disabledExpr = $"(typeof resolveControlDisabled === 'function' ? resolveControlDisabled('{targetSafe}', {baseDisabledExpr}) : ({baseDisabledExpr}))";
-            var optionsExpr = defaultOptionsJson;
+            var optionsExpr = "[]";
             var viewExpr = $"getListPickerView('{modelKeySafe}', '{targetSafe}', {optionsExpr}, {(Multiple ? "true" : "false")}, {(collapseTags ? "true" : "false")})";
             var openExpr = $@"openListPicker({{
                 modelKey: '{modelKeySafe}',
@@ -86,6 +105,8 @@ namespace App.EleUI
                 title: '{titleSafe}',
                 target: '{targetSafe}',
                 multiple: {(Multiple ? "true" : "false")},
+                allowCreate: {(AllowCreate ? "true" : "false")},
+                filterable: {(Filterable ? "true" : "false")},
                 collapseTags: {(collapseTags ? "true" : "false")},
                 placeholder: '请输入关键字过滤',
                 size: '{sizeSafe}',
@@ -121,14 +142,14 @@ namespace App.EleUI
             </template>
             <span v-else class=""el-select__placeholder is-transparent"">{Placeholder}</span>
         </div>
-        <div class=""el-select__suffix"">
+        <div class=""el-select__suffix flex items-center gap-1"">
             <el-icon
                 v-if=""{((Clearable ?? true) ? "true" : "false")} && {viewExpr}.labels.length > 0 && !({disabledExpr})""
                 class=""cursor-pointer text-slate-400 hover:text-slate-600 mr-1""
                 @click.stop=""clearListPicker('{modelKeySafe}', {(Multiple ? "true" : "false")}, '{onChangeName}')"">
                 <CircleClose />
             </el-icon>
-            <el-icon class=""el-select__caret""><ArrowDown /></el-icon>
+            <el-icon class=""el-select__caret pointer-events-none shrink-0 text-slate-400 text-[14px]""><ArrowDown /></el-icon>
         </div>
     </div>
 </div>";
@@ -218,6 +239,14 @@ namespace App.EleUI
 
         private object ConvertToTargetType(string raw, Type targetType)
         {
+            if (targetType != null && targetType.IsEnum)
+            {
+                if (int.TryParse(raw, out var enumValue))
+                    return enumValue;
+                if (Enum.TryParse(targetType, raw, true, out var enumObj))
+                    return Convert.ToInt32(enumObj, CultureInfo.InvariantCulture);
+            }
+
             if (targetType == typeof(bool) && bool.TryParse(raw, out var boolValue))
                 return boolValue;
 
@@ -236,6 +265,56 @@ namespace App.EleUI
             }
 
             return raw;
+        }
+
+        private static string GetDefaultRaw(object value)
+        {
+            if (value == null)
+                return string.Empty;
+
+            if (value is string s1 && bool.TryParse(s1, out var sBool1))
+                return sBool1 ? "true" : "false";
+
+            if (value is bool b)
+                return b ? "true" : "false";
+
+            var t = value.GetType();
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            if (t.IsEnum)
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            if (value is sbyte or byte or short or ushort or int or uint or long or ulong)
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            if (value is float or double or decimal)
+                return Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            return value.ToString();
+        }
+
+        private static string GetDefaultValueExpression(object value)
+        {
+            if (value == null)
+                return "null";
+
+            if (value is string s1 && bool.TryParse(s1, out var sBool1))
+                return sBool1 ? "true" : "false";
+
+            if (value is bool b)
+                return b ? "true" : "false";
+
+            var t = value.GetType();
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            if (t.IsEnum)
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            if (value is sbyte or byte or short or ushort or int or uint or long or ulong)
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            if (value is float or double or decimal)
+                return Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
+
+            return JsonSerializer.Serialize(value.ToString());
         }
 
         /// <summary>解析Items属性，返回SelectListItem列表</summary>

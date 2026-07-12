@@ -45,7 +45,7 @@ namespace App.Pages.Maintains
                 expanded = item.Expanded,
                 visible = item.Visible,
                 @fixed = item.Fixed,
-                power = item.Power?.ToString()
+                power = item.Power.HasValue ? (int?)item.Power.Value : null
             });
         }
 

@@ -306,6 +306,7 @@ namespace App.Pages.EleUISamples
                 Photos = src.Photos?.ToList() ?? new List<string>(),
                 Icon = src.Icon,
                 UserId = src.UserId,
+                Url = string.IsNullOrWhiteSpace(src.Url) ? $"https://example.com/users/{src.Id}" : src.Url,
                 OrgId = src.OrgId,
                 DeptId = src.DeptId,
                 RoleIds = roleIds,

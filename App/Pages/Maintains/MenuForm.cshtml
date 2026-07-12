@@ -9,7 +9,7 @@
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreeSelect For="Item.ParentId" Label="上级菜单" Api="/httpapi/auths/GetMenuTree"  Clearable="true" CheckStrictly="true"></EleTreeSelect>        
         <EleInput For="Item.NavigateUrl" Label="链接"></EleInput>
-        <EleSelect For="Item.Power" Label="权限" Items="Model.PowerOptions" Clearable="true" Filterable="true"></EleSelect>
+        <EleListPicker For="Item.Power" Label="权限" Items="Model.PowerOptions" Clearable="true" Filterable="true"></EleListPicker>
         
         <EleIconPicker For="Item.ImageUrl" Label="图标" Multi="false" Popup="/Shared/IconSelector" TextProp="ImageUrl"></EleIconPicker>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
@@ -26,4 +26,3 @@
 
 
 }
-

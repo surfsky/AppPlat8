@@ -203,7 +203,7 @@
 <aside class="info-drawer" aria-label="信息抽屉">
     <div class="info-head">
         <div class="info-head-main">
-            <span class="info-title">信息</span>
+            <span class="info-title"></span>
             <div class="info-tabs" role="tablist" aria-label="信息分类"></div>
         </div>
         <div class="info-actions">
