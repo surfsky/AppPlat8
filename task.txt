@@ -433,6 +433,13 @@ AI辅助
 --------------------------------------------------------
 Done
 --------------------------------------------------------
+尝试地图点位优化展示方案，适合截图后做挂图
+    痛点：地图上点位过多时，标签及文本会被遮挡，无法查看和检索
+    解决方案：
+        - 地图上仍然保留图标
+        - 但文本分布在地图四周，并用一根连线连接到图标。文本位置尽可能接近图标，如图标在左上角，那么对应的文本在左侧或上侧；
+    根据该思路做一个实验页面 Doc/Map/Markers.html
+
     优化检查对象
         批量给数据打标签
         把相关附属资源（如联系人、事件、隐患等）全部改为列表方式附在下面
@@ -444,15 +451,15 @@ Done
         对象标志编码（3303830000000535405），温州答复。我们需要创建一个编码方法，并给org设置编码
     弄个页面，导入各种表格，根据AI对话，梳理出一个展示页面，并固化展示方式；
 
-    融合搜索：支持地图服务搜索、系统点位搜索
     gis/index
-        增加视图服务图层（如高德地图），也用MapLayer接口实现，点击后切换地图服务源；
+        融合搜索：支持地图服务搜索、系统点位搜索
         实现gismenu 实时数据
             - gismenu设置一个signalr 的hub地址就行
             - gis/index实现对signalr的支持
         UI
             gis/index 顶部实现流光动画效果
             gis/index 页面遮住左下角的“mapbox”标签
+        增加视图服务图层（如高德地图），也用MapLayer接口实现，点击后切换地图服务源；
     优化数据授权管理
         角色与Gis菜单管理
             - 创建角色和gismenu管理页面和相关实体（ RoleGisMenu）：左侧是角色列表，右侧是gismenu菜单树表，并显示“可查看”、“可编辑”两个checkbox；
@@ -486,8 +493,8 @@ Done
                 将 /gis/PropsEditor 迁移到 shared/PropsEditor 
                 jsondata字段用 ElePicker + PropsEditor 编辑
         做好数据库更新，编译通过
-    - 创建 EleUI/Tables/EleLinkColumn 控件，实现超链接列的功能，并应用到 pages/open/Sites.Url 列
-    优化下拉框
+    /创建 EleUI/Tables/EleLinkColumn 控件，实现超链接列的功能，并应用到 pages/open/Sites.Url 列
+    /优化下拉框
         我把 MenuForm.Power 用的控件从 EleSelect 改为 EleListPicker，但是页面报错了显示不出来，完善一下该控件，接口与EleSelect完全一致
         检查所有的EleSelect，如果数据较多（如大于10条），都替换为 EleListPicker，便于移动端查看
 
