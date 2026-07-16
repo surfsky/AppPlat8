@@ -171,6 +171,7 @@
         function bindListItemEvents() {
             const body = getBody();
             if (!body) return;
+            const wrap = body.querySelector('.point-list-wrap');
 
             const searchBtn = body.querySelector('[data-command="search-menu-items"]');
             const searchInput = body.querySelector('[data-role="point-list-search"]');
@@ -207,36 +208,42 @@
                 });
             }
 
-            body.onscroll = () => {
-                if (loading) return;
-                if ((state.pointListItems || []).length >= currentTotal) return;
-                const remain = body.scrollHeight - body.scrollTop - body.clientHeight;
-                if (remain > 40) return;
-                currentPageIndex += 1;
-                loadItems(false);
+            if (wrap) {
+                wrap.onscroll = () => {
+                    if (loading) return;
+                    if ((state.pointListItems || []).length >= currentTotal) return;
+                    const remain = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight;
+                    if (remain > 40) return;
+                    currentPageIndex += 1;
+                    loadItems(false);
+                };
+            }
+
+            body.onclick = e => {
+                const detailBtn = e.target && e.target.closest ? e.target.closest('.point-list-detail-btn[data-geometry-id]') : null;
+                if (detailBtn) {
+                    e.stopPropagation();
+                    const id = Number(detailBtn.getAttribute('data-geometry-id'));
+                    if (!Number.isFinite(id)) return;
+                    onOpenDetail(id, { ctrlKey: true });
+                    return;
+                }
+
+                const itemBtn = e.target && e.target.closest ? e.target.closest('.point-list-item[data-geometry-id]') : null;
+                if (!itemBtn) return;
+                const id = Number(itemBtn.getAttribute('data-geometry-id'));
+                const item = (state.pointListItems || []).find(x => Number(x.id) === id);
+                if (!item) return;
+                flyToPoint(item);
+                onSelectGeometry(id);
             };
 
-            const buttons = body.querySelectorAll('.point-list-item[data-geometry-id]');
-            buttons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const id = Number(btn.getAttribute('data-geometry-id'));
-                    const item = (state.pointListItems || []).find(x => Number(x.id) === id);
-                    if (!item) return;
-
-                    flyToPoint(item);
-                    onSelectGeometry(id);
-                });
-            });
-
-            const detailButtons = body.querySelectorAll('.point-list-detail-btn[data-geometry-id]');
-            detailButtons.forEach(btn => {
-                btn.addEventListener('click', evt => {
-                    evt.stopPropagation();
-                    const id = Number(btn.getAttribute('data-geometry-id'));
-                    if (!Number.isFinite(id)) return;
-                    onOpenDetail(id);
-                });
-            });
+            if (wrap == null) {
+                body.onscroll = null;
+            }
+            else {
+                body.onscroll = null;
+            }
         }
 
         function renderList(menuName, items) {

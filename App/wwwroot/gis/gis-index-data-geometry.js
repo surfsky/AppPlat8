@@ -17,9 +17,138 @@
         const toImageSourceCoordinatesFromRegion = ctx.toImageSourceCoordinatesFromRegion;
         const toImageSourceCoordinatesFromRing = ctx.toImageSourceCoordinatesFromRing;
         const toImageSourceCoordinatesFromGeoJson = ctx.toImageSourceCoordinatesFromGeoJson;
-        const pointMarkerHelper = window.GisPointMarker && typeof window.GisPointMarker.create === 'function'
-            ? window.GisPointMarker.create()
-            : null;
+        let markerRender = null;
+        let markerRenderControlAdded = false;
+
+        /**Create marker facade for native mapbox marker */
+        function createNativeMarkerFacade(marker, item) {
+            const markerEl = marker?.getElement?.() || null;
+            return {
+                remove() {
+                    marker?.remove?.();
+                },
+                getElement() {
+                    return markerEl;
+                },
+                setVisible(value) {
+                    if (markerEl) {
+                        markerEl.style.display = value !== false ? '' : 'none';
+                    }
+                    return this;
+                },
+                setSelectable(value) {
+                    if (markerEl) {
+                        markerEl.style.pointerEvents = value !== false ? 'auto' : 'none';
+                        markerEl.classList.toggle('is-disabled', value === false);
+                    }
+                    return this;
+                },
+                setSelected(value) {
+                    markerEl?.classList?.toggle('is-selected', value === true);
+                    return this;
+                },
+                click(evt) {
+                    if (!item || !canOpenGeometryDetail(item, evt)) return this;
+                    onGeometryMarkerClick(item.id, evt);
+                    return this;
+                }
+            };
+        }
+
+        //------------------------------------------------------
+        // MapMarkerRender
+        //------------------------------------------------------
+        function getMarkerRender() {
+            if (markerRender) return markerRender;
+            const Render = window.MapMarkerRender;
+            if (typeof Render !== 'function') return null;
+            markerRender = new Render({
+                dock: [
+                    { position: 'top', margin: 88 },
+                    { position: 'bottom', margin: 18 },
+                    { position: 'left', margin: 18 },
+                    { position: 'right', margin: 18 }
+                ],
+                dockStyle: {
+                    labelBg: 'rgba(8, 18, 36, 0.84)',
+                    labelBorder: 'rgba(96, 165, 250, 0.24)',
+                    labelShadow: '0 14px 32px rgba(2, 6, 23, 0.36)',
+                    labelWidth: 180,
+                    cardHeight: 56,
+                    labelRadius: 18,
+                    lineColor: 'rgba(255, 255, 255, 0.96)',
+                    guideColor: 'rgba(255, 255, 255, 0.28)',
+                    fields: {
+                        no: item => item?.sortid ?? item?.sortId ?? item?.id ?? '',
+                        title: item => item?.alias || item?.name || `点位${item?.id ?? ''}`,
+                        sub: item => buildMarkerSubText(item)
+                    }
+                },
+                normalStyle: {
+                    labelBg: 'transparent',
+                    labelBorder: 'transparent',
+                    labelShadow: 'none',
+                    labelRadius: 0,
+                    labelText: '#0f172a',
+                    offsetY: 6,
+                    textSize: 13,
+                    maxWidth: 180,
+                    content: item => buildNormalMarkerText(item)
+                },
+                pointClick: (item, _entry, evt) => {
+                    if (!item || !canOpenGeometryDetail(item, evt)) return;
+                    onGeometryMarkerClick(item.id, evt);
+                }
+            });
+            if (!markerRenderControlAdded && map && typeof map.addControl === 'function') {
+                map.addControl(markerRender.RenderControl(), 'top-right');
+                markerRenderControlAdded = true;
+            }
+            return markerRender;
+        }
+
+        /**Build normal marker text */
+        function buildNormalMarkerText(item) {
+            if (!item) return '';
+            return String(item.alias || item.name || `点位${item.id ?? ''}`);
+        }
+
+        /**Build dock marker sub text */
+        function buildMarkerSubText(item) {
+            if (!item) return '';
+            const parts = [];
+            const menu = state.menuNodeMap?.get?.(item.menuId) || state.menuNodeMap?.get?.(Number(item.menuId));
+            const menuName = menu?.name || menu?.label || '';
+            const address = item.addr || item.address || '';
+            if (menuName) parts.push(menuName);
+            if (address && address !== menuName) parts.push(address);
+            return parts.filter(Boolean).join(' · ');
+        }
+
+        /**Create marker facade for old state map */
+        function createRenderMarkerFacade(item) {
+            const render = getMarkerRender();
+            return {
+                remove() {
+                    render?.setPointVisible?.(item.id, false);
+                },
+                getElement() {
+                    return render?.entries?.find?.(entry => String(entry.id) === String(item.id))?.markerEl || null;
+                },
+                setVisible(value) {
+                    render?.setPointVisible?.(item.id, value !== false);
+                    return this;
+                },
+                setSelectable(value) {
+                    render?.setPointClickable?.(item.id, value !== false);
+                    return this;
+                },
+                setSelected(value) {
+                    render?.setPointSelected?.(item.id, value === true);
+                    return this;
+                }
+            };
+        }
 
         function buildMenuLayerOrderMap() {
             const orderMap = new Map();
@@ -85,6 +214,7 @@
         function clearGeometryPointMarkers() {
             state.geometryPointMarkerMap.forEach(marker => marker.remove());
             state.geometryPointMarkerMap.clear();
+            markerRender?.setPoints?.([]);
         }
 
         function isForceDetailEvent(evt) {
@@ -105,24 +235,11 @@
                     && isMenuZoomVisible(item?.menuId)
                     && isGeometryMatchedByPointList(item);
                 const selectable = isGeometrySelectable(item?.menuId);
-                if (marker && typeof marker.setVisible === 'function') {
-                    marker.setVisible(isVisible);
-                } else {
-                    const markerEl = marker?.getElement?.();
-                    if (markerEl) markerEl.style.display = isVisible ? '' : 'none';
-                }
-                if (marker && typeof marker.setSelectable === 'function') {
-                    marker.setSelectable(selectable);
-                }
-
                 const normalizedId = Number.isFinite(Number(id)) ? Number(id) : id;
                 const isSelected = String(state.selectedGeometryId ?? '') === String(normalizedId ?? '');
-                if (marker && typeof marker.setSelected === 'function') {
-                    marker.setSelected(!!isSelected);
-                } else {
-                    const markerEl = marker?.getElement?.();
-                    if (markerEl) markerEl.classList.toggle('is-selected', !!isSelected);
-                }
+                marker?.setVisible?.(isVisible);
+                marker?.setSelectable?.(selectable);
+                marker?.setSelected?.(!!isSelected);
             });
         }
 
@@ -318,8 +435,11 @@
         }
 
         function rebuildGeometryPointMarkers() {
+            const render = getMarkerRender();
+            const currentMode = render?.flags?.normal === false ? 'dock' : 'normal';
             clearGeometryPointMarkers();
             const renderRows = getGeometryRowsForMarkerRender();
+            const renderPoints = [];
 
             (state.geometries || []).forEach(item => {
                 if (!item) return;
@@ -332,10 +452,9 @@
                 }
             });
 
-            renderRows.forEach((item, index) => {
+            renderRows.forEach((item) => {
                 if (!item) return;
                 const geometryType = getGeometryKind(item);
-                const markerZIndex = 1000 + index * 2;
 
                 if (geometryType === 'image') {
                     createImageLayer(item);
@@ -351,26 +470,23 @@
 
                 switch (geometryType) {
                     case 'text':
-                        marker = createTextMarker(item, gps);
+                        marker = createNativeMarkerFacade(createTextMarker(item, gps), item);
                         break;
                     case 'video':
-                        marker = createVideoMarker(item, gps);
+                        marker = createNativeMarkerFacade(createVideoMarker(item, gps), item);
                         break;
                     case 'file':
-                        marker = createFileMarker(item, gps);
+                        marker = createNativeMarkerFacade(createFileMarker(item, gps), item);
                         break;
                     default: {
-                        marker = pointMarkerHelper?.createGeometryPointMarker({
-                            map,
-                            item,
-                            gps,
-                            iconPath: getGeometryIcon(item),
-                            zIndex: markerZIndex,
-                            onClick: (evt) => {
-                                if (!canOpenGeometryDetail(item, evt)) return;
-                                onGeometryMarkerClick(item.id, evt);
-                            }
+                        renderPoints.push({
+                            ...item,
+                            lng: gps.lng,
+                            lat: gps.lat,
+                            icon: getGeometryIcon(item),
+                            scale: Number(item?.scale ?? item?.Scale) || 1
                         });
+                        marker = createRenderMarkerFacade(item);
                         break;
                     }
                 }
@@ -379,7 +495,14 @@
                     state.geometryPointMarkerMap.set(item.id, marker);
                 }
             });
-
+            render?.render({
+                map,
+                points: renderPoints,
+                renderMode: currentMode,
+                renderMarker: true,
+                renderLabel: true,
+                renderLine: true
+            });
             syncGeometryPointMarkerVisibility();
         }
 

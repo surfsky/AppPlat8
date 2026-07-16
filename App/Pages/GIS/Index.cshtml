@@ -37,6 +37,7 @@
     <script src="/gis/gis-index-point-list.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-public-cameras.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data-utils.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/gis-map-marker-render.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-point-marker.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data-menu.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-data-geometry.js?v=@DateTime.Now.Ticks"></script>
@@ -59,16 +60,20 @@
 }
 
 @section body {
-    <div id="map"></div>
-
-    <div class="header-bar">
-        <div class="header-title">
-            <span>应急驾驶舱</span>
-        </div>
-        <span id="header-datetime" class="header-datetime" aria-label="当前日期时间"></span>
+    <div id="map-host">
+        <div id="map"></div>
     </div>
 
-    <div class="map-toolbar">
+    <div class="header-bar">
+        <div class="header-center">
+            <div class="header-title">
+                <span>应急驾驶舱</span>
+            </div>
+            <span id="header-datetime" class="header-datetime" aria-label="当前日期时间"></span>
+        </div>
+    </div>
+
+    <div class="map-toolbar toolbar-collapsed">
         <input id="address-input" class="toolbar-input" placeholder="搜索地址或经纬度，如：120.62915,27.517297" />
         <button id="btn-search" class="toolbar-btn toolbar-icon-btn" title="搜索" aria-label="搜索">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -102,7 +107,7 @@
     <div id="scene-menu" class="view-menu" style="display:none" aria-label="场景菜单">
     </div>
 
-    <div id="layer-panel" class="panel-left">
+    <div id="layer-panel" class="panel-left panel-hidden">
         <gis-panel class="layer-gis-panel" title="图层" width="100%" height="100%">
             <div class="layer-tabs" data-panel-actions role="tablist" aria-label="图层分类">
                 <button type="button" id="btn-layer-tab-resource" class="layer-tab-btn active" data-tab="resource" role="tab" aria-selected="true">资源</button>
@@ -195,7 +200,7 @@
             selectedGeometryId: null,
             geometryInteractionBound: false,
             preservedVisibleGeometryIds: new Set(),
-            currentStyle: 'street',
+            currentStyle: 'SatelliteStreets',
             currentProjection: 'mercator',
             is3D: false,
             isAutoRotate: false,
@@ -223,6 +228,18 @@
             activeLayerTab: 'resource',
             collapsedMenuIds: new Set()
         };
+
+        /**同步点位模式关联布局*/
+        function syncMarkerRenderLayout(mode) {
+            const isDock = String(mode || '').toLowerCase() === 'dock';
+            document.body.classList.toggle('gis-marker-dock-mode', isDock);
+        }
+
+        window.addEventListener('map-marker-render-mode-change', e => {
+            syncMarkerRenderLayout(e?.detail?.mode);
+        });
+
+        syncMarkerRenderLayout('normal');
         const GisIndexUI = window.GisIndexUI;
         const GisIndexData = window.GisIndexData;
         const GisIndexAction = window.GisIndexAction;
@@ -263,7 +280,7 @@
         ];
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v11',
+            style: 'mapbox://styles/mapbox/satellite-streets-v12',
             center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
             zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
             pitch: 0,
@@ -387,7 +404,7 @@
                     dataApi.applyGeometryVisibility();
                 }
             },
-            onOpenDetail: (id) => showGeometryDetail(id),
+            onOpenDetail: (id, evt) => showGeometryDetail(id, evt),
             onClose: ({ preserveFilter } = {}) => {
                 if (preserveFilter) return;
                 state.pointListFilterMenuId = null;

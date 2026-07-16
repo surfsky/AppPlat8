@@ -15,6 +15,7 @@
 
         function getFallbackStyles() {
             return [
+                { name: 'SatelliteStreets', path: 'mapbox://styles/mapbox/satellite-streets-v12', aliases: ['satellitestreets', 'satellite-streets', 'satellite_streets'] },
                 { name: 'Streets', path: 'mapbox://styles/mapbox/streets-v11', aliases: ['street', 'streets'] },
                 { name: 'Satellite', path: 'mapbox://styles/mapbox/satellite-v9', aliases: ['satellite', 'terrain', 'sat'] },
                 { name: 'Dark', path: 'mapbox://styles/mapbox/dark-v10', aliases: ['dark'] },

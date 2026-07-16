@@ -14,9 +14,21 @@
             if (!style || !Array.isArray(style.layers)) return;
             style.layers.forEach(layer => {
                 if (!layer || layer.type !== 'symbol') return;
-                if ((layer.id || '').startsWith('draw-label-')) return;
-                if ((layer.id || '').includes('gl-draw-')) return;
+                const layerId = layer.id || '';
+                if (layerId.startsWith('draw-label-')) return;
+                if (layerId.includes('gl-draw-')) return;
                 if (layer.source && layer.source !== 'composite') return;
+
+                // 隐藏底图道路盾牌，避免黄色/绿色编号框干扰业务标注。
+                if (layerId === 'road-number-shield' || layerId === 'road-exit-shield') {
+                    try {
+                        map.setLayoutProperty(layerId, 'visibility', 'none');
+                    } catch {
+                        // ignore incompatible shield layer visibility
+                    }
+                    return;
+                }
+
                 const textField = map.getLayoutProperty(layer.id, 'text-field');
                 if (!textField) return;
                 try {
@@ -152,6 +164,73 @@
             };
         }
 
+        /**创建全屏控件*/
+        function createFullscreenControl() {
+            let container = null;
+            let button = null;
+
+            function isFullscreen() {
+                return document.fullscreenElement === document.documentElement;
+            }
+
+            function syncState() {
+                if (!button) return;
+                const active = isFullscreen();
+                button.classList.toggle('is-active', active);
+                button.title = active ? '退出全屏' : '进入全屏';
+                button.setAttribute('aria-label', active ? '退出全屏' : '进入全屏');
+            }
+
+            async function onToggle() {
+                try {
+                    if (isFullscreen()) {
+                        await document.exitFullscreen?.();
+                    } else {
+                        await document.documentElement.requestFullscreen?.();
+                    }
+                } catch {
+                }
+                syncState();
+            }
+
+            return {
+                onAdd() {
+                    container = document.createElement('div');
+                    container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+
+                    button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'mapboxgl-ctrl-icon gis-fullscreen-btn';
+                    button.innerHTML = `
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M9 4H5v4" />
+                            <path d="M15 4h4v4" />
+                            <path d="M19 15v4h-4" />
+                            <path d="M5 15v4h4" />
+                            <path d="M5 9l5-5" />
+                            <path d="M19 9l-5-5" />
+                            <path d="M19 15l-5 5" />
+                            <path d="M5 15l5 5" />
+                        </svg>
+                    `;
+                    button.addEventListener('click', onToggle);
+                    document.addEventListener('fullscreenchange', syncState);
+                    syncState();
+
+                    container.appendChild(button);
+                    return container;
+                },
+                onRemove() {
+                    document.removeEventListener('fullscreenchange', syncState);
+                    if (container && container.parentNode) {
+                        container.parentNode.removeChild(container);
+                    }
+                    button = null;
+                    container = null;
+                }
+            };
+        }
+
         /**确保地图几何助手已加载*/
         async function ensureMapGeometryHelperReady() {
             if (window.MapGeometryHelper && typeof window.MapGeometryHelper.createDisplayLayerManager === 'function') {
@@ -186,6 +265,7 @@
             applyChineseLabels,
             createCenterCoordControl,
             createResetControl,
+            createFullscreenControl,
             ensureMapGeometryHelperReady,
             searchAddress() {
                 return addressApi?.searchAddress?.();

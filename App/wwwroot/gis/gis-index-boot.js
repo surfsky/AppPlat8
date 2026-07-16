@@ -15,19 +15,14 @@
         }
 
         function positionHeaderDatetime() {
-            const headerBar = document.querySelector('.header-bar');
-            const headerTitle = document.querySelector('.header-title');
+            const headerCenter = document.querySelector('.header-center');
             const dateTime = document.getElementById('header-datetime');
-            if (!headerBar || !headerTitle || !dateTime) return;
+            if (!headerCenter || !dateTime) return;
             if (window.getComputedStyle(dateTime).display === 'none') return;
-
-            const barRect = headerBar.getBoundingClientRect();
-            const titleRect = headerTitle.getBoundingClientRect();
-            const gap = 18;
-            const left = titleRect.right - barRect.left + gap;
-
-            dateTime.style.left = `${Math.round(left)}px`;
-            dateTime.style.right = 'auto';
+            dateTime.style.left = '';
+            dateTime.style.right = '';
+            dateTime.style.top = '';
+            dateTime.style.transform = '';
         }
 
         function addMapControls() {
@@ -42,7 +37,7 @@
             const centerCoordControl = mapApi.createCenterCoordControl();
             map.addControl(centerCoordControl, 'bottom-right');
             map.addControl(mapApi.createResetControl(ctx.resetView), 'top-right');
-            map.addControl(new mapboxgl.FullscreenControl({ container: document.documentElement }), 'top-right');
+            map.addControl(mapApi.createFullscreenControl(), 'top-right');
             map.on('move', () => centerCoordControl.update());
         }
 

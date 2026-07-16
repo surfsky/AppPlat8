@@ -79,6 +79,7 @@
     border-left: 1px solid rgba(56, 189, 248, 0.38);
     box-shadow: -16px 0 40px rgba(2, 6, 23, 0.46);
     transform: translateX(100%);
+    visibility: hidden;
     transition: transform .22s ease;
     overflow: hidden;
 }
@@ -87,6 +88,7 @@
 }
 #${this.hostId}.is-open .info-drawer {
     transform: translateX(0);
+    visibility: visible;
 }
 #${this.hostId} .info-head {
     display: flex;
