@@ -18,39 +18,37 @@ namespace App.Pages.Me
             Item = new PasswordEntity();
         }
 
-        public IActionResult OnPost()
+        public IActionResult OnPost([FromBody] PasswordEntity item)
         {
             long? id = GetUserId();
             if (id == null)
                 return BuildResult(401, "请先登录");
-
-            if (Item == null)
+            if (item == null)
                 return BuildResult(400, "参数错误");
 
-            Item.OldPassword = Item.OldPassword?.Trim();
-            Item.NewPassword = Item.NewPassword?.Trim();
-            Item.ConfirmPassword = Item.ConfirmPassword?.Trim();
-
-            if (string.IsNullOrWhiteSpace(Item.OldPassword))
+            item.OldPassword = item.OldPassword?.Trim();
+            item.NewPassword = item.NewPassword?.Trim();
+            item.ConfirmPassword = item.ConfirmPassword?.Trim();
+            if (string.IsNullOrWhiteSpace(item.OldPassword))
                 return BuildResult(400, "当前密码不能为空！");
 
-            if (string.IsNullOrWhiteSpace(Item.NewPassword))
+            if (string.IsNullOrWhiteSpace(item.NewPassword))
                 return BuildResult(400, "新密码不能为空！");
 
-            if (string.IsNullOrWhiteSpace(Item.ConfirmPassword))
+            if (string.IsNullOrWhiteSpace(item.ConfirmPassword))
                 return BuildResult(400, "确认密码不能为空！");
 
-            if (Item.NewPassword != Item.ConfirmPassword)
+            if (item.NewPassword != item.ConfirmPassword)
                 return BuildResult(400, "确认密码和新密码不一致！");
 
             var user = App.DAL.User.Get(id.Value);
             if (user == null)
                 return BuildResult(404, "用户不存在");
 
-            if (!PasswordUtil.ComparePasswords(user.Password, Item.OldPassword))
+            if (!PasswordUtil.ComparePasswords(user.Password, item.OldPassword))
                 return BuildResult(400, "当前密码不正确！");
 
-            user.Password = PasswordUtil.CreateDbPassword(Item.NewPassword);
+            user.Password = PasswordUtil.CreateDbPassword(item.NewPassword);
             user.Save();
 
             return BuildResult(0, "修改密码成功！");

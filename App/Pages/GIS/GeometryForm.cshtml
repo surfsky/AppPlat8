@@ -83,7 +83,7 @@
         <EleForm Model="form" LabelWidth="120px">
             <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
             <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
-            <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+            <EleTreePicker For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreePicker>
             <EleSelect For="Item.Type" Label="类型" Clearable="true" ></EleSelect>
             <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
             <EleInput For="Item.Alias" Label="简称"></EleInput>

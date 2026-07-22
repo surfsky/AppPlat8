@@ -301,21 +301,16 @@
 
                 const manager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
                 const openDrawer = (url, title, size) => {
-                    const m = manager();
-                    if (m && typeof m.openDrawer === 'function') {
-                        m.openDrawer({
-                            title,
-                            url,
-                            direction: 'rtl',
-                            size: size || (window.innerWidth < 768 ? '100%' : '65%'),
-                            resizable: true,
-                            closeOnClickModal: false,
-                            destroyOnClose: true,
-                            closeHandler: () => reload()
-                        });
-                    } else {
-                        window.open(url, '_blank');
-                    }
+                    manager().openDrawer({
+                        title,
+                        url,
+                        direction: 'rtl',
+                        size: size || (window.innerWidth < 768 ? '100%' : '65%'),
+                        resizable: true,
+                        closeOnClickModal: false,
+                        destroyOnClose: true,
+                        closeHandler: () => reload()
+                    });
                 };
 
                 const openNew = () => {
@@ -369,8 +364,7 @@
                             }
                         }
                         
-                        const m = manager();
-                        if (m && typeof m.showInfo === 'function') m.showInfo('进入编辑模式，您可以拖动点位或修改形状，完成后点击“保存”按钮');
+                        manager().showInfo('进入编辑模式，您可以拖动点位或修改形状，完成后点击“保存”按钮');
                     } catch (err) {
                         throw err;
                     }
@@ -426,14 +420,12 @@
                         if (res.data.code === 0) {
                             cancelEditing();
                             await refreshItem(id, true);
-                            const m = manager();
-                            if (m && typeof m.showSuccess === 'function') m.showSuccess('保存成功');
+                            manager().showSuccess('保存成功');
                         } else {
                             throw new Error(res.data.msg || '保存失败');
                         }
                     } catch (err) {
-                        const m = manager();
-                        if (m && typeof m.showError === 'function') m.showError(err.message);
+                        manager().showError(err.message);
                     }
                 };
 
@@ -808,8 +800,7 @@
                     drawMode.value = 'point';
                     clearDraft();
                     map.value.getCanvasContainer().classList.add('drawing-point');
-                    const m = manager();
-                    if (m && typeof m.showInfo === 'function') m.showInfo('请在地图上点击一个位置标注点位');
+                    manager().showInfo('请在地图上点击一个位置标注点位');
                 };
 
                 const startDrawPolygon = () => {
@@ -818,8 +809,7 @@
                     clearDraft();
                     map.value.getCanvasContainer().classList.add('drawing-polygon');
                     if (map.value) map.value.doubleClickZoom.disable();
-                    const m = manager();
-                    if (m && typeof m.showInfo === 'function') m.showInfo('请在地图上连续点击绘制多边形，完成后点“完成面标注”');
+                    manager().showInfo('请在地图上连续点击绘制多边形，完成后点“完成面标注”');
                 };
 
                 const cancelDrawing = () => {
@@ -1036,11 +1026,7 @@
 
                 const removeItem = async (id) => {
                     const m = manager();
-                    if (m && typeof m.confirm === 'function') {
-                        try { await m.confirm('确定删除该点位？'); } catch { return; }
-                    } else if (!confirm('确定删除该点位？')) {
-                        return;
-                    }
+                    try { await m.confirm('确定删除该点位？'); } catch { return; }
 
                     const res = await axios.post('?handler=DeleteGeometry', { id }, {
                         headers: { 'RequestVerificationToken': getCsrfToken() }
@@ -1057,7 +1043,7 @@
                         if (editingId.value === id) editingId.value = null;
                         syncTextLabels();
                     } else {
-                        if (m && typeof m.showError === 'function') m.showError((res.data && (res.data.msg || res.data.info)) || '删除失败');
+                        m.showError((res.data && (res.data.msg || res.data.info)) || '删除失败');
                     }
                 };
 

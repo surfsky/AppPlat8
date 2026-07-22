@@ -34,7 +34,7 @@
     cd AppPlat
     dotnet build
     dotnet run --project App
-    dotnet run --project App/App.csproj --urls "http://127.0.0.1:6060"
+    dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
     dotnet app.dll --urls=http://localhost:6060;http://abc.org
 
     # 编译EleUI示例项目
@@ -45,6 +45,7 @@
     # 运行Consoler项目
     # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
     dotnet run --project App.Consoler
+    
 
     # 测试项目
     dotnet test App.Utils/App.UtilsTests/App.UtilsTests.csproj

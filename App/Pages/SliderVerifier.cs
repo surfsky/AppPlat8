@@ -53,24 +53,24 @@ public class SliderVerifier
         // 数据完整性校验
         var pts = data.Points ?? new List<Point>();
         if (pts.Count < 8)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 点数太少");
         if (pts.Count > 200)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 点数太多");
 
         // 范围合法性校验
         pts = pts.OrderBy(t => t.T).ToList();
         if (pts[0].T < 0)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 时间戳异常");
         var xs = pts.Select(p => p.X).ToList();
         var ys = pts.Select(p => p.Y).ToList();
         if (xs.Any(x => x < -1.2 || x > 1.2) || ys.Any(y => y < -1.2 || y > 1.2))
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 坐标超出范围");
 
         // 起点终点校验
         if (xs[0] > -0.8)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 起点异常");
         if (xs[^1] < 0.8)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 终点异常");
 
         // 单调性校验
         var dtList = new List<double>();
@@ -81,7 +81,7 @@ public class SliderVerifier
         {
             var dt = pts[i].T - pts[i - 1].T;
             if (dt <= 0)
-                return (false, "轨迹异常");
+                return (false, "轨迹异常: 时间戳不递增");
             dtList.Add(dt);
 
             var dx = xs[i] - xs[i - 1];
@@ -94,26 +94,26 @@ public class SliderVerifier
             }
         }
         if (backSteps > 2 || backSum > 0.18)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 回拉过多");
 
         // Y 轴“抖动”校验
         var yRange = ys.Max() - ys.Min();
         var yStd = StdDev(ys);
         if (yRange < 0.03 || yStd < 0.01)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: Y 轴抖动过小");
         if (yRange > 1.2)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: Y 轴抖动过大");
 
         // 加速-减速特征校验？
         var posDx = dxList.Where(x => x > 0.0001).ToList();
         if (posDx.Count < 5)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 加速段过少");
 
         // 轨迹过于精密：dt 和 dx 的变异系数同时过小（步长/间隔过“齐”）
         var cvDt = CoefVar(dtList);
         var cvDx = CoefVar(posDx);
         if (pts.Count >= 15 && cvDt < 0.08 && cvDx < 0.10)
-            return (false, "轨迹过于精密");
+            return (false, "轨迹异常: 过于精密");
 
         // 速度列表
         var velocities = new List<double>();
@@ -129,15 +129,15 @@ public class SliderVerifier
         // 有速度的点必须大于5个
         var posV = velocities.Where(v => v > 0).ToList();
         if (posV.Count < 5)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 有效速度点过少");
 
         // 速度平均值必须大于0.0
         var peak = posV.Max();
         var meanV = posV.Average();
         if (meanV <= 0)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 平均速度过低");
 
-        // 速度峰值位置必须在20%到90%之间
+        // 速度峰值位置必须在10%到90%之间
         var peakIndex = 0;
         var peakVal = double.MinValue;
         for (int i = 0; i < velocities.Count; i++)
@@ -148,19 +148,19 @@ public class SliderVerifier
                 peakIndex = i;
             }
         }
-        var minPeakIndex = (int)Math.Floor(velocities.Count * 0.20);
+        var minPeakIndex = (int)Math.Floor(velocities.Count * 0.10);
         var maxPeakIndex = (int)Math.Ceiling(velocities.Count * 0.90);
         if (peakIndex < minPeakIndex || peakIndex > maxPeakIndex)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 速度峰值位置异常");
 
         // 速度峰值必须明显高于均值
         if (peak < meanV * 1.15)
-            return (false, "轨迹异常");
+            return (false, "轨迹异常: 速度峰值过低");
 
         // 轨迹过于精密：x(t) 近似完美线性（平均误差过小 + dt 稳定）
         var linearErr = MeanAbsLinearFitError(pts.Select(p => (double)p.T).ToList(), xs);
         if (pts.Count >= 18 && linearErr < 0.004 && cvDt < 0.12)
-            return (false, "轨迹过于精密");
+            return (false, "轨迹异常：轨迹过于精密");
 
         // 轨迹过于精密：x(t) 近似曲线
         

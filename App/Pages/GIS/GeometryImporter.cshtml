@@ -7,29 +7,24 @@
 @section body {
     <div id="app" class="h-full flex flex-col p-4 bg-white overflow-hidden">
         <div class="mb-4 rounded border border-slate-200 p-3 bg-slate-50 text-slate-700 text-sm">
-            <div>导入类型: <span class="font-semibold">@Model.TypeTitle</span></div>
             @if (Model.DefaultMenuId.HasValue)
             {
-                <div class="mt-1 text-slate-500">当前导入默认菜单ID: <span class="font-medium">@Model.DefaultMenuId.Value</span>，当 Excel 中“菜单ID(MenuId)”留空时会自动使用该值。</div>
+                <div class="mt-1 text-slate-500">导入菜单ID: <span class="font-semibold">@Model.DefaultMenuId.Value</span></div>
             }
-            <div class="mt-1 text-slate-500">坐标系说明：导入时可指定源坐标系，系统保存时会统一转换为 <span class="font-medium">WGS84</span>。</div>
-            <div class="mt-1 text-slate-500">支持中英文标题，支持多种经纬度格式；除核心列外，其它任意列都会合并后保存到 `DataJson`。</div>
-            <div class="mt-1 text-slate-500">扩展列支持两种写法：`风险等级` 或 `风险等级(RiskLevel)`；第二种会用 `RiskLevel` 作为 json 键名。</div>
-            <div class="mt-1 text-slate-500">`是否可见(IsVisible)` 支持 `true/false`、`是/否`、`1/0` 等布尔写法；留空按可见处理。</div>
+            <div class="mt-1 text-slate-500">核心字段：名称、经纬度，其它字段会合并保存到属性字段</div>
         </div>
 
         <div class="flex flex-wrap gap-3 items-end mb-3">
+            <el-button type="primary" @@click="chooseFile">选择Excel文件</el-button>
             <div class="w-[220px]">
-                <div class="text-xs text-slate-500 mb-1">源坐标系</div>
-                <el-select v-model="coordType" class="w-full">
+                <el-select v-model="coordType" class="w-[220px]" tooltip="请选择源坐标系，系统会自动转换为WGS84" placeholder="请选择源坐标系">
                     <el-option label="WGS84" value="WGS84"></el-option>
                     <el-option label="GCJ-02(火星)" value="GCJ02"></el-option>
                     <el-option label="BD-09(百度)" value="BD09"></el-option>
                 </el-select>
             </div>
-            <el-button type="primary" @@click="downloadTemplate" :loading="downloading">下载模板</el-button>
-            <el-button @@click="chooseFile">选择Excel文件</el-button>
             <el-button type="success" @@click="startImport" :loading="importing" :disabled="!file">开始导入</el-button>
+            <el-button type="text" @@click="downloadTemplate" :loading="downloading">下载模板</el-button>
             <input id="excelFileInput" type="file" accept=".xls,.xlsx" style="display:none" @@change="onFileChange" />
         </div>
 
