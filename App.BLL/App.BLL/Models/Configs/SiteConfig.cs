@@ -25,6 +25,7 @@ namespace App.DAL
 
         // 地图
         [UI("地图", "MapKey")]            public string MapKey { get; set; }
+        [UI("地图", "驾驶舱标题")]         public string GisTitle { get; set; } = "数据驾驶舱";
 
         // 数据
         [UI("数据", "分页大小")]            public int    PageSize              { get; set; } = 50;

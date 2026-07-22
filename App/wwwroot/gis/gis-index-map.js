@@ -106,7 +106,7 @@
                 if (!container) return;
                 const mapCenter = map.getCenter();
                 const mapZoom = map.getZoom().toFixed(2);
-                lastText = `${mapZoom}: ${mapCenter.lng.toFixed(6)}， ${mapCenter.lat.toFixed(6)}`;
+                lastText = `${mapZoom}: ${mapCenter.lng.toFixed(6)}, ${mapCenter.lat.toFixed(6)}`;
                 container.textContent = lastText;
                 container.setAttribute('title', '双击复制坐标');
             };

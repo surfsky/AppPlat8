@@ -8,6 +8,28 @@
         let resizeTimer = null;
         const narrowMql = window.matchMedia('(max-width: 900px)');
         const defaultPanelHeight = 260;
+        const resizeStages = [0, 120, 280, 520];
+
+        function scheduleResizeCharts() {
+            resizeStages.forEach(delay => {
+                window.setTimeout(() => resizeCharts(), delay);
+            });
+        }
+
+        function bindStatsVisibilityObserver() {
+            const overlay = document.getElementById('stats-overlay');
+            if (!overlay || overlay.__statsResizeObserverBound) return;
+
+            const observer = new MutationObserver(() => {
+                if (overlay.classList.contains('stats-visible')) {
+                    scheduleResizeCharts();
+                }
+            });
+
+            observer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+            overlay.__statsResizeObserverBound = true;
+            overlay.__statsResizeObserver = observer;
+        }
 
         function splitColumns(panels, isNarrow) {
             const left = [];
@@ -101,6 +123,9 @@
             requestAnimationFrame(() => {
                 updateScrollHint(leftShell);
                 updateScrollHint(rightShell);
+                if (state.statsMode) {
+                    scheduleResizeCharts();
+                }
             });
 
             const chartTargets = document.querySelectorAll('.gis-panel-chart[data-panel-id]');
@@ -137,9 +162,15 @@
                 const data = res?.data ?? res?.Data;
                 state.statsPanels = code === 0 && Array.isArray(data) ? data : [];
                 await renderPanels();
+                if (state.statsMode) {
+                    scheduleResizeCharts();
+                }
             } catch {
                 state.statsPanels = [];
                 await renderPanels();
+                if (state.statsMode) {
+                    scheduleResizeCharts();
+                }
             }
         }
 
@@ -157,6 +188,8 @@
                 renderPanels().then(() => resizeCharts());
             });
         }
+
+        bindStatsVisibilityObserver();
 
         return {
             loadPanels,

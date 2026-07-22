@@ -117,6 +117,65 @@ class EleManagerCore {
         return window;
     }
 
+    _resolvePopupHostWindow() {
+        return this._uiWindow || window;
+    }
+
+    _scanMaxZIndex() {
+        let maxZIndex = 0;
+        const hostWindow = this._resolvePopupHostWindow();
+        const hostDocument = hostWindow?.document;
+        if (!hostDocument) return maxZIndex;
+
+        try {
+            const nodes = hostDocument.querySelectorAll(
+                '.el-overlay, .el-overlay-dialog, .el-popup-parent--hidden, .el-drawer, .el-dialog, .el-message, .el-notification, .el-loading-mask, .el-image-viewer__wrapper'
+            );
+            nodes.forEach((node) => {
+                const z = Number.parseInt(hostWindow.getComputedStyle(node).zIndex || '0', 10);
+                if (Number.isFinite(z)) {
+                    maxZIndex = Math.max(maxZIndex, z);
+                }
+            });
+        } catch {
+            // Ignore scan errors and fallback to base z-index.
+        }
+
+        return maxZIndex;
+    }
+
+    resolvePopupZIndex(baseZIndex = 6000, step = 2) {
+        const base = Number.isFinite(Number(baseZIndex)) ? Math.round(Number(baseZIndex)) : 6000;
+        const stepValue = Number.isFinite(Number(step)) ? Math.max(1, Math.round(Number(step))) : 2;
+        const next = this._scanMaxZIndex() + stepValue;
+        return Math.max(base, next);
+    }
+
+    resolvePopupOptions(options = {}, baseZIndex = 6000, extras = {}) {
+        const merged = {
+            ...(options && typeof options === 'object' ? options : {})
+        };
+
+        const hasCustomZIndex = Number.isFinite(Number(merged.zIndex));
+        if (!hasCustomZIndex) {
+            merged.zIndex = this.resolvePopupZIndex(baseZIndex, 2);
+        }
+
+        const appendToBody = extras && Object.prototype.hasOwnProperty.call(extras, 'appendToBody')
+            ? extras.appendToBody !== false
+            : true;
+
+        if (appendToBody && !Object.prototype.hasOwnProperty.call(merged, 'appendTo')) {
+            const hostWindow = this._resolvePopupHostWindow();
+            const hostBody = hostWindow?.document?.body;
+            if (hostBody) {
+                merged.appendTo = hostBody;
+            }
+        }
+
+        return merged;
+    }
+
     setDrawer(options = {}) { return this.drawerHelper.setDefaults(options); }
     setDrawerDefaults(options = {}) { return this.setDrawer(options); }
     openDrawer(options = {}) { return this.drawerHelper.open(options); }

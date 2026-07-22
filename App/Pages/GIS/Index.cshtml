@@ -1,10 +1,14 @@
 @page
 @model App.Pages.GIS.IndexModel
 @using System.Globalization
+@using App.DAL
 @using App.DAL.GIS
 @{
     Layout = "_Layout";
     ViewData["Title"] = "数据驾驶舱";
+    var gisTitle = string.IsNullOrWhiteSpace(SiteConfig.Instance?.GisTitle)
+        ? "数据驾驶舱"
+        : SiteConfig.Instance.GisTitle.Trim();
 
     // 地图中心和缩放级别
     var defaultScene = GisScene.GetOrCreateDefaultScene();
@@ -60,6 +64,13 @@
 }
 
 @section body {
+    <div id="gis-index-loading" class="gis-index-loading visible" aria-live="polite" aria-label="页面加载中">
+        <div class="gis-index-loading-card">
+            <span class="gis-index-loading-spinner" aria-hidden="true"></span>
+            <span class="gis-index-loading-text">地图与面板加载中...</span>
+        </div>
+    </div>
+
     <div id="map-host">
         <div id="map"></div>
     </div>
@@ -67,7 +78,7 @@
     <div class="header-bar">
         <div class="header-center">
             <div class="header-title">
-                <span>应急驾驶舱</span>
+                <span>@gisTitle</span>
             </div>
             <span id="header-datetime" class="header-datetime" aria-label="当前日期时间"></span>
         </div>
@@ -206,8 +217,8 @@
             is3D: false,
             isAutoRotate: false,
             toolbarCollapsed: true,
-            layerCollapsed: true,
-            statsMode: false,
+            layerCollapsed: true, // true: 隐藏图层面板，false: 显示图层面板
+            statsMode: true,   // true: 显示统计面板，false: 隐藏统计面板
             statsPanels: [],
             activePointListMenuId: null,
             activePointListMenuName: '',

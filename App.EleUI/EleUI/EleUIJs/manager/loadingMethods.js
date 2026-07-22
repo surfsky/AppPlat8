@@ -4,6 +4,9 @@ export const loadingMethods = {
         this._ensureLoadingStyle();
 
         const { customClass: optionClass, ...restOptions } = options || {};
+        const popupOptions = this.resolvePopupOptions(restOptions, 6003, { appendToBody: false });
+        const hostWindow = this._uiWindow || window;
+        const hostBody = hostWindow?.document?.body;
         const customClass = optionClass
             ? `ele-manager-loading ${optionClass}`
             : "ele-manager-loading";
@@ -13,7 +16,8 @@ export const loadingMethods = {
             text,
             background: "rgba(0, 0, 0, 0.35)",
             customClass,
-            ...restOptions
+            target: hostBody || restOptions.target,
+            ...popupOptions
         });
         return this._loading;
     },

@@ -26,10 +26,49 @@ namespace App.Pages.GIS
                 Item.MenuId = menuId.Value;
         }
 
-        public IActionResult OnGetData(Paging pi, string name, GeometryType? type, bool? isVisible, long? menuId)
+        public IActionResult OnGetData(Paging pi, string name, GeometryType? type, bool? isVisible, long? menuId, string menuIds = null)
         {
-            var list = GisGeometry.Search(name:name, type:type, isVisible:isVisible, menuId:menuId, recursive:false).SortPageExport(pi);
+            var ids = ParseMenuIds(menuIds);
+            if (ids.Count == 0)
+            {
+                var list0 = GisGeometry.Search(name:name, type:type, isVisible:isVisible, menuId:menuId, recursive:false).SortPageExport(pi);
+                return BuildResult(0, "success", list0, pi);
+            }
+
+            var allMenuIds = ResolveMenuWithDescendants(ids);
+            var q = GisGeometry.Search(name:name, type:type, isVisible:isVisible)
+                .Where(g => g.MenuId.HasValue && allMenuIds.Contains(g.MenuId.Value));
+
+            var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
+        }
+
+        static HashSet<long> ParseMenuIds(string menuIds)
+        {
+            if (string.IsNullOrWhiteSpace(menuIds))
+                return new HashSet<long>();
+
+            return menuIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => long.TryParse(x, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .ToHashSet();
+        }
+
+        static HashSet<long> ResolveMenuWithDescendants(HashSet<long> menuIds)
+        {
+            var result = new HashSet<long>();
+            if (menuIds == null || menuIds.Count == 0)
+                return result;
+
+            foreach (var menuId in menuIds)
+            {
+                var descendants = GisMenu.All.GetDescendants(menuId).Select(m => m.Id);
+                foreach (var id in descendants)
+                    result.Add(id);
+            }
+
+            return result;
         }
 
         public IActionResult OnPostDelete([FromBody] long[] ids)

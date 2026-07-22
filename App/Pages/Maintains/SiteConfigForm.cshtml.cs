@@ -42,6 +42,7 @@ namespace App.Pages.Maintains
             cfg.UpFileTypes = req.UpFileTypes;
             cfg.UpFileSize = req.UpFileSize;
             cfg.MapKey = req.MapKey;
+            cfg.GisTitle = string.IsNullOrWhiteSpace(req.GisTitle) ? "数据驾驶舱" : req.GisTitle.Trim();
 
             cfg.Save();
             SiteConfig.ClearCache();

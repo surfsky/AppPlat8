@@ -29,7 +29,7 @@ namespace App.Pages.GIS
         public void OnGet(long? menuId, string mode)
         {
             CurrentMode = mode == "map" ? "map" : "list";
-            var menus = GisMenu.GetTree().OrderBy(x => x.SortId).ThenBy(x => x.Id).ToList();
+            var menus = FilterGeometryMenus(GisMenu.GetTree().OrderBy(x => x.SortId).ThenBy(x => x.Id).ToList());
             DefaultFrameUrl = BuildUrl(menuId, CurrentMode == "map");
 
             NavMenus = new List<GeometryNavNode>
@@ -66,6 +66,31 @@ namespace App.Pages.GIS
                     Children = BuildNavNodes(x.Children)
                 })
                 .ToList();
+        }
+
+        /// <summary>仅保留数据来源为 Geometry 的菜单树</summary>
+        private static List<GisMenu> FilterGeometryMenus(IEnumerable<GisMenu> menus)
+        {
+            if (menus == null)
+                return new List<GisMenu>();
+
+            var list = new List<GisMenu>();
+            foreach (var item in menus)
+            {
+                if (item == null)
+                    continue;
+
+                var isGeometry = (item.DataFrom ?? GisDataFrom.Geometry) == GisDataFrom.Geometry;
+                if (!isGeometry)
+                    continue;
+
+                var children = FilterGeometryMenus(item.Children ?? new List<GisMenu>());
+                var clone = item.Clone();
+                clone.Children = children;
+                list.Add(clone);
+            }
+
+            return list;
         }
 
         /// <summary>构建目标地址</summary>

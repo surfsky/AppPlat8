@@ -10,6 +10,16 @@
         const objectApi = ctx.objectApi;
         const panelApi = ctx.panelApi;
 
+        function setPageLoading(visible, text) {
+            const host = document.getElementById('gis-index-loading');
+            if (!host) return;
+            if (text) {
+                const textEl = host.querySelector('.gis-index-loading-text');
+                if (textEl) textEl.textContent = String(text);
+            }
+            host.classList.toggle('visible', !!visible);
+        }
+
         function startHeaderDatetime() {
             window.GisIndexUI.startHeaderDatetime('header-datetime');
         }
@@ -102,9 +112,11 @@
 
         function bindMapLifecycle() {
             map.on('load', async () => {
+                setPageLoading(true, '地图与面板加载中...');
                 const mapHelperReady = await mapApi.ensureMapGeometryHelperReady();
                 if (!mapHelperReady) {
                     EleManager.showError('地图图形组件加载失败');
+                    setPageLoading(false);
                     return;
                 }
 
@@ -123,6 +135,7 @@
                 bindPageEvents();
                 syncInitialUi();
                 window.dispatchEvent(new CustomEvent('gis:index-ready', { detail: window.__gisIndexContext }));
+                setTimeout(() => setPageLoading(false), 120);
             });
 
             map.on('style.load', async () => {
@@ -153,6 +166,7 @@
         }
 
         function initialize() {
+            setPageLoading(true, '地图初始化中...');
             addMapControls();
             bindMapLifecycle();
         }

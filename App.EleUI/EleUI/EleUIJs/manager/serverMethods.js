@@ -46,18 +46,22 @@ export const serverMethods = {
         };
 
         if (isAlert) {
-            return this.ElMessageBox.alert(text, title, {
+            const popupOptions = this.resolvePopupOptions({
                 type,
-                confirmButtonText: comfirmButtonText,
-                zIndex: 6002
+                confirmButtonText: comfirmButtonText
+            }, 6002, { appendToBody: true });
+            return this.ElMessageBox.alert(text, title, {
+                ...popupOptions
             }).then(onConfirm);
         }
 
-        return this.ElMessageBox.confirm(text, title, {
+        const popupOptions = this.resolvePopupOptions({
             type,
             confirmButtonText: comfirmButtonText,
-            cancelButtonText,
-            zIndex: 6002
+            cancelButtonText
+        }, 6002, { appendToBody: true });
+        return this.ElMessageBox.confirm(text, title, {
+            ...popupOptions
         }).then(onConfirm).catch(onCancel);
     },
 
@@ -112,14 +116,13 @@ export const serverMethods = {
             return false;
         };
 
-        const promptOptions = {
+        const promptOptions = this.resolvePopupOptions({
             type,
             confirmButtonText: comfirmButtonText,
             cancelButtonText,
             inputPlaceholder,
-            inputValue,
-            zIndex: 6002
-        };
+            inputValue
+        }, 6002, { appendToBody: true });
         if (inputPattern) {
             promptOptions.inputPattern = new RegExp(inputPattern);
         }

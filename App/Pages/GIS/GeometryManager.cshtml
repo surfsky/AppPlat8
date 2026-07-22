@@ -50,6 +50,13 @@
             height: 14px;
             display: block;
         }
+        .gm-tree-check {
+            width: 14px;
+            height: 14px;
+            margin-right: 6px;
+            accent-color: #2563eb;
+            vertical-align: middle;
+        }
     </style>
 }
 
@@ -107,6 +114,11 @@
                                     ExpandOnClickNode="false"
                                     Height="100%">
                             <template #default="{ data }">
+                                <input type="checkbox"
+                                       class="js-geometry-menu-check gm-tree-check"
+                                       :data-menu-id="data.menuId || ''"
+                                       @@click.stop
+                                       @@change="window.geometryManagerNav ? window.geometryManagerNav.onCheckChange($event, data.menuId || '') : null" />
                                 <a :href="data.url || '#'"
                                    :data-list-url="data.listUrl || ''"
                                    :data-map-url="data.mapUrl || ''"
@@ -135,9 +147,18 @@
 
             let mode = page.dataset.currentMode === 'map' ? 'map' : 'list';
             let menuId = String(page.dataset.currentMenuId || '').trim();
+            const query = new URL(window.location.href).searchParams;
+            const initialMenuIds = (query.get('menuIds') || '')
+                .split(',')
+                .map(x => x.trim())
+                .filter(Boolean);
+            const checkedMenuIds = new Set(initialMenuIds);
 
             /**获取导航链接 */
             const getLinks = () => Array.from(page.querySelectorAll('.js-geometry-nav-link'));
+
+            /**获取勾选框 */
+            const getChecks = () => Array.from(page.querySelectorAll('.js-geometry-menu-check'));
 
             /**获取模式按钮 */
             const getModeBtns = () => Array.from(page.querySelectorAll('.js-geometry-mode-btn'));
@@ -157,12 +178,22 @@
             };
 
             /**构建目标地址 */
+            const buildMenuIdsParam = () => {
+                const ids = Array.from(checkedMenuIds).filter(Boolean);
+                return ids.length ? ids.join(',') : '';
+            };
+
+            /**构建目标地址 */
             const getUrl = (targetMenuId, targetMode) => {
                 const baseUrl = targetMode === 'map'
                     ? (page.dataset.defaultMapUrl || '/GIS/GeometryMap')
                     : (page.dataset.defaultListUrl || '/GIS/Geometries');
                 const id = String(targetMenuId || '').trim();
-                return id ? `${baseUrl}?menuId=${encodeURIComponent(id)}` : baseUrl;
+                const q = [];
+                if (id) q.push(`menuId=${encodeURIComponent(id)}`);
+                const menuIdsParam = buildMenuIdsParam();
+                if (menuIdsParam) q.push(`menuIds=${encodeURIComponent(menuIdsParam)}`);
+                return q.length ? `${baseUrl}?${q.join('&')}` : baseUrl;
             };
 
             /**获取链接菜单ID */
@@ -195,6 +226,17 @@
                 page.dataset.currentMenuId = menuId;
             };
 
+            /**根据勾选集合同步当前菜单ID */
+            const syncMenuIdByChecked = (preferredId) => {
+                const preferred = String(preferredId || '').trim();
+                if (preferred && checkedMenuIds.has(preferred)) {
+                    setMenuId(preferred);
+                    return;
+                }
+                const first = Array.from(checkedMenuIds)[0] || '';
+                setMenuId(first);
+            };
+
             /**同步按钮状态 */
             const syncModeBtns = () => {
                 getModeBtns().forEach(btn => {
@@ -206,6 +248,20 @@
             /**同步链接地址 */
             const syncLinkUrls = () => {
                 getLinks().forEach(link => link.setAttribute('href', getLinkUrl(link)));
+            };
+
+            /**同步勾选框 */
+            const syncChecks = () => {
+                getChecks().forEach(check => {
+                    const id = String(check.dataset.menuId || '').trim();
+                    if (!id) {
+                        check.checked = checkedMenuIds.size === 0;
+                        check.indeterminate = checkedMenuIds.size > 0;
+                        return;
+                    }
+                    check.checked = checkedMenuIds.has(id);
+                    check.indeterminate = false;
+                });
             };
 
             /**同步当前节点样式 */
@@ -226,6 +282,9 @@
                 else url.searchParams.delete('mode');
                 if (menuId) url.searchParams.set('menuId', menuId);
                 else url.searchParams.delete('menuId');
+                const menuIdsParam = buildMenuIdsParam();
+                if (menuIdsParam) url.searchParams.set('menuIds', menuIdsParam);
+                else url.searchParams.delete('menuIds');
                 window.history.replaceState({}, '', url.toString());
             };
 
@@ -242,6 +301,7 @@
                 page.dataset.currentMode = mode;
                 syncModeBtns();
                 syncLinkUrls();
+                syncChecks();
                 syncCurrentLink();
                 syncQuery();
                 refreshFrame();
@@ -254,12 +314,19 @@
                     window.setTimeout(() => initNav(count + 1), 120);
                     return;
                 }
+
+                if (checkedMenuIds.size === 0 && menuId) {
+                    checkedMenuIds.add(menuId);
+                }
+
                 const frame = getFrame();
                 if (!menuId && frame) {
                     setMenuId(parseMenuId(frame.getAttribute('src') || frame.src || ''));
                 }
+                syncMenuIdByChecked(menuId);
                 syncModeBtns();
                 syncLinkUrls();
+                syncChecks();
                 syncCurrentLink();
                 syncQuery();
             };
@@ -268,12 +335,44 @@
             const onNodeClick = (evt, link) => {
                 if (evt) evt.preventDefault();
                 const id = getLinkMenuId(link);
-                setMenuId(id);
+                if (!id) {
+                    checkedMenuIds.clear();
+                    syncMenuIdByChecked('');
+                } else if (checkedMenuIds.has(id)) {
+                    checkedMenuIds.delete(id);
+                    syncMenuIdByChecked(id);
+                } else {
+                    checkedMenuIds.add(id);
+                    syncMenuIdByChecked(id);
+                }
                 syncLinkUrls();
+                syncChecks();
                 syncCurrentLink();
                 syncQuery();
                 refreshFrame();
                 return false;
+            };
+
+            /**勾选变化 */
+            const onCheckChange = (evt, targetMenuId) => {
+                const id = String(targetMenuId || '').trim();
+                const checked = !!evt?.target?.checked;
+
+                if (!id) {
+                    checkedMenuIds.clear();
+                } else if (checked) {
+                    checkedMenuIds.add(id);
+                } else {
+                    checkedMenuIds.delete(id);
+                }
+
+                syncMenuIdByChecked(id);
+
+                syncChecks();
+                syncLinkUrls();
+                syncCurrentLink();
+                syncQuery();
+                refreshFrame();
             };
 
             page.addEventListener('click', (evt) => {
@@ -285,7 +384,7 @@
                 }
             });
 
-            window.geometryManagerNav = { onNodeClick };
+            window.geometryManagerNav = { onNodeClick, onCheckChange };
             initNav(0);
         });
     </script>

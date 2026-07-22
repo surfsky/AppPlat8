@@ -220,5 +220,58 @@
                 }
             }, 300);
         })();
+
+        (function () {
+            if (!window.EleManager || typeof window.EleManager.confirm !== 'function') return;
+            if (window.__geoFormConfirmPatched) return;
+
+            window.__geoFormConfirmPatched = true;
+            const originalConfirm = window.EleManager.confirm.bind(window.EleManager);
+
+            const getTopWindow = () => {
+                try {
+                    if (window.top && window.top.ElementPlus) return window.top;
+                } catch {
+                    // Ignore cross-origin cases and fallback to current window.
+                }
+                return window;
+            };
+
+            const resolveZIndex = (hostWindow, fallback) => {
+                let maxZ = 0;
+                try {
+                    const nodes = hostWindow.document.querySelectorAll('.el-overlay, .el-drawer, .el-message, .el-notification');
+                    nodes.forEach((node) => {
+                        const z = Number.parseInt(hostWindow.getComputedStyle(node).zIndex || '0', 10);
+                        if (Number.isFinite(z)) maxZ = Math.max(maxZ, z);
+                    });
+                } catch {
+                    // Ignore z-index scan failures and fallback.
+                }
+                return Math.max(fallback, maxZ + 2);
+            };
+
+            window.EleManager.confirm = function (msg, title = '提示', options = {}) {
+                try {
+                    const hostWindow = getTopWindow();
+                    const ep = hostWindow.ElementPlus || window.ElementPlus;
+                    const messageBox = ep && ep.ElMessageBox;
+                    if (messageBox) {
+                        const merged = {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning',
+                            zIndex: resolveZIndex(hostWindow, 6002),
+                            appendTo: hostWindow.document?.body,
+                            ...(options || {})
+                        };
+                        return messageBox.confirm(msg, title, merged);
+                    }
+                } catch {
+                    // Fallback to original behavior.
+                }
+                return originalConfirm(msg, title, options);
+            };
+        })();
     </script>
 }

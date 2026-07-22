@@ -37,7 +37,7 @@ export const imageViewerMethods = {
             teleported: false,
             hideOnClickModal: true,
             closeOnPressEscape: true,
-            zIndex: 3000,
+            zIndex: this.resolvePopupZIndex(6100, 2),
             onClose: () => this.closeImageViewer()
         });
 

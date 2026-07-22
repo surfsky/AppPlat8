@@ -222,7 +222,7 @@ body.gis-projection-globe #map {
     position: absolute;
     top: 68px;
     left: 70px;
-    z-index: 4013;
+    z-index: 4050;
     width: 300px;
     max-width: calc(100vw - 90px);
     padding: 8px;
@@ -234,6 +234,10 @@ body.gis-projection-globe #map {
     pointer-events: none;
     transform: translateY(-6px);
     transition: all .2s ease;
+}
+
+#scene-menu {
+    z-index: 4055;
 }
 .view-menu.menu-visible {
     opacity: 1;
@@ -1333,6 +1337,62 @@ body.layer-panel-resizing * {
     visibility: hidden;
     transition: opacity .25s ease, visibility 0s linear .25s;
     overflow: hidden;
+}
+
+.gis-index-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 4090;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 6, 23, 0.38);
+    -webkit-backdrop-filter: blur(1px);
+    backdrop-filter: blur(1px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .2s ease, visibility 0s linear .2s;
+}
+
+.gis-index-loading.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity .2s ease;
+}
+
+.gis-index-loading-card {
+    min-width: 180px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    background: rgba(3, 16, 80, 0.9);
+    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.46);
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #e0f2fe;
+}
+
+.gis-index-loading-spinner {
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    border: 2px solid rgba(125, 211, 252, 0.28);
+    border-top-color: #38bdf8;
+    animation: gis-index-spin .8s linear infinite;
+    flex: 0 0 20px;
+}
+
+.gis-index-loading-text {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+@keyframes gis-index-spin {
+    to { transform: rotate(360deg); }
 }
 .stats-overlay:not(.stats-visible) {
     display: none;

@@ -1,4 +1,6 @@
 using System.Linq;
+using System.Collections.Generic;
+using System;
 using App.Components;
 using App.DAL;
 using App.DAL.GIS;
@@ -13,9 +15,24 @@ namespace App.Pages.GIS
         public void OnGet() { }
 
         /// <summary>获取地图图层点位数据</summary>
-        public JsonResult OnGetGeometryLayerData(long? menuId)
+        public JsonResult OnGetGeometryLayerData(long? menuId, string menuIds = null)
         {
-            var query = GisGeometry.Search(menuId: menuId, isValid: true, recursive: true);
+            var ids = ParseMenuIds(menuIds);
+            if (menuId.HasValue)
+                ids.Add(menuId.Value);
+
+            IQueryable<GisGeometry> query;
+            if (ids.Count == 0)
+            {
+                query = GisGeometry.Search(menuId: null, isValid: true, recursive: true);
+            }
+            else
+            {
+                var allMenuIds = ResolveMenuWithDescendants(ids);
+                query = GisGeometry.Search(isValid: true)
+                    .Where(g => g.MenuId.HasValue && allMenuIds.Contains(g.MenuId.Value));
+            }
+
             var list = query
                 .OrderBy(g => g.SortId)
                 .ThenBy(g => g.Id)
@@ -74,6 +91,34 @@ namespace App.Pages.GIS
         public class DeleteReq
         {
             public long Id { get; set; }
+        }
+
+        static HashSet<long> ParseMenuIds(string menuIds)
+        {
+            if (string.IsNullOrWhiteSpace(menuIds))
+                return new HashSet<long>();
+
+            return menuIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => long.TryParse(x, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .ToHashSet();
+        }
+
+        static HashSet<long> ResolveMenuWithDescendants(HashSet<long> menuIds)
+        {
+            var result = new HashSet<long>();
+            if (menuIds == null || menuIds.Count == 0)
+                return result;
+
+            foreach (var menuId in menuIds)
+            {
+                var descendants = GisMenu.All.GetDescendants(menuId).Select(m => m.Id);
+                foreach (var id in descendants)
+                    result.Add(id);
+            }
+
+            return result;
         }
 
         /// <summary>点位投影</summary>

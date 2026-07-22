@@ -1,5 +1,8 @@
 export const messageMethods = {
-    message(msg, type = "info", options = {}) { return this.ElMessage({ message: msg, type, zIndex: 6000, ...options }); },
+    message(msg, type = "info", options = {}) {
+        const popupOptions = this.resolvePopupOptions(options, 6000, { appendToBody: true });
+        return this.ElMessage({ message: msg, type, ...popupOptions });
+    },
     showSuccess(msg, options = {}) { return this.message(msg || "操作成功", "success", options); },
     showError(msg, options = {}) { return this.message(msg || "操作失败", "error", options); },
     showWarning(msg, options = {}) { return this.message(msg || "请注意当前操作", "warning", options); },
@@ -8,14 +11,15 @@ export const messageMethods = {
 
     notify(msgOrOptions, type = "info", options = {}) {
         if (typeof msgOrOptions === "object" && msgOrOptions !== null) {
-            return this.ElNotification({ zIndex: 6001, ...msgOrOptions });
+            const popupOptions = this.resolvePopupOptions(msgOrOptions, 6001, { appendToBody: true });
+            return this.ElNotification({ ...popupOptions });
         }
+        const popupOptions = this.resolvePopupOptions(options, 6001, { appendToBody: true });
         return this.ElNotification({
             title: options.title || "提示",
             message: msgOrOptions,
             type,
-            zIndex: 6001,
-            ...options
+            ...popupOptions
         });
     },
 
@@ -25,29 +29,29 @@ export const messageMethods = {
     notifyInfo(msg, options = {}) { return this.notify(msg || "提示信息", "info", options); },
 
     alert(msg, title = "提示", options = {}) {
+        const popupOptions = this.resolvePopupOptions(options, 6002, { appendToBody: true });
         return this.ElMessageBox.alert(msg, title, {
             confirmButtonText: "确定",
-            zIndex: 6002,
-            ...options
+            ...popupOptions
         });
     },
 
     confirm(msg, title = "提示", options = {}) {
+        const popupOptions = this.resolvePopupOptions(options, 6002, { appendToBody: true });
         return this.ElMessageBox.confirm(msg, title, {
             confirmButtonText: "确定",
             cancelButtonText: "取消",
             type: "warning",
-            zIndex: 6002,
-            ...options
+            ...popupOptions
         });
     },
 
     prompt(msg, title = "请输入", options = {}) {
+        const popupOptions = this.resolvePopupOptions(options, 6002, { appendToBody: true });
         return this.ElMessageBox.prompt(msg, title, {
             confirmButtonText: "确定",
             cancelButtonText: "取消",
-            zIndex: 6002,
-            ...options
+            ...popupOptions
         });
     }
 };

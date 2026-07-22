@@ -246,7 +246,14 @@
         const app = createApp({
             setup() {
                 const mapToken = "@SiteConfig.Instance.MapKey";
-                const menuId = new URLSearchParams(window.location.search).get('menuId') || '';
+                const query = new URLSearchParams(window.location.search);
+                const menuId = query.get('menuId') || '';
+                const menuIdsRaw = query.get('menuIds') || '';
+                const menuIds = menuIdsRaw
+                    .split(',')
+                    .map(x => x.trim())
+                    .filter(Boolean);
+                const effectiveMenuId = menuId || (menuIds[0] || '');
                 const map = ref(null);
                 const items = ref([]);
                 const markerMap = new Map();
@@ -314,12 +321,12 @@
                 };
 
                 const openNew = () => {
-                    const q = menuId ? ('&menuId=' + encodeURIComponent(menuId)) : '';
+                    const q = effectiveMenuId ? ('&menuId=' + encodeURIComponent(effectiveMenuId)) : '';
                     openDrawer('/GIS/GeometryForm?id=0&md=new' + q, '新增点位', '50%');
                 };
 
                 const openNewByDraft = (gps, geoJsonObj, type) => {
-                    const qMenu = menuId ? ('&menuId=' + encodeURIComponent(menuId)) : '';
+                    const qMenu = effectiveMenuId ? ('&menuId=' + encodeURIComponent(effectiveMenuId)) : '';
                     const qGps = gps ? ('&gps=' + encodeURIComponent(gps)) : '';
                     const qGeo = geoJsonObj ? ('&geoJson=' + encodeURIComponent(JSON.stringify(geoJsonObj))) : '';
                     const qType = type ? ('&type=' + encodeURIComponent(type)) : '';
@@ -430,7 +437,10 @@
                 };
 
                 const gotoList = () => {
-                    const q = menuId ? ('?menuId=' + encodeURIComponent(menuId)) : '';
+                    const params = [];
+                    if (menuId) params.push('menuId=' + encodeURIComponent(menuId));
+                    if (menuIdsRaw) params.push('menuIds=' + encodeURIComponent(menuIdsRaw));
+                    const q = params.length ? ('?' + params.join('&')) : '';
                     window.location.href = '/GIS/Geometries' + q;
                 };
 
@@ -1015,7 +1025,10 @@
                 };
 
                 const reload = async () => {
-                    const url = '?handler=GeometryLayerData' + (menuId ? ('&menuId=' + encodeURIComponent(menuId)) : '');
+                    const params = ['handler=GeometryLayerData'];
+                    if (menuId) params.push('menuId=' + encodeURIComponent(menuId));
+                    if (menuIdsRaw) params.push('menuIds=' + encodeURIComponent(menuIdsRaw));
+                    const url = '?' + params.join('&');
                     const res = await fetch(url);
                     const data = await res.json();
                     if (data.code === 0 && Array.isArray(data.data)) {
