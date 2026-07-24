@@ -97,11 +97,14 @@
                     const geometryType = getGeometryKind(item);
                     return {
                         id: item.id,
+                        rawId: item.rawId,
                         menuId: item.menuId,
                         name: item.name || '',
                         alias: item.alias || '',
                         addr: item.addr || '',
                         gps: item.gps || '',
+                        itemUrl: item.itemUrl || '',
+                        dataFrom: item.dataFrom,
                         icon: getGeometryIcon(item),
                         geometryType,
                         lng: center ? center.lng : null,
@@ -316,6 +319,7 @@
                             isDefaultShow: !!(n.isDefaultShow ?? n.IsDefaultShow),
                             dataFrom: n.dataFrom ?? n.DataFrom ?? null,
                             dataUrl: n.dataUrl ?? n.DataUrl ?? '',
+                            itemUrl: n.itemUrl ?? n.ItemUrl ?? '',
                             zoom: (() => {
                                 const val = Number(n.zoom ?? n.Zoom);
                                 return Number.isFinite(val) ? val : null;

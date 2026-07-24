@@ -118,6 +118,51 @@
             return parts.length ? parts[0] : '';
         }
 
+        function normalizeAppUrl(pathOrUrl) {
+            const text = String(pathOrUrl || '').trim();
+            if (!text) return '';
+            if (/^https?:\/\//i.test(text) || text.startsWith('/')) return text;
+            return `/${text.replace(/^\/+/, '')}`;
+        }
+
+        function resolveTemplateUrl(template, id) {
+            const text = String(template || '').trim();
+            if (!text) return '';
+
+            const safeId = Number.isFinite(Number(id)) ? Number(id) : 0;
+            let url = text.includes('{0}') ? text.replaceAll('{0}', String(safeId)) : text;
+            url = normalizeAppUrl(url);
+            if (!url) return '';
+
+            if (!text.includes('{0}')) {
+                const sep = url.includes('?') ? '&' : '?';
+                url = `${url}${sep}id=${encodeURIComponent(String(safeId))}`;
+            }
+            return url;
+        }
+
+        function openItemUrlDrawer(itemUrl, id, title = '点位详情') {
+            const url = resolveTemplateUrl(itemUrl, id);
+            if (!url) return false;
+
+            const manager = resolveManager();
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open(url, '_blank');
+                return true;
+            }
+
+            manager.openDrawer({
+                title,
+                url,
+                direction: 'rtl',
+                size: window.innerWidth < 768 ? '100%' : '50%',
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true
+            });
+            return true;
+        }
+
         function normalizeFileUrl(url) {
             const text = String(url || '').trim().replace(/\\/g, '/');
             if (!text) return '';
@@ -194,6 +239,20 @@
             }
 
             const geometry = findGeometryById(id);
+            const routedItemUrl = evt && typeof evt === 'object' ? evt.itemUrl : null;
+            const routedRawId = evt && typeof evt === 'object' ? evt.rawId : null;
+            const dataFrom = geometry?.dataFrom ?? geometry?.DataFrom ?? (evt && typeof evt === 'object' ? evt.dataFrom : null);
+            const isApiData = String(dataFrom || '').toLowerCase() === 'api' || Number(dataFrom) === 2;
+            const detailId = Number.isFinite(Number(routedRawId)) && Number(routedRawId) > 0
+                ? Number(routedRawId)
+                : Number(geometry?.rawId ?? geometry?.RawId ?? Math.abs(Number(id)));
+            const itemUrl = String(routedItemUrl || geometry?.itemUrl || geometry?.ItemUrl || '');
+            if (isApiData && itemUrl && detailId > 0) {
+                if (openItemUrlDrawer(itemUrl, detailId, geometry?.name || geometry?.Name || '点位详情')) {
+                    return;
+                }
+            }
+
             const geometryType = parseGeometryType(geometry);
             if (geometryType === 5) {
                 openVideoDrawer(collectVideoUrls(geometry), geometry?.name || geometry?.Name || '监控视频');

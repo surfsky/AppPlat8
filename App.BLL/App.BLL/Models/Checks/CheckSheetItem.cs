@@ -13,6 +13,7 @@ namespace App.DAL
     {
         [UI("检查表")] public long SheetId { get; set; }
         [UI("层级")]   public CheckHazardLevel? HazardLevel { get; set; }
+        [UI("是否常见")] public bool? IsCommon { get; set; }
         [UI("名称")] public string Name { get; set; }
         [UI("排序")] public int SortId { get; set; }
 
@@ -24,16 +25,18 @@ namespace App.DAL
                 SheetId,
                 HazardLevel,
                 HazardLevelName = HazardLevel?.GetTitle(),
+                IsCommon,
                 Name,
                 SortId
             };
         }
 
-        public static IQueryable<CheckSheetItem> Search(long? sheetId = null, CheckHazardLevel? hazardLevel = null, string name = "")
+        public static IQueryable<CheckSheetItem> Search(long? sheetId = null, CheckHazardLevel? hazardLevel = null, bool? isCommon = null, string name = "")
         {
             IQueryable<CheckSheetItem>  q = CheckSheetItem.IncludeSet;
             if (sheetId.IsNotEmpty())     q = q.Where(o => o.SheetId == sheetId.Value);
             if (hazardLevel.IsNotEmpty()) q = q.Where(o => o.HazardLevel == hazardLevel.Value);
+            if (isCommon.IsNotEmpty())    q = q.Where(o => o.IsCommon == isCommon.Value);
             if (name.IsNotEmpty())        q = q.Where(o => o.Name.Contains(name.Trim()));
             return q;
         }

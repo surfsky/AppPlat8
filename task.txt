@@ -450,12 +450,6 @@ Done
         Gis/index maplayer 图层增加设置面板，放到右侧
         地图顶部（或底部）显示滚动告警；
 
-    用接口获取的点位详情面板错误，无法正常展示，请检查相关api接口，接口同 IGeometry；
-        gis/index 数据列表窗口，增加显示配置模版，如：{Alias}/n{Name}/n{Addr}
-    导入数据****
-        导入用户数据
-        导入对象数据，并完善标签
-        导入新141检查表
     优化
         剥离标签：标准标签、扩展标签？
         使用本地AI服务
@@ -463,31 +457,41 @@ Done
         优化HttpApi，增加AuthLogin全局配置（默认为true，表示所有接口默认都需要登陆后才能使用），若与具体API冲突，以具体API为准；
         角色和 ContactMenu 管理（RoleContactMenu）。容后
     隐患增加“是否高频”属性
-    物理删除 admin以外的所有用户
+
+
+    导入数据****
+        导入用户数据
+        导入对象数据，并完善标签
+        导入新141检查表
 
 
 
 2026/07/24
-        /优化角色权限管理
-            - 鉴于现有的 Menu 绑定权限的逻辑，不能直观的反应角色可以访问的页面和数据范围，现做重构调整；
-            - 创建管理页面/pages/admins/RoleManager，统一管理角色对应的权限和访问能力：
-                - 用IFrame进行分隔，左侧是角色列表，右侧是标签页
-                - 标签页面现在为：操作权限，系统菜单、Gis菜单，以后可以扩展
-                - 点击左侧角色名称，右侧的标签页链接参数将自动变化
-                - 角色权限页面（admins/RolePower）：
-                    - 参考原有RolePowerOld页面进行简化改造，只需要显示老页面右侧的权限部分；
-                - 角色菜单页面（admins/RoleMenu：
-                    - 顶部固定显示工具栏按钮区（全选/反选、保存），下面放系统菜单树
-                    - 创建 RoleMenu 实体类，字段：RoleId，MenuId；
-                    - 删除 Menu.Power 及相关逻辑代码；
-                    - 用新的RoleMenu 逻辑，来调整 pages/Index 页面左侧的菜单展示逻辑；
-                    - 可用HttpApi 接口来实现（/HttpApi/Auth/GetRoleMenus），并启用缓存，以减少数据库的访问；
-                - 角色Gis菜单页面（Gis/RoleGisMenu）：
-                    - 创建RoleGisMenu 实体类，用于管理角色和授权的gismenu，字段：RoleId, MenuId, CanSee, CanEdit;
-                    - 顶部工具栏，下面显示GisMenu树，每个节点都显示“能看”、“能编辑”两个checkbox；
-                    - 某个用户登录后，会根据该用户的角色，在gis/index中显示可见的gismenu，在gis/geometrymanager左侧的菜单树中显示授权编辑的菜单；
-                    - 点位导入时会检查 gismenuid 是否被当前用户角色授权（gis/GeometryImporter）
-                    - 修改相关的数据接口
+    /物理删除 admin以外的所有用户
+    /优化角色权限管理
+        - 鉴于现有的 Menu 绑定权限的逻辑，不能直观的反应角色可以访问的页面和数据范围，现做重构调整；
+        - 创建管理页面/pages/admins/RoleManager，统一管理角色对应的权限和访问能力：
+            - 用IFrame进行分隔，左侧是角色列表，右侧是标签页
+            - 标签页面现在为：操作权限，系统菜单、Gis菜单，以后可以扩展
+            - 点击左侧角色名称，右侧的标签页链接参数将自动变化
+            - 角色权限页面（admins/RolePower）：
+                - 参考原有RolePowerOld页面进行简化改造，只需要显示老页面右侧的权限部分；
+            - 角色菜单页面（admins/RoleMenu：
+                - 顶部固定显示工具栏按钮区（全选/反选、保存），下面放系统菜单树
+                - 创建 RoleMenu 实体类，字段：RoleId，MenuId；
+                - 删除 Menu.Power 及相关逻辑代码；
+                - 用新的RoleMenu 逻辑，来调整 pages/Index 页面左侧的菜单展示逻辑；
+                - 可用HttpApi 接口来实现（/HttpApi/Auth/GetRoleMenus），并启用缓存，以减少数据库的访问；
+            - 角色Gis菜单页面（Gis/RoleGisMenu）：
+                - 创建RoleGisMenu 实体类，用于管理角色和授权的gismenu，字段：RoleId, MenuId, CanSee, CanEdit;
+                - 顶部工具栏，下面显示GisMenu树，每个节点都显示“能看”、“能编辑”两个checkbox；
+                - 某个用户登录后，会根据该用户的角色，在gis/index中显示可见的gismenu，在gis/geometrymanager左侧的菜单树中显示授权编辑的菜单；
+                - 点位导入时会检查 gismenuid 是否被当前用户角色授权（gis/GeometryImporter）
+                - 修改相关的数据接口
+    /用接口获取的点位详情面板错误，无法正常展示，请检查相关api接口，接口同 IGeometry；
+        /gis/index 数据列表窗口，增加显示配置模版，如：{Alias}/n{Name}/n{Addr}
+        /显示点位详情页面 ItemUrl
+        /增加name查询参数
 
 
 2026/07/23

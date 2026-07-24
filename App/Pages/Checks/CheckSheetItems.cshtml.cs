@@ -27,11 +27,11 @@ namespace App.Pages.Checks
             }
         }
 
-        public IActionResult OnGetData(Paging pi, long sheetId, CheckHazardLevel? hazardLevel, string name)
+        public IActionResult OnGetData(Paging pi, long sheetId, CheckHazardLevel? hazardLevel, bool? isCommon, string name)
         {
             if (sheetId <= 0)
                 return BuildResult(400, "参数错误：缺少检查表ID");
-            var list = CheckSheetItem.Search(sheetId, hazardLevel, name).SortPageExport(pi);
+            var list = CheckSheetItem.Search(sheetId, hazardLevel, isCommon, name).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

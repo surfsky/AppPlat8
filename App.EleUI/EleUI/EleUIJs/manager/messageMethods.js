@@ -1,6 +1,9 @@
 export const messageMethods = {
     message(msg, type = "info", options = {}) {
-        const popupOptions = this.resolvePopupOptions(options, 6000, { appendToBody: true });
+        const popupOptions = this.resolvePopupOptions(options, 8000, {
+            appendToBody: true,
+            offset: 68
+        });
         return this.ElMessage({ message: msg, type, ...popupOptions });
     },
     showSuccess(msg, options = {}) { return this.message(msg || "操作成功", "success", options); },
@@ -11,10 +14,16 @@ export const messageMethods = {
 
     notify(msgOrOptions, type = "info", options = {}) {
         if (typeof msgOrOptions === "object" && msgOrOptions !== null) {
-            const popupOptions = this.resolvePopupOptions(msgOrOptions, 6001, { appendToBody: true });
+            const popupOptions = this.resolvePopupOptions(msgOrOptions, 8001, {
+                appendToBody: true,
+                offset: 68
+            });
             return this.ElNotification({ ...popupOptions });
         }
-        const popupOptions = this.resolvePopupOptions(options, 6001, { appendToBody: true });
+        const popupOptions = this.resolvePopupOptions(options, 8001, {
+            appendToBody: true,
+            offset: 68
+        });
         return this.ElNotification({
             title: options.title || "提示",
             message: msgOrOptions,

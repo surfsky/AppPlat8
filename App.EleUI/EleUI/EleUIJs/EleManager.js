@@ -153,6 +153,7 @@ class EleManagerCore {
 
     resolvePopupOptions(options = {}, baseZIndex = 6000, extras = {}) {
         const merged = {
+            ...(extras && typeof extras === 'object' ? extras : {}),
             ...(options && typeof options === 'object' ? options : {})
         };
 

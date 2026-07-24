@@ -12,6 +12,7 @@
         <ElePicker For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheetItems?md=select"></ElePicker>
 
         <EleInput For="Item.CheckItemText" Label="检查项内容" Enabled="false" FillRow="true"></EleInput>
+        <EleSwitch For="Item.IsCommonHazard" Label="常见隐患" Enabled="false"></EleSwitch>
         <EleInput For="Item.Description" Label="隐患描述" Rows="1" FillRow="true"></EleInput>
         <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true" FillRow="true"></EleImageUpload>
         

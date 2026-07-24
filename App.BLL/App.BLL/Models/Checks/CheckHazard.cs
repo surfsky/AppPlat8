@@ -54,6 +54,7 @@ namespace App.DAL
         public string CheckerName => Checker?.Name ?? string.Empty;
         public string CheckSheetName => CheckSheet?.Name ?? string.Empty;
         public string CheckItemName => CheckItem?.Name ?? string.Empty;
+        public bool? IsCommonHazard => CheckItem?.IsCommon;
 
 
         //
@@ -74,6 +75,7 @@ namespace App.DAL
                 ExpireDt,
                 RectifyDt,
                 IsIn141,
+                IsCommonHazard,
 
                 StatusName,
                 ObjectName,
@@ -84,7 +86,7 @@ namespace App.DAL
         }
         public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
         {
-            IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.CheckObject).Include(t => t.Checker);
+            IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.CheckObject).Include(t => t.Checker).Include(t => t.CheckItem);
             if (objectId.IsNotEmpty())     q = q.Where(o => o.ObjectId == objectId.Value);
             if (checkerId.IsNotEmpty())    q = q.Where(o => o.Check.CheckerId == checkerId.Value);
             if (objectName.IsNotEmpty())   q = q.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));

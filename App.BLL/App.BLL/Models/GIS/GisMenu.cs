@@ -24,6 +24,7 @@ namespace App.DAL.GIS
         [UI("是否可选")]      public bool? Selectable { get; set; } = true;
         [UI("数据来源")]      public GisDataFrom? DataFrom { get; set; } = GisDataFrom.Geometry;
         [UI("数据地址")]      public string DataUrl { get; set; }
+        [UI("详情地址")]      public string ItemUrl { get; set; }
         [UI("点位数")]        public int? DataCnt { get; set; }
         [UI("最后数据时间")]   public DateTime? DataDt { get; set; }
 
@@ -41,6 +42,7 @@ namespace App.DAL.GIS
                 t.Zoom = this.Zoom;
                 t.Selectable = this.Selectable;
                 t.DataUrl = this.DataUrl;
+                t.ItemUrl = this.ItemUrl;
                 t.DataCnt = this.DataCnt;
                 t.DataDt = this.DataDt;
                 t.DataFrom = this.DataFrom;
@@ -62,6 +64,7 @@ namespace App.DAL.GIS
                 Selectable,
                 Children,
                 DataUrl,
+                ItemUrl,
                 DataCnt,
                 DataDt,
                 DataFrom,

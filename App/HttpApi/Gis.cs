@@ -24,7 +24,7 @@ namespace App.API
         //---------------------------------------------------------
         // GIS菜单树相关接口
         //---------------------------------------------------------
-        [HttpApi("获取GIS菜单树", AuthLogin = true)]
+        [HttpApi("Map", "获取GIS菜单树", AuthLogin = true)]
         public static APIResult GetMenuTree(long? excludeId = null, long? selectedId = null)
         {
             // 这里使用实时查询，避免前端在菜单调整后读取到旧缓存。
@@ -60,20 +60,20 @@ namespace App.API
         //---------------------------------------------------------
         // GIS场景相关接口
         //---------------------------------------------------------
-        [HttpApi("获取GIS地图样式", AuthLogin = true)]
+        [HttpApi("Map", "获取GIS地图样式", AuthLogin = true)]
         public static APIResult GetMapStyles()
         {
             return GisScene.Styles.ToResult();
         }
 
-        [HttpApi("获取GIS场景列表", AuthLogin = true)]
+        [HttpApi("Map", "获取GIS场景列表", AuthLogin = true)]
         public static APIResult GetScenes()
         {
             var list = GisScene.Set.AsNoTracking().OrderBy(t => t.SortId).ToList();
             return list.ToResult();
         }
 
-        [HttpApi("获取GIS场景详情", AuthLogin = true)]
+        [HttpApi("Map", "获取GIS场景详情", AuthLogin = true)]
         public static APIResult GetSceneDetail(long id)
         {
             var scene = GisScene.Set.AsNoTracking()
@@ -103,9 +103,9 @@ namespace App.API
         }
 
         //---------------------------------------------------------
-        // 地址查询相关接口（使用高德地图API）
+        // 点位
         //---------------------------------------------------------
-        [HttpApi("获取检查对象点位数据", AuthLogin = false)]
+        [HttpApi("Point","获取检查对象点位数据", AuthLogin = false)]
         public static APIResult GetCheckObjectPoints(string name = null, long? orgId = null, bool? isDel = false, string region = null, int maxCount = 500)
         {
             if (maxCount <= 0)     maxCount = 100;
@@ -171,23 +171,44 @@ namespace App.API
         }
 
         /// <summary>获取检查对象统一 GIS 数据</summary>
-        [HttpApi("获取检查对象GIS数据", AuthLogin = false)]
-        public static APIResult GetCheckObjects(string tagNames = null, Paging pi = null)
+        [HttpApi("Point", "获取检查对象GIS数据", AuthLogin = false)]
+        public static APIResult GetCheckObjects(string tagNames = null, string tagIds = null, string name = null, Paging pi = null)
         {
             pi ??= new Paging();
             if (pi.PageSize <= 0) pi.PageSize = 20;
             if (pi.PageSize > 200) pi.PageSize = 200;
             if (pi.PageIndex < 0) pi.PageIndex = 0;
 
-            var tags = ParseTagNames(tagNames);
-            var tagIds = tags.Count == 0
+            var keyword = name?.Trim();
+
+            var tagNameKeywords = ParseTagNames(tagNames);
+            var explicitTagIds = ParseTagIds(tagIds);
+            var hasTagFilter = tagNameKeywords.Count > 0 || explicitTagIds.Count > 0;
+
+            var matchedByName = tagNameKeywords.Count == 0
                 ? new List<long>()
                 : CheckTag.Set.AsNoTracking()
-                    .Where(t => tags.Contains(t.Name))
+                    .Where(t => tagNameKeywords.Any(k => t.Name.Contains(k)))
                     .Select(t => t.Id)
                     .ToList();
 
-            var query = CheckObject.Search(tagIds: tagIds, includeTags: true)
+            var mergedTagIds = matchedByName
+                .Concat(explicitTagIds)
+                .Distinct()
+                .ToList();
+
+            if (hasTagFilter && mergedTagIds.Count == 0)
+            {
+                pi.SetTotal(0);
+                return new
+                {
+                    items = new List<GeometryItem>(),
+                    pageInfo = pi
+                }.ToResult();
+            }
+
+            var query = CheckObject.Search(tagIds: mergedTagIds, includeTags: true)
+                .Where(t => keyword.IsEmpty() || (t.Name ?? string.Empty).Contains(keyword))
                 .OrderBy(t => t.IsDel ?? false)
                 .ThenBy(t => t.Name)
                 .ThenBy(t => t.Id);
@@ -208,7 +229,10 @@ namespace App.API
             }.ToResult();
         }
 
-        [HttpApi("获取地址列表", AuthLogin = true)]
+        //---------------------------------------------------------
+        // 地址查询相关接口（使用高德地图API）
+        //---------------------------------------------------------
+        [HttpApi("Search", "获取地址列表", AuthLogin = true)]
         public static APIResult GetAddrs(string name)
         {
             if (name.IsEmpty())
@@ -218,7 +242,7 @@ namespace App.API
 
 
 
-        [HttpApi("获取单个地址", AuthLogin = true)]
+        [HttpApi("Search", "获取单个地址", AuthLogin = true)]
         public static APIResult GetAddr(string name)
         {
             var addr = AmapHelper.GetAddr(name);
@@ -227,6 +251,9 @@ namespace App.API
             return addr.ToResult();
         }
 
+        //---------------------------------------------------------
+        // Utils
+        //---------------------------------------------------------
         /// <summary>从菜单获取统一 GIS 数据</summary>
         public static List<GeometryItem> GetMenuGeometryItems(long menuId, Paging pi = null, string keyword = null, bool? isVisible = null)
         {
@@ -234,11 +261,11 @@ namespace App.API
             if (menu == null)
                 return new List<GeometryItem>();
 
-            return GetMenuGeometryItems(menu.Id, menu.DataFrom, menu.DataUrl, pi, keyword, menu.Name, menu.Icon, isVisible);
+            return GetMenuGeometryItems(menu.Id, menu.DataFrom, menu.DataUrl, pi, keyword, menu.Name, menu.Icon, menu.ItemUrl, isVisible);
         }
 
         /// <summary>从参数获取统一 GIS 数据</summary>
-        public static List<GeometryItem> GetMenuGeometryItems(long? menuId, GisDataFrom? dataFrom, string dataUrl, Paging pi = null, string keyword = null, string menuName = null, string icon = null, bool? isVisible = null)
+        public static List<GeometryItem> GetMenuGeometryItems(long? menuId, GisDataFrom? dataFrom, string dataUrl, Paging pi = null, string keyword = null, string menuName = null, string icon = null, string itemUrl = null, bool? isVisible = null)
         {
             var from = dataFrom ?? GisDataFrom.Geometry;
             if (from == GisDataFrom.API)
@@ -248,6 +275,7 @@ namespace App.API
                     Id = menuId ?? 0,
                     Name = menuName,
                     Icon = icon,
+                    ItemUrl = itemUrl,
                     DataFrom = GisDataFrom.API,
                     DataUrl = dataUrl
                 };
@@ -257,7 +285,7 @@ namespace App.API
             if (!menuId.IsNotEmpty())
                 return new List<GeometryItem>();
 
-            return GetGeometryMenuItems(menuId.Value, keyword, isVisible);
+            return GetGeometryMenuItems(menuId.Value, keyword, isVisible, itemUrl);
         }
 
         /// <summary>获取菜单点位数量</summary>
@@ -284,7 +312,7 @@ namespace App.API
         }
 
         /// <summary>获取 Geometry 菜单数据</summary>
-        static List<GeometryItem> GetGeometryMenuItems(long menuId, string keyword, bool? isVisible)
+        static List<GeometryItem> GetGeometryMenuItems(long menuId, string keyword, bool? isVisible, string itemUrl = null)
         {
             var query = GisGeometry.Search(menuId: menuId, recursive: true, isVisible: isVisible);
             if (keyword.IsNotEmpty())
@@ -316,6 +344,7 @@ namespace App.API
                     LabelColor = t.LabelColor,
                     Icon = t.MenuIcon,
                     MenuName = t.MenuName,
+                    ItemUrl = itemUrl,
                     DataFrom = GisDataFrom.Geometry
                 })
                 .ToList();
@@ -369,7 +398,7 @@ namespace App.API
                 {
                     t.DataFrom = GisDataFrom.API;
                     t.RawId = t.RawId > 0 ? t.RawId : (t.Id > 0 ? t.Id : 0);
-                    return t.CloneForMenu(menu.Id, menu.Name, menu.Icon);
+                    return t.CloneForMenu(menu.Id, menu.Name, menu.Icon, menu.ItemUrl);
                 })
                 .ToList();
         }
@@ -413,8 +442,13 @@ namespace App.API
             var qs = idx >= 0 ? raw[(idx + 1)..] : string.Empty;
             var query = ParseQueryString(qs);
             var tagNames = query.TryGetValue("tagNames", out var tagVal) ? tagVal : null;
+            if (tagNames.IsEmpty() && query.TryGetValue("tagnames", out var tagVal2))
+                tagNames = tagVal2;
+            var tagIds = query.TryGetValue("tagIds", out var idVal) ? idVal : null;
+            if (tagIds.IsEmpty() && query.TryGetValue("tagids", out var idVal2))
+                tagIds = idVal2;
             var pageInfo = pi ?? BuildApiPaging(menu);
-            var res = GetCheckObjects(tagNames, pageInfo);
+            var res = GetCheckObjects(tagNames, tagIds, keyword, pageInfo);
             if (res?.Code != 0)
                 throw new Exception(res?.Message ?? "获取检查对象失败");
 
@@ -435,7 +469,7 @@ namespace App.API
             {
                 t.DataFrom = GisDataFrom.API;
                 t.RawId = t.RawId > 0 ? t.RawId : (t.Id > 0 ? t.Id : 0);
-                return t.CloneForMenu(menu.Id, menu.Name, menu.Icon);
+                return t.CloneForMenu(menu.Id, menu.Name, menu.Icon, menu.ItemUrl);
             }).ToList();
             return true;
         }
@@ -458,7 +492,12 @@ namespace App.API
             var qs = idx >= 0 ? raw[(idx + 1)..] : string.Empty;
             var query = ParseQueryString(qs);
             var tagNames = query.TryGetValue("tagNames", out var tagVal) ? tagVal : null;
-            var res = GetCheckObjects(tagNames, new Paging { PageIndex = 0, PageSize = 1 });
+            if (tagNames.IsEmpty() && query.TryGetValue("tagnames", out var tagVal2))
+                tagNames = tagVal2;
+            var tagIds = query.TryGetValue("tagIds", out var idVal) ? idVal : null;
+            if (tagIds.IsEmpty() && query.TryGetValue("tagids", out var idVal2))
+                tagIds = idVal2;
+            var res = GetCheckObjects(tagNames, tagIds, null, new Paging { PageIndex = 0, PageSize = 1 });
             if (res?.Code != 0)
                 throw new Exception(res?.Message ?? "获取检查对象失败");
 
@@ -547,6 +586,20 @@ namespace App.API
                 .ToList();
         }
 
+        /// <summary>解析标签ID列表</summary>
+        static List<long> ParseTagIds(string tagIds)
+        {
+            if (tagIds.IsEmpty())
+                return new List<long>();
+
+            return tagIds
+                .Split(new[] { ',', '，', ';', '；', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => long.TryParse(t.Trim(), out var id) ? id : 0)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+        }
+
         /// <summary>读取整数值</summary>
         static int GetIntValue(JsonElement node, int defaultValue)
         {
@@ -608,6 +661,11 @@ namespace App.API
                     cnt = GetIntValue(totalNode, 0);
                     return true;
                 }
+                if (pageInfoNode.TryGetProperty("Total", out var totalNode2))
+                {
+                    cnt = GetIntValue(totalNode2, 0);
+                    return true;
+                }
             }
 
             if (node.TryGetProperty("pager", out var pagerNode) && pagerNode.ValueKind == JsonValueKind.Object)
@@ -622,6 +680,11 @@ namespace App.API
             if (node.TryGetProperty("total", out var dataTotalNode))
             {
                 cnt = GetIntValue(dataTotalNode, 0);
+                return true;
+            }
+            if (node.TryGetProperty("Total", out var dataTotalNode2))
+            {
+                cnt = GetIntValue(dataTotalNode2, 0);
                 return true;
             }
             if (node.TryGetProperty("items", out var itemsNode) && itemsNode.ValueKind == JsonValueKind.Array)

@@ -58,6 +58,7 @@ namespace App.Pages.Checks
                 CheckSheetName = sheetName,
                 item.CheckItemId,
                 item.CheckItemText,
+                IsCommonHazard = item.IsCommonHazard,
                 item.Description,
                 item.Status,
                 item.ExpireDt,

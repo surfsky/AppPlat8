@@ -53,6 +53,7 @@ namespace App.DAL.GIS
         public string CreatorName => Creator?.Name;
         public long RawId => Id;
         public string Icon => Menu?.Icon;
+        public string ItemUrl => Url;
         public GisDataFrom DataFrom => GisDataFrom.Geometry;
 
         public virtual GisGeometry Clone()

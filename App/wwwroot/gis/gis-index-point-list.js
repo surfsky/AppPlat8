@@ -150,6 +150,9 @@
                     lng: point ? point.lng : null,
                     lat: point ? point.lat : null,
                     hasCoord: !!point,
+                    rawId: Number(item?.rawId ?? item?.RawId ?? item?.id ?? 0) || 0,
+                    itemUrl: String(item?.itemUrl ?? item?.ItemUrl ?? ''),
+                    dataFrom: item?.dataFrom ?? item?.DataFrom,
                     seq: start + idx + 1
                 };
             });
@@ -225,7 +228,10 @@
                     e.stopPropagation();
                     const id = Number(detailBtn.getAttribute('data-geometry-id'));
                     if (!Number.isFinite(id)) return;
-                    onOpenDetail(id, { ctrlKey: true });
+                    const rawId = Number(detailBtn.getAttribute('data-raw-id') || '0');
+                    const itemUrl = String(detailBtn.getAttribute('data-item-url') || '');
+                    const dataFrom = detailBtn.getAttribute('data-data-from');
+                    onOpenDetail(id, { ctrlKey: true, rawId, itemUrl, dataFrom });
                     return;
                 }
 
@@ -287,7 +293,7 @@
                                 <span class="point-list-texts">
                                     <span class="point-list-title-row">
                                         <span class="point-list-title">${escapeHtml(title)}</span>
-                                        <button type="button" class="point-list-detail-btn" data-geometry-id="${item.id}" title="查看详情">
+                                        <button type="button" class="point-list-detail-btn" data-geometry-id="${item.id}" data-raw-id="${item.rawId || 0}" data-item-url="${escapeHtml(item.itemUrl || '')}" data-data-from="${escapeHtml(item.dataFrom || '')}" title="查看详情">
                                             <i class="fa-regular fa-file-lines"></i>
                                         </button>
                                     </span>

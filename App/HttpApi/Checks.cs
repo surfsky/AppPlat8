@@ -194,9 +194,9 @@ namespace App.API
         }
 
         [HttpApi("获取某个检查表的检查项", AuthLogin=true)]
-        public static APIResult GetCheckSheetItems(long sheetId)
+        public static APIResult GetCheckSheetItems(long sheetId, bool? isCommon = null)
         {
-            return CheckSheetItem.Search(sheetId:sheetId).ToList().ToResult();
+            return CheckSheetItem.Search(sheetId:sheetId, isCommon:isCommon).ToList().ToResult();
         }
 
 

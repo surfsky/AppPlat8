@@ -5,6 +5,8 @@ using App.DAL.GIS;
 using App.EleUI;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace App.Pages.GIS
 {
@@ -30,6 +32,10 @@ namespace App.Pages.GIS
             if (req == null)
                 return BuildResult(400, "参数错误");
 
+            var name = req.Name?.Trim();
+            if (string.IsNullOrWhiteSpace(name))
+                return BuildResult(400, "名称不能为空");
+
             GisMenu item;
             if (req.Id > 0)
             {
@@ -44,7 +50,27 @@ namespace App.Pages.GIS
                 item = new GisMenu();
             }
 
-            item.Name = req.Name;
+            // Avoid circular parent chains that can break full-name recursion.
+            if (req.ParentId.HasValue)
+            {
+                var all = GisMenu.Set.Select(t => new { t.Id, t.ParentId }).ToList();
+                var parentMap = all.ToDictionary(t => t.Id, t => t.ParentId);
+                var visited = new HashSet<long>();
+                var cursor = req.ParentId;
+                while (cursor.HasValue)
+                {
+                    if (!visited.Add(cursor.Value))
+                        return BuildResult(400, "菜单层级存在循环，请重新选择上级菜单");
+                    if (req.Id > 0 && cursor.Value == req.Id)
+                        return BuildResult(400, "上级菜单不能是当前菜单或其子菜单");
+
+                    if (!parentMap.TryGetValue(cursor.Value, out var nextParent))
+                        break;
+                    cursor = nextParent;
+                }
+            }
+
+            item.Name = name;
             item.ParentId = req.ParentId;
             item.Icon = req.Icon;
             item.IsDefaultShow = req.IsDefaultShow;
@@ -53,9 +79,19 @@ namespace App.Pages.GIS
             item.SortId = req.SortId;
             item.DataFrom = req.DataFrom;
             item.DataUrl = req.DataUrl?.Trim();
+            item.ItemUrl = req.ItemUrl?.Trim();
             item.DataCnt = req.DataCnt;
             item.DataDt = req.DataDt;
-            item.Save();
+
+            try
+            {
+                item.Save();
+            }
+            catch (Exception ex)
+            {
+                var msg = ex.InnerException?.Message ?? ex.Message ?? "未知错误";
+                return BuildResult(400, $"保存失败：{msg}");
+            }
 
             GisMenu.ClearCache();
             return BuildResult(0, "保存成功");
@@ -83,7 +119,8 @@ namespace App.Pages.GIS
                 var msg = $"测试成功，共 {cnt} 条数据";
                 return EleManager
                     .SetControl<GisMenu>(t => t.DataCnt, Value: cnt)
-                    .SetControl<GisMenu>(t => t.DataDt, Value: now.ToString("yyyy-MM-dd HH:mm:ss"))
+                    // Use ISO datetime to keep client display and server JSON parsing consistent.
+                    .SetControl<GisMenu>(t => t.DataDt, Value: now.ToString("yyyy-MM-ddTHH:mm:ss"))
                     .ToActionResult(msg);
             }
             catch (Exception ex)

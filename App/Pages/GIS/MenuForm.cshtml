@@ -25,6 +25,9 @@
                 </template>
             </EleInput>
         </div>
+        <div v-show="Number(form.dataFrom ?? 0) === 2 || String(form.dataFrom ?? '').toLowerCase() === 'api'">
+            <EleInput For="Item.ItemUrl" Label="详情地址" FillRow="true" Placeholder="如: Checks/CheckObjectForm?id={0}"></EleInput>
+        </div>
         <EleNumber For="Item.DataCnt" Label="点位数" Min="0" Max="10000000"></EleNumber>
         <EleDatePicker For="Item.DataDt" Label="最后数据时间" Type="DateTime"></EleDatePicker>
 
@@ -41,6 +44,12 @@
         .menu-dataurl-test-btn {
             padding: 0 6px;
             min-height: 30px;
+        }
+
+        .el-message,
+        .el-notification {
+            z-index: 100000 !important;
+            top: 72px !important;
         }
     </style>
 }

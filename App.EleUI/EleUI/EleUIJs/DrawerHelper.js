@@ -171,6 +171,12 @@ export class DrawerHelper {
     min-height: 280px;
     overflow: hidden;
 }
+
+/* Keep message/notification above drawer overlays and headers. */
+.el-message,
+.el-notification {
+    z-index: 300000 !important;
+}
 `;
         hostWindow.document.head.appendChild(style);
     }

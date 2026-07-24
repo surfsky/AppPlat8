@@ -381,6 +381,7 @@ namespace App.Pages.GIS
                 labelColor = item.LabelColor,
                 icon = item.Icon,
                 menuName = item.MenuName,
+                itemUrl = item.ItemUrl,
                 dataFrom = item.DataFrom
             };
         }

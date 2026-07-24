@@ -25,6 +25,7 @@ namespace App.DAL.GIS
         string LabelColor { get; }
         string Icon { get; }
         string MenuName { get; }
+        string ItemUrl { get; }
         GisDataFrom DataFrom { get; }
     }
 
@@ -53,6 +54,7 @@ namespace App.DAL.GIS
         public string LabelColor { get; set; }
         public string Icon { get; set; }
         public string MenuName { get; set; }
+        public string ItemUrl { get; set; }
         public GisDataFrom DataFrom { get; set; } = GisDataFrom.Geometry;
 
         /// <summary>生成 API 点位唯一编号</summary>
@@ -65,7 +67,7 @@ namespace App.DAL.GIS
         }
 
         /// <summary>复制数据到指定菜单</summary>
-        public GeometryItem CloneForMenu(long? menuId, string menuName, string icon)
+        public GeometryItem CloneForMenu(long? menuId, string menuName, string icon, string itemUrl = null)
         {
             return new GeometryItem
             {
@@ -89,6 +91,7 @@ namespace App.DAL.GIS
                 LabelColor = LabelColor,
                 Icon = icon.IsNotEmpty() ? icon : Icon,
                 MenuName = menuName.IsNotEmpty() ? menuName : MenuName,
+                ItemUrl = itemUrl.IsNotEmpty() ? itemUrl : ItemUrl,
                 DataFrom = DataFrom
             };
         }
