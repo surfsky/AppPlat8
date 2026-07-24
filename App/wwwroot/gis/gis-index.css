@@ -690,8 +690,33 @@ body.layer-panel-resizing * {
 *****************************************************/
 .layer-tree {
     flex: 1;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     font-size: 13px;
+    scrollbar-width: none;
+    background: transparent;
+}
+.layer-tree:hover {
+    scrollbar-width: thin;
+}
+.layer-tree::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+.layer-tree:hover::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+.layer-tree::-webkit-scrollbar-track {
+    background: transparent;
+}
+.layer-tree::-webkit-scrollbar-thumb {
+    background: rgba(125, 211, 252, 0.02);
+    border-radius: 999px;
+    border: none;
+}
+.layer-tree:hover::-webkit-scrollbar-thumb {
+    background: rgba(125, 211, 252, 0.45);
 }
 .layer-tabs {
     display: flex;
@@ -791,7 +816,8 @@ body.layer-panel-resizing * {
     border-radius: 8px;
     background: transparent;
     padding: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 0;
+    overflow: hidden;
 }
 .menu-node {
     display: flex;

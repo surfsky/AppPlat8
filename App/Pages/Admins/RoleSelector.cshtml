@@ -1,0 +1,111 @@
+@page
+@model App.Pages.Admins.RoleSelectorModel
+@{
+    ViewData["Title"] = "角色";
+    var selectedId = Model.RoleId ?? 0;
+}
+
+@section body {
+<div id="app" class="h-screen flex flex-col bg-white">
+    <div class="h-[52px] px-4 flex items-center justify-between border-b border-slate-200 font-bold text-slate-700 bg-[#f5f7fa]">
+        角色列表
+        <el-button text class="!px-2" title="配置角色" v-on:click="openRolesPage">
+            <el-icon><Setting /></el-icon>
+        </el-button>
+    </div>
+    <div class="flex-1 overflow-y-auto">
+        <div
+            v-for="role in roles"
+            :key="role.id"
+            class="h-[44px] px-4 border-b border-slate-100 flex items-center cursor-pointer hover:bg-blue-50"
+            :class="{ 'bg-blue-100 text-blue-700 border-l-4 border-l-blue-600': role.id === currentRoleId }"
+            v-on:click="selectRole(role)">
+            <span>{{ role.name }}</span>
+        </div>
+    </div>
+</div>
+}
+
+@section script {
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+const app = createApp({
+    setup() {
+        const roles = ref(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Roles.Select(t => new { id = t.Id, name = t.Name }))));
+        const currentRoleId = ref(@selectedId);
+
+        const notifyParent = (role) => {
+            if (!window.parent) return;
+            window.parent.postMessage({
+                type: 'role-selected',
+                roleId: role.id,
+                roleName: role.name,
+            }, '*');
+        };
+
+        const selectRole = (role) => {
+            currentRoleId.value = role.id;
+            notifyParent(role);
+        };
+
+        const openRolesPage = () => {
+            const target = `/Admins/Roles?roleId=${currentRoleId.value || 0}`;
+            const manager = window.EleManager || window.parent?.EleManager;
+            if (manager && typeof manager.openDrawer === 'function') {
+                manager.openDrawer({
+                    title: '角色权限管理',
+                    url: target,
+                    direction: 'rtl',
+                    closeAction: 'refreshdata'
+                });
+                return;
+            }
+
+            window.location.href = target;
+        };
+
+        const onRefreshData = async (event) => {
+            if (!event?.data?.__eleRefreshData) return;
+            await loadRoles();
+        };
+
+        const loadRoles = async () => {
+            try {
+                const res = await axios.get('?handler=Roles');
+                if (res.data.code === 0) {
+                    roles.value = res.data.data || [];
+                    const active = roles.value.find(t => t.id === currentRoleId.value) || roles.value[0];
+                    if (active) {
+                        currentRoleId.value = active.id;
+                        notifyParent(active);
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        onMounted(() => {
+            window.addEventListener('message', onRefreshData);
+            const first = roles.value.find(t => t.id === currentRoleId.value) || roles.value[0];
+            if (first) {
+                currentRoleId.value = first.id;
+                notifyParent(first);
+            }
+            if (!roles.value.length) {
+                loadRoles();
+            }
+        });
+
+        return { roles, currentRoleId, selectRole, openRolesPage };
+    }
+});
+
+app.use(ElementPlus);
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component);
+}
+app.mount('#app');
+</script>
+}

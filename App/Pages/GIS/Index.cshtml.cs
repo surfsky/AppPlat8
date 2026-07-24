@@ -24,7 +24,8 @@ namespace App.Pages.GIS
 
         public JsonResult OnGetMenuData()
         {
-            var menus = GisMenu.GetTree();
+            var visibleMenuIds = GetCurrentUserVisibleGisMenuIds();
+            var menus = FilterMenusByRoleGis(GisMenu.GetTree(), visibleMenuIds);
             return BuildResult(0, "success", menus);
         }
 
@@ -95,7 +96,14 @@ namespace App.Pages.GIS
 
         public JsonResult OnGetGeometryLayerData(long? menuId, bool? isVisible = null)
         {
-            var menus = GetTargetMenus(menuId);
+            var visibleMenuIds = GetCurrentUserVisibleGisMenuIds();
+            var menus = GetTargetMenus(menuId)
+                .Where(t => visibleMenuIds.Contains(t.Id))
+                .ToList();
+
+            if (menuId.HasValue && menuId.Value > 0 && menus.Count == 0)
+                return BuildResult(403, "当前角色无权访问该图层");
+
             var list = new List<object>();
             foreach (var menu in menus)
             {
@@ -118,6 +126,10 @@ namespace App.Pages.GIS
             if (pageSize <= 0) pageSize = 20;
             if (pageSize > 200) pageSize = 200;
             if (pageIndex < 0) pageIndex = 0;
+
+            var visibleMenuIds = GetCurrentUserVisibleGisMenuIds();
+            if (!visibleMenuIds.Contains(menuId))
+                return BuildResult(403, "当前角色无权访问该图层");
 
             var menu = GisMenu.Get(menuId);
             if (menu == null)
@@ -297,6 +309,37 @@ namespace App.Pages.GIS
 
             rows.Add(new { key = "原文", value = dataJson.Trim() });
             return rows;
+        }
+
+        HashSet<long> GetCurrentUserVisibleGisMenuIds()
+        {
+            var userId = GetUserId();
+            if (!userId.HasValue)
+                return new HashSet<long>();
+            return RoleGisMenu.GetUserVisibleMenuIds(userId.Value).ToHashSet();
+        }
+
+        static List<GisMenu> FilterMenusByRoleGis(List<GisMenu> menus, HashSet<long> allowIds)
+        {
+            if (menus == null || menus.Count == 0)
+                return new List<GisMenu>();
+
+            var list = new List<GisMenu>();
+            foreach (var menu in menus)
+            {
+                if (menu == null)
+                    continue;
+
+                var children = FilterMenusByRoleGis(menu.Children ?? new List<GisMenu>(), allowIds);
+                var allowed = allowIds.Contains(menu.Id);
+                if (!allowed && children.Count == 0)
+                    continue;
+
+                var clone = menu.Clone();
+                clone.Children = children;
+                list.Add(clone);
+            }
+            return list;
         }
 
         static List<GisMenu> GetTargetMenus(long? menuId)

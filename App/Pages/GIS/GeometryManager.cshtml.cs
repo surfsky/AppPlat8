@@ -29,7 +29,12 @@ namespace App.Pages.GIS
         public void OnGet(long? menuId, string mode)
         {
             CurrentMode = mode == "map" ? "map" : "list";
-            var menus = FilterGeometryMenus(GisMenu.GetTree().OrderBy(x => x.SortId).ThenBy(x => x.Id).ToList());
+            var userId = GetUserId();
+            var editableIds = userId.HasValue
+                ? RoleGisMenu.GetUserEditableMenuIds(userId.Value).ToHashSet()
+                : new HashSet<long>();
+
+            var menus = FilterGeometryMenus(GisMenu.GetTree().OrderBy(x => x.SortId).ThenBy(x => x.Id).ToList(), editableIds);
             DefaultFrameUrl = BuildUrl(menuId, CurrentMode == "map");
 
             NavMenus = new List<GeometryNavNode>
@@ -69,7 +74,7 @@ namespace App.Pages.GIS
         }
 
         /// <summary>仅保留数据来源为 Geometry 的菜单树</summary>
-        private static List<GisMenu> FilterGeometryMenus(IEnumerable<GisMenu> menus)
+        private static List<GisMenu> FilterGeometryMenus(IEnumerable<GisMenu> menus, HashSet<long> editableIds)
         {
             if (menus == null)
                 return new List<GisMenu>();
@@ -84,7 +89,11 @@ namespace App.Pages.GIS
                 if (!isGeometry)
                     continue;
 
-                var children = FilterGeometryMenus(item.Children ?? new List<GisMenu>());
+                var children = FilterGeometryMenus(item.Children ?? new List<GisMenu>(), editableIds);
+                var allowed = editableIds != null && editableIds.Contains(item.Id);
+                if (!allowed && children.Count == 0)
+                    continue;
+
                 var clone = item.Clone();
                 clone.Children = children;
                 list.Add(clone);

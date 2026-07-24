@@ -153,6 +153,13 @@ namespace App.Pages.GIS
                     return BuildFailResult("Excel表头为空，无法识别导入列", logs);
                 
                 var userId = GetUserId();
+                if (!userId.HasValue)
+                    return BuildFailResult("当前用户未登录", logs);
+
+                var editableMenuIds = RoleGisMenu.GetUserEditableMenuIds(userId.Value).ToHashSet();
+                if (menuId.HasValue && !editableMenuIds.Contains(menuId.Value))
+                    return BuildFailResult($"当前角色无权导入到菜单[{menuId.Value}]", logs);
+
                 for (int i = 1; i <= sheet.LastRowNum; i++)
                 {
                     IRow row = sheet.GetRow(i);
@@ -192,6 +199,10 @@ namespace App.Pages.GIS
 
                         if (string.IsNullOrWhiteSpace(item.Name))
                             throw new Exception("名称不能为空");
+                        if (!item.MenuId.HasValue)
+                            throw new Exception("菜单ID不能为空");
+                        if (!editableMenuIds.Contains(item.MenuId.Value))
+                            throw new Exception($"无权导入到菜单[{item.MenuId.Value}]");
 
                         // 验证经纬度，并统一转为 WGS84
                         if (!string.IsNullOrEmpty(item.Gps))

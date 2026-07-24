@@ -1,0 +1,114 @@
+@page
+@model App.Pages.Admins.RoleManagerModel
+@{
+    ViewData["Title"] = "角色权限管理";
+    var roleId = Model.RoleId ?? 0;
+}
+
+@section body {
+<div id="app" class="h-screen flex overflow-hidden bg-slate-100">
+    <div class="w-[200px] border-r border-slate-200 h-full bg-white">
+        <iframe id="role-selector-frame" src="/Admins/RoleSelector?roleId=@roleId" class="w-full h-full border-0"></iframe>
+    </div>
+
+    <div class="flex-1 h-full flex flex-col min-w-0 bg-white">
+        <div class="h-[52px] border-b border-slate-200 px-4 flex items-center justify-between bg-[#f5f7fa]">
+            <el-tabs v-model="activeTab" class="role-manager-tabs" type="card" v-on:tab-change="switchTab">
+                <el-tab-pane label="操作权限" name="power"></el-tab-pane>
+                <el-tab-pane label="系统菜单" name="menu"></el-tab-pane>
+                <el-tab-pane label="Gis菜单" name="gis"></el-tab-pane>
+            </el-tabs>
+            <div class="text-sm text-slate-600 whitespace-nowrap">当前角色：{{ roleName || '-' }}</div>
+        </div>
+
+        <div class="flex-1 min-h-0 bg-white">
+            <iframe :src="activeUrl" class="w-full h-full border-0 bg-white"></iframe>
+        </div>
+    </div>
+</div>
+
+<style>
+.role-manager-tabs.el-tabs--card > .el-tabs__header {
+    margin: 0;
+    border-bottom: none;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+}
+
+.role-manager-tabs.el-tabs--card > .el-tabs__header .el-tabs__nav-wrap::after {
+    height: 0;
+}
+
+.role-manager-tabs.el-tabs--card > .el-tabs__header .el-tabs__nav {
+    border-color: #d7deea;
+    border-bottom: none;
+}
+
+.role-manager-tabs.el-tabs--card > .el-tabs__header .el-tabs__item {
+    border-color: #d7deea;
+    background: #f5f7fa;
+    color: #334155;
+}
+
+.role-manager-tabs.el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
+    background: #ffffff;
+    color: #2563eb;
+    border-bottom-color: #ffffff;
+}
+
+.role-manager-tabs.el-tabs--card > .el-tabs__header .el-tabs__item:not(.is-active):hover {
+    color: #0f172a;
+}
+</style>
+}
+
+@section script {
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+const app = createApp({
+    setup() {
+        const roleId = ref(@roleId);
+        const roleName = ref('');
+        const activeTab = ref('power');
+
+        const buildUrl = (tab) => {
+            const id = roleId.value || 0;
+            if (tab === 'menu') return `/Admins/RoleMenu?roleId=${id}`;
+            if (tab === 'gis') return `/GIS/RoleGisMenu?roleId=${id}`;
+            return `/Admins/RolePower?roleId=${id}`;
+        };
+
+        const activeUrl = computed(() => buildUrl(activeTab.value));
+        const switchTab = (tab) => { activeTab.value = tab; };
+
+        const onMessage = (event) => {
+            if (!event || !event.data) return;
+            const msg = event.data;
+            if (msg.type !== 'role-selected') return;
+            roleId.value = Number(msg.roleId || 0);
+            roleName.value = msg.roleName || '';
+        };
+
+        onMounted(() => {
+            window.addEventListener('message', onMessage);
+        });
+
+        return {
+            roleId,
+            roleName,
+            activeTab,
+            activeUrl,
+            switchTab,
+        };
+    }
+});
+
+app.use(ElementPlus);
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component);
+}
+app.mount('#app');
+</script>
+}

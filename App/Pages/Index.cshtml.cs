@@ -33,10 +33,30 @@ namespace App.Pages
         // 获取用户可用的菜单列表
         private List<Menu> GetUserMenus()
         {
-            var powers = GetPowers();
+            var userId = GetUserId();
+            if (!userId.HasValue)
+                return new List<Menu>();
+
+            var roleMenuIds = RoleMenu.GetUserMenuIds(userId.Value);
+            var menuMap = Menu.All.ToDictionary(t => t.Id, t => t);
+            var allVisibleIds = new HashSet<long>();
+            foreach (var menuId in roleMenuIds)
+            {
+                if (!menuMap.TryGetValue(menuId, out var menu))
+                    continue;
+
+                var current = menu;
+                while (current != null)
+                {
+                    allVisibleIds.Add(current.Id);
+                    if (!current.ParentId.HasValue || !menuMap.TryGetValue(current.ParentId.Value, out current))
+                        break;
+                }
+            }
+
             return Menu.All
                 .Where(m => m.Visible != false)
-                .Where(m => m.Power == null || powers.Contains(m.Power.Value))
+                .Where(m => allVisibleIds.Contains(m.Id))
                 .Each(m => {
                     m.ImageUrl = Asp.ResolveUrl(m.ImageUrl);
                     m.NavigateUrl = Asp.ResolveUrl(m.NavigateUrl);

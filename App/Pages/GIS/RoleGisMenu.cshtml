@@ -1,0 +1,172 @@
+@page
+@model App.Pages.GIS.RoleGisMenuModel
+@{
+    ViewData["Title"] = "角色GIS菜单";
+}
+
+@section body {
+<div id="app" class="h-screen flex flex-col overflow-hidden bg-white">
+    <div class="h-[50px] px-4 flex items-center gap-2 sticky top-0 z-10">
+        <el-button type="primary" v-on:click="save" :loading="saving" :disabled="!roleId">
+            <el-icon class="mr-1"><Check /></el-icon>
+            保存
+        </el-button>
+        <div class="ml-auto flex items-center gap-3">
+            <el-switch
+                v-model="allVisible"
+                inline-prompt
+                active-text="全部可见"
+                inactive-text="全部不可见"
+                :disabled="!roleId"
+                v-on:change="handleAllVisibleToggle">
+            </el-switch>
+            <el-switch
+                v-model="allEditable"
+                inline-prompt
+                active-text="全部可编辑"
+                inactive-text="全部不可编辑"
+                :disabled="!roleId"
+                v-on:change="handleAllEditableToggle">
+            </el-switch>
+        </div>
+    </div>
+
+    <div v-loading="loading" class="flex-1 min-h-0 overflow-auto p-3">
+        <el-tree
+            ref="treeRef"
+            :data="menus"
+            node-key="id"
+            default-expand-all
+            :expand-on-click-node="false"
+            :props="treeProps">
+            <template #default="{ data }">
+                <div class="flex items-center gap-4 w-full py-1">
+                    <span class="min-w-[240px] text-slate-700">{{ data.name }}</span>
+                    <el-checkbox v-model="data.canSee" v-on:click.stop>可见</el-checkbox>
+                    <el-checkbox v-model="data.canEdit" v-on:click.stop>可编辑</el-checkbox>
+                </div>
+            </template>
+        </el-tree>
+    </div>
+</div>
+}
+
+@section script {
+<script>
+const { createApp, ref, onMounted } = Vue;
+const { ElMessage } = ElementPlus;
+
+const app = createApp({
+    setup() {
+        const roleId = ref(Number('@Model.RoleId') || 0);
+        const loading = ref(false);
+        const saving = ref(false);
+        const allVisible = ref(false);
+        const allEditable = ref(false);
+        const menus = ref([]);
+        const treeRef = ref(null);
+        const treeProps = { children: 'children' };
+
+        const getCsrfToken = () => document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+        const walk = (nodes, act) => {
+            (nodes || []).forEach(n => {
+                act(n);
+                walk(n.children || [], act);
+            });
+        };
+
+        const load = async () => {
+            if (!roleId.value) return;
+            loading.value = true;
+            try {
+                const res = await axios.get(`?handler=Menus&roleId=${roleId.value}`);
+                menus.value = res.data.data || [];
+                allVisible.value = menus.value.length > 0 && menus.value.every(root => isFullyVisible(root));
+                allEditable.value = menus.value.length > 0 && menus.value.every(root => isFullyEditable(root));
+            } catch (err) {
+                ElMessage.error('加载GIS菜单失败');
+            } finally {
+                loading.value = false;
+            }
+        };
+
+        const isFullyVisible = (node) => {
+            if (!node) return true;
+            if (!node.canSee) return false;
+            return (node.children || []).every(child => isFullyVisible(child));
+        };
+
+        const isFullyEditable = (node) => {
+            if (!node) return true;
+            if (!node.canEdit) return false;
+            return (node.children || []).every(child => isFullyEditable(child));
+        };
+
+        const handleAllVisibleToggle = (checked) => {
+            walk(menus.value, n => {
+                n.canSee = !!checked;
+            });
+            allVisible.value = !!checked;
+        };
+
+        const handleAllEditableToggle = (checked) => {
+            walk(menus.value, n => {
+                n.canEdit = !!checked;
+            });
+            allEditable.value = !!checked;
+        };
+
+        const save = async () => {
+            if (!roleId.value) return;
+            saving.value = true;
+            try {
+                const items = [];
+                walk(menus.value, n => {
+                    if (n.canSee || n.canEdit) {
+                        items.push({ menuId: Number(n.id), canSee: !!n.canSee, canEdit: !!n.canEdit });
+                    }
+                });
+
+                const res = await axios.post('?handler=Save', {
+                    roleId: roleId.value,
+                    items,
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getCsrfToken(),
+                    }
+                });
+
+                if (res.data.code === 0) ElMessage.success('保存成功');
+                else ElMessage.error(res.data.msg || '保存失败');
+            } finally {
+                saving.value = false;
+            }
+        };
+
+        onMounted(load);
+
+        return {
+            roleId,
+            loading,
+            saving,
+            allVisible,
+            allEditable,
+            menus,
+            treeRef,
+            treeProps,
+            handleAllVisibleToggle,
+            handleAllEditableToggle,
+            save,
+        };
+    }
+});
+
+app.use(ElementPlus);
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component);
+}
+app.mount('#app');
+</script>
+}

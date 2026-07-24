@@ -15,15 +15,10 @@ namespace App.Pages.Maintains
     {
         public Menu Item { get; set; }
         public List<TreeItem> MenuTree { get; set; } // Changed type
-        public List<ListItem> PowerOptions { get; set; }
 
         public void OnGet(long? id)
         {
-            MenuTree     = EleHelper.ToTreeItems(Menu.All, null);
-            PowerOptions = typeof(Power)
-                .GetEnumInfos()
-                .Select(e => new ListItem(e.Value.ToString(), e.ToString()))
-                .ToList();
+            MenuTree = EleHelper.ToTreeItems(Menu.All, null);
         }
 
         public IActionResult OnGetData(long id, long? selectId)
@@ -44,8 +39,7 @@ namespace App.Pages.Maintains
                 target = item.Target,
                 expanded = item.Expanded,
                 visible = item.Visible,
-                @fixed = item.Fixed,
-                power = item.Power.HasValue ? (int?)item.Power.Value : null
+                @fixed = item.Fixed
             });
         }
 
@@ -68,7 +62,6 @@ namespace App.Pages.Maintains
             item.Name = req.Name;
             item.ParentId = req.ParentId;
             item.NavigateUrl = req.NavigateUrl;
-            item.Power = req.Power;
             item.ImageUrl = req.ImageUrl;
             item.SortId = req.SortId;
             item.Target = req.Target;

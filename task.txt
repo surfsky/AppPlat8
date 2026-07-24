@@ -233,24 +233,7 @@ gismenu 支持几种图层及融合
             - 先实现台风预警
             - 定义统一事件通知接口，可接受各种异源事件接口
             告警消息实时推送：signalr
-GisMenu数据来源
-    字段 DataFrom =Geometry/Api，区分数据来源；
-    修改 list/form 页面
-    修改 /gis/GeometryManager 页面，左侧菜单只显示 DataFrom = Geometry 的菜单
-    修改 /gis/apiManager 页面，左侧菜单只显示 DataFrom = Api 的菜单
-    修改 /gis/index 页面，根据 DataFrom 类型，取对应的数据，并展示；
 
-/实现点位 excel 导入页面
-    只取通用的列（id编号、menu菜单、name名称、alias别称、gps坐标、type类别、geojson图形数据），其它列都存储到datajson中
-    写一个通用方法，可设置列名兼容
-    可解析gps坐标，支持: lng,lat    xxxxE, xxxxN
-
-将气象地图图层（这些图层定制图层）迁移到gis/index页面，考虑：
-    把这些图层加到顶部的视图图层去？
-    或融合到左侧图层面板？
-UI
-    弄个半透明遮罩层（中奖部分亮，两侧暗），在统计模式时显示（便于展示统计面板），在图层模式时隐藏；
-    调整统计模式页面布局：左右侧各放置一个容器，可上下滚动，内部可放置多个面板，这样可以容纳和展示更多统计数据；
 
 统一固定点位 GisGeometry 和接口 GisApi 获取的点位
     /所有都是图层，gismenu真的要改成gislayer了（不改了，事实上一个menu可以容纳多个layer）
@@ -464,36 +447,71 @@ Done
             gis/index 顶部实现流光动画效果
             gis/index 页面遮住左下角的“mapbox”标签
         可接入其它地图层（如高德地图），也用MapLayer接口实现，点击后切换地图服务源；
-    Gis/index maplayer 图层增加设置面板，放到右侧
+        Gis/index maplayer 图层增加设置面板，放到右侧
+        地图顶部（或底部）显示滚动告警；
 
-    地图顶部（或底部）显示滚动告警；
-
-2026.07/21
-    /优化首页，默认显示统计面板
-    /优化GisManager页面，可多选图层进行编辑
-    /登陆现支持cookie和header bareer两种方式
     用接口获取的点位详情面板错误，无法正常展示，请检查相关api接口，接口同 IGeometry；
         gis/index 数据列表窗口，增加显示配置模版，如：{Alias}/n{Name}/n{Addr}
     导入数据****
         导入用户数据
         导入对象数据，并完善标签
         导入新141检查表
-    优化数据授权管理
-        角色和系统菜单 Menu 管理
-        角色与GIS菜单 GisMenu 管理
-            - 创建角色和gismenu管理页面和相关实体（ RoleGisMenu）：左侧是角色列表，右侧是gismenu菜单树表，并显示“可查看”、“可编辑”两个checkbox；
-            - 某个用户登录后，会根据该用户的角色，在gis/index中显示可见的gismenu，在gis/geometrymanager左侧的菜单树中显示授权编辑的菜单；
-            - 点位导入时会检查 gismenuid 是否被当前用户角色授权（gis/GeometryImporter）
-            - 修改相关的数据接口
-        角色和 ContactMenu 管理（RoleContactMenu）
-            参考RoleGisMenu
     优化
         剥离标签：标准标签、扩展标签？
         使用本地AI服务
         改用snowflakeid
         优化HttpApi，增加AuthLogin全局配置（默认为true，表示所有接口默认都需要登陆后才能使用），若与具体API冲突，以具体API为准；
+        角色和 ContactMenu 管理（RoleContactMenu）。容后
+    隐患增加“是否高频”属性
+    物理删除 admin以外的所有用户
 
 
+
+2026/07/24
+        /优化角色权限管理
+            - 鉴于现有的 Menu 绑定权限的逻辑，不能直观的反应角色可以访问的页面和数据范围，现做重构调整；
+            - 创建管理页面/pages/admins/RoleManager，统一管理角色对应的权限和访问能力：
+                - 用IFrame进行分隔，左侧是角色列表，右侧是标签页
+                - 标签页面现在为：操作权限，系统菜单、Gis菜单，以后可以扩展
+                - 点击左侧角色名称，右侧的标签页链接参数将自动变化
+                - 角色权限页面（admins/RolePower）：
+                    - 参考原有RolePowerOld页面进行简化改造，只需要显示老页面右侧的权限部分；
+                - 角色菜单页面（admins/RoleMenu：
+                    - 顶部固定显示工具栏按钮区（全选/反选、保存），下面放系统菜单树
+                    - 创建 RoleMenu 实体类，字段：RoleId，MenuId；
+                    - 删除 Menu.Power 及相关逻辑代码；
+                    - 用新的RoleMenu 逻辑，来调整 pages/Index 页面左侧的菜单展示逻辑；
+                    - 可用HttpApi 接口来实现（/HttpApi/Auth/GetRoleMenus），并启用缓存，以减少数据库的访问；
+                - 角色Gis菜单页面（Gis/RoleGisMenu）：
+                    - 创建RoleGisMenu 实体类，用于管理角色和授权的gismenu，字段：RoleId, MenuId, CanSee, CanEdit;
+                    - 顶部工具栏，下面显示GisMenu树，每个节点都显示“能看”、“能编辑”两个checkbox；
+                    - 某个用户登录后，会根据该用户的角色，在gis/index中显示可见的gismenu，在gis/geometrymanager左侧的菜单树中显示授权编辑的菜单；
+                    - 点位导入时会检查 gismenuid 是否被当前用户角色授权（gis/GeometryImporter）
+                    - 修改相关的数据接口
+
+
+2026/07/23
+    /登陆现支持cookie和header bareer两种方式
+
+2026.07/21
+    /优化首页，默认显示统计面板
+    /优化GisManager页面，可多选图层进行编辑
+    /GisMenu数据来源
+        字段 DataFrom =Geometry/Api，区分数据来源；
+        修改 list/form 页面
+        修改 /gis/GeometryManager 页面，左侧菜单只显示 DataFrom = Geometry 的菜单
+        修改 /gis/apiManager 页面，左侧菜单只显示 DataFrom = Api 的菜单
+        修改 /gis/index 页面，根据 DataFrom 类型，取对应的数据，并展示；
+    /实现点位 excel 导入页面
+        只取通用的列（id编号、menu菜单、name名称、alias别称、gps坐标、type类别、geojson图形数据），其它列都存储到datajson中
+        写一个通用方法，可设置列名兼容
+        可解析gps坐标，支持: lng,lat    xxxxE, xxxxN
+    /将气象地图图层（这些图层定制图层）迁移到gis/index页面，考虑：
+        把这些图层加到顶部的视图图层去？
+        或融合到左侧图层面板？
+    /UI
+        弄个半透明遮罩层（中奖部分亮，两侧暗），在统计模式时显示（便于展示统计面板），在图层模式时隐藏；
+        调整统计模式页面布局：左右侧各放置一个容器，可上下滚动，内部可放置多个面板，这样可以容纳和展示更多统计数据；
 
 
 2026/07/20
