@@ -123,15 +123,11 @@ namespace App.HttpApi.Test
                 o.TypePrefix = "App.API.";
                 o.Language = "en";
                 //o.ErrorResponse
-                o.OnVisit += args => Console.WriteLine("VISIT{0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
+                o.OnVisit += args => Console.WriteLine("API {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
                 o.OnAuth += args =>
                 {
-                    // 对带有[AuthToken]属性的方法认证授权逻辑, 如检查请求头中的令牌是否有效，或者检查用户是否具有访问该方法的权限
-                    var token = args.Context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                    if (token != "valid-token")
-                    {
+                    if (!AuthHelper.CheckHeaderAuth())
                         throw new HttpApiException(StatusCodes.Status401Unauthorized, "Unauthorized token");
-                    }
                 };
                 o.OnBan += args => Console.WriteLine("BAN ip={0}, url={1}", args.IP, args.Url);
                 o.OnEnd += args => Console.WriteLine("END {0} {1} => {2}", args.Context.Request.Method, args.Context.Request.Path, args.Context.Response.StatusCode);

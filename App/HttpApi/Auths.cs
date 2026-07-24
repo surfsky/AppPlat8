@@ -79,7 +79,17 @@ namespace App.API
             }
             
             int code = Auth.Login(userName, password);
-            return new APIResult(code, code == 0 ? "登录成功" : "登录失败");
+            if (code != 0)
+                return new APIResult(code, "登录失败");
+
+            // 同时返回 Bearer，便于不支持 Cookie 的终端调用后续接口。
+            var token = Auth.CreateBearerToken();
+            return new APIResult(0, "登录成功", new
+            {
+                tokenType = "Bearer",
+                accessToken = token,
+                expiresAt = DateTime.Now.AddDays(7)
+            });
         }
 
         [HttpApi("注销")]

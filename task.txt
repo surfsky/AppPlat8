@@ -471,6 +471,7 @@ Done
 2026.07/21
     /优化首页，默认显示统计面板
     /优化GisManager页面，可多选图层进行编辑
+    /登陆现支持cookie和header bareer两种方式
     用接口获取的点位详情面板错误，无法正常展示，请检查相关api接口，接口同 IGeometry；
         gis/index 数据列表窗口，增加显示配置模版，如：{Alias}/n{Name}/n{Addr}
     导入数据****
@@ -486,8 +487,11 @@ Done
             - 修改相关的数据接口
         角色和 ContactMenu 管理（RoleContactMenu）
             参考RoleGisMenu
-    使用本地AI服务
-    剥离标签：标准标签、扩展标签？
+    优化
+        剥离标签：标准标签、扩展标签？
+        使用本地AI服务
+        改用snowflakeid
+        优化HttpApi，增加AuthLogin全局配置（默认为true，表示所有接口默认都需要登陆后才能使用），若与具体API冲突，以具体API为准；
 
 
 

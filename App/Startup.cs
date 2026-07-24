@@ -207,7 +207,7 @@ namespace App
 
             // 自定义中间件
             app.UserAppWeb(env.ContentRootPath);            // 注册后，可用 Asp.Current, Asp.User, Asp.Response 等静态属性获取当前请求的上下文信息
-            app.UseMonitor(o => Logger.Info("[VISIT] {0} from {1} use {2}s", o.Url, o.ClientIP, o.Seconds));  // 监控网页访问情况，输出访问的 URL、耗时和客户端 IP 地址
+            app.UseMonitor(o => Logger.Info("[PAGE] {0} from {1} use {2}s", o.Url, o.ClientIP, o.Seconds));  // 监控网页访问情况，输出访问的 URL、耗时和客户端 IP 地址
             app.UseHttpApi(o =>                             // HttpApi 配置（代码见 /Apis 目录）
             {
                 o.TypePrefix = "App.API.";
@@ -217,12 +217,12 @@ namespace App
                 o.FormatLowCamel = true;
                 o.FormatLongNumber = "Int64,Decimal";
                 o.Language = "en";
-                o.OnVisit += args => Logger.Info("[API-VISIT] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
-                o.OnBan += args => Logger.Warn("[API-BAN] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
+                o.OnVisit += args => Logger.Info("[API] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
+                o.OnBan += args => Logger.Warn("[BAN] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
                 o.OnAuth += args =>
                 {
-                    var token = args.Context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();  // 如：Bearer token
-                    //Logger.Warn("[API-AUTH] {0} {1} from {2} token={3}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress, token);
+                    if (!AuthHelper.CheckHeaderAuth())
+                        throw new HttpApiException(StatusCodes.Status401Unauthorized, "Unauthorized token");
                 };
             });
 

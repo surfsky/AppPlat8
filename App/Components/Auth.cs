@@ -85,41 +85,39 @@ namespace App.Components
             }
         }
 
+        public static string CreateBearerToken()
+        {
+            return AuthHelper.CreateBearerToken(Asp.Current.User, DateTime.Now.AddDays(7));
+        }
 
-        /// <summary>登录成功，写入验票</summary>
+
+        /// <summary>登录成功，写入Cookie验票</summary>
         public static void LoginSuccess(User user)
         {
             RegisterOnlineUser(user.Id);
 
             // Aspnetcore 标准登录代码: Ticket验票--Principal主角--Identity身份--(1:n)--Claim属性
             var roleIds = user.Roles.Select(r => r.Id).Aggregate("", (a, b) => a + "," + b).TrimStart(','); // 用户角色Id列表字符串
-            var claims = new[] { new Claim("UserId", user.Id.ToString()), new Claim("UserName", user.Name), new Claim("RoleIds", roleIds) }; // 属性
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);  // 用户信息
-            var principal = new ClaimsPrincipal(identity); // 用户
-            Asp.Current.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
-                new AuthenticationProperties() { IsPersistent = true, ExpiresUtc = DateTime.UtcNow.AddDays(7) }
-                );
-
+            AuthHelper.Login(user.Id.ToString(), user.Name, roleIds, DateTime.Now.AddDays(7));
         }
 
         /// <summary>当前登录用户标识符</summary>
-        public static int? GetUserId(HttpContext context=null)
+        public static long? GetUserId(HttpContext context=null)
         {
             context = context ?? Asp.Current;
-            if (!context.User.Identity.IsAuthenticated)
+            if (!IsLogin(context))
                 return null;
 
-            var userId = context.User.Claims.Where(x => x.Type == "UserId").FirstOrDefault().Value;
-            return Convert.ToInt32(userId);
+            var userId = context.User.Claims.Where(x => x.Type == "UserId").FirstOrDefault()?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+                return null;
+            return Convert.ToInt64(userId);
         }
         
         /// <summary>当前用户是否已登录</summary>
         public static bool IsLogin(HttpContext context=null)
         {
-            context = context ?? Asp.Current;
-            return context.User.Identity.IsAuthenticated;
+            return AuthHelper.IsLogin(context);
         }
 
 
@@ -127,10 +125,10 @@ namespace App.Components
         public static string GetUserName(HttpContext context=null)
         {
             context = context ?? Asp.Current;
-            if (!context.User.Identity.IsAuthenticated)
+            if (!IsLogin(context))
                 return null;
 
-            var userName = context.User.Claims.Where(x => x.Type == "UserName").FirstOrDefault().Value;
+            var userName = context.User.Claims.Where(x => x.Type == "UserName").FirstOrDefault()?.Value;
             return userName;
         }
 
@@ -235,7 +233,7 @@ namespace App.Components
                 foreach (string roleId in userData.Split(','))
                 {
                     if (roleId.IsNotEmpty())
-                        roleIds.Add(Convert.ToInt32(roleId));
+                        roleIds.Add(Convert.ToInt64(roleId));
                 }
             }
 
