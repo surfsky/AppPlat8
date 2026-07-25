@@ -11,14 +11,16 @@
             <Filters>
                 <EleInput For="Item.Name" Label="账号" Width="260px"></EleInput>
                 <EleInput For="Item.RealName" Label="姓名" Width="260px"></EleInput>
-                <EleTreeSelect For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" Width="280px"></EleTreeSelect>
+                <EleTreePicker For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" Width="280px"></EleTreePicker>
+                <EleSelect For="Item.RoleId" Label="角色" Items="Model.RoleList" Clearable="true" Width="220px"></EleSelect>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
-                <EleButton Type="Success" PopupUrl="Orgs" PopupTitle="组织管理" IconCls="fas fa-sitemap" Visible="@Auth.CheckPower(Power.OrgEdit)">组织管理</EleButton>
-                <EleButton Type="Success" Command="Export" Icon="Download">导出</EleButton>
+                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" visible="false">删除</EleButton>
+                <EleButton Type="Success" PopupUrl="Orgs" PopupTitle="组织管理" IconCls="fas fa-sitemap" Visible="false">组织管理</EleButton>
+                <EleButton Type="Success" Command="Export" Icon="Download" visible="false">导出</EleButton>
+                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.UserNew)">导入</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

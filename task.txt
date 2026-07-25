@@ -456,17 +456,19 @@ Done
         改用snowflakeid
         优化HttpApi，增加AuthLogin全局配置（默认为true，表示所有接口默认都需要登陆后才能使用），若与具体API冲突，以具体API为准；
         角色和 ContactMenu 管理（RoleContactMenu）。容后
-    隐患增加“是否高频”属性
 
 
+2026/07/25
     导入数据****
         导入用户数据
         导入对象数据，并完善标签
         导入新141检查表
+    
 
 
 
 2026/07/24
+    /隐患增加“是否高频”属性: 检查项表增加IsCommon属性，CheckHarzard增加IsCommonHazard方法属性；
     /物理删除 admin以外的所有用户
     /优化角色权限管理
         - 鉴于现有的 Menu 绑定权限的逻辑，不能直观的反应角色可以访问的页面和数据范围，现做重构调整；

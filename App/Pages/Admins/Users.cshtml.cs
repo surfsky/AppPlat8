@@ -12,6 +12,7 @@ using App.Web;
 using App.HttpApi;
 using App.Entities;
 using System;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.Admins
 {
@@ -21,23 +22,29 @@ namespace App.Pages.Admins
     public class UsersModel : AdminModel
     {
         public App.DAL.User Item { get; set; }
+        public List<SelectListItem> RoleList { get; set; }
 
         public void OnGet()
         {
+            RoleList = Role.Set
+                .OrderBy(r => r.Name)
+                .ThenBy(r => r.Id)
+                .Select(r => new SelectListItem(r.Name, r.Id.ToString()))
+                .ToList();
         }
 
         /// <summary>获取用户列表</summary>
-        public IActionResult OnGetData(Paging pi, string name, string realName, long? deptId)
+        public IActionResult OnGetData(Paging pi, string name, string realName, long? deptId, long? roleId)
         {
-            var list = App.DAL.User.Search(name, realName, deptId).SortPageExport(pi);
+            var list = App.DAL.User.Search(name, realName, deptId, roleId).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
         // 导出用户列表到 Excel
-        public IActionResult OnPostExport(Paging pi, string name, string username, long? deptId)
+        public IActionResult OnPostExport(Paging pi, string name, string realName, long? deptId, long? roleId)
         {
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
-            var list = App.DAL.User.Search(name, username, deptId).SortPageExport(exportPi);
+            var list = App.DAL.User.Search(name, realName, deptId, roleId).SortPageExport(exportPi);
             ExcelExporter.Export(list, $"用户列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             return new EmptyResult();
         }
@@ -55,5 +62,18 @@ namespace App.Pages.Admins
             return BuildResult(0, "删除成功");
         }
 
+        public IActionResult OnPostImport()
+        {
+            if (!CheckPower(Power.UserNew))
+                return BuildResult(403, "无权操作");
+
+            var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.User");
+            return EleManager.ShowDrawer(
+                title: "导入用户",
+                url: url,
+                //size: "980px",
+                direction: "rtl",
+                closeAction: DrawerCloseAction.RefreshData);
+        }
     }
 }

@@ -55,6 +55,7 @@ namespace App.DAL
         // 用户角色（多对多关系）
         [UI("用户角色")]        public virtual List<Role> Roles { get; set; } = new List<Role>();
         [UI("角色IDs"), NotMapped]  public virtual List<long> RoleIds {get; set;}   // 冗余设计用于前端绑定
+        [UI("角色"), NotMapped]      public long? RoleId { get; set; }               // 仅用于列表筛选
 
         // extend
         public string MobileMasked => this.Mobile?.Mask(3, 4);

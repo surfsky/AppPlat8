@@ -145,6 +145,14 @@ namespace App.Pages.GIS
             {
                 var total = menu.DataCnt ?? list.Count;
                 pi.SetTotal(total);
+
+                // 点位清单会基于 mapIds 二次过滤地图点位；API 菜单必须返回有效 mapIds，
+                // 否则前端会把该菜单下点位全部判定为不匹配而隐藏。
+                var allPi = new Paging { PageIndex = 0, PageSize = Math.Clamp(total <= 0 ? list.Count : total, 1, 5000) };
+                mapIds = Gis.GetMenuGeometryItems(menuId, allPi, keyword, isVisible)
+                    .Select(BuildGeometryRow)
+                    .Select(GetId)
+                    .ToList();
             }
             else
             {
