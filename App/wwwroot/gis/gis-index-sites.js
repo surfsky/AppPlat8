@@ -7,6 +7,7 @@
         constructor() {
             this.btnId = 'btn-info-toggle';
             this.eventBtnId = 'btn-event-toggle';
+            this.chatBtnId = 'btn-chat-toggle';
             this.hostId = 'gis-info-drawer-host';
             this.styleId = 'gis-info-drawer-style';
             this.inited = false;
@@ -18,6 +19,7 @@
             ];
             this.btn = null;
             this.eventBtn = null;
+            this.chatBtn = null;
             this.host = null;
             this.panel = null;
             this.iframe = null;
@@ -30,12 +32,16 @@
 
             this.btn = document.getElementById(this.btnId);
             this.eventBtn = document.getElementById(this.eventBtnId);
-            if (!this.btn && !this.eventBtn) return;
+            this.chatBtn = document.getElementById(this.chatBtnId);
+            if (!this.btn && !this.eventBtn && !this.chatBtn) return;
 
-            this.ensureStyle();
-            this.ensureHost();
-            this.bindInfoEvents();
+            if (this.btn || this.eventBtn) {
+                this.ensureStyle();
+                this.ensureHost();
+                this.bindInfoEvents();
+            }
             this.bindEventButton();
+            this.bindChatButton();
             this.inited = true;
         }
 
@@ -279,6 +285,17 @@
             });
         }
 
+        /**绑定 AI 聊天入口 */
+        bindChatButton() {
+            if (!this.chatBtn) return;
+
+            this.chatBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.openChatDrawer();
+            });
+        }
+
         /**打开事件抽屉 */
         openEventDrawer() {
             const manager = this.getManager();
@@ -290,6 +307,24 @@
             manager.openDrawer({
                 title: '事件',
                 url: '/Tasks/Events',
+                size: '50%',
+                direction: 'rtl',
+                showFooter: false,
+                closeAction: 'none'
+            });
+        }
+
+        /**打开 AI 聊天抽屉 */
+        openChatDrawer() {
+            const manager = this.getManager();
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open('/AI/Chat', '_blank', 'noopener,noreferrer');
+                return;
+            }
+
+            manager.openDrawer({
+                title: 'AI 助手',
+                url: '/AI/Chat?t=' + Date.now(),
                 size: '50%',
                 direction: 'rtl',
                 showFooter: false,
