@@ -37,6 +37,11 @@ namespace App.EleUI
             if (!string.IsNullOrEmpty(propName))
                 output.Attributes.SetAttribute("data-tree-model", propName);
 
+            // Default value (e.g. from URL parameter via page handler).
+            // Pre-populates the EleTable filter so the picker shows the right
+            // label and the list auto-loads with the filter applied.
+            TrySetFilterDefault(context, output);
+
             // check-strictly
             if (CheckStrictly)
                 output.Attributes.SetAttribute("check-strictly", "true");

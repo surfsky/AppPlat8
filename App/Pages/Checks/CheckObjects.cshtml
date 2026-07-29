@@ -8,25 +8,29 @@
     <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="检查对象" FormPage="CheckObjectForm" EnableBatch="true" >
         <Toolbar>
             <Filters>
-                <EleInput For="Item.Name" Width="250px" Label="检查对象名称" ></EleInput>
-                <EleSelect For="Item.ObjectType" Width="250px" Label="类型" Clearable="true"></EleSelect>
-                <EleSelect For="Item.Scope" Width="250px" Label="所属领域" Clearable="true"></EleSelect>
-                <EleSelect For="Item.IsChecked" Width="250px" Label="是否检查" Clearable="true"></EleSelect>
-                <EleTreePicker For="Item.DutyOrgId" Width="250px" Label="所属网格" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true"></EleTreePicker>
-                <EleInput For="Item.Address" Width="250px" Label="详细地址" ></EleInput>
-                <EleSelect For="Item.HasHarzard" Width="250px" Label="存在隐患" Clearable="true"></EleSelect>
-                <EleInput For="Item.SocialCreditCode" Width="250px" Label="统一社会信用代码" ></EleInput>
-                <EleSelect For="Item.RiskLevel" Width="250px" Label="风险等级" Clearable="true"></EleSelect>
-                <EleInput For="Item.Code" Width="250px" Label="对象标识" ></EleInput>
-                <EleSelect For="Item.IndustryType" Width="250px" Label="行业" Clearable="true"></EleSelect>
-                <EleInput For="Item.DutyUserName" Width="250px" Label="责任人" ></EleInput>
-                <EleDatePicker Prop="createStartDt" Width="250px" Label="创建时间起" Type="DateTime" ></EleDatePicker>
-                <EleDatePicker Prop="createEndDt" Width="250px" Label="创建时间止" Type="DateTime" ></EleDatePicker>
-                <EleDatePicker Prop="latestCheckStartDt" Width="250px" Label="巡查时间起" Type="DateTime" ></EleDatePicker>
-                <EleDatePicker Prop="latestCheckEndDt" Width="250px" Label="巡查时间止" Type="DateTime" ></EleDatePicker>
-                <EleSelect For="Item.IndustryRisk" Width="250px" Label="行业风险类型" Clearable="true"></EleSelect>
-                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Clearable="true"></EleTreePicker>
-                <EleSelect For="Item.IsDel" Width="250px" Label="已删除"  Clearable="true" Value="false"></EleSelect>
+                @* 过滤器支持 URL 参数预填充：
+                   - ?orgId=730 走 Model.Item.DutyOrgId（OnGet 中已经按 orgId 查到 Org 实体并绑定到 Item）；
+                   - 其它参数（?name=xxx&address=yyy 等）直接用 QString("key") 读取（_ViewImports 全局 @using static 导入），
+                     无需 Model. 前缀，简单清晰。*@
+                <EleInput For="Item.Name"              Width="250px" Label="检查对象名称"     Value="@QString("name")"></EleInput>
+                <EleSelect For="Item.ObjectType"       Width="250px" Label="类型"            Value="@QString("objectType")"></EleSelect>
+                <EleSelect For="Item.Scope"            Width="250px" Label="所属领域"         Value="@QString("scope")"></EleSelect>
+                <EleSelect For="Item.IsChecked"        Width="250px" Label="是否检查"         Value="@QString("isChecked")"></EleSelect>
+                <EleTreePicker For="Item.DutyOrgId"    Width="250px" Label="所属网格"         Value="@QString("dutyOrgId")" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreePicker>
+                <EleInput For="Item.Address"           Width="250px" Label="详细地址"         Value="@QString("address")"></EleInput>
+                <EleSelect For="Item.HasHarzard"       Width="250px" Label="存在隐患"         Value="@QString("hasHarzard")"></EleSelect>
+                <EleInput For="Item.SocialCreditCode"  Width="250px" Label="统一社会信用代码"  Value="@QString("socialCreditCode")"></EleInput>
+                <EleSelect For="Item.RiskLevel"        Width="250px" Label="风险等级"         Value="@QString("riskLevel")"></EleSelect>
+                <EleInput For="Item.Code"              Width="250px" Label="对象标识"         Value="@QString("code")"></EleInput>
+                <EleSelect For="Item.IndustryType"     Width="250px" Label="行业"            Value="@QString("industryType")"></EleSelect>
+                <EleInput For="Item.DutyUserName"      Width="250px" Label="责任人"          Value="@QString("dutyUserName")"></EleInput>
+                <EleDatePicker Prop="createStartDt"   Width="250px" Label="创建时间起"        Type="DateTime" Value="@QString("createStartDt")"></EleDatePicker>
+                <EleDatePicker Prop="createEndDt"     Width="250px" Label="创建时间止"        Type="DateTime" Value="@QString("createEndDt")"></EleDatePicker>
+                <EleDatePicker Prop="latestCheckStartDt" Width="250px" Label="巡查时间起"     Type="DateTime" Value="@QString("latestCheckStartDt")"></EleDatePicker>
+                <EleDatePicker Prop="latestCheckEndDt"   Width="250px" Label="巡查时间止"     Type="DateTime" Value="@QString("latestCheckEndDt")"></EleDatePicker>
+                <EleSelect For="Item.IndustryRisk"     Width="250px" Label="行业风险类型"     Value="@QString("industryRisk")"></EleSelect>
+                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QString("tagIds")"></EleTreePicker>
+                <EleSelect For="Item.IsDel"            Width="250px" Label="已删除"           Value="@QString("isDel", "false")"></EleSelect>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

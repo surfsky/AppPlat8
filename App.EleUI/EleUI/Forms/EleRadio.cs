@@ -23,6 +23,11 @@ namespace App.EleUI
             output.TagName = "el-radio-group";
             AddCommonAttributes(context, output);
 
+            // Default value (e.g. from URL parameter via page handler).
+            // Pre-populates the EleTable filter so the radio shows the right
+            // selection and the list auto-loads with the filter applied.
+            TrySetFilterDefault(context, output);
+
             var childContent = await output.GetChildContentAsync();
             var contentHtml = "";
             string tag = IsButton ? "el-radio-button" : "el-radio";

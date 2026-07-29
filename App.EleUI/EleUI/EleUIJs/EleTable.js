@@ -119,6 +119,26 @@ export class EleTable {
         const selectedValues = Array.isArray(currentValue)
             ? [...currentValue]
             : (currentValue ? [currentValue] : []);
+
+        // 关键：el-tree 的 :current-node-key / :default-checked-keys 用 === 严格匹配节点 id 字段。
+        // selectedValues 当前是 String 化的"730"，而 treeData 经 normalizeIds 后是 number 730，
+        // 直接传会导致 el-tree 无法高亮/勾选。这里在 treeData 中找到对应节点，
+        // 用节点的原始 id 字段值（保持类型一致）作为 state.current / state.values。
+        const coerceToNodeId = (rawValue) => {
+            if (rawValue === null || rawValue === undefined || rawValue === '') return rawValue;
+            const node = this.findTreeNodeById(treeData, rawValue, idField, childrenField);
+            if (node) return node[idField];
+            // 兼容 string/number 互换
+            if (typeof rawValue === 'number') {
+                const alt = this.findTreeNodeById(treeData, String(rawValue), idField, childrenField);
+                if (alt) return alt[idField];
+            } else if (typeof rawValue === 'string' && /^-?\d+(\.\d+)?$/.test(rawValue)) {
+                const alt = this.findTreeNodeById(treeData, Number(rawValue), idField, childrenField);
+                if (alt) return alt[idField];
+            }
+            return rawValue;
+        };
+        const initialValues = selectedValues.map(coerceToNodeId);
         const table = this;
 
         EleManager.openDrawer({
@@ -137,8 +157,8 @@ export class EleTable {
                 const state = reactive({
                     keyword: '',
                     nodes: Array.isArray(treeData) ? treeData : [],
-                    values: [...selectedValues],
-                    current: !multiple && selectedValues.length > 0 ? selectedValues[0] : '',
+                    values: [...initialValues],
+                    current: !multiple && initialValues.length > 0 ? initialValues[0] : '',
                     collapseTags
                 });
 
@@ -163,10 +183,12 @@ export class EleTable {
                         },
                         onNodeClick(data) {
                             if (multiple) return;
-                            const val = data && data[idField] !== undefined && data[idField] !== null
-                                ? String(data[idField])
-                                : '';
-                            state.current = val;
+                            if (!data || data[idField] === undefined || data[idField] === null) {
+                                state.current = '';
+                                return;
+                            }
+                            // 保持与 el-tree 节点 id 字段类型一致（不 String()），避免下次打开弹窗时类型不匹配
+                            state.current = data[idField];
                         },
                         syncChecked() {
                             if (!multiple) return;
@@ -175,7 +197,9 @@ export class EleTable {
                             const keys = typeof tree.getCheckedKeys === 'function'
                                 ? tree.getCheckedKeys(false)
                                 : [];
-                            state.values = Array.isArray(keys) ? keys.map(v => String(v)) : [];
+                            // el-tree.getCheckedKeys() 返回的 key 与 node-key 字段同类型（已被 normalizeIds 处理），
+                            // 直接保留原始类型，避免下次打开弹窗时类型不匹配。
+                            state.values = Array.isArray(keys) ? [...keys] : [];
                         },
                         getSummary() {
                             const view = table.getTreePickerView(
@@ -276,11 +300,13 @@ export class EleTable {
                                 const keys = tree && typeof tree.getCheckedKeys === 'function'
                                     ? tree.getCheckedKeys(false)
                                     : state.values;
-                                const result = Array.isArray(keys) ? keys.map(v => String(v)) : [];
-                                table.filters.value[modelKey] = result;
+                                // 直接保留 el-tree 返回的原始类型
+                                table.filters.value[modelKey] = Array.isArray(keys) ? [...keys] : [];
                             } else {
-                                const result = state.current ? String(state.current) : null;
-                                table.filters.value[modelKey] = result;
+                                // 直接保留 state.current 的原始类型（与 el-tree 节点 id 同类型）
+                                table.filters.value[modelKey] = (state.current === null || state.current === undefined || state.current === '')
+                                    ? null
+                                    : state.current;
                             }
                             drawerCtx.close({ message: 'selected', data: { type: 'EleTreePicker', value: table.filters.value[modelKey] } });
                         }

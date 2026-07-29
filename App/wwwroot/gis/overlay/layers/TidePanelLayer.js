@@ -7,13 +7,13 @@ import { addOrUpdateGeoJsonSource, clamp, fetchWithTimeout, findNearestHourlyInd
  ****************************************************************/
 export class TidePanelLayer extends MapLayer {
   static TIDE_STATIONS = {
-    cn_wenzhou: { name: "温州潮位站", lat: 28.02833, lon: 120.625, timezone: "Asia/Shanghai" },
     cn_ruian: { name: "瑞安潮位站", lat: 27.785, lon: 120.62, timezone: "Asia/Shanghai" },
     cn_aojiang: { name: "鳌江潮位站", lat: 27.595611, lon: 120.551806, timezone: "Asia/Shanghai" },
     cn_pipamen: { name: "琵琶门潮位站", lat: 27.508369, lon: 120.668023, timezone: "Asia/Shanghai" }, 
     cn_nanjishan: { name: "南麂山潮位站", lat: 27.465, lon: 121.06317, timezone: "Asia/Shanghai" },
     cn_ningbo: { name: "宁波舟山", lat: 29.85, lon: 122.12, timezone: "Asia/Shanghai" },
     cn_xiamen: { name: "厦门外海", lat: 24.48, lon: 118.08, timezone: "Asia/Shanghai" },
+    cn_wenzhou: { name: "温州潮位站", lat: 28.02833, lon: 120.625, timezone: "Asia/Shanghai" },
     cn_shenzhen: { name: "深圳大鹏湾", lat: 22.56, lon: 114.28, timezone: "Asia/Shanghai" },
     cn_qingdao: { name: "青岛外海", lat: 36.08, lon: 120.33, timezone: "Asia/Shanghai" },
     cn_dalian: { name: "大连外海", lat: 38.92, lon: 121.64, timezone: "Asia/Shanghai" },

@@ -60,6 +60,11 @@ namespace App.EleUI
             output.Attributes.SetAttribute("data-tree-id-field", idField);
             output.Attributes.SetAttribute("data-tree-children-field", childrenField);
 
+            // Default value (e.g. from URL parameter via page handler).
+            // Pre-populates the EleTable filter so the picker shows the right
+            // label and the list auto-loads with the filter applied.
+            TrySetFilterDefault(context, output);
+
             var enabledForPath = GetBindPath(EnabledFor);
             string baseDisabledExpr;
             if (!string.IsNullOrWhiteSpace(enabledForPath))

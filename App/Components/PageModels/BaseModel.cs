@@ -108,5 +108,25 @@ namespace App
         protected long? GetUserId() => Auth.GetUserId(HttpContext);
 
         protected App.DAL.User GetUser() => Auth.GetUser();
+
+
+        //-------------------------------------------------
+        // URL 查询参数便捷访问
+        //-------------------------------------------------
+        /// <summary>
+        /// 读取当前 URL 的查询参数（querystring）。
+        /// <para>用法（.cshtml 中）：</para>
+        /// <code>
+        /// &lt;EleInput For="Item.Name" Value="@QString("name")" /&gt;
+        /// </code>
+        /// <para>无对应参数时返回 <paramref name="defaultValue"/>（默认为 <c>null</c>）。</para>
+        /// </summary>
+        public string QString(string key, string defaultValue = null)
+        {
+            if (string.IsNullOrEmpty(key) || Request?.Query == null) return defaultValue;
+            return Request.Query.TryGetValue(key, out var v) && !Microsoft.Extensions.Primitives.StringValues.IsNullOrEmpty(v)
+                ? v.ToString()
+                : defaultValue;
+        }
     }
 }

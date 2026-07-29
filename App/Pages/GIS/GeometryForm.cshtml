@@ -90,7 +90,7 @@
             <EleInput For="Item.Addr" Label="地址" FillRow="true"></EleInput>
             <ElePicker For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-picker datajson-picker" PopupUrl="/Shared/PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>
 
-            <EleInput For="Item.Url" Label="链接" FillRow="true" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
+            <EleInput For="Item.Url" Label="链接" FillRow="true" Placeholder="例如 /Checks/CheckObjects?dutyOrgId={{id}}"></EleInput>
             <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
             <EleSwitch For="Item.IsVisible" Label="是否可见"></EleSwitch>
 
@@ -118,7 +118,7 @@
             <div class="geo-field-toggle" v-show="['1','点','point','2','形状','shape'].includes((form.type ?? '').toString().toLowerCase())">
                 <ElePicker For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-picker geometry-json-picker" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></ElePicker>
             </div>
-            <EleList Label="更多附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <EleList Label="附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
                 <ItemTemplate>
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0 flex-1">
@@ -128,8 +128,10 @@
                         <a href="javascript:void(0)" class="text-xs text-blue-600" v-on:click.prevent="openLinkInDrawer(item.previewUrl, '附件预览', null)">预览</a>
                     </div>
                 </ItemTemplate>
+                <Footer>
+                    <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">管理附件</EleButton>
+                </Footer>
             </EleList>
-            <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">管理附件</EleButton>
             <Bottom>
                 <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
                 <EleButton Command="Close">关闭</EleButton>

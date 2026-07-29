@@ -32,6 +32,11 @@ namespace App.EleUI
             if (Step > 0)      output.Attributes.Add("step", Step);
             if (!string.IsNullOrWhiteSpace(ControlPosition)) output.Attributes.SetAttribute("controls-position", ControlPosition.ToLower());
 
+            // Default value (e.g. from URL parameter via page handler).
+            // Pre-populates the EleTable filter so the input shows the right
+            // value and the list auto-loads with the filter applied.
+            TrySetFilterDefault(context, output);
+
             var childContent = await output.GetChildContentAsync();
             var contentHtml = childContent.GetContent();
 

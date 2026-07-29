@@ -1,0 +1,136 @@
+@page
+@{
+    Layout = null;
+    var xmindBytes = System.IO.File.ReadAllBytes("/Users/cjh/Downloads/Projects/AppPlat/AppPlat8/App/Files/Att/sample.xmind");
+    var xmindBase64 = Convert.ToBase64String(xmindBytes);
+    var dataUri = "data:application/zip;base64," + xmindBase64;
+}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Mind Render Test</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsmind@0.8.5/style/jsmind.css">
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsmind@0.8.5/es6/jsmind.js"></script>
+<style>
+html, body { margin: 0; height: 100%; }
+#mind { width: 100%; height: 100%; position: relative; background: #f8fafc; }
+#log { position: fixed; top: 0; right: 0; width: 400px; max-height: 80vh; overflow: auto;
+       font-family: monospace; font-size: 11px; padding: 8px;
+       background: rgba(255,255,255,0.9); border: 1px solid #ddd; z-index: 9999; white-space: pre-wrap; }
+#err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+       background: #fee; color: #c00; font-size: 14px; padding: 20px; z-index: 10; }
+</style>
+</head>
+<body>
+<div id="log"></div>
+<div id="mind">
+    <div id="hint">脑图预览</div>
+    <div id="mermaidWrap" style="display:none"><div id="mermaidHost"></div></div>
+    <div id="err"></div>
+</div>
+<script>
+(function() {
+    var log = document.getElementById('log');
+    function L(s) { log.textContent += s + '\n'; }
+    window.addEventListener('error', function(e) { L('GLOBAL ERR: ' + e.message + ' at ' + e.filename + ':' + e.lineno + ':' + e.colno); });
+    window.addEventListener('unhandledrejection', function(e) { L('REJECTION: ' + (e.reason && e.reason.message || e.reason)); });
+
+    var dataUri = '@dataUri';
+    L('dataUri length: ' + dataUri.length);
+    L('jsMind type: ' + typeof window.jsMind);
+    L('JSZip type: ' + typeof window.JSZip);
+
+    var hint = document.getElementById('hint');
+    var err = document.getElementById('err');
+    var mind = document.getElementById('mind');
+    var mermaidWrap = document.getElementById('mermaidWrap');
+    var mermaidHost = document.getElementById('mermaidHost');
+
+    function showError(m) { err.innerHTML = m; err.style.display = 'flex'; }
+    function hideError() { err.style.display = 'none'; }
+
+    function parseXmindJsonTopic(topic, idx) {
+        var id = 'xmind_json_' + (++idx.value);
+        var title = (topic && topic.title) ? topic.title : '节点';
+        var children = [];
+        var cg = (topic && topic.children) || {};
+        var attached = Array.isArray(cg.attached) ? cg.attached : [];
+        var detached = Array.isArray(cg.detached) ? cg.detached : [];
+        var summary = Array.isArray(cg.summary) ? cg.summary : [];
+        var all = attached.concat(detached, summary);
+        for (var i = 0; i < all.length; i++) {
+            var c = all[i];
+            if (!c || typeof c !== 'object') continue;
+            children.push(parseXmindJsonTopic(c, idx));
+        }
+        return { id: id, topic: title, children: children };
+    }
+    function parseXmindJsonText(text) {
+        var raw = JSON.parse(text);
+        var sheets = Array.isArray(raw) ? raw : [raw];
+        var first = sheets.find(function(s) { return s && s.rootTopic; }) || sheets[0];
+        var rootTopic = first && first.rootTopic ? first.rootTopic : null;
+        if (!rootTopic) throw new Error('no rootTopic');
+        return parseXmindJsonTopic(rootTopic, { value: 0 });
+    }
+    function renderJsMind(rootData) {
+        L('renderJsMind called, root: ' + JSON.stringify(rootData).substring(0, 200));
+        var options = {
+            container: 'mind',
+            editable: false,
+            theme: 'primary',
+            view: { hmargin: 90, vmargin: 50, line_width: 2, line_color: '#93c5fd' }
+        };
+        try {
+            var jm = new window.jsMind(options);
+            L('jsMind created');
+            jm.show({ meta: { name: 'sample.xmind', author: 'App', version: '1.0' }, format: 'node_tree', data: rootData });
+            L('jsMind show called');
+        } catch (e) {
+            L('renderJsMind ERR: ' + e.message + '\n' + e.stack);
+            throw e;
+        }
+    }
+    async function renderXmind(buffer) {
+        L('renderXmind: buffer byteLength = ' + buffer.byteLength);
+        var zip = await window.JSZip.loadAsync(buffer);
+        L('zip loaded');
+        var matched = zip.file(/content\.json$/i);
+        L('content.json found count: ' + (matched ? matched.length : 'null'));
+        if (!matched || matched.length === 0) {
+            var all = Object.keys(zip.files);
+            L('all files: ' + all.join(', '));
+            throw new Error('no content.json');
+        }
+        var text = await matched[0].async('text');
+        L('text length = ' + text.length);
+        var root = parseXmindJsonText(text);
+        L('parseXmindJsonText done');
+        hideError();
+        renderJsMind(root);
+    }
+    async function run() {
+        L('--- run() start ---');
+        hint.textContent = '脑图预览 · sample.xmind';
+        L('hint updated to: ' + hint.textContent);
+        try {
+            L('fetching data: URI...');
+            var resp = await fetch(dataUri);
+            L('fetch status: ' + resp.status + ', ok: ' + resp.ok);
+            if (!resp.ok) throw new Error('not ok');
+            var buffer = await resp.arrayBuffer();
+            L('buffer: ' + buffer.byteLength);
+            await renderXmind(buffer);
+        } catch (e) {
+            L('CATCH: ' + e.message);
+            L(e.stack);
+            showError('脑图预览失败：' + e.message);
+        }
+    }
+    run();
+})();
+</script>
+</body>
+</html>

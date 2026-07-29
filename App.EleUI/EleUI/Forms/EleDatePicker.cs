@@ -50,6 +50,11 @@ namespace App.EleUI
             if (!string.IsNullOrEmpty(StartPlaceholder)) output.Attributes.SetAttribute("start-placeholder", StartPlaceholder);
             if (!string.IsNullOrEmpty(EndPlaceholder))   output.Attributes.SetAttribute("end-placeholder", EndPlaceholder);
 
+            // Default value (e.g. from URL parameter via page handler).
+            // Pre-populates the EleTable filter so the date picker shows the
+            // right value and the list auto-loads with the filter applied.
+            TrySetFilterDefault(context, output);
+
             await RenderWrapper(output);
         }
     }

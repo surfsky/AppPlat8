@@ -22,7 +22,6 @@ namespace App.EleUI
         [HtmlAttributeName("Filterable")] public bool Filterable { get; set; } = true;
         [HtmlAttributeName("KeyField")] public string KeyField { get; set; }
         [HtmlAttributeName("TextField")] public string TextField { get; set; }
-        [HtmlAttributeName("Value")] public object Value { get; set; }
         [HtmlAttributeName("Clearable")] public new bool? Clearable { get; set; } = true;
         [HtmlAttributeName("CollapseTags")] public bool? CollapseTags { get; set; } = true;
         [HtmlAttributeName("DrawerTitle")] public string DrawerTitle { get; set; }
@@ -57,15 +56,9 @@ namespace App.EleUI
             var vModel = GetVModel(context);
             if (Value != null && !string.IsNullOrWhiteSpace(vModel))
             {
-                var defaultRaw = GetDefaultRaw(Value);
-                var defaultExpr = GetDefaultValueExpression(Value);
+                var defaultExpr = GetDefaultValueExpression();
 
-                if (!context.Items.ContainsKey("IsEleForm") && vModel.StartsWith("filters.", StringComparison.Ordinal))
-                {
-                    output.Attributes.SetAttribute("data-filter-default", defaultRaw);
-                    if (!string.IsNullOrWhiteSpace(propName))
-                        output.Attributes.SetAttribute("data-filter-model", propName);
-                }
+                TrySetFilterDefault(context, output);
 
                 output.Attributes.SetAttribute(":data-default-value", defaultExpr);
             }
@@ -265,56 +258,6 @@ namespace App.EleUI
             }
 
             return raw;
-        }
-
-        private static string GetDefaultRaw(object value)
-        {
-            if (value == null)
-                return string.Empty;
-
-            if (value is string s1 && bool.TryParse(s1, out var sBool1))
-                return sBool1 ? "true" : "false";
-
-            if (value is bool b)
-                return b ? "true" : "false";
-
-            var t = value.GetType();
-            t = Nullable.GetUnderlyingType(t) ?? t;
-            if (t.IsEnum)
-                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
-
-            if (value is sbyte or byte or short or ushort or int or uint or long or ulong)
-                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
-
-            if (value is float or double or decimal)
-                return Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
-
-            return value.ToString();
-        }
-
-        private static string GetDefaultValueExpression(object value)
-        {
-            if (value == null)
-                return "null";
-
-            if (value is string s1 && bool.TryParse(s1, out var sBool1))
-                return sBool1 ? "true" : "false";
-
-            if (value is bool b)
-                return b ? "true" : "false";
-
-            var t = value.GetType();
-            t = Nullable.GetUnderlyingType(t) ?? t;
-            if (t.IsEnum)
-                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
-
-            if (value is sbyte or byte or short or ushort or int or uint or long or ulong)
-                return Convert.ToInt64(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
-
-            if (value is float or double or decimal)
-                return Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture);
-
-            return JsonSerializer.Serialize(value.ToString());
         }
 
         /// <summary>解析Items属性，返回SelectListItem列表</summary>

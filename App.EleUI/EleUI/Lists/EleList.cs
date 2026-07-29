@@ -9,18 +9,19 @@ using System.Net;
 namespace App.EleUI
 {
     /// <summary>
-    /// 列表上下文（当前仅包含条目模板）
+    /// 列表上下文（包含条目模板、底部模板）
     /// </summary>
     public class ListContext
     {
         public StringBuilder ItemTemplateHtml { get; set; } = new StringBuilder();
+        public StringBuilder FooterTemplateHtml { get; set; } = new StringBuilder();
     }
 
     /// <summary>
     /// 列表控件，支持下拉滚动分页加载。
     /// </summary>
     [HtmlTargetElement("EleList")]
-    [RestrictChildren("ItemTemplate")]
+    [RestrictChildren("ItemTemplate", "Footer")]
     public class EleList : EleControl
     {
         [HtmlAttributeName("Label")]
@@ -67,6 +68,12 @@ namespace App.EleUI
 
         [HtmlAttributeName("EmptyText")]
         public string EmptyText { get; set; } = "暂无数据";
+
+        [HtmlAttributeName("LoadText")]
+        public string LoadText { get; set; } = "加载中...";
+
+        [HtmlAttributeName("LastText")]
+        public string LastText { get; set; } = "没有更多数据了";
 
         [HtmlAttributeName("MinHeight")]
         public string MinHeight { get; set; } = "40px";
@@ -124,6 +131,7 @@ namespace App.EleUI
             {
                 template = "<div class='text-gray-500'>{{ item && item.id ? item.id : idx + 1 }}</div>";
             }
+            var footerTemplate = listContext.FooterTemplateHtml.ToString();
 
             var pageSize = ResolvePageSize();
             var itemClass = string.IsNullOrWhiteSpace(ItemClass) ? "p-4 border border-gray-100 rounded-lg bg-white shadow-sm" : ItemClass.Trim();
@@ -164,9 +172,16 @@ namespace App.EleUI
                 {template}
             </div>
 
-            <div v-if='{stateExpr}.loading' class='text-center text-gray-400 py-3'>加载中...</div>
-            <div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400 py-0'{emptyStyle}>{EmptyText}</div>
-            <div v-else-if='{stateExpr}.finished' class='text-center text-gray-400 py-3'>没有更多数据了</div>
+            <div v-if='{stateExpr}.loading' class='text-center text-gray-400 py-3'>{LoadText}</div>
+            {(string.IsNullOrWhiteSpace(footerTemplate)
+                ? $"<div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400 py-0'{emptyStyle}>{EmptyText}</div>"
+                : $"<div v-else-if='{stateExpr}.items.length === 0' class='text-gray-400 py-3 px-3 flex items-center justify-between gap-3'{emptyStyle}><span>{EmptyText}</span><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
+            {(string.IsNullOrWhiteSpace(footerTemplate)
+                ? $"<div v-else-if='{stateExpr}.finished' class='text-center text-gray-400 py-3'>{LastText}</div>"
+                : $"<div v-else-if='{stateExpr}.finished' class='text-gray-400 py-3 px-3 flex items-center justify-between gap-3'><span>{LastText}</span><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
+            {(string.IsNullOrWhiteSpace(footerTemplate)
+                ? ""
+                : $"<div v-else class='text-gray-400 py-2 px-3 flex items-center justify-end gap-2'><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
         </div>
     </div>
 </div>

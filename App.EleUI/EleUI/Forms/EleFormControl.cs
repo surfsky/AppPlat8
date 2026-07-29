@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using App.Components;
 using App.Utils;
 using System.ComponentModel;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace App.EleUI
 {
@@ -25,6 +27,14 @@ namespace App.EleUI
         [HtmlAttributeName("ColSpan")]       public int? ColSpan { get; set; }
         [HtmlAttributeName("FillRow")]       public bool FillRow { get; set; }
         [HtmlAttributeName("Prop")]          public string Prop { get; set; } // Manual prop path,(e.g. form.title)???
+
+        /// <summary>
+        /// Default value for the control. In filter context, also rendered as
+        /// <c>data-filter-default</c> + <c>data-filter-model</c> so the EleTable
+        /// app can pre-populate the corresponding filter (typically from a URL
+        /// parameter on the page handler).
+        /// </summary>
+        [HtmlAttributeName("Value")]         public object Value { get; set; }
 
         // Get Vue Model Path (e.g. form.title)
         protected string GetVModel(TagHelperContext context)
@@ -86,6 +96,108 @@ namespace App.EleUI
                 return s.ToLowerInvariant();
 
             return s.Substring(0, i - 1).ToLowerInvariant() + s.Substring(i - 1);
+        }
+
+        /// <summary>
+        /// Get raw string representation of <see cref="Value"/> suitable for a
+        /// plain HTML attribute (e.g. <c>data-filter-default</c>).
+        /// </summary>
+        protected string GetDefaultRaw()
+        {
+            return Value == null ? null : FormatDefaultRaw(Value);
+        }
+
+        /// <summary>
+        /// Get JavaScript/Vue expression for <see cref="Value"/> suitable for an
+        /// interpolated Vue binding (e.g. <c>:model-value</c>).
+        /// </summary>
+        protected string GetDefaultValueExpression()
+        {
+            return Value == null ? null : FormatDefaultValueExpression(Value);
+        }
+
+        /// <summary>
+        /// Format a value for a plain HTML attribute.
+        /// </summary>
+        private static string FormatDefaultRaw(object value)
+        {
+            if (value == null) return null;
+            if (value is bool b) return b ? "true" : "false";
+            if (value is string s) return s;
+            var t = value.GetType();
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            if (t.IsEnum) return Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (t.IsPrimitive) return Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+            if (value is System.Collections.IEnumerable enumerable)
+            {
+                var parts = new List<string>();
+                foreach (var item in enumerable)
+                {
+                    if (item == null) continue;
+                    if (item is bool bi) parts.Add(bi ? "true" : "false");
+                    else if (item.GetType().IsPrimitive) parts.Add(Convert.ToString(item, System.Globalization.CultureInfo.InvariantCulture));
+                    else if (item is string si) parts.Add($"\"{si.Replace("\"", "\\\"")}\"");
+                    else parts.Add(Convert.ToString(item, System.Globalization.CultureInfo.InvariantCulture));
+                }
+                return $"[{string.Join(",", parts)}]";
+            }
+            return Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
+        /// Format a value as a JavaScript/Vue expression.
+        /// </summary>
+        private static string FormatDefaultValueExpression(object value)
+        {
+            if (value == null) return null;
+            if (value is bool b) return b ? "true" : "false";
+            if (value is string s) return $"'{s.Replace("'", "\\'")}'";
+            var t = value.GetType();
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            if (t.IsEnum) return Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (t.IsPrimitive) return Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+            if (value is System.Collections.IEnumerable enumerable)
+            {
+                var parts = new List<string>();
+                foreach (var item in enumerable)
+                {
+                    if (item == null) continue;
+                    if (item is bool bi) parts.Add(bi ? "true" : "false");
+                    else if (item.GetType().IsPrimitive) parts.Add(Convert.ToString(item, System.Globalization.CultureInfo.InvariantCulture));
+                    else if (item is string si) parts.Add($"'{si.Replace("'", "\\'")}'");
+                    else parts.Add(Convert.ToString(item, System.Globalization.CultureInfo.InvariantCulture));
+                }
+                return $"[{string.Join(",", parts)}]";
+            }
+            // Object: serialize as JSON
+            return JsonSerializer.Serialize(value);
+        }
+
+        /// <summary>
+        /// When the control is used inside an EleTable filter row and a
+        /// <see cref="Value"/> has been provided, emit
+        /// <c>data-filter-default</c> + <c>data-filter-model</c> attributes so
+        /// the JS side can pre-populate the filter state and trigger the
+        /// initial data load. This is what enables URL-parameter-driven
+        /// defaults (e.g. <c>?orgId=730</c>).
+        /// </summary>
+        protected void TrySetFilterDefault(TagHelperContext context, TagHelperOutput output)
+        {
+            if (Value == null) return;
+            if (context.Items.ContainsKey("IsEleForm")) return; // Only valid in filter context
+            if (context.Items.ContainsKey("FilterDefaultSuppressed")) return;
+
+            var vModel = GetVModel(context);
+            if (string.IsNullOrEmpty(vModel) || !vModel.StartsWith("filters.", StringComparison.Ordinal))
+                return;
+
+            var propName = vModel.Substring("filters.".Length);
+            var defaultRaw = GetDefaultRaw();
+            if (string.IsNullOrEmpty(defaultRaw)) return;
+
+            output.Attributes.SetAttribute("data-filter-default", defaultRaw);
+            if (!string.IsNullOrWhiteSpace(propName))
+                output.Attributes.SetAttribute("data-filter-model", propName);
         }
 
         protected void TryAutoSetLabel()

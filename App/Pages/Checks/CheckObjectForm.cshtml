@@ -63,17 +63,76 @@
         <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
 
         <EleLabel Label="更多" FillRow="true"></EleLabel>
-        <EleTreePicker For="Item.TagIds" Label="匹配标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreePicker>
-        <EleButton Type="Primary" Look="Text" Icon="User" Handler="ShowContacts" EnabledFor="Item.Id">联系人</EleButton>
-        <EleButton Type="Primary" Look="Text" Icon="Calendar" Handler="ShowObjectEvents" EnabledFor="Item.Id">对象事件</EleButton>
-        <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">文件</EleButton>
-        <EleButton Type="Primary" Look="Text" Icon="Histogram" Handler="ShowCheckLogs" EnabledFor="Item.Id">检查历史</EleButton>
-        <EleButton Type="Primary" Look="Text" Icon="Warning" Handler="ShowHazards" EnabledFor="Item.Id">隐患清单</EleButton>
-        <EleButton Type="Primary" Look="Text" Icon="DocumentChecked" PopupUrl="/Checks/CheckFlow?objectId=@Model.Item.Id&objectName=@System.Net.WebUtility.UrlEncode(Model.Item.Name ?? string.Empty)" EnabledFor="Item.Id" Visible="@Auth.CheckPower(Power.CheckNew)">开始排查</EleButton>
+        <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreePicker>
+        
+        <EleList Label="联系人" FillRow="true" DataHandler="?handler=ContactsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" LastText=" " SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-xs text-gray-400 shrink-0 w-16 truncate">{{ item.contactTypeName }}</span>
+                    <span class="text-sm font-medium truncate flex-1">{{ item.name }}</span>
+                    <span class="text-xs text-blue-500 shrink-0">{{ item.phone }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Text" Handler="ShowContacts" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
+
+        <EleList Label="附件" FillRow="true" DataHandler="?handler=FilesData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-sm font-medium truncate flex-1">{{ item.fileName }}</span>
+                    <span class="text-xs text-gray-400 shrink-0">{{ item.fileSizeText }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Text" Handler="ShowFiles" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
+
+
+        <EleList Label="事件" FillRow="true" DataHandler="?handler=EventsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-sm font-medium truncate flex-1">{{ item.title }}</span>
+                    <span class="text-xs text-gray-400 shrink-0">{{ item.triggleDt }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Text"  Handler="ShowObjectEvents" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
+
+        <EleList Label="检查历史" FillRow="true" DataHandler="?handler=CheckLogsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" SortField="CheckDt" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-xs text-gray-400 shrink-0 w-24 truncate">{{ item.checkDt }}</span>
+                    <span class="text-sm text-gray-500 truncate flex-1">{{ item.checkerName }}</span>
+                    <span class="text-xs text-orange-500 shrink-0" v-if="item.hazardCount > 0">隐患 {{ item.hazardCount }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Text" Handler="ShowCheckLogs" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
+
+        <EleList Label="隐患清单" FillRow="true" DataHandler="?handler=HazardsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-xs text-gray-500 shrink-0 w-14 truncate">{{ item.statusName }}</span>
+                    <span class="text-sm truncate flex-1">{{ item.description }}</span>
+                    <span class="text-xs text-gray-400 shrink-0">{{ item.expireDt }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Text" Handler="ShowHazards" >管理</EleButton>
+            </Footer>
+        </EleList>
     
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
+            <EleButton Type="Primary" Icon="Select" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Type="Success" Icon="DocumentChecked" PopupUrl="/Checks/CheckFlow?objectId=@Model.Item.Id&objectName=@System.Net.WebUtility.UrlEncode(Model.Item.Name ?? string.Empty)" EnabledFor="Item.Id" Visible="@Auth.CheckPower(Power.CheckNew)">开始排查</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
 }

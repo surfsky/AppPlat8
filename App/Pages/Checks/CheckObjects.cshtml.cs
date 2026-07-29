@@ -14,9 +14,9 @@ namespace App.Pages.Checks
     [Auth(Power.CheckObjectView)]
     public class CheckObjectsModel : AdminModel
     {
-        public CheckObject Item { get; set; }
+        public CheckObject Item { get; set; } = new CheckObject();
 
-        public void OnGet() { }
+        public void OnGet() {}
 
         public IActionResult OnGetData(
             Paging pi, 

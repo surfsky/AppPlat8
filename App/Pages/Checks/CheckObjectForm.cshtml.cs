@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
+using App.DAL.OA;
 using App.EleUI;
-using App.HttpApi;
+using App.Entities;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
@@ -87,6 +86,54 @@ namespace App.Pages.Checks
             item.SetTags(req.TagIds);
             return BuildResult(0, "保存成功");
         }
+
+        // ────────────── 列表数据查询 ──────────────
+
+        /// <summary>获取联系人列表数据</summary>
+        public IActionResult OnGetContactsData(Paging pi, long objectId)
+        {
+            if (objectId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+            var list = CheckObjectContact.Search(objectId: objectId).SortPageExport(pi);
+            return BuildResult(0, "success", list, pi);
+        }
+
+        /// <summary>获取对象事件列表数据</summary>
+        public IActionResult OnGetEventsData(Paging pi, long objectId)
+        {
+            if (objectId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+            var list = CheckObjectEvent.Search(objectId, null, null).SortPageExport(pi);
+            return BuildResult(0, "success", list, pi);
+        }
+
+        /// <summary>获取文件列表数据</summary>
+        public IActionResult OnGetFilesData(Paging pi, long objectId)
+        {
+            if (objectId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+            var uniId = CheckObject.Get(objectId)?.UniId;
+            if (string.IsNullOrWhiteSpace(uniId))
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+
+            var files = Att.Search(key: uniId).SortPageExport(pi);
+            return BuildResult(0, "success", files, pi);
+        }
+
+        /// <summary>获取检查历史列表数据</summary>
+        public IActionResult OnGetCheckLogsData(Paging pi, long objectId)
+        {
+            if (objectId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+            var list = Check.Search(null, null, objectId, null, null, null).SortPageExport(pi);
+            return BuildResult(0, "success", list, pi);
+        }
+
+        /// <summary>获取隐患清单列表数据</summary>
+        public IActionResult OnGetHazardsData(Paging pi, long objectId)
+        {
+            if (objectId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+            var list = CheckHazard.Search(null, objectId, null, null, null, null).SortPageExport(pi);
+            return BuildResult(0, "success", list, pi);
+        }
+
+        // ────────────── 抽屉弹窗 ──────────────
 
         /// <summary>显示联系人</summary>
         public IActionResult OnPostShowContacts([FromBody] CheckObject req)

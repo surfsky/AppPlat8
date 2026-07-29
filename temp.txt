@@ -9,3 +9,18 @@
                 new AuthenticationProperties() { IsPersistent = true, ExpiresUtc = DateTime.UtcNow.AddDays(7) }
                 );
 
+
+            // 根据 URL 参数预填"所属网格"：?orgId=730 会将"所属网格"默认值设为对应组织。
+            // 页面中的其它过滤项可直接使用 Value="@QString("xxx")" 或 Value="@Model.Item.XXX" 设置默认值。
+            var org = orgId.HasValue ? DAL.Org.Get(orgId.Value) : null;
+            if (org != null)
+            {
+                Item = new CheckObject
+                {
+                    DutyOrg = org,
+                    DutyOrgId = orgId
+                };
+            }
+
+
+用EleList 来改造Checks/CheckObjectForm，将子表内容直接显示在表单内（如附件、联系人等），参考 GeometryForm 的附件部分
