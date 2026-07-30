@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.DAL.OA;
+using App.EleUI;
 using App.Entities;
 using App.HttpApi;
 using App.Utils;
@@ -12,10 +13,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Common;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.EventView)]
+    //[Auth(Power.EventView)]
     public class EventsModel : AdminModel
     {
         public Event Item { get; set; }
@@ -33,6 +35,8 @@ namespace App.Pages.OA
         public IActionResult OnGetData(Paging pi, string title, long? typeId, long? orgId, long? publisherId)
         {
             var list = Event.Search(title, typeId, orgId, publisherId).SortPageExport(pi);
+            //EleManager.ShowToast("定时刷新", NotifyType.Info);
+            Console.WriteLine("定时刷新" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
             return BuildResult(0, "success", list, pi);
         }
 

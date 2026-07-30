@@ -21,6 +21,7 @@ namespace App.Pages.AI
     {
         public List<AIConfigOption> Configs { get; set; } = new();
         public long? DefaultConfigId { get; set; }
+        public AIConfigOption DefaultConfig { get; set; }
 
         public void OnGet()
         {
@@ -30,9 +31,19 @@ namespace App.Pages.AI
                 Id = t.Id,
                 Name = t.Name,
                 Model = t.Model,
-                Remark = t.Remark
+                Remark = t.Remark,
+                Logo = t.Logo
             }).ToList();
-            DefaultConfigId = list.OrderByDescending(t => t.IsDefault).ThenBy(t => t.SortId).ThenBy(t => t.Id).FirstOrDefault()?.Id;
+            var def = list.OrderByDescending(t => t.IsDefault).ThenBy(t => t.SortId).ThenBy(t => t.Id).FirstOrDefault();
+            DefaultConfigId = def?.Id;
+            DefaultConfig = def == null ? null : new AIConfigOption
+            {
+                Id = def.Id,
+                Name = def.Name,
+                Model = def.Model,
+                Remark = def.Remark,
+                Logo = def.Logo
+            };
         }
 
         public async Task<IActionResult> OnPostSend([FromBody] ChatRequest req)
@@ -48,27 +59,37 @@ namespace App.Pages.AI
             if (string.IsNullOrWhiteSpace(cfg.BaseUrl) || string.IsNullOrWhiteSpace(cfg.Model))
                 return BuildResult(400, "AI配置不完整：缺少地址或模型");
 
-            var endpoint = BuildChatEndpoint(cfg.BaseUrl);
+            var apiType = DetectApiType(cfg.BaseUrl);
+            var endpoint = apiType == AiApiType.Responses
+                ? BuildResponsesEndpoint(cfg.BaseUrl)
+                : BuildChatCompletionsEndpoint(cfg.BaseUrl);
             var model = NormalizeModelName(cfg.BaseUrl, cfg.Model);
-            var messageBuild = BuildUserMessageContent(req, model);
-            if (!messageBuild.Success)
-                return BuildResult(400, messageBuild.ErrorMessage);
 
-            var messages = new List<object>();
-            if (!string.IsNullOrWhiteSpace(req.SystemPrompt))
+            var systemPrompt = !string.IsNullOrWhiteSpace(req.SystemPrompt) ? req.SystemPrompt.Trim() : null;
+            List<object> messages;
+            if (req.Messages != null && req.Messages.Count > 0)
             {
-                messages.Add(new { role = "system", content = req.SystemPrompt.Trim() });
+                messages = BuildMessagesFromHistory(req.Messages, model, systemPrompt);
             }
-            messages.Add(new { role = "user", content = messageBuild.Content });
-
-            var payload = new Dictionary<string, object>
+            else
             {
-                ["model"] = model,
-                ["messages"] = messages,
-                ["stream"] = false
-            };
-            if (req.Temperature != null)
-                payload["temperature"] = req.Temperature.Value;
+                var messageBuild = BuildUserMessageContent(req, model);
+                if (!messageBuild.Success)
+                    return BuildResult(400, messageBuild.ErrorMessage);
+                messages = new List<object>();
+                if (!string.IsNullOrWhiteSpace(systemPrompt))
+                    messages.Add(new { role = "system", content = systemPrompt });
+                messages.Add(new { role = "user", content = messageBuild.Content });
+            }
+
+            var payload = BuildRequestPayloadMulti(
+                apiType,
+                model,
+                cfg.EnableWebSearch,
+                messages,
+                systemPrompt,
+                req.Temperature,
+                stream: false);
 
             using var client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(GetRequestTimeoutSeconds(cfg.TimeoutSeconds));
@@ -109,7 +130,51 @@ namespace App.Pages.AI
                 var root = doc.RootElement;
 
                 string reply = null;
-                if (root.TryGetProperty("choices", out var choices)
+                var citations = new List<object>();
+
+                if (apiType == AiApiType.Responses)
+                {
+                    if (root.TryGetProperty("output", out var output)
+                        && output.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var item in output.EnumerateArray())
+                        {
+                            if (!item.TryGetProperty("type", out var itemType)
+                                || itemType.ValueKind != JsonValueKind.String
+                                || itemType.ToString() != "message")
+                                continue;
+                            if (!item.TryGetProperty("content", out var contentArr)
+                                || contentArr.ValueKind != JsonValueKind.Array)
+                                continue;
+                            foreach (var content in contentArr.EnumerateArray())
+                            {
+                                if (!content.TryGetProperty("type", out var ct)
+                                    || ct.ValueKind != JsonValueKind.String
+                                    || ct.ToString() != "output_text")
+                                    continue;
+                                if (content.TryGetProperty("text", out var text))
+                                    reply = text.ToString();
+                                if (content.TryGetProperty("annotations", out var annotations)
+                                    && annotations.ValueKind == JsonValueKind.Array)
+                                {
+                                    foreach (var ann in annotations.EnumerateArray())
+                                    {
+                                        if (ann.TryGetProperty("type", out var at)
+                                            && at.ToString() == "url_citation")
+                                        {
+                                            citations.Add(new
+                                            {
+                                                url = ann.TryGetProperty("url", out var urlNode) ? urlNode.ToString() : string.Empty,
+                                                title = ann.TryGetProperty("title", out var titleNode) ? titleNode.ToString() : string.Empty
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (root.TryGetProperty("choices", out var choices)
                     && choices.ValueKind == JsonValueKind.Array
                     && choices.GetArrayLength() > 0)
                 {
@@ -140,6 +205,7 @@ namespace App.Pages.AI
                 {
                     reply = reply ?? string.Empty,
                     model = modelName,
+                    citations,
                     usage
                 });
             }
@@ -162,26 +228,40 @@ namespace App.Pages.AI
             if (string.IsNullOrWhiteSpace(cfg.BaseUrl) || string.IsNullOrWhiteSpace(cfg.Model))
                 return BuildResult(400, "AI配置不完整：缺少地址或模型");
 
-            var endpoint = BuildChatEndpoint(cfg.BaseUrl);
+            var apiType = DetectApiType(cfg.BaseUrl);
+            var endpoint = apiType == AiApiType.Responses
+                ? BuildResponsesEndpoint(cfg.BaseUrl)
+                : BuildChatCompletionsEndpoint(cfg.BaseUrl);
             var model = NormalizeModelName(cfg.BaseUrl, cfg.Model);
-            var messageBuild = BuildUserMessageContent(req, model);
-            if (!messageBuild.Success)
-                return BuildResult(400, messageBuild.ErrorMessage);
 
-            var messages = new List<object>();
-            if (!string.IsNullOrWhiteSpace(req.SystemPrompt))
+            // 构建 messages 数组：多轮对话历史（前端传入）> 单轮消息（兜底）
+            var systemPrompt = !string.IsNullOrWhiteSpace(req.SystemPrompt) ? req.SystemPrompt.Trim() : null;
+            List<object> messages;
+            if (req.Messages != null && req.Messages.Count > 0)
             {
-                messages.Add(new { role = "system", content = req.SystemPrompt.Trim() });
+                messages = BuildMessagesFromHistory(req.Messages, model, systemPrompt);
             }
-            messages.Add(new { role = "user", content = messageBuild.Content });
-            var payload = new Dictionary<string, object>
+            else
             {
-                ["model"] = model,
-                ["messages"] = messages,
-                ["stream"] = true
-            };
-            if (req.Temperature != null)
-                payload["temperature"] = req.Temperature.Value;
+                var messageBuild = BuildUserMessageContent(req, model);
+                if (!messageBuild.Success)
+                    return BuildResult(400, messageBuild.ErrorMessage);
+                messages = new List<object>();
+                if (!string.IsNullOrWhiteSpace(systemPrompt))
+                    messages.Add(new { role = "system", content = systemPrompt });
+                messages.Add(new { role = "user", content = messageBuild.Content });
+            }
+
+            var instructionText = systemPrompt; // Responses API 用 instructions
+
+            var payload = BuildRequestPayloadMulti(
+                apiType,
+                model,
+                cfg.EnableWebSearch,
+                messages,
+                instructionText,
+                req.Temperature,
+                stream: true);
 
             using var client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(GetRequestTimeoutSeconds(cfg.TimeoutSeconds));
@@ -222,6 +302,14 @@ namespace App.Pages.AI
 
             await using var upstream = await response.Content.ReadAsStreamAsync();
             using var reader = new StreamReader(upstream);
+            var citations = new List<object>();
+            string upstreamErrorMessage = null;
+            string upstreamErrorCode = null;
+            // 使用 StreamWriter 包装 Response.Body，配合 HttpCompletionOption.ResponseHeadersRead
+            // 实现真正的流式推送（每条 SSE delta 立刻 flush）。
+            var sw = new StreamWriter(Response.Body, new UTF8Encoding(false));
+            await sw.FlushAsync();
+
             while (!reader.EndOfStream)
             {
                 var line = await reader.ReadLineAsync();
@@ -241,7 +329,55 @@ namespace App.Pages.AI
                     var root = doc.RootElement;
 
                     string delta = null;
-                    if (root.TryGetProperty("choices", out var choices)
+
+                    if (apiType == AiApiType.Responses)
+                    {
+                        if (root.TryGetProperty("type", out var eventType)
+                            && eventType.ValueKind == JsonValueKind.String)
+                        {
+                            var et = eventType.ToString();
+                            if (et == "response.output_text.delta")
+                            {
+                                if (root.TryGetProperty("delta", out var d))
+                                    delta = d.ToString();
+                            }
+                            else if (et == "response.output_text.annotation.added")
+                            {
+                                if (root.TryGetProperty("annotation", out var ann)
+                                    && ann.ValueKind == JsonValueKind.Object
+                                    && ann.TryGetProperty("type", out var at)
+                                    && at.ToString() == "url_citation")
+                                {
+                                    citations.Add(new
+                                    {
+                                        url = ann.TryGetProperty("url", out var urlNode) ? urlNode.ToString() : string.Empty,
+                                        title = ann.TryGetProperty("title", out var titleNode) ? titleNode.ToString() : string.Empty
+                                    });
+                                }
+                            }
+                            else if (et == "error" || et == "response.failed")
+                            {
+                                if (root.TryGetProperty("message", out var msg))
+                                    upstreamErrorMessage = msg.ToString();
+                                if (root.TryGetProperty("code", out var code))
+                                    upstreamErrorCode = code.ToString();
+                                if (root.TryGetProperty("response", out var resp)
+                                    && resp.ValueKind == JsonValueKind.Object
+                                    && resp.TryGetProperty("error", out var respErr)
+                                    && respErr.ValueKind == JsonValueKind.Object)
+                                {
+                                    if (string.IsNullOrEmpty(upstreamErrorMessage)
+                                        && respErr.TryGetProperty("message", out var rmsg))
+                                        upstreamErrorMessage = rmsg.ToString();
+                                    if (string.IsNullOrEmpty(upstreamErrorCode)
+                                        && respErr.TryGetProperty("code", out var rcode))
+                                        upstreamErrorCode = rcode.ToString();
+                                }
+                            }
+                            // 其余事件（reasoning_*、web_search_call.*、response.created/in_progress/output_item.*）忽略
+                        }
+                    }
+                    else if (root.TryGetProperty("choices", out var choices)
                         && choices.ValueKind == JsonValueKind.Array
                         && choices.GetArrayLength() > 0)
                     {
@@ -260,8 +396,8 @@ namespace App.Pages.AI
 
                     if (!string.IsNullOrEmpty(delta))
                     {
-                        await Response.WriteAsync(delta);
-                        await Response.Body.FlushAsync();
+                        await sw.WriteAsync(delta);
+                        await sw.FlushAsync();
                     }
                 }
                 catch
@@ -270,10 +406,39 @@ namespace App.Pages.AI
                 }
             }
 
+            if (!string.IsNullOrEmpty(upstreamErrorMessage))
+            {
+                var errPayload = JsonSerializer.Serialize(new
+                {
+                    error = upstreamErrorMessage,
+                    code = upstreamErrorCode
+                });
+                await sw.WriteAsync("\n\n__ERROR__:" + errPayload + "__END__");
+                await sw.FlushAsync();
+            }
+
+            if (citations.Count > 0)
+            {
+                var citationsJson = JsonSerializer.Serialize(citations);
+                await sw.WriteAsync("\n\n__CITATIONS__:" + citationsJson + "__END__");
+                await sw.FlushAsync();
+            }
+            await sw.FlushAsync();
+
             return new EmptyResult();
         }
 
-        private static string BuildChatEndpoint(string baseUrl)
+        private enum AiApiType { ChatCompletions, Responses }
+
+        private static AiApiType DetectApiType(string baseUrl)
+        {
+            var url = (baseUrl ?? string.Empty).Trim().TrimEnd('/').ToLowerInvariant();
+            if (url.EndsWith("/responses") || url.Contains("/api/v3/responses"))
+                return AiApiType.Responses;
+            return AiApiType.ChatCompletions;
+        }
+
+        private static string BuildChatCompletionsEndpoint(string baseUrl)
         {
             var url = (baseUrl ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(url))
@@ -289,6 +454,285 @@ namespace App.Pages.AI
                 return url + "/chat/completions";
 
             return url + "/chat/completions";
+        }
+
+        private static string BuildResponsesEndpoint(string baseUrl)
+        {
+            var url = (baseUrl ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(url))
+                return string.Empty;
+
+            url = url.TrimEnd('/');
+            if (url.EndsWith("/responses", StringComparison.OrdinalIgnoreCase))
+                return url;
+            return url + "/responses";
+        }
+
+        private static object BuildResponsesUserContent(object chatContent)
+        {
+            if (chatContent is string s)
+            {
+                return new[]
+                {
+                    new Dictionary<string, object>
+                    {
+                        ["type"] = "input_text",
+                        ["text"] = s
+                    }
+                };
+            }
+
+            if (chatContent is List<object> blocks)
+            {
+                var translated = new List<object>();
+                foreach (var block in blocks)
+                {
+                    if (block is Dictionary<string, object> dict)
+                    {
+                        var type = dict.TryGetValue("type", out var t) ? t?.ToString() : null;
+                        if (type == "text")
+                        {
+                            var text = dict.TryGetValue("text", out var tx) ? tx?.ToString() ?? string.Empty : string.Empty;
+                            translated.Add(new Dictionary<string, object>
+                            {
+                                ["type"] = "input_text",
+                                ["text"] = text
+                            });
+                            continue;
+                        }
+                        if (type == "image_url")
+                        {
+                            string url = null;
+                            if (dict.TryGetValue("image_url", out var iu))
+                            {
+                                if (iu is Dictionary<string, object> iuDict && iuDict.TryGetValue("url", out var u))
+                                    url = u?.ToString();
+                                else if (iu is string us)
+                                    url = us;
+                            }
+                            if (!string.IsNullOrEmpty(url))
+                            {
+                                translated.Add(new Dictionary<string, object>
+                                {
+                                    ["type"] = "input_image",
+                                    ["image_url"] = url
+                                });
+                            }
+                            continue;
+                        }
+                    }
+                    translated.Add(block);
+                }
+                return translated;
+            }
+
+            return new[]
+            {
+                new Dictionary<string, object>
+                {
+                    ["type"] = "input_text",
+                    ["text"] = chatContent?.ToString() ?? string.Empty
+                }
+            };
+        }
+
+        private static object BuildRequestPayloadMulti(
+            AiApiType apiType,
+            string model,
+            bool enableWebSearch,
+            List<object> messages,
+            string systemPromptForResponses,
+            double? temperature,
+            bool stream)
+        {
+            if (apiType == AiApiType.Responses)
+            {
+                var input = new List<object>();
+                foreach (var msg in messages)
+                {
+                    // msg is anonymous type { role, content }
+                    var role = msg.GetType().GetProperty("role")?.GetValue(msg)?.ToString() ?? "user";
+                    var content = msg.GetType().GetProperty("content")?.GetValue(msg);
+
+                    if (role == "system")
+                        continue; // Responses 用 instructions，不发 system 消息
+
+                    input.Add(new Dictionary<string, object>
+                    {
+                        ["role"] = role,
+                        ["content"] = role == "user" ? BuildResponsesUserContent(content) : content
+                    });
+                }
+
+                var payload = new Dictionary<string, object>
+                {
+                    ["model"] = model,
+                    ["input"] = input,
+                    ["stream"] = stream
+                };
+                if (!string.IsNullOrWhiteSpace(systemPromptForResponses))
+                    payload["instructions"] = systemPromptForResponses.Trim();
+                if (temperature != null)
+                    payload["temperature"] = temperature.Value;
+                if (enableWebSearch)
+                {
+                    payload["tools"] = new[]
+                    {
+                        new Dictionary<string, object>
+                        {
+                            ["type"] = "web_search",
+                            ["max_keyword"] = 3
+                        }
+                    };
+                }
+                return payload;
+            }
+
+            // Chat Completions
+            var chatPayload = new Dictionary<string, object>
+            {
+                ["model"] = model,
+                ["messages"] = messages,
+                ["stream"] = stream
+            };
+            if (temperature != null)
+                chatPayload["temperature"] = temperature.Value;
+            return chatPayload;
+        }
+
+        /// <summary>
+        /// 从多轮对话历史构建 messages 列表
+        /// </summary>
+        private static List<object> BuildMessagesFromHistory(
+            List<ChatHistoryMessage> history,
+            string model,
+            string systemPrompt)
+        {
+            var messages = new List<object>();
+
+            if (!string.IsNullOrWhiteSpace(systemPrompt))
+                messages.Add(new { role = "system", content = systemPrompt });
+
+            var textOnly = IsLikelyTextOnlyModel(model);
+
+            foreach (var histMsg in history)
+            {
+                if (histMsg == null || string.IsNullOrWhiteSpace(histMsg.Role))
+                    continue;
+
+                var role = histMsg.Role.Trim().ToLowerInvariant();
+
+                if (role == "assistant")
+                {
+                    var text = histMsg.Content ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(text))
+                        messages.Add(new { role = "assistant", content = text });
+                    continue;
+                }
+
+                if (role == "user")
+                {
+                    var content = BuildHistoryMessageContent(histMsg, textOnly);
+                    messages.Add(new { role = "user", content = content });
+                    continue;
+                }
+
+                // system / other roles: pass through as-is
+                if (!string.IsNullOrWhiteSpace(histMsg.Content))
+                    messages.Add(new { role = role, content = histMsg.Content });
+            }
+
+            return messages;
+        }
+
+        /// <summary>
+        /// 将历史消息中的一条 user 消息转换成 content（字符串 或 内容块数组）
+        /// </summary>
+        private static object BuildHistoryMessageContent(ChatHistoryMessage msg, bool textOnlyModel)
+        {
+            var text = msg.Content ?? string.Empty;
+            var attachments = msg.Attachments;
+            if (attachments == null || attachments.Count == 0)
+                return text;
+
+            // 纯文本模型：图片附件只能转文本占位，文件内容附在末尾
+            if (textOnlyModel)
+            {
+                var sb = new StringBuilder(text);
+                foreach (var att in attachments)
+                {
+                    if ((att.ContentType ?? string.Empty).StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                        sb.AppendLine("[用户曾发送图片: " + (att.Name ?? "图片") + "]");
+                    else
+                    {
+                        var docText = BuildDocumentText(att);
+                        if (!string.IsNullOrWhiteSpace(docText))
+                        {
+                            sb.AppendLine();
+                            sb.AppendLine(docText);
+                        }
+                    }
+                }
+                return sb.ToString().Trim();
+            }
+
+            var imageAtts = attachments.Where(IsImageAttachment).ToList();
+            var fileAtts = attachments.Where(t => !IsImageAttachment(t)).ToList();
+
+            // 无图片附件：文本内容 + 文件内容
+            if (imageAtts.Count == 0)
+            {
+                var sb = new StringBuilder(text);
+                foreach (var att in fileAtts)
+                {
+                    var docText = BuildDocumentText(att);
+                    if (!string.IsNullOrWhiteSpace(docText))
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine(docText);
+                    }
+                }
+                return sb.ToString().Trim();
+            }
+
+            // 有图片附件：构建 content 块数组
+            var blocks = new List<object>
+            {
+                new Dictionary<string, object>
+                {
+                    ["type"] = "text",
+                    ["text"] = text
+                }
+            };
+
+            foreach (var att in imageAtts)
+            {
+                if (string.IsNullOrWhiteSpace(att.DataUrl))
+                    continue;
+                blocks.Add(new Dictionary<string, object>
+                {
+                    ["type"] = "image_url",
+                    ["image_url"] = new Dictionary<string, object>
+                    {
+                        ["url"] = att.DataUrl
+                    }
+                });
+            }
+
+            foreach (var att in fileAtts)
+            {
+                var docText = BuildDocumentText(att);
+                if (!string.IsNullOrWhiteSpace(docText))
+                {
+                    blocks.Add(new Dictionary<string, object>
+                    {
+                        ["type"] = "text",
+                        ["text"] = docText
+                    });
+                }
+            }
+
+            return blocks;
         }
 
         private static string NormalizeModelName(string baseUrl, string model)
@@ -342,9 +786,11 @@ namespace App.Pages.AI
 
         private static int GetRequestTimeoutSeconds(int timeoutSeconds)
         {
+            // 流式响应需要给 web_search、模型思考预留充足时间。
+            // 默认上限 600 秒（10 分钟），下限 120 秒（避免 < 2 分钟导致联网时被截断）。
             if (timeoutSeconds <= 0)
-                return 300;
-            return Math.Max(30, timeoutSeconds);
+                return 600;
+            return Math.Max(120, Math.Min(timeoutSeconds, 600));
         }
 
         private static BuiltMessageContent BuildUserMessageContent(ChatRequest req, string model)
@@ -484,6 +930,7 @@ namespace App.Pages.AI
             public string Name { get; set; }
             public string Model { get; set; }
             public string Remark { get; set; }
+            public string Logo { get; set; }
         }
 
         public class ChatRequest
@@ -492,6 +939,15 @@ namespace App.Pages.AI
             public string Message { get; set; }
             public string SystemPrompt { get; set; }
             public double? Temperature { get; set; }
+            public List<ChatAttachment> Attachments { get; set; }
+            /// <summary>多轮对话历史（含当前消息），前端传入时后端不再自行构造单条 user</summary>
+            public List<ChatHistoryMessage> Messages { get; set; }
+        }
+
+        public class ChatHistoryMessage
+        {
+            public string Role { get; set; }
+            public string Content { get; set; }
             public List<ChatAttachment> Attachments { get; set; }
         }
 

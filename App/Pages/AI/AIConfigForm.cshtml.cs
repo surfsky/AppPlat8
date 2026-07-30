@@ -48,11 +48,13 @@ namespace App.Pages.AI
             item.ApiKey = req.ApiKey?.Trim();
             item.Model = req.Model?.Trim();
             item.Services = string.IsNullOrWhiteSpace(req.Services) ? "chat" : req.Services.Trim();
-            item.TimeoutSeconds = req.TimeoutSeconds <= 0 ? 60 : req.TimeoutSeconds;
+            item.TimeoutSeconds = req.TimeoutSeconds <= 0 ? 180 : req.TimeoutSeconds;
             item.SortId = req.SortId;
             item.IsDefault = req.IsDefault;
             item.IsEnabled = req.IsEnabled;
+            item.EnableWebSearch = req.EnableWebSearch;
             item.Remark = req.Remark;
+            item.Logo = Uploader.SaveFile(nameof(AIConfig), req.Logo);
             item.Save();
 
             if (item.IsDefault)

@@ -43,7 +43,7 @@
                 title: title || '查看',
                 url,
                 direction: 'rtl',
-                size: size || (window.innerWidth < 768 ? '100%' : '70%'),
+                size: size || (window.innerWidth < 768 ? '100%' : '50%'),
                 resizable: true,
                 closeOnClickModal: false,
                 destroyOnClose: true
@@ -152,7 +152,7 @@
                 node.addEventListener('click', () => {
                     const url = normalizeOpenUrl(node.getAttribute('data-page-url'));
                     if (!url) return;
-                    openDrawer(url, '更多', window.innerWidth < 768 ? '100%' : '72%');
+                    openDrawer(url, '更多', window.innerWidth < 768 ? '100%' : '50%');
                 });
             });
 
@@ -161,7 +161,7 @@
                     const url = normalizeOpenUrl(node.getAttribute('data-preview-url'));
                     const name = node.getAttribute('data-att-name') || '附件预览';
                     if (!url) return;
-                    openDrawer(url, name, window.innerWidth < 768 ? '100%' : '72%');
+                    openDrawer(url, name, window.innerWidth < 768 ? '100%' : '50%');
                 });
             });
 

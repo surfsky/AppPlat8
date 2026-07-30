@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Encodings.Web;
 using App.DAL;
 using App.Components;
 using App.HttpApi;
@@ -28,7 +29,10 @@ namespace App
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                ReferenceHandler = ReferenceHandler.IgnoreCycles
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                // 让非 ASCII 字符（如中文）直接以 UTF-8 输出，不被转义为 \uXXXX 形式。
+                // 这样前端 JSON.parse 后能直接拿到中文，开发者工具里看到的中文也是人类可读形式。
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
 
             // Keep response enums as numbers for EleUI compatibility (formatters/select filters expect numeric enum values).
@@ -67,7 +71,16 @@ namespace App
         /// <summary>构建API结果</summary>
         public static JsonResult BuildResult(int code, string message, object data = null, Paging pager = null)
         {
-            return new JsonResult(new APIResult(code, message, data, pager), _jsonOptions);
+            var result = new JsonResult(new APIResult(code, message, data, pager), _jsonOptions);
+            // 业务错误时同步返回 HTTP 错误状态码（如 500/4xx），
+            // 这样前端的 fetch 能通过 !resp.ok 识别错误，触发 setError 路径，
+            // 避免把整段错误 JSON 误当作流式 AI 输出渲染在 AI 回答气泡里。
+            // code == 0 表示成功，仍按 200 返回。
+            if (code != 0)
+            {
+                result.StatusCode = code >= 400 && code <= 599 ? code : 500;
+            }
+            return result;
         }
 
 

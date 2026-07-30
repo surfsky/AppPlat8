@@ -16,11 +16,13 @@ namespace App.DAL
         [UI("API Key")] public string ApiKey { get; set; }
         [UI("模型")] public string Model { get; set; }
         [UI("支持服务")] public string Services { get; set; } = "chat";
-        [UI("超时(秒)")] public int TimeoutSeconds { get; set; } = 60;
+        [UI("超时(秒)")] public int TimeoutSeconds { get; set; } = 180;
         [UI("是否默认")] public bool IsDefault { get; set; } = false;
         [UI("启用")] public bool IsEnabled { get; set; } = true;
+        [UI("启用联网搜索")] public bool EnableWebSearch { get; set; } = true;
         [UI("排序")] public int SortId { get; set; } = 0;
         [UI("备注")] public string Remark { get; set; }
+        [UI("图标")] public string Logo {get;set;}
 
         [UI("API Key(脱敏)")] public string ApiKeyMask => MaskKey(ApiKey);
 
@@ -56,8 +58,10 @@ namespace App.DAL
                 Model,
                 Services,
                 TimeoutSeconds,
+                Logo,
                 IsDefault,
                 IsEnabled,
+                EnableWebSearch,
                 SortId,
                 Remark,
                 CreateDt,

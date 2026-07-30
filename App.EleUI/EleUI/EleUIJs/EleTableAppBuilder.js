@@ -49,6 +49,9 @@ export class EleTableAppBuilder extends EleAppBuilder {
                 onUnmounted(() => {
                     window.removeEventListener('message', msgHandler);
                 });
+                onUnmounted(() => {
+                    table.stopAutoRefresh();
+                });
 
                 // Form page URL configuration
                 const editPage = config.editPage || 'Form';

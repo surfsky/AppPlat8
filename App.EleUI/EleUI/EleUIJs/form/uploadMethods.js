@@ -59,7 +59,7 @@ export const uploadMethods = {
                 title,
                 url: targetUrl,
                 direction: 'rtl',
-                size: window.innerWidth < 768 ? '100%' : '72%',
+                size: window.innerWidth < 768 ? '100%' : '50%',
                 resizable: true,
                 closeOnClickModal: false,
                 destroyOnClose: true

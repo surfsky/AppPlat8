@@ -175,7 +175,7 @@ namespace App.Pages.EleUISamples
             return EleManager.ShowDrawer(
                 title: "服务端 Drawer",
                 content: "这是由服务端命令打开的 Drawer 内容。",
-                size: "40%",
+                size: "50%",
                 direction: "rtl",
                 showFooter: true,
                 footerButtons: new List<DrawerFooterButtonArgs>

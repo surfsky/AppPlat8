@@ -26,11 +26,41 @@
         body { margin: 0; height: 100vh; overflow: hidden; font-family: "PingFang SC", "Noto Sans SC", "Microsoft Yahei", sans-serif; background: #f7f9fc; color: var(--text); }
         .wrap { width: 100%; height: 100vh; margin: 0; padding: 0; }
         .card { position: relative; height: 100%; display: flex; flex-direction: column; background: var(--card); }
-        .head { padding: 10px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .head { padding: 10px 10px 10px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
         .head-main { min-width: 0; display: grid; gap: 2px; }
         .head-model { font-size: 14px; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .head-status { font-size: 12px; color: var(--sub); }
-        .row2 { display: grid; gap: 10px; grid-template-columns: 1fr auto auto; }
+        .input-panel { display: grid; grid-template-rows: auto auto; gap: 6px; padding: 12px 14px; background: #fff; border: 1px solid var(--line); border-radius: 22px; }
+        .input-textarea { width: 100%; min-height: 28px; max-height: 180px; border: 0; background: transparent; padding: 6px 4px; resize: none; line-height: 1.5; outline: none; color: var(--text); font: inherit; box-shadow: none; }
+        .input-textarea:focus { box-shadow: none; }
+        .input-textarea::placeholder { color: #94a3b8; }
+        .input-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .input-toolbar-right { display: inline-flex; align-items: center; gap: 10px; }
+        .toolbar-btn { width: 36px; height: 36px; padding: 0; border: 0; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; transition: transform .15s ease, background .15s ease; }
+        .toolbar-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .toolbar-btn:not(:disabled):active { transform: scale(0.94); }
+        .toolbar-btn img { width: 28px; height: 28px; display: block; pointer-events: none; }
+        .clip-btn { width: 32px; height: 32px; opacity: .85; }
+        .clip-btn:hover { opacity: 1; }
+        .mic-btn { background: #d8dee9; }
+        .mic-btn:hover { background: #cbd2dd; }
+        .mic-btn.recording { background: #34c759; }
+        .mic-btn.recording:hover { background: #2cb24e; }
+        .send-btn { background: #fff; border: 1px solid var(--line); }
+        .send-btn:hover { background: #f7f9fc; border-color: #c4d0e0; }
+        .send-btn.stopping { background: #ff7a45; border-color: #ff7a45; }
+        .send-btn.stopping:hover { background: #f06a35; border-color: #f06a35; }
+        .send-btn:disabled { background: #f1f5f9; border-color: #e3e8ef; }
+        .auto-send-toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 12px; color: var(--sub); padding: 4px 6px; border-radius: 6px; transition: background .15s ease; }
+        .auto-send-toggle:hover { background: #f1f5f9; }
+        .auto-send-toggle input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+        .auto-send-toggle .track { position: relative; width: 30px; height: 16px; background: #d1d5db; border-radius: 999px; transition: background .2s ease; flex: 0 0 30px; }
+        .auto-send-toggle .thumb { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform .2s ease; }
+        .auto-send-toggle input:checked + .track { background: #0b5fff; }
+        .auto-send-toggle input:checked + .track .thumb { transform: translateX(14px); }
+        .auto-send-toggle .label { white-space: nowrap; }
+        .auto-send-toggle input:disabled + .track { opacity: .5; }
+        .auto-send-toggle.is-disabled { opacity: .55; cursor: not-allowed; }
         input, textarea, select, button { font: inherit; }
         input, textarea, select { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; outline: none; background: #fff; }
         textarea { resize: vertical; min-height: 64px; }
@@ -61,9 +91,21 @@
         .msg .content th, .msg .content td { border: 1px solid #dbe2ef; padding: 6px 8px; text-align: left; }
         .msg .content th { background: #f8fafc; }
         .msg .content a { color: #0b5fff; text-decoration: underline; word-break: break-all; }
+        .msg .content .citations { margin-top: 10px; padding: 10px 12px; border: 1px dashed #c4d8ff; border-radius: 8px; background: #f5f9ff; font-size: 12px; color: #334155; }
+        .msg .content .citations-title { font-weight: 600; color: #0b5fff; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .msg .content .citations-title::before { content: ""; display: inline-block; width: 14px; height: 14px; background: #0b5fff; -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>") no-repeat center / contain; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>") no-repeat center / contain; }
+        .msg .content .citations ol { margin: 0; padding-left: 20px; }
+        .msg .content .citations li { margin: 4px 0; line-height: 1.4; word-break: break-all; }
+        .msg .content .citations a { color: #0b5fff; text-decoration: none; }
+        .msg .content .citations a:hover { text-decoration: underline; }
         .icon-btn { width: 38px; height: 38px; border-radius: 10px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #fff; color: #334155; border: 1px solid var(--line); }
         .icon-btn:hover { background: #f8fafc; }
-        .attach-btn { width: 48px; }
+        .icon-btn.active { background: #eaf2ff; color: var(--primary); border-color: #c4d8ff; }
+        .head-tools { display: inline-flex; align-items: center; gap: 8px; }
+        .ai-logo { width: 38px; height: 38px; border-radius: 10px; flex: 0 0 38px; background: linear-gradient(135deg, #0b5fff 0%, #4f8aff 100%); display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; box-shadow: 0 2px 6px rgba(11, 95, 255, 0.25); overflow: hidden; user-select: none; }
+        .ai-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ai-logo .ai-logo-fallback { line-height: 1; }
+        .head-text { min-width: 0; display: grid; gap: 2px; }
         .attachments { display: flex; flex-wrap: wrap; gap: 8px; }
         .attachment-item { display: inline-flex; align-items: center; max-width: 100%; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: #f8fafc; font-size: 12px; color: #334155; }
         .attachment-thumb { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; border: 1px solid #d8e1ef; background: #fff; }
@@ -87,13 +129,22 @@
         .settings-body { padding: 14px 16px; display: grid; gap: 14px; overflow: auto; }
         .settings-actions { padding: 12px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
         .field-label { font-size: 12px; color: var(--sub); margin-bottom: 4px; display: block; }
+        .field-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
         .temp-row { display: grid; gap: 10px; grid-template-columns: 1fr 76px; align-items: center; }
         .temp-value { text-align: center; }
         input[type="range"] { padding: 0; height: 6px; border: 0; border-radius: 999px; background: linear-gradient(90deg, #9ec5ff, #0b5fff); appearance: none; }
         input[type="range"]::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #0b5fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); cursor: pointer; }
         .foot { border-top: 0px solid var(--line); padding: 12px; display: grid; gap: 10px; }
         @@media (max-width: 920px) {
-            .row2 { grid-template-columns: 1fr auto auto; }
+            .input-panel { border-radius: 18px; padding: 10px 12px; }
+        }
+        .thinking-indicator { display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 13px; padding: 4px 0; }
+        .thinking-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; animation: thinking-bounce 1.2s ease-in-out infinite; }
+        .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+        @@keyframes thinking-bounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+            30% { transform: translateY(-5px); opacity: 1; }
         }
     </style>
 </head>
@@ -102,16 +153,30 @@
         <div class="card">
             <!-- 卡片头 -->
             <div class="head">
+                <div class="ai-logo" id="aiLogo" title="AI 助手">
+                    @if (!string.IsNullOrWhiteSpace(Model.DefaultConfig?.Logo))
+                    {
+                        <img src="@Model.DefaultConfig.Logo" alt="@Model.DefaultConfig.Name" onerror="this.remove(); document.getElementById('aiLogoFallback') && (document.getElementById('aiLogoFallback').style.display='');" />
+                        <span class="ai-logo-fallback" id="aiLogoFallback" style="display:none;">AI</span>
+                    }
+                    else
+                    {
+                        <span class="ai-logo-fallback" id="aiLogoFallback">AI</span>
+                    }
+                </div>
                 <div class="head-main">
-                    <div id="modelName" class="head-model">AI 助手</div>
+                    <div id="modelName" class="head-model">@(string.IsNullOrWhiteSpace(Model.DefaultConfig?.Name) ? "AI 助手" : Model.DefaultConfig.Name)</div>
                     <div id="status" class="head-status">就绪</div>
                 </div>
-                <button id="settingsBtn" class="icon-btn" type="button" title="设置" aria-label="打开设置">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 5 15.4a1.65 1.65 0 0 0-1.51-1H3.4a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 5 8.89a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9.11 5c.63-.26 1-.88 1-1.55V3.4a2 2 0 1 1 4 0v.09c0 .67.37 1.29 1 1.55a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.16-.33 1.82.26.63.88 1 1.55 1h.09a2 2 0 1 1 0 4h-.09c-.67 0-1.29.37-1.55 1Z"></path>
-                    </svg>
-                </button>
+                <div class="head-tools" style="margin-left: auto;">
+                    <button id="voiceBtn" class="icon-btn" type="button" title="语音播报：关（点击开启）" aria-pressed="false"></button>
+                    <button id="settingsBtn" class="icon-btn" type="button" title="设置" aria-label="打开设置">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 5 15.4a1.65 1.65 0 0 0-1.51-1H3.4a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 5 8.89a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9.11 5c.63-.26 1-.88 1-1.55V3.4a2 2 0 1 1 4 0v.09c0 .67.37 1.29 1 1.55a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.46.46-.6 1.16-.33 1.82.26.63.88 1 1.55 1h.09a2 2 0 1 1 0 4h-.09c-.67 0-1.29.37-1.55 1Z"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <!-- 消息区域 -->
@@ -120,14 +185,26 @@
             <!-- 输入区域 -->
             <div class="foot">
                 <div id="attachments" class="attachments" hidden></div>
-                <div class="row2">
-                    <textarea id="input" placeholder="输入消息，按 Ctrl+Enter 发送（Mac: Cmd+Enter），Enter 换行"></textarea>
-                    <button id="attachBtn" class="icon-btn attach-btn" type="button" title="上传附件" aria-label="上传附件">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M21.44 11.05l-8.49 8.49a5.5 5.5 0 0 1-7.78-7.78l8.49-8.49a3.5 3.5 0 0 1 4.95 4.95l-8.49 8.49a1.5 1.5 0 0 1-2.12-2.12l7.78-7.78"></path>
-                        </svg>
-                    </button>
-                    <button id="sendBtn" type="button">发送</button>
+                <div class="input-panel">
+                    <textarea id="input" class="input-textarea" rows="1" placeholder="发消息，Enter 发送，Shift+Enter 换行"></textarea>
+                    <div class="input-toolbar">
+                        <button id="attachBtn" class="toolbar-btn clip-btn" type="button" title="上传附件" aria-label="上传附件">
+                            <img src="/Pages/AI/Images/snail.png" alt="附件" />
+                        </button>
+                        <label id="autoSendToggle" class="auto-send-toggle" title="识别结束后自动发送（默认关闭）">
+                            <input id="autoSendSwitch" type="checkbox" aria-label="识别结束后自动发送" />
+                            <span class="track"><span class="thumb"></span></span>
+                            <span class="label">识别后自动发送</span>
+                        </label>
+                        <div class="input-toolbar-right">
+                            <button id="micBtn" class="toolbar-btn mic-btn" type="button" title="语音输入：关" aria-pressed="false" aria-label="语音输入">
+                                <img src="/Pages/AI/Images/voice-off.png" alt="语音" />
+                            </button>
+                            <button id="sendBtn" class="toolbar-btn send-btn" type="button" title="发送" aria-label="发送">
+                                <img src="/Pages/AI/Images/speak-up.png" alt="发送" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <input id="attachInput" type="file" multiple accept="image/*,.txt,.md,.csv,.json,.xml,.html,.htm,.log,.pdf,.doc,.docx" hidden />
             </div>
@@ -144,11 +221,11 @@
                             {
                                 if (cfg.Id == Model.DefaultConfigId)
                                 {
-                                    <option value="@cfg.Id" data-remark="@cfg.Remark" selected>@cfg.Name (@cfg.Model)</option>
+                                    <option value="@cfg.Id" data-remark="@cfg.Remark" data-logo="@cfg.Logo" selected>@cfg.Name (@cfg.Model)</option>
                                 }
                                 else
                                 {
-                                    <option value="@cfg.Id" data-remark="@cfg.Remark">@cfg.Name (@cfg.Model)</option>
+                                    <option value="@cfg.Id" data-remark="@cfg.Remark" data-logo="@cfg.Logo">@cfg.Name (@cfg.Model)</option>
                                 }
                             }
                         </select>
@@ -163,6 +240,13 @@
                             <input id="temperatureRange" type="range" step="0.1" min="0" max="2" value="0.7" />
                             <input id="temperature" class="temp-value" type="number" step="0.1" min="0" max="2" value="0.7" />
                         </div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="voiceSelect">播报语音</label>
+                        <select id="voiceSelect">
+                            <option value="">系统默认</option>
+                        </select>
+                        <div class="field-hint">中文音色更柔和；不同浏览器/系统可选数量不同。</div>
                     </div>
                 </div>
                 <div class="settings-actions">
@@ -182,6 +266,7 @@
     </div>
 
     <script src="~/js/editor.md/lib/marked.min.js"></script>
+    <script src="~/pages/ai/ai.js"></script>
     <script>
         const messagesEl = document.getElementById('messages');
         const inputEl = document.getElementById('input');
@@ -203,15 +288,354 @@
         const temperatureRangeEl = document.getElementById('temperatureRange');
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         const statusEl = document.getElementById('status');
+        const aiLogoEl = document.getElementById('aiLogo');
+        const aiLogoFallbackEl = document.getElementById('aiLogoFallback');
+        const voiceBtnEl = document.getElementById('voiceBtn');
+        const micBtnEl = document.getElementById('micBtn');
+        const sendBtnImgEl = sendBtn.querySelector('img');
+        const micBtnImgEl = micBtnEl ? micBtnEl.querySelector('img') : null;
+        const autoSendSwitchEl = document.getElementById('autoSendSwitch');
+        const autoSendToggleEl = document.getElementById('autoSendToggle');
+        const voiceSelectEl = document.getElementById('voiceSelect');
         let shouldAutoScroll = true;
         let settingsOpen = false;
         let pendingAttachments = [];
+        let voiceOn = false;
+        let micOn = false;
+        let micRecognition = null;
+        let autoSendAfterVoice = false;
+        let selectedVoiceName = '';
         const textDocExtensions = new Set(['txt', 'md', 'csv', 'json', 'xml', 'html', 'htm', 'log']);
         const maxAttachmentSize = 8 * 1024 * 1024;
+        const VOICE_STATE_KEY = 'ai.chat.voiceOn.v1';
+        const MIC_STATE_KEY = 'ai.chat.micOn.v1';
+        const AUTO_SEND_KEY = 'ai.chat.autoSendAfterVoice.v1';
+        const VOICE_NAME_KEY = 'ai.chat.voiceName.v1';
+        const IMG_VOICE_ON = '/Pages/AI/Images/voice-on.png';
+        const IMG_VOICE_OFF = '/Pages/AI/Images/voice-off.png';
+        const IMG_SEND = '/Pages/AI/Images/speak-up.png';
+        const IMG_STOP = '/Pages/AI/Images/speak-stop.png';
 
         function updateModelName() {
             const text = configIdEl.options[configIdEl.selectedIndex]?.text || 'AI 助手';
             modelNameEl.textContent = text;
+        }
+
+        function getSelectedConfigLogo() {
+            const option = configIdEl.options[configIdEl.selectedIndex];
+            if (!option) return '';
+            return (option.dataset.logo || '').trim();
+        }
+
+        function updateLogo() {
+            if (!aiLogoEl) return;
+            const logo = getSelectedConfigLogo();
+            const existingImg = aiLogoEl.querySelector('img');
+            const onError = function () {
+                this.remove();
+                if (aiLogoFallbackEl) aiLogoFallbackEl.style.display = '';
+            };
+            if (logo) {
+                if (existingImg) {
+                    existingImg.onerror = onError;
+                    if (existingImg.src !== logo) existingImg.src = logo;
+                } else {
+                    const img = document.createElement('img');
+                    img.src = logo;
+                    img.alt = 'AI 助手';
+                    img.onerror = onError;
+                    if (aiLogoFallbackEl) aiLogoFallbackEl.style.display = 'none';
+                    aiLogoEl.appendChild(img);
+                }
+            } else {
+                if (existingImg) {
+                    existingImg.remove();
+                }
+                if (aiLogoFallbackEl) aiLogoFallbackEl.style.display = '';
+            }
+        }
+
+        function speakText(text) {
+            if (!voiceOn || !text) return;
+            if (typeof window.speechSynthesis === 'undefined' || typeof window.SpeechSynthesisUtterance === 'undefined') return;
+            try {
+                window.speechSynthesis.cancel();
+                const u = new window.SpeechSynthesisUtterance(text);
+                u.lang = 'zh-CN';
+                u.rate = 0.95;   // 略慢，听感更柔
+                u.pitch = 1;
+                u.volume = 1;
+                if (selectedVoiceName) {
+                    const voices = window.speechSynthesis.getVoices() || [];
+                    const voice = voices.find(v => v.name === selectedVoiceName);
+                    if (voice) u.voice = voice;
+                }
+                window.speechSynthesis.speak(u);
+            } catch (e) {
+                // Ignore TTS errors silently.
+            }
+        }
+
+        // ===== 播报语音（浏览器 speechSynthesis） =====
+        function populateVoices() {
+            if (!voiceSelectEl || typeof window.speechSynthesis === 'undefined') return;
+            const voices = window.speechSynthesis.getVoices() || [];
+            const currentValue = voiceSelectEl.value;
+            // 中文音色优先，按名称排序
+            const zhVoices = voices
+                .filter(v => /^zh|cmn/i.test(v.lang))
+                .sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+            const others = voices.filter(v => !/^zh|cmn/i.test(v.lang));
+            const sorted = zhVoices.concat(others);
+            voiceSelectEl.innerHTML = '<option value="">系统默认</option>';
+            sorted.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.name;
+                opt.textContent = `${v.name}（${v.lang}）`;
+                voiceSelectEl.appendChild(opt);
+            });
+            // 恢复之前选中的
+            voiceSelectEl.value = sorted.some(v => v.name === currentValue) ? currentValue : '';
+        }
+
+        function loadVoiceName() {
+            try {
+                const raw = localStorage.getItem(VOICE_NAME_KEY);
+                if (raw) selectedVoiceName = raw;
+            } catch {
+                selectedVoiceName = '';
+            }
+            if (voiceSelectEl) {
+                voiceSelectEl.value = selectedVoiceName || '';
+                voiceSelectEl.addEventListener('change', () => {
+                    selectedVoiceName = voiceSelectEl.value || '';
+                    try { localStorage.setItem(VOICE_NAME_KEY, selectedVoiceName); } catch { /* ignore */ }
+                    if (voiceOn) speakText('语音试听。');
+                });
+            }
+        }
+
+        // ===== 识别后自动发送开关 =====
+        function loadAutoSendSwitch() {
+            try {
+                autoSendAfterVoice = localStorage.getItem(AUTO_SEND_KEY) === '1';
+            } catch {
+                autoSendAfterVoice = false;
+            }
+            if (autoSendSwitchEl) {
+                autoSendSwitchEl.checked = autoSendAfterVoice;
+                autoSendSwitchEl.addEventListener('change', () => {
+                    autoSendAfterVoice = autoSendSwitchEl.checked;
+                    try { localStorage.setItem(AUTO_SEND_KEY, autoSendAfterVoice ? '1' : '0'); } catch { /* ignore */ }
+                });
+            }
+        }
+
+        function loadVoiceState() {
+            try {
+                voiceOn = localStorage.getItem(VOICE_STATE_KEY) === '1';
+            } catch {
+                voiceOn = false;
+            }
+            renderVoiceBtn();
+        }
+
+        function saveVoiceState() {
+            try {
+                localStorage.setItem(VOICE_STATE_KEY, voiceOn ? '1' : '0');
+            } catch {
+                // Ignore storage errors.
+            }
+        }
+
+        function renderVoiceBtn() {
+            if (!voiceBtnEl) return;
+            voiceBtnEl.classList.toggle('active', voiceOn);
+            voiceBtnEl.setAttribute('aria-pressed', voiceOn ? 'true' : 'false');
+            voiceBtnEl.title = voiceOn ? '语音播报：开（点击关闭）' : '语音播报：关（点击开启）';
+            // 切换图标: 开 → 喇叭波形(on)，关 → 喇叭加斜杠(off)
+            const onSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+            const offSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="22" y1="9" x2="16" y2="15"></line><line x1="16" y1="9" x2="22" y2="15"></line></svg>';
+            voiceBtnEl.innerHTML = voiceOn ? onSvg : offSvg;
+        }
+
+        function toggleVoice() {
+            voiceOn = !voiceOn;
+            saveVoiceState();
+            renderVoiceBtn();
+            if (!voiceOn && typeof window.speechSynthesis !== 'undefined') {
+                try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+            }
+        }
+
+        // ===== 语音输入（麦克风） =====
+        function loadMicState() {
+            try {
+                micOn = localStorage.getItem(MIC_STATE_KEY) === '1';
+            } catch {
+                micOn = false;
+            }
+            renderMicBtn();
+        }
+
+        function saveMicState() {
+            try {
+                localStorage.setItem(MIC_STATE_KEY, micOn ? '1' : '0');
+            } catch {
+                // Ignore storage errors.
+            }
+        }
+
+        function renderMicBtn() {
+            if (!micBtnEl) return;
+            micBtnEl.classList.toggle('recording', micOn);
+            micBtnEl.setAttribute('aria-pressed', micOn ? 'true' : 'false');
+            micBtnEl.title = micOn ? '语音输入：开（点击关闭）' : '语音输入：关（点击开启）';
+            if (micBtnImgEl) micBtnImgEl.src = micOn ? IMG_VOICE_ON : IMG_VOICE_OFF;
+        }
+
+        function toggleMic() {
+            if (aiChat && aiChat.isStreaming) return;
+            if (micOn) {
+                stopMicRecognition(false);
+            } else {
+                startMicRecognition();
+            }
+        }
+
+        async function startMicRecognition() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) {
+                const tip = '当前浏览器不支持语音输入';
+                statusEl.textContent = tip;
+                if (window.EleManager?.showWarning) EleManager.showWarning(tip);
+                return;
+            }
+            try {
+                // 先检测麦克风是否可用
+                try {
+                    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    micStream.getTracks().forEach(t => t.stop());
+                } catch (micErr) {
+                    const tip = (micErr?.name === 'NotAllowedError' || micErr?.name === 'PermissionDeniedError')
+                        ? '麦克风权限被拒绝'
+                        : '未检测到麦克风';
+                    statusEl.textContent = tip;
+                    if (window.EleManager?.showWarning) {
+                        EleManager.showWarning(tip);
+                    }
+                    return;
+                }
+                if (micRecognition) {
+                    try { micRecognition.stop(); } catch { /* ignore */ }
+                }
+                const rec = new SR();
+                rec.lang = 'zh-CN';
+                rec.interimResults = true;
+                rec.continuous = false;
+                let baseText = inputEl.value;
+                const cursor = inputEl.selectionStart || baseText.length;
+                // 仅在光标处插入：若已有内容，保留前后
+                const before = baseText.slice(0, cursor);
+                const after = baseText.slice(cursor);
+                let lastInterim = '';
+                rec.onresult = (event) => {
+                    let interim = '';
+                    let finalText = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const r = event.results[i];
+                        if (r.isFinal) finalText += r[0].transcript;
+                        else interim += r[0].transcript;
+                    }
+                    if (finalText) {
+                        baseText = before + finalText + after;
+                        lastInterim = '';
+                        inputEl.value = baseText;
+                        // 重新定位光标
+                        const pos = (before + finalText).length;
+                        inputEl.setSelectionRange(pos, pos);
+                        autoResizeTextarea();
+                    } else if (interim) {
+                        lastInterim = interim;
+                        inputEl.value = before + interim + after;
+                        const pos = (before + interim).length;
+                        inputEl.setSelectionRange(pos, pos);
+                        autoResizeTextarea();
+                    }
+                };
+                rec.onerror = (e) => {
+                    console.warn('SpeechRecognition error:', e?.error || e);
+                };
+                rec.onend = () => {
+                    if (micOn) {
+                        micOn = false;
+                        saveMicState();
+                        renderMicBtn();
+                        // P0 语音闭环：识别结束根据开关判断是否自动发送
+                        if (autoSendAfterVoice && inputEl && inputEl.value.trim().length > 0) {
+                            send();
+                        }
+                    }
+                    micRecognition = null;
+                };
+                micRecognition = rec;
+                micOn = true;
+                saveMicState();
+                renderMicBtn();
+                rec.start();
+            } catch (e) {
+                console.warn('Failed to start SpeechRecognition:', e);
+                micOn = false;
+                renderMicBtn();
+            }
+        }
+
+        function stopMicRecognition(keepState) {
+            if (micRecognition) {
+                try { micRecognition.stop(); } catch { /* ignore */ }
+            }
+            micRecognition = null;
+            if (!keepState) {
+                micOn = false;
+                saveMicState();
+                renderMicBtn();
+            }
+        }
+
+        // ===== 发送 / 停止响应 按钮切换 =====
+        function renderSendBtn() {
+            if (!sendBtn) return;
+            const streaming = aiChat && aiChat.isStreaming;
+            if (streaming) {
+                sendBtn.classList.add('stopping');
+                sendBtn.setAttribute('aria-label', '停止响应');
+                sendBtn.title = '停止响应';
+                if (sendBtnImgEl) sendBtnImgEl.src = IMG_STOP;
+                if (micBtnEl) micBtnEl.disabled = true;
+            } else {
+                sendBtn.classList.remove('stopping');
+                sendBtn.setAttribute('aria-label', '发送');
+                sendBtn.title = '发送';
+                if (sendBtnImgEl) sendBtnImgEl.src = IMG_SEND;
+                if (micBtnEl) micBtnEl.disabled = false;
+            }
+        }
+
+        function stopStreaming() {
+            if (aiChat) aiChat.abort();
+            if (typeof window.speechSynthesis !== 'undefined') {
+                try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+            }
+        }
+
+        // ===== textarea 自适应高度 =====
+        function autoResizeTextarea() {
+            if (!inputEl) return;
+            inputEl.style.height = 'auto';
+            const maxH = 180;
+            const next = Math.min(inputEl.scrollHeight, maxH);
+            inputEl.style.height = next + 'px';
+            inputEl.style.overflowY = inputEl.scrollHeight > maxH ? 'auto' : 'hidden';
         }
 
         function getSelectedConfigRemark() {
@@ -256,6 +680,7 @@
                 // Ignore invalid local settings.
             }
             updateModelName();
+            updateLogo();
             applyConfigRemarkToPrompt(false);
         }
 
@@ -268,6 +693,7 @@
             };
             localStorage.setItem('ai.chat.settings.v1', JSON.stringify(payload));
             updateModelName();
+            updateLogo();
             toggleSettings(false);
         }
 
@@ -398,221 +824,121 @@
             settingsBackdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
         }
 
-        function sanitizeRenderedHtml(html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html || '', 'text/html');
-            const allowedTags = new Set([
-                'A', 'P', 'BR', 'STRONG', 'EM', 'UL', 'OL', 'LI', 'BLOCKQUOTE',
-                'CODE', 'PRE', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD',
-                'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR'
-            ]);
-
-            const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT);
-            const toReplace = [];
-            while (walker.nextNode()) {
-                const el = walker.currentNode;
-                if (!allowedTags.has(el.tagName)) {
-                    toReplace.push(el);
-                    continue;
+        // ===== AIChat 实例 — 管理对话历史、流式交互、Markdown 渲染 =====
+        const aiChat = new AIChat({
+            containerEl: messagesEl,
+            statusEl: statusEl,
+            maxHistoryTurns: 20,
+            maxImageHistoryTurns: 2,
+            onStatusChange: (status) => {
+                switch (status) {
+                    case 'thinking':
+                        statusEl.textContent = 'AI 正在思考...';
+                        break;
+                    case 'streaming':
+                        statusEl.textContent = 'AI 流式响应中...';
+                        break;
+                    case 'error':
+                        statusEl.textContent = '请求出错';
+                        break;
+                    case 'idle':
+                        statusEl.textContent = '就绪';
+                        break;
                 }
-
-                for (const attr of [...el.attributes]) {
-                    const name = attr.name.toLowerCase();
-                    if (name.startsWith('on') || name === 'style') {
-                        el.removeAttribute(attr.name);
-                        continue;
-                    }
-
-                    if (name === 'href') {
-                        const href = (attr.value || '').trim();
-                        if (!/^(https?:|mailto:|#|\/)/i.test(href)) {
-                            el.removeAttribute(attr.name);
-                        }
-                    } else if (name !== 'target' && name !== 'rel') {
-                        el.removeAttribute(attr.name);
-                    }
-                }
-
-                if (el.tagName === 'A') {
-                    el.setAttribute('target', '_blank');
-                    el.setAttribute('rel', 'noopener noreferrer nofollow');
-                }
-            }
-
-            for (const el of toReplace) {
-                const text = doc.createTextNode(el.textContent || '');
-                el.replaceWith(text);
-            }
-
-            return doc.body.innerHTML;
-        }
-
-        function renderMarkdown(text) {
-            const raw = text || '';
-            if (!window.marked) {
-                return raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
-            }
-
-            const html = window.marked(raw, {
-                gfm: true,
-                tables: true,
-                breaks: true,
-                smartLists: true,
-                sanitize: true,
-                smartypants: true
-            });
-
-            return sanitizeRenderedHtml(html);
-        }
-
-        function isNearBottom(el, threshold = 40) {
-            return (el.scrollHeight - el.scrollTop - el.clientHeight) <= threshold;
-        }
-
-        function scrollToBottomIfNeeded(force = false) {
-            if (force || shouldAutoScroll) {
-                messagesEl.scrollTop = messagesEl.scrollHeight;
-            }
-        }
-
-        messagesEl.addEventListener('scroll', () => {
-            shouldAutoScroll = isNearBottom(messagesEl);
+            },
+            onBubbleCreated: (bubbleEl) => {
+                messagesEl.appendChild(bubbleEl);
+            },
+            onResponseText: (text) => {
+                speakText(text);
+            },
+            _autoScrollGetter: () => shouldAutoScroll
         });
 
-        function addMessage(role, content, attachments = []) {
+        /**
+         * Bubble 工厂 — 由 Chat.cshtml 创建 DOM（样式、类名都在这边），
+         * 返回 { el, setContent(html), setError(text) } 供 AIChat 使用
+         */
+        function createBubble(role) {
             const div = document.createElement('div');
-            div.className = `msg ${role}`;
+            div.className = 'msg ' + role;
             const who = role === 'user' ? '我' : 'AI';
-            div.innerHTML = `<span class="meta">${who} · ${new Date().toLocaleTimeString()}</span><div class="content"></div>`;
+            div.innerHTML = '<span class="meta">' + who + ' \u00B7 ' + new Date().toLocaleTimeString()
+                + '</span><div class="content"></div>';
             const contentEl = div.querySelector('.content');
-            if (role === 'ai') {
-                contentEl.innerHTML = renderMarkdown(content || '');
-            } else {
-                contentEl.textContent = content || '';
-            }
-
-            if (attachments && attachments.length > 0) {
-                const attachmentWrap = document.createElement('div');
-                attachmentWrap.className = 'msg-attachments';
-                for (const item of attachments) {
-                    const node = document.createElement('div');
-                    node.className = 'msg-attachment';
-
-                    const isImage = (item.contentType || '').startsWith('image/') && !!item.dataUrl;
-                    if (isImage) {
-                        node.classList.add('image');
-                        const thumb = document.createElement('img');
-                        thumb.className = 'msg-attachment-thumb';
-                        thumb.src = item.dataUrl;
-                        thumb.alt = item.name || '附件';
-                        thumb.addEventListener('click', () => openImagePreview(item.dataUrl, item.name || '图片附件'));
-                        node.appendChild(thumb);
-                    }
-
-                    const nameEl = document.createElement('span');
-                    nameEl.className = 'msg-attachment-name';
-                    nameEl.textContent = item.name || '附件';
-                    nameEl.title = item.name || '附件';
-                    node.appendChild(nameEl);
-                    attachmentWrap.appendChild(node);
-                }
-                contentEl.appendChild(attachmentWrap);
-            }
-
-            messagesEl.appendChild(div);
-            scrollToBottomIfNeeded(true);
             return {
-                setContent: (text) => {
+                el: div,
+                setContent: (html) => {
                     if (role === 'ai') {
-                        contentEl.innerHTML = renderMarkdown(text || '');
+                        contentEl.innerHTML = html || '';
                     } else {
-                        contentEl.textContent = text || '';
+                        contentEl.textContent = html || '';
                     }
-                    scrollToBottomIfNeeded();
+                    if (shouldAutoScroll) {
+                        messagesEl.scrollTop = messagesEl.scrollHeight;
+                    }
+                },
+                setError: (text) => {
+                    contentEl.textContent = text || '';
+                    if (shouldAutoScroll) {
+                        messagesEl.scrollTop = messagesEl.scrollHeight;
+                    }
                 }
             };
         }
 
-        async function send() {
+        // 暴露给 AIChat._renderAttachments 使用（图片点击预览）
+        window._AIChatOpenImagePreview = openImagePreview;
+
+        /**
+         * 用户发送消息（委托到 AIChat 实例）
+         */
+        function send() {
+            if (aiChat.isStreaming) return;
             const msg = inputEl.value.trim();
             if (!msg && pendingAttachments.length === 0) return;
 
-            const body = {
-                configId: Number(configIdEl.value || 0),
-                systemPrompt: systemPromptEl.value || '',
-                temperature: Number(temperatureEl.value || 0.7),
-                message: msg || '请结合附件进行分析。',
-                attachments: pendingAttachments.map(t => ({
+            const messageText = msg || '请结合附件进行分析。';
+            const currentAttachments = [...pendingAttachments];
+
+            // UI 收尾
+            inputEl.value = '';
+            autoResizeTextarea();
+            pendingAttachments = [];
+            renderAttachments();
+            renderSendBtn();
+
+            aiChat.send({
+                message: messageText,
+                attachments: currentAttachments.map(t => ({
                     name: t.name,
                     contentType: t.contentType,
                     dataUrl: t.dataUrl,
                     textContent: t.textContent
-                }))
-            };
-
-            const messageText = msg || '请结合附件进行分析。';
-            const messageAttachments = pendingAttachments.map(t => ({
-                name: t.name,
-                contentType: t.contentType,
-                dataUrl: t.dataUrl
-            }));
-            addMessage('user', messageText, messageAttachments);
-            inputEl.value = '';
-            pendingAttachments = [];
-            renderAttachments();
-            statusEl.textContent = 'AI 流式响应中...';
-            sendBtn.disabled = true;
-            const aiBubble = addMessage('ai', '');
-
-            try {
-                const resp = await fetch('/AI/Chat?handler=SendStream', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-
-                if (!resp.ok) {
-                    let errText = '';
-                    try {
-                        const errJson = await resp.json();
-                        const msg = errJson.message || errJson.msg || '未知错误';
-                        const detail = errJson.data?.upstreamMessage || errJson.data?.body || '';
-                        errText = detail ? `请求失败：${msg}\n${detail}` : `请求失败：${msg}`;
-                    } catch {
-                        errText = `请求失败：HTTP ${resp.status}`;
-                    }
-                    aiBubble.setContent(errText);
-                    return;
-                }
-
-                if (!resp.body || !resp.body.getReader) {
-                    aiBubble.setContent('当前浏览器不支持流式读取');
-                    return;
-                }
-
-                const reader = resp.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let finalText = '';
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    finalText += decoder.decode(value, { stream: true });
-                    aiBubble.setContent(finalText);
-                }
-
-                if (!finalText.trim()) {
-                    aiBubble.setContent('(空响应)');
-                }
-            } catch (e) {
-                aiBubble.setContent('网络错误：' + (e?.message || e));
-            } finally {
-                sendBtn.disabled = false;
-                statusEl.textContent = '就绪';
+                })),
+                endpoint: '/AI/Chat?handler=SendStream',
+                configId: Number(configIdEl.value || 0),
+                systemPrompt: systemPromptEl.value || '',
+                temperature: Number(temperatureEl.value || 0.7),
+                createBubble: createBubble
+            }).finally(() => {
+                renderSendBtn();
                 inputEl.focus();
-            }
+            });
         }
 
-        sendBtn.addEventListener('click', send);
+        // 滚动监听
+        messagesEl.addEventListener('scroll', () => {
+            shouldAutoScroll = (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight) <= 40;
+        });
+
+        sendBtn.addEventListener('click', () => {
+            if (aiChat && aiChat.isStreaming) {
+                stopStreaming();
+            } else {
+                send();
+            }
+        });
         attachBtn.addEventListener('click', () => {
             attachInputEl.value = '';
             attachInputEl.click();
@@ -634,12 +960,16 @@
         saveSettingsBtn.addEventListener('click', saveSettings);
         configIdEl.addEventListener('change', () => {
             updateModelName();
+            updateLogo();
             applyConfigRemarkToPrompt(true);
         });
         temperatureRangeEl.addEventListener('input', syncTemperatureFromRange);
         temperatureEl.addEventListener('input', syncTemperatureFromInput);
+        if (voiceBtnEl) voiceBtnEl.addEventListener('click', toggleVoice);
+        if (micBtnEl) micBtnEl.addEventListener('click', toggleMic);
+        inputEl.addEventListener('input', autoResizeTextarea);
         inputEl.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
                 e.preventDefault();
                 send();
             }
@@ -654,8 +984,25 @@
             }
         });
         syncTemperatureFromInput();
+        loadVoiceState();
+        loadMicState();
+        loadAutoSendSwitch();
+        loadVoiceName();
+        if (typeof window.speechSynthesis !== 'undefined') {
+            window.speechSynthesis.onvoiceschanged = populateVoices;
+            populateVoices();
+        }
+        renderSendBtn();
+        autoResizeTextarea();
         loadSavedSettings();
         applyConfigRemarkToPrompt(false);
+        // AI 就绪后自动输出一段欢迎语
+        (function autoWelcome() {
+            const wDiv = document.createElement('div');
+            wDiv.className = 'msg ai';
+            wDiv.innerHTML = '<span class="meta">AI · ' + new Date().toLocaleTimeString() + '</span><div class="content">你好，有什么需要帮忙吗？</div>';
+            messagesEl.appendChild(wDiv);
+        })();
     </script>
 </body>
 </html>

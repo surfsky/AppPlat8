@@ -18,6 +18,11 @@ export function initPaginationState(table, vueApi, options = {}) {
     table.exportHandler = options.exportHandler || '?handler=Export';
 
     table.options = ref({});
+
+    table.autoRefreshEnabled = ref(false);
+    table.autoRefreshInterval = ref(30);
+    table._autoRefreshTimer = null;
+    table._autoRefreshTriggle = 'Data';
 }
 
 function serializeParams(params) {
@@ -40,9 +45,11 @@ function serializeParams(params) {
 }
 
 export const paginationMethods = {
-    async loadData() {
+    async loadData(options = {}) {
+        const silent = !!options.silent;
+        const dataHandler = options.handler || this.dataHandler;
         try {
-            const res = await axios.get(this.dataHandler, {
+            const res = await axios.get(dataHandler, {
                 params: {
                     pageIndex: this.pageIndex.value,
                     pageSize: this.pageSize.value,
@@ -70,6 +77,12 @@ export const paginationMethods = {
                     this.total.value = res.data.data.total;
                 } else {
                     this.total.value = Array.isArray(this.items.value) ? this.items.value.length : 0;
+                }
+
+                if (silent) {
+                    const count = this.total.value;
+                    const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+                    EleManager.showInfo(`数据已更新（共 ${count} 条 · ${time}）`, { duration: 2000 });
                 }
             } else {
                 EleManager.showError(res.data.info || res.data.msg || '加载失败');
@@ -126,5 +139,36 @@ export const paginationMethods = {
         this.filtersDrawerVisible.value = false;
         this.pageIndex.value = 0;
         return this.invokeCommand('Data');
+    },
+
+    startAutoRefresh() {
+        this.stopAutoRefresh();
+        if (!this.autoRefreshEnabled.value) return;
+        const intervalMs = (this.autoRefreshInterval.value || 30) * 1000;
+        const triggle = this._autoRefreshTriggle || 'Data';
+        const handler = '?handler=' + triggle;
+        this._autoRefreshTimer = setInterval(() => {
+            if (this.autoRefreshEnabled.value) {
+                this.loadData({ silent: true, handler });
+            }
+        }, intervalMs);
+    },
+
+    stopAutoRefresh() {
+        if (this._autoRefreshTimer) {
+            clearInterval(this._autoRefreshTimer);
+            this._autoRefreshTimer = null;
+        }
+    },
+
+    toggleAutoRefresh(val, interval, triggle) {
+        this.autoRefreshEnabled.value = val;
+        if (interval !== undefined) this.autoRefreshInterval.value = interval || 30;
+        if (triggle !== undefined) this._autoRefreshTriggle = triggle;
+        if (val) {
+            this.startAutoRefresh();
+        } else {
+            this.stopAutoRefresh();
+        }
     }
 };

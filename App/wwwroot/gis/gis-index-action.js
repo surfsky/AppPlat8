@@ -49,7 +49,7 @@
                 title: '检查对象详情',
                 url: `/Checks/CheckObjectForm?id=${id}&md=view`,
                 direction: 'rtl',
-                size: window.innerWidth < 768 ? '100%' : '25%',
+                size: window.innerWidth < 768 ? '100%' : '50%',
                 resizable: true,
                 closeOnClickModal: false,
                 destroyOnClose: true
@@ -191,7 +191,7 @@
                 title: title || '文件预览',
                 url: previewUrl,
                 direction: 'rtl',
-                size: window.innerWidth < 768 ? '100%' : '72%',
+                size: window.innerWidth < 768 ? '100%' : '50%',
                 resizable: true,
                 closeOnClickModal: false,
                 destroyOnClose: true
@@ -223,7 +223,7 @@
                 title: title || '监控视频',
                 url: pageUrl,
                 direction: 'rtl',
-                size: window.innerWidth < 768 ? '100%' : '70%',
+                size: window.innerWidth < 768 ? '100%' : '50%',
                 resizable: true,
                 closeOnClickModal: false,
                 destroyOnClose: true
@@ -288,7 +288,7 @@
                 title: '点位信息',
                 url: `/GIS/GeometryInfo?id=${id}`,
                 direction: 'rtl',
-                size: window.innerWidth < 768 ? '100%' : '38%',
+                size: window.innerWidth < 768 ? '100%' : '50%',
                 resizable: true,
                 closeOnClickModal: false,
                 destroyOnClose: true

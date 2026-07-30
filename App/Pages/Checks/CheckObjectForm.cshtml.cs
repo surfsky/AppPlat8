@@ -167,7 +167,7 @@ namespace App.Pages.Checks
             return EleManager.ShowDrawer(
                 title: "对象事件",
                 url: url,
-                size: "70%"
+                size: "50%"
                 );
         }
 
@@ -198,7 +198,7 @@ namespace App.Pages.Checks
             return EleManager.ShowDrawer(
                 title: "检查历史",
                 url: url,
-                size: "70%"
+                size: "50%"
                 );
         }
 
@@ -216,7 +216,7 @@ namespace App.Pages.Checks
             return EleManager.ShowDrawer(
                 title: "隐患清单",
                 url: url,
-                size: "70%"
+                size: "50%"
                 );
         }
     }

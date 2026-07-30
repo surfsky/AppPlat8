@@ -22,6 +22,7 @@
                 <Op Command="Edit"   Icon="Edit" Tooltip="编辑"></Op>
                 <Op Command="Delete" Icon="Delete" Tooltip="删除" ></Op>
             </EleOpColumn>
+            <EleImageColumn For="Item.Logo" Label="Logo" Width="80"></EleImageColumn>
             <EleColumn For="Item.Name" Label="名称" MinWidth="140"></EleColumn>
             <EleColumn For="Item.BaseUrl" Label="地址" MinWidth="240"></EleColumn>
             <EleColumn For="Item.Model" Label="模型" Width="160"></EleColumn>
@@ -29,6 +30,7 @@
             <EleColumn For="Item.ApiKeyMask" Label="Key" Width="160"></EleColumn>
             <EleColumn For="Item.IsDefault" Label="默认" Width="80"></EleColumn>
             <EleColumn For="Item.IsEnabled" Label="启用" Width="80"></EleColumn>
+            <EleColumn For="Item.EnableWebSearch" Label="联网" Width="70"></EleColumn>
             <EleColumn For="Item.TimeoutSeconds" Label="超时(秒)" Width="100"></EleColumn>
         </Columns>
     </EleTable>

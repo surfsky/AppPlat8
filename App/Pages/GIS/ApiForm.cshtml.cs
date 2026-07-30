@@ -70,7 +70,7 @@ namespace App.Pages.GIS
             return EleManager.ShowDrawer(
                 title: "接口测试",
                 url: url,
-                //size: "70%",
+                //size: "50%",
                 serverCloseHandler: "TestApiClosed"
                 //closeAction: DrawerCloseAction.None
             );
