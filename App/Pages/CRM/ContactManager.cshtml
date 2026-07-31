@@ -1,0 +1,175 @@
+@page
+@model App.Pages.CRM.ContactManagerModel
+@using App.BLL
+@using App.API
+@{
+    ViewData["Title"] = "通讯录管理";
+    var userId = Auth.GetUserId() ?? 0;
+    var tree = userId > 0 ? OA.GetUserVisibleContactMenuTree(userId)?.Data : null;
+    var treeJson = Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(tree ?? new List<object>()));
+}
+
+@section body {
+<div id="app" class="h-screen flex overflow-hidden bg-white">
+    <div class="w-[260px] flex-shrink-0 border-r border-slate-200 flex flex-col bg-slate-50">
+        <div class="h-[50px] px-4 flex items-center justify-between border-b border-slate-200 bg-white">
+            <span class="text-sm font-semibold text-slate-700">通讯录目录</span>
+            <el-button size="small" link v-on:click="refreshTree" :loading="loading">
+                <el-icon><Refresh /></el-icon>
+            </el-button>
+        </div>
+        <div class="flex-1 min-h-0 overflow-auto p-2" v-loading="loading">
+            <el-input
+                v-model="keyword"
+                size="small"
+                placeholder="搜索目录"
+                clearable
+                class="mb-2">
+                <template #prefix>
+                    <el-icon><Search /></el-icon>
+                </template>
+            </el-input>
+            <el-tree
+                ref="treeRef"
+                :data="filteredTree"
+                node-key="id"
+                :props="treeProps"
+                :default-expanded-keys="defaultExpanded"
+                :expand-on-click-node="false"
+                highlight-current
+                v-on:node-click="onNodeClick">
+                <template #default="{ data }">
+                    <div class="flex items-center justify-between w-full pr-2">
+                        <span class="text-slate-700">{{ data.name }}</span>
+                        <el-tag v-if="data.canEdit" size="small" type="success" effect="plain">可编辑</el-tag>
+                    </div>
+                </template>
+            </el-tree>
+            <div v-if="!loading && (!filteredTree || filteredTree.length === 0)" class="text-center text-slate-400 text-sm py-6">
+                暂无授权目录
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+        <div class="h-[50px] px-4 flex items-center justify-between border-b border-slate-200 bg-white">
+            <div class="text-sm text-slate-600">
+                <span v-if="currentMenu">当前目录：<b class="text-slate-800">{{ currentMenu.name }}</b></span>
+                <span v-else>所有已授权目录下的联系人</span>
+            </div>
+            <el-button v-if="currentMenu" size="small" v-on:click="clearSelection">查看全部</el-button>
+        </div>
+        <iframe id="contactsFrame" :src="iframeUrl" class="flex-1 w-full border-0"></iframe>
+    </div>
+</div>
+}
+
+@section script {
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+const app = createApp({
+    setup() {
+        const tree = ref(@treeJson);
+        const keyword = ref('');
+        const loading = ref(false);
+        const currentMenu = ref(null);
+        const treeRef = ref(null);
+        const treeProps = { children: 'children', label: 'name' };
+
+        const defaultExpanded = computed(() => {
+            const ids = [];
+            const walk = (nodes) => {
+                (nodes || []).forEach(n => {
+                    ids.push(n.id);
+                    if (n.children) walk(n.children);
+                });
+            };
+            walk(tree.value);
+            return ids;
+        });
+
+        const filteredTree = computed(() => {
+            const kw = (keyword.value || '').trim().toLowerCase();
+            if (!kw) return tree.value;
+            const filter = (nodes) => {
+                const out = [];
+                for (const n of nodes || []) {
+                    const match = (n.name || '').toLowerCase().includes(kw);
+                    const children = filter(n.children || []);
+                    if (match || children.length) {
+                        out.push({ ...n, children });
+                    }
+                }
+                return out;
+            };
+            return filter(tree.value);
+        });
+
+        const iframeUrl = computed(() => {
+            const base = '/Pages/CRM/Contacts';
+            if (currentMenu.value) return base + '?menuId=' + currentMenu.value.id;
+            return base;
+        });
+
+        const onNodeClick = (data) => {
+            if (!data || data.id == null) return;
+            currentMenu.value = data;
+        };
+
+        const clearSelection = () => {
+            currentMenu.value = null;
+            if (treeRef.value) treeRef.value.setCurrentKey(null);
+        };
+
+        const refreshTree = async () => {
+            loading.value = true;
+            try {
+                const res = await axios.get('/httpapi/oa/GetUserVisibleContactMenuTree?userId=@userId');
+                if (res.data.code === 0 || res.data.code === '0') {
+                    tree.value = res.data.data || [];
+                } else {
+                    EleManager.showError(res.data.info || res.data.msg || '加载失败');
+                }
+            } catch (e) {
+                console.error(e);
+                EleManager.showError('请求异常');
+            } finally {
+                loading.value = false;
+            }
+        };
+
+        onMounted(() => {
+            // 接收 Contacts iframe 内部提交/删除后的刷新通知
+            window.addEventListener('message', e => {
+                if (e.data && e.data.type === '__eleRefreshData') {
+                    const frame = document.getElementById('contactsFrame');
+                    if (frame) frame.contentWindow.location.reload();
+                }
+            });
+        });
+
+        return {
+            tree,
+            keyword,
+            loading,
+            currentMenu,
+            treeRef,
+            treeProps,
+            filteredTree,
+            defaultExpanded,
+            iframeUrl,
+            onNodeClick,
+            clearSelection,
+            refreshTree,
+        };
+    }
+});
+
+app.use(ElementPlus);
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component);
+}
+app.mount('#app');
+</script>
+}

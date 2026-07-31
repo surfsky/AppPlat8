@@ -1,14 +1,36 @@
 @page
 @model App.Pages.Admins.RoleManagerModel
+@using System.Text.Json
 @{
     ViewData["Title"] = "角色权限管理";
-    var roleId = Model.RoleId ?? 0;
+    var initialRoleId = Model.RoleId ?? 0;
+    var rolesJson = JsonSerializer.Serialize(Model.Roles.Select(t => new { id = t.Id, name = t.Name }));
 }
 
 @section body {
 <div id="app" class="h-screen flex overflow-hidden bg-slate-100">
-    <div class="w-[200px] border-r border-slate-200 h-full bg-white">
-        <iframe id="role-selector-frame" src="/Admins/RoleSelector?roleId=@roleId" class="w-full h-full border-0"></iframe>
+    <div class="w-[200px] border-r border-slate-200 h-full bg-white flex flex-col">
+        <div class="h-[52px] px-4 flex items-center justify-between border-b border-slate-200 font-bold text-slate-700 bg-[#f5f7fa]">
+            <span>角色列表</span>
+            <el-button text class="!px-2" title="配置角色" v-on:click="openRolesManager">
+                <el-icon><Setting /></el-icon>
+            </el-button>
+        </div>
+        <div class="flex-1 min-h-0 overflow-y-auto">
+            <div
+                v-for="role in roles"
+                :key="role.id"
+                class="h-[44px] px-4 border-b border-slate-100 flex items-center cursor-pointer transition-colors"
+                :class="role.id === currentRoleId
+                    ? 'bg-blue-50 text-blue-700 border-l-4 border-l-blue-600 pl-3 font-medium'
+                    : 'hover:bg-slate-50 text-slate-700'"
+                v-on:click="selectRole(role)">
+                <span class="truncate">{{ role.name }}</span>
+            </div>
+            <div v-if="!roles.length" class="h-[60px] flex items-center justify-center text-slate-400 text-sm">
+                暂无角色
+            </div>
+        </div>
     </div>
 
     <div class="flex-1 h-full flex flex-col min-w-0 bg-white">
@@ -17,6 +39,7 @@
                 <el-tab-pane label="操作权限" name="power"></el-tab-pane>
                 <el-tab-pane label="系统菜单" name="menu"></el-tab-pane>
                 <el-tab-pane label="Gis菜单" name="gis"></el-tab-pane>
+                <el-tab-pane label="通讯录目录" name="contactMenu"></el-tab-pane>
             </el-tabs>
             <div class="text-sm text-slate-600 whitespace-nowrap">当前角色：{{ roleName || '-' }}</div>
         </div>
@@ -70,34 +93,89 @@
 
 @section script {
 <script>
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
 
 const app = createApp({
     setup() {
-        const roleId = ref(@roleId);
+        const roleId = ref(@initialRoleId);
         const roleName = ref('');
+        const currentRoleId = ref(@initialRoleId);
         const activeTab = ref('power');
+        const roles = ref(@Html.Raw(rolesJson));
 
         const buildUrl = (tab) => {
             const id = roleId.value || 0;
             if (tab === 'menu') return `/Admins/RoleMenu?roleId=${id}`;
             if (tab === 'gis') return `/GIS/RoleGisMenu?roleId=${id}`;
+            if (tab === 'contactMenu') return `/CRM/RoleContactMenu?roleId=${id}`;
             return `/Admins/RolePower?roleId=${id}`;
         };
 
         const activeUrl = computed(() => buildUrl(activeTab.value));
         const switchTab = (tab) => { activeTab.value = tab; };
 
+        const selectRole = (role) => {
+            if (role.id === currentRoleId.value) return;
+            currentRoleId.value = role.id;
+            roleId.value = role.id;
+            roleName.value = role.name;
+        };
+
+        const loadRoles = async () => {
+            try {
+                const res = await axios.get('?handler=Roles');
+                if (res.data?.code === 0 || res.data?.code === '0') {
+                    roles.value = res.data.data || [];
+                    // ensure current role still exists; if not, fallback to first
+                    if (!roles.value.some(r => r.id === currentRoleId.value)) {
+                        const first = roles.value[0];
+                        if (first) {
+                            currentRoleId.value = first.id;
+                            roleId.value = first.id;
+                            roleName.value = first.name;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('加载角色列表失败', e);
+            }
+        };
+
+        const openRolesManager = () => {
+            const id = currentRoleId.value || 0;
+            const target = `/Admins/Roles?roleId=${id}`;
+            const manager = window.EleManager;
+            if (manager && typeof manager.openDrawer === 'function') {
+                manager.openDrawer({
+                    title: '角色权限管理',
+                    url: target,
+                    direction: 'rtl',
+                    closeAction: 'refreshdata'
+                });
+                return;
+            }
+            window.location.href = target;
+        };
+
         const onMessage = (event) => {
             if (!event || !event.data) return;
-            const msg = event.data;
-            if (msg.type !== 'role-selected') return;
-            roleId.value = Number(msg.roleId || 0);
-            roleName.value = msg.roleName || '';
+            if (event.data.__eleRefreshData) {
+                loadRoles();
+            }
         };
 
         onMounted(() => {
+            const initial = roles.value.find(r => r.id === currentRoleId.value) || roles.value[0];
+            if (initial) {
+                currentRoleId.value = initial.id;
+                roleId.value = initial.id;
+                roleName.value = initial.name;
+            }
             window.addEventListener('message', onMessage);
+        });
+
+        onUnmounted(() => {
+            window.removeEventListener('message', onMessage);
         });
 
         return {
@@ -106,6 +184,10 @@ const app = createApp({
             activeTab,
             activeUrl,
             switchTab,
+            roles,
+            currentRoleId,
+            selectRole,
+            openRolesManager,
         };
     }
 });

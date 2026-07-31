@@ -6,7 +6,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="联系人" FormPage="ContactForm" EnableBatch="true">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="联系人/通讯录" FormPage="ContactForm" EnableBatch="true">
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Name" Width="180px" Label="姓名"></EleInput>
@@ -33,7 +33,7 @@
             <EleColumn For="Item.Tel" Label="电话" Width="160"></EleColumn>
             <EleColumn For="Item.Title" Label="职务" Width="140"></EleColumn>
             <EleColumn For="Item.MenuName" Label="目录" Width="160" Prop="menuName"></EleColumn>
-            <EleColumn For="Item.OrgName" Label="组织" Width="180" Prop="orgName"></EleColumn>
+            <EleColumn For="Item.OrgName" Label="组织" Width="180" Prop="orgName" Expanded></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="180" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
         </Columns>
     </EleTable>

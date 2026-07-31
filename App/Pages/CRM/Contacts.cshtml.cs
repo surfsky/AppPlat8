@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.OA
 {
-    /// <summary>联系人管理页</summary>
+    /// <summary>联系人（通讯录）管理页</summary>
     [Auth(Power.ContactView)]
     public class ContactsModel : AdminModel
     {

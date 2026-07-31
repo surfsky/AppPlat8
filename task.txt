@@ -486,9 +486,12 @@ Done
         BadSmell
             IGeometry.RawId, ItemUrl
             GisMenu.ItemUrl -> DataItemUrl
+        实现 feedback 反馈页面
+        重新调整 power 枚举，根据领域拆分
 
 
 2026/07/31
+    /调整菜单，增加CRM、财务、运维等目录；
     导入数据
         导入账户
         导入141对象数据，并调整标签
@@ -497,9 +500,19 @@ Done
             根据企业归属的园区批量定位
             用地图接口批量获取定位信息，并转化为wgs84坐标；
             手动处理一个园区的企业数据，作为示例；
-    优化通讯录：通讯录及通讯录访问权限控制（RoleContactMenu），用于应急指挥
-    实现 EleProperty 控件，默认情况显示为表格，点击编辑会跳到编辑页面。可用于各种JsonData
+    增加CRM主题
+        /内置：公司、通讯录、角色通讯录管理
+        优化通讯录：实现通讯录访问权限控制（RoleContactMenu），可用于应急指挥
+        做好安全管控和脱敏处理；
+    实现 EleProperty 控件，默认情况显示为只读双列表格，用于存储key-value数据，点击编辑会跳到编辑页面。可用于各种JsonData
     把基础科的 AI 知识库弄起来 RAG
+        传统方案：拆分文本分析写到向量数据库
+        图像方案：
+            pixcel rag
+            graphy rag
+    优化
+        优化 EleColumn 增加属性 AutoExpand，可自动扩展宽度；
+        普通点位详情，缺失网站展示行；
 
 
 2026/07/30

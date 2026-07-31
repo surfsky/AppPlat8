@@ -7,7 +7,7 @@
 @section body {
     <EleForm LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleTreeSelect For="Item.ParentId" Label="上级菜单" Api="/httpapi/auths/GetMenuTree"  Clearable="true" CheckStrictly="true"></EleTreeSelect>        
+        <EleTreePicker For="Item.ParentId" Label="上级菜单" Api="/httpapi/auths/GetMenuTree"  Clearable="true" CheckStrictly="true"></EleTreePicker>        
         <EleInput For="Item.NavigateUrl" Label="链接"></EleInput>
         
         <EleIconPicker For="Item.ImageUrl" Label="图标" Multi="false" Popup="/Shared/IconSelector" TextProp="ImageUrl"></EleIconPicker>

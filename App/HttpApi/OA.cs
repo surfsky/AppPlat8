@@ -19,14 +19,14 @@ namespace App.API
             var allMap = all.ToDictionary(t => t.Id, t => t);
             var visibleMap = all.ToDictionary(t => t.Id, t => t);
 
-            if (excludeId.IsNotEmpty())
+            if (excludeId != null && excludeId > 0)
             {
-                var blockedIds = all.GetDescendants(excludeId).Select(t => t.Id).ToHashSet();
+                var blockedIds = all.GetDescendants(excludeId.Value).Select(t => t.Id).ToHashSet();
                 foreach (var id in blockedIds)
                     visibleMap.Remove(id);
             }
 
-            if (selectedId.IsNotEmpty() && allMap.TryGetValue(selectedId.Value, out var selected))
+            if (selectedId != null && selectedId > 0 && allMap.TryGetValue(selectedId.Value, out var selected))
             {
                 var current = selected;
                 while (current != null)
@@ -59,6 +59,65 @@ namespace App.API
                 .Select(t => t.Export())
                 .ToList();
             return list.ToResult();
+        }
+
+        /// <summary>获取当前用户可见的通讯录目录树（节点带 canEdit 标记）</summary>
+        [HttpApi("获取当前用户可见的通讯录目录树", AuthLogin = true)]
+        public static APIResult GetUserVisibleContactMenuTree(long userId)
+        {
+            var seeIds = new HashSet<long>(RoleContactMenu.GetUserVisibleMenuIds(userId));
+            var editIds = new HashSet<long>(RoleContactMenu.GetUserEditableMenuIds(userId));
+            return BuildContactMenuTree(seeIds, editIds).ToResult();
+        }
+
+        /// <summary>根据 seeIds / editIds 构建目录树（同时携带父链以保证目录完整）</summary>
+        static List<object> BuildContactMenuTree(HashSet<long> seeIds, HashSet<long> editIds)
+        {
+            if (seeIds.Count == 0)
+                return new List<object>();
+
+            // 包含所有需要展示的节点：可见节点 + 可见节点的祖先（保证树结构完整）
+            var all = ContactMenu.Set.AsNoTracking().ToList();
+            var allMap = all.ToDictionary(t => t.Id, t => t);
+
+            var keep = new HashSet<long>(seeIds);
+            foreach (var id in seeIds)
+            {
+                if (!allMap.TryGetValue(id, out var node)) continue;
+                var current = node;
+                while (current != null && current.ParentId.HasValue && allMap.TryGetValue(current.ParentId.Value, out var parent))
+                {
+                    if (!keep.Add(parent.Id)) break;
+                    current = parent;
+                }
+            }
+
+            var roots = all
+                .Where(t => keep.Contains(t.Id))
+                .OrderBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .ToList()
+                .ToTree();
+
+            return roots.Select(t => ToContactNode(t, keep, editIds)).ToList();
+        }
+
+        static object ToContactNode(ContactMenu menu, HashSet<long> keep, HashSet<long> editIds)
+        {
+            return new
+            {
+                id = menu.Id,
+                parentId = menu.ParentId,
+                name = menu.Name,
+                fullName = menu.FullName,
+                sortId = menu.SortId,
+                treeLevel = menu.TreeLevel,
+                canEdit = editIds.Contains(menu.Id),
+                children = (menu.Children ?? new List<ContactMenu>())
+                    .Where(c => keep.Contains(c.Id))
+                    .Select(c => ToContactNode(c, keep, editIds))
+                    .ToList()
+            };
         }
     }
 }
