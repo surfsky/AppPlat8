@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace App.Pages.Admins
 {
-    [Auth(Power.RolePowerEdit)]
+    [Auth(Power.RoleEdit)]
     public class RolePowerModel : AdminModel
     {
         public long RoleId { get; set; }

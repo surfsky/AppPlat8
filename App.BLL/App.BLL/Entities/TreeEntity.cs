@@ -71,5 +71,11 @@ namespace App.Entities
                 Children = this.Children?.Select(c => (T)c.Clone()).ToList()
             };
         }
+
+        /// <summary>获取子目录ID列表（包含自身）</summary>
+        public static List<long> GetChildIds(long id)
+        {
+            return All.GetDescendants(id).Select(t => t.Id).Distinct().ToList();
+        }
     }
 }

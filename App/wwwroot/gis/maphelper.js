@@ -2414,8 +2414,8 @@
             var obj;
             try {
                 obj = global.GisGeoJsonHelper && typeof global.GisGeoJsonHelper.parseGeoJson === 'function'
-                    ? global.GisGeoJsonHelper.parseGeoJson(row.geoJson || row.jsonData)
-                    : JSON.parse(normalizeRawGeoJson(row.geoJson || row.jsonData));
+                    ? global.GisGeoJsonHelper.parseGeoJson(row.geoJson)
+                    : JSON.parse(normalizeRawGeoJson(row.geoJson));
             } catch {
                 return [];
             }

@@ -76,7 +76,7 @@ try
             ExcelRow = i + 1,
             SourceId = TryParseLong(ReadCell(row, cId, formatter, evaluator)),
             Name = ReadCell(row, cName, formatter, evaluator),
-            SocialCreditCode = NormalizeSocialCredit(ReadCell(row, cSocial, formatter, evaluator)),
+            SocialCreditId = NormalizeSocialCredit(ReadCell(row, cSocial, formatter, evaluator)),
             GridPath = ReadCell(row, cGrid, formatter, evaluator),
             LatestCheckDt = ReadDateCell(row, cLatestCheck, formatter, evaluator),
             Code = ReadCell(row, cCode, formatter, evaluator),
@@ -97,7 +97,7 @@ try
             IsDelText = ReadCell(row, cIsDel, formatter, evaluator),
         };
 
-        if (string.IsNullOrWhiteSpace(data.Name) && string.IsNullOrWhiteSpace(data.SocialCreditCode) && !data.SourceId.HasValue)
+        if (string.IsNullOrWhiteSpace(data.Name) && string.IsNullOrWhiteSpace(data.SocialCreditId) && !data.SourceId.HasValue)
             continue;
 
         rows.Add(data);
@@ -106,7 +106,7 @@ try
     report.Add($"Rows parsed: {rows.Count}");
     report.Add($"Distinct grid path count: {rows.Select(t => t.GridPath).Where(t => !string.IsNullOrWhiteSpace(t)).Distinct(StringComparer.OrdinalIgnoreCase).Count()}");
     report.Add($"Distinct source id count: {rows.Where(t => t.SourceId.HasValue).Select(t => t.SourceId!.Value).Distinct().Count()}");
-    report.Add($"Distinct social credit count: {rows.Where(t => !string.IsNullOrWhiteSpace(t.SocialCreditCode)).Select(t => t.SocialCreditCode).Distinct(StringComparer.OrdinalIgnoreCase).Count()}");
+    report.Add($"Distinct social credit count: {rows.Where(t => !string.IsNullOrWhiteSpace(t.SocialCreditId)).Select(t => t.SocialCreditId).Distinct(StringComparer.OrdinalIgnoreCase).Count()}");
     report.Add($"Distinct unique-key(Social or SourceId) count: {rows.Select(t => BuildUniqueIdentityKey(t)).Where(t => !string.IsNullOrWhiteSpace(t)).Distinct(StringComparer.OrdinalIgnoreCase).Count()}");
 
     if (options.DryRun)
@@ -168,9 +168,9 @@ try
     var tagCache = LoadTagCache(db);
     var objectById = db.CheckObjects.ToDictionary(t => t.Id, t => t);
     var objectBySocial = db.CheckObjects
-        .Where(t => !string.IsNullOrWhiteSpace(t.SocialCreditCode))
+        .Where(t => !string.IsNullOrWhiteSpace(t.SocialCreditId))
         .AsEnumerable()
-        .GroupBy(t => NormalizeSocialCredit(t.SocialCreditCode))
+        .GroupBy(t => NormalizeSocialCredit(t.SocialCreditId))
         .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
     var objectBySourceId = db.CheckObjects
         .Where(t => !string.IsNullOrWhiteSpace(t.Code))
@@ -189,7 +189,7 @@ try
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(row.Name) && string.IsNullOrWhiteSpace(row.SocialCreditCode) && !row.SourceId.HasValue)
+            if (string.IsNullOrWhiteSpace(row.Name) && string.IsNullOrWhiteSpace(row.SocialCreditId) && !row.SourceId.HasValue)
             {
                 skipped++;
                 report.Add($"Row {row.ExcelRow}: skipped (no identity fields)");
@@ -204,7 +204,7 @@ try
                 if (objectBySourceId.TryGetValue(NormalizeSourceId(row.SourceId.Value.ToString()), out var bySourceId))
                     item = bySourceId;
             }
-            else if (!string.IsNullOrWhiteSpace(row.SocialCreditCode) && objectBySocial.TryGetValue(row.SocialCreditCode, out var bySocial))
+            else if (!string.IsNullOrWhiteSpace(row.SocialCreditId) && objectBySocial.TryGetValue(row.SocialCreditId, out var bySocial))
             {
                 item = bySocial;
             }
@@ -222,9 +222,9 @@ try
                 item.Name = row.Name.Trim();
                 changed = true;
             }
-            if (!string.IsNullOrWhiteSpace(row.SocialCreditCode) && !string.Equals(item.SocialCreditCode ?? string.Empty, row.SocialCreditCode.Trim(), StringComparison.Ordinal))
+            if (!string.IsNullOrWhiteSpace(row.SocialCreditId) && !string.Equals(item.SocialCreditId ?? string.Empty, row.SocialCreditId.Trim(), StringComparison.Ordinal))
             {
-                item.SocialCreditCode = row.SocialCreditCode.Trim();
+                item.SocialCreditId = row.SocialCreditId.Trim();
                 changed = true;
             }
             if (!string.IsNullOrWhiteSpace(row.Code) && !string.Equals(item.Code ?? string.Empty, row.Code.Trim(), StringComparison.Ordinal))
@@ -363,8 +363,8 @@ try
             if (item.Id > 0)
                 objectById[item.Id] = item;
 
-            if (!string.IsNullOrWhiteSpace(item.SocialCreditCode))
-                objectBySocial[NormalizeSocialCredit(item.SocialCreditCode)] = item;
+            if (!string.IsNullOrWhiteSpace(item.SocialCreditId))
+                objectBySocial[NormalizeSocialCredit(item.SocialCreditId)] = item;  
 
             if (!string.IsNullOrWhiteSpace(item.Code))
                 objectBySourceId[NormalizeSourceId(item.Code)] = item;
@@ -494,8 +494,8 @@ static string BuildUniqueIdentityKey(ImportRow row)
 {
     if (row.SourceId.HasValue)
         return "I:" + row.SourceId.Value.ToString(CultureInfo.InvariantCulture);
-    if (!string.IsNullOrWhiteSpace(row.SocialCreditCode))
-        return "S:" + NormalizeSocialCredit(row.SocialCreditCode);
+    if (!string.IsNullOrWhiteSpace(row.SocialCreditId))
+        return "S:" + NormalizeSocialCredit(row.SocialCreditId);
     return string.Empty;
 }
 
@@ -762,7 +762,7 @@ internal sealed class ImportRow
     public int ExcelRow { get; set; }
     public long? SourceId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string SocialCreditCode { get; set; } = string.Empty;
+    public string SocialCreditId { get; set; } = string.Empty;
     public string GridPath { get; set; } = string.Empty;
     public DateTime? LatestCheckDt { get; set; }
     public string Code { get; set; } = string.Empty;

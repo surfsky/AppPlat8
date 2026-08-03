@@ -173,6 +173,8 @@ export class DrawerHelper {
 }
 
 /* Keep message/notification above drawer overlays and headers. */
+.el-overlay.is-message-box,
+.el-overlay-message-box,
 .el-message,
 .el-notification {
     z-index: 300000 !important;

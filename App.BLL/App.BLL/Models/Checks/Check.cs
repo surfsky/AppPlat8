@@ -84,7 +84,7 @@ namespace App.DAL
             if (objectName.IsNotEmpty())        q = q.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));
             if (objectId.IsNotEmpty())          q = q.Where(o => o.CheckObjectId == objectId.Value);
             if (objectType.IsNotEmpty())        q = q.Where(o => o.CheckObject.ObjectType == objectType.Value);
-            if (socialCreditCode.IsNotEmpty())  q = q.Where(o => o.CheckObject.SocialCreditCode.Contains(socialCreditCode.Trim()));
+            if (socialCreditCode.IsNotEmpty())  q = q.Where(o => o.CheckObject.SocialCreditId.Contains(socialCreditCode.Trim()));
             if (checkStartDt.IsNotEmpty())      q = q.Where(o => o.CheckDt >= checkStartDt.Value);
             if (checkEndDt.IsNotEmpty())        q = q.Where(o => o.CheckDt <= checkEndDt.Value);
             return q;

@@ -67,10 +67,6 @@ namespace App.DAL
         [UI("配置", "AI配置")]              ConfigAI = 24,
         [UI("AI", "AI聊天")]                AIChat = 25,
 
-        [UI("网站", "参考网站新增")]          SiteNew = 278,
-        [UI("网站", "参考网站查看")]          SiteView = 279,
-        [UI("网站", "参考网站修改")]          SiteEdit = 280,
-        [UI("网站", "参考网站删除")]          SiteDelete = 281,
 
 
         //---------------------------------------------
@@ -84,8 +80,8 @@ namespace App.DAL
         [UI("监管", "IP黑名单维护")]        MonitorIP = 35,
 
 
-        [UI("反馈", "查看")]                FeedBackView = 41,
-        [UI("反馈", "新增")]                FeedBackNew = 40,
+        [UI("反馈", "查看")]                FeedBackView = 40,
+        [UI("反馈", "新增")]                FeedBackNew = 41,
         [UI("反馈", "修改")]                FeedBackEdit = 42,
         [UI("反馈", "删除")]                FeedBackDelete = 43,
         [UI("反馈", "派发")]                FeedBackDispatch = 45,           
@@ -95,22 +91,20 @@ namespace App.DAL
         //---------------------------------------------
         // 用户、角色、组织
         //---------------------------------------------
-        [UI("用户", "用户浏览")]            UserView = 51,
-        [UI("用户", "用户新增")]            UserNew = 50,
+        [UI("用户", "用户浏览")]            UserView = 50,
+        [UI("用户", "用户新增")]            UserNew = 51,
         [UI("用户", "用户修改")]            UserEdit = 52,
         [UI("用户", "用户删除")]            UserDelete = 53,
         [UI("用户", "用户密码管理")]         UserPassword = 54,
 
-        [UI("角色", "角色浏览")]            RoleView = 59,
-        [UI("角色", "角色新增")]            RoleNew = 55,
-        [UI("角色", "角色管理")]            RoleEdit = 56,
-        [UI("角色", "角色权限管理")]        RolePowerEdit = 57,
-        [UI("角色", "角色用户管理")]        RoleUserEdit = 58,
-        [UI("角色", "角色删除")]            RoleDelete = 590,
+        [UI("角色", "角色浏览")]            RoleView = 55,
+        [UI("角色", "角色新增")]            RoleNew = 56,
+        [UI("角色", "角色修改")]            RoleEdit = 57,
+        [UI("角色", "角色删除")]            RoleDelete = 58,
 
 
-        [UI("组织", "组织查看")]        OrgView = 61,
-        [UI("组织", "组织新增")]        OrgNew = 60,
+        [UI("组织", "组织查看")]        OrgView = 60,
+        [UI("组织", "组织新增")]        OrgNew = 61,
         [UI("组织", "组织修改")]        OrgEdit = 62,
         [UI("组织", "组织删除")]        OrgDelete = 63,
 
@@ -119,49 +113,51 @@ namespace App.DAL
         //---------------------------------------------
         // OA (200)
         //---------------------------------------------
-        [UI("公告", "公告查看")]               AnnounceView = 71,
-        [UI("公告", "公告新增")]               AnnounceNew = 70,
+        [UI("公告", "公告查看")]               AnnounceView = 70,
+        [UI("公告", "公告新增")]               AnnounceNew = 71,
         [UI("公告", "公告修改")]               AnnounceEdit = 72,
         [UI("公告", "公告删除")]               AnnounceDelete = 73,
 
 
-        [UI("评论", "评论新增")]               CommentNew = 210,
-        [UI("评论", "评论查看")]               CommentView = 211,
+        [UI("评论", "评论查看")]               CommentView = 210,
+        [UI("评论", "评论新增")]               CommentNew = 211,
         [UI("评论", "评论修改")]               CommentEdit = 212,
         [UI("评论", "评论删除")]               CommentDelete = 213,
+
 
 
         //---------------------------------------------
         // 财务
         //---------------------------------------------
-        [UI("项目", "项目查看")]               ProjectView = 231,
-        [UI("项目", "项目新增")]               ProjectNew = 230,
-        [UI("项目", "项目修改")]               ProjectEdit = 232,
-        [UI("项目", "项目删除")]               ProjectDelete = 233,
-
-        [UI("预算", "预算查看")]               BudgetView = 241,
-        [UI("预算", "预算新增")]               BudgetNew = 240,
-        [UI("预算", "预算修改")]               BudgetEdit = 242,
-        [UI("预算", "预算删除")]               BudgetDelete = 243,
-        [UI("预算", "预算类别管理")]           BudgetTypeEdit = 245,
-
-        [UI("资产", "资产查看")]               AssetView = 201,
-        [UI("资产", "资产新增")]               AssetNew = 200,
+        [UI("资产", "资产查看")]               AssetView = 200,
+        [UI("资产", "资产新增")]               AssetNew = 201,
         [UI("资产", "资产修改")]               AssetEdit = 202,
         [UI("资产", "资产删除")]               AssetDelete = 203,
         [UI("资产", "资产类别管理")]           AssetCategoryEdit = 205,
 
+        [UI("项目", "项目查看")]               ProjectView = 230,
+        [UI("项目", "项目新增")]               ProjectNew = 231,
+        [UI("项目", "项目修改")]               ProjectEdit = 232,
+        [UI("项目", "项目删除")]               ProjectDelete = 233,
+
+        [UI("预算", "预算查看")]               BudgetView = 240,
+        [UI("预算", "预算新增")]               BudgetNew = 241,
+        [UI("预算", "预算修改")]               BudgetEdit = 242,
+        [UI("预算", "预算删除")]               BudgetDelete = 243,
+        [UI("预算", "预算类别管理")]           BudgetTypeEdit = 245,
+
+
         //---------------------------------------------
         // Task
         //---------------------------------------------
-        [UI("任务", "任务查看")]               TaskView = 261,
-        [UI("任务", "任务新增")]               TaskNew = 260,
+        [UI("任务", "任务查看")]               TaskView = 260,
+        [UI("任务", "任务新增")]               TaskNew = 261,
         [UI("任务", "任务修改")]               TaskEdit = 262,
         [UI("任务", "任务删除")]               TaskDelete = 263,
 
 
-        [UI("事件", "事件查看")]               EventView = 221,
-        [UI("事件", "事件新增")]               EventNew = 220,
+        [UI("事件", "事件查看")]               EventView = 220,
+        [UI("事件", "事件新增")]               EventNew = 221,
         [UI("事件", "事件修改")]               EventEdit = 222,
         [UI("事件", "事件删除")]               EventDelete = 223,
         [UI("事件", "事件类别管理")]           EventTypeEdit = 225,
@@ -170,8 +166,8 @@ namespace App.DAL
         // KB
         //---------------------------------------------
 
-        [UI("文档", "文档查看")]               ArticleView = 251,
-        [UI("文档", "文档新增")]               ArticleNew = 250,
+        [UI("文档", "文档查看")]               ArticleView = 250,
+        [UI("文档", "文档新增")]               ArticleNew = 251,
         [UI("文档", "文档修改")]               ArticleEdit = 252,
         [UI("文档", "文档删除")]               ArticleDelete = 253,
         [UI("文档", "文档目录管理")]           ArticleDirEdit = 255,
@@ -180,66 +176,76 @@ namespace App.DAL
         //---------------------------------------------
         // CRM
         //---------------------------------------------
-        [UI("厂商", "厂商查看")]               CompanyView = 81,
-        [UI("厂商", "厂商新增")]               CompanyNew = 80,
-        [UI("厂商", "厂商修改")]               CompanyEdit = 82,
-        [UI("厂商", "厂商删除")]               CompanyDelete = 83,
 
-        [UI("联系人", "联系人查看")]           ContactView = 265,
-        [UI("联系人", "联系人新增")]           ContactNew = 264,
+        [UI("联系人目录", "联系人目录查看")]     ContactMenuView = 240,
+        [UI("联系人目录", "联系人目录新增")]     ContactMenuNew = 241,
+        [UI("联系人目录", "联系人目录修改")]     ContactMenuEdit = 242,
+        [UI("联系人目录", "联系人目录删除")]     ContactMenuDelete = 243,
+
+        [UI("联系人", "联系人查看")]           ContactView = 260,
+        [UI("联系人", "联系人新增")]           ContactNew = 261,
         [UI("联系人", "联系人修改")]           ContactEdit = 266,
         [UI("联系人", "联系人删除")]           ContactDelete = 267,
 
-        [UI("联系人目录", "联系人目录查看")]     ContactMenuView = 247,
-        [UI("联系人目录", "联系人目录新增")]     ContactMenuNew = 246,
-        [UI("联系人目录", "联系人目录修改")]     ContactMenuEdit = 248,
-        [UI("联系人目录", "联系人目录删除")]     ContactMenuDelete = 249,
+
 
         //---------------------------------------------
         // GIS (270)
         //---------------------------------------------
-        [UI("GIS", "GIS新增")]             GisGeometryNew = 270,
-        [UI("GIS", "GIS查看")]             GisGeometryView = 271,
+        [UI("GIS", "GIS查看")]             GisGeometryView = 270,
+        [UI("GIS", "GIS新增")]             GisGeometryNew = 271,
         [UI("GIS", "GIS修改")]             GisGeometryEdit = 272,
         [UI("GIS", "GIS删除")]             GisGeometryDelete = 273,
-        [UI("GIS", "场景新增")]             GisSceneNew = 274,
+
         [UI("GIS", "场景查看")]             GisSceneView = 275,
-        [UI("GIS", "场景修改")]             GisSceneEdit = 276,
-        [UI("GIS", "场景删除")]             GisSceneDelete = 277,
+        [UI("GIS", "场景新增")]             GisSceneNew = 276,
+        [UI("GIS", "场景修改")]             GisSceneEdit = 277,
+        [UI("GIS", "场景删除")]             GisSceneDelete = 278,
 
 
         //---------------------------------------------
         // 检查 (300)
         //---------------------------------------------
-        [UI("检查", "检查对象新增")]           CheckObjectNew = 300,
-        [UI("检查", "检查对象查看")]           CheckObjectView = 301,
+        [UI("检查", "检查对象查看")]           CheckObjectView = 300,
+        [UI("检查", "检查对象新增")]           CheckObjectNew = 301,
         [UI("检查", "检查对象修改")]           CheckObjectEdit = 302,
-        [UI("检查", "检查对象删除")]           CheckObjectDelete = 303,
-        [UI("检查", "检查对象导出")]           CheckObjectExport = 304,
-
-        [UI("检查", "检查任务新增")]           CheckTaskNew = 310,
-        [UI("检查", "检查任务查看")]           CheckTaskView = 311,
+        [UI("检查", "检查对象删除")]           CheckObjectDelete = 304,
+        [UI("检查", "检查对象导出")]           CheckObjectExport = 305,
+        [UI("检查", "检查对象导入")]           CheckObjectImport = 306,
+    
+        [UI("检查", "检查任务查看")]           CheckTaskView = 310,
+        [UI("检查", "检查任务新增")]           CheckTaskNew = 311,
         [UI("检查", "检查任务修改")]           CheckTaskEdit = 312,
         [UI("检查", "检查任务删除")]           CheckTaskDelete = 313,
 
-        [UI("检查", "检查记录新增")]           CheckNew = 320,
-        [UI("检查", "检查记录查看")]           CheckView = 321,
+        [UI("检查", "检查记录查看")]           CheckView = 320,
+        [UI("检查", "检查记录新增")]           CheckNew = 321,
         [UI("检查", "检查记录修改")]           CheckEdit = 322,
         [UI("检查", "检查记录删除")]           CheckDelete = 323,
 
-        [UI("检查", "隐患查看")]               CheckHazardView = 331,
-        [UI("检查", "隐患修改")]               CheckHazardEdit = 332,
-        [UI("检查", "隐患删除")]               CheckHazardDelete = 333,
+        [UI("检查", "隐患查看")]               CheckHazardView = 330,
+        [UI("检查", "隐患修改")]               CheckHazardEdit = 331,
+        [UI("检查", "隐患删除")]               CheckHazardDelete = 332,
 
-        [UI("检查", "检查表新增")]           CheckSheetNew = 340,
-        [UI("检查", "检查表查看")]           CheckSheetView = 341,
+        [UI("检查", "检查表查看")]           CheckSheetView = 340,
+        [UI("检查", "检查表新增")]           CheckSheetNew = 341,
         [UI("检查", "检查表修改")]           CheckSheetEdit = 342,
         [UI("检查", "检查表删除")]           CheckSheetDelete = 343,
 
-        [UI("检查", "检查点新增")]           CheckPointNew = 350,
-        [UI("检查", "检查点查看")]           CheckPointView = 351,
+        [UI("检查", "检查点查看")]           CheckPointView = 350,
+        [UI("检查", "检查点新增")]           CheckPointNew = 351,
         [UI("检查", "检查点修改")]           CheckPointEdit = 352,
         [UI("检查", "检查点删除")]           CheckPointDelete = 353,
+
+
+        //---------------------------------------------
+        // Misc
+        //---------------------------------------------
+        [UI("网站", "参考网站新增")]          SiteNew = 400,
+        [UI("网站", "参考网站查看")]          SiteView = 401,
+        [UI("网站", "参考网站修改")]          SiteEdit = 402,
+        [UI("网站", "参考网站删除")]          SiteDelete = 403,
+
 
         //---------------------------------------------
         // 报表相关权限（900-999）

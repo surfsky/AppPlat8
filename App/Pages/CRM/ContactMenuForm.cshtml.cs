@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.OA
 {
     /// <summary>联系人目录表单页</summary>
-    [Auth(Power.ContactMenuView)]
+    //[Auth(Power.ContactMenuView)]
     public class ContactMenuFormModel : AdminModel
     {
         public ContactMenu Item { get; set; }
@@ -53,6 +53,10 @@ namespace App.Pages.OA
             item.Name = req.Name?.Trim();
             item.ParentId = req.ParentId;
             item.SortId = req.SortId;
+            item.AbbrName = req.AbbrName?.Trim();
+            item.SocialCreditId = req.SocialCreditId?.Trim();
+            item.Address = req.Address;
+            item.DataJson = req.DataJson?.Trim();
             item.Save();
 
             ContactMenu.ClearCache();

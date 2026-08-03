@@ -1,0 +1,31 @@
+@page
+@model App.Pages.Maintains.FeedbackFormModel
+@{
+    ViewData["Title"] = "反馈建议";
+}
+
+@section body {
+    <EleForm LabelWidth="120px">
+        <EleSelect For="Item.Type" Label="类型" Clearable="true"></EleSelect>
+        <EleSelect For="Item.Status" Label="状态" Clearable="true"></EleSelect>
+        <EleSelect For="Item.App" Label="系统" Clearable="true"></EleSelect>
+        <EleInput For="Item.AppVersion" Label="版本"></EleInput>
+        <EleInput For="Item.AppModule" Label="模块"></EleInput>
+
+        <EleInput For="Item.User" Label="提交人"></EleInput>
+        <EleInput For="Item.Contacts" Label="联系方式"></EleInput>
+        <EleInput For="Item.Title" Label="概述" Required="true" FillRow="true"></EleInput>
+        <EleInput For="Item.Content" Label="信息" Type="@EleInputType.TextArea" Rows="6" FillRow="true"></EleInput>
+        <EleInput For="Item.Reply" Label="回应" Type="@EleInputType.TextArea" Rows="4" FillRow="true"></EleInput>
+
+        <EleImageUpload For="Item.Image1" Label="图片1" ItemWidth="120"></EleImageUpload>
+        <EleImageUpload For="Item.Image2" Label="图片2" ItemWidth="120"></EleImageUpload>
+        <EleImageUpload For="Item.Image3" Label="图片3" ItemWidth="120"></EleImageUpload>
+        <EleImageUpload For="Item.Image4" Label="反馈图片" ItemWidth="120" FillRow="true"></EleImageUpload>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

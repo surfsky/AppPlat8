@@ -27,6 +27,7 @@ export class EleForm {
 
         // Embedded EleList controls in form context
         this.eleLists = ref({});
+        this.propertyRows = ref({});
 
         // Split domains: picker, upload, control linkage
         initPickerState(this, Vue);
@@ -180,6 +181,70 @@ export class EleForm {
         }
     }
 
+    normalizePropertyField(field) {
+        if (!field) return '';
+        const name = String(field);
+        return name.charAt(0).toLowerCase() + name.slice(1);
+    }
+
+    parsePropertyJson(raw) {
+        if (raw == null) return {};
+        const text = String(raw).trim();
+        if (!text) return {};
+        try {
+            const parsed = JSON.parse(text);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                return parsed;
+            }
+            return {};
+        } catch {
+            return {};
+        }
+    }
+
+    getPropertyRows(field) {
+        const key = this.normalizePropertyField(field);
+        if (!key) return [];
+
+        const map = this.propertyRows.value;
+        if (!Array.isArray(map[key])) {
+            const obj = this.parsePropertyJson(this.form?.value ? this.form.value[key] : '');
+            map[key] = Object.keys(obj).map((k) => ({
+                key: k,
+                value: obj[k] == null ? '' : String(obj[k])
+            }));
+        }
+        return map[key];
+    }
+
+    syncPropertyJson(field) {
+        const key = this.normalizePropertyField(field);
+        if (!key || !this.form?.value) return;
+
+        const rows = this.getPropertyRows(key);
+        const obj = {};
+        for (let i = 0; i < rows.length; i += 1) {
+            const row = rows[i] || {};
+            const k = String(row.key || '').trim();
+            if (!k) continue;
+            obj[k] = row.value == null ? '' : String(row.value);
+        }
+        this.form.value[key] = Object.keys(obj).length > 0 ? JSON.stringify(obj) : '';
+    }
+
+    addPropertyRow(field) {
+        const rows = this.getPropertyRows(field);
+        rows.push({ key: '', value: '' });
+        this.syncPropertyJson(field);
+    }
+
+    removePropertyRow(field, index) {
+        const rows = this.getPropertyRows(field);
+        if (index < 0 || index >= rows.length) return;
+        rows.splice(index, 1);
+        this.syncPropertyJson(field);
+    }
+
     async load() {
         const url = new URL(window.location.href);
         const id = parseInt(url.searchParams.get('id') || '0', 10);
@@ -197,6 +262,7 @@ export class EleForm {
             if (res.data.code === 0 || res.data.code === '0') {
                 const d = res.data.data || {};
                 this.form.value = { ...this.form.value, ...d };
+                this.propertyRows.value = {};
 
                 if (typeof d.isTop !== 'undefined') this.form.value.isTop = !!d.isTop;
                 this.sanitizeAllStaticSelectValues();
@@ -218,7 +284,10 @@ export class EleForm {
         const closeData = (data && typeof data === 'object') ? data : {};
         if (this.isDirty.value && !this.readOnly.value && !this.success.value && !closeData.saved) {
             try {
-                await EleManager.confirm('数据已修改，确定关闭？');
+                const confirmZIndex = (EleManager?.Instance && typeof EleManager.Instance.resolvePopupZIndex === 'function')
+                    ? EleManager.Instance.resolvePopupZIndex(120000, 10)
+                    : 120000;
+                await EleManager.confirm('数据已修改，确定关闭？', '提示', { zIndex: confirmZIndex });
             } catch {
                 return;
             }

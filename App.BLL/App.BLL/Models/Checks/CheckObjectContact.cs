@@ -60,7 +60,7 @@ namespace App.DAL
             if (checkerId.IsNotEmpty())        q = q.Where(o => o.CheckObject.CheckerId == checkerId.Value);
             if (name.IsNotEmpty())             q = q.Where(o => o.Name.Contains(name.Trim()));
             if (phone.IsNotEmpty())            q = q.Where(o => o.Phone.Contains(phone.Trim()));
-            if (socialCreditCode.IsNotEmpty()) q = q.Where(o => o.CheckObject.SocialCreditCode.Contains(socialCreditCode.Trim()));
+            if (socialCreditCode.IsNotEmpty()) q = q.Where(o => o.CheckObject.SocialCreditId.Contains(socialCreditCode.Trim()));
             if (objectType.IsNotEmpty())       q = q.Where(o => o.CheckObject.ObjectType == objectType.Value);
             if (scale.IsNotEmpty())            q = q.Where(o => o.CheckObject.Scale == scale.Value);
             return q;

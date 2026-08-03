@@ -22,17 +22,20 @@ Thumbs.db
 **/[Bb]in/
 **/[Oo]bj/
 
+# Folders
+Design/
+Temp/
+Exam/
+Tech/
+notebooks/
+Library/
+
+
 # Files
 temp.txt
 tasklog.txt
-Exam/
 Deploy/
-Doc/Data/
-Doc/Map/
-Doc/Specs/
 app/webtest/
-notebooks/
-Library/
 
 # Logs
 **/Logs/

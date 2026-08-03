@@ -14,9 +14,9 @@ namespace App.EleUI
         [HtmlAttributeName("Triggle")]
         public string Triggle { get; set; } = "Data";
 
-        public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+        public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
-            if (!CheckPower(output)) return;
+            if (!CheckPower(output)) return Task.CompletedTask;
 
             output.TagName = "el-switch";
             AddCommonAttributes(context, output);
@@ -26,6 +26,8 @@ namespace App.EleUI
             output.Attributes.SetAttribute("style", "margin-left:auto;");
             output.Attributes.SetAttribute("v-on:change",
                 $"val => toggleAutoRefresh(val, {Interval}, '{EscapeJs(Triggle)}')");
+
+            return Task.CompletedTask;
         }
     }
 }

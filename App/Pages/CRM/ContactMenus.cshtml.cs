@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.OA
 {
     /// <summary>联系人目录管理页</summary>
-    [Auth(Power.ContactMenuView)]
+   // [Auth(Power.ContactMenuView)]
     public class ContactMenusModel : AdminModel
     {
         public ContactMenu Item { get; set; }

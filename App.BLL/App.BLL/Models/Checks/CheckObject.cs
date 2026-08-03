@@ -25,7 +25,7 @@ namespace App.DAL
         [UI("基础", "是否存在隐患")] public bool? HasHarzard { get; set; } = false;
         [UI("基础", "名称")]        public string Name { get; set;}
         [UI("基础", "地块号")]       public string AreaCode { get; set; }
-        [UI("基础", "社会信用代码")]  public string SocialCreditCode { get; set;}
+        [UI("基础", "社会信用代码")]  public string SocialCreditId { get; set;}
         [UI("基础", "地址")]        public string Address { get; set; }
         [UI("基础", "GPS")]        public string Gps { get; set; }
         [UI("基础", "是否巡查")]     public bool? IsChecked { get; set; } 
@@ -139,7 +139,7 @@ namespace App.DAL
                 HasHarzard,
                 Name,
                 Code,
-                SocialCreditCode,
+                SocialCreditId,
                 Address,
                 Gps,
                 AreaCode,
@@ -211,7 +211,7 @@ namespace App.DAL
                 Remark = FailReason,
                 DataJson = JsonSerializer.Serialize(new
                 {
-                    SocialCreditCode,
+                    SocialCreditId,
                     RiskLevel,
                     Scope,
                     Scale,
@@ -291,7 +291,7 @@ namespace App.DAL
             if (scale.IsNotEmpty())                   q = q.Where(o => o.Scale == scale.Value);
             if (riskLevel.IsNotEmpty())               q = q.Where(o => o.RiskLevel == riskLevel.Value);
             if (industryType.IsNotEmpty())            q = q.Where(o => o.IndustryType == industryType.Value);
-            if (socialCreditCode.IsNotEmpty())        q = q.Where(o => o.SocialCreditCode.Contains(socialCreditCode.Trim()));
+            if (socialCreditCode.IsNotEmpty())        q = q.Where(o => o.SocialCreditId.Contains(socialCreditCode.Trim()));
             if (createStartDt.IsNotEmpty())           q = q.Where(o => o.CreateDt >= createStartDt.Value);
             if (createEndDt.IsNotEmpty())             q = q.Where(o => o.CreateDt <= createEndDt.Value);
             if (updateStartDt.IsNotEmpty())           q = q.Where(o => o.UpdateDt >= updateStartDt.Value);

@@ -125,7 +125,7 @@ namespace App.API
                     t.Name,
                     t.Address,
                     t.Gps,
-                    t.SocialCreditCode,
+                    t.SocialCreditId,
                     t.RiskLevel,
                     t.ObjectType,
                     t.Scale,
@@ -154,7 +154,7 @@ namespace App.API
                     lat,
                     dataJson = new
                     {
-                        item.SocialCreditCode,
+                        item.SocialCreditId,
                         item.RiskLevel,
                         item.ObjectType,
                         item.Scale,

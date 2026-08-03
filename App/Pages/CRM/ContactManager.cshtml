@@ -14,8 +14,8 @@
     <div class="w-[260px] flex-shrink-0 border-r border-slate-200 flex flex-col bg-slate-50">
         <div class="h-[50px] px-4 flex items-center justify-between border-b border-slate-200 bg-white">
             <span class="text-sm font-semibold text-slate-700">通讯录目录</span>
-            <el-button size="small" link v-on:click="refreshTree" :loading="loading">
-                <el-icon><Refresh /></el-icon>
+            <el-button size="small" type="primary" plain v-on:click="openMenuManager">
+                编辑
             </el-button>
         </div>
         <div class="flex-1 min-h-0 overflow-auto p-2" v-loading="loading">
@@ -39,10 +39,7 @@
                 highlight-current
                 v-on:node-click="onNodeClick">
                 <template #default="{ data }">
-                    <div class="flex items-center justify-between w-full pr-2">
-                        <span class="text-slate-700">{{ data.name }}</span>
-                        <el-tag v-if="data.canEdit" size="small" type="success" effect="plain">可编辑</el-tag>
-                    </div>
+                    <span class="text-slate-700">{{ data.name }}</span>
                 </template>
             </el-tree>
             <div v-if="!loading && (!filteredTree || filteredTree.length === 0)" class="text-center text-slate-400 text-sm py-6">
@@ -107,8 +104,8 @@ const app = createApp({
         });
 
         const iframeUrl = computed(() => {
-            const base = '/Pages/CRM/Contacts';
-            if (currentMenu.value) return base + '?menuId=' + currentMenu.value.id;
+            const base = '/CRM/Contacts';
+            if (currentMenu.value) return base + '?menuId=' + encodeURIComponent(currentMenu.value.id);
             return base;
         });
 
@@ -120,6 +117,22 @@ const app = createApp({
         const clearSelection = () => {
             currentMenu.value = null;
             if (treeRef.value) treeRef.value.setCurrentKey(null);
+        };
+
+        const openMenuManager = () => {
+            if (window.EleManager && typeof window.EleManager.openDrawer === 'function') {
+                window.EleManager.openDrawer({
+                    title: '通讯录目录管理',
+                    url: '/CRM/ContactMenus',
+                    direction: 'rtl',
+                    size: '50%',
+                    closeHandler: () => {
+                        refreshTree();
+                    }
+                });
+                return;
+            }
+            window.location.href = '/CRM/ContactMenus';
         };
 
         const refreshTree = async () => {
@@ -161,6 +174,7 @@ const app = createApp({
             iframeUrl,
             onNodeClick,
             clearSelection,
+            openMenuManager,
             refreshTree,
         };
     }

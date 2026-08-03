@@ -3,11 +3,13 @@ using System.Linq;
 using App.Components;
 using App.DAL;
 using App.DAL.OA;
+using App.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.CRM
 {
-    [Auth(Power.RolePowerEdit)]
+    [Auth(Power.RoleEdit)]
     public class RoleContactMenuModel : AdminModel
     {
         public long RoleId { get; set; }
@@ -19,10 +21,20 @@ namespace App.Pages.CRM
 
         public IActionResult OnGetMenus(long roleId)
         {
-            var selected = RoleContactMenu.GetRoleMenus(roleId)
-                .ToDictionary(t => t.MenuId, t => t);
+            if (roleId <= 0)
+                return BuildResult(400, "角色参数无效");
 
-            var all = ContactMenu.GetTree() ?? new List<ContactMenu>();
+            var selected = RoleContactMenu.GetRoleMenus(roleId)
+                .GroupBy(t => t.MenuId)
+                .ToDictionary(g => g.Key, g => g.Last());
+
+            // Build tree from current table data to avoid stale tree-cache edge cases.
+            var all = ContactMenu.Set
+                .AsNoTracking()
+                .OrderBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .ToList()
+                .ToTree();
             var data = all.Select(t => ToNode(t, selected)).ToList();
             return BuildResult(0, "success", data);
         }

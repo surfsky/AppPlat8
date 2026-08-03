@@ -51,11 +51,10 @@ namespace App.Pages.OA
             }
 
             item.Name = req.Name?.Trim();
-            item.Tel = req.Tel?.Trim();
+            item.Phone = req.Phone?.Trim();
             item.Title = req.Title?.Trim();
             item.MenuId = req.MenuId;
-            item.OrgId = req.OrgId;
-            item.JsonData = req.JsonData?.Trim();
+            item.DataJson = req.DataJson?.Trim();
             item.Save();
 
             return BuildResult(0, "保存成功", new { id = item.Id });

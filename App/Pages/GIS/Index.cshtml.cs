@@ -68,7 +68,7 @@ namespace App.Pages.GIS
                     o.Name,
                     o.Gps,
                     o.Address,
-                    o.SocialCreditCode
+                    o.SocialCreditId
                 })
                 .ToList();
 
@@ -86,7 +86,7 @@ namespace App.Pages.GIS
                     lat,
                     lng,
                     address = item.Address,
-                    socialCreditCode = item.SocialCreditCode,
+                    socialCreditId = item.SocialCreditId,
                     tags = tags ?? new List<string>()
                 });
             }

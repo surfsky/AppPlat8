@@ -58,7 +58,7 @@
 
 其它
 
-1. 数据库迁移: 运行 `dotnet ef migrations add RoleContactMenu --project App/App.csproj --startup-project App/App.csproj`.
+1. 数据库迁移: 运行 `dotnet ef migrations add DataJson --project App/App.csproj --startup-project App/App.csproj`.
 2. 若端口被占用，查找占用 6060 的进程，然后kill
 
 ```bash

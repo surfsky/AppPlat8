@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.RolePowerEdit)]
+    [Auth(Power.RoleEdit)]
     public class RoleGisMenuModel : AdminModel
     {
         public long RoleId { get; set; }

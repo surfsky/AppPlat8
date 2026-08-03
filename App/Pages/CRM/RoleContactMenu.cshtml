@@ -9,7 +9,7 @@
 <div id="app" class="h-screen flex flex-col overflow-hidden bg-white">
     <div class="h-[50px] px-4 flex items-center gap-2 sticky top-0 z-10">
         <el-button type="primary" v-on:click="save" :loading="saving" :disabled="!roleId">
-            <el-icon class="mr-1"><Check /></el-icon>
+            <el-icon class="mr-1"><Check></Check></el-icon>
             保存
         </el-button>
         <div class="ml-auto flex items-center gap-3">
@@ -33,8 +33,8 @@
     </div>
 
     <div v-loading="loading" class="flex-1 min-h-0 overflow-auto p-3">
-        <el-empty v-if="!loading && roleId && (!menus || menus.length === 0)" description="暂无通讯录目录" />
-        <el-empty v-else-if="!roleId" description="请先在左侧选择角色" />
+        <el-empty v-if="!loading && roleId && (!menus || menus.length === 0)" description="暂无通讯录目录"></el-empty>
+        <el-empty v-else-if="!roleId" description="请先在左侧选择角色"></el-empty>
         <el-tree
             v-else
             ref="treeRef"
@@ -102,12 +102,15 @@ const app = createApp({
             loading.value = true;
             try {
                 const res = await axios.get(`?handler=Menus&roleId=${roleId.value}`);
+                if (!(res?.data?.code === 0 || res?.data?.code === '0')) {
+                    throw new Error(res?.data?.msg || res?.data?.info || '加载失败');
+                }
                 menus.value = res.data.data || [];
                 allVisible.value = menus.value.length > 0 && menus.value.every(root => isFullyVisible(root));
                 allEditable.value = menus.value.length > 0 && menus.value.every(root => isFullyEditable(root));
             } catch (err) {
                 console.error(err);
-                ElMessage.error('加载通讯录目录失败');
+                ElMessage.error(err?.message || '加载通讯录目录失败');
             } finally {
                 loading.value = false;
             }

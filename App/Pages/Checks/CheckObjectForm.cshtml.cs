@@ -20,7 +20,6 @@ namespace App.Pages.Checks
         public void OnGet(long id = 0)
         {
             Item = CheckObject.GetDetail(id) ?? new CheckObject();
-            //JsonData = Item.Export(ExportMode.Normal).ToJson();
         }
 
         public IActionResult OnGetData(long id)
@@ -46,7 +45,7 @@ namespace App.Pages.Checks
             item.DutyOrgId = req.DutyOrgId;
             item.Address = req.Address;
             item.Gps = req.Gps;
-            item.SocialCreditCode = req.SocialCreditCode;
+            item.SocialCreditId = req.SocialCreditId;
             item.LatestCheckDt = req.LatestCheckDt;
             item.ObjectType = req.ObjectType;
             item.Field = req.Field;

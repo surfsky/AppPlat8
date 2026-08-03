@@ -10,7 +10,11 @@
     <EleForm LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreeSelect For="Item.ParentId" Label="上级目录" Api="/httpapi/oa/GetContactMenuTree?excludeId=@currentId&amp;selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleInput For="Item.AbbrName" Label="简称"></EleInput>
+        <EleInput For="Item.SocialCreditId" Label="统一社会信用代码"></EleInput>
+        <EleInput For="Item.Address" Label="地址" Type="@EleInputType.TextArea" Rows="1"></EleInput>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
+        <EleProperty For="Item.DataJson" Label="属性" Rows="4" FillRow="true"></EleProperty>
 
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

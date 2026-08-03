@@ -134,7 +134,11 @@
                 const rows = ref([]);
                 const readOnly = ref(false);
 
-                const getManager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                const getManager = () => {
+                    if (window.EleManager) return window.EleManager;
+                    if (window.top && window.top.EleManager) return window.top.EleManager;
+                    return null;
+                };
                 const showWarning = (msg) => {
                     const manager = getManager();
                     if (manager && typeof manager.showWarning === 'function') {

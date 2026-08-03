@@ -16,7 +16,7 @@ namespace App
     [Authorize]
     public class AdminModel : BaseModel
     {
-        public string JsonData { get; set; } = "{}";
+        //public string DataJson { get; set; } = "{}";
 
         /// <summary>页面模式，Add/Edit/View/Select</summary>
         public PageMode Mode

@@ -101,13 +101,17 @@ namespace App.DAL
 
         // OA
         public DbSet<Announce> Announces { get; set; }
-        public DbSet<Company> Companies { get; set; }
-        public DbSet<Asset> Assets { get; set; }
         public DbSet<Comment> Comments { get; set; }
+
+        // 财务
+        public DbSet<Asset> Assets { get; set; }
         public DbSet<Budget> Budgets { get; set; }
         public DbSet<BudgetType> BudgetTypes { get; set; }
+
+        // CRM
         public DbSet<ContactMenu> ContactMenus { get; set; }
         public DbSet<Contact> Contacts { get; set; }
+        public DbSet<RoleContactMenu> RoleContactMenus { get; set; }
 
 
         //---------------------------------------------------

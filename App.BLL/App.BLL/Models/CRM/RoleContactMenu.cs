@@ -27,23 +27,7 @@ namespace App.DAL.OA
         static string UserSeeCacheKey(long userId) => $"RoleContactMenu-UserSee-{userId}";
         static string UserEditCacheKey(long userId) => $"RoleContactMenu-UserEdit-{userId}";
 
-        static void EnsureTable()
-        {
-            Db.Database.ExecuteSqlRaw(@"
-CREATE TABLE IF NOT EXISTS RoleContactMenus (
-    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    RoleId INTEGER NOT NULL,
-    MenuId INTEGER NOT NULL,
-    CanSee INTEGER NOT NULL,
-    CanEdit INTEGER NOT NULL,
-    CreateDt TEXT NULL,
-    UpdateDt TEXT NULL,
-    CreatorId INTEGER NULL,
-    OwnerId INTEGER NULL
-);");
-            Db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_RoleContactMenus_RoleId_MenuId ON RoleContactMenus(RoleId, MenuId);");
-            Db.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_RoleContactMenus_RoleId ON RoleContactMenus(RoleId);");
-        }
+
 
         static void ClearRoleCache(long roleId)
         {
@@ -61,7 +45,6 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
 
         public static List<RoleContactMenu> GetRoleMenus(long roleId)
         {
-            EnsureTable();
             return Cacher.Get(RoleCacheKey(roleId), () =>
                 Set
                     .Where(t => t.RoleId == roleId)
@@ -71,13 +54,11 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
 
         public static List<long> GetUserVisibleMenuIds(long userId)
         {
-            EnsureTable();
             return Cacher.Get(UserSeeCacheKey(userId), () => GetUserMenuIds(userId, true)) ?? new List<long>();
         }
 
         public static List<long> GetUserEditableMenuIds(long userId)
         {
-            EnsureTable();
             return Cacher.Get(UserEditCacheKey(userId), () => GetUserMenuIds(userId, false)) ?? new List<long>();
         }
 
@@ -107,7 +88,6 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
 
         public static void SetRoleMenus(long roleId, List<RoleContactMenu> menus)
         {
-            EnsureTable();
             var items = (menus ?? new List<RoleContactMenu>())
                 .GroupBy(t => t.MenuId)
                 .Select(g => g.Last())

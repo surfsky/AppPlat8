@@ -23,4 +23,44 @@
             }
 
 
-用EleList 来改造Checks/CheckObjectForm，将子表内容直接显示在表单内（如附件、联系人等），参考 GeometryForm 的附件部分
+
+        <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        static void EnsureTable()
+        {
+            Db.Database.ExecuteSqlRaw(@"
+CREATE TABLE IF NOT EXISTS RoleContactMenus (
+    Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    RoleId INTEGER NOT NULL,
+    MenuId INTEGER NOT NULL,
+    CanSee INTEGER NOT NULL,
+    CanEdit INTEGER NOT NULL,
+    CreateDt TEXT NULL,
+    UpdateDt TEXT NULL,
+    CreatorId INTEGER NULL,
+    OwnerId INTEGER NULL
+);");
+            Db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS IX_RoleContactMenus_RoleId_MenuId ON RoleContactMenus(RoleId, MenuId);");
+            Db.Database.ExecuteSqlRaw("CREATE INDEX IF NOT EXISTS IX_RoleContactMenus_RoleId ON RoleContactMenus(RoleId);");
+        }
+                    EnsureTable();
+            EnsureTable();
+            EnsureTable();
+            EnsureTable();
+
+
+
+        [UI("组织")] public long? OrgId { get; set; }
+        [UI("组织")] public virtual Org Org { get; set; }
+        [NotMapped] public string OrgName => Org?.Name;
+                orgId = OrgId,
+                orgName = OrgName,
+            if (orgId.IsNotEmpty())
+                q = q.Where(t => t.OrgId == orgId.Value);
+
+        public DbSet<Company> Companies { get; set; }
+
+        [UI("厂商", "厂商查看")]               CompanyView = 80,
+        [UI("厂商", "厂商新增")]               CompanyNew = 81,
+        [UI("厂商", "厂商修改")]               CompanyEdit = 82,
+        [UI("厂商", "厂商删除")]               CompanyDelete = 83,
+            <EleColumn For="Item.OrgName" Label="组织" Width="180" Prop="orgName" Expanded></EleColumn>

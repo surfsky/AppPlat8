@@ -61,8 +61,9 @@ namespace App.DAL.GIS
             var q = Set.AsQueryable().Where(t => t.IsLive);
             if (menuId.IsNotEmpty())
             {
-                var ids = GisMenu.All.GetDescendants(menuId).Select(t => t.Id).Distinct().ToList();
-                q = q.Where(t => t.MenuId.HasValue && ids.Contains(t.MenuId.Value));
+                //var ids = GisMenu.All.GetDescendants(menuId).Select(t => t.Id).Distinct().ToList();
+                var ids = GisMenu.GetChildIds(menuId.Value);
+                q = q.Where(t => ids.Contains(t.MenuId.Value));
             }
 
             var items = q.ToList();

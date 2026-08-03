@@ -22,7 +22,7 @@ namespace App.Pages.OA
         /// <summary>获取联系人列表</summary>
         public IActionResult OnGetData(Paging pi, string name = null, string tel = null, long? orgId = null, long? menuId = null, string title = null)
         {
-            var list = Contact.Search(name, tel, orgId, menuId, title).SortPageExport(pi);
+            var list = Contact.Search(name: name, tel: tel, menuId: menuId, title: title).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

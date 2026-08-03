@@ -2043,7 +2043,7 @@
 
             var obj;
             try {
-                obj = JSON.parse(normalizeRawGeoJson(row.geoJson || row.jsonData));
+                obj = JSON.parse(normalizeRawGeoJson(row.geoJson));
             } catch {
                 return [];
             }
