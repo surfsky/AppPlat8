@@ -215,7 +215,27 @@ export const controlStateMethods = {
 
     getControlTreeData(target, fallback = []) {
         const patch = this.getControlPatch(target);
-        const data = patch && Object.prototype.hasOwnProperty.call(patch, 'data') ? patch.data : fallback;
+        let data = patch && Object.prototype.hasOwnProperty.call(patch, 'data') ? patch.data : fallback;
+
+        if ((!Array.isArray(data) || data.length === 0) && target) {
+            try {
+                const normalizedTarget = this.normalizeControlTarget(target);
+                const nodes = document.querySelectorAll('[data-tree-model][data-static-items]');
+                for (const el of nodes) {
+                    const controlId = this.normalizeControlTarget(el.getAttribute('data-ele-control-id') || '');
+                    if (controlId !== normalizedTarget) continue;
+                    const json = el.getAttribute('data-static-items');
+                    const parsed = this.parseJsonAttribute(json);
+                    if (Array.isArray(parsed)) {
+                        data = parsed;
+                    }
+                    break;
+                }
+            } catch {
+                // ignore static tree fallback lookup failures
+            }
+        }
+
         const list = Array.isArray(data) ? data : [];
         return this.normalizeIds(list);
     },

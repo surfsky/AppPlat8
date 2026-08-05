@@ -15,7 +15,7 @@ namespace App.DAL
     public enum WFType : int
     {
         UnKnown = -1,
-        [UI("Maintain",  "反馈", typeof(FeedbackStatus))]   Feedback  = 5
+        [UI("Maintain",  "反馈", typeof(FeedStatus))]   Feedback  = 5
     }
 
 

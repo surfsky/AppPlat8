@@ -91,6 +91,10 @@ export class DrawerHelper {
     gap: 10px;
 }
 
+.ele-manager-drawer-header.is-mobile .ele-manager-drawer-actions {
+    margin-left: auto;
+}
+
 .ele-manager-drawer-title {
     font-weight: 700;
     font-size: 18px;

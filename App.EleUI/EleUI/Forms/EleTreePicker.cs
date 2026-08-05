@@ -36,14 +36,16 @@ namespace App.EleUI
             var collapseTags = CollapseTags ?? false;
 
             var fallbackExpr = "[]";
+            var hasStaticItems = false;
             if (Items is IEnumerable enumerable && Items is not string)
             {
+                hasStaticItems = true;
                 var (sourceIdField, sourceNameField, sourceChildrenField) = ResolveItemsFieldNames(enumerable);
                 idField = sourceIdField;
                 nameField = sourceNameField;
                 childrenField = sourceChildrenField;
-                fallbackExpr = Items.ToJson();
-                output.Attributes.SetAttribute("data-static-items", fallbackExpr);
+                var staticItemsJson = Items.ToJson();
+                output.Attributes.SetAttribute("data-static-items", staticItemsJson);
             }
 
             if (!string.IsNullOrWhiteSpace(Api))
@@ -51,6 +53,12 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("data-source", Api);
                 output.Attributes.SetAttribute("data-key", propName);
                 fallbackExpr = $"options['{EscapeJs(propName)}']";
+            }
+            else if (hasStaticItems)
+            {
+                // Avoid embedding raw JSON inside Vue directive attributes.
+                // Runtime will resolve static tree data from data-static-items.
+                fallbackExpr = "[]";
             }
 
             output.TagName = "div";

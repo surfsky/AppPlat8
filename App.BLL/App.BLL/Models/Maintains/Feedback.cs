@@ -12,16 +12,16 @@ namespace App.DAL
     /// <summary>反馈类型</summary>
     public enum FeedType
     {
-        [UI("BUG")]         Bug = 0,
+        [UI("BUG")]        Bug = 0,
         [UI("错误")]        Error = 1,
-        [UI("新需求")]      Request = 2,
-        [UI("调整")]        Adjust = 3,
+        [UI("需求")]        Request = 2,
+        [UI("优化")]        Adjust = 3,
         [UI("建议")]        Suggest = 4,
         [UI("其它")]        Other = 9,
     }
 
     /// <summary>反馈状态</summary>
-    public enum FeedbackStatus
+    public enum FeedStatus
     {
         [UI("已创建")]  Create = 0,
         [UI("已完成")]  Finish = 1,
@@ -35,8 +35,9 @@ namespace App.DAL
     public enum FeedApp
     {
         [UI("网站")]       Web = 0,
-        [UI("钉钉小程序")] DingMP = 1,
-        [UI("微信小程序")] WechatMP = 5,
+        [UI("钉钉小程序")]   DingMP = 1,
+        [UI("浙政钉小程序")] ZzdMP = 2,
+        [UI("微信小程序")]   WechatMP = 3,
         [UI("综合")]       Mix = 9,
     }
 
@@ -48,10 +49,10 @@ namespace App.DAL
     {
         // 分类
         [UI("类型")]        public FeedType? Type { get; set; }
-        [UI("状态")]        public FeedbackStatus? Status { get; set; }
-        [UI("系统")]        public FeedApp? App { get; set; }
-        [UI("模块")]        public string AppVersion { get; set; }
-        [UI("模块")]        public string AppModule { get; set; }
+        [UI("状态")]        public FeedStatus? Status { get; set; }
+        [UI("应用")]        public FeedApp? App { get; set; }
+        [UI("应用版本")]     public string AppVersion { get; set; }
+        [UI("应用模块")]     public string AppModule { get; set; }
         [UI("失效")]        public bool? IsDel { get; set; } = false;
 
         // 提交人
@@ -62,11 +63,13 @@ namespace App.DAL
         // 内容
         [UI("概述")]        public string Title { get; set; }
         [UI("信息")]        public string Content { get; set; }
-        [UI("回应")]        public string Reply { get; set; }
         [UI("图片1")]       public string Image1 { get; set; }
         [UI("图片2")]       public string Image2 { get; set; }
         [UI("图片3")]       public string Image3 { get; set; }
-        [UI("反馈图片")]    public string Image4 { get; set; }
+
+        // 回复
+        [UI("回应")]        public string Reply { get; set; }
+        [UI("回应图片")]    public string ReplyImage { get; set; }
 
         // 扩展
         [UI("类型")]        public string TypeName { get { return this.Type.GetTitle(); } }
@@ -81,7 +84,7 @@ namespace App.DAL
         public static IQueryable<Feedback> Search(
             long? userId = null, string user = null, 
             string keyword = null,
-            FeedType? type = null,  FeedbackStatus? status = null,
+            FeedType? type = null,  FeedStatus? status = null,
             FeedApp? app = null,  string appVersion = null,
             DateTime? fromDt = null
             )
@@ -109,12 +112,12 @@ namespace App.DAL
         /// <summary>创建反馈处理流</summary>
         static Workflow GetFlow()
         {
-            var stepCreate = WFStep.Create(FeedbackStatus.Create, null, WFStepType.Start);
-            var stepCancel = WFStep.Create(FeedbackStatus.Cancel, null, WFStepType.End);
-            var stepFinish = WFStep.Create(FeedbackStatus.Finish, null, WFStepType.End);
-            var stepDispatch = WFStep.Create(FeedbackStatus.Dispatched, Power.FeedBackDispatch);
-            var stepHandle = WFStep.Create(FeedbackStatus.Handling, Power.FeedBackHandle);
-            var stepSuspend = WFStep.Create(FeedbackStatus.Suspend, null, WFStepType.End);
+            var stepCreate = WFStep.Create(FeedStatus.Create, null, WFStepType.Start);
+            var stepCancel = WFStep.Create(FeedStatus.Cancel, null, WFStepType.End);
+            var stepFinish = WFStep.Create(FeedStatus.Finish, null, WFStepType.End);
+            var stepDispatch = WFStep.Create(FeedStatus.Dispatched, Power.FeedBackDispatch);
+            var stepHandle = WFStep.Create(FeedStatus.Handling, Power.FeedBackHandle);
+            var stepSuspend = WFStep.Create(FeedStatus.Suspend, null, WFStepType.End);
 
             // 关系
             stepCreate.AddNext(stepDispatch).AddNext(stepCancel);
@@ -123,7 +126,7 @@ namespace App.DAL
 
             // 导出
             var steps = Convertor.ToList(stepCreate, stepCancel, stepFinish, stepSuspend, stepHandle, stepDispatch);
-            var flow = new Workflow("反馈处理流程", typeof(Feedback), typeof(FeedbackStatus), steps);
+            var flow = new Workflow("反馈处理流程", typeof(Feedback), typeof(FeedStatus), steps);
             return flow;
         }
 
@@ -134,7 +137,7 @@ namespace App.DAL
         }
 
         /// <summary>更改状态（若失败会抛出异常）</summary>
-        public Feedback ChangeStatus(FeedbackStatus status, User user, string remark = "", List<string> fileUrls = null)
+        public Feedback ChangeStatus(FeedStatus status, User user, string remark = "", List<string> fileUrls = null)
         {
             // 状态相同就不用更改了
             if (this.Status == status)

@@ -33,21 +33,27 @@ namespace App.EleUI
     [HtmlTargetElement("EleColumn", ParentTag = "Columns")] 
     public class EleColumn : EleColumnBase
     {
+        /// <summary>绑定的模型表达式，用于自动解析属性名</summary>
         [HtmlAttributeName("For")]
         public ModelExpression For { get; set; }
 
+        /// <summary>绑定的属性名</summary>
         [HtmlAttributeName("Prop")]
         public string Prop { get; set; }
 
+        /// <summary>列展示格式，默认自动识别属性类型</summary>
         [HtmlAttributeName("Format")]
         public ColumnFormat Format { get; set; } = ColumnFormat.Auto;
 
+        /// <summary>自定义格式化字符串，仅当Format为Custom时生效</summary>
         [HtmlAttributeName("FormatString")]
         public string FormatString { get; set; }
 
+        /// <summary>若为true，则展示为超链接，点击后跳转到详情页</summary>
         [HtmlAttributeName("Link")]
         public bool Link { get; set; }
 
+        /// <summary>若为true，若文本过长则自动换行</summary>
         [HtmlAttributeName("Wrap")]
         public bool Wrap { get; set; } = false;
 

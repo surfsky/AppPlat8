@@ -15,7 +15,7 @@
             this.activeTab = 'sites';
             this.tabs = [
                 { key: 'sites', label: '常用网址', url: '/Open/Sites' },
-                { key: 'contacts', label: '联系人', url: '/OA/Contacts' }
+                { key: 'contacts', label: '联系人', url: '/crm/ContactManager' }
             ];
             this.btn = null;
             this.eventBtn = null;

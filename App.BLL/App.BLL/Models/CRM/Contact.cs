@@ -17,21 +17,22 @@ namespace App.DAL.OA
 
         [UI("联系人目录")] public virtual ContactMenu Menu { get; set; }
         [NotMapped] public string MenuName => Menu?.Name;
+        [NotMapped] public string PhoneMask => Phone?.Mask();
 
         /// <summary>导出联系人数据</summary>
         public override object Export(ExportMode mode = ExportMode.Normal)
         {
             return new
             {
-                id = Id,
-                menuId = MenuId,
-                menuName = MenuName,
-                name = Name,
-                tel = mode == ExportMode.Detail ? Phone : Phone?.Mask(),
-                title = Title,
-                dataJson = DataJson,
-                createDt = CreateDt,
-                updateDt = UpdateDt
+                Id,
+                MenuId,
+                MenuName,
+                Name,
+                Title,
+                DataJson,
+                CreateDt,
+                UpdateDt,
+                Phone = (mode == ExportMode.Detail) ? Phone : PhoneMask,
             };
         }
 

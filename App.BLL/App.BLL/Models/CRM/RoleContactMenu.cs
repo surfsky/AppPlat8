@@ -23,69 +23,38 @@ namespace App.DAL.OA
         public virtual Role Role { get; set; }
         public virtual ContactMenu Menu { get; set; }
 
-        static string RoleCacheKey(long roleId) => $"RoleContactMenu-Role-{roleId}";
-        static string UserSeeCacheKey(long userId) => $"RoleContactMenu-UserSee-{userId}";
-        static string UserEditCacheKey(long userId) => $"RoleContactMenu-UserEdit-{userId}";
 
-
-
-        static void ClearRoleCache(long roleId)
+        /// <summary>获取用户可查看或编辑的通讯录目录IDs</summary>
+        public static List<long> GetUserMenuIds(long userId, bool canSee)
         {
-            Cacher.Remove(RoleCacheKey(roleId));
-            var userIds = User.Set
-                .Where(t => t.Roles.Any(r => r.Id == roleId))
-                .Select(t => t.Id)
-                .ToList();
-            foreach (var userId in userIds)
-            {
-                Cacher.Remove(UserSeeCacheKey(userId));
-                Cacher.Remove(UserEditCacheKey(userId));
-            }
-        }
-
-        public static List<RoleContactMenu> GetRoleMenus(long roleId)
-        {
-            return Cacher.Get(RoleCacheKey(roleId), () =>
-                Set
-                    .Where(t => t.RoleId == roleId)
-                    .ToList()
-            ) ?? new List<RoleContactMenu>();
-        }
-
-        public static List<long> GetUserVisibleMenuIds(long userId)
-        {
-            return Cacher.Get(UserSeeCacheKey(userId), () => GetUserMenuIds(userId, true)) ?? new List<long>();
-        }
-
-        public static List<long> GetUserEditableMenuIds(long userId)
-        {
-            return Cacher.Get(UserEditCacheKey(userId), () => GetUserMenuIds(userId, false)) ?? new List<long>();
-        }
-
-        static List<long> GetUserMenuIds(long userId, bool canSee)
-        {
-            var user = User.Set.FirstOrDefault(t => t.Id == userId);
+            var user = User.GetDetail(userId);
             if (user == null)
                 return new List<long>();
-
             if (string.Equals(user.Name, "admin", StringComparison.OrdinalIgnoreCase))
                 return ContactMenu.All.Select(t => t.Id).ToList();
 
-            var roleIds = User.Set
-                .Where(t => t.Id == userId)
-                .SelectMany(t => t.Roles)
-                .Select(t => t.Id)
-                .ToList();
-
+            // get roleIds
+            var roleIds = user.GetRoleIds();
             if (roleIds.Count == 0)
                 return new List<long>();
 
-            var q = Set.Where(t => roleIds.Contains(t.RoleId));
-            q = canSee ? q.Where(t => t.CanSee) : q.Where(t => t.CanEdit);
-
-            return q.Select(t => t.MenuId).Distinct().ToList();
+            // get menuids，改为从缓存中获取，避免每次都查询数据库
+            var all = RoleContactMenu.All;
+            return all
+                .Where(t => roleIds.Contains(t.RoleId))
+                .Where(t => canSee ? t.CanSee : t.CanEdit)
+                .Select(t => t.MenuId)
+                .Distinct()
+                .ToList();
         }
 
+        /// <summary>获取某个角色授权的通讯录目录</summary>
+        public static List<RoleContactMenu> GetRoleMenus(long roleId)
+        {
+            return RoleContactMenu.All.Where(t => t.RoleId == roleId).ToList();
+        }
+
+        /// <summary>设置角色通讯录目录IDs</summary>
         public static void SetRoleMenus(long roleId, List<RoleContactMenu> menus)
         {
             var items = (menus ?? new List<RoleContactMenu>())
@@ -105,8 +74,7 @@ namespace App.DAL.OA
                     CanEdit = item.CanEdit,
                 }.Save();
             }
-
-            ClearRoleCache(roleId);
+            ClearCache();
         }
     }
 }

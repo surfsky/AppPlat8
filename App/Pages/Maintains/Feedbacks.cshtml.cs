@@ -17,7 +17,7 @@ namespace App.Pages.Maintains
         }
 
         public IActionResult OnGetData(Paging pi, string user = null, string content = null,
-            FeedType? type = null, FeedbackStatus? status = null, FeedApp? app = null, DateTime? createDt = null)
+            FeedType? type = null, FeedStatus? status = null, FeedApp? app = null, DateTime? createDt = null)
         {
             var list = Feedback.Search(
                     user: user,

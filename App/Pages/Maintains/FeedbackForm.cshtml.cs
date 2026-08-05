@@ -24,7 +24,7 @@ namespace App.Pages.Maintains
                 item.User ??= user?.RealName ?? user?.Name;
                 item.Contacts ??= user?.Mobile;
                 item.Type ??= FeedType.Bug;
-                item.Status ??= FeedbackStatus.Create;
+                item.Status ??= FeedStatus.Create;
                 item.App ??= FeedApp.Web;
             }
 
@@ -56,12 +56,12 @@ namespace App.Pages.Maintains
                 item.UserID = user?.Id;
                 item.User = user?.RealName ?? user?.Name;
                 item.Contacts = user?.Mobile;
-                item.Status = FeedbackStatus.Create;
+                item.Status = FeedStatus.Create;
                 item.IsDel = false;
             }
 
             item.Type = req.Type ?? item.Type ?? FeedType.Bug;
-            item.Status = req.Status ?? item.Status ?? FeedbackStatus.Create;
+            item.Status = req.Status ?? item.Status ?? FeedStatus.Create;
             item.App = req.App ?? item.App ?? FeedApp.Web;
             item.AppVersion = req.AppVersion?.Trim();
             item.AppModule = req.AppModule?.Trim();
@@ -76,7 +76,7 @@ namespace App.Pages.Maintains
             item.Image1 = req.Image1;
             item.Image2 = req.Image2;
             item.Image3 = req.Image3;
-            item.Image4 = req.Image4;
+            item.ReplyImage = req.ReplyImage;
 
             item.Save();
             return BuildResult(0, "保存成功", new { id = item.Id });

@@ -8,10 +8,9 @@
 @section body {
     <EleForm Model="form" LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleTreeSelect For="Item.CategoryId" Label="目录" Items="Model.Categories" ></EleTreeSelect>
-        <EleInput For="Item.Content" Label="内容" Rows="10"></EleInput>
+        <EleTreePicker For="Item.CategoryId" Label="目录" Items="Model.Categories" ></EleTreePicker>
+        <EleInput For="Item.Content" Label="内容" Rows="10" FillRow="true"></EleInput>
         <EleSwitch For="Item.AllowComment" Label="允许评论"></EleSwitch>
-        <EleButton Type="Primary" Look="Text" Icon="Edit" Handler="ShowFiles" EnabledFor="Item.Id" Label="附件" FillRow="true">编辑附件</EleButton>
         <EleList Label="附件" FillRow="true" DataHandler="?handler=AttData&id=@articleId" PageSize="10" SortField="Id" SortDirection="DESC" Height="260px" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-2" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <ItemTemplate>
                 <div class="flex items-start justify-between gap-3">
@@ -24,6 +23,9 @@
                     </a>
                 </div>
             </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Text" Handler="ShowFiles" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
         </EleList>
     
         <Bottom>

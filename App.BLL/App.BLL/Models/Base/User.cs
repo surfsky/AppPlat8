@@ -50,17 +50,36 @@ namespace App.DAL
         // Relations
         [UI("所属组织")]        public virtual Org Org { get; set; }
         [UI("授权组织")]        public virtual Org AuthOrg { get; set; }
-        
-
-        // 用户角色（多对多关系）
         [UI("用户角色")]        public virtual List<Role> Roles { get; set; } = new List<Role>();
-        [UI("角色IDs"), NotMapped]  public virtual List<long> RoleIds {get; set;}   // 冗余设计用于前端绑定
-        [UI("角色"), NotMapped]      public long? RoleId { get; set; }               // 仅用于列表筛选
 
-        // extend
+
+        //------------------------------------------------------
+        // 计算属性
+        //------------------------------------------------------
         public string MobileMasked => this.Mobile?.Mask(3, 4);
         public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
 
+        //------------------------------------------------------
+        // 角色相关
+        //------------------------------------------------------
+        // TODO：这两个字段的设计不合理，应该通过中间对象来实现多对多关系的查询和筛选，而不是在User实体中直接添加RoleIds和RoleId字段。
+        [UI("角色IDs"), NotMapped]  public virtual List<long> RoleIds {get; set;}   // 冗余设计用于前端绑定
+        [UI("角色"), NotMapped]     public long? RoleId { get; set; }               // 仅用于列表筛选。
+
+        /// <summary>获取用户的所有角色IDs（有缓存逻辑）</summary>
+        public List<long> GetRoleIds()
+        {
+            return Cacher.Get($"UserRoleIds-{this.Id}", () => User.Set.Where(t => t.Id == this.Id).SelectMany(t => t.Roles).Select(t => t.Id).ToList()) ?? new List<long>();
+        }
+
+        public override void AfterChange(EntityOp op)
+        {
+            base.AfterChange(op);
+            if (op == EntityOp.Edit || op == EntityOp.Delete)
+            {
+                Cacher.Remove($"UserRoleIds-{this.Id}");
+            }
+        }
 
         //------------------------------------------------------
         // 权限

@@ -65,8 +65,8 @@ namespace App.API
         [HttpApi("获取当前用户可见的通讯录目录树", AuthLogin = true)]
         public static APIResult GetUserVisibleContactMenuTree(long userId)
         {
-            var seeIds = new HashSet<long>(RoleContactMenu.GetUserVisibleMenuIds(userId));
-            var editIds = new HashSet<long>(RoleContactMenu.GetUserEditableMenuIds(userId));
+            var seeIds = new HashSet<long>(RoleContactMenu.GetUserMenuIds(userId, true));
+            var editIds = new HashSet<long>(RoleContactMenu.GetUserMenuIds(userId, false));
             return BuildContactMenuTree(seeIds, editIds).ToResult();
         }
 

@@ -172,31 +172,27 @@ namespace App.API
 
         /// <summary>获取检查对象统一 GIS 数据</summary>
         [HttpApi("Point", "获取检查对象GIS数据", AuthLogin = false)]
-        public static APIResult GetCheckObjects(string tagNames = null, string tagIds = null, string name = null, Paging pi = null)
+        public static APIResult GetCheckObjects(string name = null, string tagNames = null, string tagIds = null, long? dutyOrgId = null, Paging pi = null)
         {
             pi ??= new Paging();
             if (pi.PageSize <= 0) pi.PageSize = 20;
             if (pi.PageSize > 200) pi.PageSize = 200;
             if (pi.PageIndex < 0) pi.PageIndex = 0;
 
-            var keyword = name?.Trim();
-
+            // tagIds
             var tagNameKeywords = ParseTagNames(tagNames);
             var explicitTagIds = ParseTagIds(tagIds);
             var hasTagFilter = tagNameKeywords.Count > 0 || explicitTagIds.Count > 0;
-
             var matchedByName = tagNameKeywords.Count == 0
                 ? new List<long>()
                 : CheckTag.Set.AsNoTracking()
                     .Where(t => tagNameKeywords.Any(k => t.Name.Contains(k)))
                     .Select(t => t.Id)
                     .ToList();
-
             var mergedTagIds = matchedByName
                 .Concat(explicitTagIds)
                 .Distinct()
                 .ToList();
-
             if (hasTagFilter && mergedTagIds.Count == 0)
             {
                 pi.SetTotal(0);
@@ -207,7 +203,9 @@ namespace App.API
                 }.ToResult();
             }
 
-            var query = CheckObject.Search(tagIds: mergedTagIds, includeTags: true)
+            // query
+            var keyword = name?.Trim();
+            var query = CheckObject.Search(tagIds: mergedTagIds, includeTags: true, dutyOrgId: dutyOrgId)
                 .Where(t => keyword.IsEmpty() || (t.Name ?? string.Empty).Contains(keyword))
                 .OrderBy(t => t.IsDel ?? false)
                 .ThenBy(t => t.Name)
@@ -448,7 +446,7 @@ namespace App.API
             if (tagIds.IsEmpty() && query.TryGetValue("tagids", out var idVal2))
                 tagIds = idVal2;
             var pageInfo = pi ?? BuildApiPaging(menu);
-            var res = GetCheckObjects(tagNames, tagIds, keyword, pageInfo);
+            var res = GetCheckObjects(keyword, tagNames, tagIds, null, pageInfo);
             if (res?.Code != 0)
                 throw new Exception(res?.Message ?? "获取检查对象失败");
 
@@ -497,7 +495,7 @@ namespace App.API
             var tagIds = query.TryGetValue("tagIds", out var idVal) ? idVal : null;
             if (tagIds.IsEmpty() && query.TryGetValue("tagids", out var idVal2))
                 tagIds = idVal2;
-            var res = GetCheckObjects(tagNames, tagIds, null, new Paging { PageIndex = 0, PageSize = 1 });
+            var res = GetCheckObjects(null, tagNames, tagIds, null, new Paging { PageIndex = 0, PageSize = 1 });
             if (res?.Code != 0)
                 throw new Exception(res?.Message ?? "获取检查对象失败");
 

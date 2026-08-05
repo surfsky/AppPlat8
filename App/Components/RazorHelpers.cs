@@ -1,3 +1,4 @@
+using App.DAL;
 using Microsoft.AspNetCore.Http;
 
 namespace App.Components
@@ -36,5 +37,8 @@ namespace App.Components
 
         /// <summary>QString 的短别名</summary>
         public static string Q(string key, string defaultValue = null) => QString(key, defaultValue);
+
+        /// <summary>检查当前用户是否有指定权限</summary>
+        public static bool AuthPower(Power power) => Auth.CheckPower(power);
     }
 }

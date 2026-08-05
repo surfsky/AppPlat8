@@ -64,3 +64,56 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
         [UI("厂商", "厂商修改")]               CompanyEdit = 82,
         [UI("厂商", "厂商删除")]               CompanyDelete = 83,
             <EleColumn For="Item.OrgName" Label="组织" Width="180" Prop="orgName" Expanded></EleColumn>
+
+
+
+            var q = Set.Where(t => roleIds.Contains(t.RoleId));
+            q = canSee ? q.Where(t => t.CanSee) : q.Where(t => t.CanEdit);
+            return q.Select(t => t.MenuId).Distinct().ToList();
+
+
+        static string RoleCacheKey(long roleId) => $"RoleContactMenu-Role-{roleId}";
+        static string UserSeeCacheKey(long userId) => $"RoleContactMenu-UserSee-{userId}";
+        static string UserEditCacheKey(long userId) => $"RoleContactMenu-UserEdit-{userId}";
+
+
+
+            ClearRoleCache(roleId);
+
+        static void ClearRoleCache(long roleId)
+        {
+            Cacher.Remove(RoleCacheKey(roleId));
+            var userIds = User.Set
+                .Where(t => t.Roles.Any(r => r.Id == roleId))
+                .Select(t => t.Id)
+                .ToList();
+            foreach (var userId in userIds)
+            {
+                Cacher.Remove(UserSeeCacheKey(userId));
+                Cacher.Remove(UserEditCacheKey(userId));
+            }
+        }
+
+        public static List<RoleContactMenu> GetRoleMenus(long roleId)
+        {
+            return Cacher.Get(RoleCacheKey(roleId), () =>
+                Set
+                    .Where(t => t.RoleId == roleId)
+                    .ToList()
+            ) ?? new List<RoleContactMenu>();
+        }
+
+        public static List<long> GetUserVisibleMenuIds(long userId)
+        {
+            return Cacher.Get(UserSeeCacheKey(userId), () => GetUserMenuIds(userId, true)) ?? new List<long>();
+        }
+
+        public static List<long> GetUserEditableMenuIds(long userId)
+        {
+            return Cacher.Get(UserEditCacheKey(userId), () => GetUserMenuIds(userId, false)) ?? new List<long>();
+        }
+
+
+        <Footer>
+            <EleButton Type="Primary" Look="Text" Icon="Edit" Handler="ShowFiles" EnabledFor="Item.Id" >编辑附件</EleButton>
+        </Footer>
