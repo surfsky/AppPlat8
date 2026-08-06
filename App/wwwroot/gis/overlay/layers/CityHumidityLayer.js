@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, chunkArray, fetchWithTimeout } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { addOrUpdateGeoJsonSource, chunkArray, fetchWithTimeout } from "../utils.js";
 import { CityTempLayer } from "./CityTempLayer.js";
 
 /****************************************************************
@@ -12,8 +12,7 @@ export class CityHumidityLayer extends MapLayer {
       title: "城市湿度标签",
       descript: "按缩放级别显示城市相对湿度",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 600,
-      dataInterval: "1小时"
+      refreshCron: "*/30 * * * *"
     });
     this.sourceId = "city-humidity-source";
     this.layerId = "city-humidity-layer";

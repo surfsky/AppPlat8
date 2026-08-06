@@ -1,4 +1,6 @@
 
+import { CronSchedule } from "./CronSchedule.js";
+
 /****************************************************************
  * 地图图层基类
  ****************************************************************/
@@ -9,8 +11,12 @@ export class MapLayer {
     this.descript = opts.descript || "";
     this.api = opts.api || "";
     this.key = opts.key || "";
-    this.refreshSeconds = opts.refreshSeconds || 0;
-    this.dataInterval = String(opts.dataInterval || "").trim();
+    this.refreshCron = String(opts.refreshCron || "").trim();
+    this.refreshSchedule = this.refreshCron ? CronSchedule.parse(this.refreshCron) : null;
+    this.refreshText = this.refreshSchedule
+      ? this.refreshSchedule.describe()
+      : String(opts.refreshText || "").trim();
+    this.nextRefreshAt = this.refreshSchedule ? this.refreshSchedule.nextAfter(Date.now())?.getTime() || 0 : 0;
     this.lastTime = 0;
     this.lastStatus = false;
     this.dataTimeValue = null;
@@ -40,8 +46,11 @@ export class MapLayer {
     this.dataTimeText = "";
   }
 
-  setDataInterval(text) {
-    this.dataInterval = String(text || "").trim();
+  setRefreshCron(expression) {
+    this.refreshCron = String(expression || "").trim();
+    this.refreshSchedule = this.refreshCron ? CronSchedule.parse(this.refreshCron) : null;
+    this.refreshText = this.refreshSchedule ? this.refreshSchedule.describe() : "";
+    this.updateNextRefreshAt();
   }
 
   setInfoExtra(text) {
@@ -60,14 +69,6 @@ export class MapLayer {
     this.lastErrorMessage = "";
   }
 
-  formatShortTime(value) {
-    const date = value ? new Date(value) : null;
-    if (!date || Number.isNaN(date.getTime())) return "";
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
-    return `${hh}:${mm}`;
-  }
-
   formatLocalTime(value) {
     const date = value ? new Date(value) : null;
     if (!date || Number.isNaN(date.getTime())) return "";
@@ -79,22 +80,22 @@ export class MapLayer {
     return `${y}-${m}-${d} ${hh}:${mm}`;
   }
 
-  formatAutoRefreshFrequency() {
-    const sec = Number(this.refreshSeconds) || 0;
-    if (sec <= 0) return "手动";
-    return this.formatSecondsAsText(sec);
+  getRefreshTextDisplay() {
+    return String(this.refreshText || "").trim();
   }
 
-  formatSecondsAsText(sec) {
-    const n = Number(sec) || 0;
-    if (n <= 0) return "";
-    if (n % 3600 === 0) return `${n / 3600}小时`;
-    if (n % 60 === 0) return `${n / 60}分钟`;
-    return `${n}秒`;
+  getRefreshCronDisplay() {
+    return String(this.refreshCron || "").trim();
   }
 
-  getDataIntervalDisplay() {
-    return String(this.dataInterval || "").trim();
+  updateNextRefreshAt(referenceTime = this.lastTime || Date.now()) {
+    if (!this.refreshSchedule) {
+      this.nextRefreshAt = 0;
+      return 0;
+    }
+    const next = this.refreshSchedule.nextAfter(new Date(referenceTime || Date.now()));
+    this.nextRefreshAt = next ? next.getTime() : 0;
+    return this.nextRefreshAt;
   }
 
   getDataTimeDisplay() {
@@ -106,7 +107,11 @@ export class MapLayer {
 
   getDataTimeShortDisplay() {
     if (this.dataTimeValue !== null && this.dataTimeValue !== undefined) {
-      return this.formatShortTime(this.dataTimeValue);
+      const date = new Date(this.dataTimeValue);
+      if (!date || Number.isNaN(date.getTime())) return "";
+      const hh = String(date.getHours()).padStart(2, "0");
+      const mm = String(date.getMinutes()).padStart(2, "0");
+      return `${hh}:${mm}`;
     }
     const txt = String(this.dataTimeText || "").trim();
     if (!txt) return "";
@@ -121,8 +126,9 @@ export class MapLayer {
       visible: this.visible,
       status: this.lastStatus === false ? "error" : (this.visible ? "on" : "off"),
       dataTime: this.getDataTimeDisplay(),
-      dataInterval: this.getDataIntervalDisplay(),
-      autoRefresh: this.formatAutoRefreshFrequency(),
+      refreshCron: this.getRefreshCronDisplay(),
+      refreshText: this.getRefreshTextDisplay(),
+      nextRefreshAt: this.formatLocalTime(this.nextRefreshAt),
       extra: this.infoExtra || "",
       error: this.lastErrorMessage || "",
       lastRefresh: this.formatLocalTime(this.lastTime)
@@ -135,7 +141,7 @@ export class MapLayer {
     const parts = [];
     const dataText = this.getDataTimeShortDisplay();
     if (dataText) parts.push(dataText);
-    const interval = this.getDataIntervalDisplay();
+    const interval = this.getRefreshTextDisplay();
     if (interval) parts.push(interval);
     return parts.length ? parts.join(" | ") : "已开启";
   }
@@ -147,7 +153,9 @@ export class MapLayer {
     const parts = [];
     const timeText = this.getDataTimeDisplay();
     if (timeText) parts.push(`数据时间: ${timeText}`);
-    const interval = this.getDataIntervalDisplay();
+    const refreshedAt = this.formatLocalTime(this.lastTime);
+    if (refreshedAt) parts.push(`最近刷新: ${refreshedAt}`);
+    const interval = this.getRefreshTextDisplay();
     if (interval) parts.push(`更新频率: ${interval}`);
     if (this.infoExtra) parts.push(this.infoExtra);
     return parts.join("\n");
@@ -165,6 +173,7 @@ export class MapLayer {
     const ok = await this.refresh(true);
     this.lastStatus = ok;
     this.lastTime = Date.now();
+    if (ok) this.updateNextRefreshAt(this.lastTime);
     return ok;
   }
 
@@ -178,15 +187,11 @@ export class MapLayer {
     this.opacity = _opacity;
   }
 
-  shouldRefresh() {
-    if (!this.visible || this.refreshSeconds <= 0) return false;
-    return Date.now() - this.lastTime >= this.refreshSeconds * 1000;
-  }
-
   async refresh(_force = false) {
     this.lastTime = Date.now();
     this.clearLastError();
     this.lastStatus = true;
+    this.updateNextRefreshAt(this.lastTime);
     return true;
   }
 }

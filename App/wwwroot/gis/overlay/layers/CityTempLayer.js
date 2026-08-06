@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, chunkArray, fetchWithTimeout } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { addOrUpdateGeoJsonSource, chunkArray, fetchWithTimeout } from "../utils.js";
 
 
 
@@ -47,8 +47,7 @@ export class CityTempLayer extends MapLayer {
       title: "城市温度标签",
       descript: "按缩放级别显示城市温度",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 600,
-      dataInterval: "1小时"
+      refreshCron: "*/30 * * * *"
     });
     this.sourceId = "city-temp-source";
     this.layerId = "city-temp-layer";

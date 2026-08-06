@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { chunkArray, fetchWithTimeout, findNearestHourlyIndex, getTimeSeriesStepSeconds } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { chunkArray, fetchWithTimeout, findNearestHourlyIndex, getTimeSeriesStepSeconds } from "../utils.js";
 
 
 /****************************************************************
@@ -19,8 +19,7 @@ export class WindLayer extends MapLayer {
       name: "wind",
       title: "风场粒子动画",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 360,
-      dataInterval: "1小时"
+      refreshCron: "*/30 * * * *"
     });
     this.canvasId = "windCanvas";
     this.styleId = "wind-canvas-style";
@@ -223,16 +222,12 @@ export class WindLayer extends MapLayer {
       const grid = Array.from({ length: WindLayer.GRID.rows }, () => Array(WindLayer.GRID.cols).fill(null));
       let okCount = 0;
       let dataTime = "";
-      let dataInterval = this.dataInterval;
+      let refreshText = this.refreshText;
 
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const item = list[i] || {};
         const times = Array.isArray(item?.hourly?.time) ? item.hourly.time : [];
-        if (times.length > 1 && (!dataInterval || dataInterval === this.dataInterval)) {
-          const sec = getTimeSeriesStepSeconds(times);
-          if (sec > 0) dataInterval = this.formatSecondsAsText(sec);
-        }
         const idx = times.length ? findNearestHourlyIndex(times) : 0;
         if (!dataTime && times.length) dataTime = String(times[idx] || "");
         const speed = Number(item?.hourly?.wind_speed_10m?.[idx]);
@@ -256,7 +251,7 @@ export class WindLayer extends MapLayer {
         okCount,
         totalCount: nodes.length,
         dataTime,
-        dataInterval,
+        refreshText,
         fetchedAt: Date.now(),
         respDate
       };
@@ -485,7 +480,6 @@ export class WindLayer extends MapLayer {
     this.ensureCanvasOrder();
     try {
       this.field = await this.fetchField();
-      if (this.field?.dataInterval) this.setDataInterval(this.field.dataInterval);
       this.createParticles();
       this.startAnimation();
       const timeText = this.formatDataTime(this.field);

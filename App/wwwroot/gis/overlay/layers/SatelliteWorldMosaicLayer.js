@@ -1,4 +1,4 @@
-import { MapLayer } from "../core/MapLayer.js";
+import { MapLayer } from "../MapLayer.js";
 
 
 /****************************************************************
@@ -10,8 +10,7 @@ export class SatelliteWorldMosaicLayer extends MapLayer {
       name: "satelliteWorld",
       title: "全球卫星云图",
       api: "https://maps.dwd.de/geoserver/dwd/wms",
-      refreshSeconds: 900,
-      dataInterval: "3小时"
+      refreshCron: "*/30 * * * *"
     });
     this.wmsLayer = "Satellite_worldmosaic_3km_world_ir108_3h";
     this.sourceId = "satellite-world-source";

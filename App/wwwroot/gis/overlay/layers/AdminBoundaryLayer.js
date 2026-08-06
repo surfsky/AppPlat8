@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { fetchWithTimeout } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { fetchWithTimeout } from "../utils.js";
 
 const ADMIN_COUNTRY_GEOJSON = "https://geo.datav.aliyun.com/areas_v3/bound/100000.json";
 const ADMIN_PROVINCE_GEOJSON = "https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json";
@@ -16,8 +16,7 @@ export class AdminBoundaryLayer extends MapLayer {
       name: "adminBoundary",
       title: "行政边界",
       api: `${ADMIN_COUNTRY_GEOJSON}, ${ADMIN_PROVINCE_GEOJSON}`,
-      refreshSeconds: 0,
-      dataInterval: "静态"
+      refreshText: "静态"
     });
     this.countrySource = "admin-country-source";
     this.provinceSource = "admin-province-source";

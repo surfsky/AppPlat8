@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, fetchWithTimeout } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { addOrUpdateGeoJsonSource, fetchWithTimeout } from "../utils.js";
 
 /****************************************************************
  * 台风路径图层
@@ -10,8 +10,7 @@ export class TyphoonLayer extends MapLayer {
       name: "typhoon",
       title: "台风路径",
       api: "/httpapi/typhoon/list",
-      refreshSeconds: 300,
-      dataInterval: "3小时"
+      refreshCron: "0 8-23/1 * * *"
     });
     this.sourceId = "typhoon-source";
     this.wind7FillLayerId = "typhoon-wind7-fill-layer";
@@ -356,7 +355,7 @@ export class TyphoonLayer extends MapLayer {
   async ensureTyphoonSvg() {
     if (this.typhoonSvgMarkup) return;
     try {
-      const url = new URL("./typhoon.svg", import.meta.url);
+      const url = new URL("./images/typhoon.svg", import.meta.url);
       const resp = await fetchWithTimeout(url.href, {}, 8000);
       if (resp.ok) {
         this.typhoonSvgMarkup = await resp.text();

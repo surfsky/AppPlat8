@@ -1,8 +1,8 @@
 /**
  * 地图叠加图层（如云图、气压等）相关逻辑
  */
-import { setInfo } from "./overlay/core/utils.js";
-import { LayerManager } from "./overlay/core/LayerManager.js";
+import { setInfo } from "./overlay/utils.js";
+import { LayerManager } from "./overlay/LayerManager.js";
 import { RadarLayer } from "./overlay/layers/RadarLayer.js";
 import { SatelliteLiveLayer } from "./overlay/layers/SatelliteLiveLayer.js";
 import { SatelliteFallbackLayer } from "./overlay/layers/SatelliteFallbackLayer.js";

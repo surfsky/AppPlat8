@@ -7,7 +7,7 @@
 - `gis-index-*.js`：`/GIS/Index` 首页相关脚本，按启动、数据、UI、场景、面板等职责拆分。
 - `gis-*.js`：GIS 通用能力脚本，如地址搜索、点位 marker、图表辅助、面板元素等。
 - `maphelper.js`：图形编辑器与地图绘制的底层能力。
-- `overlay/core/*.js`：叠加图层基础框架。
+- `overlay/*.js`：叠加图层基础框架。
 - `overlay/layers/*.js`：各类专题叠加图层实现。
 
 ## 根目录脚本
@@ -116,17 +116,17 @@
 
 ## overlay 核心框架
 
-### `overlay/core`
+### `overlay`
 
-- `overlay/core/LayerManager.js`
+- `overlay/LayerManager.js`
   - overlay 图层管理器。
   - 统一管理图层注册、启停、刷新、状态信息与 UI 绑定。
 
-- `overlay/core/MapLayer.js`
+- `overlay/MapLayer.js`
   - overlay 图层基类。
   - 定义图层通用接口与时间、显隐、信息文案等公共逻辑。
 
-- `overlay/core/utils.js`
+- `overlay/utils.js`
   - overlay 通用工具。
   - 包含超时请求、GeoJSON source 更新、数组分块、状态信息输出等辅助方法。
 
@@ -191,4 +191,4 @@
 - 新增 `/GIS/Index` 脚本时，优先按职责拆到现有模块，而不是继续堆进 `gis-index-boot.js`。
 - 点位渲染逻辑尽量复用 `gis-point-marker.js`，避免不同页面重复维护 marker 样式。
 - 地址/经纬度搜索逻辑尽量统一走 `gis-address-search.js`，不要在页面脚本里各自重复解析。
-- 若新增 overlay 专题图层，优先继承 `overlay/core/MapLayer.js` 并交由 `LayerManager.js` 统一管理。
+- 若新增 overlay 专题图层，优先继承 `overlay/MapLayer.js` 并交由 `LayerManager.js` 统一管理。

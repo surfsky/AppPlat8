@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { fetchWithTimeout } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { fetchWithTimeout } from "../utils.js";
 
 
 /****************************************************************
@@ -11,8 +11,7 @@ export class RadarLayer extends MapLayer {
       name: "radar",
       title: "实时降水雷达图",
       api: "https://api.rainviewer.com/public/weather-maps.json",
-      refreshSeconds: 300,
-      dataInterval: "10分钟"
+      refreshCron: "*/30 * * * *"
     });
     this.sourceId = "radar-source";
     this.layerId = "radar-layer";
@@ -34,14 +33,13 @@ export class RadarLayer extends MapLayer {
     const intervalSec = ts > 0 && prev > 0 ? Math.abs(ts - prev) : 0;
     return {
       tileUrl: `${host}${latest.path}/256/{z}/{x}/{y}/2/1_1.png`,
-      time: ts > 0 ? new Date(ts * 1000) : null,
-      dataInterval: intervalSec > 0 ? this.formatSecondsAsText(intervalSec) : this.dataInterval
+      time: ts > 0 ? new Date(ts * 1000) : null
     };
   }
 
   async refresh() {
     const { map } = this.runtime;
-    const { tileUrl, time, dataInterval } = await this.getRadarTileUrlAndInfo();
+    const { tileUrl, time } = await this.getRadarTileUrlAndInfo();
     const source = map.getSource(this.sourceId);
     if (!source) {
       map.addSource(this.sourceId, { type: "raster", tiles: [tileUrl], tileSize: 256 });
@@ -50,7 +48,6 @@ export class RadarLayer extends MapLayer {
       source.setTiles([tileUrl]);
     }
     if (time) this.setDataTime(time);
-    if (dataInterval) this.setDataInterval(dataInterval);
     this.setInfoExtra("");
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;

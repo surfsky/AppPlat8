@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { chunkArray, fetchWithTimeout } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { chunkArray, fetchWithTimeout } from "../utils.js";
 import { CityTempLayer } from "./CityTempLayer.js";
 
 /****************************************************************
@@ -11,11 +11,11 @@ import { CityTempLayer } from "./CityTempLayer.js";
 export class CityWeatherLayer extends MapLayer {
   static STYLE_ID = "city-weather-layer-style";
   static ICONS = {
-    sun: "/gis/overlay/layers/sun.svg",
-    cloud: "/gis/overlay/layers/cloud.svg",
-    rain: "/gis/overlay/layers/rain.svg",
-    snow: "/gis/overlay/layers/snow.svg",
-    wind: "/gis/overlay/layers/wind.svg"
+    sun: "/gis/overlay/layers/images/sun.svg",
+    cloud: "/gis/overlay/layers/images/cloud.svg",
+    rain: "/gis/overlay/layers/images/rain.svg",
+    snow: "/gis/overlay/layers/images/snow.svg",
+    wind: "/gis/overlay/layers/images/wind.svg"
   };
 
   constructor() {
@@ -24,8 +24,7 @@ export class CityWeatherLayer extends MapLayer {
       title: "城市综合天气",
       descript: "综合展示城市天气、温度、湿度，并支持查看 5 日天气预报",
       api: "https://api.open-meteo.com/v1/forecast",
-      refreshSeconds: 600,
-      dataInterval: "1小时"
+      refreshCron: "*/30 * * * *"
     });
     this.cache = new Map();
     this.markerMap = new Map();

@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { addOrUpdateGeoJsonSource, clamp, fetchWithTimeout, findNearestHourlyIndex, getTimeSeriesStepSeconds, setInfo } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { addOrUpdateGeoJsonSource, clamp, fetchWithTimeout, findNearestHourlyIndex, getTimeSeriesStepSeconds, setInfo } from "../utils.js";
 
 
 /****************************************************************
@@ -27,8 +27,7 @@ export class TidePanelLayer extends MapLayer {
       name: "tidePanel",
       title: "潮汐面板",
       api: "https://marine-api.open-meteo.com/v1/marine",
-      refreshSeconds: 600,
-      dataInterval: "1小时"
+      refreshCron: "*/10 * * * *"
     });
     this.boundStationChange = false;
     this.panelId = "tidePanelContainer";
@@ -665,8 +664,6 @@ export class TidePanelLayer extends MapLayer {
     if (!times.length || !sea.length) throw new Error("潮位序列为空");
 
     const idx = findNearestHourlyIndex(times);
-    const stepSec = getTimeSeriesStepSeconds(times);
-    if (stepSec > 0) this.setDataInterval(this.formatSecondsAsText(stepSec));
     setInfo("waveHeight", `${Number(waveHeight[idx] ?? 0).toFixed(1)} m`);
     setInfo("waveDirection", `${Math.round(Number(waveDirection[idx] ?? 0))}°`);
     setInfo("wavePeriod", `${Number(wavePeriod[idx] ?? 0).toFixed(1)} s`);

@@ -1,5 +1,5 @@
-import { MapLayer } from "../core/MapLayer.js";
-import { fetchWithTimeout } from "../core/utils.js";
+import { MapLayer } from "../MapLayer.js";
+import { fetchWithTimeout } from "../utils.js";
 
 
 /****************************************************************
@@ -11,8 +11,7 @@ export class SatelliteLiveLayer extends MapLayer {
       name: "satelliteLive",
       title: "近实时卫星云图",
       api: "https://api.rainviewer.com/public/weather-maps.json",
-      refreshSeconds: 300,
-      dataInterval: "15分钟"
+      refreshCron: "*/30 * * * *"
     });
     this.sourceId = "satellite-live-source";
     this.layerId = "satellite-live-layer";
@@ -31,14 +30,13 @@ export class SatelliteLiveLayer extends MapLayer {
     const intervalSec = ts > 0 && prev > 0 ? Math.abs(ts - prev) : 0;
     return {
       tileUrl: `${host}${latest.path}/256/{z}/{x}/{y}/0/0_0.png`,
-      time: ts > 0 ? new Date(ts * 1000) : null,
-      dataInterval: intervalSec > 0 ? this.formatSecondsAsText(intervalSec) : this.dataInterval
+      time: ts > 0 ? new Date(ts * 1000) : null
     };
   }
 
   async refresh() {
     const { map } = this.runtime;
-    const { tileUrl, time, dataInterval } = await this.getTileInfo();
+    const { tileUrl, time } = await this.getTileInfo();
     const source = map.getSource(this.sourceId);
     if (!source) {
       map.addSource(this.sourceId, { type: "raster", tiles: [tileUrl], tileSize: 256 });
@@ -47,7 +45,6 @@ export class SatelliteLiveLayer extends MapLayer {
       source.setTiles([tileUrl]);
     }
     if (time) this.setDataTime(time);
-    if (dataInterval) this.setDataInterval(dataInterval);
     this.setInfoExtra("");
     this.setOpacity(this.runtime.getOpacity(this.name));
     this.lastStatus = true;
