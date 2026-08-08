@@ -46,6 +46,17 @@ export const controlStateMethods = {
     },
 
     messageHandler(e) {
+        if (e?.data?.__eleRefreshData === true) {
+            const listMap = this.eleLists?.value || {};
+            const keys = Object.keys(listMap);
+            if (keys.length > 0) {
+                Promise.all(keys.map((key) => this.loadEleList(key, true))).catch((err) => {
+                    console.error('refresh EleList on message failed:', err);
+                });
+            }
+            return;
+        }
+
         if (e?.data?.__eleControlPatched) {
             const targets = Array.isArray(e.data.targets) ? e.data.targets : [];
             for (const raw of targets) {

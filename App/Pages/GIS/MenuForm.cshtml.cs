@@ -3,9 +3,11 @@ using App.API;
 using App.DAL;
 using App.DAL.GIS;
 using App.EleUI;
+using App.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace App.Pages.GIS
@@ -127,6 +129,66 @@ namespace App.Pages.GIS
             {
                 return BuildResult(400, ex.Message);
             }
+        }
+
+        public IActionResult OnPostShowFiles([FromBody] GisMenu req)
+        {
+            var menuId = req?.Id ?? 0;
+            if (menuId <= 0)
+                return EleManager.ShowNotify("请先保存菜单，再维护附件", NotifyType.Warning, "提示");
+
+            var uniId = req.UniId;
+            var menuName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Shared/Atts?uniId={uniId}&name={menuName}&md={this.Mode}";
+            return EleManager.ShowDrawer(
+                title: "菜单附件",
+                url: url,
+                size: "50%",
+                closeAction: DrawerCloseAction.RefreshData
+            );
+        }
+
+        public IActionResult OnGetAttData(Paging pi, long id)
+        {
+            if (id <= 0)
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+
+            var menu = GisMenu.GetDetail(id);
+            if (menu == null)
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+
+            var uniId = menu.UniId;
+            if (string.IsNullOrWhiteSpace(uniId))
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+
+            var pageIndex = pi?.PageIndex ?? 0;
+            var pageSize = (pi?.PageSize ?? 10) > 0 ? pi.PageSize : 10;
+
+            var query = Att.Set
+                .Where(t => t.Key == uniId)
+                .OrderBy(t => t.SortId)
+                .ThenByDescending(t => t.Id);
+
+            var total = query.Count();
+            var rows = query
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToList()
+                .Select(t => (object)new
+                {
+                    id = t.Id,
+                    name = string.IsNullOrWhiteSpace(t.FileName) ? Path.GetFileName(t.Url ?? string.Empty) : t.FileName,
+                    sizeText = t.FileSizeText,
+                    createDtText = t.CreateDt?.ToString("yyyy-MM-dd HH:mm"),
+                    previewUrl = $"/Shared/FileViews/Viewer?uniId={Uri.EscapeDataString(uniId)}&id={t.Id}"
+                })
+                .ToList();
+
+            return BuildResult(0, "success", new
+            {
+                items = rows,
+                total
+            });
         }
     }
 }

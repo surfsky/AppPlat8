@@ -149,7 +149,7 @@ namespace App.EleUI
         /// <summary>获取包装器的CSS类</summary>
         private string GetWrapperClass(bool hasBottom)
         {
-            return hasBottom ? "pb-[48px]" : string.Empty;
+            return hasBottom ? "pb-[84px]" : string.Empty;
         }
 
         /// <summary>创建脚本HTML</summary>

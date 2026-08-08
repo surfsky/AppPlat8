@@ -6,6 +6,7 @@
     ViewData["Title"] = "文件预览";
     var viewerUrlJson = JsonSerializer.Serialize(Model.ViewerUrl ?? string.Empty);
     var downloadUrlJson = JsonSerializer.Serialize(Model.DownloadUrl ?? string.Empty);
+    var autoTableUrlJson = JsonSerializer.Serialize(Model.AutoTableUrl ?? string.Empty);
     var fileNameJson = JsonSerializer.Serialize(Model.FileName ?? string.Empty);
 }
 
@@ -115,6 +116,15 @@
         <div class="fv-toolbar">
             <div class="fv-title" id="fv-title">@Model.FileName</div>
             <div class="fv-actions">
+                @if (!string.IsNullOrWhiteSpace(Model.AutoTableUrl))
+                {
+                    <button type="button" id="fv-webtable" class="fv-btn">
+                        <svg class="fv-btn-icon" viewBox="0 0 1024 1024" aria-hidden="true">
+                            <path d="M128 192a64 64 0 0 1 64-64h640a64 64 0 0 1 64 64v448a64 64 0 0 1-64 64H512v96h160v64H352v-64h160v-96H192a64 64 0 0 1-64-64V192zm64 0v448h640V192H192zm96 96h448v64H288v-64zm0 128h256v64H288v-64z"></path>
+                        </svg>
+                        <span>表单模式</span>
+                    </button>
+                }
                 <button type="button" id="fv-open" class="fv-btn">
                     <svg class="fv-btn-icon" viewBox="0 0 1024 1024" aria-hidden="true">
                         <path d="M128 128h320v64H192v640h640V576h64v320H128V128zm424.96 0H896v343.04h-64V237.248L533.248 536 488 490.752 786.752 192H552.96v-64z"></path>
@@ -150,6 +160,7 @@
     <script>
         const viewerUrl = @Html.Raw(viewerUrlJson);
         const downloadUrl = @Html.Raw(downloadUrlJson);
+        const autoTableUrl = @Html.Raw(autoTableUrlJson);
         const fileName = @Html.Raw(fileNameJson);
 
         function triggerAnchorDownload(url, name) {
@@ -208,8 +219,30 @@
             window.open(viewerUrl, '_blank');
         }
 
+        function openWebTable() {
+            if (!autoTableUrl) return;
+
+            const title = (fileName ? (fileName + ' - 表单模式') : '表单模式');
+            if (window.EleManager && typeof EleManager.openDrawer === 'function') {
+                EleManager.openDrawer({
+                    title,
+                    url: autoTableUrl,
+                    direction: 'rtl',
+                    size: '50%',
+                    resizable: true,
+                    closeOnClickModal: false,
+                    destroyOnClose: true
+                });
+                return;
+            }
+
+            window.open(autoTableUrl, '_blank');
+        }
+
         const btnOpen = document.getElementById('fv-open');
         if (btnOpen) btnOpen.addEventListener('click', openInNewTab);
+        const btnWebTable = document.getElementById('fv-webtable');
+        if (btnWebTable) btnWebTable.addEventListener('click', openWebTable);
         const btnDownload = document.getElementById('fv-download');
         if (btnDownload) btnDownload.addEventListener('click', downloadFile);
     </script>

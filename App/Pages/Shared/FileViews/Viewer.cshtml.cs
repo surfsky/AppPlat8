@@ -6,6 +6,7 @@ using App.DAL;
 using App.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using System.Linq;
 
 namespace App.Pages.Shared.FileViews
 {
@@ -32,6 +33,7 @@ namespace App.Pages.Shared.FileViews
         public string SourceUrl { get; set; }
         public string ViewerUrl { get; set; }
         public string DownloadUrl { get; set; }
+        public string AutoTableUrl { get; set; }
         public string Error { get; set; }
 
         public void OnGet(string uniId, long id, string file, string src, string name)
@@ -68,6 +70,9 @@ namespace App.Pages.Shared.FileViews
             SourceUrl = $"/Shared/FileViews/Viewer?handler=Content&uniId={Uri.EscapeDataString(UniId)}&id={id}";
             ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
             DownloadUrl = $"/Shared/Atts?handler=Download&uniId={Uri.EscapeDataString(UniId)}&id={id}";
+            AutoTableUrl = IsExcelExt(FileExt)
+                ? $"/Shared/AutoTable?uniId={Uri.EscapeDataString(UniId)}&id={id}"
+                : string.Empty;
         }
 
         public IActionResult OnGetContent(string uniId, long id)
@@ -100,6 +105,55 @@ namespace App.Pages.Shared.FileViews
             }
 
             return PhysicalFile(fullPath, mimeType);
+        }
+
+        public IActionResult OnGetAutoTable(string uniId, long id, string file, string src, string name)
+        {
+            try
+            {
+                string path = string.Empty;
+                string ext = string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(uniId) && id > 0)
+                {
+                    var item = GetAtt(uniId.Trim(), id, out var err);
+                    if (item == null)
+                        return BuildResult(404, err);
+
+                    path = ExtractLocalPath(item.Content);
+                    ext = (item.FileExtension ?? string.Empty).Trim().TrimStart('.').ToLowerInvariant();
+                    if (string.IsNullOrWhiteSpace(ext))
+                        ext = Path.GetExtension(item.FileName ?? string.Empty).Trim().TrimStart('.').ToLowerInvariant();
+                }
+                else if (!string.IsNullOrWhiteSpace(file))
+                {
+                    if (!TryResolveStaticFile(file, out var safePath, out var fullPath, out var err))
+                        return BuildResult(404, err);
+
+                    path = safePath;
+                    ext = Path.GetExtension(fullPath).Trim().TrimStart('.').ToLowerInvariant();
+                }
+                else if (!string.IsNullOrWhiteSpace(src))
+                {
+                    path = ExtractLocalPath(src);
+                    ext = Path.GetExtension(name ?? string.Empty).Trim().TrimStart('.').ToLowerInvariant();
+                    if (string.IsNullOrWhiteSpace(ext))
+                        ext = Path.GetExtension(path).Trim().TrimStart('.').ToLowerInvariant();
+                }
+
+                if (string.IsNullOrWhiteSpace(path))
+                    return BuildResult(400, "无法识别 Excel 文件路径");
+
+                if (ext != "xls" && ext != "xlsx")
+                    return BuildResult(400, "当前文件不是 Excel，无法网页查看");
+
+                var url = $"/Shared/AutoTable?file={Uri.EscapeDataString(path)}";
+                return Redirect(url);
+            }
+            catch (Exception ex)
+            {
+                return BuildResult(400, ex.Message);
+            }
         }
 
         private static Att GetAtt(string uniId, long id, out string err)
@@ -177,6 +231,9 @@ namespace App.Pages.Shared.FileViews
             SourceUrl = $"/Shared/FileViews/Viewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}";
             ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
             DownloadUrl = $"/Shared/FileViews/Viewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}&download=true";
+            AutoTableUrl = IsExcelExt(FileExt)
+                ? $"/Shared/FileViews/Viewer?handler=AutoTable&file={Uri.EscapeDataString(safePath)}"
+                : string.Empty;
         }
 
         private void InitFromSourceUrl(string sourceUrl, string name)
@@ -207,6 +264,91 @@ namespace App.Pages.Shared.FileViews
 
             ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
             DownloadUrl = SourceUrl;
+            AutoTableUrl = IsExcelExt(FileExt)
+                ? $"/Shared/FileViews/Viewer?handler=AutoTable&src={Uri.EscapeDataString(SourceUrl)}&name={Uri.EscapeDataString(FileName)}"
+                : string.Empty;
+        }
+
+        private static bool IsExcelExt(string ext)
+        {
+            var val = (ext ?? string.Empty).Trim().TrimStart('.').ToLowerInvariant();
+            return val == "xls" || val == "xlsx";
+        }
+
+        private static string BuildAutoTableUrl(string source, string fileNameHint = "", string fileExtHint = "")
+        {
+            var path = ExtractLocalPath(source);
+            if (string.IsNullOrWhiteSpace(path))
+                return string.Empty;
+
+            var ext = Path.GetExtension(path).Trim().TrimStart('.').ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(ext))
+                ext = (fileExtHint ?? string.Empty).Trim().TrimStart('.').ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(ext))
+                ext = Path.GetExtension(fileNameHint ?? string.Empty).Trim().TrimStart('.').ToLowerInvariant();
+
+            if (ext != "xls" && ext != "xlsx")
+                return string.Empty;
+
+            return $"/Shared/AutoTable?file={Uri.EscapeDataString(path)}";
+        }
+
+        private static string ExtractLocalPath(string source)
+        {
+            var text = (source ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            if (Uri.TryCreate(text, UriKind.Absolute, out var uri))
+            {
+                if (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                {
+                    // Support persisted absolute URLs like https://host/Files/Att/xxx.xlsx
+                    text = uri.AbsolutePath ?? string.Empty;
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+
+            if (text.StartsWith("~/", StringComparison.Ordinal))
+                text = "/" + text.Substring(2);
+
+            var q = text.IndexOf('?');
+            if (q >= 0)
+                text = text.Substring(0, q);
+
+            var hash = text.IndexOf('#');
+            if (hash >= 0)
+                text = text.Substring(0, hash);
+
+            text = text.Replace('\\', '/').Trim();
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            if (text.StartsWith("/Shared/FileViews/Viewer", StringComparison.OrdinalIgnoreCase))
+                return string.Empty;
+
+            if (text.Contains("..", StringComparison.Ordinal))
+                return string.Empty;
+
+            var lower = text.ToLowerInvariant();
+            if (lower.StartsWith("/files/"))
+                return text.Substring("/files/".Length);
+
+            if (lower.StartsWith("files/"))
+                return text.Substring("files/".Length);
+
+            var normalized = text.TrimStart('/');
+            if (string.IsNullOrWhiteSpace(normalized))
+                return string.Empty;
+
+            // Accept relative paths that are already under Files root (e.g., Samples/a.xlsx, Att/x.xlsx).
+            if (normalized.Split('/').Any(x => string.IsNullOrWhiteSpace(x)))
+                return string.Empty;
+
+            return normalized;
         }
 
         private static string BuildViewerUrl(string sourceUrl, string fileName, string fileExt)

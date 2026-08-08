@@ -4,6 +4,9 @@
 @{
     ViewData["Title"] = "智能表格";
     var fileJson = JsonSerializer.Serialize(Model.File ?? string.Empty);
+    var uniIdJson = JsonSerializer.Serialize(Model.UniId ?? string.Empty);
+    var attIdJson = JsonSerializer.Serialize(Model.Id);
+    var headerRowJson = JsonSerializer.Serialize(Model.HeaderRow);
     var labelPositionJson = JsonSerializer.Serialize(Model.LabelPosition ?? "left");
 }
 
@@ -11,30 +14,11 @@
     <div id="app" class="h-screen overflow-hidden bg-slate-50">
         <div class="h-full flex flex-col p-4 gap-4 box-border">
             <div class="px-0 py-0">
-                <el-form :label-position="formLabelPosition"
-                         :label-width="formLabelWidth"
-                         class="auto-search-form">
-                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        <div v-for="col in meta.columns" :key="col.key">
-                            <el-form-item :label="col.title" class="mb-0">
-                                <el-select v-if="hasOptions(col)"
-                                           v-model="filters[col.key]"
-                                           clearable
-                                           filterable
-                                           placeholder="请选择"
-                                           class="w-full">
-                                    <el-option v-for="opt in col.options" :key="opt" :label="opt" :value="opt"></el-option>
-                                </el-select>
-                                <el-input v-else
-                                          v-model="filters[col.key]"
-                                          clearable
-                                          placeholder="请输入"
-                                          @@keyup.enter="search"></el-input>
-                            </el-form-item>
-                        </div>
-                    </div>
-                </el-form>
-                <div class="mt-4 flex flex-wrap justify-start gap-2">
+                <div class="mt-1 flex flex-wrap justify-start gap-2 items-center">
+                    <el-button @@click="openSettings" :loading="loading">
+                        <i class="fas fa-sliders mr-1"></i>
+                        <span>设置</span>
+                    </el-button>
                     <el-button type="primary" @@click="search" :loading="loading">
                         <i class="fas fa-search mr-1"></i>
                         <span>查询</span>
@@ -52,6 +36,31 @@
                         <span>重置</span>
                     </el-button>
                 </div>
+                <div v-if="activeFilterColumns.length" class="mt-3 rounded border border-slate-200 bg-white p-3">
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div v-for="col in activeFilterColumns" :key="col.key">
+                            <div class="mb-1 text-xs text-slate-500">{{ col.title }}</div>
+                            <el-select
+                                v-if="hasOptions(col) || getFilterOptions(col).length"
+                                v-model="filters[col.key]"
+                                clearable
+                                filterable
+                                allow-create
+                                default-first-option
+                                placeholder="请选择或输入"
+                                class="w-full"
+                            >
+                                <el-option v-for="opt in getFilterOptions(col)" :key="opt" :label="opt" :value="opt"></el-option>
+                            </el-select>
+                            <el-input
+                                v-else
+                                v-model="filters[col.key]"
+                                clearable
+                                placeholder="请输入"
+                            ></el-input>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="min-h-0 flex-1 border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -64,7 +73,7 @@
                           class="w-full">
                     <el-table-column type="index" label="#" width="60"></el-table-column>
                     <el-table-column prop="id" label="行号" width="90" sortable="custom"></el-table-column>
-                    <el-table-column v-for="col in meta.columns"
+                    <el-table-column v-for="col in visibleColumns"
                                      :key="col.key"
                                      :prop="col.key"
                                      :label="col.title"
@@ -105,11 +114,17 @@
 
 @section script {
     <script>
-        const { createApp, ref, reactive, onMounted, onUnmounted } = Vue;
+        const { createApp, ref, reactive, computed, onMounted, onUnmounted } = Vue;
 
         createApp({
             setup() {
                 const file = @Html.Raw(fileJson);
+                const uniId = @Html.Raw(uniIdJson);
+                const attId = @Html.Raw(attIdJson);
+                const initialHeaderRow = @Html.Raw(headerRowJson);
+                const effectiveFile = ref(file || '');
+                const headerRowSetting = ref(Number.isFinite(Number(initialHeaderRow)) ? Number(initialHeaderRow) : 0);
+                const resolvedHeaderRow = ref(1);
                 const labelPosition = @Html.Raw(labelPositionJson);
                 const loading = ref(false);
                 const pageIndex = ref(1);
@@ -118,29 +133,147 @@
                 const sortKey = ref('');
                 const sortOrder = ref('');
                 const formLabelPosition = ref(['left', 'right', 'top'].includes(labelPosition) ? labelPosition : 'left');
+                const selectedFilterColumns = ref([]);
+                const selectedVisibleColumns = ref([]);
                 const rows = ref([]);
                 const meta = reactive({
                     fileName: '',
                     columns: []
                 });
                 const filters = reactive({});
+                const filterOptionsMap = reactive({});
+                const headerRowOptions = [{ value: 0, label: '自动识别' }].concat(Array.from({ length: 20 }, (_, i) => ({ value: i + 1, label: `第 ${i + 1} 行` })));
+                const columnOptions = computed(() => (Array.isArray(meta.columns) ? meta.columns : []).map((col) => ({ label: col.title || col.key, value: col.key })));
+                const activeFilterColumns = computed(() => {
+                    const all = Array.isArray(meta.columns) ? meta.columns : [];
+                    const selected = new Set(Array.isArray(selectedFilterColumns.value) ? selectedFilterColumns.value : []);
+                    return all.filter(col => selected.has(col.key));
+                });
+                const visibleColumns = computed(() => {
+                    const all = Array.isArray(meta.columns) ? meta.columns : [];
+                    const selected = Array.isArray(selectedVisibleColumns.value) ? selectedVisibleColumns.value : [];
+                    if (!selected.length) return all;
+                    const set = new Set(selected);
+                    return all.filter(col => set.has(col.key));
+                });
+
+                const settingsStorageKey = () => {
+                    const filePart = String(effectiveFile.value || '').trim();
+                    if (filePart) return `autoTable.settings:${filePart}`;
+                    const keyPart = `${String(uniId || '').trim()}:${String(attId || 0)}`;
+                    return `autoTable.settings:${keyPart}`;
+                };
+
+                const loadLocalSettings = () => {
+                    try {
+                        const raw = localStorage.getItem(settingsStorageKey());
+                        if (!raw) return;
+                        const obj = JSON.parse(raw);
+                        if (obj && Number.isFinite(Number(obj.headerRow)))
+                            headerRowSetting.value = Math.floor(Number(obj.headerRow));
+                        if (obj && obj.filters && typeof obj.filters === 'object') {
+                            Object.keys(obj.filters).forEach((k) => {
+                                filters[k] = obj.filters[k] ?? '';
+                            });
+                        }
+                        if (obj && Array.isArray(obj.filterColumns)) {
+                            selectedFilterColumns.value = obj.filterColumns.map(x => String(x || '').trim()).filter(Boolean);
+                        }
+                        if (obj && Array.isArray(obj.visibleColumns)) {
+                            selectedVisibleColumns.value = obj.visibleColumns.map(x => String(x || '').trim()).filter(Boolean);
+                        }
+                    } catch {
+                    }
+                };
+
+                const saveLocalSettings = () => {
+                    try {
+                        const data = {
+                            headerRow: Number.isFinite(Number(headerRowSetting.value)) ? Number(headerRowSetting.value) : 0,
+                            filters: { ...filters },
+                            filterColumns: Array.isArray(selectedFilterColumns.value) ? [...selectedFilterColumns.value] : [],
+                            visibleColumns: Array.isArray(selectedVisibleColumns.value) ? [...selectedVisibleColumns.value] : []
+                        };
+                        localStorage.setItem(settingsStorageKey(), JSON.stringify(data));
+                    } catch {
+                    }
+                };
+
+                const normalizeColumnSettings = () => {
+                    const validKeys = new Set((Array.isArray(meta.columns) ? meta.columns : []).map(col => col.key));
+                    selectedFilterColumns.value = (Array.isArray(selectedFilterColumns.value) ? selectedFilterColumns.value : []).filter(key => validKeys.has(key));
+                    selectedVisibleColumns.value = (Array.isArray(selectedVisibleColumns.value) ? selectedVisibleColumns.value : []).filter(key => validKeys.has(key));
+                };
+
+                const buildRequestFilters = () => {
+                    const result = {};
+                    const selected = new Set(Array.isArray(selectedFilterColumns.value) ? selectedFilterColumns.value : []);
+                    Object.keys(filters).forEach((key) => {
+                        if (!selected.has(key)) return;
+                        result[key] = filters[key] ?? '';
+                    });
+                    return result;
+                };
+
+                const buildFilterOptionsMap = () => {
+                    const nextMap = {};
+                    (Array.isArray(meta.columns) ? meta.columns : []).forEach((col) => {
+                        const set = new Set();
+                        (Array.isArray(col?.options) ? col.options : []).forEach((opt) => {
+                            const text = String(opt ?? '').trim();
+                            if (text) set.add(text);
+                        });
+                        (Array.isArray(rows.value) ? rows.value : []).forEach((row) => {
+                            const text = String(row?.cells?.[col.key] ?? '').trim();
+                            if (text) set.add(text);
+                        });
+                        nextMap[col.key] = Array.from(set).slice(0, 80);
+                    });
+
+                    Object.keys(filterOptionsMap).forEach((key) => delete filterOptionsMap[key]);
+                    Object.keys(nextMap).forEach((key) => {
+                        filterOptionsMap[key] = nextMap[key];
+                    });
+                };
+
+                const getFilterOptions = (col) => {
+                    if (!col?.key) return [];
+                    return Array.isArray(filterOptionsMap[col.key]) ? filterOptionsMap[col.key] : [];
+                };
 
                 /**读取元数据 */
                 const loadMeta = async () => {
-                    const res = await axios.get('?handler=Meta', { params: { file } });
-                    const body = res.data || {};
-                    if (body.code !== 0) {
-                        throw new Error(body.msg || body.info || '读取元数据失败');
-                    }
-
-                    const data = body.data || {};
-                    meta.fileName = data.fileName || '';
-                    meta.columns = Array.isArray(data.columns) ? data.columns : [];
-                    meta.columns.forEach(col => {
-                        if (!(col.key in filters)) {
-                            filters[col.key] = '';
+                    try {
+                        const res = await axios.get('?handler=Meta', {
+                            params: {
+                                file: effectiveFile.value,
+                                uniId,
+                                id: attId,
+                                headerRow: headerRowSetting.value
+                            }
+                        });
+                        const body = res.data || {};
+                        if (body.code !== 0) {
+                            throw new Error(body.msg || body.info || '读取元数据失败');
                         }
-                    });
+
+                        const data = body.data || {};
+                        effectiveFile.value = data.file || effectiveFile.value || '';
+                        if (Number(data.headerRow) > 0)
+                            resolvedHeaderRow.value = Math.floor(Number(data.headerRow));
+                        meta.fileName = data.fileName || '';
+                        meta.columns = Array.isArray(data.columns) ? data.columns : [];
+                        meta.columns.forEach(col => {
+                            if (!(col.key in filters)) {
+                                filters[col.key] = '';
+                            }
+                        });
+                        normalizeColumnSettings();
+                        buildFilterOptionsMap();
+                    } catch (e) {
+                        const serverMsg = e?.response?.data?.msg || e?.response?.data?.message || e?.response?.data?.info;
+                        throw new Error(serverMsg || e?.message || '读取元数据失败');
+                    }
                 };
 
                 /**读取数据 */
@@ -149,8 +282,11 @@
                     try {
                         const res = await axios.get('?handler=Data', {
                             params: {
-                                file,
-                                filters: JSON.stringify(filters),
+                                file: effectiveFile.value,
+                                uniId,
+                                id: attId,
+                                headerRow: headerRowSetting.value,
+                                filters: JSON.stringify(buildRequestFilters()),
                                 pageIndex: pageIndex.value - 1,
                                 pageSize: pageSize.value,
                                 sortKey: sortKey.value,
@@ -165,9 +301,13 @@
                         const data = body.data || {};
                         rows.value = Array.isArray(data.rows) ? data.rows : [];
                         total.value = body.pager?.total || 0;
+                        if (Number(data.headerRow) > 0)
+                            resolvedHeaderRow.value = Math.floor(Number(data.headerRow));
+                        buildFilterOptionsMap();
                     } catch (e) {
                         console.error(e);
-                        EleManager.showError?.(e.message || '读取数据失败');
+                        const serverMsg = e?.response?.data?.msg || e?.response?.data?.message || e?.response?.data?.info;
+                        EleManager.showError?.(serverMsg || e.message || '读取数据失败');
                     } finally {
                         loading.value = false;
                     }
@@ -177,11 +317,13 @@
                 const search = async () => {
                     pageIndex.value = 1;
                     await loadData();
+                    saveLocalSettings();
                 };
 
                 /**重置 */
                 const resetSearch = async () => {
                     Object.keys(filters).forEach(key => filters[key] = '');
+                    saveLocalSettings();
                     await search();
                 };
 
@@ -195,7 +337,11 @@
 
                 /**打开表单 */
                 const openForm = (id) => {
-                    const url = `/Shared/AutoForm?file=${encodeURIComponent(file)}${id ? `&id=${id}` : '&md=new'}`;
+                    if (!effectiveFile.value) {
+                        EleManager.showWarning?.('文件参数缺失');
+                        return;
+                    }
+                    const url = `/Shared/AutoForm?file=${encodeURIComponent(effectiveFile.value)}&headerRow=${encodeURIComponent(headerRowSetting.value)}${id ? `&id=${id}` : '&md=new'}`;
                     const title = id ? '编辑数据' : '新增数据';
                     if (window.EleManager && typeof EleManager.openDrawer === 'function') {
                         EleManager.openDrawer({
@@ -212,7 +358,13 @@
 
                 /**下载文件 */
                 const downloadFile = () => {
-                    window.location.href = `?handler=Download&file=${encodeURIComponent(file)}`;
+                    const query = new URLSearchParams({
+                        handler: 'Download',
+                        file: effectiveFile.value || '',
+                        uniId: uniId || '',
+                        id: String(attId || 0)
+                    });
+                    window.location.href = `?${query.toString()}`;
                 };
 
                 /**删除数据 */
@@ -226,7 +378,10 @@
                         }
 
                         const res = await axios.post('?handler=Delete', {
-                            file,
+                            file: effectiveFile.value,
+                            uniId,
+                            attId,
+                            headerRow: headerRowSetting.value,
                             id: row.id
                         }, {
                             headers: {
@@ -262,6 +417,152 @@
                     pageSize.value = val;
                     pageIndex.value = 1;
                     await loadData();
+                };
+
+                const openSettings = () => {
+                                        const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
+                                        if (!manager || typeof manager.openDrawer !== 'function') {
+                                                EleManager.showWarning?.('设置抽屉不可用');
+                                                return;
+                                        }
+
+                                        const initialFilters = {};
+                                        Object.keys(filters).forEach((key) => {
+                                                initialFilters[key] = filters[key] ?? '';
+                                        });
+                                        const initialFilterColumns = Array.isArray(selectedFilterColumns.value) ? [...selectedFilterColumns.value] : [];
+                                        const initialVisibleColumns = Array.isArray(selectedVisibleColumns.value) ? [...selectedVisibleColumns.value] : [];
+                                        const initialColumns = (Array.isArray(meta.columns) ? meta.columns : []).map((col) => ({ ...col }));
+                                        const initialOptionsMap = {};
+                                        Object.keys(filterOptionsMap).forEach((key) => {
+                                                initialOptionsMap[key] = Array.isArray(filterOptionsMap[key]) ? [...filterOptionsMap[key]] : [];
+                                        });
+                                        const initialHeader = Number.isFinite(Number(headerRowSetting.value)) ? Number(headerRowSetting.value) : 0;
+
+                                        manager.openDrawer({
+                                                title: '表单模式设置',
+                                                custom: true,
+                                                direction: 'rtl',
+                                                closeOnClickModal: false,
+                                                destroyOnClose: true,
+                                                mountHandler: ({ hostWindow, bodyEl, close }) => {
+                                                        const { createApp, ref, reactive } = hostWindow.Vue;
+                                                        const headerRowDraft = ref(initialHeader);
+                                                        const filterDraft = reactive({ ...initialFilters });
+                                                        const filterColumnsDraft = ref(initialFilterColumns);
+                                                        const visibleColumnsDraft = ref(initialVisibleColumns);
+                                                        const columns = ref(initialColumns);
+                                                        const optionMap = reactive({ ...initialOptionsMap });
+
+                                                        const drawerApp = createApp({
+                                                                setup() {
+                                                                        const rowOptions = headerRowOptions;
+                                                                    const colOptions = (Array.isArray(columns.value) ? columns.value : []).map((col) => ({ label: col.title || col.key, value: col.key }));
+                                                                        const getOptions = (key) => Array.isArray(optionMap[key]) ? optionMap[key] : [];
+                                                                        const apply = async () => {
+                                                                                const draftHeader = Number(headerRowDraft.value);
+                                                                                headerRowSetting.value = Number.isFinite(draftHeader) ? Math.max(0, Math.floor(draftHeader)) : 0;
+                                                                        selectedFilterColumns.value = Array.isArray(filterColumnsDraft.value) ? [...filterColumnsDraft.value] : [];
+                                                                        selectedVisibleColumns.value = Array.isArray(visibleColumnsDraft.value) ? [...visibleColumnsDraft.value] : [];
+                                                                        normalizeColumnSettings();
+                                                                                Object.keys(filters).forEach((key) => {
+                                                                                        filters[key] = filterDraft[key] ?? '';
+                                                                                });
+                                                                                Object.keys(filterDraft).forEach((key) => {
+                                                                                        if (!(key in filters)) filters[key] = filterDraft[key] ?? '';
+                                                                                });
+                                                                                pageIndex.value = 1;
+                                                                                await loadMeta();
+                                                                                await loadData();
+                                                                                saveLocalSettings();
+                                                                                close();
+                                                                        };
+                                                                        const reset = () => {
+                                                                                headerRowDraft.value = 0;
+                                                                            filterColumnsDraft.value = [];
+                                                                            visibleColumnsDraft.value = [];
+                                                                                Object.keys(filterDraft).forEach((key) => {
+                                                                                        filterDraft[key] = '';
+                                                                                });
+                                                                                try {
+                                                                                        localStorage.removeItem(settingsStorageKey());
+                                                                                } catch {
+                                                                                }
+                                                                        };
+                                                                        return { headerRowDraft, filterDraft, filterColumnsDraft, visibleColumnsDraft, columns, rowOptions, colOptions, getOptions, apply, reset };
+                                                                },
+                                                                template: `
+<div class="h-full flex flex-col bg-white">
+    <div class="flex-1 overflow-auto px-5 py-4">
+        <el-form label-width="88px" label-position="left">
+            <el-form-item label="标题行">
+                <el-select v-model="headerRowDraft" placeholder="请选择" class="w-full">
+                    <el-option v-for="item in rowOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="过滤条件列">
+                <el-select
+                    v-model="filterColumnsDraft"
+                    multiple
+                    filterable
+                    clearable
+                    collapse-tags
+                    collapse-tags-tooltip
+                    placeholder="请选择过滤条件列"
+                    class="w-full"
+                >
+                    <el-option v-for="item in colOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="显示列">
+                <el-select
+                    v-model="visibleColumnsDraft"
+                    multiple
+                    filterable
+                    clearable
+                    collapse-tags
+                    collapse-tags-tooltip
+                    placeholder="不选择则显示全部列"
+                    class="w-full"
+                >
+                    <el-option v-for="item in colOptions" :key="item.value" :label="item.label" :value="item.value"></el-option>
+                </el-select>
+            </el-form-item>
+            <div class="grid gap-3">
+                <div v-for="col in columns" :key="col.key" v-show="filterColumnsDraft.includes(col.key)">
+                    <el-form-item :label="col.title" class="mb-0">
+                        <el-select
+                            v-model="filterDraft[col.key]"
+                            clearable
+                            filterable
+                            allow-create
+                            default-first-option
+                            placeholder="请选择或输入"
+                            class="w-full"
+                        >
+                            <el-option v-for="opt in getOptions(col.key)" :key="opt" :label="opt" :value="opt"></el-option>
+                        </el-select>
+                    </el-form-item>
+                </div>
+            </div>
+        </el-form>
+    </div>
+    <div class="border-t border-slate-200 px-5 py-3 bg-white flex justify-end gap-2">
+        <el-button @@click="reset">重置设置</el-button>
+        <el-button type="primary" @@click="apply">应用</el-button>
+    </div>
+</div>`
+                                                        });
+
+                                                        if (hostWindow.ElementPlusLocaleZhCn) {
+                                                                drawerApp.use(hostWindow.ElementPlus, { locale: hostWindow.ElementPlusLocaleZhCn });
+                                                        } else {
+                                                                drawerApp.use(hostWindow.ElementPlus);
+                                                        }
+                                                        drawerApp.mount(bodyEl);
+                                                        return () => drawerApp.unmount();
+                                                }
+                                        });
                 };
 
                 /**是否下拉列 */
@@ -319,6 +620,7 @@
 
                 onMounted(async () => {
                     try {
+                        loadLocalSettings();
                         await loadMeta();
                         await loadData();
                         bindRefreshListeners();
@@ -334,6 +636,12 @@
 
                 return {
                     file,
+                    uniId,
+                    attId,
+                    effectiveFile,
+                    headerRowSetting,
+                    resolvedHeaderRow,
+                    headerRowOptions,
                     formLabelPosition,
                     formLabelWidth,
                     loading,
@@ -345,6 +653,11 @@
                     rows,
                     meta,
                     filters,
+                    selectedFilterColumns,
+                    selectedVisibleColumns,
+                    activeFilterColumns,
+                    visibleColumns,
+                    columnOptions,
                     hasOptions,
                     loadData,
                     search,
@@ -354,7 +667,9 @@
                     openForm,
                     onSortChange,
                     onPageChange,
-                    onSizeChange
+                    onSizeChange,
+                    openSettings,
+                    getFilterOptions
                 };
             }
         })

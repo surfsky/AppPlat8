@@ -73,7 +73,7 @@ namespace App.EleUI
         public string LoadText { get; set; } = "加载中...";
 
         [HtmlAttributeName("LastText")]
-        public string LastText { get; set; } = "没有更多数据了";
+        public string LastText { get; set; } = " ";
 
         [HtmlAttributeName("MinHeight")]
         public string MinHeight { get; set; } = "40px";
@@ -175,13 +175,13 @@ namespace App.EleUI
             <div v-if='{stateExpr}.loading' class='text-center text-gray-400 py-3'>{LoadText}</div>
             {(string.IsNullOrWhiteSpace(footerTemplate)
                 ? $"<div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400 py-0'{emptyStyle}>{EmptyText}</div>"
-                : $"<div v-else-if='{stateExpr}.items.length === 0' class='text-gray-400 py-3 px-3 flex items-center justify-between gap-3'{emptyStyle}><span>{EmptyText}</span><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
+                : $"<div v-else-if='{stateExpr}.items.length === 0' class='text-gray-400 py-3 px-3 flex items-center justify-between gap-3 sticky bottom-0 z-[1] bg-white/95 backdrop-blur border-t border-gray-100'{emptyStyle}><span>{EmptyText}</span><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
             {(string.IsNullOrWhiteSpace(footerTemplate)
                 ? $"<div v-else-if='{stateExpr}.finished' class='text-center text-gray-400 py-3'>{LastText}</div>"
-                : $"<div v-else-if='{stateExpr}.finished' class='text-gray-400 py-3 px-3 flex items-center justify-between gap-3'><span>{LastText}</span><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
+                : $"<div v-else-if='{stateExpr}.finished' class='text-gray-400 py-3 px-3 flex items-center justify-between gap-3 sticky bottom-0 z-[1] bg-white/95 backdrop-blur border-t border-gray-100'><span>{LastText}</span><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
             {(string.IsNullOrWhiteSpace(footerTemplate)
                 ? ""
-                : $"<div v-else class='text-gray-400 py-2 px-3 flex items-center justify-end gap-2'><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
+                : $"<div v-else class='text-gray-400 py-2 px-3 flex items-center justify-end gap-2 sticky bottom-0 z-[1] bg-white/95 backdrop-blur border-t border-gray-100'><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
         </div>
     </div>
 </div>

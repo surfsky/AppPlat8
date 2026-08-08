@@ -19,17 +19,20 @@ namespace App.Pages.Shared
         [BindProperty(SupportsGet = true)]
         public int Id { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int HeaderRow { get; set; } = 1;
+
         /**打开页面 */
         public void OnGet()
         {
         }
 
         /**读取表单元数据 */
-        public IActionResult OnGetMeta(string file)
+        public IActionResult OnGetMeta(string file, int headerRow = 1)
         {
             try
             {
-                var model = _store.ReadSheet(file);
+            var model = _store.ReadSheet(file, headerRow);
                 return BuildResult(0, "ok", new
                 {
                     file = model.File,
@@ -45,11 +48,11 @@ namespace App.Pages.Shared
         }
 
         /**读取单行 */
-        public IActionResult OnGetRow(string file, int id)
+        public IActionResult OnGetRow(string file, int id, int headerRow = 1)
         {
             try
             {
-                var row = _store.GetRow(file, id);
+                var row = _store.GetRow(file, id, headerRow);
                 if (row == null)
                     return BuildResult(404, "数据不存在");
 
@@ -72,7 +75,7 @@ namespace App.Pages.Shared
                     vals[item.Key] = GetReqValue(item.Value);
                 }
 
-                var row = _store.SaveRow(req?.File, req?.Id > 0 ? req.Id : null, vals);
+                var row = _store.SaveRow(req?.File, req?.Id > 0 ? req.Id : null, vals, req?.HeaderRow ?? 1);
                 return BuildResult(0, "保存成功", row);
             }
             catch (Exception ex)
@@ -109,6 +112,8 @@ namespace App.Pages.Shared
             public string File { get; set; }
 
             public int? Id { get; set; }
+
+            public int? HeaderRow { get; set; }
 
             public Dictionary<string, object> Values { get; set; }
         }

@@ -14,13 +14,13 @@ namespace App.Components
     /// <summary>Excel 动态表格存储服务</summary>
     public class AutoExcelStore
     {
-        private const int HeaderRowIndex = 0;
+        private const int DefaultHeaderRowNumber = 1;
 
         //------------------------------------------------------
         // Public methods
         //------------------------------------------------------
         /**读取工作表模型 */
-        public AutoExcelSheet ReadSheet(string file)
+        public AutoExcelSheet ReadSheet(string file, int headerRowNumber = DefaultHeaderRowNumber)
         {
             var path = ResolveFilePath(file);
             using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -30,12 +30,13 @@ namespace App.Components
                 throw new InvalidOperationException("Excel 文件中没有可用工作表");
 
             var fmt = new DataFormatter(CultureInfo.InvariantCulture);
-            var headerRow = sheet.GetRow(HeaderRowIndex);
+            var headerRowIndex = ResolveHeaderRowIndex(sheet, fmt, headerRowNumber);
+            var headerRow = sheet.GetRow(headerRowIndex);
             if (headerRow == null)
-                throw new InvalidOperationException("Excel 第一行为空，无法识别表头");
+                throw new InvalidOperationException($"Excel 第 {headerRowNumber} 行为空，无法识别表头");
 
             var cols = BuildColumns(workbook, sheet, headerRow, fmt);
-            var rows = BuildRows(sheet, cols, fmt);
+            var rows = BuildRows(sheet, cols, fmt, headerRowIndex);
             FillDistinctOptions(cols, rows);
 
             return new AutoExcelSheet
@@ -48,10 +49,24 @@ namespace App.Components
             };
         }
 
-        /**分页查询 */
-        public AutoExcelQueryResult Query(string file, IDictionary<string, string> filters, int pageIndex, int pageSize, string sortKey = "", string sortOrder = "")
+        /**自动识别标题行（返回1-based行号） */
+        public int DetectHeaderRowNumber(string file, int scanRows = 20)
         {
-            var model = ReadSheet(file);
+            var path = ResolveFilePath(file);
+            using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var workbook = OpenWorkbook(fs, path);
+            var sheet = workbook.NumberOfSheets > 0 ? workbook.GetSheetAt(0) : null;
+            if (sheet == null)
+                throw new InvalidOperationException("Excel 文件中没有可用工作表");
+
+            var fmt = new DataFormatter(CultureInfo.InvariantCulture);
+            return DetectHeaderRowNumber(sheet, fmt, scanRows);
+        }
+
+        /**分页查询 */
+        public AutoExcelQueryResult Query(string file, IDictionary<string, string> filters, int pageIndex, int pageSize, string sortKey = "", string sortOrder = "", int headerRowNumber = DefaultHeaderRowNumber)
+        {
+            var model = ReadSheet(file, headerRowNumber);
             var all = model.Rows
                 .Where(r => MatchFilters(r, model.Columns, filters))
                 .ToList();
@@ -83,18 +98,19 @@ namespace App.Components
         }
 
         /**读取单行 */
-        public AutoExcelRow GetRow(string file, int id)
+        public AutoExcelRow GetRow(string file, int id, int headerRowNumber = DefaultHeaderRowNumber)
         {
             if (id <= 0)
                 return null;
 
-            var model = ReadSheet(file);
+            var model = ReadSheet(file, headerRowNumber);
             return model.Rows.FirstOrDefault(r => r.Id == id);
         }
 
         /**保存单行 */
-        public AutoExcelRow SaveRow(string file, int? id, IDictionary<string, string> vals)
+        public AutoExcelRow SaveRow(string file, int? id, IDictionary<string, string> vals, int headerRowNumber = DefaultHeaderRowNumber)
         {
+            var headerRowIndex = NormalizeHeaderRowIndex(headerRowNumber);
             var path = ResolveFilePath(file);
             vals ??= new Dictionary<string, string>();
 
@@ -105,15 +121,15 @@ namespace App.Components
                 throw new InvalidOperationException("Excel 文件中没有可用工作表");
 
             var fmt = new DataFormatter(CultureInfo.InvariantCulture);
-            var headerRow = sheet.GetRow(HeaderRowIndex);
+            var headerRow = sheet.GetRow(headerRowIndex);
             if (headerRow == null)
-                throw new InvalidOperationException("Excel 第一行为空，无法识别表头");
+                throw new InvalidOperationException($"Excel 第 {headerRowNumber} 行为空，无法识别表头");
 
             var cols = BuildColumns(workbook, sheet, headerRow, fmt);
-            var rowIndex = ResolveSaveRowIndex(sheet, id);
+            var rowIndex = ResolveSaveRowIndex(sheet, id, headerRowIndex);
             var row = sheet.GetRow(rowIndex) ?? sheet.CreateRow(rowIndex);
 
-            CopyRowStyle(sheet, rowIndex, row);
+            CopyRowStyle(sheet, rowIndex, row, headerRowIndex);
             foreach (var col in cols)
             {
                 var txt = vals.TryGetValue(col.Key, out var val) ? val : string.Empty;
@@ -122,13 +138,14 @@ namespace App.Components
 
             SaveWorkbook(path, workbook);
 
-            return ReadSheet(file).Rows.FirstOrDefault(r => r.Id == rowIndex);
+            return ReadSheet(file, headerRowNumber).Rows.FirstOrDefault(r => r.Id == rowIndex);
         }
 
         /**删除单行 */
-        public void DeleteRow(string file, int id)
+        public void DeleteRow(string file, int id, int headerRowNumber = DefaultHeaderRowNumber)
         {
-            if (id <= HeaderRowIndex)
+            var headerRowIndex = NormalizeHeaderRowIndex(headerRowNumber);
+            if (id <= headerRowIndex)
                 throw new InvalidOperationException("缺少有效行号");
 
             var path = ResolveFilePath(file);
@@ -203,10 +220,10 @@ namespace App.Components
         }
 
         /**构建行数据 */
-        private static List<AutoExcelRow> BuildRows(ISheet sheet, List<AutoExcelColumn> cols, DataFormatter fmt)
+        private static List<AutoExcelRow> BuildRows(ISheet sheet, List<AutoExcelColumn> cols, DataFormatter fmt, int headerRowIndex)
         {
             var list = new List<AutoExcelRow>();
-            for (var i = HeaderRowIndex + 1; i <= sheet.LastRowNum; i++)
+            for (var i = headerRowIndex + 1; i <= sheet.LastRowNum; i++)
             {
                 var row = sheet.GetRow(i);
                 if (row == null || RowIsEmpty(row, cols, fmt))
@@ -359,18 +376,18 @@ namespace App.Components
         // Save helpers
         //------------------------------------------------------
         /**解析保存行号 */
-        private static int ResolveSaveRowIndex(ISheet sheet, int? id)
+        private static int ResolveSaveRowIndex(ISheet sheet, int? id, int headerRowIndex)
         {
-            if (id.GetValueOrDefault() > HeaderRowIndex)
+            if (id.GetValueOrDefault() > headerRowIndex)
                 return id.Value;
 
-            return Math.Max(sheet.LastRowNum + 1, HeaderRowIndex + 1);
+            return Math.Max(sheet.LastRowNum + 1, headerRowIndex + 1);
         }
 
         /**复制前一行样式 */
-        private static void CopyRowStyle(ISheet sheet, int rowIndex, IRow row)
+        private static void CopyRowStyle(ISheet sheet, int rowIndex, IRow row, int headerRowIndex)
         {
-            if (row == null || rowIndex <= HeaderRowIndex + 0)
+            if (row == null || rowIndex <= headerRowIndex)
                 return;
 
             var src = sheet.GetRow(rowIndex - 1);
@@ -551,6 +568,92 @@ namespace App.Components
             if (txt.Contains("..", StringComparison.Ordinal))
                 throw new InvalidOperationException("非法文件路径");
             return txt;
+        }
+
+        private static int ResolveHeaderRowIndex(ISheet sheet, DataFormatter fmt, int headerRowNumber)
+        {
+            if (headerRowNumber > 0)
+                return NormalizeHeaderRowIndex(headerRowNumber);
+
+            var autoRowNumber = DetectHeaderRowNumber(sheet, fmt, 20);
+            return NormalizeHeaderRowIndex(autoRowNumber);
+        }
+
+        private static int DetectHeaderRowNumber(ISheet sheet, DataFormatter fmt, int scanRows)
+        {
+            var maxScan = Math.Max(3, scanRows);
+            var lastRow = Math.Min(sheet.LastRowNum, maxScan - 1);
+            var bestScore = int.MinValue;
+            var bestRowIndex = 0;
+
+            for (var r = 0; r <= lastRow; r++)
+            {
+                var row = sheet.GetRow(r);
+                if (row == null)
+                    continue;
+
+                var stat = AnalyzeRow(row, fmt);
+                if (stat.NonEmptyCount <= 0)
+                    continue;
+
+                var nextStat = AnalyzeRow(sheet.GetRow(r + 1), fmt);
+
+                var score = 0;
+                score += stat.NonEmptyCount * 8;
+                score += stat.TextLikeCount * 3;
+                score += Math.Min(nextStat.NonEmptyCount, stat.NonEmptyCount) * 2;
+                score -= Math.Abs(nextStat.NonEmptyCount - stat.NonEmptyCount);
+
+                // Typical title rows are a single merged-like text cell.
+                if (stat.NonEmptyCount == 1)
+                    score -= 18;
+
+                // A header row is usually not purely numeric.
+                if (stat.NumericLikeCount > stat.TextLikeCount)
+                    score -= 6;
+
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestRowIndex = r;
+                }
+            }
+
+            return bestRowIndex + 1;
+        }
+
+        private static (int NonEmptyCount, int TextLikeCount, int NumericLikeCount) AnalyzeRow(IRow row, DataFormatter fmt)
+        {
+            if (row == null)
+                return (0, 0, 0);
+
+            var nonEmpty = 0;
+            var textLike = 0;
+            var numericLike = 0;
+
+            for (var c = row.FirstCellNum; c < row.LastCellNum; c++)
+            {
+                if (c < 0)
+                    continue;
+
+                var txt = fmt.FormatCellValue(row.GetCell(c))?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(txt))
+                    continue;
+
+                nonEmpty += 1;
+                if (double.TryParse(txt, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
+                    numericLike += 1;
+                else
+                    textLike += 1;
+            }
+
+            return (nonEmpty, textLike, numericLike);
+        }
+
+        private static int NormalizeHeaderRowIndex(int headerRowNumber)
+        {
+            var rowNumber = headerRowNumber <= 0 ? DefaultHeaderRowNumber : headerRowNumber;
+            return rowNumber - 1;
         }
 
         /**构建列键 */

@@ -31,6 +31,21 @@
         <EleNumber For="Item.DataCnt" Label="点位数" Min="0" Max="10000000"></EleNumber>
         <EleDatePicker For="Item.DataDt" Label="最后数据时间" Type="DateTime"></EleDatePicker>
 
+        <EleList Label="附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-sm text-gray-800 truncate">{{ item.name }}</div>
+                        <div class="text-xs text-gray-500 truncate">{{ item.sizeText || item.createDtText || '' }}</div>
+                    </div>
+                    <a href="javascript:void(0)" class="text-xs text-blue-600" v-on:click.prevent="openLinkInDrawer(item.previewUrl, '附件预览', null)">预览</a>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Text" Icon="Edit" Handler="ShowFiles" EnabledFor="Item.Id" Visible="@(Model.Mode != PageMode.View)">管理</EleButton>
+            </Footer>
+        </EleList>
+
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Type="Primary" Command="SaveNew" Visible="@(Model.Mode != PageMode.View)">保存并新增</EleButton>

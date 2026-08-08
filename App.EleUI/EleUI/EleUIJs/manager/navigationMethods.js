@@ -89,6 +89,16 @@ export const navigationMethods = {
                     window.top.postMessage(msg, "*");
                 }
             } catch {}
+
+            try {
+                const hostDoc = (window.top && window.top.document) ? window.top.document : document;
+                const frames = hostDoc.querySelectorAll('iframe[data-ele-drawer-iframe="1"]');
+                frames.forEach((frame) => {
+                    try {
+                        frame.contentWindow?.postMessage(msg, "*");
+                    } catch {}
+                });
+            } catch {}
         }
     }
 };

@@ -2,6 +2,11 @@
  * 点列表面板相关逻辑
 */
 (function () {
+    function resolveManager() {
+        if (window.top && window.top.EleManager) return window.top.EleManager;
+        return window.EleManager;
+    }
+
     function create(ctx) {
         const panelId = ctx.panelId || 'geo-point-list-panel';
         const panelComponentId = ctx.panelComponentId || 'geo-point-list-gis-panel';
@@ -22,6 +27,7 @@
         let currentTotal = 0;
         let loading = false;
         let sourceItems = [];
+        let panelActionBound = false;
 
         function getPanel() {
             return document.getElementById(panelId);
@@ -29,6 +35,57 @@
 
         function getPanelComponent() {
             return document.getElementById(panelComponentId);
+        }
+
+        function openDrawer(url, title, size) {
+            if (!url) return;
+            const manager = resolveManager();
+            if (!manager || typeof manager.openDrawer !== 'function') {
+                window.open(url, '_blank');
+                return;
+            }
+
+            manager.openDrawer({
+                title: title || '查看',
+                url,
+                direction: 'rtl',
+                size: size || (window.innerWidth < 768 ? '100%' : '50%'),
+                resizable: true,
+                closeOnClickModal: false,
+                destroyOnClose: true
+            });
+        }
+
+        function getMenuDetailUrl(menuNode) {
+            const id = Number(menuNode?.id || 0);
+            if (!id) return '';
+            return `/GIS/MenuForm?id=${encodeURIComponent(id)}&md=view`;
+        }
+
+        function syncPanelAction(menuNode) {
+            const panelComponent = getPanelComponent();
+            if (!panelComponent) return;
+            const btn = panelComponent.querySelector('[data-panel-open-menu-detail]');
+            if (!btn) return;
+
+            const url = getMenuDetailUrl(menuNode);
+            btn.dataset.menuDetailUrl = url;
+            btn.disabled = !url;
+            btn.classList.toggle('is-disabled', !url);
+        }
+
+        function bindPanelActionEvents() {
+            if (panelActionBound) return;
+            const panelComponent = getPanelComponent();
+            if (!panelComponent) return;
+            panelComponent.addEventListener('click', e => {
+                const btn = e.target && e.target.closest ? e.target.closest('[data-panel-open-menu-detail]') : null;
+                if (!btn) return;
+                const url = String(btn.dataset.menuDetailUrl || '').trim();
+                if (!url) return;
+                openDrawer(url, '菜单详情', window.innerWidth < 768 ? '100%' : '50%');
+            });
+            panelActionBound = true;
         }
 
         function getBody() {
@@ -169,6 +226,7 @@
             if (!panelComponent) return;
             panelComponent.setAttribute('title', menuName || '点位清单');
             panelComponent.setAttribute('subtitle', buildPanelSubtitle(loadedCount, totalCount));
+            syncPanelAction(currentMenuNode);
         }
 
         function bindListItemEvents() {
@@ -385,6 +443,7 @@
             const panelComponent = getPanelComponent();
             const body = getBody();
             if (!panel || !panelComponent || !body) return;
+            bindPanelActionEvents();
 
             const menuName = menuNode?.name || `菜单${menuNode?.id || ''}`;
             const items = Array.isArray(geometryItems) ? geometryItems.slice() : [];
@@ -404,6 +463,7 @@
             state.activePointListMenuName = menuName;
             state.pointListItems = [];
             syncPanelHeader(menuName, 0, currentTotal || items.length);
+            syncPanelAction(menuNode);
 
             if (closeTimer) {
                 clearTimeout(closeTimer);
@@ -424,6 +484,7 @@
             if (panelComponent) {
                 panelComponent.setAttribute('subtitle', '');
             }
+            syncPanelAction(null);
             panel.classList.remove('open');
             panel.classList.add('closing');
             if (closeTimer) clearTimeout(closeTimer);
