@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using App.Components;
 using App.DAL;
 using App.Entities;
@@ -61,13 +62,14 @@ namespace App.Pages.Shared.FileViews
                 return;
             }
 
+            var resolvedUniId = UniId ?? item.Key;
             FileName = string.IsNullOrWhiteSpace(item.FileName)
                 ? Path.GetFileName(item.Url ?? string.Empty)
                 : item.FileName;
             FileExt = (item.FileExtension ?? string.Empty).Trim().TrimStart('.').ToLower();
-            SourceUrl = $"/Shared/FileViews/Viewer?handler=Content&uniId={Uri.EscapeDataString(UniId)}&id={id}";
+            SourceUrl = $"/Shared/FileViews/Viewer?handler=Content&uniId={Uri.EscapeDataString(resolvedUniId)}&id={id}";
             ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
-            DownloadUrl = $"/Shared/Atts?handler=Download&uniId={Uri.EscapeDataString(UniId)}&id={id}";
+            DownloadUrl = $"/Shared/Atts?handler=Download&uniId={Uri.EscapeDataString(resolvedUniId)}&id={id}";
         }
 
         public IActionResult OnGetContent(string uniId, long id)
@@ -80,10 +82,38 @@ namespace App.Pages.Shared.FileViews
             if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
                 return BuildResult(404, "文件不存在或已被删除");
 
-            var ext = Path.GetExtension(item.FileName ?? item.Content);
-            var mimeType = ResolveMimeType(path, ext);
+            var physExt = Path.GetExtension(path) ?? string.Empty;
+            var dbExt = Path.GetExtension(item.FileName ?? string.Empty) ?? string.Empty;
+            var baseName = string.IsNullOrWhiteSpace(item.FileName)
+                ? Path.GetFileNameWithoutExtension(path)
+                : (dbExt.Equals(physExt, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(physExt)
+                    ? item.FileName
+                    : (Path.GetFileNameWithoutExtension(item.FileName) + physExt));
+            var inlineName = string.IsNullOrWhiteSpace(baseName) ? Path.GetFileName(path) : baseName;
+            var mimeType = ResolveMimeType(path, physExt);
 
+            // inline 预览也写原名，确保 iframe 里的浏览器原生下载按钮能识别到原名（而不是物理雪花ID名）
+            Response.Headers["Content-Disposition"] = BuildContentDisposition("inline", inlineName);
             return PhysicalFile(path, mimeType);
+        }
+
+        // 生成符合 RFC 5987 的 Content-Disposition Header，兼容中文/空格/特殊字符文件名
+        private static string BuildContentDisposition(string kind, string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return kind;
+            var safe = fileName.Replace("\r", "").Replace("\n", "").Trim();
+            var asciiChars = safe.Select(c => c < 128 && c != '"' && c != '\\' ? c : '_').ToArray();
+            var asciiName = new string(asciiChars);
+            try
+            {
+                var encoded = Uri.EscapeDataString(safe).Replace("'", "%27");
+                return $"{kind}; filename=\"{asciiName}\"; filename*=UTF-8''{encoded}";
+            }
+            catch
+            {
+                return $"{kind}; filename=\"{asciiName}\"";
+            }
         }
 
         public IActionResult OnGetStaticContent(string file, bool download = false)
@@ -105,14 +135,21 @@ namespace App.Pages.Shared.FileViews
         private static Att GetAtt(string uniId, long id, out string err)
         {
             err = string.Empty;
-            if (id <= 0 || string.IsNullOrWhiteSpace(uniId))
+            if (id <= 0)
             {
                 err = "参数错误";
                 return null;
             }
 
             var item = Att.Get(id);
-            if (item == null || !string.Equals(item.Key, uniId, StringComparison.OrdinalIgnoreCase))
+            if (item == null)
+            {
+                err = "附件不存在";
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(uniId)
+                && !string.Equals(item.Key, uniId, StringComparison.OrdinalIgnoreCase))
             {
                 err = "附件不存在";
                 return null;

@@ -8,7 +8,7 @@
 @section body {
     <EleForm Model="form" LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleTreeSelect For="Item.ParentId" Label="上级目录" Items="Model.CategoryTree" Clearable="true"></EleTreeSelect>
+        <EleTreePicker For="Item.ParentId" Label="上级目录" Items="Model.MenuTree" Clearable="true"></EleTreePicker>
         <EleNumber For="Item.SortId" Label="排序"></EleNumber>
     
         <Bottom>

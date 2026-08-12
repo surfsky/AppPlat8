@@ -46,6 +46,13 @@ namespace App.Components
             EditPower = viewPower;
             DeletePower = viewPower;
         }
+        public AuthAttribute(Power viewPower, Power editPower)
+        {
+            ViewPower = viewPower;
+            NewPower = editPower;
+            EditPower = editPower;
+            DeletePower = editPower;
+        }
         public AuthAttribute(Power viewPower, Power newPower, Power editPower, Power deletePower)
         {
             ViewPower = viewPower;

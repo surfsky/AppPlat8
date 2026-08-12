@@ -138,8 +138,14 @@ export const serverMethods = {
         const res = await Utils.request(url, payload, "POST");
         if (res && (res.code === 0 || res.code === "0")) {
             const cmdPayload = res.data;
-            if (cmdPayload && typeof cmdPayload === "object" && cmdPayload.command) {
-                this.executeServerCommand(cmdPayload);
+            if (cmdPayload && typeof cmdPayload === "object") {
+                if (Array.isArray(cmdPayload.commands) && cmdPayload.commands.length > 0) {
+                    for (const c of cmdPayload.commands) {
+                        if (c && typeof c === "object" && c.command) this.executeServerCommand(c);
+                    }
+                } else if (cmdPayload.command) {
+                    this.executeServerCommand(cmdPayload);
+                }
             }
         }
         return res;

@@ -106,7 +106,11 @@ export const commandMethods = {
                 EleManager.showError(res.data.info || res.data.msg || '删除失败');
             }
         } catch (e) {
-            EleManager.showError('请求失败');
+            const s = (window.Utils && typeof Utils.extractMessage === 'function')
+                ? Utils.extractMessage(e?.response?.data, '请求失败')
+                : (e?.message || '请求失败');
+            EleManager.showError(s);
+            console.error(e);
         }
     },
 
@@ -127,7 +131,11 @@ export const commandMethods = {
                 EleManager.showError(res.data.info || res.data.msg || '删除失败');
             }
         } catch (e) {
-            EleManager.showError('请求失败');
+            const s = (window.Utils && typeof Utils.extractMessage === 'function')
+                ? Utils.extractMessage(e?.response?.data, '请求失败')
+                : (e?.message || '请求失败');
+            EleManager.showError(s);
+            console.error(e);
         }
     },
 
@@ -178,7 +186,10 @@ export const commandMethods = {
                 EleManager.showError(res.data.msg || res.data.info || '操作失败');
             }
         } catch (e) {
-            EleManager.showError('请求失败');
+            const s = (window.Utils && typeof Utils.extractMessage === 'function')
+                ? Utils.extractMessage(e?.response?.data, '请求失败')
+                : (e?.message || '请求失败');
+            EleManager.showError(s);
             console.error(e);
         }
     }

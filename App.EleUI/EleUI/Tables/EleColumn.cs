@@ -1,8 +1,10 @@
 using App.Components;
 using System;
 using System.Reflection;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using App.Utils; 
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -49,13 +51,30 @@ namespace App.EleUI
         [HtmlAttributeName("FormatString")]
         public string FormatString { get; set; }
 
+        /// <summary>若为true，若文本过长则自动换行</summary>
+        [HtmlAttributeName("Wrap")]
+        public bool Wrap { get; set; } = false;
+
         /// <summary>若为true，则展示为超链接，点击后跳转到详情页</summary>
         [HtmlAttributeName("Link")]
         public bool Link { get; set; }
 
-        /// <summary>若为true，若文本过长则自动换行</summary>
-        [HtmlAttributeName("Wrap")]
-        public bool Wrap { get; set; } = false;
+        /// <summary>弹窗页面URL，支持{xxx}占位符（如{id}、{fileName}），点击列文本后使用EleManager.Drawer打开</summary>
+        [HtmlAttributeName("PopupUrl")]
+        public string PopupUrl { get; set; }
+
+        /// <summary>弹窗标题，留空时使用列Label</summary>
+        [HtmlAttributeName("PopupTitle")]
+        public string PopupTitle { get; set; }
+
+        /// <summary>弹窗尺寸（百分比或像素），默认70%</summary>
+        [HtmlAttributeName("PopupSize")]
+        public string PopupSize { get; set; } = "50%";
+
+        /// <summary>弹窗方向，默认rtl（从右向左滑出）</summary>
+        [HtmlAttributeName("PopupDirection")]
+        public string PopupDirection { get; set; } = "rtl";
+
 
         public EleColumn()
         {
@@ -128,7 +147,11 @@ namespace App.EleUI
             else
             {
                 // Default Templates
-                if (Link)
+                if (!string.IsNullOrEmpty(PopupUrl))
+                {
+                    output.Content.SetHtmlContent(BuildPopupTemplate(propName));
+                }
+                else if (Link)
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
@@ -222,6 +245,68 @@ namespace App.EleUI
                     output.Content.SetHtmlContent("");
                 }
             }
+        }
+
+        /// <summary>构造Popup超链接模板</summary>
+        private string BuildPopupTemplate(string propName)
+        {
+            var urlExpr = BuildPopupUrlExpr(PopupUrl);
+            var title = EscapeSingleQuoted(!string.IsNullOrEmpty(PopupTitle) ? PopupTitle : (Label ?? "查看"));
+            var size = EscapeSingleQuoted(PopupSize ?? "70%");
+            var dir = EscapeSingleQuoted(PopupDirection ?? "rtl");
+
+            return $@"
+                        <template #default=""scope"">
+                            <span class=""text-blue-600 cursor-pointer hover:text-blue-700 no-underline"" @click=""openDrawer({urlExpr}, '{size}', '{dir}', '{title}')"">
+                                {{{{ scope.row.{propName} ?? '' }}}}
+                            </span>
+                        </template>
+                    ";
+        }
+
+        /// <summary>将Popup Url模板字符串（含{id}占位符）编译为JS拼接表达式</summary>
+        private static string BuildPopupUrlExpr(string template)
+        {
+            if (string.IsNullOrEmpty(template))
+                return "''";
+
+            var matches = Regex.Matches(template, "\\{([A-Za-z_][A-Za-z0-9_\\.]*)\\}");
+            if (matches.Count == 0)
+                return $"'{EscapeSingleQuoted(template)}'";
+
+            var sb = new StringBuilder();
+            var last = 0;
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var m = matches[i];
+                var literal = template.Substring(last, m.Index - last);
+                if (!string.IsNullOrEmpty(literal))
+                {
+                    if (sb.Length > 0) sb.Append(" + ");
+                    sb.Append("'").Append(EscapeSingleQuoted(literal)).Append("'");
+                }
+
+                var token = m.Groups[1].Value;
+                var path = token.StartsWith("scope.") ? token : $"scope.row.{token}";
+                if (sb.Length > 0) sb.Append(" + ");
+                sb.Append($"encodeURIComponent((({path}) ?? '').toString())");
+                last = m.Index + m.Length;
+            }
+
+            var tail = template.Substring(last);
+            if (!string.IsNullOrEmpty(tail))
+            {
+                if (sb.Length > 0) sb.Append(" + ");
+                sb.Append("'").Append(EscapeSingleQuoted(tail)).Append("'");
+            }
+
+            return sb.Length == 0 ? "''" : sb.ToString();
+        }
+
+        /// <summary>转义单引号包围的JS字符串</summary>
+        private static string EscapeSingleQuoted(string text)
+        {
+            return (text ?? string.Empty).Replace("\\", "\\\\").Replace("'", "\\'");
         }
     }
 }

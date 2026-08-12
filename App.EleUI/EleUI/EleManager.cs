@@ -30,7 +30,22 @@ namespace App.EleUI
         CloseLoading,
         OpenDrawer,
         CloseDrawer,
-        SetControl
+        SetControl,
+        RefreshData,
+        RefreshPage
+    }
+
+    /// <summary>
+    /// 刷新作用域（适用于 RefreshData / RefreshPage）
+    /// </summary>
+    public enum RefreshScope
+    {
+        /// <summary>只刷新当前 iframe / 当前 EleTable 实例（默认）</summary>
+        Self,
+        /// <summary>刷新 parent window（打开本 Drawer 的父页面）</summary>
+        Parent,
+        /// <summary>刷新顶级 window（top）</summary>
+        Top
     }
 
     /// <summary>
@@ -220,6 +235,12 @@ namespace App.EleUI
     /// </summary>
     public record SetControlArgs(List<ControlPatchArgs> Items);
 
+    /// <summary>刷新数据命令参数</summary>
+    public record RefreshDataArgs(RefreshScope Scope = RefreshScope.Parent, string InstanceId = null);
+
+    /// <summary>刷新页面命令参数</summary>
+    public record RefreshPageArgs(RefreshScope Scope = RefreshScope.Parent, bool ForceReload = true);
+
 
     /// <summary>
     /// ElemUI 客户端命令管理器
@@ -257,6 +278,33 @@ namespace App.EleUI
                 Utc: DateTime.UtcNow
             );
             return BuildResult(0, msg, cmd);
+        }
+
+        /// <summary>
+        /// 构建多条客户端命令（命令按数组顺序串行执行，可实现 toast → 关抽屉 → 刷数据 等串联动作）
+        /// </summary>
+        public static JsonResult BuildClientCommandResult(params ClientCommand[] commands)
+        {
+            var list = (commands ?? Array.Empty<ClientCommand>()).Where(c => c != null).ToList();
+            var payload = new
+            {
+                commands = list,
+                commandCount = list.Count
+            };
+            return BuildResult(0, "ok", payload);
+        }
+
+        /// <summary>
+        /// 创建一条客户端命令（不立即返回 ActionResult，用于搭配 BuildClientCommandResult(params[]) 做串联）
+        /// </summary>
+        public static ClientCommand MakeCommand(ClientCommandType commandType, object args)
+        {
+            return new ClientCommand(
+                Command: commandType,
+                Args: args,
+                RequestId: Guid.NewGuid().ToString("N"),
+                Utc: DateTime.UtcNow
+            );
         }
 
         //--------------------------------------------------------------
@@ -344,6 +392,29 @@ namespace App.EleUI
         public static IActionResult CloseDrawer()
         {
             return BuildClientCommandResult(ClientCommandType.CloseDrawer, new { });
+        }
+
+        /// <summary>
+        /// 刷新 EleTable 数据（不刷新页面）。
+        /// 默认从 Drawer 页发给父 iframe 的 parent window，命中 Atts 列表的 window.__attsTableInstance__。
+        /// </summary>
+        public static IActionResult RefreshData(RefreshScope scope = RefreshScope.Parent, string instanceId = null)
+        {
+            return BuildClientCommandResult(
+                ClientCommandType.RefreshData,
+                new RefreshDataArgs(Scope: scope, InstanceId: instanceId)
+            );
+        }
+
+        /// <summary>
+        /// 刷新整个页面（location.reload）。
+        /// </summary>
+        public static IActionResult RefreshPage(RefreshScope scope = RefreshScope.Parent, bool forceReload = true)
+        {
+            return BuildClientCommandResult(
+                ClientCommandType.RefreshPage,
+                new RefreshPageArgs(Scope: scope, ForceReload: forceReload)
+            );
         }
 
         /// <summary>

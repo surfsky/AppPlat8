@@ -71,7 +71,13 @@ namespace App.EleUI
             var childContent = await output.GetChildContentAsync();
             var slotContent = childContent.GetContent();
 
-            var itemsEnumerable = Items as IEnumerable;
+            // 字符串表达式（例如 "managerMenuTree"）时，不要把它当作 IEnumerable<char>
+            // 否则 ResolveItemsFieldNames 会从 char 推断字段名，导致 children/name/id 字段名错误
+            IEnumerable itemsEnumerable = null;
+            if (!(Items is string))
+            {
+                itemsEnumerable = Items as IEnumerable;
+            }
             var (idField, nameField, childrenField, disabledField) = ResolveItemsFieldNames(itemsEnumerable);
             var nodeKey = NormalizeFieldForVue(NodeKey ?? idField ?? "id");
 
@@ -239,7 +245,9 @@ namespace App.EleUI
             if (!string.IsNullOrEmpty(match))
                 return ToCamelCase(match);
 
-            return field;
+            // 当没有匹配（例如 Items 是字符串表达式、没有真实对象属性名集合时）
+            //按默认 JSON 序列化约定（CamelCase）转换一次，保证与 ToJson() 输出一致）
+            return ToCamelCase(field);
         }
 
         private static string PickField(IEnumerable<string> props, params string[] candidates)

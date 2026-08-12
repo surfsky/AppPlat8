@@ -99,7 +99,59 @@ class EleManagerCore {
                 });
             },
             closedrawer: () => this.closeDrawer(),
-            setcontrol: (args) => this.setControl(args || {})
+            setcontrol: (args) => this.setControl(args || {}),
+            reload: (args) => {
+                const delay = Number.isFinite(Number(args?.delay)) ? Math.max(0, Number(args.delay)) : 0;
+                const go = () => {
+                    try {
+                        if (args?.url && typeof args.url === 'string') {
+                            window.location.href = args.url;
+                        } else {
+                            window.location.reload();
+                        }
+                    } catch (_) {}
+                };
+                if (delay > 0) window.setTimeout(go, delay);
+                else go();
+                return true;
+            },
+            invokemethod: (args) => {
+                const name = Utils.safeText(args?.name || args?.method, 200);
+                if (!name) return false;
+                const fn = Utils.getGlobalFunction(name);
+                if (!fn || typeof fn !== 'function') return false;
+                try {
+                    const payload = args && typeof args.payload === 'object' ? args.payload : {};
+                    return fn(payload);
+                } catch (err) {
+                    console.error('invokemethod failed:', err);
+                    return false;
+                }
+            },
+            setlocation: (args) => {
+                const href = Utils.safeText(args?.url || args?.href, 600);
+                if (!href) return false;
+                try {
+                    if (args?.pushState) {
+                        const state = (args?.state && typeof args.state === 'object') ? args.state : null;
+                        const title = Utils.safeText(args?.title, 200) || '';
+                        window.history.pushState(state, title, href);
+                        if (args?.iframeId) {
+                            const el = document.getElementById(args.iframeId);
+                            if (el && typeof el.src !== 'undefined') {
+                                const src = Utils.safeText(args?.iframeSrc, 600);
+                                if (src) el.src = src;
+                            }
+                        }
+                    } else {
+                        window.location.href = href;
+                    }
+                } catch (err) {
+                    console.error('setlocation failed:', err);
+                    return false;
+                }
+                return true;
+            }
         };
 
         this._initThemeObserver();

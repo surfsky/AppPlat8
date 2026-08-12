@@ -12,18 +12,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace App.Pages.OA
+namespace App.Pages.KB
 {
-    [Auth(Power.ArticleView)]
-    public class ArticleDirsModel : AdminModel
+    [Auth(Power.KbMenuView)]
+    public class MenusModel : AdminModel
     {
-        public ArticleDir Item { get; set; }
+        public KbMenu Item { get; set; }
 
         public void OnGet() { }
 
         public IActionResult OnGetData(Paging pi, string name)
         {
-            var list = ArticleDir.GetTree();
+            var list = KbMenu.GetTree();
             return BuildResult(0, "success", list, pi);
         }
 
@@ -31,17 +31,15 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.ArticleDelete))
+            if (!CheckPower(Power.KbMenuDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
             {
-                if (ArticleDir.Set.Any(x => x.ParentId == id))
+                if (KbMenu.Set.Any(x => x.ParentId == id))
                     return BuildResult(400, "存在下级目录，无法删除");
-                if (Article.Set.Any(x => x.CategoryId == id))
-                    return BuildResult(400, "该目录下存在文档，无法删除");
 
-                ArticleDir.Delete(id);
+                KbMenu.Delete(id);
             }
             return BuildResult(0, "删除成功");
         }

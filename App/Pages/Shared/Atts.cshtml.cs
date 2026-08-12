@@ -23,6 +23,14 @@ namespace App.Pages.Shared
 
         public Att Item { get; set; }
 
+        // 封装：强制 HTTP 200，让 axios 走 .then 分支以便拿到真实 msg
+        private JsonResult OkBuildResult(int code, string msg, object data = null)
+        {
+            var json = BuildResult(code, msg, data);
+            json.StatusCode = 200;
+            return json;
+        }
+
         public void OnGet(string uniId, string name)
         {
             UniId = uniId?.Trim();
@@ -54,18 +62,18 @@ namespace App.Pages.Shared
         {
             uniId = uniId?.Trim();
             if (ids == null || ids.Length == 0)
-                return BuildResult(400, "参数错误");
+                return OkBuildResult(400, "请先勾选要删除的附件");
             if (string.IsNullOrWhiteSpace(uniId))
-                return BuildResult(400, "参数错误：缺少uniId");
+                return OkBuildResult(400, "参数错误：缺少uniId");
             if (!CheckPower(Power.CheckObjectEdit))
-                return BuildResult(403, "无权操作");
+                return OkBuildResult(403, "无权删除附件");
 
             var allowIds = Att.Set.Where(t => ids.Contains(t.Id) && t.Key == uniId).Select(t => t.Id).ToList();
             if (allowIds.Count == 0)
-                return BuildResult(404, "未找到可删除附件");
+                return OkBuildResult(404, "未找到可删除的附件");
 
             Att.DeleteBatch(allowIds);
-            return BuildResult(0, "删除成功");
+            return OkBuildResult(0, $"删除成功，共{allowIds.Count}个附件");
         }
 
         public IActionResult OnPostUpload(string uniId)
@@ -74,13 +82,13 @@ namespace App.Pages.Shared
             {
                 uniId = uniId?.Trim();
                 if (string.IsNullOrWhiteSpace(uniId))
-                    return BuildResult(400, "参数错误：缺少uniId");
+                    return OkBuildResult(400, "参数错误：缺少uniId");
                 if (!CheckPower(Power.CheckObjectEdit))
-                    return BuildResult(403, "无权操作");
+                    return OkBuildResult(403, "无权上传附件");
 
                 var files = Request?.Form?.Files;
                 if (files == null || files.Count == 0)
-                    return BuildResult(400, "请先选择要上传的文件");
+                    return OkBuildResult(400, "请先选择要上传的文件");
 
                 var nextSortId = (Att.Set.Where(t => t.Key == uniId).Select(t => (int?)t.SortId).Max() ?? 0) + 1;
                 var result = new List<object>();
@@ -90,7 +98,7 @@ namespace App.Pages.Shared
                     if (file == null || file.Length <= 0)
                         continue;
 
-                    var url = Uploader.SaveFile(file, nameof(Att), file.FileName);
+                    var url = Uploader.SaveFile(file, nameof(Att));
                     var item = new Att
                     {
                         Key = uniId,
@@ -105,15 +113,59 @@ namespace App.Pages.Shared
                 }
 
                 if (result.Count == 0)
-                    return BuildResult(400, "未上传任何有效文件");
+                    return OkBuildResult(400, "未上传任何有效文件");
 
-                return BuildResult(0, $"上传成功，共{result.Count}个文件", result);
+                return OkBuildResult(0, $"上传成功，共{result.Count}个文件", result);
             }
             catch (Exception ex)
             {
                 var message = string.IsNullOrWhiteSpace(ex?.Message) ? "上传失败" : ex.Message;
-                return BuildResult(400, message);
+                return OkBuildResult(400, message);
             }
+        }
+
+        public IActionResult OnPostMoveTo([FromBody] MoveToRequest req)
+        {
+            if (req?.Ids == null || req.Ids.Length == 0)
+                return OkBuildResult(400, "请先勾选要移动的附件");
+            req.UniId = req.UniId?.Trim();
+            if (string.IsNullOrWhiteSpace(req.UniId))
+                return OkBuildResult(400, "缺少源目录Key");
+            if (req.TargetMenuId <= 0)
+                return OkBuildResult(400, "请选择目标目录");
+            if (!CheckPower(Power.CheckObjectEdit))
+                return OkBuildResult(403, "无权移动附件");
+
+            // 强校验：当前页面必须属于知识库目录
+            if (!req.UniId.StartsWith("KbMenu-", StringComparison.OrdinalIgnoreCase))
+                return OkBuildResult(400, "当前页面不是知识库目录，不支持移动");
+
+            // 目标目录必须存在
+            var target = App.DAL.KbMenu.Get(req.TargetMenuId);
+            if (target == null)
+                return OkBuildResult(404, "目标目录不存在或已删除");
+
+            var targetKey = $"KbMenu-{req.TargetMenuId}";
+            if (string.Equals(req.UniId, targetKey, StringComparison.OrdinalIgnoreCase))
+                return OkBuildResult(400, "目标目录与源目录相同");
+
+            // 安全：只更新"选中且Att.Key == 源uniId"的记录，防止越权
+            var toMove = Att.Set.Where(t => req.Ids.Contains(t.Id) && t.Key == req.UniId).ToList();
+            var affected = 0;
+            foreach (var a in toMove)
+            {
+                a.Key = targetKey;
+                a.Save();
+                affected++;
+            }
+            return OkBuildResult(0, $"移动成功，共{affected}个附件", new { moved = affected, targetKey });
+        }
+
+        public class MoveToRequest
+        {
+            public long[] Ids { get; set; }
+            public string UniId { get; set; }
+            public long TargetMenuId { get; set; }
         }
 
         public IActionResult OnGetDownload(long id, string uniId)
@@ -132,16 +184,15 @@ namespace App.Pages.Shared
             if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
                 return BuildResult(404, "文件不存在或已被删除");
 
-            var ext = Path.GetExtension(item.FileName ?? item.Content);
-            var mimeType = IO.GetMimeType(ext);
+            var physExt = Path.GetExtension(path) ?? string.Empty;
+            var mimeType = App.Utils.IO.GetMimeType(physExt);
             if (string.IsNullOrWhiteSpace(mimeType))
                 mimeType = "application/octet-stream";
 
-            var downloadName = string.IsNullOrWhiteSpace(item.FileName)
-                ? Path.GetFileName(path)
-                : item.FileName;
-
-            return PhysicalFile(path, mimeType, downloadName);
+            // 注意：不再传 fileDownloadName，也不手写 Content-Disposition，
+            // 因为前端已通过 a.download = 数据库原名(Att.FileName) 强制指定，
+            // 这样彻底绕开 ASP.NET Core Content-Disposition 中文编码 + Chrome 忽略 a.download 的双坑。
+            return PhysicalFile(path, mimeType);
         }
     }
 }

@@ -185,21 +185,28 @@
                     EleManager.showWarning('下载地址不存在');
                 return;
             }
-
+            // 直接用后端注入的 fileName（数据库原名）写死 a.download，绕开所有响应头编码坑
+            const safeName = (fileName || '').trim() || 'download';
             try {
-                const response = await fetch(downloadUrl, { credentials: 'same-origin' });
-                if (!response.ok)
-                    throw new Error('下载失败: ' + response.status);
-
-                const blob = await response.blob();
+                let blob;
+                if (window.axios) {
+                    const res = await axios.get(downloadUrl, {
+                        responseType: 'blob',
+                        withCredentials: true
+                    });
+                    blob = res.data;
+                } else {
+                    const res = await fetch(downloadUrl, { credentials: 'same-origin' });
+                    if (!res.ok) throw new Error('下载失败: ' + res.status);
+                    blob = await res.blob();
+                }
                 const blobUrl = URL.createObjectURL(blob);
-                const disposition = response.headers.get('Content-Disposition') || response.headers.get('content-disposition') || '';
-                const downloadName = getFileNameFromDisposition(disposition) || fileName || 'download';
-                triggerAnchorDownload(blobUrl, downloadName);
+                triggerAnchorDownload(blobUrl, safeName);
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
             } catch (err) {
-                console.error(err);
-                triggerAnchorDownload(downloadUrl, fileName || 'download');
+                console.error('[viewer download]', err);
+                // 兜底：仍用 safeName 作为下载名
+                triggerAnchorDownload(downloadUrl, safeName);
             }
         }
 

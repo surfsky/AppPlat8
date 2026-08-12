@@ -1,0 +1,242 @@
+@page
+@model App.Pages.KB.IndexModel
+@using App.Utils
+@using System.Text.Json
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "知识库导航";
+    var treeJson = JsonSerializer.Serialize(
+        Model.MenuTree ?? new List<KbMenu>(),
+        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = false,
+            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, MaxDepth = 64 });
+
+    //---------------------------------------------
+    // ① 将树扁平化：深度优先遍历为 [{id, name, depth, isTop, url}] 列表
+    //   - 这样才能精确控制"每级深度退格多少像素"
+    //   - 也才能按条目数/权重把「所有节点（含子节点）」 3 等分
+    //---------------------------------------------
+    var flat = new List<FlatItem>();
+    var srcRoot = (Model.MenuTree != null && Model.MenuTree.Count > 0 && Model.MenuTree[0].Children != null)
+        ? Model.MenuTree[0].Children
+        : new List<KbMenu>();
+    foreach (var n in srcRoot) Flatten(n, 0, flat);
+
+    //---------------------------------------------
+    // ② 计算最优 3 列切分点（按"累计权重"尽量接近，避免左列爆满）
+    //   权重规则：顶级(1./2./3./4./5./6.) = 3，普通节点 = 1
+    //---------------------------------------------
+    var weights = flat.Select(f => f.IsTopLevel ? 3.0 : 1.0).ToList();
+    var totalW = weights.Sum();
+    var target = totalW / 3.0;
+    int cut1 = 0, cut2 = 0;
+    double acc = 0;
+    for (int i = 0; i < flat.Count; i++)
+    {
+        acc += weights[i];
+        if (cut1 == 0 && acc >= target) { cut1 = i + 1; acc = 0; continue; }
+        if (cut1 > 0 && cut2 == 0 && acc >= target) { cut2 = i + 1; break; }
+    }
+    if (cut2 <= cut1) cut2 = Math.Max(cut1, Math.Min(flat.Count, cut1 + (flat.Count - cut1) / 2));
+    var col1 = flat.Take(cut1).ToList();
+    var col2 = flat.Skip(cut1).Take(cut2 - cut1).ToList();
+    var col3 = flat.Skip(cut2).ToList();
+}
+
+@section body {
+    <div id="kbIndex" class="min-h-screen bg-white">
+        <!-- 顶部搜索栏 + 标题 -->
+        <div class="max-w-6xl mx-auto pt-12 pb-8 px-4">
+            <h1 class="text-center text-2xl md:text-3xl font-bold text-gray-800 mb-8">知识库导航</h1>
+
+            <!-- ✅ 胶囊型搜索框：外层 rounded-full + 阴影，放大镜在胶囊内左侧，右侧按钮融在胶囊里
+                     用原生 input 替换 el-input，彻底绕开 Element Plus 默认 inset box-shadow 边框 -->
+            <div class="kb-search-capsule mx-auto flex items-center bg-white border border-gray-200 shadow-sm rounded-full pl-5 pr-1 py-1 transition hover:shadow-md">
+                <input
+                    type="text"
+                    :value="searchText"
+                    @@input="searchText = $event.target.value"
+                    @@keyup.enter="onSearchClick"
+                    class="kb-native-input flex-1 h-11 px-1 bg-transparent text-gray-800 text-base outline-none border-0 border-none shadow-none focus:outline-none focus:ring-0 placeholder-gray-400"
+                    placeholder="输入关键词，搜索知识库（AI全文检索功能开发中）" />
+                <button v-if="searchText && searchText.length > 0"
+                        type="button"
+                        @@click="searchText = ''"
+                        class="kb-search-clear text-gray-400 hover:text-gray-600 px-2 py-1 rounded-full transition select-none"
+                        title="清空">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <button type="button" class="kb-search-btn ml-2 inline-flex items-center justify-center px-6 h-11 text-white font-medium rounded-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition shadow-sm shrink-0"
+                        @@click="onSearchClick">
+                    <i class="fa-solid fa-magnifying-glass px-1"></i>
+                    搜索
+                </button>
+            </div>
+        </div>
+
+        <!-- ✅ 三列目录：所有节点（含子节点）按累计权重 3 等分 + 每级 depth × 18px 退格 -->
+        <div class="max-w-7xl mx-auto px-4 pb-16">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                @RenderKbColumn(col1, "左列")
+                @RenderKbColumn(col2, "中列")
+                @RenderKbColumn(col3, "右列")
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    // 扁平化节点（服务器侧）
+    public class FlatItem
+    {
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public int Depth { get; set; }
+        public bool IsTopLevel { get; set; }
+        public string Url { get; set; }
+    }
+
+    // 递归扁平化：深度优先
+    private static void Flatten(KbMenu node, int depth, List<FlatItem> list)
+    {
+        if (node == null) return;
+        list.Add(new FlatItem
+        {
+            Id = node.Id,
+            Name = node.Name ?? string.Empty,
+            Depth = depth,
+            IsTopLevel = depth == 0,
+            Url = $"/KB/Manager?menuId={Uri.EscapeDataString(node.Id.ToString())}"
+        });
+        var children = node.Children ?? new List<KbMenu>();
+        foreach (var ch in children) Flatten(ch, depth + 1, list);
+    }
+
+    // 渲染单列
+    private Microsoft.AspNetCore.Html.IHtmlContent RenderKbColumn(List<FlatItem> items, string tag)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<div class=\"bg-white rounded-lg border border-gray-100 shadow-sm p-4 md:p-5\">");
+        sb.Append("  <ul class=\"kb-flat-list\">");
+        foreach (var f in items)
+        {
+            // 每级深度退格 18px；顶级多加 2px 内边距，加粗+深色
+            var leftPad = 8 + f.Depth * 18;
+            var cls = f.IsTopLevel
+                ? "kb-line kb-line-top font-bold text-gray-800 text-base md:text-lg"
+                : "kb-line kb-line-sub text-gray-700 text-sm";
+            sb.Append(
+                $"<li class=\"kb-flat-item\" style=\"padding-left:{leftPad}px;\">" +
+                $"<a class=\"{cls}\" href=\"{Html.Encode(f.Url)}\" title=\"{Html.Encode(f.Name)}\">{Html.Encode(f.Name ?? "")}</a>" +
+                $"</li>"
+            );
+        }
+        sb.Append("  </ul>");
+        sb.Append("</div>");
+        return new Microsoft.AspNetCore.Html.HtmlString(sb.ToString());
+    }
+}
+
+@section script {
+    <style>
+        /* ============== 胶囊搜索框（原生 input 版，100% 无 Element Plus 内边框） ============== */
+        .kb-search-capsule { width: 100%; max-width: 720px; height: 56px; }
+        .kb-native-input {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            border: 0 !important;
+            border-width: 0 !important;
+            border-style: none !important;
+            outline: 0 !important;
+            outline-width: 0 !important;
+            outline-style: none !important;
+            box-shadow: none !important;
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+        .kb-native-input::placeholder { color: #9ca3af; opacity: 1; }
+        .kb-native-input:focus {
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+        }
+        .kb-native-input:focus-visible {
+            outline: 0 !important;
+            box-shadow: none !important;
+        }
+        .kb-search-btn:focus,
+        .kb-search-clear:focus { outline: none !important; }
+        @@media (max-width: 640px) {
+            .kb-search-capsule { height: 50px; padding-left: 14px; padding-right: 4px; }
+            .kb-search-capsule .kb-search-btn { padding-left: 1rem; padding-right: 1rem; height: 44px; font-size: 14px; }
+        }
+
+        /* ============== 扁平化目录树（每行独立 padding-left 退格） ============== */
+        .kb-flat-list { list-style: none; margin: 0; padding: 0; }
+        .kb-flat-item { margin: 0; padding-top: 1px; padding-bottom: 1px; }
+        .kb-line {
+            display: inline-block; padding: 3px 8px; border-radius: 5px; text-decoration: none;
+            line-height: 1.6; letter-spacing: 0.01em; width: calc(100% - 0px);
+        }
+        .kb-line:hover { background: #eef2ff; color: #4f46e5; text-decoration: none; }
+        .kb-line-top { margin-top: 6px; margin-bottom: 2px; }
+        .kb-flat-item:first-child .kb-line-top { margin-top: 2px; }
+        .kb-line-sub { color: #374151; }
+    </style>
+    <script>
+        (function () {
+            const { createApp, ref } = Vue;
+            const App = {
+                setup() {
+                    const searchText = ref('');
+                    function _toast(msg, type) {
+                        try {
+                            const EP = window.ElementPlus;
+                            if (EP && EP.ElMessage) { EP.ElMessage({ message: msg || '', type: type || 'info', showClose: true, duration: 2200 }); return; }
+                        } catch (_) {}
+                        alert(msg || '');
+                    }
+                    function onSearchClick() {
+                        const kw = (searchText.value || '').trim();
+                        console.log('[KB Index] 点击搜索，关键词 =', kw);
+                        _toast('AI全文检索功能开发中', 'info');
+                    }
+                    return { searchText, onSearchClick };
+                }
+            };
+
+            function mountIt() {
+                try {
+                    const app = createApp(App);
+                    const EP = window.ElementPlus;
+                    if (EP) {
+                        app.use(EP);
+                        if (window.dayjs && typeof window.dayjs.locale === 'function') { try { window.dayjs.locale('zh-cn'); } catch (_) { } }
+                    }
+                    try {
+                        const icons = window.ElementPlusIconsVue || (window.ElementPlusIcons ? window.ElementPlusIcons : null) || null;
+                        if (icons && typeof icons === 'object') {
+                            for (const [k, v] of Object.entries(icons)) {
+                                if (v && (typeof v === 'function' || (typeof v === 'object' && v.render))) app.component(k, v);
+                            }
+                        }
+                    } catch (_) { }
+                    app.mount('#kbIndex');
+                } catch (err) { console.error('KB Index mount failed:', err); }
+            }
+            function waitAndMount(retry) {
+                retry = retry || 0;
+                const ok = typeof Vue !== 'undefined' && typeof Vue.createApp === 'function' && window.ElementPlus;
+                if (ok) { mountIt(); return; }
+                if (retry < 80) { setTimeout(function () { waitAndMount(retry + 1); }, 25); return; }
+                console.error('KB Index：等待 Vue / ElementPlus 全局加载超时。');
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { waitAndMount(0); }, { once: true });
+            } else {
+                waitAndMount(0);
+            }
+        })();
+    </script>
+}

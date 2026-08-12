@@ -19,24 +19,29 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Icon="Upload" VClick="openAttUpload">上传</EleButton>
                 <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
+                <EleButton Type="Warning" Icon="Share" VClick="openMoveTo">移动到</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
-            <EleColumn Label="操作" Width="120" Fixed="right">
+            <EleColumn Label="操作" Width="100" Fixed="right">
                 <template #default="scope">
-                    <el-icon class="cursor-pointer text-blue-500 hover:text-blue-600 mr-2" @@click="downloadFile(scope.row.id)">
+                    <el-icon class="cursor-pointer text-indigo-500 hover:text-indigo-600 mr-2" title="预览" @@click="previewFile(scope.row)">
+                        <component :is="'View'"></component>  <!-- 直接用View会冲突 -->
+                    </el-icon>
+                    <el-icon class="cursor-pointer text-blue-500 hover:text-blue-600 mr-2" title="下载" @@click="downloadFile(scope.row)">
                         <Download />
                     </el-icon>
-                    <el-icon class="cursor-pointer text-red-500 hover:text-red-600" @@click="deleteSingleItem(scope.row.id)">
+                    <el-icon class="cursor-pointer text-red-500 hover:text-red-600" title="删除" @@click="deleteSingleItem(scope.row.id)">
                         <Delete />
                     </el-icon>
                 </template>
             </EleColumn>
-            <EleImageColumn Prop="imageUrl" Label="缩略图" Width="80" ThumbnailWidth="44" ThumbnailHeight="44"></EleImageColumn>
-            <EleColumn For="Item.FileName" Label="文件名" MinWidth="220"></EleColumn>
-            <EleColumn For="Item.Type" Label="类型" Width="100"></EleColumn>
+            <EleColumn For="Item.FileName" Label="文件名" MinWidth="400" PopupUrl="/Shared/FileViews/Viewer?id={id}"></EleColumn>
             <EleColumn For="Item.FileSizeText" Label="文件大小" Width="120"></EleColumn>
+            <EleImageColumn Prop="imageUrl" Label="缩略图" Width="80" ThumbnailWidth="44" ThumbnailHeight="44"></EleImageColumn>
+            <EleColumn For="Item.Type" Label="类型" Width="100" Visible="false"></EleColumn>
+            <EleColumn For="Item.FileExtension" Label="文件扩展名" Width="120"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="上传时间" Width="180" Format="DateTime"></EleColumn>
         </Columns>
     </EleTable>
@@ -44,29 +49,238 @@
 
 @section script {
     <script>
+        // ⚠️ 本页全局本地消息提取函数（不挂 userMixin this 上，避免 this._msg is not a function）
+        // 所有需要解析 msg 的地方统一调 __attsExtractMsg(...)
+        (function () {
+            const names = ['msg', 'Msg', 'message', 'Message', 'info', 'Info', 'detail', 'Detail', 'title', 'Title', 'error', 'Error'];
+            window.__attsExtractMsg = function (data, fallback) {
+                try {
+                    if (window.Utils && typeof Utils.extractMessage === 'function')
+                        return Utils.extractMessage(data, fallback);
+                } catch (_) { }
+                if (data == null) return fallback || '';
+                if (typeof data === 'string') {
+                    const s = data.trim();
+                    if (!s) return fallback || '';
+                    try { const p = JSON.parse(s); if (p) return window.__attsExtractMsg(p, fallback); } catch (_) { }
+                    if (s.length < 240) return s;
+                    return fallback || '';
+                }
+                if (typeof data !== 'object') return fallback || '';
+                for (const k of names) { const v = data[k]; if (typeof v === 'string' && v.trim()) return v; }
+                if (data.errors && typeof data.errors === 'object') {
+                    for (const p in data.errors) {
+                        const list = data.errors[p];
+                        if (typeof list === 'string' && list) return list;
+                        if (Array.isArray(list)) { for (const x of list) if (typeof x === 'string' && x) return x; }
+                    }
+                }
+                return fallback || '';
+            };
+        })();
+
         const userMixin = {
             methods: {
+                // 把 EleTable 实例（this）挂到 window + parent + top，供 Drawer iframe（跨层级）访问时命中
+                __mount() {
+                    const tag = '[Atts:__mount]';
+                    const uniId = decodeURIComponent('@uniIdEncoded');
+                    window.__attsTableInstance__ = this;
+                    window.__attsUniId__ = uniId;
+                    try { console.log(tag, '挂到 window.__attsTableInstance__, uniId =', uniId, 'loadData?', typeof this.loadData, 'search?', typeof this.search); } catch (_) { }
+                    const windows = [];
+                    try { if (window.parent && window.parent !== window) windows.push(window.parent); } catch (_) { }
+                    try { if (window.top && window.top !== window && (!windows.length || windows[windows.length - 1] !== window.top)) windows.push(window.top); } catch (_) { }
+                    for (const w of windows) {
+                        try {
+                            // 如果同域下 Manager3 里有多个 Atts iframe（不同目录），用数组+uniId 精确匹配
+                            if (!Array.isArray(w.__attsInstances__)) w.__attsInstances__ = [];
+                            const bucket = { inst: this, uniId: uniId, time: Date.now(), win: window };
+                            const idx = w.__attsInstances__.findIndex(x => x && x.win === window);
+                            if (idx >= 0) w.__attsInstances__[idx] = bucket; else w.__attsInstances__.push(bucket);
+                            // 向后兼容：如果父/顶级没有 __attsTableInstance__ 就暂存一份（Drawer 仍取这个快捷方式）
+                            if (!w.__attsTableInstance__) w.__attsTableInstance__ = this;
+                            try { console.log(tag, '代理挂到', w === window.top ? 'top' : 'parent', '.__attsInstances__ 数量 =', w.__attsInstances__.length); } catch (_) { }
+                        } catch (_) { }
+                    }
+                },
+                __unmount() {
+                    if (window.__attsTableInstance__ === this) window.__attsTableInstance__ = null;
+                    const clearFrom = function (w) {
+                        try {
+                            if (Array.isArray(w.__attsInstances__)) {
+                                w.__attsInstances__ = w.__attsInstances__.filter(x => x && x.win !== window);
+                            }
+                            if (w.__attsTableInstance__ === this) w.__attsTableInstance__ = null;
+                        } catch (_) { }
+                    };
+                    try { if (window.parent && window.parent !== window) clearFrom(window.parent); } catch (_) { }
+                    try { if (window.top && window.top !== window) clearFrom(window.top); } catch (_) { }
+                },
+                // 上传文件
                 openAttUpload() {
                     const input = document.getElementById('attUploadInput');
                     if (input) input.click();
                 },
-                downloadFile(id) {
+                // 打开「移动到」Drawer 选择目标目录
+                openMoveTo() {
+                    const ids = Array.isArray(this.selectedIds?.value) ? [...this.selectedIds.value] : [];
+                    if (!ids.length) {
+                        EleManager.showWarning('请先勾选要移动的附件');
+                        return;
+                    }
+                    // 保存当前 EleTable this 到全局（多 Atts iframe 场景下，存 parent/top 的 __attsInstances__ 数组更精确）
+                    try {
+                        const uniId = decodeURIComponent('@uniIdEncoded');
+                        const windows = [];
+                        try { if (window.parent && window.parent !== window) windows.push(window.parent); } catch (_) { }
+                        try { if (window.top && window.top !== window && (!windows.length || windows[windows.length - 1] !== window.top)) windows.push(window.top); } catch (_) { }
+                        for (const w of windows) {
+                            try {
+                                if (!Array.isArray(w.__attsInstances__)) w.__attsInstances__ = [];
+                                const idx = w.__attsInstances__.findIndex(x => x && x.win === window);
+                                const bucket = { inst: this, uniId: uniId, time: Date.now(), win: window };
+                                if (idx >= 0) w.__attsInstances__[idx] = bucket; else w.__attsInstances__.push(bucket);
+                                w.__attsTableInstance__ = this;
+                            } catch (_) { }
+                        }
+                        console.log('[Atts:openMoveTo] 打开移动抽屉，当前 uniId =', uniId, ', 当前实例 this.loadData?', typeof this.loadData);
+                    } catch (_) { }
+                    const uniId = decodeURIComponent('@uniIdEncoded');
+                    const drawerUrl = '/Shared/AttsMoveTo?uniId=' + encodeURIComponent(uniId)
+                        + '&ids=' + encodeURIComponent(ids.join(','));
+                    EleManager.openDrawer({
+                        title: '选择目标目录',
+                        url: drawerUrl,
+                        size: '420px',
+                        direction: 'rtl',
+                        showFooter: false
+                    });
+                },
+                // 真正的刷新执行点：双通道统一走这里（直接 await loadData，失败再 try search 硬刷新）
+                async _triggerAttsRefresh(srcTag) {
+                    const tag = (srcTag || '[refresh]') + ' ';
+                    const uniId = decodeURIComponent('@uniIdEncoded');
+                    console.log(tag + '========================');
+                    console.log(tag + '开始刷新附件列表，uniId =', uniId);
+                    const inst = this || window.__attsTableInstance__;
+                    if (!inst) { console.error(tag + '❌ 找不到 EleTable 实例（__attsTableInstance__ undefined/null），放弃刷新'); return; }
+                    console.log(tag + '✅ 命中实例，typeof loadData =', typeof inst.loadData, ', typeof search =', typeof inst.search, ', typeof invokeCommand =', typeof inst.invokeCommand);
+                    try {
+                        if (Array.isArray(inst.selectedIds?.value)) { inst.selectedIds.value = []; console.log(tag + '已清空勾选'); }
+                    } catch (_) { }
+                    let ok = false;
+                    try {
+                        if (typeof inst.loadData === 'function') {
+                            console.log(tag + '👉 调用 inst.loadData() ... (会发起 ?handler=Data 请求)');
+                            await inst.loadData();
+                            ok = true;
+                            console.log(tag + '✅ inst.loadData() 执行完成，服务器日志应该出现一条 [PAGE] ... handler=Data&uniId=' + uniId);
+                        }
+                        if (typeof inst.search === 'function') {
+                            try {
+                                console.log(tag + '👉 兜底：再调用 inst.search() 确保筛选/分页同步');
+                                await inst.search();
+                            } catch (e) { console.warn(tag + 'search 兜底异常（忽略即可）', e); }
+                        }
+                    } catch (e) {
+                        console.error(tag + '❌ loadData 异常：', e);
+                        if (typeof inst.invokeCommand === 'function') {
+                            try {
+                                console.log(tag + '👉 最终兜底：inst.invokeCommand("Search") 模拟手动点查询按钮');
+                                inst.invokeCommand('Search');
+                                ok = true;
+                            } catch (ee) { console.error(tag + '❌ invokeCommand 也异常：', ee); }
+                        }
+                    }
+                    if (ok) console.log(tag + '✅ 刷新执行完毕，检查上方网络面板 / 服务器日志是否出现新的 handler=Data 请求');
+                    console.log(tag + '========================');
+                },
+                // 处理「移动到」Drawer 关闭：通道一（DrawerHelper closeHandler），若 DrawerHelper 真的走到这里也支持
+                async handleMoveToClose(payload) {
+                    const data = payload?.data || {};
+                    if (data.needsRefresh === true) {
+                        await this._triggerAttsRefresh('[close-handler]');
+                    }
+                },
+                // 预览文件
+                previewFile(row) {
+                    if (!row || !row.id) {
+                        EleManager.showWarning('附件信息不存在');
+                        return;
+                    }
+                    const uniId = '@uniIdEncoded';
+                    const params = new URLSearchParams();
+                    params.set('uniId', decodeURIComponent(uniId));
+                    params.set('id', String(row.id));
+                    if (row.fileName) params.set('name', row.fileName);
+                    const url = '/Shared/FileViews/Viewer?' + params.toString();
+                    const title = row.fileName ? '预览 - ' + row.fileName : '文件预览';
+                    EleManager.openDrawer({
+                        title: title,
+                        url: url,
+                        size: '80%',
+                        direction: 'rtl',
+                        showFooter: false
+                    });
+                },
+                // 下载文件（直接用数据库 Att.FileName 当 a.download，绕开响应头编码坑）
+                async downloadFile(row) {
+                    const id = row?.id || row?.Id || 0;
                     if (!id) {
                         EleManager.showWarning('下载地址不存在');
                         return;
                     }
-
+                    // 数据库里的原名（EleTable 渲染后属性名是 camelCase 的 fileName）
+                    const rawName = (row?.fileName || row?.FileName || '').trim() || 'download';
                     const url = '?handler=Download&uniId=@uniIdEncoded&id=' + encodeURIComponent(id);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    try {
+                        let blob;
+                        if (window.axios) {
+                            const res = await axios.get(url, {
+                                responseType: 'blob',
+                                withCredentials: true,
+                                headers: {
+                                    'RequestVerificationToken': (window.Utils && Utils.getCsrfToken) ? Utils.getCsrfToken() : ''
+                                }
+                            });
+                            blob = res.data;
+                        } else {
+                            const res = await fetch(url, { credentials: 'same-origin' });
+                            if (!res.ok) {
+                                let txt = '';
+                                try { txt = await res.text(); } catch (_) { }
+                                const msg = window.__attsExtractMsg(txt, '下载失败: ' + res.status);
+                                EleManager.showError(msg);
+                                return;
+                            }
+                            blob = await res.blob();
+                        }
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = rawName;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                    } catch (e) {
+                        console.error('[download]', e);
+                        // 兜底
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = rawName;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    }
                 },
                 async onAttFileSelected(event) {
                     const input = event.target;
                     const files = input && input.files ? Array.from(input.files) : [];
                     if (files.length === 0) return;
+                    const uniId = decodeURIComponent('@uniIdEncoded');
+                    console.log('[Atts:onAttFileSelected] 开始上传，uniId =', uniId, ', 文件数 =', files.length, files.map(f => f.name + ' ' + (f.size || 0) + 'B').join('；'));
 
                     const formData = new FormData();
                     for (const file of files) {
@@ -79,22 +293,72 @@
                                 'RequestVerificationToken': (window.Utils && Utils.getCsrfToken) ? Utils.getCsrfToken() : ''
                             }
                         });
-
-                        if (res.data && (res.data.code === 0 || res.data.code === '0')) {
-                            EleManager.showSuccess(res.data.msg || '上传成功');
-                            await this.loadData();
+                        const ok = res.data && (String(res.data.code) === '0' || String(res.data.code) === '200' || String(res.data.code) === '00000');
+                        console.log('[Atts:onAttFileSelected] 上传返回 code =', res.data ? res.data.code : '(无)', ', ok =', ok, ', msg =', res.data ? (res.data.msg || res.data.message) : '(无)');
+                        if (ok) {
+                            EleManager.showSuccess(window.__attsExtractMsg(res.data, '上传成功'));
+                            // 上传成功 → 强制刷新列表（3 层兜底）
+                            try { if (Array.isArray(this.selectedIds?.value)) this.selectedIds.value = []; } catch (_) { }
+                            try {
+                                if (typeof this._triggerAttsRefresh === 'function') {
+                                    await this._triggerAttsRefresh('[upload-success]');
+                                } else {
+                                    if (typeof this.loadData === 'function') {
+                                        console.log('[Atts:onAttFileSelected] 👉 调用 this.loadData() 刷新列表');
+                                        await this.loadData();
+                                    }
+                                    if (typeof this.search === 'function') { try { await this.search(); } catch (_) { } }
+                                    if (typeof this.invokeCommand === 'function') { try { this.invokeCommand('Search'); } catch (_) { } }
+                                }
+                                console.log('[Atts:onAttFileSelected] ✅ 上传后刷新完成，检查服务器日志是否有新的 handler=Data 请求');
+                            } catch (e) { console.error('[Atts:onAttFileSelected] 上传后刷新异常', e); }
                         } else {
-                            EleManager.showError((res.data && (res.data.msg || res.data.info)) || '上传失败');
+                            EleManager.showError(window.__attsExtractMsg(res.data, '上传失败'));
                         }
                     } catch (e) {
-                        console.error(e);
-                        const serverMsg = e?.response?.data?.msg || e?.response?.data?.info;
-                        EleManager.showError(serverMsg || '上传失败');
+                        console.error('[Atts:onAttFileSelected] catch', e);
+                        EleManager.showError(window.__attsExtractMsg(e && e.response ? e.response.data : (e || null), '上传失败'));
                     } finally {
                         if (input) input.value = '';
                     }
                 }
             }
+        };
+
+        // 全局：注册一次性移动成功后刷新监听器（仅绑定一次，不在 openMoveTo 里重复绑，避免累积）
+        (function () {
+            if (window.__attsMoveToRefreshBinded__) return;
+            window.__attsMoveToRefreshBinded__ = true;
+            const refreshChannel = '__attsMoveToRefresh__';
+            window.addEventListener('message', function (ev) {
+                try {
+                    const d = ev && ev.data;
+                    if (d && d[refreshChannel] === true && d.needsRefresh === true) {
+                        const inst = window.__attsTableInstance__;
+                        if (inst && typeof inst._triggerAttsRefresh === 'function') {
+                            inst._triggerAttsRefresh('[refresh-channel]');
+                        } else if (inst && typeof inst.loadData === 'function') {
+                            try { if (Array.isArray(inst.selectedIds?.value)) inst.selectedIds.value = []; } catch (_) { }
+                            try { inst.loadData(); } catch (_) { }
+                            try { if (typeof inst.search === 'function') inst.search(); } catch (_) { }
+                        } else {
+                            try {
+                                if (window.EleManager && typeof EleManager.showInfo === 'function')
+                                    EleManager.showInfo('附件列表已刷新');
+                            } catch (_) { }
+                        }
+                    }
+                } catch (_) { }
+            });
+        })();
+
+        // 全局函数：若 serverCloseHandler / closeHandler 字符串模式命中也可调用
+        window.refreshAttsAfterMove = function () {
+            const inst = window.__attsTableInstance__;
+            if (!inst) return null;
+            if (typeof inst._triggerAttsRefresh === 'function') return inst._triggerAttsRefresh('[global]');
+            if (typeof inst.loadData === 'function') return inst.loadData();
+            return null;
         };
     </script>
 }

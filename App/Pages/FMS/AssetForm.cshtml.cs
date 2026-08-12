@@ -80,7 +80,7 @@ namespace App.Pages.OA
 
             Asset item = req.Id > 0 ? Asset.Get(req.Id) : new Asset();
             item.Name = req.Name;
-            item.Category = req.Category;
+            item.Menu = req.Menu;
             item.OrgId = req.OrgId;
             item.ChargeUserId = req.ChargeUserId;
             item.Location = req.Location;

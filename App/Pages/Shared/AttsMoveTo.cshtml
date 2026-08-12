@@ -1,0 +1,382 @@
+@page
+@model App.Pages.Shared.AttsMoveToModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>选择目标目录</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+        #app { height: 100%; display: flex; flex-direction: column; }
+        .tip { padding: 14px 18px; font-size: 14px; color: #555; border-bottom: 1px solid #ebeef5; background: #fafafa; }
+        .tip b { color: #409eff; margin: 0 2px; }
+        .tree-wrap { flex: 1; overflow: auto; padding: 12px 14px; }
+        .footer { height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; border-top: 1px solid #ebeef5; background: #fff; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        @Html.AntiForgeryToken()
+        <div class="tip">
+            请选择要把 <b>{{ ids.length }}</b> 个附件移动到的目标目录
+        </div>
+        <div class="tree-wrap">
+            <el-tree
+                ref="treeRef"
+                :data="menuTree"
+                node-key="id"
+                :props="{ label: 'name', children: 'children' }"
+                :highlight-current="true"
+                :current-node-key="String(currentMenuId)"
+                :expand-on-click-node="true"
+                default-expand-all
+                @@node-click="onNodeClick">
+            </el-tree>
+        </div>
+        <div class="footer">
+            <el-button :disabled="submitting" @@click="cancel">取消</el-button>
+            <el-button type="primary" :loading="submitting" @@click="confirm">确认移动</el-button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/element-plus/dist/locale/zh-cn.min.js"></script>
+    <!-- 引入 EleUI 主文件（包含 Utils.extractMessage / Utils.applyClientCommands）。Drawer 关闭和刷新等通用命令执行在这里） -->
+    <script src="/_content/App.EleUI/eleui/eleui.js" type="module" onerror="this.dataset.fallback=1"></script>
+    <script>
+        // 从 @Html.AntiForgeryToken() 生成的隐藏 input 读 token，避免反射/扩展类名写法不兼容
+        (function () {
+            try {
+                var el = document.querySelector('input[name="__RequestVerificationToken"]');
+                window.__CSRF_TOKEN__ = el ? (el.value || '') : '';
+            } catch (_) { window.__CSRF_TOKEN__ = ''; }
+        })();
+        window.MoveToConfig = {
+            ids: @Html.Raw(Model.SelectedIdsJson ?? "[]"),
+            uniId: @Html.Raw(Model.UniIdJson ?? "\"\""),
+            currentMenuId: Number('@Html.Raw(Model.CurrentMenuIdStr ?? "0")') || 0,
+            menuTree: @Html.Raw(Model.MenuTreeJson ?? "[]"),
+            csrfToken: window.__CSRF_TOKEN__
+        };
+    </script>
+    <script>
+        (function () {
+            const { createApp, ref, onMounted, nextTick } = Vue;
+            const cfg = window.MoveToConfig || {};
+            const MSG = (window.ElementPlus && ElementPlus.ElMessage) ? ElementPlus.ElMessage : {
+                success: (s) => alert(s),
+                warning: (s) => alert(s),
+                error: (s) => alert(s)
+            };
+
+            // 错误信息提取（同 Utils.extractMessage，轻量版）
+            function extractMsg(data, fallback) {
+                if (data == null) return fallback || '';
+                if (typeof data === 'string') {
+                    const s = data.trim();
+                    if (!s) return fallback || '';
+                    try { const p = JSON.parse(s); if (p) return extractMsg(p, fallback); } catch (_) { }
+                    return s.length < 240 ? s : (fallback || '');
+                }
+                if (typeof data !== 'object') return fallback || '';
+                const names = ['msg', 'Msg', 'message', 'Message', 'info', 'Info', 'detail', 'Detail', 'title', 'Title', 'error', 'Error'];
+                for (const k of names) {
+                    const v = data[k];
+                    if (typeof v === 'string' && v.trim()) return v;
+                }
+                return fallback || '';
+            }
+
+            const app = createApp({
+                setup() {
+                    const treeRef = ref(null);
+                    const submitting = ref(false);
+                    const menuTree = ref(cfg.menuTree || []);
+                    const currentMenuId = ref(cfg.currentMenuId || 0);
+                    const targetMenuId = ref(0);
+                    const ids = Array.isArray(cfg.ids) ? cfg.ids : [];
+                    const uniId = cfg.uniId || '';
+                    window.__attsMoveToSourceUniId__ = uniId;
+                    console.log('[AttsMoveTo:setup] 初始化完成，源 uniId =', uniId, ', 需要移动的附件数 =', ids.length, ', 当前所在目录 currentMenuId =', currentMenuId.value);
+
+                    function onNodeClick(data) {
+                        targetMenuId.value = Number(data?.id) || 0;
+                    }
+
+                    function cancel() {
+                        if (submitting.value) return;
+                        sendClose(false, 0, false);
+                    }
+
+                    async function confirm() {
+                        const t = Number(targetMenuId.value) || 0;
+                        if (!t) { MSG.warning('请选择目标目录'); return; }
+                        if (submitting.value) return;
+                        submitting.value = true;
+                        try {
+                            const body = { ids: ids, uniId: uniId, targetMenuId: t };
+                            const csrf = (window.Utils && Utils.getCsrfToken && typeof Utils.getCsrfToken === 'function')
+                                ? Utils.getCsrfToken()
+                                : (cfg.csrfToken || '');
+                            console.log('[AttsMoveTo:confirm] 提交移动请求 ids=', ids, ', uniId=', uniId, ', targetMenuId=', t, ', csrf?', !!csrf, ', axios available?', !!(window.axios && typeof axios.post === 'function'));
+                            let data = null;
+                            // 双路径：优先 axios（如果 CDN 成功加载），否则主路径走 原生 fetch（100% 可用，不依赖 CDN）
+                            if (window.axios && typeof axios.post === 'function') {
+                                const res = await axios.post('/Shared/AttsMoveTo?handler=MoveTo', body, {
+                                    withCredentials: true,
+                                    headers: { 'RequestVerificationToken': csrf || '' }
+                                });
+                                data = res && res.data ? res.data : null;
+                            } else {
+                                const res = await fetch('/Shared/AttsMoveTo?handler=MoveTo', {
+                                    method: 'POST',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json; charset=utf-8',
+                                        'RequestVerificationToken': csrf || ''
+                                    },
+                                    body: JSON.stringify(body)
+                                });
+                                let raw = null;
+                                try { raw = await res.text(); } catch (_) { raw = ''; }
+                                try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = { code: res.status || 500, msg: raw || ('HTTP ' + res.status) }; }
+                                if (!data || typeof data !== 'object') data = { code: res.status || 500, msg: raw || ('HTTP ' + res.status) };
+                                // 强制 HTTP 成功（后端 OkBuildResult 已保证），如果 response.ok 但 data 没 code，填默认
+                                if (res.ok && (data == null || data.code == null)) data.code = 0;
+                            }
+                            const code = String(data && data.code != null ? data.code : '');
+                            console.log('[AttsMoveTo:confirm] 返回 code =', code, ', data =', JSON.stringify(data || {}).slice(0, 300));
+                            if (code === '0' || code === '00000' || code === '200') {
+                                // 执行后端下发的客户端命令序列：Toast → 关抽屉 → 刷新父列表
+                                if (window.Utils && typeof Utils.applyClientCommands === 'function') {
+                                    try { await Utils.applyClientCommands(data); }
+                                    catch (e) { console.error('[applyCommands]', e); await applyCommandsFallback(data); }
+                                } else {
+                                    await applyCommandsFallback(data);
+                                }
+                            } else {
+                                MSG.error(extractMsg(data, '移动失败'));
+                            }
+                        } catch (e) {
+                            console.error('[moveTo] catch', e);
+                            const respData = e && e.response ? e.response.data : null;
+                            MSG.error(extractMsg(respData || (e || null), '移动失败'));
+                        } finally {
+                            submitting.value = false;
+                        }
+                    }
+
+                    // Utils.applyClientCommands 的 fallback（模块脚本加载时序导致 Utils 不可用时使用）
+                    // 逻辑与 Utils.js 内保持一致：按 commands 顺序串行执行 toast → closeDrawer → refreshData
+                    async function applyCommandsFallback(resData) {
+                        if (!resData) { MSG.success(extractMsg(resData, '操作成功')); return; }
+                        let commands = [];
+                        if (Array.isArray(resData.commands)) commands = resData.commands;
+                        else if (resData.data && Array.isArray(resData.data.commands)) commands = resData.data.commands;
+                        else if (resData.command) commands = [resData];
+                        commands = commands.filter(c => c != null);
+                        if (!commands.length) { MSG.success(extractMsg(resData, '操作成功')); return; }
+                        for (let i = 0; i < commands.length; i++) {
+                            const c = commands[i];
+                            const cmd = String(c && c.command || '').toLowerCase();
+                            const args = c && c.args ? c.args : {};
+                            try {
+                                if (cmd === 'toast' || cmd === 'notify') {
+                                    const typeMap = { success: 'success', warning: 'warning', warn: 'warning', info: 'info', error: 'error' };
+                                    const t = typeMap[String(args.type || 'info').toLowerCase()] || 'info';
+                                    if (t === 'success') MSG.success(String(args.message || '操作成功'));
+                                    else if (t === 'warning') MSG.warning(String(args.message || '提示'));
+                                    else if (t === 'error') MSG.error(String(args.message || '操作失败'));
+                                    else MSG.info(String(args.message || '提示'));
+                                    await sleep(350);
+                                } else if (cmd === 'closedrawer' || cmd === 'close-drawer') {
+                                    // 父页面 EleManager.closeDrawer() 最稳
+                                    try {
+                                        const parentEM = (window.parent && window.parent.EleManager) ? window.parent.EleManager
+                                            : (window.top && window.top.EleManager ? window.top.EleManager : null);
+                                        if (parentEM && typeof parentEM.closeDrawer === 'function') parentEM.closeDrawer();
+                                        else if (window.EleManager && typeof EleManager.closeDrawer === 'function') EleManager.closeDrawer();
+                                    } catch (_) { }
+                                    // 同时兼容旧链路的 close postMessage
+                                    try {
+                                        const payload = { __elePageClose: true, code: 0, data: { fromFallback: true } };
+                                        if (window.parent && window.parent !== window) window.parent.postMessage(payload, '*');
+                                        if (window.top && window.top !== window) window.top.postMessage(payload, '*');
+                                    } catch (_) { }
+                                    await sleep(200);
+                                } else if (cmd === 'refreshdata' || cmd === 'refresh-data') {
+                                    const TAG_FB = '[AttsMoveTo:refreshData:fallback]';
+                                    console.log(TAG_FB, '开始，args =', JSON.stringify(args || {}));
+                                    const wantUniId = args && args.uniId ? String(args.uniId) : (window.__attsMoveToSourceUniId__ ? String(window.__attsMoveToSourceUniId__) : '');
+                                    console.log(TAG_FB, '目标 uniId =', wantUniId || '(未传)');
+                                    let topWin = window; try { if (window.top) topWin = window.top; } catch (_) { }
+                                    let parentWin = window; try { if (window.parent) parentWin = window.parent; } catch (_) { }
+                                    let foundInst = null; let foundWin = null; let matched = '';
+
+                                    // ① parent/top 上 __attsInstances__ 数组（精确 uniId）
+                                    const candidates = [topWin, parentWin].filter((v, i, a) => a.indexOf(v) === i);
+                                    for (const w of candidates) {
+                                        try {
+                                            if (Array.isArray(w.__attsInstances__) && w.__attsInstances__.length) {
+                                                console.log(TAG_FB, '① 在', w === topWin ? 'top' : 'parent', '找到 __attsInstances__ 数组，数量 =', w.__attsInstances__.length);
+                                                if (wantUniId) {
+                                                    const exact = w.__attsInstances__.find(x => x && x.uniId && String(x.uniId) === wantUniId);
+                                                    if (exact && exact.inst) { foundInst = exact.inst; foundWin = exact.win || w; matched = 'parent/top-' + (w === topWin ? 'top' : 'parent') + '-uniId-exact'; break; }
+                                                }
+                                                const latest = w.__attsInstances__.slice().sort((a, b) => (b.time || 0) - (a.time || 0))[0];
+                                                if (latest && latest.inst) { foundInst = latest.inst; foundWin = latest.win || w; matched = 'parent/top-' + (w === topWin ? 'top' : 'parent') + '-latest'; break; }
+                                            }
+                                        } catch (e) { console.warn(TAG_FB, '① 数组扫描异常', e); }
+                                    }
+                                    // ② __attsTableInstance__ 快捷方式
+                                    if (!foundInst) {
+                                        for (const w of candidates) {
+                                            try {
+                                                const ii = w.__attsTableInstance__;
+                                                if (ii && (typeof ii._triggerAttsRefresh === 'function' || typeof ii.loadData === 'function')) { foundInst = ii; foundWin = w; matched = '__attsTableInstance__-' + (w === topWin ? 'top' : 'parent'); break; }
+                                            } catch (_) { }
+                                        }
+                                    }
+                                    // ③ top.document 遍历 iframe
+                                    if (!foundInst) {
+                                        let doc = null; try { if (topWin && topWin.document) doc = topWin.document; } catch (_) { }
+                                        if (doc && typeof doc.querySelectorAll === 'function') {
+                                            const frames = doc.querySelectorAll('iframe');
+                                            console.log(TAG_FB, '③ 遍历 top.document iframe，共', frames.length, '个');
+                                            for (let i = 0; i < frames.length && !foundInst; i++) {
+                                                try {
+                                                    const f = frames[i]; const src = (f.src || '').slice(0, 80);
+                                                    let cw = null; try { cw = f.contentWindow; } catch (_) { }
+                                                    if (!cw) { console.log(TAG_FB, '  · iframe[' + i + '] 无法访问（跨域/未加载） src =', src); continue; }
+                                                    const inArr = Array.isArray(cw.__attsInstances__) && cw.__attsInstances__.length;
+                                                    const instQuick = cw.__attsTableInstance__;
+                                                    console.log(TAG_FB, '  · iframe[' + i + '] src =', src, '__attsTableInstance__?', !!instQuick, '__attsInstances__ 数量?', inArr ? cw.__attsInstances__.length : 0);
+                                                    if (wantUniId && inArr) {
+                                                        const exact = cw.__attsInstances__.find(x => x && x.uniId && String(x.uniId) === wantUniId);
+                                                        if (exact && exact.inst) { foundInst = exact.inst; foundWin = cw; matched = 'iframe-' + i + '-uniId-exact'; break; }
+                                                    }
+                                                    if (instQuick && (typeof instQuick._triggerAttsRefresh === 'function' || typeof instQuick.loadData === 'function')) { foundInst = instQuick; foundWin = cw; matched = 'iframe-' + i + '-__attsTableInstance__'; break; }
+                                                    if (inArr) {
+                                                        const latest = cw.__attsInstances__.slice().sort((a, b) => (b.time || 0) - (a.time || 0))[0];
+                                                        if (latest && latest.inst) { foundInst = latest.inst; foundWin = cw; matched = 'iframe-' + i + '-attsInstances-latest'; break; }
+                                                    }
+                                                } catch (e) { console.warn(TAG_FB, '  · iframe[' + i + '] 异常（忽略）', e); }
+                                            }
+                                        }
+                                    }
+                                    console.log(TAG_FB, '最终匹配：', matched || '(未匹配到实例，兜底广播)');
+                                    if (foundInst) {
+                                        try { if (Array.isArray(foundInst.selectedIds?.value)) foundInst.selectedIds.value = []; } catch (_) { }
+                                        let did = false;
+                                        if (typeof foundInst._triggerAttsRefresh === 'function') { try { await foundInst._triggerAttsRefresh('[fallback:refreshData/' + matched + ']'); did = true; } catch (e) { console.error(TAG_FB, '_triggerAttsRefresh err', e); } }
+                                        if (!did && typeof foundInst.loadData === 'function') {
+                                            try {
+                                                console.log(TAG_FB, '👉 调用 inst.loadData()（会发起 ?handler=Data 请求）');
+                                                await foundInst.loadData();
+                                                did = true;
+                                                console.log(TAG_FB, '✅ inst.loadData() 完成，服务器日志应出现新的 handler=Data 行');
+                                            } catch (e) { console.error(TAG_FB, 'loadData err', e); }
+                                        }
+                                        if (typeof foundInst.search === 'function') { try { await foundInst.search(); } catch (_) { } }
+                                        if (typeof foundInst.invokeCommand === 'function' && !did) { try { foundInst.invokeCommand('Search'); } catch (_) { } }
+                                    } else {
+                                        // 兜底：广播
+                                        let w = window;
+                                        try {
+                                            const scope = String(args.scope || 'parent').toLowerCase();
+                                            if (scope === 'self') w = window;
+                                            else if (scope === 'top' && topWin !== window) w = topWin;
+                                            else if (parentWin !== window) w = parentWin;
+                                        } catch (_) { }
+                                        try {
+                                            if (w && w !== window && typeof w.postMessage === 'function') {
+                                                w.postMessage({ __attsMoveToRefresh__: true, needsRefresh: true, fromFallback: true, uniId: wantUniId }, '*');
+                                            }
+                                        } catch (_) { }
+                                    }
+                                } else if (cmd === 'refreshpage' || cmd === 'refresh-page') {
+                                    const scope = String(args.scope || 'parent').toLowerCase();
+                                    let w = window;
+                                    try {
+                                        if (scope === 'self') w = window;
+                                        else if (scope === 'top' && window.top && window.top !== window) w = window.top;
+                                        else if (window.parent && window.parent !== window) w = window.parent;
+                                    } catch (_) { w = window; }
+                                    try { if (w && typeof w.location !== 'undefined' && w.location.reload) w.location.reload(args.forceReload !== false); } catch (_) { }
+                                }
+                            } catch (e) { console.error('[applyCommandsFallback] err at', i, e); }
+                        }
+                    }
+
+                    function sleep(ms) { return new Promise(r => setTimeout(r, ms || 0)); }
+
+                    function sendClose(ok, tgt, needsRefresh) {
+                        // 通道一：DrawerHelper 约定的 __elePageClose（通过 state.closePayload 走 closeHandler）
+                        const payload = {
+                            __elePageClose: true,
+                            code: 0,
+                            data: {
+                                confirmed: !!ok,
+                                targetMenuId: Number(tgt) || 0,
+                                needsRefresh: !!needsRefresh
+                            }
+                        };
+                        // 通道二：直接广播自定义事件（父页面 Atts.cshtml 监听，绕过 DrawerHelper 的 normalize 链路，稳）
+                        const refreshBroadcast = {
+                            __attsMoveToRefresh__: true,
+                            needsRefresh: !!needsRefresh,
+                            targetMenuId: Number(tgt) || 0
+                        };
+                        const targets = [];
+                        if (window.parent && window.parent !== window) targets.push(window.parent);
+                        if (window.top && window.top !== window && (!targets.length || targets[targets.length-1] !== window.top)) targets.push(window.top);
+                        for (const w of targets) {
+                            try { w.postMessage(payload, '*'); } catch (_) { }
+                            if (needsRefresh) {
+                                try { w.postMessage(refreshBroadcast, '*'); } catch (_) { }
+                            }
+                        }
+                    }
+
+                    onMounted(() => {
+                        nextTick(() => {
+                            if (treeRef.value && currentMenuId.value) {
+                                try {
+                                    const n = treeRef.value.getNode(currentMenuId.value);
+                                    if (n) targetMenuId.value = Number(currentMenuId.value) || 0;
+                                } catch (_) { }
+                            }
+                        });
+                    });
+
+                    return {
+                        treeRef,
+                        submitting,
+                        menuTree,
+                        currentMenuId,
+                        ids,
+                        onNodeClick,
+                        cancel,
+                        confirm
+                    };
+                }
+            });
+
+            if (window.ElementPlus) {
+                app.use(window.ElementPlus);
+                if (window.ElementPlusLocaleZhCn) {
+                    app.config.globalProperties.$ELEMENT = { locale: window.ElementPlusLocaleZhCn };
+                }
+            }
+            app.mount('#app');
+        })();
+    </script>
+</body>
+</html>

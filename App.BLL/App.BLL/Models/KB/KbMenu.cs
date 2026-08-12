@@ -8,10 +8,10 @@ using App.Utils;
 namespace App.DAL
 {
     /// <summary>文档目录</summary>
-    [UI("OA", "文档目录")]
-    public class ArticleDir : TreeEntity<ArticleDir>
+    [UI("KB", "目录")]
+    public class KbMenu : TreeEntity<KbMenu>
     {
-        public static IQueryable<ArticleDir> Search(string name)
+        public static IQueryable<KbMenu> Search(string name)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty()) q = q.Where(o => o.Name.Contains(name.Trim()));

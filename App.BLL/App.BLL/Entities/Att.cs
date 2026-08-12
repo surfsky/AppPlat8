@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 using System.Linq;
 using System.Text.Json.Serialization;
+using App.DAL;
 using App.Utils;
 using Z.EntityFramework.Plus;
 
@@ -26,13 +27,13 @@ namespace App.Entities
     {
         [UI("类型")]                       public AttType? Type { get; set; }  // 如 Text|Image|Others
         [UI("键")]                         public string Key { get; set; }     // 如 Order-3
-        [UI("内容")]                       public string Content { get; set; } // 如 /Files/Users/a.jpg
+        [UI("内容")]                       public string Content { get; set; } // 如 /Files/Users/a.jpg, 或base64编码的图片字符串
         [UI("备注")]                       public string Remark { get; set; }  // 如 超美的图片
 
         // 基础属性
         [UI("Mime类型"), JsonIgnore]       public string MimeType { get; set; }
         [UI("顺序")]                       public int   SortId { get; set; }
-        [UI("是否保护")]                   public bool?  Protect { get; set; }
+        [UI("是否保护")]                   public bool?  Protect { get; set; }     // 是否保护（若保护的话不允许删除修改）
 
         // 文件相关属性
         [UI("名称")]                       public string FileName { get; set; }    // 如 a.jpg
@@ -48,13 +49,13 @@ namespace App.Entities
         [NotMapped, JsonIgnore]            public new List<Att> Images { get; set; } = null;
 
         // 计算属性
-        [NotMapped, UI("完整URL")]
-        public string Url => this.Content;
-        //public string Url => Asp.ResolveUrl(this.Content); // 屏蔽
+        [NotMapped, UI("完整URL")]          public string Url => this.Content;
+        [NotMapped, JsonIgnore, UI("物理路径")]   public string PhysicalPath => this.Content;
 
-        [NotMapped, JsonIgnore, UI("物理路径")]
-        public string PhysicalPath => this.Content;
-        //public string PhysicalPath => Asp.MapPath(this.Content); // 屏蔽
+        // 关联属性
+        // 显式配置外键关系：Att.CreatorId → User.Id
+        [ForeignKey(nameof(CreatorId))]
+        public virtual User Creator { get; set; }   // 创建者，与 CreatorId 对应
 
         //-----------------------------------------------
         // 公共方法
@@ -71,10 +72,12 @@ namespace App.Entities
                 this.FileSizeText,
                 this.Type,
                 this.CreateDt,
+                this.CreatorId,
+                CreatorName = this.Creator?.Name,
+                FileSize,
+                FileExtension,
 
                 MimeType      = type.HasFlag(ExportMode.Detail) ? this.MimeType : null,
-                FileSize      = type.HasFlag(ExportMode.Detail) ? this.FileSize : null,
-                FileExtension = type.HasFlag(ExportMode.Detail) ? this.FileExtension : null,
                 FileMD5       = type.HasFlag(ExportMode.Detail) ? this.FileMD5 : null,
                 FileVisitCnt  = type.HasFlag(ExportMode.Detail) ? this.FileVisitCnt : null,
             };

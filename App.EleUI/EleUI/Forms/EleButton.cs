@@ -79,6 +79,12 @@ namespace App.EleUI
         /// <summary>弹出页面标题。与 PopupUrl 配合使用。</summary>
         [HtmlAttributeName("PopupTitle")]      public string PopupTitle { get; set; }
 
+        /// <summary>二次确认文案。Handler / VClick / Command 场景下，点击后先弹出 ElMessageBox.confirm(ConfirmText, ConfirmTitle)，用户确认后再执行 Handler 逻辑。</summary>
+        [HtmlAttributeName("ConfirmText")]     public string ConfirmText { get; set; }
+
+        /// <summary>二次确认对话框标题，默认"提示"。需与 ConfirmText 同时配置才生效。</summary>
+        [HtmlAttributeName("ConfirmTitle")]    public string ConfirmTitle { get; set; } = "提示";
+
 
         /// <summary>处理标签</summary>
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
@@ -107,12 +113,15 @@ namespace App.EleUI
             // 4) NavigateUrl -> v-on:click window.location.href
             // 5) Click -> native onclick
             // 6) VClick -> v-on:click
-            if (!string.IsNullOrEmpty(Handler))     output.Attributes.SetAttribute("v-on:click", $"postHandler('{Handler}')");
+            //    如设置 ConfirmText，则先弹出确认框，确认后再执行上述动作。
+            string primaryExpr;
+            if (!string.IsNullOrEmpty(Handler))
+                primaryExpr = $"postHandler('{EscapeJs(Handler)}')";
             else if (Command != Command.None)
             {
                 // 统一把 Search 路由到 Data，确保查询走 OnGetData。
                 var commandName = Command == Command.Search ? "Data" : Command.ToString();
-                output.Attributes.SetAttribute("v-on:click", $"invokeCommand('{commandName}')");
+                primaryExpr = $"invokeCommand('{EscapeJs(commandName)}')";
             }
             else if (!string.IsNullOrEmpty(PopupUrl))
             {
@@ -121,11 +130,11 @@ namespace App.EleUI
                 if (!string.IsNullOrEmpty(PopupTitle))
                 {
                     var popupTitleExpr = PopupTitle.Replace("'", "\\'");
-                    output.Attributes.SetAttribute("v-on:click", $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}', '{popupTitleExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}', title: '{popupTitleExpr}' }}) : null))");
+                    primaryExpr = $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}', '{popupTitleExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}', title: '{popupTitleExpr}' }}) : null))";
                 }
                 else
                 {
-                    output.Attributes.SetAttribute("v-on:click", $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}' }}) : null))");
+                    primaryExpr = $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}' }}) : null))";
                 }
             }
             else if (!string.IsNullOrEmpty(NavigateUrl))
@@ -136,9 +145,39 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("onclick", $"window.location.href='{navUrlExpr}'");
                 // Keep a Vue-side fallback for consistency in app-mounted regions.
                 output.Attributes.SetAttribute("v-on:click", $"window.location.href='{navUrlExpr}'");
+                primaryExpr = null;
             }
-            else if (!string.IsNullOrEmpty(Click))  output.Attributes.SetAttribute("onclick", Click);
-            else if (!string.IsNullOrEmpty(VClick)) output.Attributes.SetAttribute("v-on:click", VClick);
+            else if (!string.IsNullOrEmpty(Click))
+            {
+                output.Attributes.SetAttribute("onclick", Click);
+                primaryExpr = null;
+            }
+            else if (!string.IsNullOrEmpty(VClick))
+                primaryExpr = VClick;
+            else
+                primaryExpr = null;
+
+            if (!string.IsNullOrEmpty(primaryExpr))
+            {
+                if (!string.IsNullOrWhiteSpace(ConfirmText))
+                {
+                    var confirmText = ConfirmText.Replace("'", "\\'");
+                    var confirmTitle = (ConfirmTitle ?? "提示").Replace("'", "\\'");
+                    var wrapped =
+                        "(Promise.resolve(window.EleManager ? window.EleManager : window.$eleManager)" +
+                        " .then(m => m ? m.coreElMessageboxConfirm : Promise.reject())" +
+                        " .catch(() => ElementPlus.ElMessageBox.confirm(" +
+                        $"'{confirmText}','{confirmTitle}'," +
+                        " { confirmButtonClass: 'el-button--primary', type: 'warning' }))" +
+                        $" .then(() => {{ {primaryExpr} }})" +
+                        " .catch(() => {}))";
+                    output.Attributes.SetAttribute("v-on:click", wrapped);
+                }
+                else
+                {
+                    output.Attributes.SetAttribute("v-on:click", primaryExpr);
+                }
+            }
 
             // loading
             if (!string.IsNullOrEmpty(Loading)) 

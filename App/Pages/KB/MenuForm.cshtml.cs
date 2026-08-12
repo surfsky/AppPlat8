@@ -13,17 +13,17 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using App.EleUI;
 
-namespace App.Pages.OA
+namespace App.Pages.KB
 {
-    [Auth(Power.ArticleEdit)]
-    public class ArticleDirFormModel : AdminModel
+    [Auth(Power.KbMenuView, Power.KbMenuEdit)]
+    public class MenuFormModel : AdminModel
     {
-        public ArticleDir Item { get; set; }
-        public List<ArticleDir> CategoryTree { get; set; }
+        public KbMenu Item { get; set; }
+        public List<KbMenu> MenuTree { get; set; }
 
         public void OnGet(long? parentId)
         {
-            this.CategoryTree = ArticleDir.GetTree();
+            this.MenuTree = KbMenu.GetTree();
 
             //if (Item == null) Item = new ArticleCategory();
             //if (parentId.HasValue && parentId != 0) Item.ParentId = parentId.Value;
@@ -31,21 +31,21 @@ namespace App.Pages.OA
 
         public IActionResult OnGetData(long id, long? selectId)
         {
-            var item = ArticleDir.GetDetail(id);
+            var item = KbMenu.GetDetail(id);
             if (item == null)
             {
-                item = new ArticleDir();
-                item.ParentId = selectId.Value;
+                item = new KbMenu();
+                item.ParentId = selectId;
             }
             return BuildResult(0, "success", item);
         }
 
-        public IActionResult OnPostSave([FromBody] ArticleDir req)
+        public IActionResult OnPostSave([FromBody] KbMenu req)
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
 
-            var item = req.Id > 0 ? ArticleDir.Get(req.Id) : new ArticleDir();
+            var item = req.Id > 0 ? KbMenu.Get(req.Id) : new KbMenu();
             item.Name = req.Name;
             item.SortId = req.SortId;
             item.ParentId = req.ParentId;

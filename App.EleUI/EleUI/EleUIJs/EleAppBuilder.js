@@ -178,11 +178,24 @@ export class EleAppBuilder {
     mergeServerState(target, source) {
         if (!target || typeof target !== 'object') return;
         if (!source || typeof source !== 'object') return;
-        const stateKeys = Object.keys(target);
-        const stateKeyMap = new Map(stateKeys.map((k) => [k.toLowerCase(), k]));
-        for (const [key, value] of Object.entries(source)) {
-            const targetKey = stateKeyMap.get(key.toLowerCase()) || key;
-            target[targetKey] = value;
+        try {
+            const stateKeys = Object.keys(target);
+            const stateKeyMap = new Map(stateKeys.map((k) => [k.toLowerCase(), k]));
+            for (const [key, value] of Object.entries(source)) {
+                const targetKey = stateKeyMap.get(key.toLowerCase()) || key;
+                try {
+                    target[targetKey] = value;
+                } catch (innerErr) {
+                    // 单个字段赋值失败不影响其他字段同步（例如 Vue ref 只读属性冲突等）
+                    if (typeof console !== 'undefined' && console.warn) {
+                        console.warn('[mergeServerState] 跳过字段', targetKey, innerErr && innerErr.message ? innerErr.message : innerErr);
+                    }
+                }
+            }
+        } catch (outerErr) {
+            if (typeof console !== 'undefined' && console.error) {
+                console.error('[mergeServerState] 服务器状态合并出错：', outerErr && outerErr.stack ? outerErr.stack : outerErr);
+            }
         }
     }
 
@@ -277,12 +290,54 @@ export class EleAppBuilder {
                         bindings[key] = value.bind(state);
                     }
                 }
+
+                // Custom methods from global userMixin (对齐 EleTableAppBuilder 的 userMixin 机制)
+                if (typeof userMixin !== 'undefined' && userMixin && userMixin.methods && typeof userMixin.methods === 'object') {
+                    for (const [key, func] of Object.entries(userMixin.methods)) {
+                        if (typeof func === 'function' && typeof bindings[key] === 'undefined') {
+                            bindings[key] = func.bind(bindings);
+                        }
+                    }
+                }
+
                 return bindings;
             }
         });
 
         // 挂载应用到指定的DOM元素
         app.mount(selector);
+        // 把 EleApp 的 setup bindings（含 reactive state / userMixin methods / postHandler / invokeCommand 等）
+        // 回写到全局 window.exposeName + 通用 __appBindings，便于外部脚本（popstate、Drawer closeHandler 等）直接调用
+        try {
+            const name = (config && config.exposeName) ? config.exposeName : 'model';
+            const bindings = (app && app._instance && app._instance.setupState)
+                ? app._instance.setupState
+                : null;
+            if (bindings && typeof bindings === 'object') {
+                if (!window.__appBindings) window.__appBindings = {};
+                window.__appBindings[name] = bindings;
+                // 白名单式展开：只把这些必要的核心方法挂到 window，避免 userMixin.methods
+                // 里的业务方法（onDeleteMenu/onMenuMoveUp 等）被外部无意间调用导致"请求异常"
+                const exposeFnWhitelist = new Set([
+                    'close', 'cancel', 'confirm', 'save', 'reset', 'openForm', 'closeForm',
+                    'submit', 'search', 'clear', 'refresh', 'reload', 'add', 'edit', 'delete',
+                    'postHandler', 'invokeCommand', 'doUiCmd',
+                    'managerReloadPage',
+                    'mgr2UpdateCurrentMenuId', 'mgr2ApplyTreeRefresh'
+                ]);
+                for (const [k, v] of Object.entries(bindings)) {
+                    if (typeof v === 'function' && typeof window[k] === 'undefined') {
+                        if (!exposeFnWhitelist.has(String(k || '').trim())) continue;
+                        try { window[k] = v.bind(bindings); } catch (_) {}
+                    }
+                }
+                // 约定：把 bindings 存到 window.<exposeName> 下的 __bindings 属性；
+                // 对 Manager 暴露的快捷方式：window.__mgrAppSetup = bindings（userMixin 中的 switchMenu 等可访问）
+                if (typeof window.__mgrAppSetup === 'undefined' && typeof bindings.switchMenu === 'function') {
+                    window.__mgrAppSetup = bindings;
+                }
+            }
+        } catch (_) {}
         return app;
     }
 }

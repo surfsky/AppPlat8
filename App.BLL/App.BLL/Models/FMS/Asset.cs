@@ -7,7 +7,7 @@ using App.Utils;
 namespace App.DAL.OA
 {
     /// <summary>固定资产类别</summary>
-    public enum AssetCategory
+    public enum AssetMenu
     {
         [UI("电脑设备")] Computer = 0,
         [UI("流量卡")] SimCard = 1,
@@ -21,7 +21,7 @@ namespace App.DAL.OA
     public class Asset : EntityBase<Asset>
     {
         [UI("名称")]        public string Name { get; set; }
-        [UI("类别")]        public AssetCategory? Category { get; set; }
+        [UI("类别")]        public AssetMenu? Menu { get; set; }
         [UI("组织")]        public long? OrgId { get; set; }
         [UI("责任人")]      public long? ChargeUserId { get; set; }
         [NotMapped]         public string ChargeUserName { get; set; }
@@ -42,31 +42,31 @@ namespace App.DAL.OA
         {
             return new
             {
-                id = Id,
-                name = Name,
-                category = Category,
-                categoryName = Category.GetTitle(),
-                orgId = OrgId,
+                Id,
+                Name,
+                Menu,
+                MenuName = Menu.GetTitle(),
+                OrgId,
                 orgName = Org?.Name,
-                chargeUserId = ChargeUserId,
-                chargeUserName = ChargeUser?.Name,
-                location = Location,
-                manufacturer = Manufacturer,
-                image = Image,
-                parameters = Parameters,
-                enableDt = EnableDt,
-                expireDt = ExpireDt,
+                ChargeUserId,
+                ChargeUserName = ChargeUser?.Name,
+                Location,
+                Manufacturer,
+                Image,
+                Parameters,
+                EnableDt,
+                ExpireDt,
                 isExpireAlert = IsExpireAlert,
                 createDt = CreateDt,
                 updateDt = UpdateDt
             };
         }
 
-        public static IQueryable<Asset> Search(string name, AssetCategory? category, long? orgId)
+        public static IQueryable<Asset> Search(string name, AssetMenu? category, long? orgId)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty())       q = q.Where(o => o.Name.Contains(name.Trim()));
-            if (category.IsNotEmpty())   q = q.Where(o => o.Category == category.Value);
+            if (category.IsNotEmpty())   q = q.Where(o => o.Menu == category.Value);
             if (orgId.IsNotEmpty())      q = q.Where(o => o.OrgId == orgId.Value);
             return q;
         }

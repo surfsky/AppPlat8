@@ -87,9 +87,15 @@ namespace App.DAL
 
 
 
-        // Article 知识库
+        // CMS 内容管理
         public DbSet<Article> Articles { get; set; }
-        public DbSet<ArticleDir> ArticleDirs { get; set; }
+        public DbSet<ArticleMenu> ArticleDirs { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+
+        // KB 知识库
+        public DbSet<KbMenu> KbMenus { get; set; }
+
+
 
         // 任务、项目、事件记录管理
         public DbSet<Project> Projects { get; set; }
@@ -101,7 +107,6 @@ namespace App.DAL
 
         // OA
         public DbSet<Announce> Announces { get; set; }
-        public DbSet<Comment> Comments { get; set; }
 
         // 财务
         public DbSet<Asset> Assets { get; set; }
@@ -125,6 +130,14 @@ namespace App.DAL
         {
             base.OnModelCreating(modelBuilder);
 
+            // 统一配置 Creator 导航属性与 CreatorId 的关系：
+            // 之前 Gis* 实体和 Att 实体都有 public virtual User Creator { get; set; }，
+            // 但没显式配 HasForeignKey，导致 migrations add 时报：
+            // "Unable to determine the relationship represented by navigation 'Att.Creator' of type 'User'"
+            // 下面通过反射找出所有继承 EntityBase、且同时存在 Creator（User 类型）+ CreatorId（long? 类型）属性的实体，
+            // 统一配成：HasOne(e => e.Creator).WithMany().HasForeignKey(e => e.CreatorId).OnDelete(DeleteBehavior.Restrict)
+            ConfigureCreatorNavigation(modelBuilder);
+
             // User/Role 多对多关系
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Roles)                   // User 有多个 Role
@@ -140,6 +153,51 @@ namespace App.DAL
                 ;
 
             MapListIds(modelBuilder);
+        }
+
+        private static void ConfigureCreatorNavigation(ModelBuilder modelBuilder)
+        {
+            var entityBaseType = typeof(EntityBase);
+            var userType = typeof(User);
+            var nullableLongType = typeof(long?);
+
+            // 从当前已加载到 modelBuilder 的实体里挑（AppPlatContext 会自动注册所有有 DbSet 及被关系链条带到的实体）
+            foreach (var et in modelBuilder.Model.GetEntityTypes())
+            {
+                var clrType = et.ClrType;
+                if (clrType == null) continue;
+                if (!entityBaseType.IsAssignableFrom(clrType)) continue;
+
+                // 有没有 public User Creator 属性（含父类继承的 virtual）
+                var creatorProp = clrType.GetProperty("Creator", BindingFlags.Instance | BindingFlags.Public);
+                if (creatorProp == null || creatorProp.PropertyType != userType) continue;
+
+                // 有没有 CreatorId 属性（long?）
+                var creatorIdProp = clrType.GetProperty("CreatorId", BindingFlags.Instance | BindingFlags.Public);
+                if (creatorIdProp == null || (creatorIdProp.PropertyType != nullableLongType && creatorIdProp.PropertyType != typeof(long))) continue;
+
+                try
+                {
+                    // 用字符串 API 弱类型配置 HasOne(Creator, User) → WithMany() → HasForeignKey(CreatorId) → OnDelete Restrict
+                    var entBuilder = modelBuilder.Entity(clrType);
+
+                    // 调用：EntityTypeBuilder.HasOne(string navigationName, Type relatedEntityType)
+                    var refBuilder = entBuilder.HasOne(userType, "Creator");
+
+                    // 调用：ReferenceCollectionBuilder.WithMany()
+                    var withMany = refBuilder.WithMany();
+
+                    // 调用：ReferenceCollectionBuilder.HasForeignKey(string foreignKeyPropertyName)
+                    var fk = withMany.HasForeignKey("CreatorId");
+
+                    // 调用：ReferenceCollectionBuilder.OnDelete(DeleteBehavior)
+                    fk.OnDelete(DeleteBehavior.Restrict);
+                }
+                catch
+                {
+                    // 如果实体已经显式用 [ForeignKey] 或自定义覆盖过就跳过
+                }
+            }
         }
 
         public override int SaveChanges()

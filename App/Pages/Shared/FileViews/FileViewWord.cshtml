@@ -12,78 +12,24 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.css" />
-    <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.6/dist/docx-preview.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/superdoc@1.29.1/dist/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/superdoc@1.29.1/dist/superdoc.min.js"></script>
     <style>
         html, body { margin: 0; height: 100%; background: #eef2f7; }
         #wrap {
             height: 100%;
             position: relative;
         }
-        #office {
-            width: 100%;
+        #superdoc {
             height: 100%;
-            border: 0;
-            display: none;
             background: #fff;
         }
-        #word {
-            height: 100%;
-            overflow: auto;
-            box-sizing: border-box;
-            padding: 16px;
-            display: none;
+        #superdoc.superdoc-mode {
+            display: block;
         }
-        #word.native-mode .docx-wrapper {
-            background: #e2e8f0 !important;
-            padding: 16px !important;
-        }
-        #word.native-mode .docx-wrapper > section.docx {
-            margin: 0 auto 14px !important;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
-        }
-        #word.compat-mode .docx-wrapper {
-            background: transparent !important;
-            padding: 0 !important;
-        }
-        .word-fallback {
-            background: #fff;
-            border-radius: 6px;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-            padding: 18px 22px;
-            line-height: 1.65;
-            color: #0f172a;
-        }
-        .word-pages {
-            max-width: 860px;
-            margin: 0 auto;
-        }
-        .word-page {
-            width: 794px;
-            min-height: 1123px;
-            margin: 0 auto 16px;
-            background: #fff;
-            border-radius: 2px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
-            overflow: hidden;
-        }
-        .word-page-body {
-            box-sizing: border-box;
-            min-height: 1123px;
-            padding: 72px;
-            line-height: 1.65;
-            color: #0f172a;
-            font-size: 16px;
-            word-break: break-word;
-        }
-        .word-page-body p {
-            margin: 0 0 0.9em;
-        }
-        .word-fallback-tip {
-            margin: 0 0 10px;
-            font-size: 12px;
-            color: #64748b;
+        #superdoc.superdoc-mode > iframe,
+        #superdoc.superdoc-mode > div.sd-root {
+            height: 100% !important;
         }
         #hint {
             height: 100%;
@@ -96,47 +42,28 @@
             font-size: 14px;
             text-align: center;
         }
-        .word-actions {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 10;
-            display: flex;
-            gap: 8px;
+        .sd-toolbar {
+            display: none !important;
         }
-        .word-btn {
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            background: #ffffff;
-            color: #334155;
-            font-size: 12px;
-            line-height: 1;
-            padding: 7px 10px;
-            cursor: pointer;
-        }
-        .word-btn:hover {
-            background: #f8fafc;
+        #superdoc.superdoc-mode .sd-root,
+        #superdoc.superdoc-mode .sd-container,
+        #superdoc.superdoc-mode .sd-editor-container {
+            height: 100% !important;
         }
     </style>
 </head>
 <body>
     <div id="wrap">
-        <div class="word-actions">
-            <button id="btnOffice" type="button" class="word-btn">微软预览</button>
-            <button id="btnNative" type="button" class="word-btn">原生模式</button>
-            <button id="btnCompat" type="button" class="word-btn">兼容模式</button>
-        </div>
-        <iframe id="office" title="Office Word Preview"></iframe>
-        <div id="word"></div>
-        <div id="hint">正在加载微软 Office 预览...</div>
+        <div id="superdoc"></div>
+        <div id="hint">正在加载 SuperDoc 预览...</div>
     </div>
     <script>
         const src = @Html.Raw(srcJson);
         const name = @Html.Raw(nameJson);
         const ext = (name.split('.').pop() || '').toLowerCase();
-        const host = document.getElementById('word');
-        const office = document.getElementById('office');
+        const superdocEl = document.getElementById('superdoc');
         const hint = document.getElementById('hint');
+        let superdocInstance = null;
 
         function showHint(text) {
             hint.innerHTML = text;
@@ -147,209 +74,74 @@
             hint.style.display = 'none';
         }
 
-        function showOffice() {
-            office.style.display = 'block';
-            host.style.display = 'none';
-            host.classList.remove('native-mode', 'compat-mode');
+        function showSuperdoc() {
+            superdocEl.style.display = 'block';
+            superdocEl.classList.add('superdoc-mode');
         }
 
-        function showHost(modeClass) {
-            office.style.display = 'none';
-            host.style.display = 'block';
-            host.classList.remove('native-mode', 'compat-mode');
-            if (modeClass) {
-                host.classList.add(modeClass);
-            }
-        }
-
-        function renderOffice() {
-            if (!src) {
-                showHint('文件地址不存在');
-                return;
-            }
-            const absUrl = new URL(src, window.location.origin).toString();
-            const officeUrl = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(absUrl);
-            showOffice();
-            showHint('正在加载微软 Office 预览...');
-            office.src = officeUrl;
-            office.onload = () => {
-                hideHint();
-            };
-
-            window.setTimeout(() => {
-                if (hint.style.display !== 'none') {
-                    showHint('微软 Office 预览可能不可用（本地地址常被拦截）。<br/>可点击右上角“兼容模式”。');
-                }
-            }, 4500);
-        }
-
-        async function renderNative() {
+        async function renderSuperdoc() {
             if (!src) {
                 showHint('文件地址不存在');
                 return;
             }
 
+            // 老版二进制 .doc 格式 SuperDoc 不支持；WPS 专有格式先尝试让 SuperDoc 自己解析，失败再提示
             if (ext === 'doc') {
-                showHint('暂不支持 .doc 原生模式预览。<br/>请使用微软预览或兼容模式。');
+                showHint('SuperDoc 暂不支持 .doc 老格式预览。<br/>请下载后使用 Office/WPS 打开。');
                 return;
             }
 
-            if (!window.docx || typeof window.docx.renderAsync !== 'function') {
-                showHint('原生模式组件不可用。<br/>可切换兼容模式。');
+            if (!window.SuperDoc || typeof window.SuperDoc !== 'function') {
+                showHint('SuperDoc 组件加载失败。<br/>请检查网络或下载附件后本地打开。');
                 return;
             }
 
             try {
-                showHost('native-mode');
-                showHint('正在加载原生模式预览...');
-                host.innerHTML = '';
+                showSuperdoc();
+                showHint('正在加载 SuperDoc 预览...');
 
-                const resp = await fetch(src);
-                if (!resp.ok) throw new Error('文档请求失败');
-                const buffer = await resp.arrayBuffer();
+                if (superdocInstance && typeof superdocInstance.destroy === 'function') {
+                    try { superdocInstance.destroy(); } catch (_) {}
+                }
+                superdocEl.innerHTML = '';
 
-                await window.docx.renderAsync(buffer, host, null, {
-                    breakPages: true,
-                    renderHeaders: true,
-                    renderFooters: true,
-                    ignoreWidth: false,
-                    ignoreHeight: false,
-                    className: 'docx-preview'
+                superdocInstance = new SuperDoc({
+                    selector: '#superdoc',
+                    document: src,
+                    documentMode: 'viewing'
                 });
 
-                const hasPage = host.querySelector('section.docx, .docx-wrapper section, .docx') !== null;
-                const hasText = (host.textContent || '').trim().length > 0;
-                if (!hasPage && !hasText) {
-                    throw new Error('原生模式未产出可见内容');
+                if (superdocInstance && typeof superdocInstance.on === 'function') {
+                    try {
+                        superdocInstance.on('ready', () => hideHint());
+                    } catch (_) {}
                 }
 
-                hideHint();
+                window.setTimeout(() => {
+                    if (hint.style.display !== 'none') {
+                        const hasEl = superdocEl.querySelector('.sd-root, section, .docx, p, table');
+                        const hasText = (superdocEl.textContent || '').trim().length > 20;
+                        if (hasEl || hasText) {
+                            hideHint();
+                        } else if (ext === 'wps' || ext === 'et' || ext === 'dps') {
+                            showHint('SuperDoc 暂不支持该 WPS 专有格式预览。<br/>请下载后使用 WPS 打开。');
+                        } else {
+                            showHint('SuperDoc 加载较慢... 如长时间无响应，可下载后本地打开。');
+                        }
+                    }
+                }, 6000);
             } catch (e) {
                 console.error(e);
                 const msg = e && e.message ? e.message : '未知错误';
-                showHint('原生模式预览失败：' + msg + '<br/>正在自动切换到兼容模式...');
-                await renderCompat();
+                if (ext === 'wps' || ext === 'et' || ext === 'dps') {
+                    showHint('SuperDoc 暂不支持该 WPS 专有格式预览：' + msg + '<br/>请下载后使用 WPS 打开。');
+                } else {
+                    showHint('SuperDoc 预览失败：' + msg + '<br/>请下载后本地打开。');
+                }
             }
         }
 
-        async function renderCompat() {
-            const src = @Html.Raw(srcJson);
-            const name = @Html.Raw(nameJson);
-            const ext = (name.split('.').pop() || '').toLowerCase();
-
-            if (!src) {
-                showHint('文件地址不存在');
-                return;
-            }
-
-            if (ext === 'doc') {
-                showHint('暂不支持 .doc 兼容模式预览。<br/>请使用微软预览或下载后打开。');
-                return;
-            }
-
-            try {
-                showHost('compat-mode');
-                showHint('正在加载兼容模式预览...');
-                host.innerHTML = '';
-                const resp = await fetch(src);
-                if (!resp.ok) throw new Error('文档请求失败');
-                const buffer = await resp.arrayBuffer();
-
-                if (!window.mammoth || typeof window.mammoth.convertToHtml !== 'function') {
-                    throw new Error('兼容模式组件不可用');
-                }
-
-                const result = await window.mammoth.convertToHtml({ arrayBuffer: buffer });
-                const html = result && result.value ? result.value : '<p>文档内容为空</p>';
-                renderPagedFallback(host, html);
-
-                hideHint();
-            } catch (e) {
-                console.error(e);
-                const msg = e && e.message ? e.message : '未知错误';
-                showHint('文档预览失败：' + msg + '<br/>可下载后使用 Office/WPS 查看。');
-                showHost('compat-mode');
-            }
-        }
-
-        function renderPagedFallback(container, html) {
-            const PAGE_HEIGHT = 1123;
-            const PAGE_PADDING = 72;
-            const BODY_LIMIT = PAGE_HEIGHT - PAGE_PADDING * 2;
-
-            container.innerHTML = '';
-
-            const pages = document.createElement('div');
-            pages.className = 'word-pages';
-
-            const tip = document.createElement('p');
-            tip.className = 'word-fallback-tip';
-            tip.textContent = '兼容模式预览（按 A4 视觉分页，与 Office 可能存在细微差异）';
-            pages.appendChild(tip);
-
-            const template = document.createElement('template');
-            template.innerHTML = html || '<p>文档内容为空</p>';
-
-            const toNodeArray = (list) => Array.from(list || []).filter(Boolean);
-
-            const extractBlocks = (tpl) => {
-                const topLevel = toNodeArray(tpl.content.childNodes)
-                    .filter((n) => !(n.nodeType === Node.TEXT_NODE && !String(n.textContent || '').trim()));
-
-                if (topLevel.length === 0) {
-                    return [document.createElement('p')];
-                }
-
-                if (topLevel.length === 1 && topLevel[0].nodeType === Node.ELEMENT_NODE) {
-                    const only = topLevel[0];
-                    const children = toNodeArray(only.childNodes)
-                        .filter((n) => !(n.nodeType === Node.TEXT_NODE && !String(n.textContent || '').trim()));
-                    if (children.length > 1) {
-                        return children;
-                    }
-                }
-
-                return topLevel;
-            };
-
-            const createPage = () => {
-                const page = document.createElement('div');
-                page.className = 'word-page';
-                const body = document.createElement('div');
-                body.className = 'word-page-body';
-                page.appendChild(body);
-                pages.appendChild(page);
-                return body;
-            };
-
-            let currentBody = createPage();
-            const nodes = extractBlocks(template);
-
-            for (let i = 0; i < nodes.length; i += 1) {
-                const node = nodes[i].cloneNode(true);
-                currentBody.appendChild(node);
-
-                if (currentBody.scrollHeight > BODY_LIMIT) {
-                    currentBody.removeChild(node);
-                    const nextBody = createPage();
-                    nextBody.appendChild(node);
-
-                    if (nextBody.scrollHeight > BODY_LIMIT) {
-                        nextBody.style.overflow = 'visible';
-                    }
-
-                    currentBody = nextBody;
-                }
-            }
-
-            container.appendChild(pages);
-        }
-
-        document.getElementById('btnOffice').addEventListener('click', renderOffice);
-        document.getElementById('btnNative').addEventListener('click', renderNative);
-        document.getElementById('btnCompat').addEventListener('click', renderCompat);
-
-        renderOffice();
+        renderSuperdoc();
     </script>
 </body>
 </html>

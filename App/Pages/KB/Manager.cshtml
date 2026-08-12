@@ -1,0 +1,525 @@
+@page
+@model App.Pages.KB.ManagerModel
+@using App.Utils
+@using System.Text.Json
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "知识库管理（原生 Vue 版）";
+    var currentId = Model.CurrentMenuId ?? 0;
+    // 权限：统一写成 JS 可识别的小写字符串 "true" / "false"，
+    // 因为 Manager3 是原生 Vue，@(xxx) 会直接输出到 JS 源码里，
+    // 字符串版不会触发 JS 的关键字/大小写问题，也能无缝配合 !currentMenuId 这种 JS 逻辑。
+    var canNew    = Auth.CheckPower(Power.KbMenuNew)    ? "true" : "false";
+    var canEdit   = Auth.CheckPower(Power.KbMenuEdit)   ? "true" : "false";
+    var canDelete = Auth.CheckPower(Power.KbMenuDelete) ? "true" : "false";
+    var defaultIframeUrl = Model.DefaultAttsUrl;
+    var treeJson = JsonSerializer.Serialize(
+        Model.MenuTree ?? new List<KbMenu>(),
+        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = false,
+            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, MaxDepth = 64 });
+}
+
+@section body {
+    <div id="kbMgr3" class="h-screen overflow-hidden">
+        <el-container class="h-full">
+            <el-aside width="300px" class="border-r border-gray-100 bg-white flex flex-col overflow-hidden" style="min-width:220px;max-width:500px;">
+                <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100 shrink-0">
+                    <div class="flex gap-1">
+                        <!-- 统一用 FontAwesome 6.4 的 CSS class 图标（Layout 已全局引入 all.min.css）
+                             这样即使 ElementPlus Icons 的 CDN 资源加载慢/或全局注册漏做，
+                             图标也一定能显示，且按钮的圆形大小和对齐不受影响 -->
+                        <el-button v-if="canNew" type="primary" circle @@click="onNewMenu" title="新建子目录">
+                            <i class="fa-solid fa-plus" style="font-size:14px;"></i>
+                        </el-button>
+                        <el-button v-if="canEdit" type="success" circle :disabled="!currentMenuId" @@click="onEditMenu" title="编辑目录">
+                            <i class="fa-solid fa-pen" style="font-size:14px;"></i>
+                        </el-button>
+                        <el-button v-if="canDelete" type="danger" circle :disabled="!currentMenuId" @@click="onDeleteMenu" title="删除目录">
+                            <i class="fa-solid fa-trash" style="font-size:14px;"></i>
+                        </el-button>
+                        <el-button v-if="canEdit" circle :disabled="!currentMenuId" @@click="onMoveUp" title="上移">
+                            <i class="fa-solid fa-arrow-up" style="font-size:14px;"></i>
+                        </el-button>
+                        <el-button v-if="canEdit" circle :disabled="!currentMenuId" @@click="onMoveDown" title="下移">
+                            <i class="fa-solid fa-arrow-down" style="font-size:14px;"></i>
+                        </el-button>
+                    </div>
+                </div>
+                <div class="flex-1 min-h-0 overflow-auto px-2 py-1">
+                    <el-tree
+                        ref="treeRef"
+                        :data="treeData"
+                        node-key="id"
+                        :default-expand-all="false"
+                        :default-expanded-keys="defaultExpandedKeys"
+                        :expand-on-click-node="false"
+                        :highlight-current="true"
+                        :current-node-key="currentMenuId"
+                        @@node-click="onTreeSelect">
+                        <template #default="{ node, data }">
+                            <span
+                                @@click.stop.prevent="onTreeSelect(data)"
+                                :class="[
+                                    'inline-flex items-center w-full px-1 py-0.5 rounded cursor-pointer transition',
+                                    currentMenuId === data.id ? 'font-semibold text-indigo-700 bg-indigo-50' : 'text-gray-800 hover:bg-gray-50'
+                                ]">
+                                <span class="truncate">{{ data.name || data.label || '未命名' }}</span>
+                            </span>
+                        </template>
+                    </el-tree>
+                </div>
+            </el-aside>
+            <el-main class="p-0 h-full overflow-hidden bg-white">
+                <iframe
+                    id="kbAttsFrame3"
+                    class="w-full h-full block bg-white border-0"
+                    frameborder="0"
+                    :src="attsUrl">
+                </iframe>
+            </el-main>
+        </el-container>
+    </div>
+}
+
+@section script {
+    <script>
+        // Manager3：完整的原生 Vue 3 + Element Plus 实现（完全不用 EleUI TagHelper）
+        // - 用 Vue.createApp + ElementPlus + icons-vue 自己挂载
+        // - 按钮 / Tree / Container 全是原生标签
+        // - 与 Manager 页面一样：switchMenu 用 pushState + iframe.src 切换；同节点重复点击不操作
+        // - 服务器端仍复用 ManagerModel 的 OnPostXxx handler，通过 axios POST + RequestVerificationToken 调用
+        // - 关闭弹窗 / 保存成功后的刷新：通过 window.mgr3ReloadPage
+
+        (function () {
+            // axios 全局（Layout 已经加载过一次，做兼容判断）
+            const http = (typeof axios !== 'undefined' && axios)
+                ? axios
+                : (window.axios || null);
+
+            const initialTreeData = @Html.Raw(treeJson);
+            const initialCurrentId = @(currentId > 0 ? currentId.ToString() : "0");
+            const defaultAttsIframeUrl = "@Html.Raw(defaultIframeUrl.Replace("\"", "\\\""))";
+            // Razor 里 canNew/canEdit/canDelete 定义为字符串 "true" / "false"，直接 Razor 输出即得到 JS 字面量
+            const canNewFlag = @canNew;
+            const canEditFlag = @canEdit;
+            const canDeleteFlag = @canDelete;
+            const HANDLERS = {
+                Delete:   'DeleteMenu',
+                MoveUp:   'MenuMoveUp',
+                MoveDown: 'MenuMoveDown'
+            };
+            // el-tree 默认展开层级：1=只展开根，2=根+子级（你要的效果），3=根+子级+孙级...
+            // 可以改成 1 只展开顶级，或 3 展开三层，随意调整
+            const DEFAULT_EXPAND_TREE_LEVEL = 2;
+
+            // 递归收集：默认展开到指定 level 的节点 id + 当前选中节点的所有祖先 id
+            function computeDefaultExpandedKeys(root, targetCurrentId, maxLevel) {
+                const ids = [];
+                const ancestorChain = [];
+                const idSet = new Set();
+                var targetId = Number(targetCurrentId) || 0;
+                function pushId(id) {
+                    if (id == null) return;
+                    var n = Number(id); if (!n) return;
+                    if (!idSet.has(n)) { idSet.add(n); ids.push(n); }
+                }
+                function walk(list, level, ancestors) {
+                    if (!Array.isArray(list)) return;
+                    for (var i = 0; i < list.length; i++) {
+                        var n = list[i];
+                        if (!n) continue;
+                        var nid = Number(n.id) || 0;
+                        var lvl = Number(n.treeLevel != null ? n.treeLevel : (n.TreeLevel != null ? n.TreeLevel : level));
+                        // ① 只展开 <= 指定层级的节点（DEFAULT_EXPAND_TREE_LEVEL）
+                        if (lvl > 0 && lvl <= Number(maxLevel || 2)) pushId(nid);
+                        // ② 记录选中节点的祖先链（用于 currentMenuId 可见）
+                        var nextAnc = ancestors.slice(); nextAnc.push(nid);
+                        if (targetId && nid === targetId) {
+                            for (var k = 0; k < ancestors.length; k++) pushId(ancestors[k]);
+                        }
+                        if (Array.isArray(n.children) && n.children.length) walk(n.children, level + 1, nextAnc);
+                    }
+                }
+                walk(root || [], 1, []);
+                return ids;
+            }
+
+            function getCsrfToken() {
+                try {
+                    const input = document.querySelector('input[name="__RequestVerificationToken"]');
+                    return input ? input.value : '';
+                } catch (_) { return ''; }
+            }
+
+            function buildAttsUrlLive(menuId) {
+                const mid = Number(menuId) || 0;
+                if (!mid) return '/Shared/Atts?uniId=';
+                return '/Shared/Atts?uniId=' + encodeURIComponent('KbMenu-' + mid);
+            }
+
+            function urlWithMenuId(base, menuId) {
+                const u = new URL(base);
+                const mid = Number(menuId) || 0;
+                if (mid > 0) u.searchParams.set('menuId', String(mid));
+                else u.searchParams.delete('menuId');
+                return u.toString();
+            }
+
+            function showMessage(text, type) {
+                try {
+                    const EP = window.ElementPlus;
+                    if (EP && EP.ElMessage) {
+                        EP.ElMessage({ message: text || '', type: type || 'info', showClose: true, duration: 2200 });
+                        return;
+                    }
+                } catch (_) {}
+                alert(text || '');
+            }
+
+            function showConfirm(text, title) {
+                try {
+                    const EP = window.ElementPlus;
+                    if (EP && EP.ElMessageBox) {
+                        return EP.ElMessageBox.confirm(text || '确认？', title || '提示', {
+                            confirmButtonClass: 'el-button--primary',
+                            type: 'warning'
+                        }).then(function () { return true; }).catch(function () { return false; });
+                    }
+                } catch (_) {}
+                return Promise.resolve(window.confirm(text || '确认？'));
+            }
+
+            const { createApp, ref, onMounted, computed } = Vue;
+
+            const App = {
+                setup() {
+                    const treeData = ref(initialTreeData || []);
+                    const currentMenuId = ref(initialCurrentId);
+                    const treeRef = ref(null);
+                    // 默认展开：DEFAULT_EXPAND_TREE_LEVEL 指定层级 + 当前选中节点的祖先
+                    const defaultExpandedKeys = ref(computeDefaultExpandedKeys(initialTreeData || [], initialCurrentId, DEFAULT_EXPAND_TREE_LEVEL));
+                    // 权限：canNew/canEdit/canDelete 都是 JS 字面量 true/false（由上方 @canNew 直接展开）
+                    const canNew = canNewFlag;
+                    const canEdit = canEditFlag;
+                    const canDelete = canDeleteFlag;
+
+                    const attsUrl = computed(function () {
+                        const mid = currentMenuId.value;
+                        return mid ? buildAttsUrlLive(mid) : defaultAttsIframeUrl;
+                    });
+
+                    function switchMenu(nextId, forceReload) {
+                        const prev = Number(currentMenuId.value) || 0;
+                        const next = Number(nextId) || 0;
+                        if (!forceReload && prev === next) return;
+                        currentMenuId.value = next;
+                        const href = urlWithMenuId(window.location.href, next);
+                        if (window.location.href !== href) {
+                            window.history.pushState({ menuId: next }, '', href);
+                        }
+                    }
+
+                    function onTreeSelect(data) {
+                        const id = data && (data.id != null) ? Number(data.id) : 0;
+                        switchMenu(id, false);
+                    }
+
+                    function openDrawerForForm(url, title, size) {
+                        // 优先用 EleManager.openDrawer（项目已有，支持 closeHandler、iframe 预览等）
+                        try {
+                            const M = window.EleManager || window.$eleManager;
+                            if (M && typeof M.openDrawer === 'function') {
+                                M.openDrawer({
+                                    title: title || '',
+                                    url,
+                                    size: size || '560px',
+                                    showFooter: false,
+                                    closeHandler: 'mgr3ReloadPage'
+                                });
+                                return;
+                            }
+                        } catch (_) {}
+                        // Fallback：新窗口打开
+                        try {
+                            const w = window.open(url, '_blank', 'noopener,noreferrer');
+                            if (w) { w.focus(); return; }
+                        } catch (_) {}
+                        window.location.href = url;
+                    }
+
+                    function onNewMenu() {
+                        const selectId = Number(currentMenuId.value) || 0;
+                        openDrawerForForm('/KB/MenuForm?id=0&md=new&selectId=' + selectId, '新建知识库目录', '560px');
+                    }
+
+                    function onEditMenu() {
+                        const id = Number(currentMenuId.value) || 0;
+                        if (!id) return;
+                        openDrawerForForm('/KB/MenuForm?id=' + id + '&md=edit', '编辑知识库目录', '560px');
+                    }
+
+                    // 从任意格式的响应数据里提取出最准确的一条错误原因，匹配多种字段名和大小写
+                    function extractMessage(data, fallback) {
+                        if (!data) return fallback;
+                        if (typeof data === 'string') {
+                            try {
+                                var js = JSON.parse(data);
+                                if (js) return extractMessage(js, fallback);
+                            } catch (_) {}
+                            var s = data.trim();
+                            if (s.length > 0 && s.length < 120) return s;
+                            return fallback;
+                        }
+                        if (typeof data !== 'object') return fallback;
+                        // 我们的 APIResult 里的字段名组合（各种大小写/别名）
+                        var apiNames = ['msg', 'Msg', 'message', 'Message', 'content', 'Content', 'Detail', 'detail', 'Title', 'title'];
+                        for (var i = 0; i < apiNames.length; i++) {
+                            var k = apiNames[i];
+                            if (typeof data[k] === 'string' && data[k].trim().length > 0) return data[k];
+                        }
+                        // ASP.NET Core ProblemDetails：可能是 errors 对象 + title
+                        if (data.errors && typeof data.errors === 'object') {
+                            for (var p in data.errors) {
+                                if (!Object.prototype.hasOwnProperty.call(data.errors, p)) continue;
+                                var list = data.errors[p];
+                                if (!list) continue;
+                                if (typeof list === 'string' && list.length > 0) return list;
+                                if (Array.isArray(list) && list.length > 0) {
+                                    for (var j = 0; j < list.length; j++) {
+                                        if (typeof list[j] === 'string' && list[j].length > 0) return list[j];
+                                    }
+                                }
+                            }
+                        }
+                        // BCL 异常对象里 Message
+                        if (typeof data.Message === 'string' && data.Message.trim().length > 0) return data.Message;
+                        return fallback;
+                    }
+
+                    function postHandler(name, payload) {
+                        if (!http) {
+                            return Promise.resolve({ code: -1, msg: '缺少 axios，无法发起请求' });
+                        }
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('handler', name);
+                        return http.post(url.pathname + url.search, payload || {}, {
+                            headers: { 'RequestVerificationToken': getCsrfToken() }
+                        }).then(function (res) {
+                            const body = res && res.data ? res.data : null;
+                            if (!body || typeof body !== 'object') {
+                                var msg = extractMessage(body, '服务器返回格式异常');
+                                return { code: -2, msg: msg };
+                            }
+                            if (typeof body.code === 'undefined') {
+                                if (typeof body.Code !== 'undefined') body.code = body.Code;
+                                else if (typeof body.status !== 'undefined') body.code = body.status;
+                                else if (typeof body.Status !== 'undefined') body.code = body.Status;
+                                else body.code = 0;
+                            }
+                            if (typeof body.msg === 'undefined') {
+                                body.msg = extractMessage(body, '');
+                            }
+                            return body;
+                        }).catch(function (err) {
+                            // catch 里不再自行 toast，统一由外层 toastFromResponse 出一条；
+                            // 这里解析 err.response.data（可能是 APIResult JSON、ASP.NET ProblemDetails、HTML 错误页字符串或纯文本）
+                            var code = -1;
+                            var msg = '请求失败';
+                            try {
+                                if (err && err.response) {
+                                    var st = err.response.status;
+                                    if (typeof st === 'number') {
+                                        msg = '请求异常(' + st + ')';
+                                        code = st;
+                                    }
+                                    var extracted = extractMessage(err.response.data, null);
+                                    if (extracted) {
+                                        msg = extracted;
+                                    } else if (err.response.data && typeof err.response.data === 'string' && err.response.data.length < 120) {
+                                        var s2 = err.response.data.trim();
+                                        if (s2.length > 0) msg = s2;
+                                    }
+                                } else if (err && err.message && err.message.length < 120) {
+                                    msg = err.message;
+                                }
+                            } catch (_) {}
+                            return { code: code, msg: msg };
+                        });
+                    }
+
+                    function toastFromResponse(body, fallbackOkMsg) {
+                        if (!body || typeof body !== 'object') {
+                            showMessage('请求失败', 'error');
+                            return;
+                        }
+                        if (body.code !== 0 && body.code !== '0') {
+                            // 失败：保证只弹这一条，优先使用服务器返回的真实原因
+                            // （C# 侧已输出：无权操作/请先选择要删除的目录/存在下级目录，无法删除/目录不存在 等）
+                            showMessage(body.msg || '操作失败', 'error');
+                        } else {
+                            showMessage(body.msg || (fallbackOkMsg || '操作成功'), 'success');
+                        }
+                    }
+
+                    function applyPostTreeChange(body, lastSelectedId, deleteFlag) {
+                        try {
+                            const d = body && body.data ? body.data : null;
+                            if (d && d.refreshTree && Array.isArray(d.tree)) {
+                                treeData.value = d.tree;
+                                // 换树后重新计算默认展开层级（新建/删除后结构变了）
+                                const next = Number(d.nextMenuId) || 0;
+                                defaultExpandedKeys.value = computeDefaultExpandedKeys(d.tree || [], next || currentMenuId.value || 0, DEFAULT_EXPAND_TREE_LEVEL);
+                                const deleted = Number(d.deletedId) || 0;
+                                if (deleteFlag && deleted && lastSelectedId === deleted) {
+                                    switchMenu(0, true);
+                                } else if (next && next !== Number(currentMenuId.value)) {
+                                    switchMenu(next, false);
+                                }
+                                return true;
+                            }
+                            if (d && d.reload) {
+                                window.mgr3ReloadPage && window.mgr3ReloadPage();
+                                return true;
+                            }
+                            return false;
+                        } catch (e) {
+                            console.error('applyPostTreeChange failed:', e);
+                            return false;
+                        }
+                    }
+
+                    function onDeleteMenu() {
+                        const id = Number(currentMenuId.value) || 0;
+                        if (!id) return;
+                        showConfirm('确认删除选中目录？', '提示').then(function (ok) {
+                            if (!ok) return;
+                            postHandler(HANDLERS.Delete, { id: id }).then(function (body) {
+                                toastFromResponse(body, '删除成功');
+                                if (!applyPostTreeChange(body, id, true)) {
+                                    if (body && (body.code === 0 || body.code === '0') && body.data && body.data.reload) {
+                                        window.setTimeout(function () { window.mgr3ReloadPage && window.mgr3ReloadPage(); }, 320);
+                                    }
+                                }
+                            });
+                        });
+                    }
+
+                    function onMoveUp() {
+                        const id = Number(currentMenuId.value) || 0;
+                        if (!id) return;
+                        postHandler(HANDLERS.MoveUp, { id: id }).then(function (body) {
+                            toastFromResponse(body, '上移成功');
+                            if (!applyPostTreeChange(body, id, false)) {
+                                if (body && (body.code === 0 || body.code === '0') && body.data && body.data.reload) {
+                                    window.setTimeout(function () { window.mgr3ReloadPage && window.mgr3ReloadPage(); }, 280);
+                                }
+                            }
+                        });
+                    }
+
+                    function onMoveDown() {
+                        const id = Number(currentMenuId.value) || 0;
+                        if (!id) return;
+                        postHandler(HANDLERS.MoveDown, { id: id }).then(function (body) {
+                            toastFromResponse(body, '下移成功');
+                            if (!applyPostTreeChange(body, id, false)) {
+                                if (body && (body.code === 0 || body.code === '0') && body.data && body.data.reload) {
+                                    window.setTimeout(function () { window.mgr3ReloadPage && window.mgr3ReloadPage(); }, 280);
+                                }
+                            }
+                        });
+                    }
+
+                    onMounted(function () {
+                        // popstate：用户点浏览器前进/后退时，重新同步 currentMenuId 并展开它的祖先
+                        window.addEventListener('popstate', function () {
+                            try {
+                                const u = new URL(window.location.href);
+                                const mid = Number(u.searchParams.get('menuId')) || 0;
+                                currentMenuId.value = mid;
+                                // 如果切换到了新的深层节点，把它的祖先也加入展开 keys（保证可见）
+                                if (mid) {
+                                    const addIds = computeDefaultExpandedKeys(treeData.value || [], mid, 0) || [];
+                                    if (addIds.length) {
+                                        var map = new Set(Array.isArray(defaultExpandedKeys.value) ? defaultExpandedKeys.value : []);
+                                        var changed = false;
+                                        for (var i = 0; i < addIds.length; i++) { if (!map.has(addIds[i])) { map.add(addIds[i]); changed = true; } }
+                                        if (changed) defaultExpandedKeys.value = Array.from(map);
+                                    }
+                                }
+                            } catch (_) {}
+                        });
+                    });
+
+                    return {
+                        treeRef,
+                        treeData,
+                        currentMenuId,
+                        defaultExpandedKeys,
+                        attsUrl,
+                        canNew,
+                        canEdit,
+                        canDelete,
+                        onTreeSelect,
+                        onNewMenu,
+                        onEditMenu,
+                        onDeleteMenu,
+                        onMoveUp,
+                        onMoveDown
+                    };
+                }
+            };
+
+            // 全局函数：Drawer 关闭后或保存成功后刷新一次（重新拉取树结构）
+            // 同时注册一个 managerReloadPage 别名（兼容可能还残留的老命名）
+            window.mgr3ReloadPage = function () {
+                try { window.location.reload(); } catch (_) {}
+            };
+            try { if (typeof window.managerReloadPage === 'undefined') window.managerReloadPage = window.mgr3ReloadPage; } catch (_) {}
+
+            function mountIt() {
+                try {
+                    const app = createApp(App);
+                    const EP = window.ElementPlus;
+                    if (EP) {
+                        app.use(EP);
+                        if (window.dayjs && typeof window.dayjs.locale === 'function') {
+                            try { window.dayjs.locale('zh-cn'); } catch (_) {}
+                        }
+                    }
+                    try {
+                        const icons = window.ElementPlusIconsVue
+                            || (window.ElementPlusIcons ? window.ElementPlusIcons : null)
+                            || null;
+                        if (icons && typeof icons === 'object') {
+                            for (const [k, v] of Object.entries(icons)) {
+                                if (v && (typeof v === 'function' || (typeof v === 'object' && v.render))) {
+                                    app.component(k, v);
+                                }
+                            }
+                        }
+                    } catch (_) {}
+                    app.mount('#kbMgr3');
+                } catch (err) {
+                    console.error('KB Manager3 mount failed:', err);
+                }
+            }
+
+            function waitAndMount(retry) {
+                retry = retry || 0;
+                const ok = typeof Vue !== 'undefined'
+                    && typeof Vue.createApp === 'function'
+                    && window.ElementPlus;
+                if (ok) { mountIt(); return; }
+                if (retry < 80) { setTimeout(function () { waitAndMount(retry + 1); }, 25); return; }
+                console.error('KB Manager3：等待 Vue / ElementPlus 全局加载超时。');
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { waitAndMount(0); }, { once: true });
+            } else {
+                waitAndMount(0);
+            }
+        })();
+    </script>
+}
