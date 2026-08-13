@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "name": "file-viewer-official-demo-iframe",
+  "version": "2.2.8",
+  "artifact": "file-viewer-v2-2.2.8-official-demo-iframe.tar.gz",
+  "fileCount": 3248,
+  "totalBytes": 240827102,
+  "entries": {
+    "iframe": "iframe.html",
+    "demo": "index.html",
+    "compare": "compare.html",
+    "parentExample": "iframe-example.html",
+    "readme": "README.iframe.md"
+  },
+  "iframe": {
+    "urlPattern": "./iframe.html?url=./example/word.docx",
+    "postMessagePattern": "./iframe.html?from=<parent-origin>&name=<filename>",
+    "acceptedMessagePayload": "Blob"
+  },
+  "compatibleEntries": [
+    "iframe.html",
+    "index.html"
+  ],
+  "offlineRuntimeAssets": true,
+  "keepTogether": [
+    "assets/",
+    "vendor/",
+    "wasm/",
+    "example/"
+  ]
+}

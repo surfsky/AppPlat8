@@ -1,0 +1,220 @@
+@page "/Shared/FileViews/Flyfish"
+@{
+    Layout = null;
+    var src = Request.Query["src"].ToString();
+    var name = Request.Query["name"].ToString();
+    var srcJson = System.Text.Json.JsonSerializer.Serialize(src ?? string.Empty);
+    var nameJson = System.Text.Json.JsonSerializer.Serialize(name ?? string.Empty);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>文件预览</title>
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+
+        .fv-host {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            background: #f8fafc;
+        }
+
+        .fv-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            background: #ffffff;
+        }
+
+        .fv-mask {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+            background: rgba(248, 250, 252, 0.94);
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: center;
+            transition: opacity .2s ease;
+            z-index: 2;
+        }
+
+        .fv-mask.is-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .fv-mask.is-error {
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="fv-host">
+        <iframe id="viewerFrame" class="fv-frame" allow="fullscreen"></iframe>
+        <div id="viewerMask" class="fv-mask">正在加载文件预览...</div>
+    </div>
+
+    <script>
+        const src = @Html.Raw(srcJson);
+        const name = @Html.Raw(nameJson);
+        const frame = document.getElementById('viewerFrame');
+        const mask = document.getElementById('viewerMask');
+        const atFontFace = '@@font-face';
+        const previewFontCss = [
+            `${atFontFace} { font-family: "仿宋_GB2312"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "仿宋"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FangSong_GB2312"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FangSong"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "方正小标宋简"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "方正小标宋简体"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "小标宋体"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FZXiaoBiaoSong-B05S"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            'body { font-synthesis: none; }'
+        ].join('\n');
+
+        // 更新遮罩状态。
+        function setMask(text, isError) {
+            mask.innerHTML = text;
+            mask.classList.toggle('is-error', !!isError);
+            mask.classList.remove('is-hidden');
+        }
+
+        // 隐藏加载遮罩。
+        function hideMask() {
+            mask.classList.add('is-hidden');
+        }
+
+        // 给 file-viewer iframe 注入公文字体别名。
+        function injectPreviewFonts() {
+            try {
+                const doc = frame.contentDocument || (frame.contentWindow ? frame.contentWindow.document : null);
+                if (!doc || !doc.head || doc.getElementById('kb-preview-fonts')) return;
+                const style = doc.createElement('style');
+                style.id = 'kb-preview-fonts';
+                style.textContent = previewFontCss;
+                doc.head.appendChild(style);
+            } catch (_) {}
+        }
+
+        // 等待 iframe 完成一次装载。
+        function waitForFrameLoad() {
+            return new Promise((resolve) => {
+                frame.addEventListener('load', () => {
+                    injectPreviewFonts();
+                    resolve();
+                }, { once: true });
+            });
+        }
+
+        // 判断 URL 路径是否自带可识别扩展名。
+        function hasFileExtension(urlText) {
+            try {
+                const url = new URL(urlText, window.location.origin);
+                const pathname = (url.pathname || '').replace(/\/+$/, '');
+                const fileName = pathname.split('/').pop() || '';
+                return /\.[A-Za-z0-9]{1,12}$/.test(fileName);
+            } catch {
+                return false;
+            }
+        }
+
+        // 识别这类代理内容地址，file-viewer 仅靠 url 无法判断格式。
+        function shouldUseBlobMode(urlText) {
+            if (!hasFileExtension(urlText)) return true;
+
+            try {
+                const url = new URL(urlText, window.location.origin);
+                const pathname = (url.pathname || '').toLowerCase();
+                const handler = (url.searchParams.get('handler') || '').toLowerCase();
+                return pathname.endsWith('/shared/fileviews/viewer') && (handler === 'content' || handler === 'staticcontent');
+            } catch {
+                return true;
+            }
+        }
+
+        // 通过 URL 方式直接打开可访问文件。
+        async function openByUrl(urlText) {
+            const targetUrl = `/file-viewer/iframe.html?url=${encodeURIComponent(urlText)}&lang=zh-CN`;
+            const loadTask = waitForFrameLoad();
+            frame.src = targetUrl;
+            await loadTask;
+            window.setTimeout(() => {
+                injectPreviewFonts();
+                hideMask();
+            }, 600);
+        }
+
+        // 通过 Blob 方式兜底打开文件。
+        async function openByBlob(urlText) {
+            const frameUrl = `/file-viewer/iframe.html?from=${encodeURIComponent(window.location.origin)}&name=${encodeURIComponent(name || '未命名文件')}&lang=zh-CN`;
+            const loadTask = waitForFrameLoad();
+            frame.src = frameUrl;
+            const fetchUrl = new URL(urlText, window.location.origin).toString();
+
+            const response = await fetch(fetchUrl, {
+                credentials: 'same-origin'
+            });
+            if (!response.ok) {
+                throw new Error(`文件请求失败：${response.status}`);
+            }
+            const blob = await response.blob();
+            await loadTask;
+
+            // 官方示例直接在 iframe load 后投递；这里补一次短延迟重发，避免监听尚未就绪。
+            frame.contentWindow.postMessage(blob, window.location.origin);
+            window.setTimeout(() => {
+                try {
+                    frame.contentWindow.postMessage(blob, window.location.origin);
+                } catch (_) {}
+            }, 250);
+            window.setTimeout(() => {
+                injectPreviewFonts();
+                hideMask();
+            }, 600);
+        }
+
+        // 加载 file-viewer 预览。
+        async function run() {
+            if (!src) {
+                setMask('文件地址不存在', true);
+                return;
+            }
+
+            try {
+                // 代理内容地址没有扩展名时，优先改走 Blob，由 name 提供格式识别。
+                if (shouldUseBlobMode(src)) {
+                    await openByBlob(src);
+                    return;
+                }
+
+                // 有真实扩展名的直链优先走 URL，保留 file-viewer 原生加载能力。
+                try {
+                    await openByUrl(src);
+                } catch (urlError) {
+                    console.warn('[flyfish-viewer] url mode failed, fallback to blob mode.', urlError);
+                    await openByBlob(src);
+                }
+            } catch (error) {
+                console.error('[flyfish-viewer]', error);
+                setMask('文件预览失败。<br/>请下载后使用 Office/WPS 查看。', true);
+            }
+        }
+
+        run();
+    </script>
+</body>
+</html>

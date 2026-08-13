@@ -1,0 +1,1 @@
+var e=void 0,t,n=!1;function r(){return n?e:void 0}function i(r,i){let a=e||r();return t===void 0?t=(async()=>(n=!0,await a.init(i),e=a))():t}function a(e,t,n,a){let o=r();if(o){n(o);return}i(e,t).then(n).catch(a)}export{i as createGlobalRenderer,r as getGlobalRenderer,a as withGlobalRenderer};

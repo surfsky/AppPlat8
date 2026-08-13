@@ -12,79 +12,287 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/x-data-spreadsheet@1.1.5/dist/xspreadsheet.css" />
-    <script src="https://cdn.jsdelivr.net/npm/x-data-spreadsheet@1.1.5/dist/xspreadsheet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-preview@1.0.5/dist/xlsxPreview.iife.js"></script>
     <style>
-        html, body { margin: 0; height: 100%; background: #f8fafc; overflow: hidden; }
-        #excel {
-            width: 100%;
-            height: 100%;
-            display: none;
+        @@font-face {
+            font-family: "仿宋_GB2312";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
         }
-        #hint {
+
+        @@font-face {
+            font-family: "仿宋";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+
+        @@font-face {
+            font-family: "FangSong_GB2312";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+
+        @@font-face {
+            font-family: "FangSong";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+
+        @@font-face {
+            font-family: "方正小标宋简";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+
+        @@font-face {
+            font-family: "方正小标宋简体";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+
+        @@font-face {
+            font-family: "小标宋体";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+
+        @@font-face {
+            font-family: "FZXiaoBiaoSong-B05S";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+
+        html, body {
+            margin: 0;
             height: 100%;
+            background: #f8fafc;
+            overflow: hidden;
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+
+        .excel-viewer {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .excel-toolbar {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 18px;
+            gap: 10px;
+            min-height: 44px;
+            padding: 8px 12px;
             box-sizing: border-box;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .excel-status {
+            flex: 1;
+            min-width: 0;
             color: #334155;
-            font-size: 14px;
-            text-align: center;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .excel-status.is-error {
+            color: #dc2626;
+        }
+
+        .excel-status.is-ready {
+            color: #475569;
+        }
+
+        .sheet-tabs {
+            display: none;
+            gap: 8px;
+            padding: 8px 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .sheet-tabs.is-visible {
+            display: flex;
+        }
+
+        .sheet-tab {
+            flex: 0 0 auto;
+            max-width: 220px;
+            padding: 6px 12px;
+            border: 1px solid #dbe5f1;
+            border-radius: 999px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 13px;
+            line-height: 18px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sheet-tab.is-active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff;
+        }
+
+        .preview-host {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            background: #eef2f7;
+        }
+
+        #sheetFrame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: #eef2f7;
         }
     </style>
 </head>
 <body>
-    <div id="excel"></div>
-    <div id="hint">正在加载 Excel 预览...</div>
+    <div class="excel-viewer">
+        <div class="excel-toolbar">
+            <div id="status" class="excel-status">正在加载 Excel 预览...</div>
+        </div>
+        <div id="sheetTabs" class="sheet-tabs"></div>
+        <div class="preview-host">
+            <iframe id="sheetFrame" title="Excel预览"></iframe>
+        </div>
+    </div>
     <script>
-        function workbookToSpreadsheetData(workbook) {
-            const data = [];
-            workbook.SheetNames.forEach((sheetName) => {
-                const ws = workbook.Sheets[sheetName];
-                if (!ws || !ws['!ref']) {
-                    data.push({ name: sheetName, rows: {} });
-                    return;
-                }
+        const src = @Html.Raw(srcJson);
+        const name = @Html.Raw(nameJson);
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        const statusEl = document.getElementById('status');
+        const tabsEl = document.getElementById('sheetTabs');
+        const frameEl = document.getElementById('sheetFrame');
+        const atFontFace = '@@font-face';
+        const previewFontCss = [
+            `${atFontFace} { font-family: "仿宋_GB2312"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "仿宋"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FangSong_GB2312"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FangSong"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "方正小标宋简"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "方正小标宋简体"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "小标宋体"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FZXiaoBiaoSong-B05S"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            'html, body { margin: 0; min-height: 100%; background: #eef2f7; }',
+            'body { font-synthesis: none; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; }',
+            '.sheet-root { min-height: 100vh; box-sizing: border-box; padding: 12px; }',
+            '.sheet-root table { border-collapse: collapse; }',
+            '.sheet-root table td, .sheet-root table th { font-synthesis: none; }',
+            '.sheet-root img { max-width: 100%; }'
+        ].join('\n');
+        let sheets = [];
+        let currentIndex = 0;
 
-                const range = XLSX.utils.decode_range(ws['!ref']);
-                const rows = {};
-                for (let r = range.s.r; r <= range.e.r; r += 1) {
-                    const cells = {};
-                    for (let c = range.s.c; c <= range.e.c; c += 1) {
-                        const ref = XLSX.utils.encode_cell({ r, c });
-                        const cell = ws[ref];
-                        if (!cell) continue;
-                        const text = XLSX.utils.format_cell(cell);
-                        cells[c] = { text: text == null ? '' : String(text) };
-                    }
-                    if (Object.keys(cells).length > 0) {
-                        rows[r] = { cells };
-                    }
-                }
-
-                data.push({
-                    name: sheetName,
-                    rows
-                });
-            });
-            return data;
+        // 设置顶部状态。
+        function setStatus(text, state) {
+            statusEl.textContent = text;
+            statusEl.classList.remove('is-error', 'is-ready');
+            if (state) statusEl.classList.add(state);
         }
 
+        // 渲染工作表页签。
+        function renderTabs() {
+            tabsEl.innerHTML = '';
+            tabsEl.classList.toggle('is-visible', sheets.length > 1);
+            sheets.forEach((sheet, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sheet-tab' + (index === currentIndex ? ' is-active' : '');
+                btn.textContent = sheet.name || `Sheet ${index + 1}`;
+                btn.title = btn.textContent;
+                btn.addEventListener('click', () => showSheet(index));
+                tabsEl.appendChild(btn);
+            });
+        }
+
+        // 包装工作表 HTML，补上字体和基础样式。
+        function wrapSheetHtml(sheetName, content, mode) {
+            const extraCss = mode === 'compat'
+                ? '.sheet-root{overflow:auto}.sheet-root table{background:#fff}.sheet-root table td,.sheet-root table th{border:1px solid #dbe5f1;padding:4px 6px;white-space:pre-wrap;vertical-align:top}'
+                : '.sheet-root{overflow:auto}';
+            return `<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>${escapeHtml(sheetName)}</title><style>${previewFontCss}\n${extraCss}</style></head><body><div class="sheet-root">${content}</div></body></html>`;
+        }
+
+        // 转义标题文本。
+        function escapeHtml(text) {
+            return String(text || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        // 显示指定工作表。
+        function showSheet(index) {
+            currentIndex = index;
+            const sheet = sheets[index];
+            if (!sheet) return;
+            frameEl.srcdoc = sheet.html;
+            Array.from(tabsEl.children).forEach((tab, tabIndex) => {
+                tab.classList.toggle('is-active', tabIndex === index);
+            });
+            setStatus(`共 ${sheets.length} 个工作表，当前：${sheet.name}`, 'is-ready');
+        }
+
+        // 用 xlsx-preview 渲染 xlsx。
+        async function buildXlsxSheets(buffer) {
+            if (!window.xlsxPreview || typeof window.xlsxPreview.xlsx2Html !== 'function') {
+                throw new Error('xlsx-preview 组件加载失败');
+            }
+            const htmlList = await window.xlsxPreview.xlsx2Html(buffer, {
+                separateSheets: true,
+                minimumRows: 20,
+                minimumCols: 12
+            });
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(buffer);
+            return htmlList.map((html, index) => ({
+                name: workbook.worksheets[index] ? workbook.worksheets[index].name : `Sheet ${index + 1}`,
+                html: wrapSheetHtml(workbook.worksheets[index] ? workbook.worksheets[index].name : `Sheet ${index + 1}`, html, 'xlsx-preview')
+            }));
+        }
+
+        // 用 SheetJS 兼容预览 xls。
+        function buildCompatSheets(buffer) {
+            const workbook = XLSX.read(buffer, {
+                type: 'array',
+                cellStyles: true,
+                cellNF: true
+            });
+            return workbook.SheetNames.map((sheetName) => {
+                const sheet = workbook.Sheets[sheetName];
+                const html = XLSX.utils.sheet_to_html(sheet, {
+                    editable: false
+                });
+                return {
+                    name: sheetName,
+                    html: wrapSheetHtml(sheetName, html, 'compat')
+                };
+            });
+        }
+
+        // 加载并渲染 Excel。
         async function run() {
-            const src = @Html.Raw(srcJson);
-            const name = @Html.Raw(nameJson);
-            const ext = (name.split('.').pop() || '').toLowerCase();
-            const host = document.getElementById('excel');
-            const hint = document.getElementById('hint');
             if (!src) {
-                hint.textContent = '文件地址不存在';
+                setStatus('文件地址不存在', 'is-error');
                 return;
             }
 
-            if (ext !== 'xls' && ext !== 'xlsx' && ext !== 'csv') {
-                hint.innerHTML = '当前文件不是 Excel 格式。<br/>请下载后使用 Office/WPS 查看。';
+            if (ext !== 'xls' && ext !== 'xlsx') {
+                setStatus('当前文件不是 Excel 格式，请下载后使用 Office/WPS 查看。', 'is-error');
                 return;
             }
 
@@ -92,32 +300,30 @@
                 const resp = await fetch(src);
                 if (!resp.ok) throw new Error('表格请求失败');
                 const buffer = await resp.arrayBuffer();
-                const workbook = XLSX.read(buffer, { type: 'array' });
-                const sheetData = workbookToSpreadsheetData(workbook);
 
-                host.style.display = 'block';
-
-                const xs = x_spreadsheet(host, {
-                    mode: 'read',
-                    showToolbar: false,
-                    showContextmenu: false,
-                    showBottomBar: true,
-                    row: { len: 200, height: 24 },
-                    col: { len: 80, width: 100 },
-                    view: {
-                        height: () => host.clientHeight,
-                        width: () => host.clientWidth
+                if (ext === 'xlsx') {
+                    try {
+                        sheets = await buildXlsxSheets(buffer);
+                    } catch (previewError) {
+                        console.warn('xlsx-preview 失败，回退兼容模式。', previewError);
+                        sheets = buildCompatSheets(buffer);
+                        setStatus('已切换兼容模式预览，部分样式可能略有差异。', 'is-ready');
                     }
-                });
-                xs.loadData(sheetData);
+                } else {
+                    sheets = buildCompatSheets(buffer);
+                    setStatus('当前为兼容模式预览。', 'is-ready');
+                }
 
-                hint.style.display = 'none';
-                window.addEventListener('resize', () => {
-                    if (typeof xs.reRender === 'function') xs.reRender();
-                });
-            } catch (e) {
-                console.error(e);
-                hint.innerHTML = 'Excel 预览失败。<br/>可下载后使用 Office/WPS 查看。';
+                if (!Array.isArray(sheets) || sheets.length === 0) {
+                    throw new Error('工作表为空');
+                }
+
+                currentIndex = 0;
+                renderTabs();
+                showSheet(0);
+            } catch (error) {
+                console.error(error);
+                setStatus('Excel 预览失败，请下载后使用 Office/WPS 查看。', 'is-error');
             }
         }
 

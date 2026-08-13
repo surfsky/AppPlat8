@@ -1,0 +1,6 @@
+{
+  // JSONC keeps comments while remaining close to JSON.
+  "viewer": "Flyfish",
+  "features": ["preview", "search", "watermark"],
+  "matrixAligned": true
+}

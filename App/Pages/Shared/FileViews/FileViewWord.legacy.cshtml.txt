@@ -1,0 +1,257 @@
+@page "/Shared/FileViews/Word"
+@using System.Text.Json
+@{
+    Layout = null;
+    var src = Request.Query["src"].ToString();
+    var name = Request.Query["name"].ToString();
+    var srcJson = JsonSerializer.Serialize(src ?? string.Empty);
+    var nameJson = JsonSerializer.Serialize(name ?? string.Empty);
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/superdoc@1.29.1/dist/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/superdoc@1.29.1/dist/superdoc.min.js"></script>
+    <style>
+        @@font-face {
+            font-family: "仿宋_GB2312";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "仿宋";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "FangSong_GB2312";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "FangSong";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "方正小标宋简";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "方正小标宋简体";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "小标宋体";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "FZXiaoBiaoSong-B05S";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+        html, body { margin: 0; height: 100%; background: #eef2f7; }
+        #wrap {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        #superdoc {
+            flex: 1;
+            min-height: 0;
+            background: #fff;
+        }
+        #superdoc.superdoc-mode {
+            display: block;
+        }
+        #superdoc.superdoc-mode > iframe,
+        #superdoc.superdoc-mode > div.sd-root {
+            height: 100% !important;
+        }
+        #hint {
+            display: none;
+            flex: 0 0 auto;
+            padding: 10px 14px;
+            box-sizing: border-box;
+            color: #92400e;
+            background: #fff7ed;
+            border-bottom: 1px solid #fed7aa;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        #hint.is-visible {
+            display: block;
+        }
+        .sd-toolbar {
+            display: none !important;
+        }
+        #superdoc.superdoc-mode .sd-root,
+        #superdoc.superdoc-mode .sd-container,
+        #superdoc.superdoc-mode .sd-editor-container {
+            height: 100% !important;
+        }
+        #superdoc.superdoc-mode,
+        #superdoc.superdoc-mode * {
+            font-synthesis: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <div id="hint">正在加载 SuperDoc 预览...</div>
+        <div id="superdoc"></div>
+    </div>
+    <script>
+        const src = @Html.Raw(srcJson);
+        const name = @Html.Raw(nameJson);
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        const superdocEl = document.getElementById('superdoc');
+        const hint = document.getElementById('hint');
+        const atFontFace = '@@font-face';
+        let superdocInstance = null;
+        const previewFontCss = [
+            `${atFontFace} { font-family: "仿宋_GB2312"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "仿宋"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FangSong_GB2312"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FangSong"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "方正小标宋简"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "方正小标宋简体"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "小标宋体"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FZXiaoBiaoSong-B05S"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            'body { font-synthesis: none; }'
+        ].join('\n');
+
+        // 显示顶部提示。
+        function showHint(text) {
+            hint.innerHTML = text;
+            hint.classList.add('is-visible');
+        }
+
+        // 隐藏顶部提示。
+        function hideHint() {
+            hint.classList.remove('is-visible');
+        }
+
+        // 切换到 SuperDoc 预览区。
+        function showSuperdoc() {
+            superdocEl.style.display = 'block';
+            superdocEl.classList.add('superdoc-mode');
+        }
+
+        // 向指定文档注入公文字体别名。
+        function injectPreviewFonts(doc) {
+            if (!doc || !doc.head) return;
+            if (doc.getElementById('kb-preview-fonts')) return;
+            const style = doc.createElement('style');
+            style.id = 'kb-preview-fonts';
+            style.textContent = previewFontCss;
+            doc.head.appendChild(style);
+        }
+
+        // 预先加载关键公文字体，减少首次预览时的错位。
+        async function ensurePreviewFontsLoaded() {
+            if (!document.fonts || typeof document.fonts.load !== 'function') return;
+            try {
+                await Promise.allSettled([
+                    document.fonts.load('16px "仿宋_GB2312"'),
+                    document.fonts.load('16px "FangSong_GB2312"'),
+                    document.fonts.load('16px "方正小标宋简体"'),
+                    document.fonts.load('16px "小标宋体"')
+                ]);
+            } catch (_) {}
+        }
+
+        // 给 SuperDoc 的内层 iframe 也补一遍字体声明。
+        function applyFontsToInnerFrames() {
+            const frames = superdocEl.querySelectorAll('iframe');
+            frames.forEach(frame => {
+                const inject = () => {
+                    try {
+                        const doc = frame.contentDocument || (frame.contentWindow ? frame.contentWindow.document : null);
+                        injectPreviewFonts(doc);
+                    } catch (_) {}
+                };
+                inject();
+                try { frame.addEventListener('load', inject, { once: true }); } catch (_) {}
+            });
+        }
+
+        // 渲染 Word 预览。
+        async function renderSuperdoc() {
+            if (!src) {
+                showHint('文件地址不存在');
+                return;
+            }
+
+            // 老版二进制 .doc 格式 SuperDoc 不支持；WPS 专有格式先尝试让 SuperDoc 自己解析，失败再提示
+            if (ext === 'doc') {
+                showHint('SuperDoc 暂不支持 .doc 老格式预览。<br/>请下载后使用 Office/WPS 打开。');
+                return;
+            }
+
+            if (!window.SuperDoc || typeof window.SuperDoc !== 'function') {
+                showHint('SuperDoc 组件加载失败。<br/>请检查网络或下载附件后本地打开。');
+                return;
+            }
+
+            try {
+                injectPreviewFonts(document);
+                await ensurePreviewFontsLoaded();
+                showSuperdoc();
+                showHint('正在加载 SuperDoc 预览...');
+
+                if (superdocInstance && typeof superdocInstance.destroy === 'function') {
+                    try { superdocInstance.destroy(); } catch (_) {}
+                }
+                superdocEl.innerHTML = '';
+
+                superdocInstance = new SuperDoc({
+                    selector: '#superdoc',
+                    document: src,
+                    documentMode: 'viewing'
+                });
+
+                if (superdocInstance && typeof superdocInstance.on === 'function') {
+                    try {
+                        superdocInstance.on('ready', () => {
+                            applyFontsToInnerFrames();
+                            hideHint();
+                        });
+                    } catch (_) {}
+                }
+
+                window.setTimeout(() => {
+                    applyFontsToInnerFrames();
+                    if (hint.classList.contains('is-visible')) {
+                        const hasEl = superdocEl.querySelector('.sd-root, section, .docx, p, table');
+                        const hasText = (superdocEl.textContent || '').trim().length > 20;
+                        if (hasEl || hasText) {
+                            hideHint();
+                        } else if (ext === 'wps' || ext === 'et' || ext === 'dps') {
+                            showHint('SuperDoc 暂不支持该 WPS 专有格式预览。<br/>请下载后使用 WPS 打开。');
+                        } else {
+                            showHint('SuperDoc 加载较慢... 如长时间无响应，可下载后本地打开。');
+                        }
+                    }
+                }, 6000);
+            } catch (e) {
+                console.error(e);
+                const msg = e && e.message ? e.message : '未知错误';
+                if (ext === 'wps' || ext === 'et' || ext === 'dps') {
+                    showHint('SuperDoc 暂不支持该 WPS 专有格式预览：' + msg + '<br/>请下载后使用 WPS 打开。');
+                } else {
+                    showHint('SuperDoc 预览失败：' + msg + '<br/>请下载后本地打开。');
+                }
+            }
+        }
+
+        renderSuperdoc();
+    </script>
+</body>
+</html>

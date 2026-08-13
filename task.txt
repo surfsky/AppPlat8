@@ -522,45 +522,54 @@ Done
     实现 Feedback 处理流程，重新熟悉一下 liteflow 工作流引擎
 
 2026/08/13
-    /优化mananger页面
-        /1、首次进知识库manager页面时，会报错（估计是menuid未设置导致的），请修正；
-        /2、左侧目录树默认只展开根，根据113行所示，我将参数DEFAULT_EXPAND_TREE_LEVEL设置为1，但是确展开了2层（如图），该参数若设置为0，树就全部展开了。请核查一下方法computeDefaultExpandedKeys 的逻辑。
-        /3、优化该页面，中间放一个spliter，可调整左右模块的宽度；
-        /4、优化该页面，支持响应式布局，窄屏时默认只显示菜单页，点击节点后用elemanger drawer显示文件列表页面；
-    /解决 spliter bar 拖动丢失问题，同样的逻辑也可用于drawer的调整宽度；
-也修正drawer 的拖拽调整宽度的bug：drawer向左拖动时问题不大，可以保持跟踪实时调整drawer的大小，但是往右拖动时经常会丢失跟踪，导致drawer无法调整宽度。另外拖动时也感觉不平滑，会抖动；
-    我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
-    <el-drawer v-model="drawer" :direction="direction" resizable>
-        This is drawer content.
-    </el-drawer>
-    word渲染丢失文字格式
-    excel渲染丢失合并行逻辑
-请使用splitter来改造manager页面  ，并启用 Collapsible，这样左侧树有时候可以根据需求进行折叠。注意保持响应式布局逻辑；
-
-2026/08/12
+    参考
+        也修正drawer 的拖拽调整宽度的bug：drawer向左拖动时问题不大，可以保持跟踪实时调整drawer的大小，但是往右拖动时经常会丢失跟踪，导致drawer无法调整宽度。另外拖动时也感觉不平滑，会抖动；
+            我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
+            <el-drawer v-model="drawer" :direction="direction" resizable>
+                This is drawer content.
+            </el-drawer>
+            word渲染丢失文字格式
+            excel渲染丢失合并行逻辑
+        请使用splitter来改造manager页面  ，并启用 Collapsible，这样左侧树有时候可以根据需求进行折叠。注意保持响应式布局逻辑；
+    如何封装这个网站项目，作为跨平台单机工具使用，先给方案先不编程
     把 AI 对话页面（AI/Chat）中的语音用 QWen3 ASR 0.6B 服务替代 
     如何封装该网站为一个桌面程序；
     知识库
-        文件和目录管理
-            /文档管理和查看、排序
-            /实现目录的移动
-            /上传错误时要正确提示；
+        实现文件和目录管理
+            实现递归检索
             实现目录和文件的混合展示
             实现多目录文件的批量上传加载
             实现大文件的上传和下载
-        实现文件预览能力
-            /office系列、pdf、脑图、三维模型
-            /doc文件查看、wps文件查看（算了，仅下载）
         实现检索页面
-            /一个输入对话框
-            /一个知识地图图谱
             实现全文检索
             实现AI RAG增强检索
         缺：
             4.3
             5.2.3.1
         实现权限管理
-        3、如何封装这个网站项目，作为跨平台单机工具使用，先给方案先不编程         
+
+2026/08/13
+    /优化mananger页面
+        /1、首次进知识库manager页面时，会报错（估计是menuid未设置导致的），请修正；
+        /2、左侧目录树默认只展开根，根据113行所示，我将参数DEFAULT_EXPAND_TREE_LEVEL设置为1，但是确展开了2层（如图），该参数若设置为0，树就全部展开了。请核查一下方法computeDefaultExpandedKeys 的逻辑。
+        /3、优化该页面，中间放一个spliter，可调整左右模块的宽度；
+        /4、优化该页面，支持响应式布局，窄屏时默认只显示菜单页，点击节点后用elemanger drawer显示文件列表页面；
+    /解决 spliter bar 拖动丢失问题，同样的逻辑也可用于drawer的调整宽度；
+
+
+2026/08/12
+    /知识库框架
+        /文件和目录管理
+            /文档管理和查看、排序
+            /实现目录的移动
+            /上传错误时要正确提示；
+        /实现文件预览能力
+            /office系列、pdf、脑图、三维模型
+            /doc文件查看、wps文件查看（算了，仅下载）
+            /解决公文字体问题
+        /实现检索首页
+            /一个输入对话框
+            /一个知识地图图谱
 
 2026/08/06
     /优化MayLayer及LayerManager，增加Cron调度方案，并做好日志；

@@ -270,17 +270,18 @@ namespace App.Pages.Shared.FileViews
             {
                 "mp4", "webm", "ogv", "mov", "m4v", "avi"
             };
+            var flyfishExts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "pdf", "ofd",
+                "doc", "docx", "docm", "dot", "dotx", "dotm", "rtf", "odt", "ott",
+                "xls", "xlsx", "xlsm", "xlsb", "xlt", "xltx", "xltm", "ods", "fods", "csv", "tsv",
+                "ppt", "pptx", "pptm", "pps", "ppsx", "pot", "potx", "potm", "odp"
+            };
             var nameText = (fileName ?? string.Empty).ToLower();
             var likelyPanorama = nameText.Contains("pano") || nameText.Contains("panorama") || nameText.Contains("360");
 
-            if (ext == "pdf")
-                return $"/Shared/FileViews/Pdf?src={src}&name={name}";
-
-            if (ext == "doc" || ext == "docx")
-                return $"/Shared/FileViews/Word?src={src}&name={name}";
-
-            if (ext == "xls" || ext == "xlsx")
-                return $"/Shared/FileViews/Excel?src={src}&name={name}";
+            if (flyfishExts.Contains(ext))
+                return $"/Shared/FileViews/Flyfish?src={src}&name={name}";
 
             if (ext == "glb" || ext == "gltf" || ext == "usdz")
                 return $"/Shared/FileViews/Model?src={src}&name={name}";

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flyfish File Viewer iframe example</title>
+    <style>
+      html, body { margin: 0; min-height: 100%; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f4f7f8; color: #172033; }
+      main { min-height: 100vh; display: grid; grid-template-rows: auto 1fr; gap: 12px; padding: 16px; box-sizing: border-box; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      input, button { height: 36px; border-radius: 6px; border: 1px solid #c8d4de; background: #fff; color: inherit; }
+      input[type="text"] { min-width: min(520px, 100%); flex: 1; padding: 0 10px; }
+      button { padding: 0 14px; cursor: pointer; }
+      iframe { width: 100%; height: min(760px, calc(100vh - 84px)); border: 1px solid #ccd8e0; border-radius: 8px; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="toolbar">
+        <input id="url" type="text" value="./example/word.docx" aria-label="File URL">
+        <button id="open" type="button">Open URL</button>
+        <input id="file" type="file" aria-label="Local file">
+      </div>
+      <iframe id="viewer" src="./iframe.html?url=./example/word.docx" allow="fullscreen"></iframe>
+    </main>
+    <script>
+      const frame = document.querySelector('#viewer')
+      const urlInput = document.querySelector('#url')
+      document.querySelector('#open').addEventListener('click', () => {
+        frame.src = './iframe.html?url=' + encodeURIComponent(urlInput.value)
+      })
+      document.querySelector('#file').addEventListener('change', event => {
+        const file = event.target.files && event.target.files[0]
+        if (!file) return
+        frame.src = './iframe.html?from=' + encodeURIComponent(location.origin) + '&name=' + encodeURIComponent(file.name)
+        frame.addEventListener('load', () => {
+          frame.contentWindow.postMessage(file, location.origin)
+        }, { once: true })
+      })
+    </script>
+  </body>
+</html>

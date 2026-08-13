@@ -1,0 +1,1 @@
+var e=async()=>{throw Error(`Packaged PPT runtime URL was not initialized.`)};export{e as createPptViewer};
