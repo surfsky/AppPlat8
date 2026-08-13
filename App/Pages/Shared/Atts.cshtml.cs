@@ -172,13 +172,15 @@ namespace App.Pages.Shared
         public IActionResult OnGetDownload(long id, string uniId)
         {
             uniId = uniId?.Trim();
-            if (id <= 0 || string.IsNullOrWhiteSpace(uniId))
+            if (id <= 0)
                 return BuildResult(400, "参数错误");
             if (!CheckPower(Power.CheckObjectView))
                 return BuildResult(403, "无权访问");
 
             var item = Att.Get(id);
-            if (item == null || item.Key != uniId)
+            if (item == null)
+                return BuildResult(404, "附件不存在");
+            if (!string.IsNullOrWhiteSpace(uniId) && !string.Equals(item.Key, uniId, StringComparison.OrdinalIgnoreCase))
                 return BuildResult(404, "附件不存在");
 
             var path = App.Web.Asp.MapPath(item.Content);

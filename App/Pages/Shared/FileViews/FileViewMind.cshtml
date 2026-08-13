@@ -2,20 +2,42 @@
 @using System.Text.Json
 @{
     Layout = null;
-    var src = Request.Query["src"].ToString();
-    var name = Request.Query["name"].ToString();
-    var srcJson = JsonSerializer.Serialize(src ?? string.Empty);
-    var nameJson = JsonSerializer.Serialize(name ?? string.Empty);
+    var preview = App.Pages.Shared.FileViews.FilePreviewResolver.Resolve(
+        Request.Query["id"].ToString(),
+        Request.Query["src"].ToString(),
+        Request.Query["name"].ToString());
+    var srcJson = JsonSerializer.Serialize(preview.SourceUrl ?? string.Empty);
+    var nameJson = JsonSerializer.Serialize(preview.FileName ?? string.Empty);
+    var embeddedMode = string.Empty;
+    var embeddedText = string.Empty;
+    var embeddedBase64 = string.Empty;
+    if (!string.IsNullOrWhiteSpace(preview.PhysicalPath) && System.IO.File.Exists(preview.PhysicalPath))
+    {
+        if (string.Equals(preview.FileExt, "xmind", StringComparison.OrdinalIgnoreCase))
+        {
+            embeddedMode = "xmind-base64";
+            embeddedBase64 = Convert.ToBase64String(System.IO.File.ReadAllBytes(preview.PhysicalPath));
+        }
+        else if (string.Equals(preview.FileExt, "mm", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(preview.FileExt, "mmd", StringComparison.OrdinalIgnoreCase))
+        {
+            embeddedMode = "text";
+            embeddedText = System.IO.File.ReadAllText(preview.PhysicalPath);
+        }
+    }
+    var embeddedModeJson = JsonSerializer.Serialize(embeddedMode);
+    var embeddedTextJson = JsonSerializer.Serialize(embeddedText);
+    var embeddedBase64Json = JsonSerializer.Serialize(embeddedBase64);
 }
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsmind@0.8.5/style/jsmind.css" />
-    <script src="https://cdn.jsdelivr.net/npm/jsmind@0.8.5/es6/jsmind.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.0.2/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="/lib/jsmind/jsmind.css" />
+    <script src="/lib/jsmind/jsmind.js"></script>
+    <script src="/lib/jszip/jszip.min.js"></script>
+    <script src="/lib/mermaid/mermaid.min.js"></script>
     <style>
         html, body {
             margin: 0;
@@ -84,6 +106,9 @@
         const src = @Html.Raw(srcJson);
         const name = @Html.Raw(nameJson);
         const ext = (name.split('.').pop() || '').toLowerCase();
+        const embeddedMode = @Html.Raw(embeddedModeJson);
+        const embeddedText = @Html.Raw(embeddedTextJson);
+        const embeddedBase64 = @Html.Raw(embeddedBase64Json);
         const hint = document.getElementById('hint');
         const err = document.getElementById('error');
         const mind = document.getElementById('mind');
@@ -273,15 +298,34 @@
             hint.textContent = `脑图预览 · ${name || ''}`;
 
             try {
+                if (embeddedMode === 'xmind-base64' && ext === 'xmind') {
+                    const binary = atob(embeddedBase64 || '');
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i += 1) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+                    await renderXmind(bytes.buffer);
+                    return;
+                }
+
+                if (embeddedMode === 'text' && (ext === 'mm' || ext === 'mmd')) {
+                    if (ext === 'mm') {
+                        await renderMm(embeddedText || '');
+                        return;
+                    }
+                    await renderMmd(embeddedText || '');
+                    return;
+                }
+
                 if (ext === 'xmind') {
-                    const resp = await fetch(src);
+                    const resp = await fetch(src, { credentials: 'same-origin' });
                     if (!resp.ok) throw new Error('xmind 文件请求失败');
                     const buffer = await resp.arrayBuffer();
                     await renderXmind(buffer);
                     return;
                 }
 
-                const resp = await fetch(src);
+                const resp = await fetch(src, { credentials: 'same-origin' });
                 if (!resp.ok) throw new Error('文件请求失败');
                 const text = await resp.text();
 

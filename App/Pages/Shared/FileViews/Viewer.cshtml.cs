@@ -62,14 +62,13 @@ namespace App.Pages.Shared.FileViews
                 return;
             }
 
-            var resolvedUniId = UniId ?? item.Key;
             FileName = string.IsNullOrWhiteSpace(item.FileName)
                 ? Path.GetFileName(item.Url ?? string.Empty)
                 : item.FileName;
             FileExt = (item.FileExtension ?? string.Empty).Trim().TrimStart('.').ToLower();
-            SourceUrl = $"/Shared/FileViews/Viewer?handler=Content&uniId={Uri.EscapeDataString(resolvedUniId)}&id={id}";
-            ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
-            DownloadUrl = $"/Shared/Atts?handler=Download&uniId={Uri.EscapeDataString(resolvedUniId)}&id={id}";
+            SourceUrl = $"/Shared/FileViews/Viewer?handler=Content&id={id}";
+            ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt, id);
+            DownloadUrl = $"/Shared/Atts?handler=Download&id={id}";
         }
 
         public IActionResult OnGetContent(string uniId, long id)
@@ -212,7 +211,7 @@ namespace App.Pages.Shared.FileViews
             FileName = Path.GetFileName(fullPath);
             FileExt = Path.GetExtension(fullPath).TrimStart('.').ToLower();
             SourceUrl = $"/Shared/FileViews/Viewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}";
-            ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
+            ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt, 0);
             DownloadUrl = $"/Shared/FileViews/Viewer?handler=StaticContent&file={Uri.EscapeDataString(safePath)}&download=true";
         }
 
@@ -242,17 +241,18 @@ namespace App.Pages.Shared.FileViews
             if (string.IsNullOrWhiteSpace(FileExt))
                 FileExt = Path.GetExtension(FileName).TrimStart('.').ToLower();
 
-            ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt);
+            ViewerUrl = BuildViewerUrl(SourceUrl, FileName, FileExt, 0);
             DownloadUrl = SourceUrl;
         }
 
-        private static string BuildViewerUrl(string sourceUrl, string fileName, string fileExt)
+        private static string BuildViewerUrl(string sourceUrl, string fileName, string fileExt, long attId)
         {
             var src = Uri.EscapeDataString(sourceUrl ?? string.Empty);
             var name = Uri.EscapeDataString(fileName ?? string.Empty);
             var ext = (fileExt ?? string.Empty).Trim().ToLower();
             if (string.IsNullOrWhiteSpace(ext))
                 ext = Path.GetExtension(fileName ?? string.Empty).TrimStart('.').ToLower();
+            var idQuery = attId > 0 ? $"?id={attId}" : string.Empty;
 
             var imageExts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
@@ -281,30 +281,30 @@ namespace App.Pages.Shared.FileViews
             var likelyPanorama = nameText.Contains("pano") || nameText.Contains("panorama") || nameText.Contains("360");
 
             if (flyfishExts.Contains(ext))
-                return $"/Shared/FileViews/Flyfish?src={src}&name={name}";
+                return attId > 0 ? $"/Shared/FileViews/Flyfish{idQuery}" : $"/Shared/FileViews/Flyfish?src={src}&name={name}";
 
             if (ext == "glb" || ext == "gltf" || ext == "usdz")
-                return $"/Shared/FileViews/Model?src={src}&name={name}";
+                return attId > 0 ? $"/Shared/FileViews/Model{idQuery}" : $"/Shared/FileViews/Model?src={src}&name={name}";
 
             if (ext == "md" || ext == "markdown")
-                return $"/Shared/FileViews/Markdown?src={src}&name={name}";
+                return attId > 0 ? $"/Shared/FileViews/Markdown{idQuery}" : $"/Shared/FileViews/Markdown?src={src}&name={name}";
 
             if (mindmapExts.Contains(ext))
-                return $"/Shared/FileViews/Mind?src={src}&name={name}";
+                return attId > 0 ? $"/Shared/FileViews/Mind{idQuery}" : $"/Shared/FileViews/Mind?src={src}&name={name}";
 
             if (videoExts.Contains(ext))
-                return $"/Shared/FileViews/Video?src={src}&name={name}";
+                return attId > 0 ? $"/Shared/FileViews/Video{idQuery}" : $"/Shared/FileViews/Video?src={src}&name={name}";
 
             if (imageExts.Contains(ext) && likelyPanorama)
-                return $"/Shared/FileViews/Panorama?src={src}&name={name}";
+                return attId > 0 ? $"/Shared/FileViews/Panorama{idQuery}" : $"/Shared/FileViews/Panorama?src={src}&name={name}";
 
             if (imageExts.Contains(ext))
-                return $"/Shared/FileViews/Image?src={src}&name={name}";
+                return attId > 0 ? $"/Shared/FileViews/Image{idQuery}" : $"/Shared/FileViews/Image?src={src}&name={name}";
 
             if (textExts.Contains(ext))
-                return $"/Shared/FileViews/Text?src={src}&name={name}";
+                return attId > 0 ? $"/Shared/FileViews/Text{idQuery}" : $"/Shared/FileViews/Text?src={src}&name={name}";
 
-            return $"/Shared/FileViews/Pdf?src={src}&name={name}";
+            return attId > 0 ? $"/Shared/FileViews/Pdf{idQuery}" : $"/Shared/FileViews/Pdf?src={src}&name={name}";
         }
 
         private static string ResolveMimeType(string filePath, string ext)

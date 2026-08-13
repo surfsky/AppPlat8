@@ -1,10 +1,12 @@
 @page "/Shared/FileViews/Flyfish"
 @{
     Layout = null;
-    var src = Request.Query["src"].ToString();
-    var name = Request.Query["name"].ToString();
-    var srcJson = System.Text.Json.JsonSerializer.Serialize(src ?? string.Empty);
-    var nameJson = System.Text.Json.JsonSerializer.Serialize(name ?? string.Empty);
+    var preview = App.Pages.Shared.FileViews.FilePreviewResolver.Resolve(
+        Request.Query["id"].ToString(),
+        Request.Query["src"].ToString(),
+        Request.Query["name"].ToString());
+    var srcJson = System.Text.Json.JsonSerializer.Serialize(preview.SourceUrl ?? string.Empty);
+    var nameJson = System.Text.Json.JsonSerializer.Serialize(preview.FileName ?? string.Empty);
 }
 <!DOCTYPE html>
 <html>

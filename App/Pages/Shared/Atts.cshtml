@@ -37,11 +37,11 @@
                     </el-icon>
                 </template>
             </EleColumn>
-            <EleColumn For="Item.FileName" Label="文件" MinWidth="400" PopupUrl="/Shared/FileViews/Viewer?id={id}" PopupSize="80%"></EleColumn>
-            <EleColumn For="Item.FileSizeText" Label="文件大小" Width="120"></EleColumn>
+            <EleColumn For="Item.FileName" Label="文件" MinWidth="400" PopupUrl="/Shared/FileViews/Viewer?id={id}" PopupTitle="{fileName}" PopupSize="80%"></EleColumn>
+            <EleColumn For="Item.FileSizeText" Label="大小" Width="120"></EleColumn>
             <EleImageColumn Prop="imageUrl" Label="缩略图" Width="80" ThumbnailWidth="44" ThumbnailHeight="44"></EleImageColumn>
             <EleColumn For="Item.Type" Label="类型" Width="100" Visible="false"></EleColumn>
-            <EleColumn For="Item.FileExtension" Label="文件扩展名" Width="120"></EleColumn>
+            <EleColumn For="Item.FileExtension" Label="扩展名" Width="100"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="上传时间" Width="180" Format="DateTime"></EleColumn>
         </Columns>
     </EleTable>
@@ -209,17 +209,12 @@
                         EleManager.showWarning('附件信息不存在');
                         return;
                     }
-                    const uniId = '@uniIdEncoded';
-                    const params = new URLSearchParams();
-                    params.set('uniId', decodeURIComponent(uniId));
-                    params.set('id', String(row.id));
-                    if (row.fileName) params.set('name', row.fileName);
-                    const url = '/Shared/FileViews/Viewer?' + params.toString();
-                    const title = row.fileName ? '预览 - ' + row.fileName : '文件预览';
+                    const url = '/Shared/FileViews/Viewer?id=' + encodeURIComponent(row.id);
+                    const title = (row.fileName || '').trim() || '文件预览';
                     EleManager.openDrawer({
                         title: title,
                         url: url,
-                        size: '80%',
+                        //size: '80%',
                         direction: 'rtl',
                         showFooter: false
                     });
@@ -233,7 +228,7 @@
                     }
                     // 数据库里的原名（EleTable 渲染后属性名是 camelCase 的 fileName）
                     const rawName = (row?.fileName || row?.FileName || '').trim() || 'download';
-                    const url = '?handler=Download&uniId=@uniIdEncoded&id=' + encodeURIComponent(id);
+                    const url = '?handler=Download&id=' + encodeURIComponent(id);
                     try {
                         let blob;
                         if (window.axios) {

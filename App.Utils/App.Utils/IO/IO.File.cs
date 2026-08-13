@@ -390,6 +390,9 @@ namespace App.Utils
             Mimes[".ppt"]  = "application/vnd.ms-powerpoint";
             Mimes[".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
             Mimes[".pdf"]  = "application/pdf";
+            Mimes[".xmind"] = "application/vnd.xmind.workbook";
+            Mimes[".mm"]    = "application/x-freemind";
+            Mimes[".mmd"]   = "text/plain";
 
             // ext
             Mimes[".exe"]  = "application/octet-stream";

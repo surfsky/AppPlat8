@@ -17,18 +17,20 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            background: #f8fafc;
+            gap: 4px;
+            background: white；/* #f8fafc;*/
         }
         .fv-toolbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            padding: 8px 12px;
+            padding: 8px 2px;
+            /*
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             background: #ffffff;
+            */
         }
         .fv-title {
             font-size: 14px;
@@ -56,6 +58,13 @@
         .fv-empty {
             color: #64748b;
             padding: 20px;
+        }
+        .fv-notice {
+            padding: 0 2px;
+            color: #ef4444;
+            font-size: 12px;
+            line-height: 1.5;
+            text-align: left;
         }
         .fv-actions {
             display: inline-flex;
@@ -113,14 +122,14 @@
 @section body {
     <div class="fv-root">
         <div class="fv-toolbar">
-            <div class="fv-title" id="fv-title">@Model.FileName</div>
+            <div class="fv-notice">文件预览效果，若有格式偏差，以实际文件为准</div>
             <div class="fv-actions">
                 <button type="button" id="fv-open" class="fv-btn" title="Open in new window">
                     <svg class="fv-btn-icon" viewBox="0 0 1024 1024" aria-hidden="true">
                         <path d="M128 128h320v64H192v640h640V576h64v320H128V128zm424.96 0H896v343.04h-64V237.248L533.248 536 488 490.752 786.752 192H552.96v-64z"></path>
                     </svg>
                 </button>
-                <button type="button" id="fv-download" class="fv-btn fv-btn-primary" title="Download file">
+                <button type="button" id="fv-download" class="fv-btn" title="Download file">
                     <svg class="fv-btn-icon" viewBox="0 0 1024 1024" aria-hidden="true">
                         <path d="M160 832h704v64H160zM480 128h64v416h172.8L512 748.8 307.2 544H480z"></path>
                     </svg>
@@ -183,34 +192,13 @@
                     EleManager.showWarning('下载地址不存在');
                 return;
             }
-            // 直接用后端注入的 fileName（数据库原名）写死 a.download，绕开所有响应头编码坑
-            const safeName = (fileName || '').trim() || 'download';
-            try {
-                let blob;
-                if (window.axios) {
-                    const res = await axios.get(downloadUrl, {
-                        responseType: 'blob',
-                        withCredentials: true
-                    });
-                    blob = res.data;
-                } else {
-                    const res = await fetch(downloadUrl, { credentials: 'same-origin' });
-                    if (!res.ok) throw new Error('下载失败: ' + res.status);
-                    blob = await res.blob();
-                }
-                const blobUrl = URL.createObjectURL(blob);
-                triggerAnchorDownload(blobUrl, safeName);
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-            } catch (err) {
-                console.error('[viewer download]', err);
-                // 兜底：仍用 safeName 作为下载名
-                triggerAnchorDownload(downloadUrl, safeName);
-            }
+            // 直接走后端下载链接，避免把错误页或中间响应重新打包成损坏文件。
+            const safeName = (fileName || '').trim();
+            triggerAnchorDownload(downloadUrl, safeName);
         }
 
         function openInNewTab() {
-            if (!viewerUrl) return;
-            window.open(viewerUrl, '_blank');
+            window.open(window.location.href, '_blank');
         }
 
         const btnOpen = document.getElementById('fv-open');

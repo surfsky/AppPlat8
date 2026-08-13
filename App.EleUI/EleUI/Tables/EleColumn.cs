@@ -251,12 +251,12 @@ namespace App.EleUI
         private string BuildPopupTemplate(string propName)
         {
             var urlExpr = BuildPopupUrlExpr(PopupUrl);
-            var title = EscapeSingleQuoted(!string.IsNullOrEmpty(PopupTitle) ? PopupTitle : (Label ?? "查看"));
+            var titleExpr = BuildPopupTextExpr(!string.IsNullOrEmpty(PopupTitle) ? PopupTitle : (Label ?? "查看"));
             var dir = EscapeSingleQuoted(PopupDirection ?? "rtl");
             var popupSize = PopupSize?.Trim();
             var openDrawerArgs = !string.IsNullOrEmpty(popupSize)
-                ? $"{urlExpr}, '{EscapeSingleQuoted(popupSize)}', '{dir}', '{title}'"
-                : $"{urlExpr}, null, '{dir}', '{title}'";
+                ? $"{urlExpr}, '{EscapeSingleQuoted(popupSize)}', '{dir}', {titleExpr}"
+                : $"{urlExpr}, null, '{dir}', {titleExpr}";
 
             return $@"
                         <template #default=""scope"">
@@ -293,6 +293,45 @@ namespace App.EleUI
                 var path = token.StartsWith("scope.") ? token : $"scope.row.{token}";
                 if (sb.Length > 0) sb.Append(" + ");
                 sb.Append($"encodeURIComponent((({path}) ?? '').toString())");
+                last = m.Index + m.Length;
+            }
+
+            var tail = template.Substring(last);
+            if (!string.IsNullOrEmpty(tail))
+            {
+                if (sb.Length > 0) sb.Append(" + ");
+                sb.Append("'").Append(EscapeSingleQuoted(tail)).Append("'");
+            }
+
+            return sb.Length == 0 ? "''" : sb.ToString();
+        }
+
+        /// <summary>将Popup标题模板字符串（支持{fileName}占位符）编译为JS拼接表达式</summary>
+        private static string BuildPopupTextExpr(string template)
+        {
+            if (string.IsNullOrEmpty(template))
+                return "''";
+
+            var matches = Regex.Matches(template, "\\{([A-Za-z_][A-Za-z0-9_\\.]*)\\}");
+            if (matches.Count == 0)
+                return $"'{EscapeSingleQuoted(template)}'";
+
+            var sb = new StringBuilder();
+            var last = 0;
+            for (int i = 0; i < matches.Count; i++)
+            {
+                var m = matches[i];
+                var literal = template.Substring(last, m.Index - last);
+                if (!string.IsNullOrEmpty(literal))
+                {
+                    if (sb.Length > 0) sb.Append(" + ");
+                    sb.Append("'").Append(EscapeSingleQuoted(literal)).Append("'");
+                }
+
+                var token = m.Groups[1].Value;
+                var path = token.StartsWith("scope.") ? token : $"scope.row.{token}";
+                if (sb.Length > 0) sb.Append(" + ");
+                sb.Append($"((({path}) ?? '').toString())");
                 last = m.Index + m.Length;
             }
 

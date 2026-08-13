@@ -1,7 +1,11 @@
 @page "/Shared/FileViews/Image"
 @{
     Layout = null;
-    var src = Request.Query["src"].ToString();
+    var preview = App.Pages.Shared.FileViews.FilePreviewResolver.Resolve(
+        Request.Query["id"].ToString(),
+        Request.Query["src"].ToString(),
+        Request.Query["name"].ToString());
+    var src = preview.SourceUrl;
 }
 <!DOCTYPE html>
 <html>

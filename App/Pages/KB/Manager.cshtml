@@ -22,53 +22,61 @@
 @section head {
     <style>
         .kb-manager-shell {
-            display: flex;
             height: 100%;
             min-width: 0;
             min-height: 0;
             background: #fff;
         }
 
-        .kb-manager-aside {
-            min-width: 220px;
-            max-width: 520px;
+        .kb-manager-split-shell {
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
         }
 
-        .kb-manager-splitter {
-            width: 10px;
-            flex: 0 0 10px;
-            position: relative;
-            cursor: col-resize;
-            touch-action: none;
-            background: linear-gradient(180deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%);
+        .kb-manager-panel-fill {
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .kb-manager-tree-panel {
+            border-right: 1px solid #f1f5f9;
+        }
+
+        .kb-manager-mobile-shell {
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .kb-manager-split-shell .el-splitter__bar {
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
             border-left: 1px solid #eef2f7;
             border-right: 1px solid #eef2f7;
         }
 
-        .kb-manager-splitter::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 3px;
-            height: 44px;
-            border-radius: 999px;
-            background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
-            transform: translate(-50%, -50%);
-            opacity: .9;
+        .kb-manager-split-shell .el-splitter__bar:hover,
+        .kb-manager-split-shell .el-splitter__bar.is-active {
+            background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
         }
 
-        .kb-manager-splitter:hover::before,
-        .kb-manager-shell.is-resizing .kb-manager-splitter::before {
-            background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+        .kb-manager-split-shell .el-splitter__trigger {
+            background: #fff;
+            border: 1px solid #dbeafe;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
         }
 
-        .kb-manager-resize-mask {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            cursor: col-resize;
-            background: transparent;
+        .kb-manager-split-shell .el-splitter__trigger:hover {
+            background: #eff6ff;
         }
 
         .kb-manager-empty {
@@ -118,17 +126,90 @@
 
 @section body {
     <div id="kbMgr3" class="h-screen overflow-hidden">
-        <div
-            :class="['kb-manager-shell', { 'is-resizing': isResizing }]"
-            class="h-full">
+        <div class="kb-manager-shell h-full">
+            <el-splitter
+                v-if="!isMobileLayout"
+                class="kb-manager-split-shell"
+                @@resize-start="onResizeStart"
+                @@resize-end="onResizeEnd"
+                @@collapse="onSplitterCollapse">
+                <el-splitter-panel
+                    v-model:size="asideWidth"
+                    :min="0"
+                    :max="MAX_ASIDE_WIDTH"
+                    :collapsible="true"
+                    class="kb-manager-tree-panel">
+                    <div class="kb-manager-panel-fill">
+                        <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100 shrink-0">
+                            <div class="flex gap-1">
+                                <el-button v-if="canNew" type="primary" circle @@click="onNewMenu" title="新建子目录">
+                                    <i class="fa-solid fa-plus" style="font-size:14px;"></i>
+                                </el-button>
+                                <el-button v-if="canEdit" type="success" circle :disabled="!currentMenuId" @@click="onEditMenu" title="编辑目录">
+                                    <i class="fa-solid fa-pen" style="font-size:14px;"></i>
+                                </el-button>
+                                <el-button v-if="canDelete" type="danger" circle :disabled="!currentMenuId" @@click="onDeleteMenu" title="删除目录">
+                                    <i class="fa-solid fa-trash" style="font-size:14px;"></i>
+                                </el-button>
+                                <el-button v-if="canEdit" circle :disabled="!currentMenuId" @@click="onMoveUp" title="上移">
+                                    <i class="fa-solid fa-arrow-up" style="font-size:14px;"></i>
+                                </el-button>
+                                <el-button v-if="canEdit" circle :disabled="!currentMenuId" @@click="onMoveDown" title="下移">
+                                    <i class="fa-solid fa-arrow-down" style="font-size:14px;"></i>
+                                </el-button>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-h-0 overflow-auto px-2 py-1">
+                            <el-tree
+                                ref="treeRef"
+                                :data="treeData"
+                                node-key="id"
+                                :default-expand-all="false"
+                                :default-expanded-keys="defaultExpandedKeys"
+                                :expand-on-click-node="false"
+                                :highlight-current="true"
+                                :current-node-key="currentMenuId"
+                                @@node-click="onTreeSelect">
+                                <template #default="{ node, data }">
+                                    <span
+                                        @@click.stop.prevent="onTreeSelect(data)"
+                                        :class="[
+                                            'inline-flex items-center w-full px-1 py-0.5 rounded cursor-pointer transition',
+                                            currentMenuId === data.id ? 'font-semibold text-indigo-700 bg-indigo-50' : 'text-gray-800 hover:bg-gray-50'
+                                        ]">
+                                        <span class="truncate">{{ data.name || data.label || '未命名' }}</span>
+                                    </span>
+                                </template>
+                            </el-tree>
+                        </div>
+                    </div>
+                </el-splitter-panel>
+
+                <el-splitter-panel>
+                    <div class="kb-manager-panel-fill">
+                        <div v-if="!hasSelection" class="kb-manager-empty">
+                            <div class="kb-manager-empty-card">
+                                <h3>请选择左侧目录</h3>
+                            </div>
+                        </div>
+                        <iframe
+                            v-else
+                            id="kbAttsFrame3"
+                            :class="{ 'pointer-events-none': isResizing }"
+                            class="w-full h-full block bg-white border-0"
+                            frameborder="0"
+                            :src="attsUrl">
+                        </iframe>
+                    </div>
+                </el-splitter-panel>
+            </el-splitter>
+
             <aside
-                class="kb-manager-aside border-r border-gray-100 bg-white flex flex-col overflow-hidden shrink-0"
-                :style="asideStyle">
+                v-else
+                class="kb-manager-mobile-shell"
+                :style="{ width: '100%' }">
                 <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100 shrink-0">
                     <div class="flex gap-1">
-                        <!-- 统一用 FontAwesome 6.4 的 CSS class 图标（Layout 已全局引入 all.min.css）
-                             这样即使 ElementPlus Icons 的 CDN 资源加载慢/或全局注册漏做，
-                             图标也一定能显示，且按钮的圆形大小和对齐不受影响 -->
                         <el-button v-if="canNew" type="primary" circle @@click="onNewMenu" title="新建子目录">
                             <i class="fa-solid fa-plus" style="font-size:14px;"></i>
                         </el-button>
@@ -170,37 +251,6 @@
                     </el-tree>
                 </div>
             </aside>
-
-            <div
-                v-if="!isMobileLayout"
-                class="kb-manager-splitter"
-                title="拖动调整左右宽度，双击恢复默认宽度"
-                @@pointerdown="startResize"
-                @@dblclick="resetAsideWidth">
-            </div>
-
-            <div
-                v-if="isResizing"
-                class="kb-manager-resize-mask">
-            </div>
-
-            <main
-                v-if="!isMobileLayout"
-                class="flex-1 min-w-0 p-0 h-full overflow-hidden bg-white">
-                <div v-if="!hasSelection" class="kb-manager-empty">
-                    <div class="kb-manager-empty-card">
-                        <h3>请选择左侧目录</h3>
-                    </div>
-                </div>
-                <iframe
-                    v-else
-                    id="kbAttsFrame3"
-                    :class="{ 'pointer-events-none': isResizing }"
-                    class="w-full h-full block bg-white border-0"
-                    frameborder="0"
-                    :src="attsUrl">
-                </iframe>
-            </main>
         </div>
     </div>
 }
@@ -337,7 +387,7 @@
                 return Promise.resolve(window.confirm(text || '确认？'));
             }
 
-            const { createApp, ref, onMounted, onBeforeUnmount, computed } = Vue;
+            const { createApp, ref, onMounted, onBeforeUnmount, computed, watch } = Vue;
 
             const App = {
                 setup() {
@@ -347,8 +397,7 @@
                     const isMobileLayout = ref(window.innerWidth < DESKTOP_BREAKPOINT);
                     const asideWidth = ref(DEFAULT_ASIDE_WIDTH);
                     const isResizing = ref(false);
-                    let removeResizeListeners = null;
-                    let activePointerId = null;
+                    const lastExpandedAsideWidth = ref(DEFAULT_ASIDE_WIDTH);
 
                     // 默认展开：DEFAULT_EXPAND_TREE_LEVEL 指定层级 + 当前选中节点的祖先
                     const defaultExpandedKeys = ref(computeDefaultExpandedKeys(initialTreeData || [], initialCurrentId, DEFAULT_EXPAND_TREE_LEVEL));
@@ -361,10 +410,6 @@
                     });
                     const currentMenuName = computed(function () {
                         return findMenuNameById(treeData.value || [], currentMenuId.value) || '';
-                    });
-                    const asideStyle = computed(function () {
-                        if (isMobileLayout.value) return { width: '100%', minWidth: '0', maxWidth: '100%' };
-                        return { width: asideWidth.value + 'px' };
                     });
 
                     const attsUrl = computed(function () {
@@ -629,53 +674,54 @@
                                 if (manager && typeof manager.closeDrawer === 'function') manager.closeDrawer();
                             } catch (_) {}
                         }
+                        if (!mobile && (Number(asideWidth.value) || 0) <= 0) {
+                            asideWidth.value = lastExpandedAsideWidth.value || DEFAULT_ASIDE_WIDTH;
+                        }
                     }
 
-                    // 开始拖动分隔条。
-                    function startResize(event) {
-                        if (isMobileLayout.value) return;
-                        if (event && typeof event.preventDefault === 'function') event.preventDefault();
-                        const startX = event.clientX || 0;
-                        const startWidth = asideWidth.value;
+                    function normalizeAsideWidth(value) {
+                        const size = Number(value);
+                        if (!Number.isFinite(size) || size <= 0) return 0;
+                        return Math.min(MAX_ASIDE_WIDTH, Math.max(MIN_ASIDE_WIDTH, Math.round(size)));
+                    }
+
+                    function onResizeStart() {
                         isResizing.value = true;
-                        activePointerId = typeof event.pointerId === 'number' ? event.pointerId : null;
                         document.body.style.cursor = 'col-resize';
                         document.body.style.userSelect = 'none';
-                        try {
-                            if (event.currentTarget && typeof event.currentTarget.setPointerCapture === 'function' && activePointerId !== null) {
-                                event.currentTarget.setPointerCapture(activePointerId);
+                    }
+
+                    function onResizeEnd() {
+                        isResizing.value = false;
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                        const normalized = normalizeAsideWidth(asideWidth.value);
+                        if (normalized > 0 && normalized !== Number(asideWidth.value)) {
+                            asideWidth.value = normalized;
+                        }
+                    }
+
+                    function onSplitterCollapse() {
+                        window.setTimeout(function () {
+                            const size = Number(asideWidth.value) || 0;
+                            if (size > 0) {
+                                lastExpandedAsideWidth.value = normalizeAsideWidth(size) || DEFAULT_ASIDE_WIDTH;
+                                return;
                             }
-                        } catch (_) {}
-
-                        const onMove = function (e) {
-                            if (activePointerId !== null && typeof e.pointerId === 'number' && e.pointerId !== activePointerId) return;
-                            const delta = (e.clientX || 0) - startX;
-                            const next = Math.min(MAX_ASIDE_WIDTH, Math.max(MIN_ASIDE_WIDTH, startWidth + delta));
-                            asideWidth.value = next;
-                        };
-
-                        const stop = function (e) {
-                            if (activePointerId !== null && e && typeof e.pointerId === 'number' && e.pointerId !== activePointerId) return;
-                            isResizing.value = false;
-                            activePointerId = null;
-                            document.body.style.cursor = '';
-                            document.body.style.userSelect = '';
-                            window.removeEventListener('pointermove', onMove);
-                            window.removeEventListener('pointerup', stop);
-                            window.removeEventListener('pointercancel', stop);
-                            removeResizeListeners = null;
-                        };
-
-                        window.addEventListener('pointermove', onMove);
-                        window.addEventListener('pointerup', stop);
-                        window.addEventListener('pointercancel', stop);
-                        removeResizeListeners = stop;
+                            asideWidth.value = 0;
+                        }, 0);
                     }
 
-                    // 恢复默认侧栏宽度。
-                    function resetAsideWidth() {
-                        asideWidth.value = DEFAULT_ASIDE_WIDTH;
-                    }
+                    watch(asideWidth, function (next) {
+                        const raw = Number(next);
+                        if (!Number.isFinite(raw) || raw <= 0) return;
+                        const normalized = normalizeAsideWidth(raw);
+                        if (normalized !== raw) {
+                            asideWidth.value = normalized;
+                            return;
+                        }
+                        lastExpandedAsideWidth.value = normalized;
+                    });
 
                     onMounted(function () {
                         updateLayoutState();
@@ -703,25 +749,26 @@
 
                     onBeforeUnmount(function () {
                         window.removeEventListener('resize', updateLayoutState);
-                        if (typeof removeResizeListeners === 'function') removeResizeListeners();
                     });
 
                     return {
                         treeRef,
                         treeData,
                         currentMenuId,
+                        asideWidth,
                         defaultExpandedKeys,
                         hasSelection,
                         currentMenuName,
                         attsUrl,
                         isMobileLayout,
-                        asideStyle,
                         isResizing,
                         canNew,
                         canEdit,
                         canDelete,
-                        startResize,
-                        resetAsideWidth,
+                        MAX_ASIDE_WIDTH,
+                        onResizeStart,
+                        onResizeEnd,
+                        onSplitterCollapse,
                         onTreeSelect,
                         onNewMenu,
                         onEditMenu,
