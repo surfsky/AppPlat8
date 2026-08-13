@@ -20,17 +20,17 @@
     任务和事件
         任务派发和分配、进度统计、巡查可选任务
         事件独立，不绑定对象，可关联对象
+    督查整改模块：
+        督察员检查到的隐患，要求责任单位人员进行整改。
+        隐患需有字段：检查员、检查类别（如日常巡查、督查、专项检查等）、责任人员就是对象的管理人员
+        我的隐患处理任务：责任人是我的隐患
+关于风险点
+    方案一：增加风险点 Check 对象，用于保存风险点，可关联到对象，也可以独立存在，并关联到企业责任人、政府监管人
+        CheckRisk: Id, CheckObjectId, RiskLevel, Pic, Name, Desc
+    方案二：直接在 CheckObject 用tag标注，风险信息用附件存储
+        先实现 SearchObject(....Tag....) 方法，可根据标签搜索对象，风险点文档先放在对象附件里面
 
-增加风险点 Check 对象，用于保存风险点，可关联到对象，也可以独立存在，并关联到企业责任人、政府监管人
-    CheckRisk: Id, CheckObjectId, RiskLevel, Pic, Name, Desc
-    是否需要这个表？直接在 CheckObject 用tag标注，用附件存储即可？
-    先搁置，并实现 SearchObject(....Tag....) 方法，可根据标签搜索对象
 
-
-bug：新建标签时，组织老是自动设置为“新城应消中心”
-将检查对象 checkobject 的风险类标签合并到 Tags（原风险类别字段尚未删除）
-
-- 检索页面增加多标签检索的能力；
 - 隐患排查
 - 统计及调度
 - web监管进度
@@ -521,9 +521,24 @@ Done
         这样有两层loading逻辑，第一次的页面创建，每次的数据加载，会优化用户体验；
     实现 Feedback 处理流程，重新熟悉一下 liteflow 工作流引擎
 
+2026/08/13
+    /优化mananger页面
+        /1、首次进知识库manager页面时，会报错（估计是menuid未设置导致的），请修正；
+        /2、左侧目录树默认只展开根，根据113行所示，我将参数DEFAULT_EXPAND_TREE_LEVEL设置为1，但是确展开了2层（如图），该参数若设置为0，树就全部展开了。请核查一下方法computeDefaultExpandedKeys 的逻辑。
+        /3、优化该页面，中间放一个spliter，可调整左右模块的宽度；
+        /4、优化该页面，支持响应式布局，窄屏时默认只显示菜单页，点击节点后用elemanger drawer显示文件列表页面；
+    /解决 spliter bar 拖动丢失问题，同样的逻辑也可用于drawer的调整宽度；
+    如果spliterbar摆不平，请使用 https://element-plus.org/en-US/component/splitter ，并启用 Collapsible
+
+也修正drawer 的拖拽调整宽度的bug：drawer向左拖动时问题不大，可以保持跟踪实时调整drawer的大小，但是往右拖动时经常会丢失跟踪，导致drawer无法调整宽度。另外拖动时也感觉不平滑，会抖动；
+我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
+  <el-drawer v-model="drawer" :direction="direction" resizable>
+    This is drawer content.
+  </el-drawer>
+
 
 2026/08/12
-    用个壳封装该网站
+    如何封装该网站为一个桌面程序；
     知识库
         文件和目录管理
             /文档管理和查看、排序
@@ -544,6 +559,7 @@ Done
             4.3
             5.2.3.1
         实现权限管理
+        3、如何封装这个网站项目，作为跨平台单机工具使用，先给方案先不编程         
 
 2026/08/06
     /优化MayLayer及LayerManager，增加Cron调度方案，并做好日志；
@@ -551,6 +567,9 @@ Done
 2026/08/05
     /修正EleTreePicker故障
     /如何快速的获取某个页面的url？日志要记录；前端在页面右键》查看框架的源代码，看地址栏即可；
+    /bug：新建标签时，组织老是自动设置为“新城应消中心”
+    /将检查对象 checkobject 的风险类标签合并到 Tags（原风险类别字段尚未删除）
+    /检索页面增加多标签检索的能力；
 
 
 2026/08/04

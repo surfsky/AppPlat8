@@ -29,14 +29,16 @@ namespace App.Pages.KB
 
         private static string BuildAttsUrl(long? menuId)
         {
-            if (menuId.HasValue && menuId.Value > 0)
-            {
-                var menu = KbMenu.Get(menuId.Value);
-                var uniId = $"KbMenu-{menuId.Value}";
-                var nameEncoded = System.Net.WebUtility.UrlEncode(menu?.Name ?? string.Empty);
-                return $"/Shared/Atts?uniId={System.Net.WebUtility.UrlEncode(uniId)}&name={nameEncoded}";
-            }
-            return "/Shared/Atts?uniId=";
+            if (!menuId.HasValue || menuId.Value <= 0)
+                return string.Empty;
+
+            var menu = KbMenu.Get(menuId.Value);
+            if (menu == null)
+                return string.Empty;
+
+            var uniId = $"KbMenu-{menuId.Value}";
+            var nameEncoded = System.Net.WebUtility.UrlEncode(menu.Name ?? string.Empty);
+            return $"/Shared/Atts?uniId={System.Net.WebUtility.UrlEncode(uniId)}&name={nameEncoded}";
         }
 
 

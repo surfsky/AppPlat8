@@ -67,9 +67,9 @@ namespace App.EleUI
         [HtmlAttributeName("PopupTitle")]
         public string PopupTitle { get; set; }
 
-        /// <summary>弹窗尺寸（百分比或像素），默认70%</summary>
+        /// <summary>弹窗尺寸（百分比或像素），默认为空（即宽屏50%，窄屏全屏）</summary>
         [HtmlAttributeName("PopupSize")]
-        public string PopupSize { get; set; } = "50%";
+        public string PopupSize { get; set; } = "";
 
         /// <summary>弹窗方向，默认rtl（从右向左滑出）</summary>
         [HtmlAttributeName("PopupDirection")]
@@ -252,12 +252,15 @@ namespace App.EleUI
         {
             var urlExpr = BuildPopupUrlExpr(PopupUrl);
             var title = EscapeSingleQuoted(!string.IsNullOrEmpty(PopupTitle) ? PopupTitle : (Label ?? "查看"));
-            var size = EscapeSingleQuoted(PopupSize ?? "70%");
             var dir = EscapeSingleQuoted(PopupDirection ?? "rtl");
+            var popupSize = PopupSize?.Trim();
+            var openDrawerArgs = !string.IsNullOrEmpty(popupSize)
+                ? $"{urlExpr}, '{EscapeSingleQuoted(popupSize)}', '{dir}', '{title}'"
+                : $"{urlExpr}, null, '{dir}', '{title}'";
 
             return $@"
                         <template #default=""scope"">
-                            <span class=""text-blue-600 cursor-pointer hover:text-blue-700 no-underline"" @click=""openDrawer({urlExpr}, '{size}', '{dir}', '{title}')"">
+                            <span class=""text-blue-600 cursor-pointer hover:text-blue-700 no-underline"" @click=""openDrawer({openDrawerArgs})"">
                                 {{{{ scope.row.{propName} ?? '' }}}}
                             </span>
                         </template>

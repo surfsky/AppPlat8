@@ -19,10 +19,111 @@
             ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, MaxDepth = 64 });
 }
 
+@section head {
+    <style>
+        .kb-manager-shell {
+            display: flex;
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            background: #fff;
+        }
+
+        .kb-manager-aside {
+            min-width: 220px;
+            max-width: 520px;
+        }
+
+        .kb-manager-splitter {
+            width: 10px;
+            flex: 0 0 10px;
+            position: relative;
+            cursor: col-resize;
+            touch-action: none;
+            background: linear-gradient(180deg, rgba(248,250,252,1) 0%, rgba(241,245,249,1) 100%);
+            border-left: 1px solid #eef2f7;
+            border-right: 1px solid #eef2f7;
+        }
+
+        .kb-manager-splitter::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 3px;
+            height: 44px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
+            transform: translate(-50%, -50%);
+            opacity: .9;
+        }
+
+        .kb-manager-splitter:hover::before,
+        .kb-manager-shell.is-resizing .kb-manager-splitter::before {
+            background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+        }
+
+        .kb-manager-resize-mask {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            cursor: col-resize;
+            background: transparent;
+        }
+
+        .kb-manager-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 24px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .kb-manager-empty-card {
+            width: min(420px, 100%);
+            padding: 28px 24px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 16px;
+            background: rgba(248, 250, 252, .92);
+            text-align: center;
+            color: #475569;
+            /*box-shadow: 0 12px 30px rgba(15, 23, 42, .06);*/
+        }
+
+        .kb-manager-empty-card h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .kb-manager-empty-card p {
+            margin: 0;
+            line-height: 1.7;
+            font-size: 13px;
+        }
+
+        .kb-manager-mobile-tip {
+            margin: 8px 12px 0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+    </style>
+}
+
 @section body {
     <div id="kbMgr3" class="h-screen overflow-hidden">
-        <el-container class="h-full">
-            <el-aside width="300px" class="border-r border-gray-100 bg-white flex flex-col overflow-hidden" style="min-width:220px;max-width:500px;">
+        <div
+            :class="['kb-manager-shell', { 'is-resizing': isResizing }]"
+            class="h-full">
+            <aside
+                class="kb-manager-aside border-r border-gray-100 bg-white flex flex-col overflow-hidden shrink-0"
+                :style="asideStyle">
                 <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100 shrink-0">
                     <div class="flex gap-1">
                         <!-- 统一用 FontAwesome 6.4 的 CSS class 图标（Layout 已全局引入 all.min.css）
@@ -68,16 +169,39 @@
                         </template>
                     </el-tree>
                 </div>
-            </el-aside>
-            <el-main class="p-0 h-full overflow-hidden bg-white">
+            </aside>
+
+            <div
+                v-if="!isMobileLayout"
+                class="kb-manager-splitter"
+                title="拖动调整左右宽度，双击恢复默认宽度"
+                @@pointerdown="startResize"
+                @@dblclick="resetAsideWidth">
+            </div>
+
+            <div
+                v-if="isResizing"
+                class="kb-manager-resize-mask">
+            </div>
+
+            <main
+                v-if="!isMobileLayout"
+                class="flex-1 min-w-0 p-0 h-full overflow-hidden bg-white">
+                <div v-if="!hasSelection" class="kb-manager-empty">
+                    <div class="kb-manager-empty-card">
+                        <h3>请选择左侧目录</h3>
+                    </div>
+                </div>
                 <iframe
+                    v-else
                     id="kbAttsFrame3"
+                    :class="{ 'pointer-events-none': isResizing }"
                     class="w-full h-full block bg-white border-0"
                     frameborder="0"
                     :src="attsUrl">
                 </iframe>
-            </el-main>
-        </el-container>
+            </main>
+        </div>
     </div>
 }
 
@@ -108,21 +232,26 @@
                 MoveUp:   'MenuMoveUp',
                 MoveDown: 'MenuMoveDown'
             };
-            // el-tree 默认展开层级：1=只展开根，2=根+子级（你要的效果），3=根+子级+孙级...
-            // 可以改成 1 只展开顶级，或 3 展开三层，随意调整
-            const DEFAULT_EXPAND_TREE_LEVEL = 2;
+            // 默认展开层数：0=全部折叠，1=只展开根，2=根+子级，3=根+子级+孙级...
+            const DEFAULT_EXPAND_TREE_LEVEL = 1;
+            const DESKTOP_BREAKPOINT = 992;
+            const DEFAULT_ASIDE_WIDTH = 300;
+            const MIN_ASIDE_WIDTH = 220;
+            const MAX_ASIDE_WIDTH = 520;
 
-            // 递归收集：默认展开到指定 level 的节点 id + 当前选中节点的所有祖先 id
+            // 递归收集：默认展开到指定层数的节点 + 当前选中节点的祖先链
             function computeDefaultExpandedKeys(root, targetCurrentId, maxLevel) {
                 const ids = [];
-                const ancestorChain = [];
                 const idSet = new Set();
-                var targetId = Number(targetCurrentId) || 0;
+                const targetId = Number(targetCurrentId) || 0;
+                const expandLevel = Number.isFinite(Number(maxLevel)) ? Number(maxLevel) : 1;
+
                 function pushId(id) {
                     if (id == null) return;
                     var n = Number(id); if (!n) return;
                     if (!idSet.has(n)) { idSet.add(n); ids.push(n); }
                 }
+
                 function walk(list, level, ancestors) {
                     if (!Array.isArray(list)) return;
                     for (var i = 0; i < list.length; i++) {
@@ -130,9 +259,8 @@
                         if (!n) continue;
                         var nid = Number(n.id) || 0;
                         var lvl = Number(n.treeLevel != null ? n.treeLevel : (n.TreeLevel != null ? n.TreeLevel : level));
-                        // ① 只展开 <= 指定层级的节点（DEFAULT_EXPAND_TREE_LEVEL）
-                        if (lvl > 0 && lvl <= Number(maxLevel || 2)) pushId(nid);
-                        // ② 记录选中节点的祖先链（用于 currentMenuId 可见）
+                        // TreeLevel 根节点为 0，所以“展开 1 层”应展开 lvl=0 的根节点。
+                        if (expandLevel > 0 && lvl >= 0 && lvl < expandLevel) pushId(nid);
                         var nextAnc = ancestors.slice(); nextAnc.push(nid);
                         if (targetId && nid === targetId) {
                             for (var k = 0; k < ancestors.length; k++) pushId(ancestors[k]);
@@ -151,18 +279,38 @@
                 } catch (_) { return ''; }
             }
 
-            function buildAttsUrlLive(menuId) {
+            // 构建附件页地址。
+            function buildAttsUrlLive(menuId, menuName) {
                 const mid = Number(menuId) || 0;
-                if (!mid) return '/Shared/Atts?uniId=';
-                return '/Shared/Atts?uniId=' + encodeURIComponent('KbMenu-' + mid);
+                if (!mid) return '';
+                const url = new URL('/Shared/Atts', window.location.origin);
+                url.searchParams.set('uniId', 'KbMenu-' + mid);
+                if (menuName) url.searchParams.set('name', menuName);
+                return url.pathname + url.search;
             }
 
+            // 带上 menuId 更新浏览器地址。
             function urlWithMenuId(base, menuId) {
                 const u = new URL(base);
                 const mid = Number(menuId) || 0;
                 if (mid > 0) u.searchParams.set('menuId', String(mid));
                 else u.searchParams.delete('menuId');
                 return u.toString();
+            }
+
+            // 递归查找菜单名称。
+            function findMenuNameById(list, targetId) {
+                const id = Number(targetId) || 0;
+                if (!id || !Array.isArray(list)) return '';
+                for (var i = 0; i < list.length; i++) {
+                    var node = list[i];
+                    if (!node) continue;
+                    if (Number(node.id) === id) return node.name || node.label || '';
+                    var children = Array.isArray(node.children) ? node.children : [];
+                    var name = findMenuNameById(children, id);
+                    if (name) return name;
+                }
+                return '';
             }
 
             function showMessage(text, type) {
@@ -189,25 +337,43 @@
                 return Promise.resolve(window.confirm(text || '确认？'));
             }
 
-            const { createApp, ref, onMounted, computed } = Vue;
+            const { createApp, ref, onMounted, onBeforeUnmount, computed } = Vue;
 
             const App = {
                 setup() {
                     const treeData = ref(initialTreeData || []);
                     const currentMenuId = ref(initialCurrentId);
                     const treeRef = ref(null);
+                    const isMobileLayout = ref(window.innerWidth < DESKTOP_BREAKPOINT);
+                    const asideWidth = ref(DEFAULT_ASIDE_WIDTH);
+                    const isResizing = ref(false);
+                    let removeResizeListeners = null;
+                    let activePointerId = null;
+
                     // 默认展开：DEFAULT_EXPAND_TREE_LEVEL 指定层级 + 当前选中节点的祖先
                     const defaultExpandedKeys = ref(computeDefaultExpandedKeys(initialTreeData || [], initialCurrentId, DEFAULT_EXPAND_TREE_LEVEL));
                     // 权限：canNew/canEdit/canDelete 都是 JS 字面量 true/false（由上方 @canNew 直接展开）
                     const canNew = canNewFlag;
                     const canEdit = canEditFlag;
                     const canDelete = canDeleteFlag;
+                    const hasSelection = computed(function () {
+                        return (Number(currentMenuId.value) || 0) > 0;
+                    });
+                    const currentMenuName = computed(function () {
+                        return findMenuNameById(treeData.value || [], currentMenuId.value) || '';
+                    });
+                    const asideStyle = computed(function () {
+                        if (isMobileLayout.value) return { width: '100%', minWidth: '0', maxWidth: '100%' };
+                        return { width: asideWidth.value + 'px' };
+                    });
 
                     const attsUrl = computed(function () {
                         const mid = currentMenuId.value;
-                        return mid ? buildAttsUrlLive(mid) : defaultAttsIframeUrl;
+                        if (!mid) return defaultAttsIframeUrl || '';
+                        return buildAttsUrlLive(mid, currentMenuName.value);
                     });
 
+                    // 同步 URL 中的 menuId 参数。
                     function switchMenu(nextId, forceReload) {
                         const prev = Number(currentMenuId.value) || 0;
                         const next = Number(nextId) || 0;
@@ -219,20 +385,42 @@
                         }
                     }
 
+                    // 按菜单名打开窄屏抽屉。
+                    function openMobileAttsDrawer(menuId) {
+                        const id = Number(menuId) || 0;
+                        if (!id || !isMobileLayout.value) return;
+                        const url = buildAttsUrlLive(id, currentMenuName.value || findMenuNameById(treeData.value || [], id));
+                        if (!url) return;
+                        try {
+                            const manager = window.EleManager || window.$eleManager;
+                            if (manager && typeof manager.openDrawer === 'function') {
+                                if (typeof manager.closeDrawer === 'function') manager.closeDrawer();
+                                manager.openDrawer({
+                                    title: (currentMenuName.value || '文件列表') + ' - 文件列表',
+                                    url: url,
+                                    direction: 'rtl',
+                                    showFooter: false
+                                });
+                                return;
+                            }
+                        } catch (_) {}
+                        window.location.href = url;
+                    }
+
                     function onTreeSelect(data) {
                         const id = data && (data.id != null) ? Number(data.id) : 0;
                         switchMenu(id, false);
+                        if (id && isMobileLayout.value) openMobileAttsDrawer(id);
                     }
 
-                    function openDrawerForForm(url, title, size) {
-                        // 优先用 EleManager.openDrawer（项目已有，支持 closeHandler、iframe 预览等）
+                    // 优先用 EleManager 打开目录表单抽屉。
+                    function openDrawerForForm(url, title) {
                         try {
                             const M = window.EleManager || window.$eleManager;
                             if (M && typeof M.openDrawer === 'function') {
                                 M.openDrawer({
                                     title: title || '',
                                     url,
-                                    size: size || '560px',
                                     showFooter: false,
                                     closeHandler: 'mgr3ReloadPage'
                                 });
@@ -249,13 +437,13 @@
 
                     function onNewMenu() {
                         const selectId = Number(currentMenuId.value) || 0;
-                        openDrawerForForm('/KB/MenuForm?id=0&md=new&selectId=' + selectId, '新建知识库目录', '560px');
+                        openDrawerForForm('/KB/MenuForm?id=0&md=new&selectId=' + selectId, '新建知识库目录');
                     }
 
                     function onEditMenu() {
                         const id = Number(currentMenuId.value) || 0;
                         if (!id) return;
-                        openDrawerForForm('/KB/MenuForm?id=' + id + '&md=edit', '编辑知识库目录', '560px');
+                        openDrawerForForm('/KB/MenuForm?id=' + id + '&md=edit', '编辑知识库目录');
                     }
 
                     // 从任意格式的响应数据里提取出最准确的一条错误原因，匹配多种字段名和大小写
@@ -430,7 +618,69 @@
                         });
                     }
 
+                    // 更新响应式状态，并在切换回桌面时关闭可能残留的移动端抽屉。
+                    function updateLayoutState() {
+                        const mobile = window.innerWidth < DESKTOP_BREAKPOINT;
+                        const oldMobile = isMobileLayout.value;
+                        isMobileLayout.value = mobile;
+                        if (!mobile && oldMobile) {
+                            try {
+                                const manager = window.EleManager || window.$eleManager;
+                                if (manager && typeof manager.closeDrawer === 'function') manager.closeDrawer();
+                            } catch (_) {}
+                        }
+                    }
+
+                    // 开始拖动分隔条。
+                    function startResize(event) {
+                        if (isMobileLayout.value) return;
+                        if (event && typeof event.preventDefault === 'function') event.preventDefault();
+                        const startX = event.clientX || 0;
+                        const startWidth = asideWidth.value;
+                        isResizing.value = true;
+                        activePointerId = typeof event.pointerId === 'number' ? event.pointerId : null;
+                        document.body.style.cursor = 'col-resize';
+                        document.body.style.userSelect = 'none';
+                        try {
+                            if (event.currentTarget && typeof event.currentTarget.setPointerCapture === 'function' && activePointerId !== null) {
+                                event.currentTarget.setPointerCapture(activePointerId);
+                            }
+                        } catch (_) {}
+
+                        const onMove = function (e) {
+                            if (activePointerId !== null && typeof e.pointerId === 'number' && e.pointerId !== activePointerId) return;
+                            const delta = (e.clientX || 0) - startX;
+                            const next = Math.min(MAX_ASIDE_WIDTH, Math.max(MIN_ASIDE_WIDTH, startWidth + delta));
+                            asideWidth.value = next;
+                        };
+
+                        const stop = function (e) {
+                            if (activePointerId !== null && e && typeof e.pointerId === 'number' && e.pointerId !== activePointerId) return;
+                            isResizing.value = false;
+                            activePointerId = null;
+                            document.body.style.cursor = '';
+                            document.body.style.userSelect = '';
+                            window.removeEventListener('pointermove', onMove);
+                            window.removeEventListener('pointerup', stop);
+                            window.removeEventListener('pointercancel', stop);
+                            removeResizeListeners = null;
+                        };
+
+                        window.addEventListener('pointermove', onMove);
+                        window.addEventListener('pointerup', stop);
+                        window.addEventListener('pointercancel', stop);
+                        removeResizeListeners = stop;
+                    }
+
+                    // 恢复默认侧栏宽度。
+                    function resetAsideWidth() {
+                        asideWidth.value = DEFAULT_ASIDE_WIDTH;
+                    }
+
                     onMounted(function () {
+                        updateLayoutState();
+                        window.addEventListener('resize', updateLayoutState);
+
                         // popstate：用户点浏览器前进/后退时，重新同步 currentMenuId 并展开它的祖先
                         window.addEventListener('popstate', function () {
                             try {
@@ -451,15 +701,27 @@
                         });
                     });
 
+                    onBeforeUnmount(function () {
+                        window.removeEventListener('resize', updateLayoutState);
+                        if (typeof removeResizeListeners === 'function') removeResizeListeners();
+                    });
+
                     return {
                         treeRef,
                         treeData,
                         currentMenuId,
                         defaultExpandedKeys,
+                        hasSelection,
+                        currentMenuName,
                         attsUrl,
+                        isMobileLayout,
+                        asideStyle,
+                        isResizing,
                         canNew,
                         canEdit,
                         canDelete,
+                        startResize,
+                        resetAsideWidth,
                         onTreeSelect,
                         onNewMenu,
                         onEditMenu,

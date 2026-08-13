@@ -18,10 +18,13 @@
         html, body { margin: 0; height: 100%; background: #eef2f7; }
         #wrap {
             height: 100%;
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
         #superdoc {
-            height: 100%;
+            flex: 1;
+            min-height: 0;
             background: #fff;
         }
         #superdoc.superdoc-mode {
@@ -32,15 +35,18 @@
             height: 100% !important;
         }
         #hint {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 18px;
+            display: none;
+            flex: 0 0 auto;
+            padding: 10px 14px;
             box-sizing: border-box;
-            color: #334155;
-            font-size: 14px;
-            text-align: center;
+            color: #92400e;
+            background: #fff7ed;
+            border-bottom: 1px solid #fed7aa;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        #hint.is-visible {
+            display: block;
         }
         .sd-toolbar {
             display: none !important;
@@ -54,8 +60,8 @@
 </head>
 <body>
     <div id="wrap">
-        <div id="superdoc"></div>
         <div id="hint">正在加载 SuperDoc 预览...</div>
+        <div id="superdoc"></div>
     </div>
     <script>
         const src = @Html.Raw(srcJson);
@@ -67,11 +73,11 @@
 
         function showHint(text) {
             hint.innerHTML = text;
-            hint.style.display = 'flex';
+            hint.classList.add('is-visible');
         }
 
         function hideHint() {
-            hint.style.display = 'none';
+            hint.classList.remove('is-visible');
         }
 
         function showSuperdoc() {
@@ -118,7 +124,7 @@
                 }
 
                 window.setTimeout(() => {
-                    if (hint.style.display !== 'none') {
+                    if (hint.classList.contains('is-visible')) {
                         const hasEl = superdocEl.querySelector('.sd-root, section, .docx, p, table');
                         const hasText = (superdocEl.textContent || '').trim().length > 20;
                         if (hasEl || hasText) {

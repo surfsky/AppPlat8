@@ -47,16 +47,17 @@ export const drawerMethods = {
         const title = titleOverride || this.config?.drawerTitle || this.config?.title || '编辑';
         this.drawerSize.value = size;
         this.drawerPosition.value = position || 'rtl';
-        EleManager.openDrawer({
+        const options = {
             title,
             url,
             direction: this.drawerPosition.value,
-            size,
             resizable: true,
             closeOnClickModal: false,
             destroyOnClose: true,
             closeHandler: () => this.handleDrawerClose()
-        });
+        };
+        if (size) options.size = size;
+        EleManager.openDrawer(options);
     },
 
     handleDrawerClose() {
