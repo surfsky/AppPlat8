@@ -528,16 +528,17 @@ Done
         /3、优化该页面，中间放一个spliter，可调整左右模块的宽度；
         /4、优化该页面，支持响应式布局，窄屏时默认只显示菜单页，点击节点后用elemanger drawer显示文件列表页面；
     /解决 spliter bar 拖动丢失问题，同样的逻辑也可用于drawer的调整宽度；
-    如果spliterbar摆不平，请使用 https://element-plus.org/en-US/component/splitter ，并启用 Collapsible
-
 也修正drawer 的拖拽调整宽度的bug：drawer向左拖动时问题不大，可以保持跟踪实时调整drawer的大小，但是往右拖动时经常会丢失跟踪，导致drawer无法调整宽度。另外拖动时也感觉不平滑，会抖动；
-我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
-  <el-drawer v-model="drawer" :direction="direction" resizable>
-    This is drawer content.
-  </el-drawer>
-
+    我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
+    <el-drawer v-model="drawer" :direction="direction" resizable>
+        This is drawer content.
+    </el-drawer>
+    word渲染丢失文字格式
+    excel渲染丢失合并行逻辑
+请使用splitter来改造manager页面  ，并启用 Collapsible，这样左侧树有时候可以根据需求进行折叠。注意保持响应式布局逻辑；
 
 2026/08/12
+    把 AI 对话页面（AI/Chat）中的语音用 QWen3 ASR 0.6B 服务替代 
     如何封装该网站为一个桌面程序；
     知识库
         文件和目录管理

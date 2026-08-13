@@ -66,13 +66,15 @@ namespace App.Utils.Tests
         {
             var url1 = "xxx.jpg?test=x";
             var url2 = "/a/b/xxx.doc?test=x";
-            var url3 = "/a/b/xxx.xxx?test=x";
-            var url4 = "/a/b/xxx?test=x";
+            var url3 = "/a/b/xxx.docx?test=x";
+            var url4 = "/a/b/xxx.xxx?test=x";
+            var url5 = "/a/b/xxx?test=x";
 
             Assert.AreEqual(url1.GetMimeType(), @"image/jpeg");
             Assert.AreEqual(url2.GetMimeType(), @"application/msword");
-            Assert.AreEqual(url3.GetMimeType(), @"application/octet-stream");
+            Assert.AreEqual(url3.GetMimeType(), @"application/vnd.openxmlformats-officedocument.wordprocessingml.document");
             Assert.AreEqual(url4.GetMimeType(), @"application/octet-stream");
+            Assert.AreEqual(url5.GetMimeType(), @"application/octet-stream");
         }
 
         [TestMethod()]

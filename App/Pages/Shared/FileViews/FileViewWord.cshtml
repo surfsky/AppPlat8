@@ -15,6 +15,46 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/superdoc@1.29.1/dist/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/superdoc@1.29.1/dist/superdoc.min.js"></script>
     <style>
+        @@font-face {
+            font-family: "仿宋_GB2312";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "仿宋";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "FangSong_GB2312";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "FangSong";
+            src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "方正小标宋简";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "方正小标宋简体";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "小标宋体";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
+        @@font-face {
+            font-family: "FZXiaoBiaoSong-B05S";
+            src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype");
+            font-display: swap;
+        }
         html, body { margin: 0; height: 100%; background: #eef2f7; }
         #wrap {
             height: 100%;
@@ -56,6 +96,10 @@
         #superdoc.superdoc-mode .sd-editor-container {
             height: 100% !important;
         }
+        #superdoc.superdoc-mode,
+        #superdoc.superdoc-mode * {
+            font-synthesis: none;
+        }
     </style>
 </head>
 <body>
@@ -69,22 +113,76 @@
         const ext = (name.split('.').pop() || '').toLowerCase();
         const superdocEl = document.getElementById('superdoc');
         const hint = document.getElementById('hint');
+        const atFontFace = '@@font-face';
         let superdocInstance = null;
+        const previewFontCss = [
+            `${atFontFace} { font-family: "仿宋_GB2312"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "仿宋"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FangSong_GB2312"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FangSong"; src: url("/fonts/%E4%BB%BF%E5%AE%8B_GB2312.ttf") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "方正小标宋简"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "方正小标宋简体"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "小标宋体"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            `${atFontFace} { font-family: "FZXiaoBiaoSong-B05S"; src: url("/fonts/%E6%96%B9%E6%AD%A3%E5%B0%8F%E6%A0%87%E5%AE%8B%E7%AE%80.TTF") format("truetype"); font-display: swap; }`,
+            'body { font-synthesis: none; }'
+        ].join('\n');
 
+        // 显示顶部提示。
         function showHint(text) {
             hint.innerHTML = text;
             hint.classList.add('is-visible');
         }
 
+        // 隐藏顶部提示。
         function hideHint() {
             hint.classList.remove('is-visible');
         }
 
+        // 切换到 SuperDoc 预览区。
         function showSuperdoc() {
             superdocEl.style.display = 'block';
             superdocEl.classList.add('superdoc-mode');
         }
 
+        // 向指定文档注入公文字体别名。
+        function injectPreviewFonts(doc) {
+            if (!doc || !doc.head) return;
+            if (doc.getElementById('kb-preview-fonts')) return;
+            const style = doc.createElement('style');
+            style.id = 'kb-preview-fonts';
+            style.textContent = previewFontCss;
+            doc.head.appendChild(style);
+        }
+
+        // 预先加载关键公文字体，减少首次预览时的错位。
+        async function ensurePreviewFontsLoaded() {
+            if (!document.fonts || typeof document.fonts.load !== 'function') return;
+            try {
+                await Promise.allSettled([
+                    document.fonts.load('16px "仿宋_GB2312"'),
+                    document.fonts.load('16px "FangSong_GB2312"'),
+                    document.fonts.load('16px "方正小标宋简体"'),
+                    document.fonts.load('16px "小标宋体"')
+                ]);
+            } catch (_) {}
+        }
+
+        // 给 SuperDoc 的内层 iframe 也补一遍字体声明。
+        function applyFontsToInnerFrames() {
+            const frames = superdocEl.querySelectorAll('iframe');
+            frames.forEach(frame => {
+                const inject = () => {
+                    try {
+                        const doc = frame.contentDocument || (frame.contentWindow ? frame.contentWindow.document : null);
+                        injectPreviewFonts(doc);
+                    } catch (_) {}
+                };
+                inject();
+                try { frame.addEventListener('load', inject, { once: true }); } catch (_) {}
+            });
+        }
+
+        // 渲染 Word 预览。
         async function renderSuperdoc() {
             if (!src) {
                 showHint('文件地址不存在');
@@ -103,6 +201,8 @@
             }
 
             try {
+                injectPreviewFonts(document);
+                await ensurePreviewFontsLoaded();
                 showSuperdoc();
                 showHint('正在加载 SuperDoc 预览...');
 
@@ -119,11 +219,15 @@
 
                 if (superdocInstance && typeof superdocInstance.on === 'function') {
                     try {
-                        superdocInstance.on('ready', () => hideHint());
+                        superdocInstance.on('ready', () => {
+                            applyFontsToInnerFrames();
+                            hideHint();
+                        });
                     } catch (_) {}
                 }
 
                 window.setTimeout(() => {
+                    applyFontsToInnerFrames();
                     if (hint.classList.contains('is-visible')) {
                         const hasEl = superdocEl.querySelector('.sd-root, section, .docx, p, table');
                         const hasText = (superdocEl.textContent || '').trim().length > 20;

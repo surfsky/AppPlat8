@@ -384,7 +384,7 @@ namespace App.Utils
 
             // office application
             Mimes[".doc"]  = "application/msword";
-            Mimes[".docx"] = "application/application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            Mimes[".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
             Mimes[".xls"]  = "application/vnd.ms-excel";
             Mimes[".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
             Mimes[".ppt"]  = "application/vnd.ms-powerpoint";

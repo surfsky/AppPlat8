@@ -8,6 +8,7 @@ using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using System.IO;
 
 namespace App.Pages.Shared
@@ -185,7 +186,7 @@ namespace App.Pages.Shared
                 return BuildResult(404, "文件不存在或已被删除");
 
             var physExt = Path.GetExtension(path) ?? string.Empty;
-            var mimeType = App.Utils.IO.GetMimeType(physExt);
+            var mimeType = ResolveMimeType(path, physExt);
             if (string.IsNullOrWhiteSpace(mimeType))
                 mimeType = "application/octet-stream";
 
@@ -193,6 +194,35 @@ namespace App.Pages.Shared
             // 因为前端已通过 a.download = 数据库原名(Att.FileName) 强制指定，
             // 这样彻底绕开 ASP.NET Core Content-Disposition 中文编码 + Chrome 忽略 a.download 的双坑。
             return PhysicalFile(path, mimeType);
+        }
+
+        /// <summary>解析下载响应的MimeType</summary>
+        private static string ResolveMimeType(string filePath, string ext)
+        {
+            var provider = new FileExtensionContentTypeProvider();
+            if (!string.IsNullOrWhiteSpace(filePath)
+                && provider.TryGetContentType(filePath, out var providerMime)
+                && !string.IsNullOrWhiteSpace(providerMime))
+            {
+                return providerMime;
+            }
+
+            var mime = App.Utils.IO.GetMimeType(ext);
+            mime = NormalizeMimeType(mime);
+            return string.IsNullOrWhiteSpace(mime) ? "application/octet-stream" : mime;
+        }
+
+        /// <summary>清理异常的MimeType字符串</summary>
+        private static string NormalizeMimeType(string mime)
+        {
+            var value = (mime ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            if (value.StartsWith("application/application/", StringComparison.OrdinalIgnoreCase))
+                value = value.Substring("application/".Length);
+
+            return value;
         }
     }
 }
