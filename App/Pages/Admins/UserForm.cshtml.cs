@@ -25,20 +25,12 @@ namespace App.Pages.Admins
         public void OnGet(long id)
         {
             RoleList = Role.Set.Select(r => new SelectListItem(r.Name, r.Id.ToString())).ToList();
+            IsNameEditable = id <= 0;
         }
 
         public IActionResult OnGetData(long id)
         {
-            if (id > 0)
-            {
-                Item = App.DAL.User.GetDetail(t=>t.Id == id);
-                IsNameEditable = false;
-            }
-            else
-            {
-                Item = new App.DAL.User();
-                IsNameEditable = true;
-            }
+            Item = (id > 0) ? App.DAL.User.GetDetail(t=>t.Id == id) : new App.DAL.User();
             return BuildResult(0, "success", Item.Export());
         }
 
@@ -65,6 +57,7 @@ namespace App.Pages.Admins
                 user = App.DAL.User.GetDetail(u => u.Id == req.Id);
                 if (user == null)
                     return BuildResult(404, "用户不存在");
+                req.Name = user.Name;
             }
             user.Name = req.Name;
             user.RealName = req.RealName;
