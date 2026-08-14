@@ -17,7 +17,7 @@ namespace App.Pages.Shared
     public class AttsModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]
-        public string UniId { get; set; }
+        public string UniId { get; set; }  // 关联对象ID，格式为：对象类型-对象ID
 
         [BindProperty(SupportsGet = true)]
         public string Name { get; set; }
@@ -38,6 +38,12 @@ namespace App.Pages.Shared
             Name = name;
         }
 
+        /// <summary>获取附件列表</summary>
+        /// <param name="pi">分页参数</param>
+        /// <param name="uniId">关联对象ID</param>
+        /// <param name="fileName">文件名</param>
+        /// <param name="type">附件类型</param>
+        /// <returns>附件列表</returns>
         public IActionResult OnGetData(Paging pi, string uniId, string fileName, AttType? type)
         {
             uniId = uniId?.Trim();
@@ -59,6 +65,10 @@ namespace App.Pages.Shared
             return BuildResult(0, "success", list, pi);
         }
 
+        /// <summary>删除附件</summary>
+        /// <param name="ids">附件ID列表</param>
+        /// <param name="uniId">关联对象ID</param>
+        /// <returns>删除结果</returns>
         public IActionResult OnPostDelete([FromBody] long[] ids, string uniId)
         {
             uniId = uniId?.Trim();
@@ -77,6 +87,9 @@ namespace App.Pages.Shared
             return OkBuildResult(0, $"删除成功，共{allowIds.Count}个附件");
         }
 
+        /// <summary>上传附件</summary>
+        /// <param name="uniId">关联对象ID</param>
+        /// <returns>上传结果</returns>
         public IActionResult OnPostUpload(string uniId)
         {
             try
@@ -91,17 +104,17 @@ namespace App.Pages.Shared
                 if (files == null || files.Count == 0)
                     return OkBuildResult(400, "请先选择要上传的文件");
 
+                var folder = uniId.Split('-')[0];  // uniId 格式为 folder-id, 取前面的 folder 作为目录
                 var nextSortId = (Att.Set.Where(t => t.Key == uniId).Select(t => (int?)t.SortId).Max() ?? 0) + 1;
                 var result = new List<object>();
-
                 foreach (IFormFile file in files)
                 {
                     if (file == null || file.Length <= 0)
                         continue;
 
-                    var url = Uploader.SaveFile(file, nameof(Att));
+                    var url = Uploader.SaveFile(folder, file);
                     var item = new Att
-                    {
+                    {   
                         Key = uniId,
                         Content = url,
                         FileName = file.FileName,
@@ -125,6 +138,9 @@ namespace App.Pages.Shared
             }
         }
 
+        /// <summary>移动附件</summary>
+        /// <param name="req">移动请求参数</param>
+        /// <returns>移动结果</returns>
         public IActionResult OnPostMoveTo([FromBody] MoveToRequest req)
         {
             if (req?.Ids == null || req.Ids.Length == 0)
@@ -162,6 +178,10 @@ namespace App.Pages.Shared
             return OkBuildResult(0, $"移动成功，共{affected}个附件", new { moved = affected, targetKey });
         }
 
+        /// <summary>移动附件请求参数</summary>
+        /// <param name="Ids">附件ID列表</param>
+        /// <param name="UniId">关联对象ID</param>
+        /// <param name="TargetMenuId">目标目录ID</param>
         public class MoveToRequest
         {
             public long[] Ids { get; set; }
@@ -169,6 +189,10 @@ namespace App.Pages.Shared
             public long TargetMenuId { get; set; }
         }
 
+        /// <summary>下载附件</summary>
+        /// <param name="id">附件ID</param>
+        /// <param name="uniId">关联对象ID</param>
+        /// <returns>下载结果</returns>
         public IActionResult OnGetDownload(long id, string uniId)
         {
             uniId = uniId?.Trim();

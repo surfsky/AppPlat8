@@ -226,7 +226,9 @@ namespace App.Components
         /// <summary>上传文件</summary>
         /// <param name="folderName">上传目录名</param>
         /// <param name="fileName">文件名。若为空，则自动生成文件名。</param>
-        public static string SaveFile(IFormFile file, string folderName, string fileName = "", bool checkExtension = true)
+        /// <param name="checkExtension">是否检查文件扩展名</param>
+        /// <returns>文件URL</returns>
+        public static string SaveFile(string folderName, IFormFile file, string fileName = "", bool checkExtension = true)
         {
             // 扩展名及校验
             string ext;
@@ -236,8 +238,7 @@ namespace App.Components
                 ext = fileName.GetFileExtension();
             if (checkExtension)
             {
-                var exts = SiteConfig.Instance.UpFileTypes.SplitString();
-                if (!exts.Contains(ext))
+                if (!SiteConfig.IsSupportFile(ext))
                     throw new Exception("禁止上传该类型文件");
             }
 

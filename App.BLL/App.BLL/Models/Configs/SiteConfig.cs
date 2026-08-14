@@ -33,5 +33,15 @@ namespace App.DAL
         [UI("数据", "可上传文件类型")]       public string UpFileTypes           { get; set; } = ".gif, .png, .jpg, .jpeg, .bmp, .mp3, .mp4, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .pdf, .cdr";
         [UI("数据", "可上传文件大小（M）")]   public long?  UpFileSize            { get; set; } = 50;
 
+
+        /// <summary>检查文件扩展名是否在可上传文件类型中</summary>
+        /// <param name="ext">文件扩展名</param>
+        /// <returns>是否支持</returns>
+        public static bool IsSupportFile(string ext)
+        {
+            var exts = SiteConfig.Instance.UpFileTypes.SplitString();
+            return exts.Contains(ext);
+        }
+
     }
 }

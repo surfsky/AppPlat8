@@ -521,19 +521,7 @@ Done
         这样有两层loading逻辑，第一次的页面创建，每次的数据加载，会优化用户体验；
     实现 Feedback 处理流程，重新熟悉一下 liteflow 工作流引擎
 
-2026/08/13
-    参考
-        也修正drawer 的拖拽调整宽度的bug：drawer向左拖动时问题不大，可以保持跟踪实时调整drawer的大小，但是往右拖动时经常会丢失跟踪，导致drawer无法调整宽度。另外拖动时也感觉不平滑，会抖动；
-            我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
-            <el-drawer v-model="drawer" :direction="direction" resizable>
-                This is drawer content.
-            </el-drawer>
-            word渲染丢失文字格式
-            excel渲染丢失合并行逻辑
-        请使用splitter来改造manager页面  ，并启用 Collapsible，这样左侧树有时候可以根据需求进行折叠。注意保持响应式布局逻辑；
-    如何封装这个网站项目，作为跨平台单机工具使用，先给方案先不编程
-    把 AI 对话页面（AI/Chat）中的语音用 QWen3 ASR 0.6B 服务替代 
-    如何封装该网站为一个桌面程序；
+2026/08/14
     知识库
         实现文件和目录管理
             实现递归检索
@@ -547,6 +535,19 @@ Done
             4.3
             5.2.3.1
         实现权限管理
+        /换个目录存储？如/files/KB，根据当前UniId来判断存储位置
+    参考
+        /请使用splitter来改造manager页面  ，并启用 Collapsible，这样左侧树有时候可以根据需求进行折叠。注意保持响应式布局逻辑；
+        也修正drawer 的拖拽调整宽度的bug：drawer向左拖动时问题不大，可以保持跟踪实时调整drawer的大小，但是往右拖动时经常会丢失跟踪，导致drawer无法调整宽度。另外拖动时也感觉不平滑，会抖动；
+            我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
+            <el-drawer v-model="drawer" :direction="direction" resizable>
+                This is drawer content.
+            </el-drawer>
+            word渲染丢失文字格式
+            excel渲染丢失合并行逻辑
+    如何封装这个网站项目，作为跨平台单机工具使用，先给方案先不编程
+    把 AI 对话页面（AI/Chat）中的语音用 QWen3 ASR 0.6B 服务替代 
+    实现会议导入：组织、日期、类别、图片、内容
 
 2026/08/13
     /优化mananger页面
