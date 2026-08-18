@@ -26,7 +26,7 @@
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
-            <EleOpColumn Width="140" Fixed="right" Shows="3">
+            <EleOpColumn Width="100" Fixed="right" Shows="3">
                 <Op Command="Edit" Tooltip="编辑" Icon="Edit" Visible="@Auth.CheckPower(Power.UserEdit)"></Op>
                 <Op Command="Delete" Tooltip="删除" Icon="Delete" Visible="@Auth.CheckPower(Power.UserDelete)"></Op>
                 <Op Handler="resetPasswordToDefault(scope.row)" Tooltip="修改密码" Icon="Key" Visible="@Model.CanResetPassword"></Op>

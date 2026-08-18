@@ -87,14 +87,6 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     }
                 }
 
-                // Custom methods from global mixin
-                const extraMethods = {};
-                if (typeof userMixin !== 'undefined' && userMixin.methods) {
-                    for (const [key, func] of Object.entries(userMixin.methods)) {
-                        extraMethods[key] = func.bind(bindings);
-                    }
-                }
-
                 // Inherited postHandler with additional context
                 const inheritedPostHandler = async (name, payload) => {
                     return builder.postHandler(name, payload || {
@@ -107,14 +99,32 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     });
                 };
 
-                // Return all bindings for template access
-                return {
+                // Build a shared method context so page-level custom methods can
+                // access postHandler/openForm/openView/permission flags consistently.
+                const methodContext = {
                     ...bindings,
                     openForm,
                     openView,
                     Utils: window.Utils,
                     postHandler: inheritedPostHandler,
-                    hasEditPower, hasViewPower, hasDeletePower,
+                    hasEditPower,
+                    hasViewPower,
+                    hasDeletePower
+                };
+
+                // Custom methods from global mixin
+                const extraMethods = {};
+                if (typeof userMixin !== 'undefined' && userMixin.methods) {
+                    for (const [key, func] of Object.entries(userMixin.methods)) {
+                        if (typeof func === 'function') {
+                            extraMethods[key] = func.bind(methodContext);
+                        }
+                    }
+                }
+
+                // Return all bindings for template access
+                return {
+                    ...methodContext,
                     ...extraMethods
                 };
             }

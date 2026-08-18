@@ -99,11 +99,11 @@ export const commandMethods = {
                 headers: { 'RequestVerificationToken': Utils.getCsrfToken() }
             });
             if (res.data.result === true || res.data.code === 0 || res.data.code === '0') {
-                EleManager.showSuccess(res.data.info || '删除成功');
+                EleManager.showSuccess(Utils.extractMessage(res.data, '删除成功'));
                 this.selectedIds.value = [];
                 this.loadData();
             } else {
-                EleManager.showError(res.data.info || res.data.msg || '删除失败');
+                EleManager.showError(Utils.extractMessage(res.data, '删除失败'));
             }
         } catch (e) {
             const s = (window.Utils && typeof Utils.extractMessage === 'function')
@@ -125,10 +125,10 @@ export const commandMethods = {
                 headers: { 'RequestVerificationToken': Utils.getCsrfToken() }
             });
             if (res.data.result === true || res.data.code === 0 || res.data.code === '0') {
-                EleManager.showSuccess(res.data.info || '删除成功');
+                EleManager.showSuccess(Utils.extractMessage(res.data, '删除成功'));
                 this.loadData();
             } else {
-                EleManager.showError(res.data.info || res.data.msg || '删除失败');
+                EleManager.showError(Utils.extractMessage(res.data, '删除失败'));
             }
         } catch (e) {
             const s = (window.Utils && typeof Utils.extractMessage === 'function')
@@ -180,10 +180,10 @@ export const commandMethods = {
             });
 
             if (res.data.code === 0 || res.data.code === '0' || res.data.result === true) {
-                EleManager.showSuccess(res.data.msg || res.data.info || '操作成功');
+                EleManager.showSuccess(Utils.extractMessage(res.data, '操作成功'));
                 this.loadData();
             } else {
-                EleManager.showError(res.data.msg || res.data.info || '操作失败');
+                EleManager.showError(Utils.extractMessage(res.data, '操作失败'));
             }
         } catch (e) {
             const s = (window.Utils && typeof Utils.extractMessage === 'function')

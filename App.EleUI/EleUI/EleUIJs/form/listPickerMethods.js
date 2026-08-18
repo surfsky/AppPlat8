@@ -249,6 +249,12 @@ export const listPickerMethods = {
                         isChecked(value) {
                             return state.values.includes(String(value));
                         },
+                        isSelected(value) {
+                            if (multiple) {
+                                return this.isChecked(value);
+                            }
+                            return String(state.current) === String(value);
+                        },
                         toggleItem(item) {
                             const value = item?.value === null || item?.value === undefined ? '' : String(item.value);
                             if (!value) return;
@@ -285,24 +291,25 @@ export const listPickerMethods = {
                 v-for="(item, idx) in filteredOptions"
                 :key="String(item.value)"
                 type="button"
-                class="relative w-full text-left px-4 py-3 transition flex items-center gap-3 bg-white hover:bg-slate-50"
-                :class="multiple
-                    ? (isChecked(item.value) ? 'bg-blue-50/90 shadow-[inset_4px_0_0_0_#2563eb]' : '')
-                    : (String(state.current) === String(item.value) ? 'bg-blue-50/90 shadow-[inset_4px_0_0_0_#2563eb]' : '')"
+                class="relative w-full border-l-4 border-l-transparent text-left px-4 py-3 transition flex items-center gap-3 bg-white hover:bg-slate-50"
+                :class="isSelected(item.value)
+                    ? 'border-l-blue-500 bg-blue-100/90 shadow-[inset_0_1px_0_rgba(191,219,254,0.9),inset_0_-1px_0_rgba(191,219,254,0.9)]'
+                    : ''"
                 @click="toggleItem(item)">
                 <div class="w-8 shrink-0 text-sm font-semibold text-center"
-                    :class="multiple
-                        ? (isChecked(item.value) ? 'text-blue-700' : 'text-slate-400')
-                        : (String(state.current) === String(item.value) ? 'text-blue-700' : 'text-slate-400')">
+                    :class="isSelected(item.value) ? 'text-blue-700' : 'text-slate-400'">
                     {{ idx + 1 }}
                 </div>
-                <div class="min-w-0 flex-1">
+                <div class="min-w-0 flex-1 flex items-center gap-2">
                     <div class="text-sm truncate font-medium"
-                        :class="multiple
-                            ? (isChecked(item.value) ? 'text-blue-900' : 'text-slate-800')
-                            : (String(state.current) === String(item.value) ? 'text-blue-900' : 'text-slate-800')">{{ item.label }}</div>
+                        :class="isSelected(item.value) ? 'text-blue-900' : 'text-slate-800'">{{ item.label }}</div>
+                    <span
+                        v-if="isSelected(item.value)"
+                        class="shrink-0 rounded-full bg-blue-600/10 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                        已选
+                    </span>
                 </div>
-                <el-icon class="shrink-0 text-blue-600" v-if="multiple ? isChecked(item.value) : (String(state.current) === String(item.value))">
+                <el-icon class="shrink-0 text-blue-600" v-if="isSelected(item.value)">
                     <Check />
                 </el-icon>
             </button>

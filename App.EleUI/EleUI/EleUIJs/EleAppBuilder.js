@@ -106,7 +106,10 @@ export class EleAppBuilder {
             const body = res ? res.data : null;
             return this.processPostResponse(body, state);
         } catch (e) {
-            EleManager.showError('请求失败');
+            const failMsg = (window.Utils && typeof Utils.extractMessage === 'function')
+                ? Utils.extractMessage(e?.response?.data, '请求失败')
+                : (e?.message || '请求失败');
+            EleManager.showError(failMsg);
             throw e;
         }
     }
@@ -126,14 +129,14 @@ export class EleAppBuilder {
         // 处理标准响应格式 { code, msg, data }
         if (Object.prototype.hasOwnProperty.call(body, 'code')) {
             if (body.code !== 0 && body.code !== '0') {
-                EleManager.showError(body.msg || '操作失败');
+                EleManager.showError(Utils.extractMessage(body, '操作失败'));
                 return body;
             }
 
             // 处理命令响应
             const commandExists = this.hasCommandPayload(body) || this.hasCommandPayload(body.data);
             if (!commandExists)
-                EleManager.showSuccess(body.msg || '操作成功');
+                EleManager.showSuccess(Utils.extractMessage(body, '操作成功'));
             this.executeServerCommands(body);       // ？
             this.executeServerCommands(body.data);  // ？
 

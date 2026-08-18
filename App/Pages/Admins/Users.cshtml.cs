@@ -84,6 +84,7 @@ namespace App.Pages.Admins
         /// <summary>管理员将用户密码重置为默认密码。</summary>
         public IActionResult OnPostResetPasswordToDefault([FromBody] ResetPasswordToDefaultRequest req)
         {
+            Logger.Info($"ResetPasswordToDefault: {req.Id}");
             if (!string.Equals(GetUserName(), "admin", StringComparison.OrdinalIgnoreCase))
                 return BuildResult(403, "仅管理员可重置默认密码");
 
