@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Http;
+using App.EleUI;
 
 namespace App.Pages.EleUISamples
 {
@@ -93,7 +94,8 @@ namespace App.Pages.EleUISamples
             {
                 req.Id = new Random().Next(1, 1000); // Assign a random Id for demo purposes
             }
-            return new JsonResult(new App.HttpApi.APIResult(0, "新增成功", req));
+            //return new JsonResult(new App.EleUI.EleResult(0, "新增成功", req));
+            return EleHandler.BuildResult(0, "新增成功", req);
         }
     }
 }

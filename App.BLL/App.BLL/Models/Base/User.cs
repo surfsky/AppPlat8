@@ -64,23 +64,63 @@ namespace App.DAL
         //------------------------------------------------------
         // 角色相关
         //------------------------------------------------------
-        public string RoleNames => this.Roles.Select(t => t.Name).ToJoinString(",");
-        [UI("角色IDs"), NotMapped]  public virtual List<long> RoleIds {get; set;}   // 冗余设计用于前端绑定，或者不合适
-
-
-        /// <summary>获取用户的所有角色IDs（有缓存逻辑）</summary>
-        public List<long> GetRoleIds()
+        public string RoleNames => (this.Roles ?? new List<Role>())
+            .Where(t => t != null && t.Name.IsNotEmpty())
+            .Select(t => t.Name.Trim())
+            .Distinct()
+            .ToJoinString(",");
+        [NotMapped] private List<long> _roleIds;
+        [UI("角色IDs"), NotMapped]
+        public virtual List<long> RoleIds
         {
-            return Cacher.Get($"UserRoleIds-{this.Id}", () => User.Set.Where(t => t.Id == this.Id).SelectMany(t => t.Roles).Select(t => t.Id).ToList()) ?? new List<long>();
+            get
+            {
+                if (_roleIds != null)
+                    return _roleIds;
+                return (this.Roles ?? new List<Role>())
+                    .Where(t => t != null)
+                    .Select(t => t.Id)
+                    .Distinct()
+                    .ToList();
+            }
+            set
+            {
+                _roleIds = (value ?? new List<long>())
+                    .Where(t => t > 0)
+                    .Distinct()
+                    .ToList();
+            }
         }
 
-        public override void AfterChange(EntityOp op)
+
+        /// <summary>获取用户的所有角色IDs。</summary>
+        public List<long> GetRoleIds()
         {
-            base.AfterChange(op);
-            if (op == EntityOp.Edit || op == EntityOp.Delete)
-            {
-                Cacher.Remove($"UserRoleIds-{this.Id}");
-            }
+            if (_roleIds != null)
+                return this.RoleIds;
+
+            if ((this.Roles ?? new List<Role>()).Count > 0)
+                return this.RoleIds;
+
+            if (this.Id <= 0)
+                return new List<long>();
+
+            return User.Set
+                .Where(t => t.Id == this.Id)
+                .SelectMany(t => t.Roles)
+                .Select(t => t.Id)
+                .Distinct()
+                .ToList();
+        }
+
+        /// <summary>按角色ID列表更新导航属性。</summary>
+        public void SetRoles(IEnumerable<long> roleIds)
+        {
+            this.RoleIds = roleIds?.ToList();
+            var ids = this.RoleIds;
+            this.Roles = (ids.Count == 0)
+                ? new List<Role>()
+                : Role.Set.Where(t => ids.Contains(t.Id)).ToList();
         }
 
         //------------------------------------------------------
@@ -137,7 +177,8 @@ namespace App.DAL
                 this.IdCard,
                 this.Photo,
                 this.IsDel,
-                this.RoleIds,
+                RoleIds = this.GetRoleIds(),
+                this.RoleNames,
                 Roles = this.Roles.Export(type),
             };
         }

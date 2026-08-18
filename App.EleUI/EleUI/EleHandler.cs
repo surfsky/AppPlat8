@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Filters;
 using App.Components;
-using App.HttpApi;
 using System.Linq.Expressions;
 using App.EleUI;
 using System.Text.Json;
@@ -296,7 +295,7 @@ namespace App.EleUI
         /// <summary>构建API结果</summary>
         public static JsonResult BuildResult(int code, string msg, object data = null, Paging pager = null)
         {
-            return new JsonResult(new APIResult(code, msg, data, pager), _jsonOptions);
+            return new JsonResult(new EleResult(code, msg, data, pager), _jsonOptions);
         }
 
         //--------------------------------------------------------------

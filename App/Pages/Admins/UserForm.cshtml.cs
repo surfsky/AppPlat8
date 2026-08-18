@@ -69,8 +69,7 @@ namespace App.Pages.Admins
             user.IsDel = req.IsDel;
             user.Remark = req.Remark;
             user.Photo = Uploader.SaveFile(nameof(User), req.Photo);
-            user.RoleIds = req.RoleIds;
-            user.Roles = req.RoleIds.Cast<long, Role>(t => Role.Get(t)).ToList();  // 更新用户角色, req.RoleIds 是前端提交的角色ID列表
+            user.SetRoles(req.RoleIds);
             user.Save();
             return BuildResult(0, "保存成功");
         }

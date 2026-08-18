@@ -257,6 +257,10 @@
 
             <!-- Right Section: Toolbar Icons -->
             <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <div class="hidden md:flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-sm text-white backdrop-blur-sm">
+                    <i class="fas fa-user text-xs opacity-90"></i>
+                    <span class="max-w-40 truncate" title="@Model.DisplayName">@Model.DisplayName</span>
+                </div>
                 <!-- AI Chat Button -->
                 <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="AI Chat" @@click="openAiChatDrawer">
                     <i class="fas fa-comments text-lg"></i>

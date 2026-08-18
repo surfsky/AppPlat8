@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Reflection;
-using App.HttpApi;
+using App.EleUI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -40,7 +40,7 @@ namespace App.Pages.EleUISamples
         public static JsonResult BuildResult(int code, string msg, object data = null, App.Components.Paging pager = null)
         {
             // Use framework default System.Text.Json pipeline to avoid serializer type mismatch.
-            return new JsonResult(new APIResult(code, msg, data, pager));
+            return new JsonResult(new EleResult(code, msg, data, pager));
         }
     }
 }

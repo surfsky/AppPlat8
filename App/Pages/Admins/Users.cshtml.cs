@@ -102,8 +102,8 @@ namespace App.Pages.Admins
 
             user.Password = PasswordUtil.CreateDbPassword(defaultPassword);
             user.Save();
-            return EleHandler.ShowToast($"已将用户“{user.Name}”的密码重置为默认密码{defaultPassword}");
-            //return BuildResult(0, $"已将用户“{user.Name}”的密码重置为默认密码");
+            //return EleHandler.ShowToast($"已将用户“{user.Name}”的密码重置为默认密码{defaultPassword}");
+            return BuildResult(0, $"已将用户“{user.Name}”的密码重置为默认密码{defaultPassword}");
         }
 
         public class ResetPasswordToDefaultRequest

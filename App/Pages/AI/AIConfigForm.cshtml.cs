@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.AI
 {
-    [Auth(Power.ConfigAI)]
+    [Auth(Power.AIConfig)]
     public class AIConfigFormModel : AdminModel
     {
         public AIConfig Item { get; set; }
@@ -24,7 +24,7 @@ namespace App.Pages.AI
 
         public IActionResult OnPostSave([FromBody] AIConfig req)
         {
-            if (!CheckPower(Power.ConfigAI))
+            if (!CheckPower(Power.AIConfig))
                 return BuildResult(403, "无权操作");
             if (req == null)
                 return BuildResult(400, "参数错误");

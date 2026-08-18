@@ -555,9 +555,10 @@ Done
 
 2026/08/18
     /EleManager 服务器端重命名为 EleServer（or EleHandler， ElePatcher），避免与客户的混淆
+    /用户列表页面，删除有提示，但是用户还在
+    /用户列表页面，显示角色列表
+    /剥离 EleUI 库对 HttpApi 库的依赖（可用同结构的 APIResult 数据接口）
     组织表不能随便删除啊，要做成逻辑删除的
-    用户列表页面，删除有提示，但是用户还在
-    剥离 EleUI 库对 HttpApi 库的依赖（可用同结构的 ApiResult 数据接口）
     点击修改“重设密码”后，前端无反馈，可考虑用 EleServer.ShowToast 显示一个 toast到前端
     新建 me/WorkDesk 工作台页面，用于展示：交办任务清单及进度、个人排查任务及进度、科室任务及进度，数据驾驶舱入口（gis/index）
 

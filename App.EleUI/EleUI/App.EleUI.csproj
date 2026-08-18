@@ -18,8 +18,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\App.API\HttpApi\HttpApi.csproj" />
     <ProjectReference Include="..\..\App.Utils\App.Utils\App.Utils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>

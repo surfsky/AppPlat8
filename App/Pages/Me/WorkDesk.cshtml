@@ -7,7 +7,7 @@
 
 @section body {
     <div class="h-full bg-white overflow-y-auto">
-        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div class="mx-auto  px-4 py-6 sm:px-6 lg:px-8">
             <section class="mt-6">
                 <div class="mb-4 flex items-center justify-between">
                     <div>
@@ -45,22 +45,7 @@
                         <p class="mt-1 text-sm text-slate-500">以下为演示数据，便于先确认版式和交互</p>
                     </div>
                 </div>
-            <div class="rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-600 to-sky-500 p-6 text-white shadow-lg mb-4">
-                <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        @foreach (var item in Model.SummaryCards)
-                        {
-                            <div class="rounded-2xl bg-white/15 px-4 py-4 backdrop-blur-sm">
-                                <div class="text-xs text-blue-100">@item.Title</div>
-                                <div class="mt-2 text-2xl font-bold">@item.Value</div>
-                                <div class="mt-1 text-xs text-blue-100">@item.Remark</div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-
-                <div class="grid grid-cols-1 gap-5 2xl:grid-cols-3">
+                <div class="grid grid-cols-1 gap-8 2xl:grid-cols-3">
                     @foreach (var board in Model.TaskBoards)
                     {
                         <section class="flex min-h-[420px] flex-col rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -103,7 +88,6 @@
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0">
                                                 <h4 class="truncate text-base font-semibold text-slate-900">@task.Title</h4>
-                                                <p class="mt-1 text-sm text-slate-500">@task.Summary</p>
                                             </div>
                                             <span class="shrink-0 rounded-full px-3 py-1 text-xs font-medium @task.StatusClass">@task.Status</span>
                                         </div>
@@ -119,11 +103,11 @@
                                         </div>
 
                                         <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-500">
-                                            <div class="rounded-xl bg-white px-3 py-2">
+                                            <div class="rounded-xl px-3 py-2">
                                                 <div class="text-xs text-slate-400">责任人</div>
                                                 <div class="mt-1 font-medium text-slate-700">@task.Owner</div>
                                             </div>
-                                            <div class="rounded-xl bg-white px-3 py-2">
+                                            <div class="rounded-xl px-3 py-2">
                                                 <div class="text-xs text-slate-400">计划完成</div>
                                                 <div class="mt-1 font-medium text-slate-700">@task.DueDateText</div>
                                             </div>

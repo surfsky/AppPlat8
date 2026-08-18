@@ -19,12 +19,17 @@ namespace App.Pages
     {
         public List<Menu> Menus { get; set; } = new List<Menu>();
         public string UserName { get; set; }
+        public string DisplayName { get; set; }
         public string ProductVersion { get; set; }
         public string SiteTitle { get; set; }
 
         public void OnGet()
         {
-            UserName = GetUserName();
+            var user = GetUser();
+            UserName = user?.Name ?? GetUserName();
+            DisplayName = user?.RealName.IsNotEmpty() == true
+                ? user.RealName
+                : (user?.NickName.IsNotEmpty() == true ? user.NickName : UserName);
             ProductVersion = Common.GetVersion();
             SiteTitle = SiteConfig.Instance.Title;
             Menus = GetUserMenus();

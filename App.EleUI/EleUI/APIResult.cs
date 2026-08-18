@@ -3,9 +3,9 @@
 namespace App.EleUI
 {
     /// <summary>
-    /// API 返回值
+    /// API 返回值（结构同 HttpApi.APIResult）
     /// </summary>
-    internal class APIResult
+    public class EleResult
     {
         /// <summary>错误编码</summary>
         public int Code { get; set; }
@@ -22,7 +22,7 @@ namespace App.EleUI
         /// <summary>附加数据（分页信息Pager）</summary>
         public object Pager { get; set; }
 
-        public APIResult(int code=0, string message="", object data=null, object pager=null)
+        public EleResult(int code=0, string message="", object data=null, object pager=null)
         {
             Code = code;
             Message = message;
