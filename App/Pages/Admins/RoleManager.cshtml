@@ -36,10 +36,10 @@
     <div class="flex-1 h-full flex flex-col min-w-0 bg-white">
         <div class="h-[52px] border-b border-slate-200 px-4 flex items-center justify-between bg-[#f5f7fa]">
             <el-tabs v-model="activeTab" class="role-manager-tabs" type="card" v-on:tab-change="switchTab">
-                <el-tab-pane label="操作权限" name="power"></el-tab-pane>
                 <el-tab-pane label="系统菜单" name="menu"></el-tab-pane>
                 <el-tab-pane label="Gis菜单" name="gis"></el-tab-pane>
                 <el-tab-pane label="通讯录目录" name="contactMenu"></el-tab-pane>
+                <el-tab-pane label="操作权限" name="power"></el-tab-pane>
             </el-tabs>
             <div class="text-sm text-slate-600 whitespace-nowrap">当前角色：{{ roleName || '-' }}</div>
         </div>
@@ -100,7 +100,7 @@ const app = createApp({
         const roleId = ref(@initialRoleId);
         const roleName = ref('');
         const currentRoleId = ref(@initialRoleId);
-        const activeTab = ref('power');
+        const activeTab = ref('menu');
         const roles = ref(@Html.Raw(rolesJson));
 
         const buildUrl = (tab) => {
