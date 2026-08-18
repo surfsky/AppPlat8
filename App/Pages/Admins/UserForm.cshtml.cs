@@ -31,7 +31,7 @@ namespace App.Pages.Admins
         public IActionResult OnGetData(long id)
         {
             Item = (id > 0) ? App.DAL.User.GetDetail(t=>t.Id == id) : new App.DAL.User();
-            return BuildResult(0, "success", Item.Export());
+            return BuildResult(0, "success", Item.Export( ExportMode.Detail));
         }
 
 

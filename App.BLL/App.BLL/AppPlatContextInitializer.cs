@@ -58,7 +58,7 @@ namespace App.DAL
                 {
                     Name = "仪表盘",
                     SortId = 0,
-                    NavigateUrl = "Me/Dashboard",
+                    NavigateUrl = "Me/WorkDesk",
                     ImageUrl = "fas fa-chart-line",
                     Power = (Power?)0,
                 },

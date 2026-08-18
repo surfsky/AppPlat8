@@ -16,6 +16,9 @@ using System.Text.Json.Serialization;
 
 namespace App.EleUI
 {
+    //======================================================================
+    // EleManager client command
+    //======================================================================
     /// <summary>
     /// 客户端命令类型
     /// </summary>
@@ -35,6 +38,17 @@ namespace App.EleUI
         RefreshPage
     }
 
+    /// <summary>客户端命令</summary>
+    public record ClientCommand(ClientCommandType Command, object Args)
+    {
+        public string RequestId => Guid.NewGuid().ToString("N");
+        public DateTime Utc => DateTime.UtcNow;
+    }
+
+
+    //======================================================================
+    // client command args
+    //======================================================================
     /// <summary>
     /// 刷新作用域（适用于 RefreshData / RefreshPage）
     /// </summary>
@@ -59,6 +73,25 @@ namespace App.EleUI
         Error
     }
 
+
+    /// <summary>通知参数</summary>
+    public record NotifyArgs(NotifyType Type, string Message, string Title = null);
+
+    /// <summary>加载参数</summary>
+    public record LoadingArgs(string Text = "加载中...");
+
+
+    /// <summary>刷新数据命令参数</summary>
+    public record RefreshDataArgs(RefreshScope Scope = RefreshScope.Parent, string InstanceId = null);
+
+    /// <summary>刷新页面命令参数</summary>
+    public record RefreshPageArgs(RefreshScope Scope = RefreshScope.Parent, bool ForceReload = true);
+
+
+
+    //======================================================================
+    // Drawer command
+    //======================================================================
     /// <summary>
     /// 抽屉关闭后的客户端动作
     /// </summary>
@@ -68,15 +101,6 @@ namespace App.EleUI
         RefreshData,
         None
     }
-
-    /// <summary>客户端命令</summary>
-    public record ClientCommand(ClientCommandType Command, object Args, string RequestId, DateTime Utc);
-
-    /// <summary>通知参数</summary>
-    public record NotifyArgs(NotifyType Type, string Message, string Title = null);
-
-    /// <summary>加载参数</summary>
-    public record LoadingArgs(string Text = "加载中...");
 
     /// <summary>抽屉参数</summary>
     public record DrawerFooterButtonArgs(
@@ -105,8 +129,12 @@ namespace App.EleUI
         string CloseHandler = null,
         string ServerCloseHandler = null,
         DrawerCloseAction CloseAction = DrawerCloseAction.RefreshData,
-        bool? Html = null);
+        bool? Html = null
+        );
 
+    //======================================================================
+    // Popups command
+    //======================================================================
     /// <summary>MessageBox 参数</summary>
     public record MessageBoxArgs(
         string Text,
@@ -116,7 +144,8 @@ namespace App.EleUI
         string CancelButtonText = "取消",
         bool IsAlert = false,
         string ClientHandler = null,
-        string ServerHandler = null);
+        string ServerHandler = null
+        );
 
     /// <summary>InputBox 参数</summary>
     public record InputBoxArgs(
@@ -130,8 +159,12 @@ namespace App.EleUI
         string ClientHandler = null,
         string ServerHandler = null,
         string InputPattern = null,
-        string InputErrorMessage = null);
+        string InputErrorMessage = null
+        );
 
+    //======================================================================
+    // Control command
+    //======================================================================
     /// <summary>控件目标类型</summary>
     public enum ControlTargetType
     {
@@ -195,7 +228,7 @@ namespace App.EleUI
             object Data = null,
             object Value = null)
         {
-            var fieldName = EleManager.ResolveFieldExpress(fieldExpress);
+            var fieldName = EleServer.ResolveFieldExpress(fieldExpress);
             return SetControl(ControlTarget.Field(fieldName), Enabled, Visible, Data, Value);
         }
 
@@ -216,7 +249,7 @@ namespace App.EleUI
 
         public IActionResult ToActionResult(string msg = "success")
         {
-            return EleManager.SetControl(_items, msg);
+            return EleServer.SetControl(_items, msg);
         }
     }
 
@@ -235,57 +268,50 @@ namespace App.EleUI
     /// </summary>
     public record SetControlArgs(List<ControlPatchArgs> Items);
 
-    /// <summary>刷新数据命令参数</summary>
-    public record RefreshDataArgs(RefreshScope Scope = RefreshScope.Parent, string InstanceId = null);
 
-    /// <summary>刷新页面命令参数</summary>
-    public record RefreshPageArgs(RefreshScope Scope = RefreshScope.Parent, bool ForceReload = true);
-
-
+    //======================================================================
+    // EleManager 客户端命令管理器
+    //======================================================================
     /// <summary>
-    /// ElemUI 客户端命令管理器
+    /// ElemUI Server <----> EleManager client
     /// </summary>
-    public class EleManager
+    public class EleServer
     {
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            ReferenceHandler = ReferenceHandler.IgnoreCycles
-        };
+        //-------------------------------------------------
+        // Json result
+        //-------------------------------------------------
+        private static readonly JsonSerializerOptions _jsonOptions;
 
-        static EleManager()
+        static EleServer()
         {
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            };
             _jsonOptions.Converters.Add(new JsonStringEnumConverter());
         }
 
-        //-------------------------------------------------
-        // 构建API结果
-        //-------------------------------------------------
         /// <summary>构建API结果</summary>
         public static JsonResult BuildResult(int code, string msg, object data = null, Paging pager = null)
         {
-            // Use ASP.NET Core default System.Text.Json pipeline for JsonResult serialization.
             return new JsonResult(new APIResult(code, msg, data, pager), _jsonOptions);
         }
 
-        private static IActionResult BuildClientCommandResult(ClientCommandType commandType, object args, string msg = "success")
+        //--------------------------------------------------------------
+        // build client command result
+        //--------------------------------------------------------------
+        /// <summary>构建一条客户端命令结果</summary>
+        private static JsonResult BuildCommandResult(ClientCommandType commandType, object args, string msg = "ok")
         {
-            var cmd = new ClientCommand(
-                Command: commandType,
-                Args: args,
-                RequestId: Guid.NewGuid().ToString("N"),
-                Utc: DateTime.UtcNow
-            );
-            return BuildResult(0, msg, cmd);
+            return BuildResult(0, msg, new ClientCommand(commandType, args));
         }
 
-        /// <summary>
-        /// 构建多条客户端命令（命令按数组顺序串行执行，可实现 toast → 关抽屉 → 刷数据 等串联动作）
-        /// </summary>
-        public static JsonResult BuildClientCommandResult(params ClientCommand[] commands)
+        /// <summary>构建多条客户端命令（命令按数组顺序串行执行，可实现 toast → 关抽屉 → 刷数据 等串联动作）</summary>
+        public static JsonResult BuildCommandResult(params ClientCommand[] commands)
         {
-            var list = (commands ?? Array.Empty<ClientCommand>()).Where(c => c != null).ToList();
+            var list = (commands ?? Array.Empty<ClientCommand>()).ToList();
             var payload = new
             {
                 commands = list,
@@ -294,18 +320,6 @@ namespace App.EleUI
             return BuildResult(0, "ok", payload);
         }
 
-        /// <summary>
-        /// 创建一条客户端命令（不立即返回 ActionResult，用于搭配 BuildClientCommandResult(params[]) 做串联）
-        /// </summary>
-        public static ClientCommand MakeCommand(ClientCommandType commandType, object args)
-        {
-            return new ClientCommand(
-                Command: commandType,
-                Args: args,
-                RequestId: Guid.NewGuid().ToString("N"),
-                Utc: DateTime.UtcNow
-            );
-        }
 
         //--------------------------------------------------------------
         // 传递客户端命令
@@ -313,7 +327,7 @@ namespace App.EleUI
         /// <summary>显示客户端 Toast（就是element中的 message 走轻提示）</summary>
         public static IActionResult ShowToast(string message, NotifyType type = NotifyType.Info, string title = "Title")
         {
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.Toast,
                 new NotifyArgs(Type: type, Message: message, Title: title)
             );
@@ -322,16 +336,19 @@ namespace App.EleUI
         /// <summary>显示客户端提示</summary>
         public static IActionResult ShowNotify(string message, NotifyType type = NotifyType.Info, string title="Title")
         {
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.Notify,
                 new NotifyArgs(Type: type, Message: message, Title: title)
             );
         }
 
+        //---------------------------------------------------------------
+        // Loading
+        //---------------------------------------------------------------
         /// <summary>显示客户端 Loading</summary>
         public static IActionResult ShowLoading(string text = "加载中...")
         {
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.ShowLoading,
                 new LoadingArgs(Text: text)
             );
@@ -340,9 +357,12 @@ namespace App.EleUI
         /// <summary>关闭客户端 Loading</summary>
         public static IActionResult CloseLoading()
         {
-            return BuildClientCommandResult(ClientCommandType.CloseLoading, new { });
+            return BuildCommandResult(ClientCommandType.CloseLoading, new { });
         }
 
+        //---------------------------------------------------------------
+        // Drawer
+        //---------------------------------------------------------------
         /// <summary>打开客户端 Drawer</summary>
         public static IActionResult ShowDrawer(
             string title = null,
@@ -364,7 +384,7 @@ namespace App.EleUI
             DrawerCloseAction closeAction = DrawerCloseAction.RefreshData,
             bool? html = null)
         {
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.OpenDrawer,
                 new DrawerArgs(
                     Title: title,
@@ -391,16 +411,19 @@ namespace App.EleUI
         /// <summary>关闭客户端 Drawer</summary>
         public static IActionResult CloseDrawer()
         {
-            return BuildClientCommandResult(ClientCommandType.CloseDrawer, new { });
+            return BuildCommandResult(ClientCommandType.CloseDrawer, new { });
         }
 
+        //---------------------------------------------------------------
+        // 客户端数据刷新
+        //---------------------------------------------------------------
         /// <summary>
         /// 刷新 EleTable 数据（不刷新页面）。
         /// 默认从 Drawer 页发给父 iframe 的 parent window，命中 Atts 列表的 window.__attsTableInstance__。
         /// </summary>
         public static IActionResult RefreshData(RefreshScope scope = RefreshScope.Parent, string instanceId = null)
         {
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.RefreshData,
                 new RefreshDataArgs(Scope: scope, InstanceId: instanceId)
             );
@@ -411,7 +434,7 @@ namespace App.EleUI
         /// </summary>
         public static IActionResult RefreshPage(RefreshScope scope = RefreshScope.Parent, bool forceReload = true)
         {
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.RefreshPage,
                 new RefreshPageArgs(Scope: scope, ForceReload: forceReload)
             );
@@ -434,7 +457,7 @@ namespace App.EleUI
             string clientHandler = null,
             string serverHandler = null)
         {
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.MessageBox,
                 new MessageBoxArgs(
                     Text: text,
@@ -468,7 +491,7 @@ namespace App.EleUI
             string inputPattern = null,
             string inputErrorMessage = null)
         {
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.InputBox,
                 new InputBoxArgs(
                     Text: text,
@@ -484,6 +507,9 @@ namespace App.EleUI
                     InputErrorMessage: inputErrorMessage));
         }
 
+        //---------------------------------------------------------------
+        // 客户端控件设置
+        //---------------------------------------------------------------
         /// <summary>链式起点：强类型字段表达式</summary>
         public static ControlCommandBuilder SetControl<T>(
             Expression<Func<T, object>> fieldExpress,
@@ -518,15 +544,12 @@ namespace App.EleUI
                     Value: i.Value))
                 .ToList();
 
-            return BuildClientCommandResult(
+            return BuildCommandResult(
                 ClientCommandType.SetControl,
                 new SetControlArgs(list),
                 msg);
         }
 
-        //--------------------------------------------------------------
-        // Control
-        //--------------------------------------------------------------
         // 规范化控件目标字符串，支持自动添加 "field:" 前缀
         private static string NormalizeControlTarget(string target)
         {

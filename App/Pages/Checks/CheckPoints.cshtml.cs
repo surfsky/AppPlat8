@@ -64,7 +64,7 @@ namespace App.Pages.Checks
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckPoint") + "&objectId=" + ObjectId;
-            return EleManager.ShowDrawer(
+            return EleServer.ShowDrawer(
                 title: "导入检查点",
                 url: url,
                 //size: "980px",

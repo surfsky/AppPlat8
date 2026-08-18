@@ -71,11 +71,10 @@ namespace App
         /// <summary>构建API结果</summary>
         public static JsonResult BuildResult(int code, string message, object data = null, Paging pager = null)
         {
-            var result = new JsonResult(new APIResult(code, message, data, pager), _jsonOptions);
-            // 业务错误时同步返回 HTTP 错误状态码（如 500/4xx），
-            // 这样前端的 fetch 能通过 !resp.ok 识别错误，触发 setError 路径，
+            // 业务错误时同步返回 HTTP 错误状态码（如 500/4xx），这样前端的 fetch 能通过 !resp.ok 识别错误，触发 setError 路径，
             // 避免把整段错误 JSON 误当作流式 AI 输出渲染在 AI 回答气泡里。
             // code == 0 表示成功，仍按 200 返回。
+            var result = new JsonResult(new APIResult(code, message, data, pager), _jsonOptions);
             if (code != 0)
             {
                 result.StatusCode = code >= 400 && code <= 599 ? code : 500;

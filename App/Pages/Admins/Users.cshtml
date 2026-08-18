@@ -25,9 +25,10 @@
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
-            <EleOpColumn Width="100" Fixed="right">
+            <EleOpColumn Width="140" Fixed="right" Shows="3">
                 <Op Command="Edit" Tooltip="编辑" Icon="Edit" Visible="@Auth.CheckPower(Power.UserEdit)"></Op>
                 <Op Command="Delete" Tooltip="删除" Icon="Delete" Visible="@Auth.CheckPower(Power.UserDelete)"></Op>
+                <Op Handler="resetPasswordToDefault(scope.row)" Tooltip="修改密码" Icon="Key" Visible="@Model.CanResetPassword"></Op>
             </EleOpColumn>
             <EleImageColumn For="Item.Photo" Label="头像" Width="60" Sortable="false"></EleImageColumn>
             <EleColumn For="Item.Name" Label="账号" Link="true" MinWidth="120" Sortable="true"></EleColumn>
@@ -42,3 +43,28 @@
     </EleTable>
 }
 
+@section script {
+    <script>
+        const userMixin = {
+            methods: {
+                // 管理员可将指定用户密码重置为站点配置中的默认密码。
+                async resetPasswordToDefault(row) {
+                    const userId = Number(row?.id || 0);
+                    if (!userId) {
+                        EleManager.showError('未找到有效的用户标识');
+                        return;
+                    }
+
+                    const displayName = row?.name || row?.realName || ('ID=' + userId);
+                    try {
+                        await EleManager.confirm(`确定将用户“${displayName}”的密码重置为默认密码吗？`);
+                    } catch (err) {
+                        return;
+                    }
+
+                    await this.postHandler('ResetPasswordToDefault', { id: userId });
+                }
+            }
+        };
+    </script>
+}

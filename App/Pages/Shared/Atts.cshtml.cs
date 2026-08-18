@@ -13,7 +13,7 @@ using System.IO;
 
 namespace App.Pages.Shared
 {
-    [Auth(Power.CheckObjectView)]
+    [Auth(AuthLogin =true)]
     public class AttsModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

@@ -1,0 +1,149 @@
+@page
+@model App.Pages.Me.WorkDeskModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "工作台";
+}
+
+@section body {
+    <div class="h-full bg-white overflow-y-auto">
+        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <div class="rounded-3xl bg-gradient-to-r from-blue-600 via-cyan-600 to-sky-500 p-6 text-white shadow-lg">
+                <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="max-w-3xl">
+                        <div class="text-sm font-medium uppercase tracking-[0.3em] text-blue-100">WorkDesk</div>
+                        <h1 class="mt-3 text-3xl font-bold sm:text-4xl">欢迎来到 @Model.SiteTitle 工作台</h1>
+                        <p class="mt-3 text-sm leading-7 text-blue-50 sm:text-base">
+                            集中查看常用系统入口和任务进度。
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        @foreach (var item in Model.SummaryCards)
+                        {
+                            <div class="rounded-2xl bg-white/15 px-4 py-4 backdrop-blur-sm">
+                                <div class="text-xs text-blue-100">@item.Title</div>
+                                <div class="mt-2 text-2xl font-bold">@item.Value</div>
+                                <div class="mt-1 text-xs text-blue-100">@item.Remark</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <section class="mt-6">
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">快捷入口</h2>
+                        <p class="mt-1 text-sm text-slate-500">常用业务页面一键直达</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 xl:grid-cols-4">
+                    @foreach (var entry in Model.EntryCards)
+                    {
+                        <a href="@entry.Url" target="@entry.Target"
+                           class="group flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
+                            <div class="flex items-start gap-4">
+                                <div class="flex h-14 w-14 items-center justify-center rounded-2xl @entry.IconBg text-2xl text-white shadow-sm">
+                                    <i class="@entry.Icon"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <h3 class="text-xl font-bold text-slate-900">@entry.Title</h3>
+                                        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">@entry.Badge</span>
+                                    </div>
+                                    <p class="mt-2 text-sm leading-6 text-slate-500">@entry.Description</p>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </section>
+
+            <section class="mt-8">
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">任务进度</h2>
+                        <p class="mt-1 text-sm text-slate-500">以下为演示数据，便于先确认版式和交互</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-5 2xl:grid-cols-3">
+                    @foreach (var board in Model.TaskBoards)
+                    {
+                        <section class="flex min-h-[420px] flex-col rounded-3xl border border-slate-200 bg-white shadow-sm">
+                            <div class="border-b border-slate-100 px-6 py-5">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex h-11 w-11 items-center justify-center rounded-2xl @board.IconBg text-lg text-white">
+                                                <i class="@board.Icon"></i>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-bold text-slate-900">@board.Title</h3>
+                                                <p class="mt-1 text-sm text-slate-500">@board.Description</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500">@board.Tasks.Count 项</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-3 px-6 pt-4">
+                                <div class="rounded-2xl bg-slate-50 px-4 py-3">
+                                    <div class="text-xs text-slate-500">平均进度</div>
+                                    <div class="mt-2 text-lg font-semibold text-slate-900">@board.AverageProgress%</div>
+                                </div>
+                                <div class="rounded-2xl bg-amber-50 px-4 py-3">
+                                    <div class="text-xs text-amber-600">进行中</div>
+                                    <div class="mt-2 text-lg font-semibold text-amber-700">@board.InProgressCount</div>
+                                </div>
+                                <div class="rounded-2xl bg-emerald-50 px-4 py-3">
+                                    <div class="text-xs text-emerald-600">已完成</div>
+                                    <div class="mt-2 text-lg font-semibold text-emerald-700">@board.CompletedCount</div>
+                                </div>
+                            </div>
+
+                            <div class="flex-1 space-y-4 px-6 py-5">
+                                @foreach (var task in board.Tasks)
+                                {
+                                    <article class="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <h4 class="truncate text-base font-semibold text-slate-900">@task.Title</h4>
+                                                <p class="mt-1 text-sm text-slate-500">@task.Summary</p>
+                                            </div>
+                                            <span class="shrink-0 rounded-full px-3 py-1 text-xs font-medium @task.StatusClass">@task.Status</span>
+                                        </div>
+
+                                        <div class="mt-4">
+                                            <div class="mb-2 flex items-center justify-between text-xs text-slate-500">
+                                                <span>完成进度</span>
+                                                <span>@task.Progress%</span>
+                                            </div>
+                                            <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
+                                                <div class="h-full rounded-full @task.ProgressBarClass" style="width:@task.Progress%"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-500">
+                                            <div class="rounded-xl bg-white px-3 py-2">
+                                                <div class="text-xs text-slate-400">责任人</div>
+                                                <div class="mt-1 font-medium text-slate-700">@task.Owner</div>
+                                            </div>
+                                            <div class="rounded-xl bg-white px-3 py-2">
+                                                <div class="text-xs text-slate-400">计划完成</div>
+                                                <div class="mt-1 font-medium text-slate-700">@task.DueDateText</div>
+                                            </div>
+                                        </div>
+                                    </article>
+                                }
+                            </div>
+                        </section>
+                    }
+                </div>
+            </section>
+        </div>
+    </div>
+}

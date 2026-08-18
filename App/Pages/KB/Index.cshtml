@@ -43,7 +43,7 @@
 }
 
 @section body {
-    <div id="kbIndex" class="min-h-screen bg-white">
+    <div id="kbIndex" class="h-full bg-white overflow-y-auto">
         <!-- 顶部搜索栏 + 标题 -->
         <div class="max-w-6xl mx-auto pt-12 pb-8 px-4">
             <h1 class="text-center text-2xl md:text-3xl font-bold text-gray-800 mb-8">知识库导航</h1>
@@ -115,7 +115,7 @@
     private Microsoft.AspNetCore.Html.IHtmlContent RenderKbColumn(List<FlatItem> items, string tag)
     {
         var sb = new System.Text.StringBuilder();
-        sb.Append("<div class=\"bg-white rounded-lg border border-gray-100 shadow-sm p-4 md:p-5\">");
+        sb.Append("<div class=\"bg-white rounded-lg border-0 border-gray-100  p-4 md:p-5\">");
         sb.Append("  <ul class=\"kb-flat-list\">");
         foreach (var f in items)
         {

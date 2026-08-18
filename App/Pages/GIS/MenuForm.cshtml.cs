@@ -117,7 +117,7 @@ namespace App.Pages.GIS
 
                 var now = DateTime.Now;
                 var msg = $"测试成功，共 {cnt} 条数据";
-                return EleManager
+                return EleServer
                     .SetControl<GisMenu>(t => t.DataCnt, Value: cnt)
                     // Use ISO datetime to keep client display and server JSON parsing consistent.
                     .SetControl<GisMenu>(t => t.DataDt, Value: now.ToString("yyyy-MM-ddTHH:mm:ss"))

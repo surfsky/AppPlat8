@@ -117,3 +117,36 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
         <Footer>
             <EleButton Type="Primary" Look="Text" Icon="Edit" Handler="ShowFiles" EnabledFor="Item.Id" >编辑附件</EleButton>
         </Footer>
+
+           var cmd = new ClientCommand(
+                Command: commandType,
+                Args: args,
+                RequestId: Guid.NewGuid().ToString("N"),
+                Utc: DateTime.UtcNow
+            );
+ 
+         /// <summary>创建一条客户端命令（不立即返回 ActionResult，用于搭配 BuildClientCommandResult(params[]) 做串联）</summary>
+        public static ClientCommand MakeCommand(ClientCommandType commandType, object args)
+        {
+            return new ClientCommand(
+                Command: commandType,
+                Args: args
+            );
+        }
+
+
+
+                            <div class="mt-5 grid grid-cols-2 gap-3">
+                                @foreach (var stat in entry.Stats)
+                                {
+                                    <div class="rounded-2xl bg-slate-50 px-4 py-3">
+                                        <div class="text-xs text-slate-500">@stat.Title</div>
+                                        <div class="mt-2 text-lg font-semibold text-slate-900">@stat.Value</div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="mt-5 inline-flex items-center gap-2 text-sm font-medium text-blue-600">
+                                进入页面
+                                <i class="fas fa-arrow-right transition group-hover:translate-x-1"></i>
+                            </div>

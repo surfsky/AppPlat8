@@ -23,6 +23,7 @@ namespace App.Pages.Admins
     {
         public App.DAL.User Item { get; set; }
         public List<SelectListItem> RoleList { get; set; }
+        public bool CanResetPassword { get; set; }
 
         public void OnGet()
         {
@@ -31,6 +32,7 @@ namespace App.Pages.Admins
                 .ThenBy(r => r.Id)
                 .Select(r => new SelectListItem(r.Name, r.Id.ToString()))
                 .ToList();
+            CanResetPassword = string.Equals(GetUserName(), "admin", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>获取用户列表</summary>
@@ -68,12 +70,40 @@ namespace App.Pages.Admins
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.User");
-            return EleManager.ShowDrawer(
+            return EleServer.ShowDrawer(
                 title: "导入用户",
                 url: url,
                 //size: "980px",
                 direction: "rtl",
                 closeAction: DrawerCloseAction.RefreshData);
+        }
+
+        /// <summary>管理员将用户密码重置为默认密码。</summary>
+        public IActionResult OnPostResetPasswordToDefault([FromBody] ResetPasswordToDefaultRequest req)
+        {
+            if (!string.Equals(GetUserName(), "admin", StringComparison.OrdinalIgnoreCase))
+                return BuildResult(403, "仅管理员可重置默认密码");
+
+            if (req == null || req.Id <= 0)
+                return BuildResult(400, "参数错误");
+
+            var user = App.DAL.User.Get(req.Id);
+            if (user == null)
+                return BuildResult(404, "用户不存在");
+
+            var defaultPassword = SiteConfig.Instance.DefaultPassword?.Trim();
+            if (string.IsNullOrWhiteSpace(defaultPassword))
+                return BuildResult(500, "系统默认密码未配置");
+
+            user.Password = PasswordUtil.CreateDbPassword(defaultPassword);
+            user.Save();
+            return EleServer.ShowToast($"已将用户“{user.Name}”的密码重置为默认密码{defaultPassword}");
+            //return BuildResult(0, $"已将用户“{user.Name}”的密码重置为默认密码");
+        }
+
+        public class ResetPasswordToDefaultRequest
+        {
+            public long Id { get; set; }
         }
     }
 }

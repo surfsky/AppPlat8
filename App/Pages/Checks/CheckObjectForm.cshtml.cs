@@ -140,12 +140,12 @@ namespace App.Pages.Checks
             var objectId = req?.Id ?? 0;
             if (objectId <= 0)
             {
-                return EleManager.ShowNotify("请先保存检查对象，再维护联系人", NotifyType.Warning, "提示");
+                return EleServer.ShowNotify("请先保存检查对象，再维护联系人", NotifyType.Warning, "提示");
             }
 
             var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
             var url = $"/Checks/ObjectContacts?objectId={objectId}&objectName={objectName}&md={this.Mode}";
-            return EleManager.ShowDrawer(
+            return EleServer.ShowDrawer(
                 title: "对象联系人",
                 url: url,
                 size: "50%"
@@ -158,12 +158,12 @@ namespace App.Pages.Checks
             var objectId = req?.Id ?? 0;
             if (objectId <= 0)
             {
-                return EleManager.ShowNotify("请先保存检查对象，再维护对象事件", NotifyType.Warning, "提示");
+                return EleServer.ShowNotify("请先保存检查对象，再维护对象事件", NotifyType.Warning, "提示");
             }
 
             var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
             var url = $"/Checks/CheckObjectEvents?objectId={objectId}&objectName={objectName}&md={this.Mode}";
-            return EleManager.ShowDrawer(
+            return EleServer.ShowDrawer(
                 title: "对象事件",
                 url: url,
                 size: "50%"
@@ -176,7 +176,7 @@ namespace App.Pages.Checks
             var uniId = req.UniId;
             var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
             var url = $"/Shared/Atts?uniId={uniId}&name={objectName}&md={this.Mode}";
-            return EleManager.ShowDrawer(
+            return EleServer.ShowDrawer(
                 title: "文件",
                 url: url,
                 size: "50%"
@@ -189,12 +189,12 @@ namespace App.Pages.Checks
             var objectId = req?.Id ?? 0;
             if (objectId <= 0)
             {
-                return EleManager.ShowNotify("请先保存检查对象，再查看检查历史", NotifyType.Warning, "提示");
+                return EleServer.ShowNotify("请先保存检查对象，再查看检查历史", NotifyType.Warning, "提示");
             }
 
             var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
             var url = $"/Checks/CheckLogs?objectId={objectId}&objectName={objectName}&md={this.Mode}";
-            return EleManager.ShowDrawer(
+            return EleServer.ShowDrawer(
                 title: "检查历史",
                 url: url,
                 size: "50%"
@@ -207,12 +207,12 @@ namespace App.Pages.Checks
             var objectId = req?.Id ?? 0;
             if (objectId <= 0)
             {
-                return EleManager.ShowNotify("请先保存检查对象，再查看隐患清单", NotifyType.Warning, "提示");
+                return EleServer.ShowNotify("请先保存检查对象，再查看隐患清单", NotifyType.Warning, "提示");
             }
 
             var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
             var url = $"/Checks/CheckHazards?objectId={objectId}&objectName={objectName}&md={this.Mode}";
-            return EleManager.ShowDrawer(
+            return EleServer.ShowDrawer(
                 title: "隐患清单",
                 url: url,
                 size: "50%"

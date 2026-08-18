@@ -77,7 +77,7 @@ namespace App.Pages.EleUISamples
                 ? EleHelper.ToOptions(cityMap.Keys)
                 : new List<ListItem>();
 
-            return EleManager
+            return EleServer
                 .SetControl<CitySelectDto>(t => t.CityId, Enabled: cities.Count > 0, Data: cities, Value: null)
                 .SetControl<CitySelectDto>(t => t.CountyId, Enabled: false, Data: new List<ListItem>(), Value: null)
                 .ToActionResult();
@@ -94,7 +94,7 @@ namespace App.Pages.EleUISamples
                 ? EleHelper.ToOptions(countyList)
                 : new List<ListItem>();
 
-            return EleManager
+            return EleServer
                 .SetControl<CitySelectDto>(t => t.CountyId, Enabled: counties.Count > 0, Data: counties, Value: null)
                 .ToActionResult();
         }
@@ -107,7 +107,7 @@ namespace App.Pages.EleUISamples
             else if (bool.TryParse(req?.Value?.ToString(), out var parsed))
                 enabled = parsed;
 
-            return EleManager
+            return EleServer
                 .SetControl<CitySelectDto>(t => t.CountyId, Enabled: enabled)
                 .ToActionResult();
         }
@@ -117,7 +117,7 @@ namespace App.Pages.EleUISamples
             var regionValue = req?.Value?.ToString() ?? string.Empty;
             var showCityCounty = regionValue == "zj" || regionValue == "js";
 
-            return EleManager
+            return EleServer
                 .SetControl<CitySelectDto>(t => t.ProvinceId, Visible: showCityCounty)
                 .SetControl<CitySelectDto>(t => t.CityId, Visible: showCityCounty)
                 .SetControl<CitySelectDto>(t => t.CountyId, Visible: showCityCounty)

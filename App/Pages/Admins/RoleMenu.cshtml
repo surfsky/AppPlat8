@@ -94,9 +94,9 @@ const app = createApp({
             if (!roleId.value) return;
             saving.value = true;
             try {
+                // 仅保存真正勾选的节点，避免半选父节点回填时把整棵子树重新勾满。
                 const checked = treeRef.value?.getCheckedKeys(false) || [];
-                const half = treeRef.value?.getHalfCheckedKeys() || [];
-                const ids = Array.from(new Set([...(checked || []), ...(half || [])])).map(Number);
+                const ids = Array.from(new Set(checked || [])).map(Number);
 
                 const res = await axios.post('?handler=SaveRoleMenus', {
                     roleId: roleId.value,

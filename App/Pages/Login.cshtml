@@ -28,6 +28,17 @@
     
 
     <title>@Model.WinTitle</title>
+    <script>
+        // 登录页如果落在 iframe 中，直接提升到顶层窗口，避免出现嵌套登录页。
+        (function () {
+            if (window.top === window.self) return;
+            try {
+                window.top.location.replace(window.location.href);
+            } catch (err) {
+                window.location.replace(window.location.href);
+            }
+        })();
+    </script>
     <!-- Element Plus & Vue -->
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
