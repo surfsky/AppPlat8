@@ -61,13 +61,13 @@ namespace App.Pages.GIS
             var dataUrl = req?.DataUrl?.Trim() ?? string.Empty;
 
             if (apiId <= 0 && string.IsNullOrWhiteSpace(dataUrl))
-                return EleServer.ShowNotify("请先填写接口地址", NotifyType.Warning, "提示");
+                return EleHandler.ShowNotify("请先填写接口地址", NotifyType.Warning, "提示");
 
             var url = apiId > 0
                 ? $"/GIS/ApiData?apiId={apiId}"
                 : $"/GIS/ApiData?dataUrl={Uri.EscapeDataString(dataUrl)}";
 
-            return EleServer.ShowDrawer(
+            return EleHandler.ShowDrawer(
                 title: "接口测试",
                 url: url,
                 //size: "50%",
@@ -87,7 +87,7 @@ namespace App.Pages.GIS
                 return BuildResult(0, "success");
 
             var dataDtText = item.DataDt?.ToString("yyyy-MM-dd HH:mm:ss");
-            return EleServer
+            return EleHandler
                 .SetControl<GisApi>(t => t.DataCnt, Value: item.DataCnt)
                 .SetControl<GisApi>(t => t.DataDt, Value: dataDtText)
                 .SetControl<GisApi>(t => t.LastErr, Value: item.LastErr)

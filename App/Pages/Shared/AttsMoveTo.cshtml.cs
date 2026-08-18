@@ -87,7 +87,7 @@ namespace App.Pages.Shared
             // 客户端命令序列：Toast → 关抽屉 → 刷新父 iframe 的 EleTable 列表
             // 关键：RefreshDataArgs 携带源 UniId（KbMenu-78），前端刷新命中 Atts 列表时按 uniId 精确匹配
             var msg = affected > 0 ? $"移动成功，共{affected}个附件" : "没有可移动的附件（可能已被移动或权限不足）";
-            return App.EleUI.EleServer.BuildCommandResult(
+            return App.EleUI.EleHandler.BuildCommandsResult(
                 new ClientCommand(
                     ClientCommandType.Toast,
                     new NotifyArgs(

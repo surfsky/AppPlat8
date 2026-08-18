@@ -56,15 +56,17 @@ namespace App.DAL
         //------------------------------------------------------
         // 计算属性
         //------------------------------------------------------
+        public string OrgName => this.Org?.Name;
+        public string OrgFullName => this.Org?.FullName;
         public string MobileMasked => this.Mobile?.Mask(3, 4);
         public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
 
         //------------------------------------------------------
         // 角色相关
         //------------------------------------------------------
-        // TODO：这两个字段的设计不合理，应该通过中间对象来实现多对多关系的查询和筛选，而不是在User实体中直接添加RoleIds和RoleId字段。
-        [UI("角色IDs"), NotMapped]  public virtual List<long> RoleIds {get; set;}   // 冗余设计用于前端绑定
-        [UI("角色"), NotMapped]     public long? RoleId { get; set; }               // 仅用于列表筛选。
+        public string RoleNames => this.Roles.Select(t => t.Name).ToJoinString(",");
+        [UI("角色IDs"), NotMapped]  public virtual List<long> RoleIds {get; set;}   // 冗余设计用于前端绑定，或者不合适
+
 
         /// <summary>获取用户的所有角色IDs（有缓存逻辑）</summary>
         public List<long> GetRoleIds()
@@ -120,7 +122,8 @@ namespace App.DAL
                 this.Name,
                 this.RealName,
                 this.OrgId,
-                OrgName = this.Org?.Name,
+                this.OrgName,
+                this.OrgFullName,
                 this.Email,
                 this.Gender,
                 this.Birthday,
@@ -150,13 +153,15 @@ namespace App.DAL
         }
 
         /// <summary>搜索用户列表</summary>
-        public static IQueryable<User> Search(string name, string realName, long? deptId=null, long? roleId=null)
+        public static IQueryable<User> Search(string name, string realName, long? deptId=null, long? roleId=null, bool? isDel=null)
         {
             var q = DataSet.Include(u => u.Org).Include(u => u.AuthOrg).Include(u => u.Roles).AsQueryable();
             if (name.IsNotEmpty())     q = q.Where(t => t.Name.Contains(name));
             if (realName.IsNotEmpty()) q = q.Where(t => t.RealName.Contains(realName));
             if (deptId != null)        q = q.Where(t => t.OrgId == deptId);
             if (roleId != null)        q = q.Where(t => t.Roles.Any(r => r.Id == roleId));
+            if (isDel == true)         q = q.Where(t => t.IsDel == true);
+            if (isDel == false)        q = q.Where(t => t.IsDel == false || t.IsDel == null);
 
             return q;
         }

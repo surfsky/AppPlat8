@@ -22,12 +22,12 @@ namespace App.Utils
     public static partial class ListHelper
     {
         /// <summary>获取列表成员字符串并拼合</summary>
-        public static string ToJoinString(this IEnumerable data)
+        public static string ToJoinString(this IEnumerable data, string separator = "")
         {
             var sb = new StringBuilder();
             foreach (object o in data)
-                sb.Append(o.ToString());
-            return sb.ToString();
+                sb.Append(o.ToString() + separator);
+            return sb.ToString().TrimEnd(separator.ToCharArray());
         }
 
         //---------------------------------------------------
@@ -53,7 +53,7 @@ namespace App.Utils
         }
 
 
-        /// <summary>找到第一个匹配的位置（类似 Exists，但会返回位置信息）</summary>
+        /// <summary>找到第一个匹配的位置（类似 Exists，但会返回位置信息），若未找到则返回 -1</summary>
         public static int IndexOf<T>(this IEnumerable<T> data, Func<T, bool> condition)
         {
             int n = -1;
@@ -63,7 +63,7 @@ namespace App.Utils
                 if (condition(o))
                     return n;
             }
-            return n;
+            return -1;
         }
 
         //---------------------------------------------------

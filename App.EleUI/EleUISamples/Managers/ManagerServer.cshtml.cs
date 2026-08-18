@@ -43,12 +43,12 @@ namespace App.Pages.EleUISamples
         //---------------------------------------------------
         public IActionResult OnPostToast()
         {
-            return EleServer.ShowToast("服务端下发 Toast 成功", NotifyType.Warning);
+            return EleHandler.ShowToast("服务端下发 Toast 成功", NotifyType.Warning);
         }
 
         public IActionResult OnPostNotify()
         {
-            return EleServer.ShowNotify("服务端下发 Notify 成功", NotifyType.Info, "Server Notify");
+            return EleHandler.ShowNotify("服务端下发 Notify 成功", NotifyType.Info, "Server Notify");
         }
 
 
@@ -57,7 +57,7 @@ namespace App.Pages.EleUISamples
         //---------------------------------------------------
         public IActionResult OnPostOpenMessageBoxAlert()
         {
-            return EleServer.ShowMessageBox(
+            return EleHandler.ShowMessageBox(
                 text: "这是一个最简单的弹出框，仅显示一个确定按钮。",
                 title: "Alert",
                 type: NotifyType.Info,
@@ -70,7 +70,7 @@ namespace App.Pages.EleUISamples
 
         public IActionResult OnPostOpenMessageBoxServer()
         {
-            return EleServer.ShowMessageBox(
+            return EleHandler.ShowMessageBox(
                 text: "确认执行 MessageBox 服务端回调演示？",
                 title: "服务端 MessageBox",
                 type: NotifyType.Warning,
@@ -86,10 +86,10 @@ namespace App.Pages.EleUISamples
             var action = (req?.Action ?? string.Empty).Trim().ToLowerInvariant();
             if (action == "confirm")
             {
-                return EleServer.ShowNotify("服务端回调：用户点击了确定", NotifyType.Success, "MessageBox Callback");
+                return EleHandler.ShowNotify("服务端回调：用户点击了确定", NotifyType.Success, "MessageBox Callback");
             }
 
-            return EleServer.ShowNotify("服务端回调：用户点击了取消", NotifyType.Info, "MessageBox Callback");
+            return EleHandler.ShowNotify("服务端回调：用户点击了取消", NotifyType.Info, "MessageBox Callback");
         }
 
         //---------------------------------------------------
@@ -97,7 +97,7 @@ namespace App.Pages.EleUISamples
         //---------------------------------------------------
         public IActionResult OnPostOpenInputBox()
         {
-            return EleServer.ShowInputBox(
+            return EleHandler.ShowInputBox(
                 text: "请输入用户名",
                 title: "InputBox",
                 inputPlaceholder: "例如：admin",
@@ -112,7 +112,7 @@ namespace App.Pages.EleUISamples
 
         public IActionResult OnPostOpenInputBoxServer()
         {
-            return EleServer.ShowInputBox(
+            return EleHandler.ShowInputBox(
                 text: "请输入要保存的备注",
                 title: "InputBox Server Callback",
                 inputPlaceholder: "请输入备注",
@@ -127,7 +127,7 @@ namespace App.Pages.EleUISamples
 
         public IActionResult OnPostOpenInputBoxValidate()
         {
-            return EleServer.ShowInputBox(
+            return EleHandler.ShowInputBox(
                 text: "请输入邮箱地址",
                 title: "InputBox with Validation",
                 inputPlaceholder: "例如：user@example.com",
@@ -148,10 +148,10 @@ namespace App.Pages.EleUISamples
             if (action == "confirm")
             {
                 var email = req?.Value ?? string.Empty;
-                return EleServer.ShowNotify($"邮箱验证通过：{email}", NotifyType.Success, "Validation Success");
+                return EleHandler.ShowNotify($"邮箱验证通过：{email}", NotifyType.Success, "Validation Success");
             }
 
-            return EleServer.ShowNotify("用户取消了验证", NotifyType.Info, "Validation Canceled");
+            return EleHandler.ShowNotify("用户取消了验证", NotifyType.Info, "Validation Canceled");
         }
 
         public IActionResult OnPostInputBoxCallback([FromBody] InputBoxCallbackRequest req)
@@ -160,10 +160,10 @@ namespace App.Pages.EleUISamples
             if (action == "confirm")
             {
                 var value = req?.Value ?? string.Empty;
-                return EleServer.ShowNotify($"服务端回调：用户输入了：{value}", NotifyType.Success, "InputBox Callback");
+                return EleHandler.ShowNotify($"服务端回调：用户输入了：{value}", NotifyType.Success, "InputBox Callback");
             }
 
-            return EleServer.ShowNotify("服务端回调：用户取消了 InputBox", NotifyType.Info, "InputBox Callback");
+            return EleHandler.ShowNotify("服务端回调：用户取消了 InputBox", NotifyType.Info, "InputBox Callback");
         }
 
 
@@ -172,7 +172,7 @@ namespace App.Pages.EleUISamples
         //---------------------------------------------------
         public IActionResult OnPostOpenDrawer()
         {
-            return EleServer.ShowDrawer(
+            return EleHandler.ShowDrawer(
                 title: "服务端 Drawer",
                 content: "这是由服务端命令打开的 Drawer 内容。",
                 size: "50%",
@@ -187,13 +187,13 @@ namespace App.Pages.EleUISamples
 
         public IActionResult OnPostCloseDrawer()
         {
-            return EleServer.CloseDrawer();
+            return EleHandler.CloseDrawer();
         }
 
         public IActionResult OnPostDrawerClosed([FromBody] DrawerClosedCallbackRequest req)
         {
             var action = (req?.Action ?? string.Empty).Trim().ToLowerInvariant();
-            return EleServer.ShowNotify($"服务端回调：Drawer 已关闭（action={action}）", NotifyType.Info, "Drawer Closed");
+            return EleHandler.ShowNotify($"服务端回调：Drawer 已关闭（action={action}）", NotifyType.Info, "Drawer Closed");
         }
     }
 }

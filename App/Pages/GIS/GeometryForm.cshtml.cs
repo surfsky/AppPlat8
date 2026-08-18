@@ -114,12 +114,12 @@ namespace App.Pages.GIS
         {
             var geometryId = req?.Id ?? 0;
             if (geometryId <= 0)
-                return EleServer.ShowNotify("请先保存点位，再维护附件", NotifyType.Warning, "提示");
+                return EleHandler.ShowNotify("请先保存点位，再维护附件", NotifyType.Warning, "提示");
 
             var uniId = req.UniId;
             var geometryName = Uri.EscapeDataString(req?.Name ?? string.Empty);
             var url = $"/Shared/Atts?uniId={uniId}&name={geometryName}&md={this.Mode}";
-            return EleServer.ShowDrawer(
+            return EleHandler.ShowDrawer(
                 title: "点位附件",
                 url: url,
                 size: "50%"

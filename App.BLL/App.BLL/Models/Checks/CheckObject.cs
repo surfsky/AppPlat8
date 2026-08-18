@@ -86,10 +86,10 @@ namespace App.DAL
         // 扩展字段，供列表展示
         [UI("基础", "责任网格")]   public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name;
         [UI("基础", "责任单位")]   public string DutyUnitName => this.DutyOrg?.GetAncestor(OrgLevel.Unit)?.Name;         // 责任单位
+        [UI("基础", "责任科室")]   public string DutySectionName => this.DutyOrg?.GetAncestor(OrgLevel.Section)?.Name;         // 责任科室
         [UI("基础", "责任区县")]   public string DutyDistrictName => this.DutyOrg?.GetAncestor(OrgLevel.District)?.Name;         // 责任区县
         [UI("基础", "责任乡镇")]   public string DutyTownName => this.DutyOrg?.GetAncestor(OrgLevel.Town)?.Name;         // 责任乡镇
         [UI("基础", "责任社区")]   public string DutyCommunityName => this.DutyOrg?.GetAncestor(OrgLevel.Community)?.Name;         // 责任社区
-
         [UI("基础", "技术检查员")] public string CheckerName => Checker?.Name;
         [UI("基础", "检查周期")]   public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
 

@@ -45,7 +45,7 @@ namespace App.Pages.EleUISamples
 
         private IActionResult OpenDemoDrawer(string actionName, DrawerCloseAction action)
         {
-            return EleServer.ShowDrawer(
+            return EleHandler.ShowDrawer(
                 title: $"CloseAction = {actionName}",
                 content: "点击右上角关闭按钮或遮罩关闭抽屉，观察列表刷新行为。",
                 direction: "rtl",

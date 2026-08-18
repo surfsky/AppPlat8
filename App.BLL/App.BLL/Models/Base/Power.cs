@@ -95,7 +95,7 @@ namespace App.DAL
         [UI("用户", "用户新增")]            UserNew = 51,
         [UI("用户", "用户修改")]            UserEdit = 52,
         [UI("用户", "用户删除")]            UserDelete = 53,
-        [UI("用户", "用户密码管理")]         UserPassword = 54,
+        [UI("用户", "用户密码重置")]         UserResetPassword = 54,
 
         [UI("角色", "角色浏览")]            RoleView = 55,
         [UI("角色", "角色新增")]            RoleNew = 56,

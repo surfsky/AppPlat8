@@ -228,7 +228,7 @@ namespace App.EleUI
             object Data = null,
             object Value = null)
         {
-            var fieldName = EleServer.ResolveFieldExpress(fieldExpress);
+            var fieldName = EleHandler.ResolveFieldExpress(fieldExpress);
             return SetControl(ControlTarget.Field(fieldName), Enabled, Visible, Data, Value);
         }
 
@@ -249,7 +249,7 @@ namespace App.EleUI
 
         public IActionResult ToActionResult(string msg = "success")
         {
-            return EleServer.SetControl(_items, msg);
+            return EleHandler.SetControl(_items, msg);
         }
     }
 
@@ -273,16 +273,16 @@ namespace App.EleUI
     // EleManager 客户端命令管理器
     //======================================================================
     /// <summary>
-    /// ElemUI Server <----> EleManager client
+    /// ElemUI Server Handler <----> EleManager client ui
     /// </summary>
-    public class EleServer
+    public class EleHandler
     {
         //-------------------------------------------------
         // Json result
         //-------------------------------------------------
         private static readonly JsonSerializerOptions _jsonOptions;
 
-        static EleServer()
+        static EleHandler()
         {
             _jsonOptions = new JsonSerializerOptions
             {
@@ -303,13 +303,13 @@ namespace App.EleUI
         // build client command result
         //--------------------------------------------------------------
         /// <summary>构建一条客户端命令结果</summary>
-        private static JsonResult BuildCommandResult(ClientCommandType commandType, object args, string msg = "ok")
+        public static JsonResult BuildCommandResult(ClientCommandType commandType, object args, string msg = "ok")
         {
             return BuildResult(0, msg, new ClientCommand(commandType, args));
         }
 
         /// <summary>构建多条客户端命令（命令按数组顺序串行执行，可实现 toast → 关抽屉 → 刷数据 等串联动作）</summary>
-        public static JsonResult BuildCommandResult(params ClientCommand[] commands)
+        public static JsonResult BuildCommandsResult(params ClientCommand[] commands)
         {
             var list = (commands ?? Array.Empty<ClientCommand>()).ToList();
             var payload = new
@@ -325,7 +325,7 @@ namespace App.EleUI
         // 传递客户端命令
         //--------------------------------------------------------------
         /// <summary>显示客户端 Toast（就是element中的 message 走轻提示）</summary>
-        public static IActionResult ShowToast(string message, NotifyType type = NotifyType.Info, string title = "Title")
+        public static JsonResult ShowToast(string message, NotifyType type = NotifyType.Info, string title = "Title")
         {
             return BuildCommandResult(
                 ClientCommandType.Toast,
@@ -334,7 +334,7 @@ namespace App.EleUI
         }
 
         /// <summary>显示客户端提示</summary>
-        public static IActionResult ShowNotify(string message, NotifyType type = NotifyType.Info, string title="Title")
+        public static JsonResult ShowNotify(string message, NotifyType type = NotifyType.Info, string title="Title")
         {
             return BuildCommandResult(
                 ClientCommandType.Notify,
@@ -346,7 +346,7 @@ namespace App.EleUI
         // Loading
         //---------------------------------------------------------------
         /// <summary>显示客户端 Loading</summary>
-        public static IActionResult ShowLoading(string text = "加载中...")
+        public static JsonResult ShowLoading(string text = "加载中...")
         {
             return BuildCommandResult(
                 ClientCommandType.ShowLoading,
@@ -355,7 +355,7 @@ namespace App.EleUI
         }
 
         /// <summary>关闭客户端 Loading</summary>
-        public static IActionResult CloseLoading()
+        public static JsonResult CloseLoading()
         {
             return BuildCommandResult(ClientCommandType.CloseLoading, new { });
         }
@@ -364,7 +364,7 @@ namespace App.EleUI
         // Drawer
         //---------------------------------------------------------------
         /// <summary>打开客户端 Drawer</summary>
-        public static IActionResult ShowDrawer(
+        public static JsonResult ShowDrawer(
             string title = null,
             string content = null,
             string url = null,
@@ -409,7 +409,7 @@ namespace App.EleUI
         }
 
         /// <summary>关闭客户端 Drawer</summary>
-        public static IActionResult CloseDrawer()
+        public static JsonResult CloseDrawer()
         {
             return BuildCommandResult(ClientCommandType.CloseDrawer, new { });
         }
@@ -421,7 +421,7 @@ namespace App.EleUI
         /// 刷新 EleTable 数据（不刷新页面）。
         /// 默认从 Drawer 页发给父 iframe 的 parent window，命中 Atts 列表的 window.__attsTableInstance__。
         /// </summary>
-        public static IActionResult RefreshData(RefreshScope scope = RefreshScope.Parent, string instanceId = null)
+        public static JsonResult RefreshData(RefreshScope scope = RefreshScope.Parent, string instanceId = null)
         {
             return BuildCommandResult(
                 ClientCommandType.RefreshData,
@@ -432,7 +432,7 @@ namespace App.EleUI
         /// <summary>
         /// 刷新整个页面（location.reload）。
         /// </summary>
-        public static IActionResult RefreshPage(RefreshScope scope = RefreshScope.Parent, bool forceReload = true)
+        public static JsonResult RefreshPage(RefreshScope scope = RefreshScope.Parent, bool forceReload = true)
         {
             return BuildCommandResult(
                 ClientCommandType.RefreshPage,
@@ -447,7 +447,7 @@ namespace App.EleUI
         /// <param name="isAlert">是否为 Alert 类型，若为 true，则仅显示一个确定按钮。</param>
         /// <param name="clientHandler">客户端回调处理函数名称。</param>
         /// <param name="serverHandler">服务端回调处理函数名称。</param>
-        public static IActionResult ShowMessageBox(
+        public static JsonResult ShowMessageBox(
             string text,
             string title = "提示",
             NotifyType type = NotifyType.Info,
@@ -478,7 +478,7 @@ namespace App.EleUI
         /// <param name="serverHandler">服务端回调处理函数名称。</param>
         /// <param name="inputPattern">输入验证正则表达式（可选）。</param>
         /// <param name="inputErrorMessage">验证失败提示信息（可选）。</param>
-        public static IActionResult ShowInputBox(
+        public static JsonResult ShowInputBox(
             string text,
             string title = "请输入",
             string inputPlaceholder = "请输入内容",
@@ -533,7 +533,7 @@ namespace App.EleUI
         }
 
         /// <summary>批量设置控件状态（底层入口）</summary>
-        public static IActionResult SetControl(IEnumerable<ControlPatchArgs> items, string msg = "success")
+        public static JsonResult SetControl(IEnumerable<ControlPatchArgs> items, string msg = "success")
         {
             var list = (items ?? Enumerable.Empty<ControlPatchArgs>())
                 .Select(i => new ControlPatchArgs(

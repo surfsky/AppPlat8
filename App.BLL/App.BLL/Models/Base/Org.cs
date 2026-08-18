@@ -20,6 +20,7 @@ namespace App.DAL
         [UI("社区")]  Community = 5,
         [UI("网格")]  Net = 6,
         [UI("单位")]  Unit = 7,
+        [UI("科室")]  Section = 8,
     }
 
     /// <summary>组织</summary>

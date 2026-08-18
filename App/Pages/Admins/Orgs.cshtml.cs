@@ -9,6 +9,7 @@ using App.DAL;
 using App.HttpApi;
 using App.Utils;
 using App.Entities;
+using App.EleUI;
 
 namespace App.Pages.Admins
 {
@@ -34,6 +35,7 @@ namespace App.Pages.Admins
 
         public async Task<IActionResult> OnPostDelete([FromBody]long[] ids)
         {
+            Logger.Info($"尝试删除组织: {string.Join(",", ids)}");
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
             if (!CheckPower(Power.OrgDelete))
@@ -43,17 +45,19 @@ namespace App.Pages.Admins
             {
                 // Check users
                 int userCount = await App.DAL.User.Set.Where(u => u.OrgId == id).CountAsync();
-                if (userCount > 0) return BuildResult(400, $"删除失败！组织[{id}]下还有用户");
+                if (userCount > 0) 
+                    return BuildResult(400, $"删除失败！组织[{id}]下还有用户");
+                    //return EleHandler.ShowToast($"删除失败！组织[{id}]下还有用户");
 
                 // Check children
                 int childCount = await App.DAL.Org.Set.Where(d => d.ParentId == id).CountAsync();
-                if (childCount > 0) return BuildResult(400, $"删除失败！组织[{id}]下还有子组织");
+                if (childCount > 0) 
+                    return BuildResult(400, $"删除失败！组织[{id}]下还有子组织");
+                    //return EleHandler.ShowToast($"删除失败！组织[{id}]下还有子组织");
 
                 var item = App.DAL.Org.Get(id);
                 if (item != null)
-                {
                     item.Delete();
-                }
             }
             App.DAL.Org.ClearCache();
             return BuildResult(0, "删除成功");

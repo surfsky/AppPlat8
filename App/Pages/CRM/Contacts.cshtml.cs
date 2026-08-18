@@ -49,7 +49,7 @@ namespace App.Pages.OA
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.OA.Contact") + "&ignoreId=true";
-            return EleServer.ShowDrawer(
+            return EleHandler.ShowDrawer(
                 title: "导入联系人",
                 url: url,
                 direction: "rtl",

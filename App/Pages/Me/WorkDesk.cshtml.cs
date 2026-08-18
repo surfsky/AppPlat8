@@ -46,9 +46,9 @@ namespace App.Pages.Me
             {
                 new()
                 {
-                    Title = "数据驾驶舱",
+                    Title = "应急一张图",
                     Badge = "GIS",
-                    Description = "进入全局地图驾驶舱，查看图层、点位、场景面板和空间信息。",
+                    Description = "进入全局应急一张图地图，查看图层、点位、场景面板和空间信息。",
                     Url = "/GIS/Index",
                     Target = "_blank",
                     Icon = "fas fa-earth-asia",

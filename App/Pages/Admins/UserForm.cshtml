@@ -7,7 +7,7 @@
 
 @section body {
     <EleForm LabelWidth="120px">
-        <EleImageUpload For="Item.Photo" Label="头像"></EleImageUpload>
+        <EleImageUpload For="Item.Photo" Label="头像" FillRow="true" ItemWidth="64" ></EleImageUpload>
         <EleInput For="Item.Name" Label="账号" Required="true" Enabled="@(Model.IsNameEditable)"></EleInput>
         <EleInput For="Item.RealName" Label="姓名" Required="true"></EleInput>
         <EleTreePicker For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" IdField="id" NameField="name" Required="true" CheckStrictly="true"></EleTreePicker>

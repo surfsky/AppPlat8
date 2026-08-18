@@ -22,6 +22,7 @@ namespace App.Pages.Admins
     public class UsersModel : AdminModel
     {
         public App.DAL.User Item { get; set; }
+        public long? RoleId { get; set; }
         public List<SelectListItem> RoleList { get; set; }
         public bool CanResetPassword { get; set; }
 
@@ -32,13 +33,15 @@ namespace App.Pages.Admins
                 .ThenBy(r => r.Id)
                 .Select(r => new SelectListItem(r.Name, r.Id.ToString()))
                 .ToList();
-            CanResetPassword = string.Equals(GetUserName(), "admin", StringComparison.OrdinalIgnoreCase);
+            // 获取当前登录用户是否可以重置密码权限
+            CanResetPassword = this.CheckPower(Power.UserResetPassword);
+            //CanResetPassword = string.Equals(GetUserName(), "admin", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>获取用户列表</summary>
-        public IActionResult OnGetData(Paging pi, string name, string realName, long? deptId, long? roleId)
+        public IActionResult OnGetData(Paging pi, string name, string realName, long? deptId, long? roleId, bool? isDel)
         {
-            var list = App.DAL.User.Search(name, realName, deptId, roleId).SortPageExport(pi);
+            var list = App.DAL.User.Search(name, realName, deptId, roleId, isDel).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
@@ -58,7 +61,7 @@ namespace App.Pages.Admins
             if (ids == null || ids.Length == 0) return BuildResult(400, "参数错误");
             foreach (var id in ids)
             {
-                if (id == 1) continue;
+                if (id == 1) continue;   // admin 管理员用户不能删除
                 App.DAL.User.Delete(id);
             }
             return BuildResult(0, "删除成功");
@@ -70,7 +73,7 @@ namespace App.Pages.Admins
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.User");
-            return EleServer.ShowDrawer(
+            return EleHandler.ShowDrawer(
                 title: "导入用户",
                 url: url,
                 //size: "980px",
@@ -90,6 +93,8 @@ namespace App.Pages.Admins
             var user = App.DAL.User.Get(req.Id);
             if (user == null)
                 return BuildResult(404, "用户不存在");
+            if (user.Name == "admin")
+                return BuildResult(403, "管理员用户不能在此重置密码");
 
             var defaultPassword = SiteConfig.Instance.DefaultPassword?.Trim();
             if (string.IsNullOrWhiteSpace(defaultPassword))
@@ -97,7 +102,7 @@ namespace App.Pages.Admins
 
             user.Password = PasswordUtil.CreateDbPassword(defaultPassword);
             user.Save();
-            return EleServer.ShowToast($"已将用户“{user.Name}”的密码重置为默认密码{defaultPassword}");
+            return EleHandler.ShowToast($"已将用户“{user.Name}”的密码重置为默认密码{defaultPassword}");
             //return BuildResult(0, $"已将用户“{user.Name}”的密码重置为默认密码");
         }
 
