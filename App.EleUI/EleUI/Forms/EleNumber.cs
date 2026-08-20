@@ -14,11 +14,11 @@ namespace App.EleUI
     {
         [HtmlAttributeName("Precision")]         public int Precision { get; set; } = 0;
         [HtmlAttributeName("Step")]              public double Step { get; set; } = 0;
-        [HtmlAttributeName("Prefix")]            public string Prefix { get; set; }
-        [HtmlAttributeName("Suffix")]            public string Suffix { get; set; }
-        [HtmlAttributeName("Prepend")]           public string Prepend { get; set; }
-        [HtmlAttributeName("Append")]            public string Append { get; set; }
-        [HtmlAttributeName("ControlPosition")]   public string ControlPosition { get; set; }
+        [HtmlAttributeName("Prefix")]            public string Prefix { get; set; }  // 前缀
+        [HtmlAttributeName("Suffix")]            public string Suffix { get; set; }  // 后缀
+        //[HtmlAttributeName("Prepend")]           public string Prepend { get; set; }  // 前缀（？是否重复）
+        //[HtmlAttributeName("Append")]            public string Append { get; set; }  // 后缀（？是否重复）
+        [HtmlAttributeName("ControlPosition")]   public string ControlPosition { get; set; }  // 控制按钮位置
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -41,8 +41,8 @@ namespace App.EleUI
             var contentHtml = childContent.GetContent();
 
             // prefix & suffix
-            var effectivePrefix = string.IsNullOrWhiteSpace(Prefix) ? Prepend : Prefix;
-            var effectiveSuffix = string.IsNullOrWhiteSpace(Suffix) ? Append : Suffix;
+            var effectivePrefix = Prefix;
+            var effectiveSuffix = Suffix;
             if (!string.IsNullOrWhiteSpace(effectivePrefix))
             {
                 contentHtml = $"<template #prefix><span>{WebUtility.HtmlEncode(effectivePrefix)}</span></template>" + contentHtml;

@@ -120,9 +120,9 @@ namespace App
                         .Select(t => t.PowerId)
                         .ToList();
 
-                    hasAll = powerIds.Contains(Power.DataAccessAll);
-                    hasOrg = powerIds.Contains(Power.DataAccessOrg);
-                    hasOwn = powerIds.Contains(Power.DataAccessOwn);
+                    hasAll = powerIds.Contains(Power.DataAll);
+                    hasOrg = powerIds.Contains(Power.DataUnit);
+                    hasOwn = powerIds.Contains(Power.DataDuty);
                 }
 
                 // 无数据权限标识时默认按责任数据收敛，避免越权。

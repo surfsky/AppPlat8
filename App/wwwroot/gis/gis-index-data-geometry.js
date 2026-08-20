@@ -436,7 +436,9 @@
 
         function rebuildGeometryPointMarkers() {
             const render = getMarkerRender();
-            const currentMode = render?.flags?.normal === false ? 'dock' : 'normal';
+            const currentMode = typeof render?.getRenderMode === 'function'
+                ? render.getRenderMode()
+                : (render?.flags?.normal === false ? 'dock' : 'normal');
             clearGeometryPointMarkers();
             const renderRows = getGeometryRowsForMarkerRender();
             const renderPoints = [];

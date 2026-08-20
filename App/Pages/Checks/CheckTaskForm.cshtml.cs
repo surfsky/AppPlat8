@@ -39,12 +39,16 @@ namespace App.Pages.Checks
             var item = req.Id > 0 ? CheckTask.Get(req.Id) : new CheckTask();
             if (item.Id == 0)
             {
-                item.PublisherId = GetUserId();
+                item.CreatorId = GetUserId();
             }
 
             item.Name = req.Name;
+            item.StartDt = req.StartDt;
             item.ExpireDt = req.ExpireDt;
             item.Remark = req.Remark;
+            item.TotalCount = req.TotalCount;
+            item.FinishCount = req.FinishCount;
+            item.Progress = req.Progress;
             //item.SetCheckObjectIds(req.CheckObjectIds);
             //item.SetOrgIds(req.OrgIds);
             //item.SetCheckSheetIds(req.CheckSheetIds);

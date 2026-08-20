@@ -1,5 +1,5 @@
 /**
- * Render point markers in dock and normal modes.
+ * Render point markers in icon, normal and dock modes.
  *
  * Usage:
  * const markerRender = new MapMarkerRender({
@@ -43,7 +43,7 @@ class MapMarkerRender {
     this.map = null;
     this.points = [];
     this.entries = [];
-    this.flags = { marker: true, label: true, leader: true, normal: true };
+    this.flags = { marker: true, label: true, leader: true, mode: "normal" };
     this.boundRender = () => this.requestRender();
     this.boundMoveStart = () => this.handleMoveStart();
     this.boundMoveEnd = () => this.handleMoveEnd();
@@ -100,7 +100,7 @@ class MapMarkerRender {
       marker: next.renderMarker !== false,
       label: next.renderLabel !== false,
       leader: next.renderLine !== false,
-      normal: mode === "normal"
+      mode
     };
     this.markerSize = this.getActiveMarkerSize();
 
@@ -125,12 +125,12 @@ class MapMarkerRender {
   /**Update render options only */
   setRenderOptions(options = {}) {
     const next = options && typeof options === "object" ? options : {};
-    const mode = this.normalizeRenderMode(next.renderMode ?? (this.flags?.normal ? "normal" : "dock"));
+    const mode = this.normalizeRenderMode(next.renderMode ?? this.getRenderMode());
     this.flags = {
       marker: next.renderMarker !== false,
       label: next.renderLabel !== false,
       leader: next.renderLine !== false,
-      normal: mode === "normal"
+      mode
     };
     this.markerSize = this.getActiveMarkerSize();
     this.applyStyleVars();
@@ -195,7 +195,26 @@ class MapMarkerRender {
   /**Normalize render mode */
   normalizeRenderMode(mode) {
     const val = String(mode ?? "normal").trim().toLowerCase();
-    return val === "normal" ? "normal" : "dock";
+    if (val === "dock") return "dock";
+    if (val === "icon" || val === "icononly" || val === "icon-only" || val === "marker" || val === "markers") return "icon";
+    return "normal";
+  }
+
+  /**Get current render mode */
+  getRenderMode() {
+    const mode = String(this.flags?.mode || "").trim().toLowerCase();
+    if (mode === "dock" || mode === "icon" || mode === "normal") return mode;
+    return this.flags?.normal === false ? "dock" : "normal";
+  }
+
+  /**Check whether current mode is dock */
+  isDockMode() {
+    return this.getRenderMode() === "dock";
+  }
+
+  /**Check whether current mode shows inline text */
+  isInlineTextMode() {
+    return this.getRenderMode() === "normal";
   }
 
   /**Destroy renderer */
@@ -303,7 +322,7 @@ class MapMarkerRender {
 
   /**Get active marker size */
   getActiveMarkerSize() {
-    const style = this.flags?.normal ? this.getNormalStyle() : this.getDockStyle();
+    const style = this.isDockMode() ? this.getDockStyle() : this.getNormalStyle();
     return this.parseSize(style?.markerSize, 18);
   }
 
@@ -1136,17 +1155,18 @@ class MapMarkerRender {
 
   /**Toggle render mode */
   toggleRenderMode() {
-    this.flags.normal = !this.flags.normal;
-    this.markerSize = this.getActiveMarkerSize();
-    this.applyStyleVars();
-    this.updateControlStates();
-    this.requestRender();
-    return this.flags.normal;
+    const current = this.getRenderMode();
+    const next = current === "icon" ? "normal" : (current === "normal" ? "dock" : "icon");
+    this.setRenderMode(next);
+    return next;
   }
 
   /**Set render mode */
-  setRenderMode(renderNormal = false) {
-    this.flags.normal = renderNormal === true;
+  setRenderMode(renderMode = "normal") {
+    const nextMode = typeof renderMode === "boolean"
+      ? (renderMode === true ? "normal" : "dock")
+      : this.normalizeRenderMode(renderMode);
+    this.flags.mode = nextMode;
     this.markerSize = this.getActiveMarkerSize();
     this.applyStyleVars();
     this.updateControlStates();
@@ -1157,7 +1177,7 @@ class MapMarkerRender {
 
   /**Notify host when render mode changes */
   emitRenderModeChange() {
-    const mode = this.flags?.normal === true ? "normal" : "dock";
+    const mode = this.getRenderMode();
     try {
       window.dispatchEvent(new CustomEvent("map-marker-render-mode-change", {
         detail: { mode, renderer: this }
@@ -1211,12 +1231,18 @@ class MapMarkerRender {
 
   /**Refresh control active state */
   updateControlStates() {
-    const title = this.flags.normal ? "点位控制：当前为普通模式" : "点位控制：当前为停靠模式";
+    const mode = this.getRenderMode();
+    const titleMap = {
+      icon: "点位控制：当前为仅图标",
+      normal: "点位控制：当前为图标和文本",
+      dock: "点位控制：当前为文本靠边停靠"
+    };
+    const title = titleMap[mode] || titleMap.normal;
     this.controls.forEach(ctrl => {
       const btn = ctrl?._button;
       if (!btn) return;
       btn.title = title;
-      btn.classList.toggle("is-normal", this.flags.normal === true);
+      btn.classList.toggle("is-normal", mode === "normal");
       btn.setAttribute("aria-expanded", ctrl?._panelOpen === true ? "true" : "false");
       ctrl?._dockBtnTop?.classList.toggle("is-active", this.activeDockSet.has("top"));
       ctrl?._dockBtnBottom?.classList.toggle("is-active", this.activeDockSet.has("bottom"));
@@ -1227,9 +1253,10 @@ class MapMarkerRender {
       ctrl?._dockBtnBottom?.classList.toggle("is-disabled", !this.hasDock("bottom") || (single && this.activeDockSet.has("bottom")));
       ctrl?._dockBtnLeft?.classList.toggle("is-disabled", !this.hasDock("left") || (single && this.activeDockSet.has("left")));
       ctrl?._dockBtnRight?.classList.toggle("is-disabled", !this.hasDock("right") || (single && this.activeDockSet.has("right")));
-      ctrl?._modeDock?.classList.toggle("is-active", this.flags.normal !== true);
-      ctrl?._modeNormal?.classList.toggle("is-active", this.flags.normal === true);
-      ctrl?._dockGroup?.classList.toggle("is-hidden", this.flags.normal === true);
+      ctrl?._modeIcon?.classList.toggle("is-active", mode === "icon");
+      ctrl?._modeNormal?.classList.toggle("is-active", mode === "normal");
+      ctrl?._modeDock?.classList.toggle("is-active", mode === "dock");
+      ctrl?._dockGroup?.classList.toggle("is-hidden", mode !== "dock");
       if (ctrl?._panel) ctrl._panel.hidden = ctrl?._panelOpen !== true;
       ctrl?._panel?.classList.toggle("is-open", ctrl?._panelOpen === true);
     });
@@ -1244,8 +1271,9 @@ class MapMarkerRender {
       <div class="mmr-ctrl-groupbox">
         <div class="mmr-ctrl-group-title">点位展示方式</div>
         <div class="mmr-ctrl-groupbuttons">
-          <button type="button" class="mmr-ctrl-option" data-mode="normal">普通</button>
-          <button type="button" class="mmr-ctrl-option" data-mode="dock">停靠</button>
+          <button type="button" class="mmr-ctrl-option" data-mode="icon">仅图标</button>
+          <button type="button" class="mmr-ctrl-option" data-mode="normal">图标和文本</button>
+          <button type="button" class="mmr-ctrl-option" data-mode="dock">文本靠边停靠</button>
         </div>
       </div>
       <div class="mmr-ctrl-groupbox" data-role="dock-group">
@@ -1260,6 +1288,7 @@ class MapMarkerRender {
     `;
     panel.addEventListener("pointerdown", (evt) => evt.stopPropagation());
     ctrl._panelOpen = false;
+    ctrl._modeIcon = panel.querySelector('[data-mode="icon"]');
     ctrl._modeNormal = panel.querySelector('[data-mode="normal"]');
     ctrl._modeDock = panel.querySelector('[data-mode="dock"]');
     ctrl._dockGroup = panel.querySelector('[data-role="dock-group"]');
@@ -1267,8 +1296,9 @@ class MapMarkerRender {
     ctrl._dockBtnBottom = panel.querySelector('[data-dock="bottom"]');
     ctrl._dockBtnLeft = panel.querySelector('[data-dock="left"]');
     ctrl._dockBtnRight = panel.querySelector('[data-dock="right"]');
+    ctrl._modeIcon?.addEventListener("click", () => this.setRenderMode("icon"));
     ctrl._modeNormal?.addEventListener("click", () => this.setRenderMode(true));
-    ctrl._modeDock?.addEventListener("click", () => this.setRenderMode(false));
+    ctrl._modeDock?.addEventListener("click", () => this.setRenderMode("dock"));
     ctrl._dockBtnTop?.addEventListener("click", () => this.handleDockControlClick("top"));
     ctrl._dockBtnBottom?.addEventListener("click", () => this.handleDockControlClick("bottom"));
     ctrl._dockBtnLeft?.addEventListener("click", () => this.handleDockControlClick("left"));
@@ -1325,7 +1355,7 @@ class MapMarkerRender {
     if (!this.map || !this.overlayEl) return;
 
     this.updateMarkerVisibility();
-    if (this.flags.normal) {
+    if (!this.isDockMode()) {
       this.clearOverlay();
       return;
     }
@@ -1346,7 +1376,7 @@ class MapMarkerRender {
       this.updateMarkerContent(entry, idx);
       const pointState = this.getEntryState(entry) || this.getPointState(entry.item, idx);
       const visible = pointState?.visible !== false;
-      const showInline = this.flags.normal && this.flags.label;
+      const showInline = this.isInlineTextMode() && this.flags.label;
       entry.markerEl.classList.toggle("is-normal", showInline);
       entry.markerEl.classList.toggle("hide-icon", !visible || !this.flags.marker);
       entry.markerEl.classList.toggle("hide-all", !visible || (!this.flags.marker && !showInline));
@@ -1415,7 +1445,7 @@ class MapMarkerRender {
   /**Get effective dock margin */
   getDockMargin(dock) {
     const margin = this.parseSize(dock?.margin, 20);
-    if (this.flags?.normal === true) return margin;
+    if (!this.isDockMode()) return margin;
     if (dock?.position === "top") return Math.max(18, margin - 70);
     return margin;
   }

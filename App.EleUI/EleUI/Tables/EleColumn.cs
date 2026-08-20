@@ -17,7 +17,7 @@ namespace App.EleUI
     // Columns
     //-----------------------------------------------------------------
     /// <summary>表格列展示格式</summary>
-    public enum ColumnFormat
+    public enum ColumnDisplay
     {
         Auto, // 自动识别
         Text,
@@ -44,10 +44,10 @@ namespace App.EleUI
         public string Prop { get; set; }
 
         /// <summary>列展示格式，默认自动识别属性类型</summary>
-        [HtmlAttributeName("Format")]
-        public ColumnFormat Format { get; set; } = ColumnFormat.Auto;
+        [HtmlAttributeName("Display")]
+        public ColumnDisplay Display { get; set; } = ColumnDisplay.Auto;
 
-        /// <summary>自定义格式化字符串，仅当Format为Custom时生效</summary>
+        /// <summary>自定义格式化字符串，仅当Display为Custom时生效</summary>
         [HtmlAttributeName("FormatString")]
         public string FormatString { get; set; }
 
@@ -112,18 +112,18 @@ namespace App.EleUI
                 }
 
                 // Auto-detect Format if is Auto
-                if (Format == ColumnFormat.Auto)
+                if (Display == ColumnDisplay.Auto)
                 {
                     // Handle Nullable types
                     var type = For.ModelExplorer.ModelType;
                     if (Nullable.GetUnderlyingType(type) != null)
                         type = Nullable.GetUnderlyingType(type);
                     if (type == typeof(bool))
-                        Format = ColumnFormat.Switch;
+                        Display = ColumnDisplay.Tag;
                     else if (type == typeof(DateTime))
-                        Format = ColumnFormat.DateTime;
+                        Display = ColumnDisplay.DateTime;
                     else if (type.IsEnum)
-                        Format = ColumnFormat.Enum;
+                        Display = ColumnDisplay.Enum;
                 }
             }
 
@@ -159,7 +159,7 @@ namespace App.EleUI
                         </template>
                     ");
                 }
-                else if (Format == ColumnFormat.Custom || !string.IsNullOrEmpty(FormatString))
+                else if (Display == ColumnDisplay.Custom || !string.IsNullOrEmpty(FormatString))
                 {
                      // If FormatString is provided (e.g. yyyy-MM-dd), we assume Date/Time formatting for now
                      // Or it could be a JS formatter function name if we supported that.
@@ -178,7 +178,7 @@ namespace App.EleUI
                         </template>
                     ");
                 }
-                else if (Format == ColumnFormat.DateTime)
+                else if (Display == ColumnDisplay.DateTime)
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
@@ -186,7 +186,7 @@ namespace App.EleUI
                         </template>
                     ");
                 }
-                else if (Format == ColumnFormat.Date)
+                else if (Display == ColumnDisplay.Date)
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
@@ -194,7 +194,7 @@ namespace App.EleUI
                         </template>
                     ");
                 }
-                else if (Format == ColumnFormat.Time)
+                else if (Display == ColumnDisplay.Time)
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
@@ -202,7 +202,7 @@ namespace App.EleUI
                         </template>
                     ");
                 }
-                else if (Format == ColumnFormat.Switch)
+                else if (Display == ColumnDisplay.Switch)
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
@@ -210,7 +210,7 @@ namespace App.EleUI
                         </template>
                     ");
                 }
-                else if (Format == ColumnFormat.Tag)
+                else if (Display == ColumnDisplay.Tag)
                 {
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
@@ -219,7 +219,7 @@ namespace App.EleUI
                         </template>
                     ");
                 }
-                else if (Format == ColumnFormat.Enum)
+                else if (Display == ColumnDisplay.Enum)
                 {
                     // 获取枚举类型
                     Type enumType = null;

@@ -62,7 +62,7 @@ namespace App.DAL
         public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
 
         //------------------------------------------------------
-        // 角色相关
+        // 角色相关（用UserRoles表存储）
         //------------------------------------------------------
         public string RoleNames => (this.Roles ?? new List<Role>())
             .Where(t => t != null && t.Name.IsNotEmpty())
@@ -124,7 +124,7 @@ namespace App.DAL
         }
 
         //------------------------------------------------------
-        // 权限
+        // 权限（用RolePower表存储）
         //------------------------------------------------------
         /// <summary>获取用户权限（admin拥有所有权限、普通用户根据角色来获取权限）</summary>
         public List<Power> GetPowers()

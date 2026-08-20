@@ -22,9 +22,9 @@ namespace App.Pages.Checks
         {
         }
 
-        public IActionResult OnGetData(Paging pi, string name, long? publisherId, DateTime? expireBefore)
+        public IActionResult OnGetData(Paging pi, string name, DateTime? startDt, DateTime? expireDt)
         {
-            var list = CheckTask.Search(name, publisherId, expireBefore).SortPageExport(pi);
+            var list = CheckTask.Search(name, startDt, expireDt).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

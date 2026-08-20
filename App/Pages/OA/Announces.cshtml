@@ -27,10 +27,10 @@
             <EleColumn For="Item.Title" Label="标题" Link="true" MinWidth="200" Sortable="true"></EleColumn>
             <EleColumn For="Item.Author" Label="作者" Width="120" Sortable="true"></EleColumn>
             <EleColumn For="Item.StatusName" Label="状态" Width="100"></EleColumn>
-            <EleColumn For="Item.PublishTime" Label="发布时间" Width="180" Format="@ColumnFormat.DateTime" Sortable="true"></EleColumn>
+            <EleColumn For="Item.PublishTime" Label="发布时间" Width="180" Display="DateTime" Sortable="true"></EleColumn>
             <EleColumn For="Item.ViewCount" Label="浏览次数" Width="110" Sortable="true"></EleColumn>
             <EleColumn For="Item.IsTop" Label="是否置顶" Width="90"></EleColumn>
-            <EleColumn For="Item.CreateTime" Label="创建时间" Width="180" Format="@ColumnFormat.Date" Sortable="true"></EleColumn>
+            <EleColumn For="Item.CreateTime" Label="创建时间" Width="180" Display="Date" Sortable="true"></EleColumn>
         </Columns>
     </EleTable>
 }

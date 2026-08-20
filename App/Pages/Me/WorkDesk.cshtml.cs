@@ -77,7 +77,7 @@ namespace App.Pages.Me
                 {
                     Title = "通讯录",
                     Badge = "CRM",
-                    Description = "进入通讯录导航，快速打开通讯录页面。",
+                    Description = "检索应急通讯录。",
                     Url = "/CRM/Contacts",
                     Icon = "fas fa-book-open-reader",
                     IconBg = "bg-gradient-to-br from-violet-500 to-fuchsia-600",
@@ -86,7 +86,7 @@ namespace App.Pages.Me
                 {
                     Title = "值班表",
                     Badge = "DUTY",
-                    Description = "查看近期值班表",
+                    Description = "查看近期值班表。",
                     Url = "/Duty/Index",
                     Icon = "fas fa-book-open-reader",
                     IconBg = "bg-gradient-to-br from-violet-500 to-fuchsia-600",
@@ -107,9 +107,9 @@ namespace App.Pages.Me
                     IconBg = "bg-gradient-to-br from-blue-500 to-cyan-500",
                     Tasks = new List<WorkDeskTaskItem>
                     {
-                        CreateTask("台风防御演练方案上报", "整理演练流程与附件材料，等待局办审核。", "徐建泽", "进行中", 78, DateTime.Today.AddDays(3)),
-                        CreateTask("防汛仓库设备清单复核", "核对库存数量与领用记录，补齐缺失设备照片。", "陈晓燕", "进行中", 55, DateTime.Today.AddDays(6)),
-                        CreateTask("应急值守月报归档", "已完成归档与签批流转。", "张瑞", "已完成", 100, DateTime.Today.AddDays(-1)),
+                        CreateTask("台风防御演练方案上报", "整理演练流程与附件材料，等待局办审核。", "徐建泽", "进行中", 78, DateTime.Today.AddDays(3), "/Tasks/ToDo"),
+                        CreateTask("防汛仓库设备清单复核", "核对库存数量与领用记录，补齐缺失设备照片。", "陈晓燕", "进行中", 55, DateTime.Today.AddDays(6), "/Tasks/ToDo"),
+                        CreateTask("应急值守月报归档", "已完成归档与签批流转。", "张瑞", "已完成", 100, DateTime.Today.AddDays(-1), "/Tasks/ToDo"),
                     }
                 },
                 new()
@@ -120,9 +120,9 @@ namespace App.Pages.Me
                     IconBg = "bg-gradient-to-br from-amber-500 to-orange-500",
                     Tasks = new List<WorkDeskTaskItem>
                     {
-                        CreateTask("危化企业专项排查", "重点核查储罐区和消防设施，待补录整改照片。", "林志恒", "进行中", 64, DateTime.Today.AddDays(2)),
-                        CreateTask("老旧厂房安全复查", "针对上次发现的电气线路问题开展复查。", "王梦洁", "待开始", 20, DateTime.Today.AddDays(8)),
-                        CreateTask("校园周边燃气隐患核验", "已完成现场核验，待形成闭环报告。", "周晓峰", "已完成", 100, DateTime.Today.AddDays(-2)),
+                        CreateTask("危化企业专项排查", "重点核查储罐区和消防设施，待补录整改照片。", "林志恒", "进行中", 64, DateTime.Today.AddDays(2), "/Checks/CheckTasks"),
+                        CreateTask("老旧厂房安全复查", "针对上次发现的电气线路问题开展复查。", "王梦洁", "待开始", 20, DateTime.Today.AddDays(8), "/Checks/CheckTasks"),
+                        CreateTask("校园周边燃气隐患核验", "已完成现场核验，待形成闭环报告。", "周晓峰", "已完成", 100, DateTime.Today.AddDays(-2), "/Checks/CheckTasks"),
                     }
                 },
                 new()
@@ -133,9 +133,9 @@ namespace App.Pages.Me
                     IconBg = "bg-gradient-to-br from-emerald-500 to-teal-500",
                     Tasks = new List<WorkDeskTaskItem>
                     {
-                        CreateTask("八月份值班表发布", "完成科室排班汇总并同步到共享目录。", "孙宁", "已完成", 100, DateTime.Today.AddDays(-4)),
-                        CreateTask("应急预案修订意见汇总", "收集各条线反馈，形成修订对照稿。", "黄诗雅", "进行中", 72, DateTime.Today.AddDays(5)),
-                        CreateTask("视频会议设备巡检", "核对会议室音视频设备状态，安排缺陷报修。", "郑豪", "待开始", 15, DateTime.Today.AddDays(10)),
+                        CreateTask("八月份值班表发布", "完成科室排班汇总并同步到共享目录。", "孙宁", "已完成", 100, DateTime.Today.AddDays(-4), "/Duty/Index"),
+                        CreateTask("应急预案修订意见汇总", "收集各条线反馈，形成修订对照稿。", "黄诗雅", "进行中", 72, DateTime.Today.AddDays(5), "/Me/WorkDesk"),
+                        CreateTask("视频会议设备巡检", "核对会议室音视频设备状态，安排缺陷报修。", "郑豪", "待开始", 15, DateTime.Today.AddDays(10), "/Me/WorkDesk"),
                     }
                 }
             };
@@ -146,7 +146,7 @@ namespace App.Pages.Me
         }
 
         /// <summary>创建单条任务演示数据。</summary>
-        private static WorkDeskTaskItem CreateTask(string title, string summary, string owner, string status, int progress, DateTime dueDate)
+        private static WorkDeskTaskItem CreateTask(string title, string summary, string owner, string status, int progress, DateTime dueDate, string url = "", string target = "_self")
         {
             var safeProgress = Math.Max(0, Math.Min(100, progress));
             var normalizedStatus = string.IsNullOrWhiteSpace(status) ? "进行中" : status.Trim();
@@ -156,11 +156,17 @@ namespace App.Pages.Me
                 "待开始" => "bg-slate-200 text-slate-600",
                 _ => "bg-amber-100 text-amber-700",
             };
+            //var progressBarClass = normalizedStatus switch
+            //{
+            //    "已完成" => "bg-emerald-500",
+            //    "待开始" => "bg-slate-400",
+            //    _ => "bg-gradient-to-r from-blue-500 to-cyan-500",
+            //};
             var progressBarClass = normalizedStatus switch
             {
                 "已完成" => "bg-emerald-500",
-                "待开始" => "bg-slate-400",
-                _ => "bg-gradient-to-r from-blue-500 to-cyan-500",
+                "待开始" => "bg-emerald-500",
+                _ => "bg-emerald-500",
             };
 
             return new WorkDeskTaskItem
@@ -174,6 +180,8 @@ namespace App.Pages.Me
                 DueDateText = dueDate.ToString("yyyy-MM-dd"),
                 StatusClass = statusClass,
                 ProgressBarClass = progressBarClass,
+                Url = url,
+                Target = string.IsNullOrWhiteSpace(target) ? "_self" : target,
             };
         }
     }
@@ -235,5 +243,7 @@ namespace App.Pages.Me
         public string DueDateText { get; set; }
         public string StatusClass { get; set; }
         public string ProgressBarClass { get; set; }
+        public string Url { get; set; }
+        public string Target { get; set; } = "_self";
     }
 }

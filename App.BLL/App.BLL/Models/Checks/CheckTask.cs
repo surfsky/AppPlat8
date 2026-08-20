@@ -8,6 +8,15 @@ using App.Utils;
 
 namespace App.DAL
 {
+    /// <summary>
+    /// 检查任务类型
+    /// </summary>
+    public enum CheckTaskType
+    {
+        [UI("日常")] Daily = 1,
+        [UI("专项")] Special = 2,
+    }
+
     /*
     检查任务
     CheckTask --1:n--CheckTaskOrg（受理组织）
@@ -17,18 +26,23 @@ namespace App.DAL
     [UI("检查", "检查任务")]
     public class CheckTask : TreeEntity<CheckTask>
     {
-        [UI("发布人")] public long? PublisherId { get; set; }
-        [UI("备注")] public string Remark { get; set; }
-        [UI("截止时间")] public DateTime? ExpireDt { get; set; }
-        [UI("进度")] public float? Progress { get; set; }
+        [UI("类型")]      public CheckTaskType? Type { get; set; } = CheckTaskType.Daily;
+        [UI("总数量")]     public long? TotalCount {get;set;}
+        [UI("已完成数量")]  public long? FinishCount {get;set;}
+        [UI("任务进度")]   public float? Progress { get; set; }
+        [UI("备注")]      public string Remark { get; set; }
+        [UI("开始时间")]   public DateTime? StartDt { get; set; }
+        [UI("截止时间")]   public DateTime? ExpireDt { get; set; }
+        [UI("是否活动中")] public bool IsActive => (StartDt <= DateTime.Now && ExpireDt > DateTime.Now);
 
 
         // Relations
-        public virtual CheckTask Parent { get; set; }
-        public virtual User Publisher { get; set; }
-        public virtual List<CheckTaskOrg> Orgs { get; set; }
-        public virtual List<CheckTaskObject> CheckObjects { get; set; }
-        public virtual List<CheckTaskSheet> CheckSheets { get; set; }
+        public virtual User Creator { get; set; }                       // 发布人
+        public virtual List<CheckTaskOrg> Orgs { get; set; }            // 承接组织
+        public virtual List<CheckTaskObject> CheckObjects { get; set; } // 要检查的对象
+        public virtual List<CheckTaskSheet> CheckSheets { get; set; }   // 使用的检查表
+
+        public virtual string CreatorName => Creator?.Name;
 
 
         public override object Export(ExportMode type = ExportMode.Normal)
@@ -38,21 +52,27 @@ namespace App.DAL
                 Id,
                 ParentId,
                 Name,
-                PublisherId,
-                PublisherName = Publisher?.Name,
+                CreatorId,
+                CreatorName,
                 Remark,
-                CreateDt,
+                StartDt,
                 ExpireDt,
-                Progress
+                TotalCount,
+                FinishCount,
+                Progress,
+                IsActive,
+                OrgIds = Orgs?.Select(o => o.OrgId).ToList(),
+                CheckObjectIds = CheckObjects?.Select(o => o.ObjectId).ToList(),
+                CheckSheetIds = CheckSheets?.Select(o => o.SheetId).ToList()
             };
         }
 
-        public static IQueryable<CheckTask> Search(string name, long? publisherId, DateTime? expireBefore)
+        public static IQueryable<CheckTask> Search(string name, DateTime? startDt, DateTime? expireDt)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty())          q = q.Where(o => o.Name.Contains(name.Trim()));
-            if (publisherId.IsNotEmpty())   q = q.Where(o => o.PublisherId == publisherId.Value);
-            if (expireBefore.IsNotEmpty())  q = q.Where(o => o.ExpireDt <= expireBefore.Value);
+            if (startDt.IsNotEmpty())       q = q.Where(o => o.StartDt >= startDt.Value);
+            if (expireDt.IsNotEmpty())      q = q.Where(o => o.ExpireDt <= expireDt.Value);
             return q;
         }
 
@@ -71,9 +91,8 @@ namespace App.DAL
     }
 
 
-    /// <summary>
-    /// 检查任务-组织关联
-    /// </summary>
+    //==================================================================
+    /// <summary>检查任务-组织关联</summary>
     public class CheckTaskOrg: EntityBase<CheckTaskOrg>
     {
         [UI("任务")] public long? TaskId { get; set; }
@@ -104,9 +123,8 @@ namespace App.DAL
         }
     }
 
-    /// <summary>
-    /// 检查任务-要检查的对象
-    /// </summary>
+    //==================================================================
+    /// <summary>检查任务-要检查的对象</summary>
     public class CheckTaskObject : EntityBase<CheckTaskObject>
     {
         [UI("任务")] public long? TaskId { get; set; }
@@ -138,13 +156,12 @@ namespace App.DAL
         }
     }
 
-    /// <summary>
-    /// 检查任务-检查表关联
-    /// </summary>
+    //==================================================================
+    /// <summary>检查任务-检查表关联</summary>
     public class CheckTaskSheet: EntityBase<CheckTaskSheet>
     {
         [UI("任务")] public long? TaskId { get; set; }
-        [UI("检查表")] public long? CheckSheetId { get; set; }
+        [UI("检查表")] public long? SheetId { get; set; }
 
         // Relations
         public virtual CheckTask Task { get; set; }
@@ -157,16 +174,16 @@ namespace App.DAL
                 Id,
                 TaskId,
                 TaskName = Task?.Name,
-                CheckSheetId,
-                CheckSheetName = Sheet?.Name
+                SheetId,
+                SheetName = Sheet?.Name
             };
         }
 
-        public static IQueryable<CheckTaskSheet> Search(long? taskId, long? checkSheetId)
+        public static IQueryable<CheckTaskSheet> Search(long? taskId, long? sheetId)
         {
             var q = IncludeSet.AsQueryable();
             if (taskId.IsNotEmpty())       q = q.Where(o => o.TaskId == taskId.Value);
-            if (checkSheetId.IsNotEmpty()) q = q.Where(o => o.CheckSheetId == checkSheetId.Value);
+            if (sheetId.IsNotEmpty()) q = q.Where(o => o.SheetId == sheetId.Value);
             return q;
         }
     }

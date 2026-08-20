@@ -167,3 +167,5 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
         [UI("角色"), NotMapped]     public long? RoleId { get; set; }               // 仅用于列表筛选。
 
 
+        [UI("发布人")] public long? PublisherId { get; set; }
+        [UI("组织")]      public long? OrgId { get; set; }

@@ -23,7 +23,7 @@ namespace App.EleUI
         [HtmlAttributeName("KeyField")] public string KeyField { get; set; }
         [HtmlAttributeName("TextField")] public string TextField { get; set; }
         [HtmlAttributeName("Clearable")] public new bool? Clearable { get; set; } = true;
-        [HtmlAttributeName("CollapseTags")] public bool? CollapseTags { get; set; } = true;
+        [HtmlAttributeName("CollapseTags")] public bool? CollapseTags { get; set; } = false;
         [HtmlAttributeName("DrawerTitle")] public string DrawerTitle { get; set; }
         [HtmlAttributeName("DrawerSize")] public string DrawerSize { get; set; }
 
