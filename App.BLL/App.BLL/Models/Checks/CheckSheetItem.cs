@@ -17,11 +17,14 @@ namespace App.DAL
         [UI("名称")] public string Name { get; set; }
         [UI("排序")] public int SortId { get; set; }
 
+        [UI("编码")] public string Code => $"{SheetId}-{Id}";
+
         public override object Export(ExportMode type = ExportMode.Normal)
         {
             return new
             {
                 Id,
+                Code,
                 SheetId,
                 HazardLevel,
                 HazardLevelName = HazardLevel?.GetTitle(),

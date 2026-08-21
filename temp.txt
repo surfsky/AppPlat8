@@ -169,3 +169,14 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
 
         [UI("发布人")] public long? PublisherId { get; set; }
         [UI("组织")]      public long? OrgId { get; set; }
+
+        // 数据相关
+        [UI("数据", "是否录入平台")] public bool? IsInOnlinePlatform { get; set; }
+        [UI("数据", "是否录入141平台")] public bool? IsIn141Platform { get; set; }
+
+                IsInOnlinePlatform,
+                IsIn141Platform,
+        <EleSwitch For="Item.IsInOnlinePlatform" Label="录入工业在线"></EleSwitch>
+        <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
+            item.IsInOnlinePlatform = req.IsInOnlinePlatform;
+            item.IsIn141Platform = req.IsIn141Platform;

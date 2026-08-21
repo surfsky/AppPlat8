@@ -31,16 +31,10 @@ namespace App.Pages.Checks
             ObjectId = objectId;
             ObjectName = objectName;
 
-            TaskOptions = new List<SelectListItem>
-            {
-                new SelectListItem { Value = string.Empty, Text = "日常检查" }
-            };
-            TaskOptions.AddRange(
-                CheckTask.Set
-                    .OrderBy(t => t.Id)
-                    .Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.Name })
-                    .ToList()
-            );
+            TaskOptions = CheckTask.Set
+                .OrderBy(t => t.Id)
+                .Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.Name })
+                .ToList();
 
             SheetOptions = CheckSheet.Set
                 .OrderBy(t => t.Id)
@@ -69,6 +63,14 @@ namespace App.Pages.Checks
             var tagNames = obj.TagNames != null && obj.TagNames.Count > 0
                 ? string.Join("，", obj.TagNames)
                 : string.Empty;
+            var objectTagIds = obj.TagIds?.Where(t => t > 0).Distinct().ToList() ?? new List<long>();
+            var matchedSheetIds = objectTagIds.Count == 0
+                ? new List<long>()
+                : CheckSheet.Search(tagIds: objectTagIds)
+                    .OrderBy(t => t.Id)
+                    .Select(t => t.Id)
+                    .Distinct()
+                    .ToList();
 
             Item = new CheckFlowData
             {
@@ -81,11 +83,11 @@ namespace App.Pages.Checks
                 TagNames = tagNames,
                 CheckLogId = checkLogId,
                 CheckDt = DateTime.Now,
-                TaskId = null,
+                TaskIds = new List<long>(),
                 PatrolOrgName = org?.Name ?? string.Empty,
                 PatrolOrgLevel = org?.Level?.GetTitle() ?? string.Empty,
-                SheetIds = new List<long>(),
-                CheckItems = new List<CheckFlowItemRow>()
+                SheetIds = matchedSheetIds,
+                CheckItems = BuildCheckItemRows(matchedSheetIds)
             };
 
             return BuildResult(0, "success", Item);
@@ -109,37 +111,7 @@ namespace App.Pages.Checks
             sheetIds = sheetIds.Where(t => t > 0).Distinct().ToList();
             if (sheetIds.Count == 0)
                 return BuildResult(0, "success", new { checkItems = new List<CheckFlowItemRow>() });
-
-            var sheetNameMap = CheckSheet.Set
-                .Where(t => sheetIds.Contains(t.Id))
-                .Select(t => new { t.Id, t.Name })
-                .ToDictionary(t => t.Id, t => t.Name ?? string.Empty);
-
-            var items = CheckSheetItem.Set
-                .Where(t => sheetIds.Contains(t.SheetId))
-                .OrderBy(t => t.SheetId)
-                .ThenBy(t => t.SortId)
-                .Select(t => new
-                {
-                    t.Id,
-                    t.SheetId,
-                    t.Name,
-                    t.HazardLevel
-                })
-                .ToList();
-
-            var rows = items.Select(t => new CheckFlowItemRow
-            {
-                CheckItemId = t.Id,
-                SheetId = t.SheetId,
-                SheetName = sheetNameMap.TryGetValue(t.SheetId, out var name) ? name : string.Empty,
-                Name = t.Name ?? string.Empty,
-                HazardLevelName = t.HazardLevel?.GetTitle() ?? string.Empty,
-                Result = "pass",
-                Remark = string.Empty
-            }).ToList();
-
-            return BuildResult(0, "success", new { checkItems = rows });
+            return BuildResult(0, "success", new { checkItems = BuildCheckItemRows(sheetIds) });
         }
 
         public IActionResult OnPostSave([FromBody] CheckFlowData req)
@@ -159,7 +131,7 @@ namespace App.Pages.Checks
             var now = DateTime.Now;
             var checkDt = req.CheckDt == default ? now : req.CheckDt;
 
-            var check = Check.Get(req.CheckLogId);
+            var check = Check.GetDetail(req.CheckLogId);
             if (check == null)
             {
                 check = new Check
@@ -169,11 +141,11 @@ namespace App.Pages.Checks
                 };
             }
 
-            check.TaskId = req.TaskId;
             check.CheckDt = checkDt;
             check.OrgId = user?.OrgId;
             check.CheckerId = userId;
             check.CheckObjectId = req.ObjectId;
+            check.SetTasks(req.TaskIds);
 
             var hazardCount = CheckHazard.Set.Count(t => t.CheckLogId == req.CheckLogId);
             check.HazardCount = hazardCount;
@@ -206,7 +178,7 @@ namespace App.Pages.Checks
 
             public long CheckLogId { get; set; }
             public DateTime CheckDt { get; set; }
-            public long? TaskId { get; set; }
+            public List<long> TaskIds { get; set; } = new();
 
             public string PatrolOrgName { get; set; }
             public string PatrolOrgLevel { get; set; }
@@ -220,10 +192,49 @@ namespace App.Pages.Checks
             public long CheckItemId { get; set; }
             public long SheetId { get; set; }
             public string SheetName { get; set; }
+            public string Code { get; set; }
             public string Name { get; set; }
             public string Result { get; set; }
             public string Remark { get; set; }
             public string HazardLevelName { get; set; }
+        }
+
+        /// <summary>根据检查表构造检查项行。</summary>
+        static List<CheckFlowItemRow> BuildCheckItemRows(List<long> sheetIds)
+        {
+            sheetIds = (sheetIds ?? new List<long>()).Where(t => t > 0).Distinct().ToList();
+            if (sheetIds.Count == 0)
+                return new List<CheckFlowItemRow>();
+
+            var sheetNameMap = CheckSheet.Set
+                .Where(t => sheetIds.Contains(t.Id))
+                .Select(t => new { t.Id, t.Name })
+                .ToDictionary(t => t.Id, t => t.Name ?? string.Empty);
+
+            var items = CheckSheetItem.Set
+                .Where(t => sheetIds.Contains(t.SheetId))
+                .OrderBy(t => t.SheetId)
+                .ThenBy(t => t.SortId)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.SheetId,
+                    t.Name,
+                    t.HazardLevel
+                })
+                .ToList();
+
+            return items.Select(t => new CheckFlowItemRow
+            {
+                CheckItemId = t.Id,
+                SheetId = t.SheetId,
+                SheetName = sheetNameMap.TryGetValue(t.SheetId, out var name) ? name : string.Empty,
+                Code = $"{t.SheetId}-{t.Id}",
+                Name = t.Name ?? string.Empty,
+                HazardLevelName = t.HazardLevel?.GetTitle() ?? string.Empty,
+                Result = "pass",
+                Remark = string.Empty
+            }).ToList();
         }
 
         private static List<long> ReadLongList(JsonElement el)

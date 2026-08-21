@@ -29,6 +29,19 @@ namespace App.DAL
         [UI("其他")] Other = 4,
     }
 
+    // 停业,搬迁,虚拟注册,注销,无实体经营,数据重复,其他原因
+    [UI("检查", "检查对象失败原因")]
+    public enum CheckObjectFailReason
+    {
+        [UI("停业")] StopBusiness = 0,
+        [UI("搬迁")] Move = 1,
+        [UI("虚拟注册")] VirtualRegistration = 2,
+        [UI("注销")] Logout = 3,
+        [UI("无实体经营")] NoPhysicalBusiness = 4,
+        [UI("数据重复")] DataDuplicate = 5,
+        [UI("其他")] Other = 6,
+    }
+
     [UI("检查", "建筑类型")]
     public enum CheckBuildingType
     {

@@ -28,7 +28,7 @@ namespace App.Pages.Checks
 
         public IActionResult OnGetData(long id)
         {
-            var item = Check.Get(id);
+            var item = Check.GetDetail(id);
             if (item == null)
             {
                 item = new Check();
@@ -43,22 +43,24 @@ namespace App.Pages.Checks
             if (req == null)
                 return BuildResult(400, "参数错误");
 
-            var item = Check.Get(req.Id);
+            var item = Check.GetDetail(req.Id);
             if (item == null)
             {
                 item = new Check();
                 item.CreateDt = DateTime.Now;
             }
 
-            item.TaskId = req.TaskId;
             item.CheckDt = req.CheckDt;
             item.OrgId = req.OrgId;
             item.CheckerId = req.CheckerId;
             item.CheckObjectId = req.CheckObjectId;
+            item.CheckSheetId = req.CheckSheetId;
+            item.CheckItemId = req.CheckItemId;
             item.Result = req.Result;
             item.HazardCount = req.HazardCount;
+            item.RemainHazardCount = req.RemainHazardCount;
             item.IsClosed = req.IsClosed;
-            item.HazardCount = req.HazardCount;
+            item.SetTasks(req.TaskIds);
 
             item.Save();
             return BuildResult(0, "保存成功");

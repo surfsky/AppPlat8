@@ -218,18 +218,51 @@ namespace App.API
         [HttpApi("添加检查记录", AuthLogin = true)]
         public static APIResult AddCheckLog(DAL.Check log)
         {
-            log.CreateDt = DateTime.Now;
-            log.UpdateDt = DateTime.Now;
-            log.Save(EntityOp.New);
-            return log.ToResult();
+            if (log == null)
+                return new APIResult(-1, "参数错误", null);
+
+            var item = new DAL.Check
+            {
+                Id = log.Id,
+                CreateDt = DateTime.Now,
+                UpdateDt = DateTime.Now
+            };
+            CopyCheckFields(item, log);
+            item.SetTasks(log.TaskIds);
+            item.Save(EntityOp.New);
+            return DAL.Check.GetDetail(item.Id).ToResult();
         }
 
         [HttpApi("修改检查记录", AuthLogin = true)]
         public static APIResult UpdateCheckLog(DAL.Check log)
         {
-            log.UpdateDt = DateTime.Now;
-            log.Save(EntityOp.Edit);
-            return log.ToResult();
+            if (log == null || log.Id <= 0)
+                return new APIResult(-1, "参数错误", null);
+
+            var item = DAL.Check.GetDetail(log.Id);
+            if (item == null)
+                return new APIResult(-1, "检查记录不存在", null);
+
+            CopyCheckFields(item, log);
+            item.SetTasks(log.TaskIds);
+            item.UpdateDt = DateTime.Now;
+            item.Save(EntityOp.Edit);
+            return DAL.Check.GetDetail(item.Id).ToResult();
+        }
+
+        /// <summary>复制检查记录可编辑字段。</summary>
+        static void CopyCheckFields(DAL.Check target, DAL.Check source)
+        {
+            target.CheckDt = source.CheckDt;
+            target.OrgId = source.OrgId;
+            target.CheckerId = source.CheckerId;
+            target.CheckObjectId = source.CheckObjectId;
+            target.CheckSheetId = source.CheckSheetId;
+            target.CheckItemId = source.CheckItemId;
+            target.Result = source.Result;
+            target.IsClosed = source.IsClosed;
+            target.HazardCount = source.HazardCount;
+            target.RemainHazardCount = source.RemainHazardCount;
         }
 
         [HttpApi("删除检查记录", AuthLogin = true)]

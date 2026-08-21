@@ -60,7 +60,6 @@ namespace App.Pages.Checks
             item.HasHarzard = req.HasHarzard;
             item.LandArea = req.LandArea;
             item.BuildingArea = req.BuildingArea;
-            item.IsInOnlinePlatform = req.IsInOnlinePlatform;
             item.IsKeySupervision = req.IsKeySupervision;
             item.ThirdPartySafetyAgency = req.ThirdPartySafetyAgency;
 
@@ -69,7 +68,6 @@ namespace App.Pages.Checks
             item.CheckerId = req.CheckerId;
             item.OutlookImage = req.OutlookImage;
             item.LicenseImage = req.LicenseImage;
-            item.IsIn141Platform = req.IsIn141Platform;
             item.IsDemonstration = req.IsDemonstration;
             item.IndustryType = req.IndustryType;
             item.IndustryRisk = req.IndustryRisk;

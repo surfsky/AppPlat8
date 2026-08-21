@@ -152,6 +152,21 @@ namespace App.DAL
                 .UsingEntity(j => j.ToTable("CheckTagSheet"))  // 指定关联表名称为 CheckTagSheet
                 ;
 
+            // Check/CheckTask 多对多关系
+            modelBuilder.Entity<Check>()
+                .HasMany(t => t.Tasks)
+                .WithMany(s => s.Checks)
+                .UsingEntity<Dictionary<string, object>>(
+                    "CheckTaskCheck",
+                    j => j.HasOne<CheckTask>().WithMany().HasForeignKey("TaskId").OnDelete(DeleteBehavior.Cascade),
+                    j => j.HasOne<Check>().WithMany().HasForeignKey("CheckId").OnDelete(DeleteBehavior.Cascade),
+                    j =>
+                    {
+                        j.ToTable("CheckTaskCheck");
+                        j.HasKey("CheckId", "TaskId");
+                    })
+                ;
+
             MapListIds(modelBuilder);
         }
 

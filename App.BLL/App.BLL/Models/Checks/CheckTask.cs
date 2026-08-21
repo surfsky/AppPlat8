@@ -41,6 +41,7 @@ namespace App.DAL
         public virtual List<CheckTaskOrg> Orgs { get; set; }            // 承接组织
         public virtual List<CheckTaskObject> CheckObjects { get; set; } // 要检查的对象
         public virtual List<CheckTaskSheet> CheckSheets { get; set; }   // 使用的检查表
+        public virtual List<Check> Checks { get; set; } = new List<Check>(); // 关联检查记录
 
         public virtual string CreatorName => Creator?.Name;
 

@@ -7,7 +7,7 @@
 @section body {
     <EleForm Model="form" LabelWidth="120px">
         <EleSelect For="Item.CheckObjectId" Label="检查对象" Items="Model.CheckObjects" Required="true" Filterable="true"></EleSelect>
-        <EleSelect For="Item.TaskId" Label="关联任务" Items="Model.Tasks" Filterable="true"></EleSelect>
+        <EleSelect For="Item.TaskIds" Label="关联任务" Items="Model.Tasks" Filterable="true" Multiple="true"></EleSelect>
         <EleTreeSelect For="Item.OrgId" Label="检查科室" Api="/httpapi/orgs/GetAuthOrgTree"  Placeholder="请选择科室"></EleTreeSelect>
         <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Label="检查人员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
         <EleDatePicker For="Item.CheckDt" Label="检查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
@@ -22,4 +22,3 @@
         </Bottom>
     </EleForm>
 }
-

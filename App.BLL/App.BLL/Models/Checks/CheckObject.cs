@@ -21,7 +21,7 @@ namespace App.DAL
     {
         [UI("基础", "编码")]      public string Code { get; set; }
         [UI("基础", "是否失效")]    public bool? IsDel { get; set; } = false;
-        [UI("基础", "失效原因")]    public string FailReason { get; set; }
+        [UI("基础", "失效原因")]    public CheckObjectFailReason? FailReason { get; set; }
         [UI("基础", "是否存在隐患")] public bool? HasHarzard { get; set; } = false;
         [UI("基础", "名称")]        public string Name { get; set;}
         [UI("基础", "地块号")]       public string AreaCode { get; set; }
@@ -48,10 +48,6 @@ namespace App.DAL
         [UI("基础", "生产内容")] public string ProductContent { get; set; }
         [UI("基础", "外观图片")] public string OutlookImage { get; set; }
         [UI("基础", "工商执照")] public string LicenseImage { get; set; }
-
-        // 数据相关
-        [UI("数据", "是否录入平台")] public bool? IsInOnlinePlatform { get; set; }
-        [UI("数据", "是否录入141平台")] public bool? IsIn141Platform { get; set; }
 
 
         // 风险相关
@@ -168,8 +164,6 @@ namespace App.DAL
                 ProductContent,
                 OutlookImage,
                 LicenseImage,
-                IsInOnlinePlatform,
-                IsIn141Platform,
                 IsKeySupervision,
                 IsDemonstration,
                 ThirdPartySafetyAgency,
@@ -208,7 +202,7 @@ namespace App.DAL
                 Url = null,
                 File = null,
                 GeoJson = null,
-                Remark = FailReason,
+                Remark = FailReason?.GetTitle(),
                 DataJson = JsonSerializer.Serialize(new
                 {
                     SocialCreditId,

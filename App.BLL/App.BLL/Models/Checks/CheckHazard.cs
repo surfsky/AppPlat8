@@ -38,6 +38,8 @@ namespace App.DAL
         [UI("整改状态")] public CheckHazardStatus? Status { get; set; } = CheckHazardStatus.Pending;
         [UI("整改期限")] public DateTime? ExpireDt { get; set; }
         [UI("整改日期")] public DateTime? RectifyDt { get; set; }
+
+        //
         [UI("录入141")] public bool? IsIn141 { get; set; }
 
         //

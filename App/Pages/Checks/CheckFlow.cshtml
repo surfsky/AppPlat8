@@ -21,38 +21,55 @@
         <EleLabel Label="检查信息" FillRow="true"></EleLabel>
         <EleInput For="Item.CheckLogId" Label="检查记录标识" Enabled="false" FillRow="true"></EleInput>
         <EleDatePicker For="Item.CheckDt" Label="检查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
-        <EleSelect For="Item.TaskId" Label="检查任务" Items="Model.TaskOptions" Clearable="true"></EleSelect>
+        <EleSelect For="Item.TaskIds" Label="检查任务" Items="Model.TaskOptions" Multiple="true" Filterable="true"></EleSelect>
         <EleInput For="Item.PatrolOrgName" Label="巡查单位" Enabled="false"></EleInput>
         <EleInput For="Item.PatrolOrgLevel" Label="单位类型" Enabled="false"></EleInput>
 
-        <EleLabel Label="检查表及检查项" FillRow="true"></EleLabel>
+        <EleLabel Label="检查表" FillRow="true"></EleLabel>
         <EleSelect For="Item.SheetIds" Label="检查表" Items="Model.SheetOptions" Multiple="true" Filterable="true" FillRow="true" OnChange="SheetItems"></EleSelect>
 
+        <EleLabel Label="检查项" FillRow="true"></EleLabel>
         <div class="col-span-full">
+            <div class="mb-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+                <el-input v-model="itemCodeKeyword" clearable placeholder="按编号过滤，如：12-3"></el-input>
+                <el-input v-model="itemNameKeyword" clearable placeholder="按检查项名称过滤"></el-input>
+                <el-select v-model="itemHazardLevelFilter" clearable placeholder="按隐患级别过滤">
+                    <el-option label="全部级别" value=""></el-option>
+                    <el-option
+                        v-for="level in hazardLevelOptions"
+                        :key="level"
+                        :label="level"
+                        :value="level"></el-option>
+                </el-select>
+                <el-select v-model="itemResultFilter" clearable placeholder="按结果过滤">
+                    <el-option label="全部结果" value=""></el-option>
+                    <el-option label="仅看隐患项（不合格）" value="fail"></el-option>
+                    <el-option label="仅看合格项" value="pass"></el-option>
+                    <el-option label="仅看不涉及" value="na"></el-option>
+                </el-select>
+            </div>
             <el-table
-                :data="form.checkItems || []"
+                :data="filteredCheckItems"
                 stripe
                 size="small"
                 style="width: 100%;"
-                row-key="checkItemId">
-                <el-table-column prop="sheetName" label="检查表" width="160"></el-table-column>
-                <el-table-column prop="name" label="检查项" min-width="260"></el-table-column>
-                <el-table-column prop="hazardLevelName" label="隐患级别" width="120"></el-table-column>
-                <el-table-column label="结果" width="140">
+                row-key="checkItemId"
+                :row-class-name="getCheckItemRowClass">
+                <el-table-column prop="sheetName" label="检查表" width="180" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="code" label="编号" width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="name" label="检查项" min-width="300" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="hazardLevelName" label="隐患级别" width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column label="结果" width="220" fixed="right">
                     <template #default="{ row }">
-                        <el-select
+                        <el-radio-group
                             v-model="row.result"
-                            placeholder="请选择"
+                            size="small"
+                            class="check-flow-result-group"
                             v-on:change="onCheckFlowItemResultChanged(form, row, $event, save)">
-                            <el-option label="合格" value="pass"></el-option>
-                            <el-option label="不合格" value="fail"></el-option>
-                            <el-option label="不涉及" value="na"></el-option>
-                        </el-select>
-                    </template>
-                </el-table-column>
-                <el-table-column label="备注" min-width="220">
-                    <template #default="{ row }">
-                        <el-input v-model="row.remark" placeholder="备注"></el-input>
+                            <el-radio-button value="pass" class="result-pass">合格</el-radio-button>
+                            <el-radio-button value="fail" class="result-fail">不合格</el-radio-button>
+                            <el-radio-button value="na" class="result-na">不涉及</el-radio-button>
+                        </el-radio-group>
                     </template>
                 </el-table-column>
             </el-table>
@@ -69,7 +86,47 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const checkFlowMixin = {
+                data() {
+                    return {
+                        itemCodeKeyword: '',
+                        itemNameKeyword: '',
+                        itemHazardLevelFilter: '',
+                        itemResultFilter: ''
+                    };
+                },
+                computed: {
+                    hazardLevelOptions() {
+                        const rows = Array.isArray(this.form?.checkItems) ? this.form.checkItems : [];
+                        const levels = rows
+                            .map((row) => (row?.hazardLevelName || '').toString().trim())
+                            .filter((name) => !!name);
+                        return Array.from(new Set(levels));
+                    },
+                    filteredCheckItems() {
+                        const rows = Array.isArray(this.form?.checkItems) ? this.form.checkItems : [];
+                        const codeKeyword = (this.itemCodeKeyword || '').trim().toLowerCase();
+                        const nameKeyword = (this.itemNameKeyword || '').trim().toLowerCase();
+                        const hazardLevelFilter = (this.itemHazardLevelFilter || '').trim();
+                        const resultFilter = (this.itemResultFilter || '').trim().toLowerCase();
+                        if (!codeKeyword && !nameKeyword && !hazardLevelFilter && !resultFilter)
+                            return rows;
+                        return rows.filter((row) => {
+                            const code = (row?.code || '').toString().toLowerCase();
+                            const name = (row?.name || '').toString().toLowerCase();
+                            const hazardLevelName = (row?.hazardLevelName || '').toString().trim();
+                            const result = (row?.result || '').toString().toLowerCase();
+                            const hitCode = !codeKeyword || code.includes(codeKeyword);
+                            const hitName = !nameKeyword || name.includes(nameKeyword);
+                            const hitHazardLevel = !hazardLevelFilter || hazardLevelName === hazardLevelFilter;
+                            const hitResult = !resultFilter || result === resultFilter;
+                            return hitCode && hitName && hitHazardLevel && hitResult;
+                        });
+                    }
+                },
                 methods: {
+                    getCheckItemRowClass({ row }) {
+                        return row && row.result === 'fail' ? 'check-flow-row-fail' : '';
+                    },
                     async onCheckFlowItemResultChanged(form, row, val, save) {
                         if (!row || val !== 'fail') return;
 
@@ -112,4 +169,43 @@
             });
         });
     </script>
+
+    <style>
+        .el-table thead th.el-table__cell {
+            background: #f8fafc;
+            color: #475569;
+        }
+
+        .check-flow-result-group {
+            display: inline-flex;
+            flex-wrap: nowrap;
+        }
+
+        .check-flow-result-group .el-radio-button__inner {
+            min-width: 64px;
+            padding-inline: 12px;
+        }
+
+        .check-flow-result-group .result-pass.is-active .el-radio-button__inner {
+            background: #16a34a;
+            border-color: #16a34a;
+            box-shadow: -1px 0 0 0 #16a34a;
+        }
+
+        .check-flow-result-group .result-fail.is-active .el-radio-button__inner {
+            background: #dc2626;
+            border-color: #dc2626;
+            box-shadow: -1px 0 0 0 #dc2626;
+        }
+
+        .check-flow-result-group .result-na.is-active .el-radio-button__inner {
+            background: #64748b;
+            border-color: #64748b;
+            box-shadow: -1px 0 0 0 #64748b;
+        }
+
+        .el-table .check-flow-row-fail > td.el-table__cell {
+            background: #fff7ed;
+        }
+    </style>
 }

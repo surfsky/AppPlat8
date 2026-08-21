@@ -21,7 +21,7 @@
         <EleSwitch For="Item.HasHarzard" Label="是否存在隐患"></EleSwitch>
         <EleSwitch For="Item.IsDel" Label="是否失效"></EleSwitch>
         <div v-show="form.isDel === true">
-            <EleSelect For="Item.FailReason" Label="失效原因" FillRow="true" Items='new[]{"停业","搬迁","虚拟注册","注销","无实体经营","数据重复","其他原因"}'></EleSelect>
+            <EleSelect For="Item.FailReason" Label="失效原因" FillRow="true" ></EleSelect>
         </div>
 
         <EleLabel Label="责任信息" FillRow="true"></EleLabel>
@@ -59,8 +59,6 @@
 
 
         <EleLabel Label="系统信息" FillRow="true"></EleLabel>
-        <EleSwitch For="Item.IsInOnlinePlatform" Label="录入工业在线"></EleSwitch>
-        <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
 
         <EleLabel Label="更多" FillRow="true"></EleLabel>
         <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreePicker>
