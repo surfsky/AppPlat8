@@ -9,6 +9,7 @@
     <EleForm LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreePicker For="Item.ParentId" Label="上级目录" Items="Model.MenuTree" Clearable="true"></EleTreePicker>
+        <EleTreePicker For="Item.OrgId" Label="归属组织" Api="/httpapi/orgs/GetAuthOrgTree" IdField="id" NameField="name" Clearable="true" CheckStrictly="true"></EleTreePicker>
         <EleNumber For="Item.SortId" Label="排序"></EleNumber>
     
         <Bottom>

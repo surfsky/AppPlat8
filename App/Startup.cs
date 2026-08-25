@@ -60,8 +60,13 @@ namespace App
             });
             services.Configure<FormOptions>(options =>
             {
-                options.ValueCountLimit = 1024;                 // 1024
+                options.ValueCountLimit = 2048;                 // 2048
                 options.ValueLengthLimit = 4194304;             // 4194304 = 1024 * 1024 * 4
+                options.MultipartBodyLengthLimit = 2147483648;  // 2GB，支持批量目录上传
+            });
+            services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
+            {
+                options.Limits.MaxRequestBodySize = 2147483648; // 2GB
             });
             services.AddRazorPages(options =>
             {

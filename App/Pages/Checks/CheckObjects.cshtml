@@ -44,7 +44,7 @@
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="120" Fixed="right" Shows="3">
                 <Op Command="Edit"   Icon="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.CheckObjectEdit)"></Op>
-                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckObjectDelete)"></Op>
+                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="false"></Op>
                 <Op Popup="/Checks/CheckFlow?objectId={id}&objectName={name}"   Icon="DocumentChecked" Text="开始排查" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
                 <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"   Icon="User" Text="联系人" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Checks/CheckHazards?objectId={id}&objectName={name}"   Icon="WarningFilled" Text="隐患清单" Visible="@Auth.CheckPower(Power.CheckHazardView)"></Op>

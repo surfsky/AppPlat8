@@ -1,6 +1,5 @@
 @page
 @model App.Pages.KB.ManagerModel
-@using App.Utils
 @using System.Text.Json
 @{
     Layout = "_Layout";
@@ -12,6 +11,7 @@
     var canNew    = Auth.CheckPower(Power.KbMenuNew)    ? "true" : "false";
     var canEdit   = Auth.CheckPower(Power.KbMenuEdit)   ? "true" : "false";
     var canDelete = Auth.CheckPower(Power.KbMenuDelete) ? "true" : "false";
+    var canUploadDir = (Auth.CheckPower(Power.KbMenuNew) || Auth.CheckPower(Power.KbMenuEdit)) ? "true" : "false";
     var defaultIframeUrl = Model.DefaultAttsUrl;
     var treeJson = JsonSerializer.Serialize(
         Model.MenuTree ?? new List<KbMenu>(),
@@ -126,6 +126,7 @@
 
 @section body {
     <div id="kbMgr3" class="h-screen overflow-hidden">
+        <input id="kbDirUploadInput" type="file" style="display:none" webkitdirectory directory multiple @@change="onDirectorySelected" />
         <div class="kb-manager-shell h-full">
             <el-splitter
                 v-if="!isMobileLayout"
@@ -144,6 +145,9 @@
                             <div class="flex gap-1">
                                 <el-button v-if="canNew" type="primary" circle @@click="onNewMenu" title="新建子目录">
                                     <i class="fa-solid fa-plus" style="font-size:14px;"></i>
+                                </el-button>
+                                <el-button v-if="canUploadDir" type="warning" circle @@click="onOpenUploadDirectory" title="上传目录">
+                                    <i class="fa-solid fa-folder-plus" style="font-size:14px;"></i>
                                 </el-button>
                                 <el-button v-if="canEdit" type="success" circle :disabled="!currentMenuId" @@click="onEditMenu" title="编辑目录">
                                     <i class="fa-solid fa-pen" style="font-size:14px;"></i>
@@ -213,6 +217,9 @@
                         <el-button v-if="canNew" type="primary" circle @@click="onNewMenu" title="新建子目录">
                             <i class="fa-solid fa-plus" style="font-size:14px;"></i>
                         </el-button>
+                        <el-button v-if="canUploadDir" type="warning" circle @@click="onOpenUploadDirectory" title="上传目录">
+                            <i class="fa-solid fa-folder-plus" style="font-size:14px;"></i>
+                        </el-button>
                         <el-button v-if="canEdit" type="success" circle :disabled="!currentMenuId" @@click="onEditMenu" title="编辑目录">
                             <i class="fa-solid fa-pen" style="font-size:14px;"></i>
                         </el-button>
@@ -277,10 +284,12 @@
             const canNewFlag = @canNew;
             const canEditFlag = @canEdit;
             const canDeleteFlag = @canDelete;
+            const canUploadDirFlag = @canUploadDir;
             const HANDLERS = {
                 Delete:   'DeleteMenu',
                 MoveUp:   'MenuMoveUp',
-                MoveDown: 'MenuMoveDown'
+                MoveDown: 'MenuMoveDown',
+                UploadDirectory: 'UploadDirectory'
             };
             // 默认展开层数：0=全部折叠，1=只展开根，2=根+子级，3=根+子级+孙级...
             const DEFAULT_EXPAND_TREE_LEVEL = 1;
@@ -405,6 +414,7 @@
                     const canNew = canNewFlag;
                     const canEdit = canEditFlag;
                     const canDelete = canDeleteFlag;
+                    const canUploadDir = canUploadDirFlag;
                     const hasSelection = computed(function () {
                         return (Number(currentMenuId.value) || 0) > 0;
                     });
@@ -489,6 +499,11 @@
                         const id = Number(currentMenuId.value) || 0;
                         if (!id) return;
                         openDrawerForForm('/KB/MenuForm?id=' + id + '&md=edit', '编辑知识库目录');
+                    }
+
+                    function onOpenUploadDirectory() {
+                        const input = document.getElementById('kbDirUploadInput');
+                        if (input) input.click();
                     }
 
                     // 从任意格式的响应数据里提取出最准确的一条错误原因，匹配多种字段名和大小写
@@ -663,6 +678,46 @@
                         });
                     }
 
+                    function onDirectorySelected(event) {
+                        const input = event && event.target ? event.target : null;
+                        const files = input && input.files ? Array.from(input.files) : [];
+                        if (!files.length) return;
+
+                        files.sort(function (a, b) {
+                            const pa = (a.webkitRelativePath || a.name || '').toLowerCase();
+                            const pb = (b.webkitRelativePath || b.name || '').toLowerCase();
+                            return pa === pb ? 0 : (pa < pb ? -1 : 1);
+                        });
+
+                        const formData = new FormData();
+                        for (let i = 0; i < files.length; i++) {
+                            const file = files[i];
+                            formData.append('files', file);
+                            formData.append('relativePaths', file.webkitRelativePath || file.name || '');
+                        }
+
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('handler', HANDLERS.UploadDirectory);
+                        const menuId = Number(currentMenuId.value) || 0;
+                        if (menuId > 0) url.searchParams.set('menuId', String(menuId));
+                        else url.searchParams.delete('menuId');
+
+                        http.post(url.pathname + url.search, formData, {
+                            headers: { 'RequestVerificationToken': getCsrfToken() }
+                        }).then(function (res) {
+                            const body = res && res.data ? res.data : null;
+                            toastFromResponse(body, '目录上传成功');
+                            if (!applyPostTreeChange(body, menuId, false) && body && (body.code === 0 || body.code === '0')) {
+                                window.setTimeout(function () { window.mgr3ReloadPage && window.mgr3ReloadPage(); }, 280);
+                            }
+                        }).catch(function (err) {
+                            const msg = extractMessage(err && err.response ? err.response.data : err, '目录上传失败');
+                            showMessage(msg, 'error');
+                        }).finally(function () {
+                            if (input) input.value = '';
+                        });
+                    }
+
                     // 更新响应式状态，并在切换回桌面时关闭可能残留的移动端抽屉。
                     function updateLayoutState() {
                         const mobile = window.innerWidth < DESKTOP_BREAKPOINT;
@@ -765,12 +820,15 @@
                         canNew,
                         canEdit,
                         canDelete,
+                        canUploadDir,
                         MAX_ASIDE_WIDTH,
                         onResizeStart,
                         onResizeEnd,
                         onSplitterCollapse,
                         onTreeSelect,
                         onNewMenu,
+                        onOpenUploadDirectory,
+                        onDirectorySelected,
                         onEditMenu,
                         onDeleteMenu,
                         onMoveUp,

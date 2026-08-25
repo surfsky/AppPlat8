@@ -1,242 +1,616 @@
 @page
 @model App.Pages.KB.IndexModel
-@using App.Utils
-@using System.Text.Json
 @{
     Layout = "_Layout";
     ViewData["Title"] = "知识库导航";
-    var treeJson = JsonSerializer.Serialize(
-        Model.MenuTree ?? new List<KbMenu>(),
-        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = false,
-            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, MaxDepth = 64 });
-
-    //---------------------------------------------
-    // ① 将树扁平化：深度优先遍历为 [{id, name, depth, isTop, url}] 列表
-    //   - 这样才能精确控制"每级深度退格多少像素"
-    //   - 也才能按条目数/权重把「所有节点（含子节点）」 3 等分
-    //---------------------------------------------
-    var flat = new List<FlatItem>();
-    var srcRoot = (Model.MenuTree != null && Model.MenuTree.Count > 0 && Model.MenuTree[0].Children != null)
-        ? Model.MenuTree[0].Children
-        : new List<KbMenu>();
-    foreach (var n in srcRoot) Flatten(n, 0, flat);
-
-    //---------------------------------------------
-    // ② 计算最优 3 列切分点（按"累计权重"尽量接近，避免左列爆满）
-    //   权重规则：顶级(1./2./3./4./5./6.) = 3，普通节点 = 1
-    //---------------------------------------------
-    var weights = flat.Select(f => f.IsTopLevel ? 3.0 : 1.0).ToList();
-    var totalW = weights.Sum();
-    var target = totalW / 3.0;
-    int cut1 = 0, cut2 = 0;
-    double acc = 0;
-    for (int i = 0; i < flat.Count; i++)
-    {
-        acc += weights[i];
-        if (cut1 == 0 && acc >= target) { cut1 = i + 1; acc = 0; continue; }
-        if (cut1 > 0 && cut2 == 0 && acc >= target) { cut2 = i + 1; break; }
-    }
-    if (cut2 <= cut1) cut2 = Math.Max(cut1, Math.Min(flat.Count, cut1 + (flat.Count - cut1) / 2));
-    var col1 = flat.Take(cut1).ToList();
-    var col2 = flat.Skip(cut1).Take(cut2 - cut1).ToList();
-    var col3 = flat.Skip(cut2).ToList();
 }
 
 @section body {
-    <div id="kbIndex" class="h-full bg-white overflow-y-auto">
-        <!-- 顶部搜索栏 + 标题 -->
-        <div class="max-w-6xl mx-auto pt-12 pb-8 px-4">
-            <h1 class="text-center text-2xl md:text-3xl font-bold text-gray-800 mb-8">知识库导航</h1>
-
-            <!-- ✅ 胶囊型搜索框：外层 rounded-full + 阴影，放大镜在胶囊内左侧，右侧按钮融在胶囊里
-                     用原生 input 替换 el-input，彻底绕开 Element Plus 默认 inset box-shadow 边框 -->
-            <div class="kb-search-capsule mx-auto flex items-center bg-white border border-gray-200 shadow-sm rounded-full pl-5 pr-1 py-1 transition hover:shadow-md">
-                <input
-                    type="text"
-                    :value="searchText"
-                    @@input="searchText = $event.target.value"
-                    @@keyup.enter="onSearchClick"
-                    class="kb-native-input flex-1 h-11 px-1 bg-transparent text-gray-800 text-base outline-none border-0 border-none shadow-none focus:outline-none focus:ring-0 placeholder-gray-400"
-                    placeholder="输入关键词，搜索知识库（AI全文检索功能开发中）" />
-                <button v-if="searchText && searchText.length > 0"
-                        type="button"
-                        @@click="searchText = ''"
-                        class="kb-search-clear text-gray-400 hover:text-gray-600 px-2 py-1 rounded-full transition select-none"
-                        title="清空">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                <button type="button" class="kb-search-btn ml-2 inline-flex items-center justify-center px-6 h-11 text-white font-medium rounded-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition shadow-sm shrink-0"
-                        @@click="onSearchClick">
-                    <i class="fa-solid fa-magnifying-glass px-1"></i>
-                    搜索
-                </button>
+    <div id="kbIndex" class="h-full bg-slate-50 overflow-y-auto" v-cloak>
+        <div class="w-full mx-auto px-4 py-6 md:py-8">
+            <div class="text-center mb-6 md:mb-8">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800 inline-flex items-center justify-center gap-2 md:gap-3">
+                    <span class="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm">
+                        <i class="fa-solid fa-book-open text-base md:text-lg"></i>
+                    </span>
+                    知识库导航
+                </h1>
             </div>
-        </div>
 
-        <!-- ✅ 三列目录：所有节点（含子节点）按累计权重 3 等分 + 每级 depth × 18px 退格 -->
-        <div class="max-w-7xl mx-auto px-4 pb-16">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                @RenderKbColumn(col1, "左列")
-                @RenderKbColumn(col2, "中列")
-                @RenderKbColumn(col3, "右列")
+            <div class="bg-transparent rounded-2xl p-4 md:p-5 mb-4">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div class="kb-filter-toolbar flex flex-wrap items-center gap-4 md:gap-6">
+                        <div class="kb-filter-item">
+                            <span class="kb-filter-label">显示模式</span>
+                            <el-select
+                                v-model="displayMode"
+                                class="kb-filter-select"
+                                placeholder="请选择">
+                                <el-option label="只显示目录" value="menu"></el-option>
+                                <el-option label="显示目录和文件" value="all"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="kb-filter-item">
+                            <span class="kb-filter-label">部门科室</span>
+                            <div
+                                class="kb-filter-select el-input el-input--suffix cursor-pointer"
+                                @@click="openOrgPicker">
+                                <div class="el-input__wrapper" style="width: 100%;">
+                                    <div class="flex flex-wrap gap-1 items-center w-full py-1" style="min-height: 32px;">
+                                        <span v-if="selectedOrgLabel" class="w-full truncate text-sm text-slate-700">{{ selectedOrgLabel }}</span>
+                                        <span v-else class="text-gray-400 text-sm">选择授权组织</span>
+                                    </div>
+                                    <span class="el-input__suffix">
+                                        <span class="el-input__suffix-inner flex items-center gap-1" style="pointer-events:auto;">
+                                            <el-icon
+                                                v-if="selectedOrgId"
+                                                class="cursor-pointer text-slate-400 hover:text-slate-600"
+                                                @@click.stop="clearOrgPicker">
+                                                <Close />
+                                            </el-icon>
+                                            <el-icon class="text-slate-400" title="打开组织选择抽屉"><Search /></el-icon>
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="kb-search-capsule flex items-center bg-white border border-slate-200 rounded-full pl-5 pr-1 py-1 shadow-sm">
+                    <input
+                        type="text"
+                        :value="searchText"
+                        @@input="searchText = $event.target.value"
+                        @@keyup.enter="onSearchClick"
+                        class="kb-native-input flex-1 h-11 px-1 bg-transparent text-slate-800 text-base"
+                        placeholder="输入关键词，搜索目录或文件" />
+                    <button
+                        v-if="searchText"
+                        type="button"
+                        @@click="clearSearch"
+                        class="text-slate-400 hover:text-slate-600 px-2 py-1 rounded-full transition"
+                        title="清空">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <button
+                        type="button"
+                        class="kb-search-btn ml-2 inline-flex items-center justify-center px-6 h-11 text-white font-medium rounded-full bg-indigo-600 hover:bg-indigo-700 transition shadow-sm shrink-0"
+                        @@click="onSearchClick">
+                        <i class="fa-solid fa-magnifying-glass mr-1"></i>
+                        搜索
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm min-h-[360px]">
+                <el-skeleton :loading="loading" animated :rows="10" class="p-5">
+                    <template #default>
+                        <div v-if="committedKeyword" class="p-4 md:p-5">
+                            <div class="flex items-center justify-between gap-3 mb-4">
+                                <div class="text-sm text-slate-500">
+                                    搜索“<span class="text-slate-800 font-medium">{{ committedKeyword }}</span>”，共 {{ searchResults.length }} 条结果
+                                </div>
+                                <button type="button" class="text-sm text-slate-500 hover:text-indigo-600" @@click="clearSearch">
+                                    返回导航
+                                </button>
+                            </div>
+
+                            <div v-if="searchResults.length" class="space-y-3">
+                                <div
+                                    v-for="item in searchResults"
+                                    :key="item.key"
+                                    @@click="openNode(item.node)"
+                                    class="kb-result-card rounded-xl border border-slate-200 p-4 transition cursor-pointer hover:border-indigo-200 hover:bg-slate-50">
+                                    <div class="flex items-start gap-3">
+                                        <span :class="item.node.nodeType === 'file' ? 'kb-badge-file' : 'kb-badge-menu'">
+                                            {{ item.node.nodeType === 'file' ? '文件' : '目录' }}
+                                        </span>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-base font-medium text-slate-800 truncate">{{ item.name }}</div>
+                                            <div class="text-sm text-slate-500 mt-1 break-all">{{ item.pathText }}</div>
+                                            <div v-if="item.node.orgName" class="text-xs text-slate-400 mt-2">归属：{{ item.node.orgName }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <el-empty v-else description="未找到匹配内容"></el-empty>
+                        </div>
+
+                        <div v-else-if="treeColumns.some(t => t.length)" class="p-4 md:p-5">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                                <div
+                                    v-for="(column, index) in treeColumns"
+                                    :key="index"
+                                    class="rounded-xl border border-slate-100 bg-white p-3 md:p-4">
+                                    <div class="kb-flat-list">
+                                        <div
+                                            v-for="item in column"
+                                            :key="item.key"
+                                            class="kb-flat-item"
+                                            :style="{ paddingLeft: (8 + item.depth * 18) + 'px' }">
+                                            <div
+                                                @@click="openNode(item.node)"
+                                                :title="item.name"
+                                                :class="[
+                                                    'kb-line flex items-center gap-2 rounded-lg cursor-pointer transition hover:bg-indigo-50 hover:text-indigo-700',
+                                                    item.node.nodeType === 'menu' ? 'kb-line-menu' : 'kb-line-file'
+                                                ]">
+                                                <span class="truncate flex-1">{{ item.name }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <el-empty v-else description="当前范围内暂无知识库内容"></el-empty>
+                    </template>
+                </el-skeleton>
             </div>
         </div>
     </div>
 }
 
-@functions {
-    // 扁平化节点（服务器侧）
-    public class FlatItem
-    {
-        public long Id { get; set; }
-        public string Name { get; set; }
-        public int Depth { get; set; }
-        public bool IsTopLevel { get; set; }
-        public string Url { get; set; }
-    }
-
-    // 递归扁平化：深度优先
-    private static void Flatten(KbMenu node, int depth, List<FlatItem> list)
-    {
-        if (node == null) return;
-        list.Add(new FlatItem
-        {
-            Id = node.Id,
-            Name = node.Name ?? string.Empty,
-            Depth = depth,
-            IsTopLevel = depth == 0,
-            Url = $"/KB/Manager?menuId={Uri.EscapeDataString(node.Id.ToString())}"
-        });
-        var children = node.Children ?? new List<KbMenu>();
-        foreach (var ch in children) Flatten(ch, depth + 1, list);
-    }
-
-    // 渲染单列
-    private Microsoft.AspNetCore.Html.IHtmlContent RenderKbColumn(List<FlatItem> items, string tag)
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.Append("<div class=\"bg-white rounded-lg border-0 border-gray-100  p-4 md:p-5\">");
-        sb.Append("  <ul class=\"kb-flat-list\">");
-        foreach (var f in items)
-        {
-            // 每级深度退格 18px；顶级多加 2px 内边距，加粗+深色
-            var leftPad = 8 + f.Depth * 18;
-            var cls = f.IsTopLevel
-                ? "kb-line kb-line-top font-bold text-gray-800 text-base md:text-lg"
-                : "kb-line kb-line-sub text-gray-700 text-sm";
-            sb.Append(
-                $"<li class=\"kb-flat-item\" style=\"padding-left:{leftPad}px;\">" +
-                $"<a class=\"{cls}\" href=\"{Html.Encode(f.Url)}\" title=\"{Html.Encode(f.Name)}\">{Html.Encode(f.Name ?? "")}</a>" +
-                $"</li>"
-            );
-        }
-        sb.Append("  </ul>");
-        sb.Append("</div>");
-        return new Microsoft.AspNetCore.Html.HtmlString(sb.ToString());
-    }
-}
-
 @section script {
     <style>
-        /* ============== 胶囊搜索框（原生 input 版，100% 无 Element Plus 内边框） ============== */
-        .kb-search-capsule { width: 100%; max-width: 720px; height: 56px; }
+        [v-cloak] { display: none; }
+        .kb-search-capsule { width: 100%; min-height: 56px; }
         .kb-native-input {
             appearance: none;
             -webkit-appearance: none;
-            -moz-appearance: none;
             border: 0 !important;
-            border-width: 0 !important;
-            border-style: none !important;
             outline: 0 !important;
-            outline-width: 0 !important;
-            outline-style: none !important;
             box-shadow: none !important;
-            background-color: transparent !important;
             background: transparent !important;
         }
-        .kb-native-input::placeholder { color: #9ca3af; opacity: 1; }
-        .kb-native-input:focus {
+        .kb-native-input:focus,
+        .kb-native-input:focus-visible {
             border: 0 !important;
             outline: 0 !important;
             box-shadow: none !important;
-            -webkit-box-shadow: none !important;
         }
-        .kb-native-input:focus-visible {
-            outline: 0 !important;
-            box-shadow: none !important;
-        }
-        .kb-search-btn:focus,
-        .kb-search-clear:focus { outline: none !important; }
-        @@media (max-width: 640px) {
-            .kb-search-capsule { height: 50px; padding-left: 14px; padding-right: 4px; }
-            .kb-search-capsule .kb-search-btn { padding-left: 1rem; padding-right: 1rem; height: 44px; font-size: 14px; }
-        }
+        .kb-native-input::placeholder { color: #94a3b8; }
 
-        /* ============== 扁平化目录树（每行独立 padding-left 退格） ============== */
-        .kb-flat-list { list-style: none; margin: 0; padding: 0; }
-        .kb-flat-item { margin: 0; padding-top: 1px; padding-bottom: 1px; }
-        .kb-line {
-            display: inline-block; padding: 3px 8px; border-radius: 5px; text-decoration: none;
-            line-height: 1.6; letter-spacing: 0.01em; width: calc(100% - 0px);
+        .kb-filter-toolbar { justify-content: flex-start; }
+        .kb-filter-item { display: inline-flex; align-items: center; gap: 8px; }
+        .kb-filter-label {
+            flex: 0 0 auto;
+            font-size: 12px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .kb-line:hover { background: #eef2ff; color: #4f46e5; text-decoration: none; }
-        .kb-line-top { margin-top: 6px; margin-bottom: 2px; }
-        .kb-flat-item:first-child .kb-line-top { margin-top: 2px; }
-        .kb-line-sub { color: #374151; }
+        .kb-filter-select { width: 180px; max-width: 200px; min-width: 160px; }
+
+        .kb-flat-list { display: flex; flex-direction: column; gap: 2px; }
+        .kb-flat-item { min-width: 0; }
+        .kb-line { min-height: 34px; padding: 4px 8px; font-size: 14px; }
+        .kb-line-menu { color: #0f172a; font-weight: 700; }
+        .kb-line-file { color: #334155; font-weight: 400; }
+
+        @@media (max-width: 768px) {
+            .kb-filter-select { width: 100%; min-width: 0; }
+            .kb-filter-item { width: 100%; }
+        }
+        .kb-badge-menu,
+        .kb-badge-file {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 42px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+        }
+        .kb-badge-menu {
+            color: #4338ca;
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            font-weight: bold;
+        }
+        .kb-badge-file {
+            color: #b45309;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+        }
+        @@media (max-width: 640px) {
+            .kb-search-capsule { min-height: 50px; padding-left: 14px; padding-right: 4px; }
+            .kb-search-btn { padding-left: 1rem; padding-right: 1rem; height: 44px; font-size: 14px; }
+        }
     </style>
     <script>
         (function () {
-            const { createApp, ref } = Vue;
-            const App = {
+            const { createApp, ref, computed } = Vue;
+            const appConfig = {
                 setup() {
+                    const loading = ref(false);
+                    const treeData = ref([]);
+                    const orgTree = ref([]);
+                    const selectedOrgId = ref(null);
+                    const selectedOrgLabel = ref('');
+                    const displayMode = ref('all');
                     const searchText = ref('');
-                    function _toast(msg, type) {
+                    const committedKeyword = ref('');
+                    const orgTreeProps = { label: 'name', value: 'id', children: 'children' };
+
+                    const filteredTree = computed(() => filterTreeByMode(treeData.value, displayMode.value));
+                    const flatItems = computed(() => flattenNodes(filteredTree.value));
+                    const treeColumns = computed(() => splitColumns(flatItems.value));
+                    const searchResults = computed(() => {
+                        const keyword = (committedKeyword.value || '').trim().toLowerCase();
+                        if (!keyword)
+                            return [];
+                        return flattenNodes(filteredTree.value).filter(t => {
+                            const scope = [
+                                t.name,
+                                t.pathText,
+                                t.node.orgName,
+                                t.node.fileName
+                            ].filter(Boolean).join(' ').toLowerCase();
+                            return scope.includes(keyword);
+                        });
+                    });
+
+                    function filterTreeByMode(nodes, mode) {
+                        return (nodes || []).map(node => {
+                            const sourceChildren = filterTreeByMode(node.children || [], mode);
+                            const children = mode === 'menu'
+                                ? sourceChildren.filter(t => t.nodeType === 'menu')
+                                : sourceChildren;
+                            return { ...node, children };
+                        });
+                    }
+
+                    function flattenNodes(nodes, depth, trail) {
+                        const result = [];
+                        const currentDepth = depth || 0;
+                        const currentTrail = trail || [];
+                        (nodes || []).forEach(node => {
+                            const breadcrumb = currentTrail.concat([toBreadcrumbItem(node)]);
+                            result.push({
+                                key: node.key,
+                                name: node.name || '',
+                                depth: currentDepth,
+                                isTopLevel: currentDepth === 0,
+                                node,
+                                breadcrumb,
+                                pathText: breadcrumb.map(t => t.name).join(' / ')
+                            });
+                            result.push(...flattenNodes(node.children || [], currentDepth + 1, breadcrumb));
+                        });
+                        return result;
+                    }
+
+                    function toBreadcrumbItem(node) {
+                        return {
+                            key: node.key,
+                            name: node.name || '',
+                            node
+                        };
+                    }
+
+                    function splitColumns(items) {
+                        const weights = (items || []).map(t => t.isTopLevel ? 3 : 1);
+                        const total = weights.reduce((sum, item) => sum + item, 0);
+                        if (!total)
+                            return [[], [], []];
+
+                        const target = total / 3;
+                        let cut1 = 0;
+                        let cut2 = 0;
+                        let acc = 0;
+                        for (let i = 0; i < items.length; i++) {
+                            acc += weights[i];
+                            if (cut1 === 0 && acc >= target) {
+                                cut1 = i + 1;
+                                acc = 0;
+                                continue;
+                            }
+                            if (cut1 > 0 && cut2 === 0 && acc >= target) {
+                                cut2 = i + 1;
+                                break;
+                            }
+                        }
+                        if (cut2 <= cut1)
+                            cut2 = Math.max(cut1, Math.min(items.length, cut1 + Math.floor((items.length - cut1) / 2)));
+
+                        return [
+                            items.slice(0, cut1),
+                            items.slice(cut1, cut2),
+                            items.slice(cut2)
+                        ];
+                    }
+
+                    function flattenOrgTree(nodes, idField, nameField, childrenField, result) {
+                        const list = Array.isArray(nodes) ? nodes : [];
+                        const rows = result || [];
+                        for (let i = 0; i < list.length; i++) {
+                            const node = list[i];
+                            if (!node || typeof node !== 'object') continue;
+                            rows.push({
+                                id: node[idField] === null || node[idField] === undefined ? '' : String(node[idField]),
+                                name: node[nameField] === null || node[nameField] === undefined ? '' : String(node[nameField])
+                            });
+                            const children = node[childrenField];
+                            if (Array.isArray(children) && children.length > 0) {
+                                flattenOrgTree(children, idField, nameField, childrenField, rows);
+                            }
+                        }
+                        return rows;
+                    }
+
+                    function updateSelectedOrgLabel() {
+                        if (!selectedOrgId.value) {
+                            selectedOrgLabel.value = '';
+                            return;
+                        }
+                        const flat = flattenOrgTree(orgTree.value, 'id', 'name', 'children', []);
+                        const hit = flat.find(item => item.id === String(selectedOrgId.value));
+                        selectedOrgLabel.value = hit ? hit.name : '';
+                    }
+
+                    async function loadData() {
+                        loading.value = true;
+                        try {
+                            const resp = await axios.get('/httpapi/kb/GetNavigation', {
+                                params: {
+                                    orgId: selectedOrgId.value || ''
+                                }
+                            });
+                            const body = resp?.data || {};
+                            if (body.code !== 0)
+                                throw new Error(body.msg || '加载失败');
+
+                            const data = body.data || {};
+                            orgTree.value = data.orgTree || [];
+                            treeData.value = data.tree || [];
+                            updateSelectedOrgLabel();
+                        } catch (err) {
+                            treeData.value = [];
+                            showMessage(err?.message || '加载失败', 'error');
+                        } finally {
+                            loading.value = false;
+                        }
+                    }
+
+                    function openOrgPicker() {
+                        if (!window.EleManager || typeof EleManager.openDrawer !== 'function') {
+                            showMessage('组件未初始化完成', 'warning');
+                            return;
+                        }
+                        const currentVal = selectedOrgId.value ? String(selectedOrgId.value) : '';
+                        const treeData = Array.isArray(orgTree.value) ? orgTree.value : [];
+
+                        EleManager.openDrawer({
+                            title: '选择授权组织',
+                            direction: 'rtl',
+                            size: '380px',
+                            resizable: true,
+                            closeOnClickModal: false,
+                            destroyOnClose: true,
+                            custom: true,
+                            bodyClass: 'ele-tree-picker-drawer-host',
+                            mountHandler(ctx) {
+                                const { hostWindow, bodyEl, setFooterButtons } = ctx;
+                                const { createApp, reactive, nextTick } = hostWindow.Vue;
+
+                                const state = reactive({
+                                    keyword: '',
+                                    nodes: treeData,
+                                    current: currentVal
+                                });
+
+                                const app = createApp({
+                                    data() {
+                                        return { state };
+                                    },
+                                    methods: {
+                                        onFilterChange(value) {
+                                            state.keyword = value || '';
+                                            const tree = this.$refs.treeRef;
+                                            if (tree && typeof tree.filter === 'function') {
+                                                tree.filter(state.keyword);
+                                            }
+                                        },
+                                        filterNode(value, data) {
+                                            if (!value) return true;
+                                            const text = data && data.name !== undefined && data.name !== null
+                                                ? String(data.name)
+                                                : '';
+                                            return text.toLowerCase().includes(String(value).toLowerCase());
+                                        },
+                                        onNodeClick(data) {
+                                            const val = data && data.id !== undefined && data.id !== null
+                                                ? String(data.id)
+                                                : '';
+                                            state.current = val;
+                                        },
+                                        getCurrentLabel() {
+                                            if (!state.current) return '';
+                                            const flat = flattenOrgTree(state.nodes, 'id', 'name', 'children', []);
+                                            const hit = flat.find(item => item.id === state.current);
+                                            return hit ? hit.name : '';
+                                        }
+                                    },
+                                    template: `
+<div class="ele-tree-picker-panel h-full flex flex-col">
+    <div class="px-4 pt-4 pb-3 border-b border-slate-200 bg-white">
+        <el-input
+            :model-value="state.keyword"
+            clearable
+            placeholder="输入关键字过滤"
+            @@update:model-value="onFilterChange">
+            <template #prefix>
+                <el-icon><Search /></el-icon>
+            </template>
+        </el-input>
+        <div class="mt-3 text-xs text-slate-500" v-if="getCurrentLabel()">
+            已选：{{ getCurrentLabel() }}
+        </div>
+    </div>
+    <div class="flex-1 min-h-0 overflow-auto bg-white p-2">
+        <el-tree
+            ref="treeRef"
+            node-key="id"
+            :data="state.nodes"
+            :props="{ label: 'name', children: 'children' }"
+            :default-expand-all="true"
+            :expand-on-click-node="true"
+            :highlight-current="true"
+            :current-node-key="state.current"
+            :filter-node-method="filterNode"
+            class="w-full"
+            @@node-click="onNodeClick">
+        </el-tree>
+    </div>
+</div>`
+                                });
+
+                                app.use(hostWindow.ElementPlus, hostWindow.ElementPlusLocaleZhCn ? { locale: hostWindow.ElementPlusLocaleZhCn } : undefined);
+                                if (hostWindow.ElementPlusIconsVue) {
+                                    for (const [key, component] of Object.entries(hostWindow.ElementPlusIconsVue)) {
+                                        app.component(key, component);
+                                    }
+                                }
+
+                                app.mount(bodyEl);
+
+                                setFooterButtons([
+                                    { text: '取消', action: 'close' },
+                                    {
+                                        text: '确定',
+                                        type: 'primary',
+                                        handler: (_action, _btn, drawerCtx) => {
+                                            const result = state.current ? state.current : null;
+                                            selectedOrgId.value = result;
+                                            updateSelectedOrgLabel();
+                                            clearSearch();
+                                            loadData();
+                                            drawerCtx.close();
+                                        }
+                                    }
+                                ]);
+
+                                return () => {
+                                    try { app.unmount(); } catch { }
+                                };
+                            }
+                        });
+                    }
+
+                    function clearOrgPicker() {
+                        selectedOrgId.value = null;
+                        selectedOrgLabel.value = '';
+                        clearSearch();
+                        loadData();
+                    }
+
+                    function clearSearch() {
+                        searchText.value = '';
+                        committedKeyword.value = '';
+                    }
+
+                    function onSearchClick() {
+                        committedKeyword.value = (searchText.value || '').trim();
+                        if (!committedKeyword.value)
+                            return;
+                    }
+
+                    function onOrgChange() {
+                        clearSearch();
+                        loadData();
+                    }
+
+                    function openNode(node) {
+                        if (!node)
+                            return;
+                        if (node.nodeType === 'file') {
+                            const fileId = node.id || 0;
+                            if (!fileId) {
+                                showMessage('文件信息不存在', 'warning');
+                                return;
+                            }
+                            const title = (node.fileName || node.name || '').trim() || '文件预览';
+                            if (window.EleManager && typeof window.EleManager.openDrawer === 'function') {
+                                window.EleManager.openDrawer({
+                                    title: title,
+                                    url: '/Shared/FileViews/Viewer?id=' + encodeURIComponent(fileId),
+                                    direction: 'rtl',
+                                    showFooter: false
+                                });
+                                return;
+                            }
+                        }
+                        if (node.url)
+                            window.location.href = node.url;
+                    }
+
+                    function showMessage(message, type) {
                         try {
                             const EP = window.ElementPlus;
-                            if (EP && EP.ElMessage) { EP.ElMessage({ message: msg || '', type: type || 'info', showClose: true, duration: 2200 }); return; }
-                        } catch (_) {}
-                        alert(msg || '');
+                            if (EP?.ElMessage) {
+                                EP.ElMessage({
+                                    message: message || '',
+                                    type: type || 'info',
+                                    showClose: true,
+                                    duration: 2200
+                                });
+                                return;
+                            }
+                        } catch (_) { }
+                        alert(message || '');
                     }
-                    function onSearchClick() {
-                        const kw = (searchText.value || '').trim();
-                        console.log('[KB Index] 点击搜索，关键词 =', kw);
-                        _toast('AI全文检索功能开发中', 'info');
-                    }
-                    return { searchText, onSearchClick };
+
+                    loadData();
+
+                    return {
+                        loading,
+                        orgTree,
+                        selectedOrgId,
+                        selectedOrgLabel,
+                        displayMode,
+                        searchText,
+                        committedKeyword,
+                        orgTreeProps,
+                        treeColumns,
+                        searchResults,
+                        clearSearch,
+                        onSearchClick,
+                        onOrgChange,
+                        openNode,
+                        openOrgPicker,
+                        clearOrgPicker
+                    };
                 }
             };
 
-            function mountIt() {
-                try {
-                    const app = createApp(App);
-                    const EP = window.ElementPlus;
-                    if (EP) {
-                        app.use(EP);
-                        if (window.dayjs && typeof window.dayjs.locale === 'function') { try { window.dayjs.locale('zh-cn'); } catch (_) { } }
-                    }
-                    try {
-                        const icons = window.ElementPlusIconsVue || (window.ElementPlusIcons ? window.ElementPlusIcons : null) || null;
-                        if (icons && typeof icons === 'object') {
-                            for (const [k, v] of Object.entries(icons)) {
-                                if (v && (typeof v === 'function' || (typeof v === 'object' && v.render))) app.component(k, v);
-                            }
-                        }
-                    } catch (_) { }
-                    app.mount('#kbIndex');
-                } catch (err) { console.error('KB Index mount failed:', err); }
+            function mountApp() {
+                const app = createApp(appConfig);
+                if (window.ElementPlus)
+                    app.use(window.ElementPlus);
+                app.mount('#kbIndex');
             }
+
             function waitAndMount(retry) {
-                retry = retry || 0;
-                const ok = typeof Vue !== 'undefined' && typeof Vue.createApp === 'function' && window.ElementPlus;
-                if (ok) { mountIt(); return; }
-                if (retry < 80) { setTimeout(function () { waitAndMount(retry + 1); }, 25); return; }
-                console.error('KB Index：等待 Vue / ElementPlus 全局加载超时。');
+                const ready = typeof Vue !== 'undefined' && typeof Vue.createApp === 'function' && window.ElementPlus && window.axios;
+                if (ready) {
+                    mountApp();
+                    return;
+                }
+                if ((retry || 0) < 80) {
+                    setTimeout(function () { waitAndMount((retry || 0) + 1); }, 25);
+                    return;
+                }
+                console.error('KB Index：等待 Vue / ElementPlus / axios 加载超时。');
             }
-            if (document.readyState === 'loading') {
+
+            if (document.readyState === 'loading')
                 document.addEventListener('DOMContentLoaded', function () { waitAndMount(0); }, { once: true });
-            } else {
+            else
                 waitAndMount(0);
-            }
         })();
     </script>
 }

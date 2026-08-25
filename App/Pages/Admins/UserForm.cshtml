@@ -11,6 +11,7 @@
         <EleInput For="Item.Name" Label="账号" Required="true" Enabled="@(Model.IsNameEditable)"></EleInput>
         <EleInput For="Item.RealName" Label="姓名" Required="true"></EleInput>
         <EleTreePicker For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" IdField="id" NameField="name" Required="true" CheckStrictly="true"></EleTreePicker>
+        <EleTreePicker For="Item.AuthOrgIds" Label="授权组织" Api="/httpapi/orgs/GetAuthOrgTree" IdField="id" NameField="name" Multiple="true" CollapseTags="false" CheckStrictly="true" ></EleTreePicker>
         <EleListPicker For="Item.RoleIds" Label="角色" Items="Model.RoleList" Multiple="true" CollapseTags="false"></EleListPicker>
         <EleInput For="Item.Title" Label="职务"></EleInput>
         <EleInput For="Item.Email" Label="邮箱"></EleInput>

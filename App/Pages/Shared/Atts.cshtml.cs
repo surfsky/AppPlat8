@@ -7,6 +7,7 @@ using App.Entities;
 using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using System.IO;
@@ -14,6 +15,8 @@ using System.IO;
 namespace App.Pages.Shared
 {
     [Auth(AuthLogin =true)]
+    [RequestSizeLimit(2147483648)]        // 2GB
+    [RequestFormLimits(MultipartBodyLengthLimit = 2147483648, ValueCountLimit = 4096)]
     public class AttsModel : AdminModel
     {
         [BindProperty(SupportsGet = true)]

@@ -27,6 +27,7 @@ namespace App.DAL
         // base
         public DbSet<Org> Orgs { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<UserOrg> UserOrgs { get; set; }
         public DbSet<Role> Roles { get; set; }
         //public DbSet<RoleUser> RoleUsers { get; set; }
         public DbSet<RolePower> RolePowers { get; set; }
@@ -144,6 +145,25 @@ namespace App.DAL
                 .WithMany(r => r.Users)                  // Role 可以被多个 User 拥有
                 .UsingEntity(j => j.ToTable("UserRole")) // 指定连接表的名称为 "UserRole"
                 ;
+
+            // User/UserOrg 多对多（兼职/授权组织）
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.UserOrgs)
+                .WithOne(o => o.User)
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserOrg>()
+                .HasOne(o => o.Org)
+                .WithMany()
+                .HasForeignKey(o => o.OrgId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<KbMenu>()
+                .HasOne(o => o.Org)
+                .WithMany()
+                .HasForeignKey(o => o.OrgId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // CheckTag/CheckSheet 多对多关系
             modelBuilder.Entity<CheckTag>()

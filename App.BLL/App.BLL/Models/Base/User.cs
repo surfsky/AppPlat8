@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -8,6 +8,7 @@ using App.Utils;
 using App.Entities;
 using App.Components;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.ObjectModel;
 
 namespace App.DAL
 {
@@ -51,6 +52,7 @@ namespace App.DAL
         [UI("所属组织")]        public virtual Org Org { get; set; }
         [UI("授权组织")]        public virtual Org AuthOrg { get; set; }
         [UI("用户角色")]        public virtual List<Role> Roles { get; set; } = new List<Role>();
+        [UI("授权组织")]        public virtual List<UserOrg> UserOrgs { get; set; } = new List<UserOrg>();
 
 
         //------------------------------------------------------
@@ -58,8 +60,15 @@ namespace App.DAL
         //------------------------------------------------------
         public string OrgName => this.Org?.Name;
         public string OrgFullName => this.Org?.FullName;
+        public string AuthOrgName => this.AuthOrg?.Name;
+        public string AuthOrgFullName => this.AuthOrg?.FullName ?? this.AuthOrg?.Name;
         public string MobileMasked => this.Mobile?.Mask(3, 4);
         public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
+        public string AuthOrgNames => GetAuthorizedOrgs()
+            .Select(t => t.FullName ?? t.Name)
+            .Where(t => t.IsNotEmpty())
+            .Distinct()
+            .ToJoinString("，");
 
         //------------------------------------------------------
         // 角色相关（用UserRoles表存储）
@@ -92,6 +101,29 @@ namespace App.DAL
             }
         }
 
+        [NotMapped] private List<long> _authOrgIds;
+        [UI("授权组织IDs"), NotMapped]
+        public virtual List<long> AuthOrgIds
+        {
+            get
+            {
+                if (_authOrgIds != null)
+                    return _authOrgIds;
+                return GetAuthorizedOrgs()
+                    .Where(t => t != null)
+                    .Select(t => t.Id)
+                    .Distinct()
+                    .ToList();
+            }
+            set
+            {
+                _authOrgIds = (value ?? new List<long>())
+                    .Where(t => t > 0)
+                    .Distinct()
+                    .ToList();
+            }
+        }
+
 
         /// <summary>获取用户的所有角色IDs。</summary>
         public List<long> GetRoleIds()
@@ -113,6 +145,36 @@ namespace App.DAL
                 .ToList();
         }
 
+        /// <summary>获取用户直接授权的组织列表（含主组织、默认授权组织）。</summary>
+        public List<Org> GetAuthorizedOrgs()
+        {
+            var orgs = new List<Org>();
+
+            void addOrg(Org org)
+            {
+                if (org == null) return;
+                if (orgs.Any(t => t.Id == org.Id)) return;
+                orgs.Add(org);
+            }
+
+            addOrg(this.Org);
+            addOrg(this.AuthOrg);
+            foreach (var item in this.UserOrgs ?? new List<UserOrg>())
+                addOrg(item?.Org);
+
+            if (orgs.Count > 0)
+                return orgs;
+
+            var ids = new List<long>();
+            if (this.OrgId.HasValue && this.OrgId.Value > 0) ids.Add(this.OrgId.Value);
+            if (this.AuthOrgId.HasValue && this.AuthOrgId.Value > 0) ids.Add(this.AuthOrgId.Value);
+            if (this.Id > 0)
+                ids.AddRange(UserOrg.Set.Where(t => t.UserId == this.Id && t.OrgId != null).Select(t => t.OrgId.Value).ToList());
+
+            ids = ids.Where(t => t > 0).Distinct().ToList();
+            return ids.Count == 0 ? new List<Org>() : Org.Set.Where(t => ids.Contains(t.Id)).ToList();
+        }
+
         /// <summary>按角色ID列表更新导航属性。</summary>
         public void SetRoles(IEnumerable<long> roleIds)
         {
@@ -121,6 +183,24 @@ namespace App.DAL
             this.Roles = (ids.Count == 0)
                 ? new List<Role>()
                 : Role.Set.Where(t => ids.Contains(t.Id)).ToList();
+        }
+
+        /// <summary>设置授权组织。</summary>
+        public void SetAuthOrgs(IEnumerable<long> orgIds)
+        {
+            this.AuthOrgIds = orgIds?.ToList();
+            var ids = this.AuthOrgIds;
+            this.UserOrgs = (ids.Count == 0)
+                ? new List<UserOrg>()
+                : Org.Set
+                    .Where(t => ids.Contains(t.Id))
+                    .Select(t => new UserOrg
+                    {
+                        UserId = this.Id > 0 ? this.Id : null,
+                        OrgId = t.Id,
+                        Org = t
+                    })
+                    .ToList();
         }
 
         //------------------------------------------------------
@@ -164,6 +244,11 @@ namespace App.DAL
                 this.OrgId,
                 this.OrgName,
                 this.OrgFullName,
+                this.AuthOrgId,
+                this.AuthOrgName,
+                this.AuthOrgFullName,
+                AuthOrgIds = this.AuthOrgIds,
+                this.AuthOrgNames,
                 this.Email,
                 this.Gender,
                 this.Birthday,
@@ -180,23 +265,37 @@ namespace App.DAL
                 RoleIds = this.GetRoleIds(),
                 this.RoleNames,
                 Roles = this.Roles.Export(type),
+                AuthOrgs = this.GetAuthorizedOrgs().Export(type),
             };
         }
 
         /// <summary>获取用户详情（包含关联数据）</summary>
         public static User GetDetail(Func<User, bool> predicate)
         {
-            var user = DataSet.Include(u => u.Org).Include(u => u.AuthOrg).Include(u => u.Roles).FirstOrDefault(predicate);
+            var user = DataSet
+                .Include(u => u.Org)
+                .Include(u => u.AuthOrg)
+                .Include(u => u.Roles)
+                .Include(u => u.UserOrgs)
+                    .ThenInclude(t => t.Org)
+                .FirstOrDefault(predicate);
             if (user == null)
                 return null;
             user.RoleIds = user.Roles.Select(r => r.Id).ToList();
+            user.AuthOrgIds = user.GetAuthorizedOrgs().Select(t => t.Id).Distinct().ToList();
             return user;
         }
 
         /// <summary>搜索用户列表</summary>
         public static IQueryable<User> Search(string name, string realName, long? deptId=null, long? roleId=null, bool? isDel=null)
         {
-            var q = DataSet.Include(u => u.Org).Include(u => u.AuthOrg).Include(u => u.Roles).AsQueryable();
+            var q = DataSet
+                .Include(u => u.Org)
+                .Include(u => u.AuthOrg)
+                .Include(u => u.Roles)
+                .Include(u => u.UserOrgs)
+                    .ThenInclude(t => t.Org)
+                .AsQueryable();
             if (name.IsNotEmpty())     q = q.Where(t => t.Name.Contains(name));
             if (realName.IsNotEmpty()) q = q.Where(t => t.RealName.Contains(realName));
             if (deptId != null)        q = q.Where(t => t.OrgId == deptId);

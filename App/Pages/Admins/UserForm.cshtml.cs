@@ -5,12 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using System;
-using Microsoft.EntityFrameworkCore;
 using User = App.DAL.User;
-using App.EleUI;
 using App.Entities;
 
 namespace App.Pages.Admins
@@ -26,6 +21,7 @@ namespace App.Pages.Admins
         {
             RoleList = Role.Set.Select(r => new SelectListItem(r.Name, r.Id.ToString())).ToList();
             IsNameEditable = id <= 0;
+            Item = id > 0 ? App.DAL.User.GetDetail(t => t.Id == id) : new App.DAL.User();
         }
 
         public IActionResult OnGetData(long id)
@@ -62,6 +58,8 @@ namespace App.Pages.Admins
             user.Name = req.Name;
             user.RealName = req.RealName;
             user.OrgId = req.OrgId;
+            var authOrgIds = (req.AuthOrgIds ?? new List<long>()).Where(t => t > 0).Distinct().ToList();
+            user.AuthOrgId = authOrgIds.Count > 0 ? authOrgIds[0] : req.OrgId;
             user.Title = req.Title;
             user.Mobile = req.Mobile;
             user.Email = req.Email;
@@ -71,6 +69,15 @@ namespace App.Pages.Admins
             user.Photo = Uploader.SaveFile(nameof(User), req.Photo);
             user.SetRoles(req.RoleIds);
             user.Save();
+            UserOrg.Delete(t => t.UserId == user.Id);
+            foreach (var authOrgId in authOrgIds)
+            {
+                new UserOrg
+                {
+                    UserId = user.Id,
+                    OrgId = authOrgId
+                }.Save();
+            }
             return BuildResult(0, "保存成功");
         }
     }
