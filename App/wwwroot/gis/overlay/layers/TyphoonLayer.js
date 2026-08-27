@@ -35,6 +35,7 @@ export class TyphoonLayer extends MapLayer {
     this.getApi = "/httpapi/typhoon/get";
     this.logsApi = "/httpapi/typhoon/logs";
     this.predictApi = "/httpapi/typhoon/predict";
+    this.importLiveApi = "/httpapi/typhoon/importLive";
     this.currentTrackApi = "https://agora.ex.nii.ac.jp/digital-typhoon/geojson/wnp/";
     this.currentForecastApi = "https://agora.ex.nii.ac.jp/digital-typhoon/json/jmaxml-forecast/wnp/";
     this.currentListApi = "https://codh.ex.nii.ac.jp/digital-typhoon/latest/track/index.html.en";
@@ -425,6 +426,13 @@ export class TyphoonLayer extends MapLayer {
     return String(item?.chineseName || item?.ChineseName || "").trim();
   }
 
+  /**获取名称（中文名优先，其次英文名） */
+  getItemName(item) {
+    const cn = this.getChineseName(item);
+    if (cn) return cn;
+    return String(item?.name || item?.Name || item?.englishName || item?.EnglishName || "").trim();
+  }
+
   /**是否登陆 */
   isLandfall(item) {
     return item?.isLand === true || item?.IsLand === true;
@@ -537,7 +545,70 @@ export class TyphoonLayer extends MapLayer {
   isCurrentCode(code) {
     const key = String(code || "").trim();
     if (!key) return false;
-    return this.currentList.some(item => this.getItemCode(item) === key);
+    return this.mergeItemsByCode(this.historyList, this.currentList)
+      .some(item => this.getItemCode(item) === key && this.isLiveItem(item));
+  }
+
+  /**判断一个合并后的台风项是否还活跃（按用户思路：只用最后更新时间差值，单一阈值 20 小时） */
+  isLiveItem(item) {
+    if (!item) return false;
+    if (item.isLiveEnded === true) return false;
+
+    const track = Array.isArray(item.track)
+      ? item.track
+      : (Array.isArray(item.Track) ? item.Track : null);
+    const logs = Array.isArray(item.logs)
+      ? item.logs
+      : (Array.isArray(item.Logs) ? item.Logs : null);
+    const forecast = item.forecast || item.Forecast || null;
+    const forecastCurrent = forecast?.current || forecast?.Current || null;
+    const forecastTrack = Array.isArray(forecast?.track) ? forecast.track
+      : (Array.isArray(forecast?.Track) ? forecast.Track
+        : (Array.isArray(forecast) ? forecast : null));
+
+    const times = [];
+    times.push(
+      this.parseTime(item.lastTime || item.LastTime || item.lastUpdate || item.LastUpdate),
+      this.parseTime(item.forecastTime || item.ForecastTime || item.updateTime || item.UpdateTime || item.UpdatedAt || item.updatedAt),
+      this.parseTime(item.createTime || item.CreateTime || item.createAt || item.createdAt)
+    );
+    for (const p of (track || [])) {
+      times.push(this.parseTime(p.time || p.Time || p.timeUtc || p.TimeUtc || p.date || p.Date));
+    }
+    for (const p of (logs || [])) {
+      times.push(this.parseTime(p.time || p.Time || p.timeUtc || p.TimeUtc || p.date || p.Date));
+    }
+    if (forecastCurrent) {
+      times.push(this.parseTime(
+        this.toUtcIsoFromUnix(forecastCurrent.forecasttime)
+        || this.toUtcIsoFromUnix(forecastCurrent.basetime)
+        || this.toUtcIsoFromJstText(forecastCurrent.time)
+        || forecastCurrent.time
+      ));
+    }
+    for (const p of (Array.isArray(forecastTrack) ? forecastTrack : [])) {
+      times.push(this.parseTime(
+        this.toUtcIsoFromUnix(p.forecasttime)
+        || this.toUtcIsoFromJstText(p.time)
+        || p.time
+      ));
+    }
+
+    const now = Date.now();
+    const deathUtcTs = this.parseTime(item.deathUtc || item.DeathUtc);
+    if (Number.isFinite(deathUtcTs) && deathUtcTs < now - 6 * 3600 * 1000) return false;
+
+    const valid = times.filter(Number.isFinite);
+    if (!valid.length) {
+      // 没有任何可判定时间：若仅存 currentList 的 isLive=true 老标记且距生成 <1h 就信任，否则判非活跃
+      if (item.isLive === true) {
+        const ts = Number(item._liveCapturedAt || 0);
+        return ts > 0 && (now - ts) <= (1 * 60 * 60 * 1000);
+      }
+      return false;
+    }
+    const last = Math.max(...valid);
+    return (now - last) <= (20 * 60 * 60 * 1000);
   }
 
   /**确保默认选择 */
@@ -559,7 +630,8 @@ export class TyphoonLayer extends MapLayer {
   /**渲染图例 */
   renderLegend() {
     const el = this.ensureLegend();
-    const liveCnt = this.currentList.length;
+    const allItems = this.mergeItemsByCode(this.historyList, this.currentList);
+    const liveCnt = allItems.filter(item => this.isLiveItem(item)).length;
     const yearOptions = this.getYears()
       .map(year => `<option value="${year}" ${String(year) === String(this.selectedYear) ? "selected" : ""}>${year}</option>`)
       .join("");
@@ -576,13 +648,16 @@ export class TyphoonLayer extends MapLayer {
         <span>${item.name}</span>
       </span>
     `).join("");
+    const tip = liveCnt > 0
+      ? `当前活跃 ${liveCnt} 个，实时源：Digital Typhoon`
+      : `数据源：本地台风数据库`;
     el.innerHTML = `
       <div class="typhoon-legend-title">
         <span class="typhoon-legend-title-text">
           <span>台风路径</span>
         </span>
         <span class="typhoon-legend-actions">
-          <span class="typhoon-legend-tip">${liveCnt > 0 ? `当前活跃 ${liveCnt} 个，实时源：Digital Typhoon` : "数据源：本地台风数据库"}</span>
+          <span class="typhoon-legend-tip">${tip}</span>
           <button type="button" class="typhoon-legend-toggle" data-legend-action="collapse" title="收起台风面板" aria-label="收起台风面板">
             <i class="fa-solid fa-chevron-down"></i>
           </button>
@@ -766,6 +841,33 @@ export class TyphoonLayer extends MapLayer {
     const hh = `${date.getHours()}`.padStart(2, "0");
     const mm = `${date.getMinutes()}`.padStart(2, "0");
     return `${y}-${m}-${d} ${hh}:${mm}`;
+  }
+
+  /**解析任意时间为 Unix 毫秒 */
+  parseTime(value) {
+    if (value == null || value === "") return NaN;
+    if (typeof value === "number") return isFinite(value) ? (value > 1e12 ? value : value * 1000) : NaN;
+    if (value instanceof Date) return isNaN(value.getTime()) ? NaN : value.getTime();
+    if (typeof value === "boolean" || typeof value === "function") return NaN;
+    const s = String(value).trim();
+    if (!s) return NaN;
+    if (/^[0-9]+$/.test(s)) {
+      const n = Number(s);
+      return n > 1e12 ? n : n * 1000;
+    }
+    if (/\d{10,}/.test(s) && !isNaN(Number(s.replace(/[^0-9]/g, "").slice(0, 13)))) {
+      const digits = s.replace(/[^0-9]/g, "");
+      if (digits.length >= 10) {
+        const n = Number(digits.slice(0, 13));
+        if (isFinite(n)) return n;
+      }
+    }
+    try {
+      const d = new Date(s);
+      const t = d.getTime();
+      if (isFinite(t)) return t;
+    } catch (_e) { /* ignore */ }
+    return NaN;
   }
 
   /**格式化本地时间 */
@@ -977,33 +1079,133 @@ export class TyphoonLayer extends MapLayer {
       forecast: this.parseCurrentForecastJson(forecastData)
     };
     this.currentStormMap.set(key, { __fetchedAt: now, data });
+    this.submitLiveImport(key, data).catch(() => { /* 忽略，异步入库 */ });
     return data;
   }
 
+  /**把实时源数据异步回写到本地数据库（增量合并）。*/
+  async submitLiveImport(code, data) {
+    if (!code || !data) return;
+    const track = Array.isArray(data.track) ? data.track : [];
+    const meta = data.meta || {};
+    if (!track.length && !(meta && meta.name)) return;
+    try {
+      const payload = {
+        code: String(meta.code || code || "").trim(),
+        name: String(meta.name || "").trim(),
+        chineseName: "",
+        birthUtc: track[0]?.time || null,
+        deathUtc: track[track.length - 1]?.time || null,
+        maxLevel: 0,
+        isLand: false,
+        track: track.map(t => ({
+          time: t.time,
+          lng: Array.isArray(t.coord) ? t.coord[0] : null,
+          lat: Array.isArray(t.coord) ? t.coord[1] : null,
+          pressure: (t.pressure === "-" || t.pressure == null) ? null : Number(t.pressure),
+          windMs: Number(t.windMs) || 0,
+          levelCode: Number(t.levelCode) || 0,
+          levelName: String(t.levelName || "").trim()
+        })).filter(t => Number.isFinite(t.lng) && Number.isFinite(t.lat) && t.time)
+      };
+      if (!payload.track.length) return;
+      const first = track[0];
+      const last = track[track.length - 1];
+      if (first && first.time) payload.birthUtc = first.time;
+      if (last && last.time) payload.deathUtc = last.time;
+      const maxWind = track.reduce((m, t) => Math.max(m, Number(t?.windMs) || 0), 0);
+      payload.maxLevel = this.msToBeaufortLevel(maxWind);
+      const body = JSON.stringify({ data: [payload] });
+      await fetch(this.importLiveApi, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body
+      });
+    } catch (_e) { /* 入库失败不影响展示 */ }
+  }
+
   /**提取在线候选编号 */
-  extractCurrentCodes(text) {
-    const list = String(text || "").match(/\b\d{6}\b/g) || [];
+  extractCurrentCodes(html) {
+    const list = [];
+    if (!html) return list;
+    const yy = new Date().getUTCFullYear() % 100;
+    const yyyy = new Date().getUTCFullYear();
+    const patterns = [
+      new RegExp(`\\b(${yyyy}[0-9]{2})\\b`, "g"),
+      /\b(\d{4}[0-9]{2})\b/g,
+      new RegExp(`(${yy}[0-9]{2})[A-Z]{2,4}\\b`, "g"),
+      /id[=:]\s*["']?\s*(\d{4}[0-9]{2})\s*["']?/g,
+      new RegExp(`wnp\\/(${yyyy}[0-9]{2})\\/`, "g"),
+      /track\/(?:T[PCY]?)(\d{2})([0-9]{2})[^0-9]/g
+    ];
+    for (const re of patterns) {
+      let m;
+      re.lastIndex = 0;
+      while ((m = re.exec(html)) != null) {
+        let code = null;
+        if (m[1] && String(m[1]).length === 6) {
+          code = m[1];
+        } else if (m.length >= 3 && m[1] && m[2] && !isNaN(Number(m[1])) && !isNaN(Number(m[2]))) {
+          if (String(m[1]).length === 2 && String(m[2]).length === 2) {
+            const y = Number(m[1]);
+            const baseCentury = Math.floor(yyyy / 100) * 100;
+            const g1 = (y <= 99) ? (baseCentury + y) : yyyy;
+            code = `${g1}${String(m[2]).padStart(2, "0")}`;
+          }
+        }
+        if (code && code.length === 6 && !list.includes(code)) list.push(code);
+        if (list.length > 300) break;
+      }
+    }
     return Array.from(new Set(list.filter(code => this.isCurrentYearCode(code))));
   }
 
-  /**是否在线活跃 */
+  /**在线活跃判定：用户思路 —— 用最后更新时间与当前时间差值判断，单一阈值，不再依赖 forecast 字段 */
   isLiveCurrentData(data) {
     const track = Array.isArray(data?.track) ? data.track : [];
-    const current = data?.forecast?.current || null;
-    const latestTrack = track.length ? new Date(track[track.length - 1]?.time || "").getTime() : NaN;
-    const latestForecast = current
-      ? new Date(this.toUtcIsoFromUnix(current?.forecasttime) || this.toUtcIsoFromUnix(current?.basetime) || this.toUtcIsoFromJstText(current?.time)).getTime()
-      : NaN;
-    const latest = Math.max(Number.isFinite(latestTrack) ? latestTrack : 0, Number.isFinite(latestForecast) ? latestForecast : 0);
-    if (!latest) return false;
-    return latest >= Date.now() - 96 * 3600 * 1000;
+    const forecast = data?.forecast || null;
+    const forecastTrack = Array.isArray(forecast?.track) ? forecast.track : [];
+    const current = forecast?.current || null;
+    const trackTimes = (track || []).map(p => this.parseTime(p.time || p.Time || p.timeUtc || p.TimeUtc || p.date || p.Date));
+    const forecastTimes = [];
+    if (current) {
+      forecastTimes.push(this.parseTime(
+        this.toUtcIsoFromUnix(current.forecasttime)
+        || this.toUtcIsoFromUnix(current.basetime)
+        || this.toUtcIsoFromJstText(current.time)
+        || current.time
+      ));
+    }
+    for (const p of forecastTrack) {
+      forecastTimes.push(this.parseTime(
+        this.toUtcIsoFromUnix(p.forecasttime)
+        || this.toUtcIsoFromJstText(p.time)
+        || p.time
+      ));
+    }
+    const metaUpdate = this.parseTime(
+      data?.meta?.updateTime || data?.meta?.updated || data?.meta?.time
+      || data?.updateTime || data?.updated || data?.updateTimeUtc
+    );
+    const all = [...trackTimes, ...forecastTimes, metaUpdate].filter(Number.isFinite);
+    if (!all.length) return false;
+    const last = Math.max(...all);
+    // 单一阈值：最后更新点距当前 <= 20 小时即判活跃
+    // （既比 96h 严格得多，又保留了"半天 ~ 18 小时内"的刚停止编号缓冲）
+    return (Date.now() - last) <= (20 * 60 * 60 * 1000);
   }
 
   /**确保当前活跃台风 */
-  async ensureCurrentList() {
+  async ensureCurrentList(force) {
     const now = Date.now();
-    if (this.currentList.length && now - this.currentListLoadedAt < 15 * 60 * 1000) {
+    if (!force && this.currentList.length && now - this.currentListLoadedAt < 60 * 1000) {
       return this.currentList;
+    }
+    if (force) {
+      // 强制刷新：清掉旧缓存的 isLive 标记，避免把已消亡台风永远当成活跃
+      this.currentList = [];
+      this.currentListLoadedAt = 0;
     }
 
     const curYear = new Date().getUTCFullYear();
@@ -1019,7 +1221,9 @@ export class TyphoonLayer extends MapLayer {
     const codeSet = new Set([...yearCodes, ...latestCodes]);
     const seqList = Array.from(codeSet).map(code => this.getCodeSeq(code)).filter(Number.isFinite);
     const maxSeq = seqList.length ? Math.max(...seqList) : 0;
-    for (let i = 1; i <= 4; i++) {
+    // 探测步长至少 15：温州台风网 8/27 已到 202622，若 DB 只到 12 号则保证 13..27 均被探测
+    const probe = Math.max(15, 22 - maxSeq + 6);
+    for (let i = 1; i <= probe; i++) {
       const seq = maxSeq + i;
       if (seq <= 0 || seq > 99) continue;
       codeSet.add(`${curYear}${String(seq).padStart(2, "0")}`);
@@ -1032,20 +1236,59 @@ export class TyphoonLayer extends MapLayer {
       return { code, data };
     }));
 
+    // 把 DB 中当年台风全部先推入 currentList，兜底：即使实时源全挂了也能看见 DB 里存在的
+    for (const item of this.historyList) {
+      const code = this.getItemCode(item);
+      if (!code || !String(code).startsWith(String(curYear))) continue;
+      const name = this.getItemName(item);
+      list.push({
+        ...item,
+        code,
+        name: String(name || "").trim(),
+        chineseName: this.getChineseName(item) || "",
+        isLive: false,
+        isLiveEnded: this.isEndedTyphoon(item),
+        hasLiveTrack: false,
+        isHistoryFallback: true
+      });
+    }
+
     for (const row of rows) {
-      if (!this.isLiveCurrentData(row.data)) continue;
+      const hasTrack = Array.isArray(row?.data?.track) && row.data.track.length > 0;
+      const live = this.isLiveCurrentData(row.data);
       const local = this.historyList.find(item => this.getItemCode(item) === row.code) || null;
+      const codeInLocal = !!local;
+      const seq = this.getCodeSeq(row.code);
+
+      // 没有轨迹 + 不在本地 DB + 序号较大 → 认为是空编号占位，跳过（避免 202619、202620 这种"有一点点历史点位但实际消亡"的被误加入）
+      if (!hasTrack && !codeInLocal) {
+        if (!live) continue;
+      }
+
+      // 已结束且本地DB有 且 实时源没给新轨迹或新时间 → 用 historyList 兜底版本即可，不重复
+      if (!live && codeInLocal && !hasTrack) continue;
+
+      const fallbackName = String(local?.name || local?.Name || "").trim();
+      const capturedAt = Date.now();
       const item = {
         ...(local || {}),
         code: row.code,
-        name: String(local?.name || local?.Name || row.data?.meta?.name || "").trim(),
+        name: String(row.data?.meta?.name || fallbackName || "").trim(),
         chineseName: this.getChineseName(local) || "",
-        isLive: true
+        isLive: live,
+        isLiveEnded: hasTrack && !live,
+        hasLiveTrack: hasTrack,
+        track: (Array.isArray(row?.data?.track) && row.data.track.length) ? row.data.track : (local?.track || local?.Track || null),
+        forecast: row?.data?.forecast || forecast || null,
+        logs: (Array.isArray(row?.data?.logs) && row.data.logs.length) ? row.data.logs : (local?.logs || local?.Logs || null),
+        _liveCapturedAt: capturedAt
       };
-      list.push(item);
+      const existsIdx = list.findIndex(t => this.getItemCode(t) === row.code);
+      if (existsIdx >= 0) list.splice(existsIdx, 1, item);
+      else list.push(item);
     }
 
-    this.currentList = this.mergeItemsByCode(list);
+    this.currentList = this.mergeItemsByCode(list).map(it => ({ ...it, _liveCapturedAt: it._liveCapturedAt || Date.now() }));
     this.currentListLoadedAt = now;
     return this.currentList;
   }
@@ -1497,9 +1740,13 @@ export class TyphoonLayer extends MapLayer {
   }
 
   /**构建全部活跃台风 */
-  async buildCurrentListFeatures(code) {
+  async buildCurrentListFeatures(code, activeItems = null) {
     const key = String(code || "").trim();
-    const extras = this.currentList
+    const allItems = this.mergeItemsByCode(this.historyList, this.currentList);
+    const liveItems = Array.isArray(activeItems) && activeItems.length
+      ? activeItems
+      : allItems.filter(item => this.isLiveItem(item));
+    const extras = liveItems
       .map(item => this.getItemCode(item))
       .filter(itemCode => !!itemCode && itemCode !== key);
     const codes = Array.from(new Set([key, ...extras].filter(Boolean)));
@@ -1512,10 +1759,11 @@ export class TyphoonLayer extends MapLayer {
       }));
     }));
     const merged = this.mergeFeatureResults(rows);
+    const idx = Math.max(0, codes.indexOf(key));
     return {
       ...merged,
-      summary: rows[0]?.summary || null,
-      activeCnt: merged.summaries.length
+      summary: rows[idx]?.summary || merged.summaries?.[0] || null,
+      activeCnt: liveItems.length || merged.summaries.length
     };
   }
 
@@ -1956,7 +2204,8 @@ export class TyphoonLayer extends MapLayer {
   async refresh() {
     await this.ensureTyphoonSvg();
     await this.ensureHistoryList();
-    await this.ensureCurrentList();
+    // 强制刷新 currentList（清缓存 + 重跑探测 + 重判 isLive），避免 19/20/21 这种老的 isLive=true 标记一直占用活跃位
+    await this.ensureCurrentList(true);
     this.ensureDefaultSelection();
     if (!this.selectedCode) {
       const first = this.getYearItems(this.selectedYear)[0]
@@ -1985,13 +2234,18 @@ export class TyphoonLayer extends MapLayer {
     let summary = result.summary || null;
     let currentStorms = result.currentStorms || [];
     let activeCnt = 0;
-    if (this.isCurrentCode(this.selectedCode)) {
-      const liveResult = await this.buildCurrentListFeatures(this.selectedCode);
+    const allItems = this.mergeItemsByCode(this.historyList, this.currentList);
+    const activeItems = allItems.filter(item => this.isLiveItem(item));
+    activeCnt = activeItems.length;
+    if (this.isCurrentCode(this.selectedCode) || activeCnt > 0) {
+      const liveResult = await this.buildCurrentListFeatures(this.selectedCode, activeItems);
       if (liveResult?.features?.length) {
         result = liveResult;
-        summary = liveResult.summary || null;
+        summary = liveResult.summary || summary;
         currentStorms = liveResult.currentStorms || [];
-        activeCnt = Number(liveResult.activeCnt) || 0;
+      }
+      if (activeCnt < (Number(liveResult?.activeCnt) || 0)) {
+        activeCnt = Number(liveResult?.activeCnt) || 0;
       }
     } else if (this.shouldUseLiveData(baseTyphoon, logs)) {
       const liveResult = await this.buildCurrentFeatures(baseTyphoon, this.selectedCode);

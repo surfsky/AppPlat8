@@ -1,4 +1,4 @@
-﻿//using System.Web.Script.Serialization;
+//using System.Web.Script.Serialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using System;
@@ -20,7 +20,19 @@ namespace App.HttpApi
         /// <summary>创建解码器（尝试根据ContentType来构造解析器，但往往不准确，客户端没那么乖）</summary>
         public static RequestDecoder CreateInstance(HttpContext context)
         {
-            // 若客户端明确发送了ContentType，则调用相应的 Decoder
+            var method = (context.Request.Method ?? string.Empty).ToUpperInvariant();
+            bool hasBody;
+            try
+            {
+                var cl = context.Request.ContentLength;
+                hasBody = (cl.HasValue && cl.Value > 0)
+                          || (!cl.HasValue && "POST".Equals(method, StringComparison.OrdinalIgnoreCase));
+            }
+            catch
+            {
+                hasBody = "POST".Equals(method, StringComparison.OrdinalIgnoreCase);
+            }
+
             string contentType = context.Request.ContentType?.ToLower();
             if (!string.IsNullOrEmpty(contentType))
             {
@@ -32,19 +44,14 @@ namespace App.HttpApi
                     return new MultipartFormDecoder(context);
                 if (contentType.IndexOf("application/xml") >= 0)
                     return new JsonDecoder(context);
-                //if (contentType.IndexOf("application/contract") >= 0)
-                //    throw new NotImplementedException();
             }
 
-            // 若是 POST 请求方式用 JsonDecoder
-            if (context.Request.Method == "POST")
+            if ("POST".Equals(method, StringComparison.OrdinalIgnoreCase) && hasBody)
                 return new JsonDecoder(context);
 
-            // 否则尝试分析querystring，若有则用url解析器
             if (context.Request.Query.Count > 0)
                 return new UrlDecoder(context);
 
-            // 默认用 UrlDecoder
             return new UrlDecoder(context);
         }
 
@@ -118,35 +125,92 @@ namespace App.HttpApi
         internal JsonDecoder(HttpContext context)
             : base(context)
         {
-            if (this._context.Request.Method.ToUpper() == "GET")
-                throw new NotSupportedException("不支持GET请求");
         }
 
         /// <summary>解析参数</summary>
         public override Dictionary<string, object> ParseArguments()
         {
-            // 解析 Post 上来的字符串
-            /*
-            var stream = this._context.Request.Body;
-            var buffer = new byte[stream.Length];
-            stream.Position = 0;
-            stream.Read(buffer, 0, (int)stream.Length);
-            var enc = GetRequestEncoding(_context.Request);
-            var str = enc.GetString(buffer);
+            var dict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
-            // 将字符串解析为字典（不知道能否解析复杂类，可能要根据方法的参数类型来强制转换）
-            var dict = obj as Dictionary<string, object>;
-            */
+            // 仅当确实存在 form 内容时才读 Form，避免对 无 body 的 POST 或纯 JSON POST 抛异常
+            try
+            {
+                var canReadForm = false;
+                try
+                {
+                    var cl = _context.Request.ContentLength;
+                    var ct = _context.Request.ContentType?.ToLower() ?? string.Empty;
+                    canReadForm = (cl.HasValue && cl.Value > 0)
+                                  && (ct.IndexOf("application/x-www-form-urlencoded", StringComparison.Ordinal) >= 0
+                                      || ct.IndexOf("multipart/", StringComparison.Ordinal) >= 0);
+                }
+                catch { canReadForm = false; }
 
-            // 自己解析比较麻烦，直接用Asp内置的机制来简化参数解析操作
-            var dict = new Dictionary<string, object>();
-            foreach (var item in _context.Request.Form)
-                dict.Add(item.Key, item.Value);
+                if (canReadForm)
+                {
+                    foreach (var item in _context.Request.Form)
+                        dict[item.Key] = item.Value;
+                }
+            }
+            catch (InvalidOperationException) { /* 缺 Content-Type 或缺 Body 时忽略 */ }
+            catch (System.IO.IOException) { }
 
-            // 附加上 QueryString（有些请求既有Post部分，又有 QueryString 部分，需要补全）
+            // 附加上 QueryString
             foreach (var q in _context.Request.Query)
-                dict.Add(q.Key, q.Value);
+                dict[q.Key] = q.Value;
+
+            // 尝试读 JSON Body
+            try
+            {
+                var ct = _context.Request.ContentType?.ToLower() ?? string.Empty;
+                var cl = _context.Request.ContentLength;
+                var bodyPresent = (cl.HasValue && cl.Value > 0);
+                if (ct.IndexOf("application/json", StringComparison.Ordinal) >= 0
+                    && bodyPresent
+                    && _context.Request.Body != null && _context.Request.Body.CanRead)
+                {
+                    using var ms = new System.IO.MemoryStream();
+                    var copyTask = _context.Request.Body.CopyToAsync(ms);
+                    copyTask.ConfigureAwait(false).GetAwaiter().GetResult();
+                    var body = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                    if (!string.IsNullOrWhiteSpace(body))
+                    {
+                        try
+                        {
+                            using var doc = System.Text.Json.JsonDocument.Parse(body);
+                            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+                            {
+                                foreach (var prop in doc.RootElement.EnumerateObject())
+                                    dict[prop.Name] = JsonElementToValue(prop.Value);
+                            }
+                            dict["$body"] = body;
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch (NotSupportedException) { /* HttpRequestStream.get_Length 不支持 */ }
+            catch (System.IO.IOException) { }
+            catch { }
+
             return dict;
+        }
+
+        static object JsonElementToValue(System.Text.Json.JsonElement el)
+        {
+            switch (el.ValueKind)
+            {
+                case System.Text.Json.JsonValueKind.String:
+                    return el.GetString();
+                case System.Text.Json.JsonValueKind.Number:
+                    if (el.TryGetInt64(out var l)) return l;
+                    if (el.TryGetDouble(out var d)) return d;
+                    return el.GetRawText();
+                case System.Text.Json.JsonValueKind.True: return true;
+                case System.Text.Json.JsonValueKind.False: return false;
+                case System.Text.Json.JsonValueKind.Null: return null;
+                default: return el.GetRawText();
+            }
         }
 
         private Encoding GetRequestEncoding(HttpRequest request)
@@ -170,21 +234,26 @@ namespace App.HttpApi
         internal MultipartFormDecoder(HttpContext context)
             : base(context)
         {
-            if (this._context.Request.Method.ToUpper() == "GET")
-                throw new NotSupportedException("不支持GET请求");
         }
 
         /// <summary>解析参数</summary>
         public override Dictionary<string, object> ParseArguments()
         {
-            // 自己解析比较麻烦，直接用Asp内置的机制来简化参数解析操作
-            var dict = new Dictionary<string, object>();
-            foreach (var item in _context.Request.Form)
-                dict.Add(item.Key, item.Value);
+            var dict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                var cl = _context.Request.ContentLength;
+                if (!cl.HasValue || cl.Value > 0)
+                {
+                    foreach (var item in _context.Request.Form)
+                        dict[item.Key] = item.Value;
+                }
+            }
+            catch (InvalidOperationException) { }
+            catch (System.IO.IOException) { }
 
-            // 附加上 QueryString（有些请求既有Post部分，又有 QueryString 部分，需要补全）
             foreach (var item in _context.Request.Query)
-                dict.Add(item.Key, item.Value);
+                dict[item.Key] = item.Value;
             return dict;
         }
     }

@@ -1,7 +1,15 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
+using App.DAL;
 using App.DAL.GIS;
+using App.Entities;
 using App.HttpApi;
+using App.Utils;
+using App.Web;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.API
 {
@@ -81,6 +89,56 @@ namespace App.API
             if (string.IsNullOrWhiteSpace(code))
                 return new APIResult(400, "缺少台风编号");
             return new APIResult(0, "暂无预测数据", Array.Empty<object>());
+        }
+
+        /// <summary>导入前端从实时源抓取的台风数据（自动更新/新增入库）</summary>
+        [HttpApi("导入实时台风", AuthLogin = false)]
+        public static APIResult ImportLive()
+        {
+            string body;
+            try
+            {
+                var req = Asp.Request;
+                if (req == null)
+                    return new APIResult(400, "无法获取当前请求上下文");
+                using var sr = new StreamReader(req.Body);
+                body = sr.ReadToEnd();
+            }
+            catch
+            {
+                return new APIResult(400, "无法读取请求体");
+            }
+            if (string.IsNullOrWhiteSpace(body))
+                return new APIResult(400, "请求体为空");
+            JsonElement dataEl = default;
+            try
+            {
+                using var doc = JsonDocument.Parse(body);
+                var root = doc.RootElement;
+                if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("data", out dataEl))
+                {
+                    body = dataEl.GetRawText();
+                }
+                else if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("payload", out dataEl))
+                {
+                    body = dataEl.GetRawText();
+                }
+            }
+            catch { }
+
+            using var db = EntityConfig.Db as AppPlatContext;
+            var res = GisTyphoonImporter.ImportLiveData(db, body);
+            return new APIResult(0,
+                $"导入完成：新增{res.TyphoonAddCnt}个台风，更新{res.TyphoonEditCnt}个",
+                new
+                {
+                    res.TyphoonAddCnt,
+                    res.TyphoonEditCnt,
+                    res.LogAddCnt,
+                    res.LogDeleteCnt,
+                    res.FileCnt,
+                    logs = res.Logs.Take(50).ToList()
+                });
         }
     }
 }

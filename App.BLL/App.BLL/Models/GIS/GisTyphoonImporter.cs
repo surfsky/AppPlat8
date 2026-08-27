@@ -366,6 +366,171 @@ namespace App.DAL.GIS
             return 0;
         }
 
+        /// <summary>按风力估算蒲福氏风力等级（浮点兼容版）</summary>
+        public static int EstimateBeaufortLevel(double? windMs)
+        {
+            var v = (int)Math.Round(NumberToDouble(windMs) ?? 0, MidpointRounding.AwayFromZero);
+            return GetWindLevel(v);
+        }
+
+        static double? NumberToDouble(object v)
+        {
+            if (v == null) return null;
+            if (v is double d) return d;
+            if (v is float f) return f;
+            if (v is decimal dd) return (double)dd;
+            if (v is int i) return i;
+            if (v is long l) return l;
+            if (v is short s) return s;
+            if (double.TryParse(v.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var r)) return r;
+            return null;
+        }
+
+        /// <summary>导入前端从实时源抓回的台风数据（含元数据+轨迹）。</summary>
+        public static GisTyphoonImportResult ImportLiveData(AppPlatContext db, string json)
+        {
+            var result = new GisTyphoonImportResult();
+            if (string.IsNullOrWhiteSpace(json)) return result;
+
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            List<JsonElement> items = new();
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var it in root.EnumerateArray()) items.Add(it);
+            }
+            else if (root.ValueKind == JsonValueKind.Object)
+            {
+                items.Add(root);
+            }
+            if (items.Count == 0) return result;
+            result.FileCnt = items.Count;
+
+            var codes = items.Select(it => (GetString(it, "code", "Code") ?? "").Trim())
+                             .Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+            if (codes.Count == 0) return result;
+
+            var tyMap = db.GisTyphoons.Where(t => codes.Contains(t.Code)).ToDictionary(t => t.Code, t => t);
+            var oldLogs = db.GisTyphoonLogs.Where(t => codes.Contains(t.Code)).ToList();
+            if (oldLogs.Count > 0)
+            {
+                db.GisTyphoonLogs.RemoveRange(oldLogs);
+                result.LogDeleteCnt += oldLogs.Count;
+            }
+
+            foreach (var it in items)
+            {
+                var code = (GetString(it, "code", "Code") ?? "").Trim();
+                if (code.Length < 4) continue;
+                var meta = it.TryGetProperty("meta", out var m) ? m : it;
+                var trackEl = it.TryGetProperty("track", out var tr) ? tr : (it.TryGetProperty("logs", out tr) ? tr : default);
+                var rawName = PickValue(GetString(meta, "name", "Name"), GetString(meta, "englishName", "NameEn"));
+                var chineseName = GetString(meta, "chineseName", "ChineseName");
+                var birthRaw = GetString(it, "birthUtc", "BirthUtc", "startUtc");
+                var deathRaw = GetString(it, "deathUtc", "DeathUtc", "endUtc");
+                var isLand = GetBool(it, "isLand", "IsLand");
+                var maxLevel = GetInt(it, "maxLevel", "MaxLevel");
+
+                var pts = new List<GisTyphoonTrackPoint>();
+                if (trackEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var p in trackEl.EnumerateArray())
+                    {
+                        double? lng = null, lat = null;
+                        if (p.TryGetProperty("lng", out var lngEl)) lng = NumberToDouble(lngEl);
+                        else if (p.TryGetProperty("Lng", out lngEl)) lng = NumberToDouble(lngEl);
+                        else if (p.TryGetProperty("coord", out var coordEl) && coordEl.ValueKind == JsonValueKind.Array && coordEl.GetArrayLength() >= 2)
+                        {
+                            var arr = coordEl.EnumerateArray().ToArray();
+                            lng = NumberToDouble(arr[0]);
+                            lat = NumberToDouble(arr[1]);
+                        }
+                        if (lat == null)
+                        {
+                            if (p.TryGetProperty("lat", out var latEl)) lat = NumberToDouble(latEl);
+                            else if (p.TryGetProperty("Lat", out latEl)) lat = NumberToDouble(latEl);
+                        }
+                        var timeUtc = ParseUtc(GetString(p, "time", "timeUtc", "TimeUtc", "Time"));
+                        var pressure = GetInt(p, "pressure", "Pressure");
+                        var windMs = GetInt(p, "windMs", "WindMs");
+                        if (!windMs.HasValue)
+                        {
+                            var w = NumberToDouble(GetString(p, "wind", "Wind"));
+                            if (w.HasValue) windMs = (int)Math.Round(w.Value, MidpointRounding.AwayFromZero);
+                        }
+                        var levelCode = GetInt(p, "levelCode", "LevelCode", "class");
+                        var levelName = GetString(p, "levelName", "LevelName");
+                        if (lng.HasValue && lat.HasValue)
+                        {
+                            pts.Add(new GisTyphoonTrackPoint
+                            {
+                                TimeUtc = timeUtc,
+                                Lng = lng,
+                                Lat = lat,
+                                Pressure = pressure,
+                                WindMs = windMs,
+                                LevelCode = levelCode,
+                                LevelName = levelName.IsNotEmpty() ? levelName : GetLevelName(levelCode, windMs)
+                            });
+                        }
+                    }
+                }
+                pts = pts.Where(p => p.TimeUtc.HasValue).OrderBy(p => p.TimeUtc.Value).ToList();
+                DateTime? firstUtc = pts.FirstOrDefault()?.TimeUtc;
+                DateTime? lastUtc = pts.LastOrDefault()?.TimeUtc;
+                var liveMax = pts.Count == 0 ? 0 : EstimateBeaufortLevel(pts.Max(p => NumberToDouble(p.WindMs)));
+
+                if (!tyMap.TryGetValue(code, out var ty))
+                {
+                    ty = new GisTyphoon
+                    {
+                        Code = code,
+                        Name = rawName,
+                        ChineseName = chineseName,
+                        BirthUtc = ParseUtc(birthRaw) ?? firstUtc,
+                        DeathUtc = ParseUtc(deathRaw) ?? lastUtc,
+                        MaxLevel = maxLevel ?? (liveMax > 0 ? liveMax : null),
+                        IsLand = isLand ?? false
+                    };
+                    db.GisTyphoons.Add(ty);
+                    tyMap[code] = ty;
+                    result.TyphoonAddCnt++;
+                }
+                else
+                {
+                    result.TyphoonEditCnt++;
+                    ty.Name = PickValue(rawName, ty.Name);
+                    ty.ChineseName = PickValue(chineseName, ty.ChineseName);
+                    ty.BirthUtc = MinUtc(ParseUtc(birthRaw) ?? firstUtc, ty.BirthUtc);
+                    ty.DeathUtc = MaxUtc(ParseUtc(deathRaw) ?? lastUtc, ty.DeathUtc);
+                    var maxLv = Math.Max(maxLevel ?? 0, Math.Max(liveMax, ty.MaxLevel ?? 0));
+                    ty.MaxLevel = maxLv > 0 ? maxLv : ty.MaxLevel;
+                    ty.IsLand = isLand ?? ty.IsLand ?? false;
+                }
+
+                for (int i = 0; i < pts.Count; i++)
+                {
+                    var pt = pts[i];
+                    db.GisTyphoonLogs.Add(new GisTyphoonLog
+                    {
+                        Code = code,
+                        TimeUtc = pt.TimeUtc,
+                        Lng = pt.Lng,
+                        Lat = pt.Lat,
+                        Pressure = pt.Pressure,
+                        WindMs = pt.WindMs,
+                        LevelCode = pt.LevelCode,
+                        LevelName = pt.LevelName,
+                        SortId = i + 1
+                    });
+                    result.LogAddCnt++;
+                }
+            }
+            db.SaveChanges();
+            result.Logs.Add($"导入实时台风: {codes.Count} 个，新增 {result.TyphoonAddCnt} 个，更新 {result.TyphoonEditCnt} 个，轨迹 {result.LogAddCnt} 条");
+            return result;
+        }
+
         /// <summary>解析 UTC 时间</summary>
         static DateTime? ParseUtc(string raw)
         {

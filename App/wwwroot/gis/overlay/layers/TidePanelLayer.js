@@ -41,6 +41,10 @@ export class TidePanelLayer extends MapLayer {
     this.selectedChartIndex = -1;
     this.chart = null;
     this.boundWindowResize = false;
+    this.panelCollapsed = false;
+    this.panelMiniId = "tidePanelMiniToggle";
+    this.panelMiniEl = null;
+    this.panelBound = false;
   }
 
   /**绑定运行时并确保面板 UI 已创建 */
@@ -48,7 +52,7 @@ export class TidePanelLayer extends MapLayer {
     super.bind(runtime);
     this.ensurePanel();
     const stationEl = this.getStationEl();
-    if (stationEl) stationEl.value = "cn_wenzhou";
+    if (stationEl) stationEl.value = "cn_aojiang";
     if (!this.boundStationChange && stationEl) {
       stationEl.addEventListener("change", async () => {
         if (!this.visible) return;
@@ -77,21 +81,89 @@ export class TidePanelLayer extends MapLayer {
 
   /**获取当前选中的站点编号 */
   getStationId() {
-    return this.getStationEl()?.value || "cn_wenzhou";
+    return this.getStationEl()?.value || "cn_aojiang";
   }
 
   /**确保潮汐面板 DOM 已创建 */
   ensurePanel() {
     this.ensureStyle();
-    if (this.getPanelEl()) return;
+    if (this.getPanelEl()) {
+      this.ensureMiniButton();
+      this.bindPanelEvents();
+      return;
+    }
 
     const panel = document.createElement("div");
     panel.id = this.panelId;
     panel.className = "tide-panel";
     panel.innerHTML = this.getPanelHtml();
     document.body.appendChild(panel);
+    this.ensureMiniButton();
+    this.bindPanelEvents();
     this.ensureChart();
     this.bindChartEvents();
+  }
+
+  /**确保潮汐面板最小化按钮 */
+  ensureMiniButton() {
+    if (this.panelMiniEl) return this.panelMiniEl;
+    let btn = document.getElementById(this.panelMiniId);
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.type = "button";
+      btn.id = this.panelMiniId;
+      btn.className = "is-hidden";
+      btn.setAttribute("title", "展开潮汐面板");
+      btn.setAttribute("aria-label", "展开潮汐面板");
+      btn.innerHTML = '<i class="fa-solid fa-water"></i>';
+      document.body.appendChild(btn);
+    }
+    this.panelMiniEl = btn;
+    return btn;
+  }
+
+  /**同步面板显隐 */
+  syncPanelDisplay() {
+    const panel = this.getPanelEl();
+    const mini = this.ensureMiniButton();
+    if (!this.visible) {
+      panel?.classList.add("is-hidden");
+      if (panel) panel.style.display = "none";
+      mini?.classList.add("is-hidden");
+      return;
+    }
+    const panelHidden = this.panelCollapsed;
+    if (panel) {
+      panel.classList.toggle("is-hidden", panelHidden);
+      panel.style.display = panelHidden ? "none" : "block";
+    }
+    mini?.classList.toggle("is-hidden", !panelHidden);
+  }
+
+  /**切换面板折叠状态 */
+  togglePanelCollapsed(collapsed) {
+    this.panelCollapsed = typeof collapsed === "boolean"
+      ? collapsed
+      : !this.panelCollapsed;
+    this.syncPanelDisplay();
+    if (!this.panelCollapsed) this.resizeChart();
+  }
+
+  /**绑定面板最小化事件 */
+  bindPanelEvents() {
+    if (this.panelBound) return;
+    const panel = this.getPanelEl();
+    const mini = this.ensureMiniButton();
+    if (!panel) return;
+    panel.addEventListener("click", (e) => {
+      const actionEl = e.target?.closest?.("[data-tide-action]");
+      if (!actionEl) return;
+      if (actionEl.dataset.tideAction === "collapse") {
+        this.togglePanelCollapsed(true);
+      }
+    });
+    mini.addEventListener("click", () => this.togglePanelCollapsed(false));
+    this.panelBound = true;
   }
 
   /**确保潮汐面板样式已注入 */
@@ -219,6 +291,69 @@ export class TidePanelLayer extends MapLayer {
       #${this.panelId} .dot-tide { background: #0ea5e9; }
       #${this.panelId} .dot-now { background: #ef4444; }
       #${this.panelId} .dot-peak { background: #22c55e; }
+      #${this.panelId}.is-hidden { display: none; }
+      #${this.panelId} .tide-panel-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin: -14px -14px 10px;
+        padding: 10px 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.15));
+        border-bottom: 1px solid rgba(148,163,184,0.24);
+        border-radius: 12px 12px 0 0;
+      }
+      #${this.panelId} .tide-panel-title-text {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: 0.2px;
+      }
+      #${this.panelId} .tide-panel-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      #${this.panelId} .tide-panel-toggle {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(148,163,184,0.24);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.72);
+        color: #334155;
+        cursor: pointer;
+        transition: all .16s ease;
+      }
+      #${this.panelId} .tide-panel-toggle:hover {
+        color: #0f172a;
+        border-color: rgba(14,165,233,0.5);
+        background: rgba(255,255,255,0.92);
+      }
+      #${this.panelMiniId} {
+        position: fixed;
+        right: 18px;
+        bottom: 180px;
+        z-index: 1001;
+        width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(56,189,248,0.45);
+        border-radius: 10px;
+        background: rgba(8,47,73,0.92);
+        color: #e0f2fe;
+        box-shadow: 0 10px 24px rgba(2,6,23,0.34);
+        cursor: pointer;
+      }
+      #${this.panelMiniId}.is-hidden { display: none; }
+      #${this.panelMiniId}:hover {
+        background: rgba(12,74,110,0.92);
+        border-color: rgba(56,189,248,0.75);
+      }
       @media (max-width: 1020px) {
         #${this.panelId} {
           top: auto;
@@ -396,11 +531,18 @@ export class TidePanelLayer extends MapLayer {
   /**构建潮汐面板 HTML */
   getPanelHtml() {
     const options = Object.entries(TidePanelLayer.TIDE_STATIONS)
-      .map(([key, item]) => `<option value="${key}"${key === "cn_wenzhou" ? " selected" : ""}>${item.name}</option>`)
+      .map(([key, item]) => `<option value="${key}"${key === "cn_aojiang" ? " selected" : ""}>${item.name}</option>`)
       .join("");
 
     return `
-      <h3>海况与潮汐面板</h3>
+      <div class="tide-panel-title">
+        <span class="tide-panel-title-text">海况与潮汐面板</span>
+        <span class="tide-panel-actions">
+          <button type="button" class="tide-panel-toggle" data-tide-action="collapse" title="收起潮汐面板" aria-label="收起潮汐面板">
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+        </span>
+      </div>
       <div class="stats">
         <div class="stat"><div class="k">当前浪高</div><div class="v" id="waveHeight">--</div></div>
         <div class="stat"><div class="k">波浪周期</div><div class="v" id="wavePeriod">--</div></div>
@@ -642,7 +784,7 @@ export class TidePanelLayer extends MapLayer {
     this.ensurePanel();
     this.ensureStationLayers();
     const stationId = this.getStationId();
-    const station = TidePanelLayer.TIDE_STATIONS[stationId] || TidePanelLayer.TIDE_STATIONS.cn_wenzhou;
+    const station = TidePanelLayer.TIDE_STATIONS[stationId] || TidePanelLayer.TIDE_STATIONS.cn_aojiang;
 
     const query = new URLSearchParams({
       latitude: String(station.lat),
@@ -693,8 +835,7 @@ export class TidePanelLayer extends MapLayer {
   /**隐藏面板 */
   hide() {
     super.hide();
-    const panel = this.getPanelEl();
-    if (panel) panel.style.display = "none";
+    this.syncPanelDisplay();
     this.setStationVisibility(false);
     this.clearDataTime();
     this.setInfoExtra("");
@@ -705,11 +846,10 @@ export class TidePanelLayer extends MapLayer {
   async show(opacity = 1) {
     this.ensurePanel();
     this.ensureStationLayers();
-    const panel = this.getPanelEl();
-    if (panel) panel.style.display = "block";
     this.setStationVisibility(true);
     const ok = await super.show(opacity);
-    this.resizeChart();
+    this.syncPanelDisplay();
+    if (!this.panelCollapsed) this.resizeChart();
     this.setOpacity(opacity);
     return ok;
   }
