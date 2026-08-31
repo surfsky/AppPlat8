@@ -24,30 +24,28 @@
             <EleSelect For="Item.FailReason" Label="失效原因" FillRow="true" ></EleSelect>
         </div>
 
-        <EleLabel Label="责任信息" FillRow="true"></EleLabel>
-        <EleInput For="Item.DutyUserName" Label="负责人信息"></EleInput>
-        <EleInput For="Item.SafetyAdminName" Label="安全管理员"></EleInput>
-        <EleInput For="Item.ThirdPartySafetyAgency" Label="三方机构"></EleInput>
-        <EleTreeSelect For="Item.DutyOrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
-        <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Label="技术检查员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
-
-        <EleLabel Label="企业信息" FillRow="true"></EleLabel>
+        <EleLabel Label="营业信息" FillRow="true"></EleLabel>
         <EleImageUpload For="Item.LicenseImage" Label="工商执照" FillRow="true"></EleImageUpload>
         <EleSelect For="Item.ObjectType" Label="对象类型" Placeholder="请选择"></EleSelect>
         <EleListPicker For="Item.Scope" Label="领域"></EleListPicker>
+        <EleSelect For="Item.IndustryType" Label="行业类型"></EleSelect>
         <EleSelect For="Item.Scale" Label="规模"></EleSelect>
         <EleInput For="Item.ProductContent" Label="生产内容" Rows="1" FillRow="true"></EleInput>
         <EleInput For="Item.EleMeeterNum" Label="电表号"></EleInput>
         <EleNumber For="Item.EmployeeCount" Label="员工数"></EleNumber>
 
+        <EleLabel Label="责任信息" FillRow="true"></EleLabel>
+        <EleTreePicker For="Item.DutyOrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreePicker>
+        <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Label="技术检查员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
+        <EleInput For="Item.DutyUserName" Label="企业负责人"></EleInput>
+        <EleInput For="Item.SafetyAdminName" Label="安全管理员"></EleInput>
+        <EleInput For="Item.SafetySteward" Label="安全管家"></EleInput>
+        <EleInput For="Item.ThirdPartySafetyAgency" Label="三方机构"></EleInput>
+
+
         <EleLabel Label="风险信息" FillRow="true"></EleLabel>
         <EleSelect For="Item.RiskLevel" Label="风险等级" ></EleSelect>
-        <EleSelect For="Item.IndustryType" Label="行业类型"></EleSelect>
         <EleSelect For="Item.IndustryRisk" Label="行业风险"></EleSelect>
-        <EleInput For="Item.InternalRewardMechanism" Label="内部奖励机制"></EleInput>
-        <EleSwitch For="Item.IsKeySupervision" Label="重点监管"></EleSwitch>
-        <EleSwitch For="Item.IsDemonstration" Label="示范企业"></EleSwitch>
-        <EleSwitch For="Item.SafetySteward" Label="有安全管家"></EleSwitch>
 
 
         <EleLabel Label="建筑信息" FillRow="true"></EleLabel>
@@ -57,8 +55,6 @@
         <EleSelect For="Item.FactoryUsageType" Label="厂房使用权"></EleSelect>
         <EleSelect For="Item.BuildingStructure" Label="房屋结构"></EleSelect>
 
-
-        <EleLabel Label="系统信息" FillRow="true"></EleLabel>
 
         <EleLabel Label="更多" FillRow="true"></EleLabel>
         <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreePicker>

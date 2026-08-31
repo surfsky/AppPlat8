@@ -247,22 +247,34 @@ export class AdminBoundaryLayer extends MapLayer {
   }
 
   async refresh() {
-    await this.ensureLayers();
-    const adcode = this.pickNearestProvinceAdcode(this.runtime.map.getCenter());
-    await this.ensureCityDistrictSource(adcode);
-    this.setOpacity(this.runtime.getOpacity(this.name));
-    this.setDataTimeText("静态");
-    this.setInfoExtra("");
-    this.lastStatus = true;
+    try {
+      await this.ensureLayers();
+      const adcode = this.pickNearestProvinceAdcode(this.runtime.map.getCenter());
+      await this.ensureCityDistrictSource(adcode);
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      this.setDataTimeText("静态");
+      this.setInfoExtra("");
+      this.lastStatus = true;
+    } catch (e) {
+      console.error("刷新行政边界失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "行政边界加载失败");
+      this.setLastError(msg || "行政边界加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
+    }
     this.lastTime = Date.now();
     return true;
   }
 
   setOpacity(opacity) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     const { map } = this.runtime;
     for (const id of this.layers) {
-      if (map.getLayer(id)) map.setPaintProperty(id, "line-opacity", opacity);
+      if (map.getLayer(id)) map.setPaintProperty(id, "line-opacity", safe);
     }
+    this.opacity = safe;
   }
 
   hide() {
@@ -276,12 +288,13 @@ export class AdminBoundaryLayer extends MapLayer {
     return true;
   }
 
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
     const ok = await super.show(opacity);
     const { map } = this.runtime;
     for (const id of this.layers) {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "visible");
     }
+    this.setOpacity(Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8);
     return ok;
   }
 }

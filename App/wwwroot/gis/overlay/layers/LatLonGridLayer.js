@@ -130,123 +130,135 @@ export class LatLonGridLayer extends MapLayer {
 
   async refresh(_force = false) {
     if (!this.runtime) return false;
-    const { map } = this.runtime;
-    const zoom = map.getZoom();
-    const step = this.getStepByZoom(zoom);
-    const geo = this.buildGeo(map.getBounds(), step, zoom);
-    addOrUpdateGeoJsonSource(map, this.sourceId, geo);
+    try {
+      const { map } = this.runtime;
+      const zoom = map.getZoom();
+      const step = this.getStepByZoom(zoom);
+      const geo = this.buildGeo(map.getBounds(), step, zoom);
+      addOrUpdateGeoJsonSource(map, this.sourceId, geo);
 
-    if (!map.getLayer(this.lineLayerId)) {
-      map.addLayer({
-        id: this.lineLayerId,
-        type: "line",
-        source: this.sourceId,
-        filter: ["==", ["geometry-type"], "LineString"],
-        paint: {
-          "line-color": "#ffffff",
-          "line-width": 1,
-          "line-opacity": 0.82
-        }
-      });
+      if (!map.getLayer(this.lineLayerId)) {
+        map.addLayer({
+          id: this.lineLayerId,
+          type: "line",
+          source: this.sourceId,
+          filter: ["==", ["geometry-type"], "LineString"],
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": 1,
+            "line-opacity": 0.82
+          }
+        });
+      }
+
+      if (!map.getLayer(this.lonLabelLayerId)) {
+        map.addLayer({
+          id: this.lonLabelLayerId,
+          type: "symbol",
+          source: this.sourceId,
+          filter: [
+            "all",
+            ["==", ["geometry-type"], "Point"],
+            ["==", ["get", "labelType"], "lon"]
+          ],
+          layout: {
+            "text-field": ["get", "label"],
+            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 9, 8, 12],
+            "text-rotate": 0,
+            "text-anchor": [
+              "match",
+              ["get", "labelPos"],
+              "north", "top",
+              "south", "bottom",
+              "center"
+            ],
+            "text-offset": [
+              "match",
+              ["get", "labelPos"],
+              "north", ["literal", [0, 0.2]],
+              "south", ["literal", [0, -0.2]],
+              ["literal", [0, 0]]
+            ],
+            "text-padding": 2,
+            "symbol-placement": "point",
+            "text-allow-overlap": true,
+            "text-ignore-placement": true
+          },
+          paint: {
+            "text-color": "#ffffff",
+            "text-halo-color": "#020617",
+            "text-halo-width": 2.4,
+            "text-halo-blur": 0.18
+          }
+        });
+      }
+
+      if (!map.getLayer(this.latLabelLayerId)) {
+        map.addLayer({
+          id: this.latLabelLayerId,
+          type: "symbol",
+          source: this.sourceId,
+          filter: [
+            "all",
+            ["==", ["geometry-type"], "Point"],
+            ["==", ["get", "labelType"], "lat"]
+          ],
+          layout: {
+            "text-field": ["get", "label"],
+            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 9, 8, 12],
+            "text-anchor": [
+              "match",
+              ["get", "labelPos"],
+              "west", "left",
+              "east", "right",
+              "left"
+            ],
+            "text-offset": [
+              "match",
+              ["get", "labelPos"],
+              "west", ["literal", [0.15, -0.15]],
+              "east", ["literal", [-0.15, -0.15]],
+              ["literal", [0.15, -0.15]]
+            ],
+            "text-padding": 2,
+            "symbol-placement": "point",
+            "text-allow-overlap": true,
+            "text-ignore-placement": true
+          },
+          paint: {
+            "text-color": "#ffffff",
+            "text-halo-color": "#020617",
+            "text-halo-width": 2.4,
+            "text-halo-blur": 0.18
+          }
+        });
+      }
+
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      this.setDataTimeText("实时");
+      this.setInfoExtra(`步长: ${step}°`);
+      this.lastStatus = true;
+    } catch (e) {
+      console.error("刷新经纬网格失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "经纬网格加载失败");
+      this.setLastError(msg || "经纬网格加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
     }
-
-    if (!map.getLayer(this.lonLabelLayerId)) {
-      map.addLayer({
-        id: this.lonLabelLayerId,
-        type: "symbol",
-        source: this.sourceId,
-        filter: [
-          "all",
-          ["==", ["geometry-type"], "Point"],
-          ["==", ["get", "labelType"], "lon"]
-        ],
-        layout: {
-          "text-field": ["get", "label"],
-          "text-size": ["interpolate", ["linear"], ["zoom"], 4, 9, 8, 12],
-          "text-rotate": 0,
-          "text-anchor": [
-            "match",
-            ["get", "labelPos"],
-            "north", "top",
-            "south", "bottom",
-            "center"
-          ],
-          "text-offset": [
-            "match",
-            ["get", "labelPos"],
-            "north", ["literal", [0, 0.2]],
-            "south", ["literal", [0, -0.2]],
-            ["literal", [0, 0]]
-          ],
-          "text-padding": 2,
-          "symbol-placement": "point",
-          "text-allow-overlap": true,
-          "text-ignore-placement": true
-        },
-        paint: {
-          "text-color": "#ffffff",
-          "text-halo-color": "#020617",
-          "text-halo-width": 2.4,
-          "text-halo-blur": 0.18
-        }
-      });
-    }
-
-    if (!map.getLayer(this.latLabelLayerId)) {
-      map.addLayer({
-        id: this.latLabelLayerId,
-        type: "symbol",
-        source: this.sourceId,
-        filter: [
-          "all",
-          ["==", ["geometry-type"], "Point"],
-          ["==", ["get", "labelType"], "lat"]
-        ],
-        layout: {
-          "text-field": ["get", "label"],
-          "text-size": ["interpolate", ["linear"], ["zoom"], 4, 9, 8, 12],
-          "text-anchor": [
-            "match",
-            ["get", "labelPos"],
-            "west", "left",
-            "east", "right",
-            "left"
-          ],
-          "text-offset": [
-            "match",
-            ["get", "labelPos"],
-            "west", ["literal", [0.15, -0.15]],
-            "east", ["literal", [-0.15, -0.15]],
-            ["literal", [0.15, -0.15]]
-          ],
-          "text-padding": 2,
-          "symbol-placement": "point",
-          "text-allow-overlap": true,
-          "text-ignore-placement": true
-        },
-        paint: {
-          "text-color": "#ffffff",
-          "text-halo-color": "#020617",
-          "text-halo-width": 2.4,
-          "text-halo-blur": 0.18
-        }
-      });
-    }
-
-    this.setOpacity(this.runtime.getOpacity(this.name));
-    this.setDataTimeText("实时");
-    this.setInfoExtra(`步长: ${step}°`);
-    this.lastStatus = true;
     this.lastTime = Date.now();
     return true;
   }
 
   setOpacity(opacity) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     if (!this.runtime) return;
     const { map } = this.runtime;
-    if (map.getLayer(this.lineLayerId)) map.setPaintProperty(this.lineLayerId, "line-opacity", opacity);
-    if (map.getLayer(this.lonLabelLayerId)) map.setPaintProperty(this.lonLabelLayerId, "text-opacity", opacity);
-    if (map.getLayer(this.latLabelLayerId)) map.setPaintProperty(this.latLabelLayerId, "text-opacity", opacity);
+    if (map.getLayer(this.lineLayerId)) map.setPaintProperty(this.lineLayerId, "line-opacity", 0.82 * safe);
+    if (map.getLayer(this.lonLabelLayerId)) map.setPaintProperty(this.lonLabelLayerId, "text-opacity", safe);
+    if (map.getLayer(this.latLabelLayerId)) map.setPaintProperty(this.latLabelLayerId, "text-opacity", safe);
+    this.opacity = safe;
   }
 
   hide() {
@@ -261,12 +273,14 @@ export class LatLonGridLayer extends MapLayer {
     return true;
   }
 
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
     const ok = await super.show(opacity);
+    if (!this.runtime) return ok;
     const { map } = this.runtime;
     if (map.getLayer(this.lineLayerId)) map.setLayoutProperty(this.lineLayerId, "visibility", "visible");
     if (map.getLayer(this.lonLabelLayerId)) map.setLayoutProperty(this.lonLabelLayerId, "visibility", "visible");
     if (map.getLayer(this.latLabelLayerId)) map.setLayoutProperty(this.latLabelLayerId, "visibility", "visible");
+    this.setOpacity(Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8);
     return ok;
   }
 }

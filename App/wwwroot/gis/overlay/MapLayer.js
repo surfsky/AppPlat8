@@ -24,6 +24,7 @@ export class MapLayer {
     this.infoExtra = "";
     this.lastErrorMessage = "";
     this.visible = false;
+    this.opacity = 0.8;
     this.runtime = null;
   }
 
@@ -62,11 +63,13 @@ export class MapLayer {
       ? error.message
       : String(error || "").trim();
     this.lastErrorMessage = msg || "图层加载失败";
+    this.lastErrorAt = Date.now();
     this.lastStatus = false;
   }
 
   clearLastError() {
     this.lastErrorMessage = "";
+    this.lastErrorAt = 0;
   }
 
   formatLocalTime(value) {
@@ -161,20 +164,99 @@ export class MapLayer {
     return parts.join("\n");
   }
 
+  /**获取图层运行状态信息 */
+  getRuntimeState() {
+    const safeOpacity = Number.isFinite(Number(this.opacity)) ? Number(this.opacity) : 0.8;
+    return {
+      name: this.name,
+      title: this.title || "",
+      visible: !!this.visible,
+      status: !this.visible ? "off" : (this.lastStatus === false ? "error" : "on"),
+      opacity: safeOpacity,
+      dataTime: this.getDataTimeDisplay(),
+      updatePeriod: this.getRefreshTextDisplay() || (this.getRefreshCronDisplay() || ""),
+      updatePeriodCron: this.getRefreshCronDisplay(),
+      lastRefreshAt: this.formatLocalTime(this.lastTime),
+      lastRefreshAtMs: Number(this.lastTime) || 0,
+      nextRefreshAt: this.formatLocalTime(this.nextRefreshAt || 0),
+      nextRefreshAtMs: Number(this.nextRefreshAt) || 0,
+      lastErrorAt: Number(this.lastErrorAt) || 0,
+      lastErrorMessage: String(this.lastErrorMessage || "").trim()
+    };
+  }
+
+  /**确保 lastStatus===false 时有错误文案（兜底：有些子类只 return false 不写 error） */
+  ensureLastErrorSynced(defaultMsg = "图层加载失败") {
+    if (this.lastStatus === false && !String(this.lastErrorMessage || "").trim()) {
+      this.lastErrorMessage = String(defaultMsg || "图层加载失败");
+      if (!this.lastErrorAt) this.lastErrorAt = this.lastTime || Date.now();
+    }
+  }
+
+  /**主动触发一次配置面板的手动刷新（成功/失败都会重算面板信息） */
+  async refreshForConfig(opacity = 0.8) {
+    const start = Date.now();
+    try {
+      let ok = true;
+      if (this.visible) {
+        ok = await this.refresh(true);
+      } else {
+        const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
+        ok = await this.show(safe);
+      }
+      this.ensureLastErrorSynced("图层刷新失败");
+      if (ok) {
+        if (typeof this.clearLastError === "function") this.clearLastError();
+        return {
+          ok: true,
+          durationMs: Date.now() - start,
+          error: ""
+        };
+      }
+      const msg = String(this.lastErrorMessage || "").trim() || "图层刷新失败";
+      return {
+        ok: false,
+        durationMs: Date.now() - start,
+        error: msg
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e || "图层刷新失败");
+      if (typeof this.setLastError === "function") this.setLastError(msg || "图层刷新失败");
+      return {
+        ok: false,
+        durationMs: Date.now() - start,
+        error: msg || "图层刷新失败"
+      };
+    }
+  }
+
+  /**设置图层不透明度并返回下一次 opacity（不抛错） */
+  applyOpacity(opacity) {
+    const next = Math.max(0, Math.min(1, Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8));
+    try {
+      this.setOpacity(next);
+    } catch (e) {
+      console.error("applyOpacity failed:", e);
+    }
+    this.opacity = next;
+    return next;
+  }
+
   /**
-   * 
-   * @param {*} opacity 
-   * @returns 
+   *
+   * @param {*} opacity
+   * @returns
    */
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
     this.visible = true;
     this.clearLastError();
-    this.setOpacity(opacity);
+    this.setOpacity(Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8);
     const ok = await this.refresh(true);
-    this.lastStatus = ok;
-    this.lastTime = Date.now();
+    this.lastStatus = !!ok;
+    this.lastTime = this.lastTime || Date.now();
     if (ok) this.updateNextRefreshAt(this.lastTime);
-    return ok;
+    this.ensureLastErrorSynced("图层加载失败");
+    return !!ok;
   }
 
   hide() {
@@ -188,7 +270,7 @@ export class MapLayer {
   }
 
   async refresh(_force = false) {
-    this.lastTime = Date.now();
+    this.lastTime = this.lastTime || Date.now();
     this.clearLastError();
     this.lastStatus = true;
     this.updateNextRefreshAt(this.lastTime);

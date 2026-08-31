@@ -148,90 +148,109 @@ export class CityTempLayer extends MapLayer {
     const cities = this.visibleCitiesByZoom(zoom);
     const now = Date.now();
 
-    // 找出缓存中没有或已过期的城市
-    const CACHE_TTL = 30 * 60 * 1000; // 30分钟缓存
-    const citiesToFetch = cities.filter(c => {
-      const cached = this.cache.get(c.name);
-      return force || !cached || (now - cached.time > CACHE_TTL);
-    });
+    try {
+      // 找出缓存中没有或已过期的城市
+      const CACHE_TTL = 30 * 60 * 1000; // 30分钟缓存
+      const citiesToFetch = cities.filter(c => {
+        const cached = this.cache.get(c.name);
+        return force || !cached || (now - cached.time > CACHE_TTL);
+      });
 
-    if (citiesToFetch.length > 0) {
-      const chunks = chunkArray(citiesToFetch, 35);
-      for (const chunk of chunks) {
-        const part = await this.fetchBatch(chunk);
-        for (const item of part) {
-          if (Number.isFinite(item.temp)) {
-            this.cache.set(item.name, {
-              temp: item.temp,
-              time: now,
-              dataTime: item.dataTime || "",
-              fetchedAt: item.fetchedAt || now,
-              respDate: item.respDate || ""
-            });
+      if (citiesToFetch.length > 0) {
+        const chunks = chunkArray(citiesToFetch, 35);
+        let gotAny = false;
+        for (const chunk of chunks) {
+          const part = await this.fetchBatch(chunk);
+          for (const item of part) {
+            if (Number.isFinite(item.temp)) {
+              this.cache.set(item.name, {
+                temp: item.temp,
+                time: now,
+                dataTime: item.dataTime || "",
+                fetchedAt: item.fetchedAt || now,
+                respDate: item.respDate || ""
+              });
+              gotAny = true;
+            }
           }
         }
-      }
-    }
-
-    const features = cities.map(c => {
-      const cached = this.cache.get(c.name);
-      const temp = cached ? cached.temp : Number.NaN;
-      const text = Number.isFinite(temp) ? `${c.name}\n${temp.toFixed(0)}°C` : `${c.name}\n--`;
-      return {
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [c.lon, c.lat] },
-        properties: { text, temp: Number.isFinite(temp) ? temp : -99 }
-      };
-    });
-
-    addOrUpdateGeoJsonSource(map, this.sourceId, { type: "FeatureCollection", features });
-    if (!map.getLayer(this.layerId)) {
-      map.addLayer({
-        id: this.layerId,
-        type: "symbol",
-        source: this.sourceId,
-        layout: {
-          "text-field": ["get", "text"],
-          "text-size": ["interpolate", ["linear"], ["zoom"], 4, 13, 8, 18],
-          "text-line-height": 1.05,
-          "text-offset": [0, 0.9],
-          "text-anchor": "top",
-          "text-allow-overlap": true,
-          "text-ignore-placement": true,
-          "text-max-width": 5
-        },
-        paint: {
-          "text-color": [
-            "interpolate", ["linear"], ["get", "temp"],
-            -10, "#93c5fd",
-            0, "#bfdbfe",
-            12, "#fef08a",
-            22, "#fdba74",
-            30, "#fb7185",
-            36, "#ef4444"
-          ],
-          "text-halo-color": "#000000",
-          "text-halo-width": 1.8,
-          "text-opacity": 0.95
+        // 有城市需要取，但没有任何结果，视为失败
+        if (citiesToFetch.length > 0 && !gotAny) {
+          const allCached = cities.every(c => Number.isFinite(this.cache.get(c.name)?.temp));
+          if (!allCached) throw new Error("城市温度无可用结果");
         }
-      });
-    }
+      }
 
-    const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
-    this.setDataTimeText(timeText);
-    this.setInfoExtra("");
-    this.setOpacity(this.runtime.getOpacity(this.name));
-    this.lastStatus = true;
+      const features = cities.map(c => {
+        const cached = this.cache.get(c.name);
+        const temp = cached ? cached.temp : Number.NaN;
+        const text = Number.isFinite(temp) ? `${c.name}\n${temp.toFixed(0)}°C` : `${c.name}\n--`;
+        return {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [c.lon, c.lat] },
+          properties: { text, temp: Number.isFinite(temp) ? temp : -99 }
+        };
+      });
+
+      addOrUpdateGeoJsonSource(map, this.sourceId, { type: "FeatureCollection", features });
+      if (!map.getLayer(this.layerId)) {
+        map.addLayer({
+          id: this.layerId,
+          type: "symbol",
+          source: this.sourceId,
+          layout: {
+            "text-field": ["get", "text"],
+            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 13, 8, 18],
+            "text-line-height": 1.05,
+            "text-offset": [0, 0.9],
+            "text-anchor": "top",
+            "text-allow-overlap": true,
+            "text-ignore-placement": true,
+            "text-max-width": 5
+          },
+          paint: {
+            "text-color": [
+              "interpolate", ["linear"], ["get", "temp"],
+              -10, "#93c5fd",
+              0, "#bfdbfe",
+              12, "#fef08a",
+              22, "#fdba74",
+              30, "#fb7185",
+              36, "#ef4444"
+            ],
+            "text-halo-color": "#000000",
+            "text-halo-width": 1.8,
+            "text-opacity": 0.95
+          }
+        });
+      }
+
+      const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
+      this.setDataTimeText(timeText);
+      this.setInfoExtra("");
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      this.lastStatus = true;
+    } catch (e) {
+      console.error("刷新城市温度失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "城市温度加载失败");
+      this.setLastError(msg || "城市温度加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
+    }
     this.lastTime = now;
     return true;
   }
 
   setOpacity(opacity) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     if (!this.runtime) return;
     const { map } = this.runtime;
     if (map.getLayer(this.layerId)) {
-      map.setPaintProperty(this.layerId, "text-opacity", opacity);
+      map.setPaintProperty(this.layerId, "text-opacity", 0.95 * safe);
     }
+    this.opacity = safe;
   }
 
   hide() {
@@ -244,10 +263,11 @@ export class CityTempLayer extends MapLayer {
     return true;
   }
 
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
     const ok = await super.show(opacity);
     const { map } = this.runtime;
     if (map.getLayer(this.layerId)) map.setLayoutProperty(this.layerId, "visibility", "visible");
+    this.setOpacity(Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8);
     return ok;
   }
 }

@@ -2009,7 +2009,7 @@ export class TyphoonLayer extends MapLayer {
         <div class="typhoon-popup-body">
           <div><b>时间：</b>${props.popupTime || "-"}</div>
           <div><b>坐标：</b>${props.popupCoord || "-"}</div>
-          <div><b>中心气压：</b>${props.popupPressure || "-"} hPa</div>
+          <div><b>中心气压：</b>${props.popupPressure || "-"} Pa</div>
           <div><b>风速风力：</b>${windText}</div>
           <div><b>等级：</b>${props.popupLevel || "-"}</div>
           ${moveText ? `<div><b>移速移向：</b>${moveText}</div>` : ``}
@@ -2202,6 +2202,7 @@ export class TyphoonLayer extends MapLayer {
 
   /**刷新图层 */
   async refresh() {
+    try {
     await this.ensureTyphoonSvg();
     await this.ensureHistoryList();
     // 强制刷新 currentList（清缓存 + 重跑探测 + 重判 isLive），避免 19/20/21 这种老的 isLive=true 标记一直占用活跃位
@@ -2220,6 +2221,9 @@ export class TyphoonLayer extends MapLayer {
       addOrUpdateGeoJsonSource(this.runtime.map, this.sourceId, { type: "FeatureCollection", features: [] });
       this.clearDataTime();
       this.setInfoExtra("暂无台风数据");
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      this.lastStatus = true;
+      this.lastTime = Date.now();
       return true;
     }
 
@@ -2275,10 +2279,21 @@ export class TyphoonLayer extends MapLayer {
     this.lastStatus = true;
     this.lastTime = Date.now();
     return true;
+    } catch (e) {
+      console.error("刷新台风图层失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "台风数据加载失败");
+      this.setLastError(msg || "台风数据加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      this.lastTime = this.lastTime || Date.now();
+      return false;
+    }
   }
 
   /**设置透明度 */
   setOpacity(opacity) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     const { map } = this.runtime;
     const lineIds = [this.wind7LineLayerId, this.wind10LineLayerId, this.probLayerId, this.historyLayerId, this.forecastLayerId];
     const fillIds = [this.wind7FillLayerId, this.wind10FillLayerId, this.probFillLayerId];
@@ -2286,24 +2301,25 @@ export class TyphoonLayer extends MapLayer {
     const textIds = [this.pointLabelLayerId, this.tailLabelLayerId, this.nameLayerId];
     const iconIds = [this.centerLayerId];
     lineIds.forEach(id => {
-      if (map.getLayer(id)) map.setPaintProperty(id, "line-opacity", opacity);
+      if (map.getLayer(id)) map.setPaintProperty(id, "line-opacity", safe);
     });
     fillIds.forEach(id => {
       if (!map.getLayer(id)) return;
       let base = 0.08;
       if (id === this.wind7FillLayerId) base = 0.18;
       if (id === this.wind10FillLayerId) base = 0.2;
-      map.setPaintProperty(id, "fill-opacity", opacity * base);
+      map.setPaintProperty(id, "fill-opacity", safe * base);
     });
     circleIds.forEach(id => {
-      if (map.getLayer(id)) map.setPaintProperty(id, "circle-opacity", opacity);
+      if (map.getLayer(id)) map.setPaintProperty(id, "circle-opacity", safe);
     });
     textIds.forEach(id => {
-      if (map.getLayer(id)) map.setPaintProperty(id, "text-opacity", opacity);
+      if (map.getLayer(id)) map.setPaintProperty(id, "text-opacity", safe);
     });
     iconIds.forEach(id => {
-      if (map.getLayer(id)) map.setPaintProperty(id, "icon-opacity", opacity);
+      if (map.getLayer(id)) map.setPaintProperty(id, "icon-opacity", safe);
     });
+    this.opacity = safe;
   }
 
   /**隐藏图层 */
@@ -2323,7 +2339,7 @@ export class TyphoonLayer extends MapLayer {
   }
 
   /**显示图层 */
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
     const ok = await super.show(opacity);
     const { map } = this.runtime;
     this.getLayerIds().forEach(id => {

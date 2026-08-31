@@ -783,53 +783,65 @@ export class TidePanelLayer extends MapLayer {
   async refresh() {
     this.ensurePanel();
     this.ensureStationLayers();
-    const stationId = this.getStationId();
-    const station = TidePanelLayer.TIDE_STATIONS[stationId] || TidePanelLayer.TIDE_STATIONS.cn_aojiang;
+    try {
+      const stationId = this.getStationId();
+      const station = TidePanelLayer.TIDE_STATIONS[stationId] || TidePanelLayer.TIDE_STATIONS.cn_aojiang;
 
-    const query = new URLSearchParams({
-      latitude: String(station.lat),
-      longitude: String(station.lon),
-      hourly: "sea_level_height_msl,wave_height,wave_direction,wave_period",
-      timezone: station.timezone,
-      forecast_days: "3"
-    });
+      const query = new URLSearchParams({
+        latitude: String(station.lat),
+        longitude: String(station.lon),
+        hourly: "sea_level_height_msl,wave_height,wave_direction,wave_period",
+        timezone: station.timezone,
+        forecast_days: "3"
+      });
 
-    const response = await fetchWithTimeout(`${this.api}?${query.toString()}`, {}, 12000);
-    if (!response.ok) throw new Error(`海况潮位请求失败: ${response.status}`);
-    const data = await response.json();
-    const h = data.hourly || {};
-    const times = Array.isArray(h.time) ? h.time : [];
-    const sea = Array.isArray(h.sea_level_height_msl) ? h.sea_level_height_msl : [];
-    const waveHeight = Array.isArray(h.wave_height) ? h.wave_height : [];
-    const waveDirection = Array.isArray(h.wave_direction) ? h.wave_direction : [];
-    const wavePeriod = Array.isArray(h.wave_period) ? h.wave_period : [];
-    if (!times.length || !sea.length) throw new Error("潮位序列为空");
+      const response = await fetchWithTimeout(`${this.api}?${query.toString()}`, {}, 12000);
+      if (!response.ok) throw new Error(`海况潮位请求失败: ${response.status}`);
+      const data = await response.json();
+      const h = data.hourly || {};
+      const times = Array.isArray(h.time) ? h.time : [];
+      const sea = Array.isArray(h.sea_level_height_msl) ? h.sea_level_height_msl : [];
+      const waveHeight = Array.isArray(h.wave_height) ? h.wave_height : [];
+      const waveDirection = Array.isArray(h.wave_direction) ? h.wave_direction : [];
+      const wavePeriod = Array.isArray(h.wave_period) ? h.wave_period : [];
+      if (!times.length || !sea.length) throw new Error("潮位序列为空");
 
-    const idx = findNearestHourlyIndex(times);
-    setInfo("waveHeight", `${Number(waveHeight[idx] ?? 0).toFixed(1)} m`);
-    setInfo("waveDirection", `${Math.round(Number(waveDirection[idx] ?? 0))}°`);
-    setInfo("wavePeriod", `${Number(wavePeriod[idx] ?? 0).toFixed(1)} s`);
+      const idx = findNearestHourlyIndex(times);
+      setInfo("waveHeight", `${Number(waveHeight[idx] ?? 0).toFixed(1)} m`);
+      setInfo("waveDirection", `${Math.round(Number(waveDirection[idx] ?? 0))}°`);
+      setInfo("wavePeriod", `${Number(wavePeriod[idx] ?? 0).toFixed(1)} s`);
 
-    const curveTimes = times.slice(0, 49);
-    const curveValues = sea.slice(0, 49).map(v => Number(v));
-    this.selectedChartIndex = findNearestHourlyIndex(curveTimes);
-    this.drawTideChart(curveTimes, curveValues);
-    setInfo("tidePeak", `${Math.max(...curveValues).toFixed(2)} m`);
-    setInfo("tideInfo", `站点 ${station.name}，更新: ${new Date().toLocaleString()}`);
-    this.setDataTime(times[idx] || "");
-    this.setInfoExtra(`站点: ${station.name}`);
-    this.syncStationSource();
-    this.setOpacity(this.runtime.getOpacity(this.name));
-    this.lastStatus = true;
+      const curveTimes = times.slice(0, 49);
+      const curveValues = sea.slice(0, 49).map(v => Number(v));
+      this.selectedChartIndex = findNearestHourlyIndex(curveTimes);
+      this.drawTideChart(curveTimes, curveValues);
+      setInfo("tidePeak", `${Math.max(...curveValues).toFixed(2)} m`);
+      setInfo("tideInfo", `站点 ${station.name}，更新: ${new Date().toLocaleString()}`);
+      this.setDataTime(times[idx] || "");
+      this.setInfoExtra(`站点: ${station.name}`);
+      this.syncStationSource();
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      this.lastStatus = true;
+    } catch (e) {
+      console.error("刷新海况与潮汐失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "潮汐数据加载失败");
+      this.setLastError(msg || "潮汐数据加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
+    }
     this.lastTime = Date.now();
     return true;
   }
 
   /**设置面板透明度 */
   setOpacity(opacity) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     const panel = this.getPanelEl();
-    if (panel) panel.style.opacity = String(opacity);
-    this.setStationOpacity(opacity);
+    if (panel) panel.style.opacity = String(safe);
+    this.setStationOpacity(safe);
+    this.opacity = safe;
   }
 
   /**隐藏面板 */
@@ -843,14 +855,15 @@ export class TidePanelLayer extends MapLayer {
   }
 
   /**显示面板 */
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     this.ensurePanel();
     this.ensureStationLayers();
     this.setStationVisibility(true);
-    const ok = await super.show(opacity);
+    const ok = await super.show(safe);
     this.syncPanelDisplay();
     if (!this.panelCollapsed) this.resizeChart();
-    this.setOpacity(opacity);
+    this.setOpacity(safe);
     return ok;
   }
 }

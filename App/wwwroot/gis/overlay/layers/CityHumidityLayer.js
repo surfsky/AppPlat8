@@ -113,89 +113,107 @@ export class CityHumidityLayer extends MapLayer {
     const cities = this.visibleCitiesByZoom(zoom);
     const now = Date.now();
 
-    const CACHE_TTL = 30 * 60 * 1000;
-    const citiesToFetch = cities.filter(c => {
-      const cached = this.cache.get(c.name);
-      return force || !cached || (now - cached.time > CACHE_TTL);
-    });
+    try {
+      const CACHE_TTL = 30 * 60 * 1000;
+      const citiesToFetch = cities.filter(c => {
+        const cached = this.cache.get(c.name);
+        return force || !cached || (now - cached.time > CACHE_TTL);
+      });
 
-    if (citiesToFetch.length > 0) {
-      const chunks = chunkArray(citiesToFetch, 35);
-      for (const chunk of chunks) {
-        const part = await this.fetchBatch(chunk);
-        for (const item of part) {
-          if (Number.isFinite(item.humidity)) {
-            this.cache.set(item.name, {
-              humidity: item.humidity,
-              time: now,
-              dataTime: item.dataTime || "",
-              fetchedAt: item.fetchedAt || now,
-              respDate: item.respDate || ""
-            });
+      if (citiesToFetch.length > 0) {
+        const chunks = chunkArray(citiesToFetch, 35);
+        let gotAny = false;
+        for (const chunk of chunks) {
+          const part = await this.fetchBatch(chunk);
+          for (const item of part) {
+            if (Number.isFinite(item.humidity)) {
+              this.cache.set(item.name, {
+                humidity: item.humidity,
+                time: now,
+                dataTime: item.dataTime || "",
+                fetchedAt: item.fetchedAt || now,
+                respDate: item.respDate || ""
+              });
+              gotAny = true;
+            }
           }
         }
-      }
-    }
-
-    const features = cities.map(c => {
-      const cached = this.cache.get(c.name);
-      const humidity = cached ? cached.humidity : Number.NaN;
-      const text = Number.isFinite(humidity) ? `${c.name}\n${humidity.toFixed(0)}%` : `${c.name}\n--`;
-      return {
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [c.lon, c.lat] },
-        properties: { text, humidity: Number.isFinite(humidity) ? humidity : -1 }
-      };
-    });
-
-    addOrUpdateGeoJsonSource(map, this.sourceId, { type: "FeatureCollection", features });
-    if (!map.getLayer(this.layerId)) {
-      map.addLayer({
-        id: this.layerId,
-        type: "symbol",
-        source: this.sourceId,
-        layout: {
-          "text-field": ["get", "text"],
-          "text-size": ["interpolate", ["linear"], ["zoom"], 4, 13, 8, 18],
-          "text-line-height": 1.05,
-          "text-offset": [0, 0.9],
-          "text-anchor": "top",
-          "text-allow-overlap": true,
-          "text-ignore-placement": true,
-          "text-max-width": 5
-        },
-        paint: {
-          "text-color": [
-            "interpolate", ["linear"], ["get", "humidity"],
-            0, "#7f1d1d",
-            20, "#991b1b",
-            40, "#a16207",
-            60, "#ca8a04",
-            80, "#3f6212",
-            100, "#14532d"
-          ],
-          "text-halo-color": "#ffffff",
-          "text-halo-width": 1.8,
-          "text-opacity": 0.95
+        if (citiesToFetch.length > 0 && !gotAny) {
+          const allCached = cities.every(c => Number.isFinite(this.cache.get(c.name)?.humidity));
+          if (!allCached) throw new Error("城市湿度无可用结果");
         }
-      });
-    }
+      }
 
-    const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
-    this.setDataTimeText(timeText);
-    this.setInfoExtra("");
-    this.setOpacity(this.runtime.getOpacity(this.name));
-    this.lastStatus = true;
+      const features = cities.map(c => {
+        const cached = this.cache.get(c.name);
+        const humidity = cached ? cached.humidity : Number.NaN;
+        const text = Number.isFinite(humidity) ? `${c.name}\n${humidity.toFixed(0)}%` : `${c.name}\n--`;
+        return {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [c.lon, c.lat] },
+          properties: { text, humidity: Number.isFinite(humidity) ? humidity : -1 }
+        };
+      });
+
+      addOrUpdateGeoJsonSource(map, this.sourceId, { type: "FeatureCollection", features });
+      if (!map.getLayer(this.layerId)) {
+        map.addLayer({
+          id: this.layerId,
+          type: "symbol",
+          source: this.sourceId,
+          layout: {
+            "text-field": ["get", "text"],
+            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 13, 8, 18],
+            "text-line-height": 1.05,
+            "text-offset": [0, 0.9],
+            "text-anchor": "top",
+            "text-allow-overlap": true,
+            "text-ignore-placement": true,
+            "text-max-width": 5
+          },
+          paint: {
+            "text-color": [
+              "interpolate", ["linear"], ["get", "humidity"],
+              0, "#7f1d1d",
+              20, "#991b1b",
+              40, "#a16207",
+              60, "#ca8a04",
+              80, "#3f6212",
+              100, "#14532d"
+            ],
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.8,
+            "text-opacity": 0.95
+          }
+        });
+      }
+
+      const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
+      this.setDataTimeText(timeText);
+      this.setInfoExtra("");
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      this.lastStatus = true;
+    } catch (e) {
+      console.error("刷新城市湿度失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "城市湿度加载失败");
+      this.setLastError(msg || "城市湿度加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
+    }
     this.lastTime = now;
     return true;
   }
 
   setOpacity(opacity) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     if (!this.runtime) return;
     const { map } = this.runtime;
     if (map.getLayer(this.layerId)) {
-      map.setPaintProperty(this.layerId, "text-opacity", opacity);
+      map.setPaintProperty(this.layerId, "text-opacity", 0.95 * safe);
     }
+    this.opacity = safe;
   }
 
   hide() {
@@ -208,10 +226,11 @@ export class CityHumidityLayer extends MapLayer {
     return true;
   }
 
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
     const ok = await super.show(opacity);
     const { map } = this.runtime;
     if (map.getLayer(this.layerId)) map.setLayoutProperty(this.layerId, "visibility", "visible");
+    this.setOpacity(Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8);
     return ok;
   }
 }

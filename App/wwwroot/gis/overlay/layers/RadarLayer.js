@@ -38,26 +38,38 @@ export class RadarLayer extends MapLayer {
   }
 
   async refresh() {
-    const { map } = this.runtime;
-    const { tileUrl, time } = await this.getRadarTileUrlAndInfo();
-    const source = map.getSource(this.sourceId);
-    if (!source) {
-      map.addSource(this.sourceId, { type: "raster", tiles: [tileUrl], tileSize: 256 });
-      map.addLayer({ id: this.layerId, type: "raster", source: this.sourceId, paint: { "raster-opacity": 0.8 } });
-    } else {
-      source.setTiles([tileUrl]);
+    try {
+      const { map } = this.runtime;
+      const { tileUrl, time } = await this.getRadarTileUrlAndInfo();
+      const source = map.getSource(this.sourceId);
+      if (!source) {
+        map.addSource(this.sourceId, { type: "raster", tiles: [tileUrl], tileSize: 256 });
+        map.addLayer({ id: this.layerId, type: "raster", source: this.sourceId, paint: { "raster-opacity": 0.8 } });
+      } else {
+        source.setTiles([tileUrl]);
+      }
+      if (time) this.setDataTime(time);
+      this.setInfoExtra("");
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      this.lastStatus = true;
+    } catch (e) {
+      console.error("刷新雷达图失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "雷达数据加载失败");
+      this.setLastError(msg || "雷达数据加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
     }
-    if (time) this.setDataTime(time);
-    this.setInfoExtra("");
-    this.setOpacity(this.runtime.getOpacity(this.name));
-    this.lastStatus = true;
     this.lastTime = Date.now();
     return true;
   }
 
   setOpacity(opacity) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     const { map } = this.runtime;
-    if (map.getLayer(this.layerId)) map.setPaintProperty(this.layerId, "raster-opacity", opacity);
+    if (map.getLayer(this.layerId)) map.setPaintProperty(this.layerId, "raster-opacity", safe);
+    this.opacity = safe;
   }
 
   hide() {
@@ -69,10 +81,11 @@ export class RadarLayer extends MapLayer {
     return true;
   }
 
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
     const ok = await super.show(opacity);
     const { map } = this.runtime;
     if (map.getLayer(this.layerId)) map.setLayoutProperty(this.layerId, "visibility", "visible");
+    this.setOpacity(Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8);
     return ok;
   }
 }

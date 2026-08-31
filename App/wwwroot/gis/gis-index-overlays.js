@@ -11,6 +11,7 @@ import { PressureLayer } from "./overlay/layers/PressureLayer.js";
 import { AdminBoundaryLayer } from "./overlay/layers/AdminBoundaryLayer.js";
 import { WindLayer } from "./overlay/layers/WindLayer.js";
 import { CityTempLayer } from "./overlay/layers/CityTempLayer.js";
+import { CityTempColorLayer } from "./overlay/layers/CityTempColorLayer.js";
 import { CityHumidityLayer } from "./overlay/layers/CityHumidityLayer.js";
 import { CityWeatherLayer } from "./overlay/layers/CityWeatherLayer.js";
 import { LatLonGridLayer } from "./overlay/layers/LatLonGridLayer.js";
@@ -27,6 +28,7 @@ const layerDefs = [
   { name: "pressure", title: "气压", layerType: "PressureLayer", infoId: "pressureInfo" },
   { name: "wind", title: "气流", layerType: "WindLayer", infoId: "windInfo" },
   { name: "cityWeather", title: "城市综合天气", layerType: "CityWeatherLayer", infoId: "cityWeatherInfo" },
+  { name: "cityTempColor", title: "气温色斑", layerType: "CityTempColorLayer", infoId: "cityTempColorInfo" },
   { name: "cityTemp", title: "城市温度", layerType: "CityTempLayer", infoId: "cityTempInfo" },
   { name: "cityHumidity", title: "城市湿度", layerType: "CityHumidityLayer", infoId: "cityHumidityInfo" },
   { name: "latlonGrid", title: "经纬度", layerType: "LatLonGridLayer", infoId: "gridInfo" },
@@ -45,6 +47,7 @@ function createLayers() {
     new AdminBoundaryLayer(),
     new WindLayer(),
     new CityWeatherLayer(),
+    new CityTempColorLayer(),
     new CityTempLayer(),
     new CityHumidityLayer(),
     new LatLonGridLayer(),
@@ -61,12 +64,17 @@ function getContext() {
 /**构建单个图层项 HTML */
 function buildLayerItemHtml(def) {
   return `
-    <div class="view-layer-item" data-layer-name="${def.name}">
+    <div class="view-layer-item view-layer-item-config" data-layer-name="${def.name}">
       <label class="view-layer-check">
         <input type="checkbox" id="${def.name}" data-info-id="${def.infoId}">
         <span>${def.title}</span>
       </label>
-      <div id="${def.infoId}" class="view-layer-info">未开启</div>
+      <div class="view-layer-item-right">
+        <div id="${def.infoId}" class="view-layer-info">未开启</div>
+        <button type="button" class="layer-config-btn" data-layer-name="${def.name}" title="图层配置">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
     </div>
   `;
 }
@@ -104,11 +112,13 @@ function initOverlayManager() {
   if (!ctx || !ctx.map) return;
 
   renderOverlayMenu();
+  ensureLayerConfigStyles();
   const layers = createLayers();
   const manager = new LayerManager(ctx.map, layers);
   manager.bindUi();
   initLayerInfos();
   bindStyleReload(manager, ctx.map);
+  bindConfigButtons(manager);
 
   window.__gisIndexOverlayApi = {
     manager,
@@ -121,6 +131,114 @@ function initOverlayManager() {
       return manager.setActiveLayers(layerNames);
     }
   };
+}
+
+/**确保图层配置按钮样式已注入 */
+function ensureLayerConfigStyles() {
+  const styleId = "gis-layer-config-styles";
+  if (document.getElementById(styleId)) return;
+  const el = document.createElement("style");
+  el.id = styleId;
+  el.textContent = `
+    .view-layer-item-config {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .view-layer-item-config .view-layer-check {
+      flex: 1;
+      min-width: 0;
+    }
+    .view-layer-item-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .view-layer-item-right .view-layer-info {
+      margin: 0;
+    }
+    .layer-config-btn {
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: #93c5fd;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      padding: 0;
+      transition: all 0.15s ease;
+    }
+    .layer-config-btn:hover {
+      background: rgba(59, 130, 246, 0.18);
+      border-color: rgba(96, 165, 250, 0.55);
+      color: #bfdbfe;
+    }
+    .layer-config-btn:active {
+      transform: translateY(1px);
+    }
+    .layer-config-drawer .el-descriptions {
+      --el-descriptions-table-border: 1px solid #e2e8f0;
+    }
+    .layer-config-drawer .el-descriptions__label {
+      width: 120px;
+      color: #475569;
+      font-weight: 600;
+    }
+    .layer-config-drawer .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 12px 0;
+      padding-left: 10px;
+      border-left: 3px solid #3b82f6;
+      line-height: 1.4;
+    }
+    .layer-config-drawer .section-block + .section-block {
+      margin-top: 22px;
+    }
+    .layer-config-drawer .error-empty {
+      color: #94a3b8;
+    }
+    .layer-config-drawer .error-text {
+      color: #dc2626;
+      word-break: break-all;
+    }
+    .layer-config-drawer .refresh-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 8px;
+    }
+  `;
+  document.head.appendChild(el);
+}
+
+/**绑定图层配置按钮点击事件 */
+function bindConfigButtons(manager) {
+  const host = document.getElementById("view-overlay-menu");
+  if (!host) return;
+  host.querySelectorAll(".layer-config-btn").forEach(btn => {
+    btn.addEventListener("click", (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      const name = btn.getAttribute("data-layer-name");
+      if (!name) return;
+      try {
+        if (manager && typeof manager.openLayerConfig === "function") {
+          manager.openLayerConfig(name);
+        }
+      } catch (e) {
+        console.error("打开图层配置失败", e);
+      }
+    });
+  });
 }
 
 window.addEventListener("gis:index-ready", initOverlayManager);

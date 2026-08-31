@@ -507,45 +507,62 @@ export class CityWeatherLayer extends MapLayer {
 
   async refresh(force = false) {
     if (!this.runtime) return false;
-    const zoom = this.runtime.map.getZoom();
-    const cities = this.visibleCitiesByZoom(zoom);
     const now = Date.now();
-    const cacheTtl = 30 * 60 * 1000;
-    const citiesToFetch = cities.filter(c => {
-      const cached = this.cache.get(c.name);
-      return force || !cached || (now - cached.time > cacheTtl);
-    });
+    try {
+      const zoom = this.runtime.map.getZoom();
+      const cities = this.visibleCitiesByZoom(zoom);
+      const cacheTtl = 30 * 60 * 1000;
+      const citiesToFetch = cities.filter(c => {
+        const cached = this.cache.get(c.name);
+        return force || !cached || (now - cached.time > cacheTtl);
+      });
 
-    if (citiesToFetch.length > 0) {
-      const chunks = chunkArray(citiesToFetch, 20);
-      for (const chunk of chunks) {
-        const part = await this.fetchBatch(chunk);
-        for (const item of part) {
-          if (Number.isFinite(item.temp) || Number.isFinite(item.humidity)) {
-            this.cache.set(item.name, {
-              ...item,
-              time: now
-            });
+      if (citiesToFetch.length > 0) {
+        const chunks = chunkArray(citiesToFetch, 20);
+        let gotAny = false;
+        for (const chunk of chunks) {
+          const part = await this.fetchBatch(chunk);
+          for (const item of part) {
+            if (Number.isFinite(item.temp) || Number.isFinite(item.humidity)) {
+              this.cache.set(item.name, {
+                ...item,
+                time: now
+              });
+              gotAny = true;
+            }
           }
         }
+        if (citiesToFetch.length > 0 && !gotAny) {
+          const allCached = cities.every(c => this.cache.get(c.name));
+          if (!allCached) throw new Error("城市综合天气无可用结果");
+        }
       }
-    }
 
-    this.rebuildMarkers(cities);
-    this.setOpacity(this.runtime.getOpacity(this.name));
-    const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
-    this.setDataTimeText(timeText);
-    this.setInfoExtra("");
-    this.lastStatus = true;
+      this.rebuildMarkers(cities);
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      const timeText = this.getInfoTime(cities) || new Date(now).toLocaleString("zh-CN", { hour12: false });
+      this.setDataTimeText(timeText);
+      this.setInfoExtra("");
+      this.lastStatus = true;
+    } catch (e) {
+      console.error("刷新城市综合天气失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "城市综合天气加载失败");
+      this.setLastError(msg || "城市综合天气加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
+    }
     this.lastTime = now;
     return true;
   }
 
   setOpacity(opacity) {
-    this.opacity = opacity;
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
+    this.opacity = safe;
     this.markerMap.forEach(marker => {
       const el = marker.getElement();
-      if (el) el.style.opacity = `${opacity}`;
+      if (el) el.style.opacity = `${safe}`;
     });
   }
 
@@ -561,9 +578,9 @@ export class CityWeatherLayer extends MapLayer {
     return true;
   }
 
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
     const ok = await super.show(opacity);
-    this.setOpacity(opacity);
+    this.setOpacity(Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8);
     return ok;
   }
 }

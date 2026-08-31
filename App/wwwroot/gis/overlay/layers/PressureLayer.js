@@ -8,6 +8,39 @@ import { addOrUpdateGeoJsonSource, fetchWithTimeout, findNearestHourlyIndex, get
 /****************************************************************
  * 气压等压线图层
  ****************************************************************/
+export const PressureConfig = Object.freeze({
+  /**色斑画布/图层 */
+  canvas: {
+    heatmapZIndex: 1.5,
+    heatmapOpacity: 0.6,
+    maxDpr: 2
+  },
+  /**色斑渲染 */
+  heatmap: {
+    cellPx: 8,
+    fillAlpha: 0.58,
+    /**气压 -> 颜色：低压(965hPa)深蓝紫 → 中压青/绿 → 高压(1045hPa)亮橙红（高饱和+高对比） */
+    colorStops: [
+      { hpa: 965, color: [67, 20, 150] },
+      { hpa: 980, color: [59, 73, 223] },
+      { hpa: 992, color: [14, 165, 233] },
+      { hpa: 1000, color: [34, 197, 194] },
+      { hpa: 1008, color: [163, 230, 53] },
+      { hpa: 1016, color: [250, 204, 21] },
+      { hpa: 1024, color: [249, 115, 22] },
+      { hpa: 1032, color: [239, 68, 68] },
+      { hpa: 1045, color: [185, 28, 28] }
+    ]
+  },
+  /**采样平滑倍率 */
+  smooth: {
+    factorZoom4: 5,
+    factorZoom5: 4,
+    factorZoom6: 3,
+    factorOther: 2
+  }
+});
+
 export class PressureLayer extends MapLayer {
   static GRID = {
     rows: 12,
@@ -15,7 +48,6 @@ export class PressureLayer extends MapLayer {
     contourStep: 2,
     smoothFactor: 5
   };
-
 
   constructor() {
     super({
@@ -28,6 +60,16 @@ export class PressureLayer extends MapLayer {
     this.labelSourceId = "pressure-label-source";
     this.contourLayerId = "pressure-contour-layer";
     this.labelLayerId = "pressure-label-layer";
+    this.heatmapCanvasId = "pressureHeatmapCanvas";
+    this.styleId = "pressure-canvas-style";
+    this.heatmapCanvas = null;
+    this.heatmapCtx = null;
+    this.hostEl = null;
+    this.dpr = 1;
+    this.isMapMoving = false;
+    this.heatmapDirty = true;
+    this.resizeHandler = () => this.resizeCanvas();
+    this.field = null;
     
     // 原始采样缓存
     this.rawCache = {
@@ -35,6 +77,176 @@ export class PressureLayer extends MapLayer {
       bounds: null,
       timestamp: 0
     };
+  }
+
+  bind(runtime) {
+    super.bind(runtime);
+    const { map } = runtime;
+    map.on("movestart", () => {
+      this.isMapMoving = true;
+      this.clearHeatmap();
+    });
+    map.on("moveend", () => {
+      this.isMapMoving = false;
+      this.heatmapDirty = true;
+      if (this.visible) {
+        this.ensureCanvas();
+        this.drawHeatmap();
+      }
+    });
+  }
+
+  ensureCanvas() {
+    if (this.heatmapCanvas && this.heatmapCtx) return;
+    this.ensureStyle();
+    const { map } = this.runtime;
+    this.hostEl = map?.getContainer?.() || document.body;
+
+    this.heatmapCanvas = document.getElementById(this.heatmapCanvasId);
+    if (!this.heatmapCanvas) {
+      this.heatmapCanvas = document.createElement("canvas");
+      this.heatmapCanvas.id = this.heatmapCanvasId;
+      this.heatmapCanvas.setAttribute("aria-hidden", "true");
+      this.heatmapCanvas.style.display = "none";
+      this.hostEl.appendChild(this.heatmapCanvas);
+    }
+    this.heatmapCtx = this.heatmapCanvas.getContext("2d", { alpha: true });
+    this.ensureCanvasOrder();
+    this.resizeCanvas();
+    window.addEventListener("resize", this.resizeHandler);
+  }
+
+  ensureStyle() {
+    const C = PressureConfig.canvas;
+    const cssText = `
+      #${this.heatmapCanvasId} {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: ${C.heatmapZIndex};
+        opacity: ${C.heatmapOpacity};
+        image-rendering: optimizeQuality;
+      }
+    `;
+    let style = document.getElementById(this.styleId);
+    if (style) {
+      style.textContent = cssText;
+      return;
+    }
+    style = document.createElement("style");
+    style.id = this.styleId;
+    style.textContent = cssText;
+    document.head.appendChild(style);
+  }
+
+  ensureCanvasOrder() {
+    if (!this.heatmapCanvas) return;
+    const { map } = this.runtime || {};
+    const host = map?.getContainer?.() || this.hostEl || document.body;
+    if (this.heatmapCanvas.parentNode !== host) host.appendChild(this.heatmapCanvas);
+  }
+
+  clearHeatmap() {
+    if (this.heatmapCtx && this.heatmapCanvas) {
+      this.heatmapCtx.clearRect(0, 0, this.heatmapCanvas.width, this.heatmapCanvas.height);
+    }
+  }
+
+  resizeCanvas() {
+    if (!this.heatmapCanvas) return;
+    const host = this.hostEl || this.runtime?.map?.getContainer?.();
+    const rect = host?.getBoundingClientRect?.();
+    const cssW = Math.max(1, Math.round(rect?.width || window.innerWidth));
+    const cssH = Math.max(1, Math.round(rect?.height || window.innerHeight));
+    this.dpr = Math.max(1, Math.min(PressureConfig.canvas.maxDpr, window.devicePixelRatio || 1));
+    this.heatmapCanvas.width = Math.max(1, Math.round(cssW * this.dpr));
+    this.heatmapCanvas.height = Math.max(1, Math.round(cssH * this.dpr));
+    this.heatmapCanvas.style.width = `${cssW}px`;
+    this.heatmapCanvas.style.height = `${cssH}px`;
+    const cx = this.heatmapCanvas.getContext("2d", { alpha: true });
+    if (cx) cx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    this.heatmapCtx = cx;
+    this.heatmapDirty = true;
+  }
+
+  /**气压值 -> 颜色；越界/NaN -> 完全透明（地球外不染色） */
+  pressureToColor(hpa, alpha = PressureConfig.heatmap.fillAlpha) {
+    const stops = PressureConfig.heatmap.colorStops;
+    if (!Number.isFinite(hpa)) return "rgba(0,0,0,0)";
+    const p = hpa;
+    if (p <= stops[0].hpa) {
+      const c = stops[0].color;
+      return `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;
+    }
+    for (let i = 1; i < stops.length; i++) {
+      const prev = stops[i - 1];
+      const curr = stops[i];
+      if (p <= curr.hpa) {
+        const t = (p - prev.hpa) / Math.max(0.01, curr.hpa - prev.hpa);
+        const r = Math.round(prev.color[0] + (curr.color[0] - prev.color[0]) * t);
+        const g = Math.round(prev.color[1] + (curr.color[1] - prev.color[1]) * t);
+        const b = Math.round(prev.color[2] + (curr.color[2] - prev.color[2]) * t);
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+    }
+    const c = stops[stops.length - 1].color;
+    return `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;
+  }
+
+  /**在插值网格中采样经纬度气压 */
+  samplePressureAtLngLat(lng, lat, smoothedField) {
+    const f = smoothedField || this.field;
+    if (!f) return Number.NaN;
+    if (lng < f.bounds.west || lng > f.bounds.east || lat < f.bounds.south || lat > f.bounds.north) return Number.NaN;
+    const colF = (lng - f.bounds.west) / (f.bounds.east - f.bounds.west) * (f.cols - 1);
+    const rowF = (f.bounds.north - lat) / (f.bounds.north - f.bounds.south) * (f.rows - 1);
+    return this.bilinearSample(f, rowF, colF);
+  }
+
+  /**绘制气压色斑（地球外/插值网格外 -> 不填色） */
+  drawHeatmap(smoothedField) {
+    if (!this.heatmapCtx || !this.heatmapCanvas || this.isMapMoving) return;
+    const useField = smoothedField || this.field;
+    if (!useField) return;
+    const H = PressureConfig.heatmap;
+    const { map } = this.runtime;
+    const cssW = this.heatmapCanvas.width / this.dpr;
+    const cssH = this.heatmapCanvas.height / this.dpr;
+    const cell = H.cellPx;
+    const cols = Math.max(2, Math.ceil(cssW / cell));
+    const rows = Math.max(2, Math.ceil(cssH / cell));
+    this.heatmapCtx.clearRect(0, 0, this.heatmapCanvas.width, this.heatmapCanvas.height);
+
+    const projectionName = map.getProjection && map.getProjection()?.name;
+    const isGlobe = projectionName === "globe";
+
+    for (let r = 0; r < rows; r++) {
+      const y = r * cell;
+      for (let c = 0; c < cols; c++) {
+        const x = c * cell;
+        const px = x + cell * 0.5;
+        const py = y + cell * 0.5;
+        const lnglat = map.unproject([px, py]);
+        // 地球投影：非法经纬度 -> 跳过（避免地球外黑色背景染色）
+        if (isGlobe) {
+          if (!lnglat || !Number.isFinite(lnglat.lng) || !Number.isFinite(lnglat.lat)) continue;
+          if (lnglat.lat < -85 || lnglat.lat > 85) continue;
+          // Globe 下：通过 project 反向验证该经纬度是否落在可视球面内
+          const reproj = map.project([lnglat.lng, lnglat.lat]);
+          const dx = reproj.x - px;
+          const dy = reproj.y - py;
+          if (dx * dx + dy * dy > cell * cell * 2.25) continue;
+        }
+        const p = this.samplePressureAtLngLat(lnglat.lng, lnglat.lat, useField);
+        if (!Number.isFinite(p)) continue;
+        this.heatmapCtx.fillStyle = this.pressureToColor(p, H.fillAlpha);
+        this.heatmapCtx.fillRect(x, y, cell + 1, cell + 1);
+      }
+    }
+    this.heatmapDirty = false;
   }
 
   getSamplingBounds() {
@@ -479,90 +691,133 @@ export class PressureLayer extends MapLayer {
       features.push({
         type: "Feature",
         geometry: { type: "LineString", coordinates: coords },
-        properties: { text: `${Math.round(level)}hPa` }
+        properties: { text: `${Math.round(level)}` }
       });
     }
     return { type: "FeatureCollection", features };
   }
 
   async refresh() {
-    const rawField = await this.fetchField();
-    const field = this.buildSmoothedField(rawField, this.getSmoothFactor());
-    const contourGeo = this.buildContourGeo(field, PressureLayer.GRID.contourStep);
-    const labelGeo = this.buildLabelGeoFromContours(contourGeo);
+    this.ensureCanvas();
+    this.ensureCanvasOrder();
+    try {
+      const rawField = await this.fetchField();
+      const field = this.buildSmoothedField(rawField, this.getSmoothFactor());
+      this.field = field;
+      const contourGeo = this.buildContourGeo(field, PressureLayer.GRID.contourStep);
+      const labelGeo = this.buildLabelGeoFromContours(contourGeo);
 
-    addOrUpdateGeoJsonSource(this.runtime.map, this.contourSourceId, contourGeo);
-    addOrUpdateGeoJsonSource(this.runtime.map, this.labelSourceId, labelGeo);
+      addOrUpdateGeoJsonSource(this.runtime.map, this.contourSourceId, contourGeo);
+      addOrUpdateGeoJsonSource(this.runtime.map, this.labelSourceId, labelGeo);
 
-    const { map } = this.runtime;
-    if (!map.getLayer(this.contourLayerId)) {
-      map.addLayer({
-        id: this.contourLayerId,
-        type: "line",
-        source: this.contourSourceId,
-        layout: {
-          "line-join": "round",
-          "line-cap": "round"
-        },
-        paint: {
-          "line-color": [
-            "interpolate", ["linear"], ["get", "level"],
-            980, "#1d4ed8",
-            1000, "#0ea5e9",
-            1012, "#22c55e",
-            1020, "#f59e0b",
-            1032, "#ef4444"
-          ],
-          "line-width": 1.6,
-          "line-opacity": 0.92
-        }
-      });
-    }
-    if (!map.getLayer(this.labelLayerId)) {
-      map.addLayer({
-        id: this.labelLayerId,
-        type: "symbol",
-        source: this.labelSourceId,
-        layout: {
-          "symbol-placement": "line-center",
-          "text-field": ["get", "text"],
-          "text-size": 11,
-          "text-letter-spacing": 0.02,
-          "text-max-angle": 15,
-          "text-rotation-alignment": "map",
-          "text-keep-upright": false,
-          "text-allow-overlap": true,
-          "text-ignore-placement": true,
-          "text-padding": 1
-        },
-        paint: {
-          "text-color": "#ffffff",
-          "text-halo-color": "rgba(0,0,0,0.96)",
-          "text-halo-width": 1.9,
-          "text-halo-blur": 0.35,
-          "text-opacity": 0.95
-        }
-      });
-    }
+      const { map } = this.runtime;
+      if (!map.getLayer(this.contourLayerId)) {
+        map.addLayer({
+          id: this.contourLayerId,
+          type: "line",
+          source: this.contourSourceId,
+          layout: {
+            "line-join": "round",
+            "line-cap": "round"
+          },
+          paint: {
+            "line-color": "#ffffff",
+            "line-width": 1.8,
+            "line-opacity": 0.92
+          }
+        });
+      }
+      if (!map.getLayer(this.labelLayerId)) {
+        map.addLayer({
+          id: this.labelLayerId,
+          type: "symbol",
+          source: this.labelSourceId,
+          layout: {
+            "symbol-placement": "line-center",
+            "text-field": ["get", "text"],
+            "text-size": 13,
+            "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+            "text-letter-spacing": 0.02,
+            "text-max-angle": 18,
+            "text-rotation-alignment": "viewport",
+            "text-keep-upright": true,
+            "text-allow-overlap": true,
+            "text-ignore-placement": true,
+            "text-padding": 1
+          },
+          paint: {
+            "text-color": "#ffffff",
+            "text-halo-color": "rgba(0,0,0,0.96)",
+            "text-halo-width": 2.3,
+            "text-halo-blur": 0,
+            "text-opacity": 0.98
+          }
+        });
+      }
+      // 强制同步现有图层的属性（老的 label/contour 图层即使已经 addLayer 过也会应用新配置）
+      const syncedOpacity = Number.isFinite(Number(this.runtime.getOpacity(this.name))) ? Number(this.runtime.getOpacity(this.name)) : 0.8;
+      if (map.getLayer(this.contourLayerId)) {
+        try {
+          map.setLayoutProperty(this.contourLayerId, "visibility", "visible");
+        } catch (_) { /* ignore */ }
+        try {
+          map.setPaintProperty(this.contourLayerId, "line-color", "#ffffff");
+          map.setPaintProperty(this.contourLayerId, "line-width", 1.8);
+          map.setPaintProperty(this.contourLayerId, "line-opacity", 0.92 * syncedOpacity);
+        } catch (_) { /* ignore */ }
+      }
+      if (map.getLayer(this.labelLayerId)) {
+        try {
+          map.setLayoutProperty(this.labelLayerId, "visibility", "visible");
+          map.setLayoutProperty(this.labelLayerId, "text-size", 13);
+          map.setLayoutProperty(this.labelLayerId, "text-max-angle", 18);
+          map.setLayoutProperty(this.labelLayerId, "text-font", ["Open Sans Bold", "Arial Unicode MS Bold"]);
+          map.setLayoutProperty(this.labelLayerId, "text-rotation-alignment", "viewport");
+          map.setLayoutProperty(this.labelLayerId, "text-keep-upright", true);
+        } catch (_) { /* ignore */ }
+        try {
+          map.setPaintProperty(this.labelLayerId, "text-color", "#ffffff");
+          map.setPaintProperty(this.labelLayerId, "text-halo-color", "rgba(0,0,0,0.96)");
+          map.setPaintProperty(this.labelLayerId, "text-halo-width", 2.3);
+          map.setPaintProperty(this.labelLayerId, "text-halo-blur", 0);
+          map.setPaintProperty(this.labelLayerId, "text-opacity", 0.98 * syncedOpacity);
+        } catch (_) { /* ignore */ }
+      }
 
-    const sampleTs = rawField.sampleTime ? new Date(rawField.sampleTime).getTime() : Number.NaN;
-    let ageText = "时效未知";
-    if (Number.isFinite(sampleTs)) {
-      const ageMin = Math.round((Date.now() - sampleTs) / 60000);
-      ageText = ageMin >= 0 ? `${ageMin}分钟前` : `预报${Math.abs(ageMin)}分钟后`;
+      this.setOpacity(this.runtime.getOpacity(this.name));
+      this.drawHeatmap(field);
+
+      const sampleTs = rawField.sampleTime ? new Date(rawField.sampleTime).getTime() : Number.NaN;
+      let ageText = "时效未知";
+      if (Number.isFinite(sampleTs)) {
+        const ageMin = Math.round((Date.now() - sampleTs) / 60000);
+        ageText = ageMin >= 0 ? `${ageMin}分钟前` : `预报${Math.abs(ageMin)}分钟后`;
+      }
+      if (rawField.sampleTime) this.setDataTime(rawField.sampleTime);
+      this.setInfoExtra(`时效: ${ageText}`);
+      this.lastStatus = true;
+    } catch (e) {
+      console.error("刷新气压等压线失败", e);
+      const msg = e instanceof Error ? e.message : String(e || "气压数据加载失败");
+      this.setLastError(msg || "气压数据加载失败");
+      this.clearDataTime();
+      this.setInfoExtra("");
+      this.lastStatus = false;
+      return false;
     }
-    if (rawField.sampleTime) this.setDataTime(rawField.sampleTime);
-    this.setInfoExtra(`时效: ${ageText}`);
-    this.setOpacity(this.runtime.getOpacity(this.name));
-    this.lastStatus = true;
     this.lastTime = Date.now();
     return true;
   }
 
   setOpacity(opacity) {
+    const safe = Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8;
     const { map } = this.runtime;
-    if (map.getLayer(this.contourLayerId)) map.setPaintProperty(this.contourLayerId, "line-opacity", opacity);
-    if (map.getLayer(this.labelLayerId)) map.setPaintProperty(this.labelLayerId, "text-opacity", opacity);
+    if (map.getLayer(this.contourLayerId)) map.setPaintProperty(this.contourLayerId, "line-opacity", 0.92 * safe);
+    if (map.getLayer(this.labelLayerId)) map.setPaintProperty(this.labelLayerId, "text-opacity", 0.98 * safe);
+    if (this.heatmapCanvas) {
+      this.heatmapCanvas.style.opacity = String(PressureConfig.canvas.heatmapOpacity * safe);
+    }
+    this.opacity = safe;
   }
 
   hide() {
@@ -570,16 +825,24 @@ export class PressureLayer extends MapLayer {
     const { map } = this.runtime;
     if (map.getLayer(this.contourLayerId)) map.setLayoutProperty(this.contourLayerId, "visibility", "none");
     if (map.getLayer(this.labelLayerId)) map.setLayoutProperty(this.labelLayerId, "visibility", "none");
+    if (this.heatmapCanvas) this.heatmapCanvas.style.display = "none";
+    this.clearHeatmap();
     this.clearDataTime();
     this.setInfoExtra("");
     return true;
   }
 
-  async show(opacity = 1) {
+  async show(opacity = 0.8) {
+    this.ensureCanvas();
+    this.ensureCanvasOrder();
+    if (this.heatmapCanvas) this.heatmapCanvas.style.display = "block";
     const ok = await super.show(opacity);
     const { map } = this.runtime;
     if (map.getLayer(this.contourLayerId)) map.setLayoutProperty(this.contourLayerId, "visibility", "visible");
     if (map.getLayer(this.labelLayerId)) map.setLayoutProperty(this.labelLayerId, "visibility", "visible");
+    this.setOpacity(Number.isFinite(Number(opacity)) ? Number(opacity) : 0.8);
+    this.heatmapDirty = true;
+    this.drawHeatmap();
     return ok;
   }
 }

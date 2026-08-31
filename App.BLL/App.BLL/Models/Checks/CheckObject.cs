@@ -54,11 +54,6 @@ namespace App.DAL
         [UI("风险", "行业类型")] public CheckIndustryType? IndustryType { get; set; }  // 枚举（考虑用tag实现，更容易扩展维护）
         [UI("风险", "行业风险")] public CheckIndustryRiskType? IndustryRisk { get; set; }  // 枚举（考虑用tag实现，更容易扩展维护）
 
-        //
-        [UI("其它", "重点监管")] public bool? IsKeySupervision { get; set; }
-        [UI("其它", "示范企业")] public bool? IsDemonstration { get; set; } 
-        [UI("其它", "内部奖励机制")] public string InternalRewardMechanism { get; set; }
-
         // 人员相关
         [UI("人员", "三方机构")] public string ThirdPartySafetyAgency { get; set; }
         [UI("人员", "负责人信息")] public string DutyUserName { get; set; }
@@ -164,13 +159,10 @@ namespace App.DAL
                 ProductContent,
                 OutlookImage,
                 LicenseImage,
-                IsKeySupervision,
-                IsDemonstration,
                 ThirdPartySafetyAgency,
                 DutyUserName,
                 SafetyAdminName,
                 SafetySteward,
-                InternalRewardMechanism,
                 BuildingType,
                 LandArea,
                 BuildingArea,
@@ -257,8 +249,6 @@ namespace App.DAL
             bool? hasHarzard = null,
             bool? isChecked = null,
             bool? isDel = null,
-            bool? isDemonstration = null,
-            bool? isKeySupervision = null,
             bool? isProductInNight = null,
             bool? isThreePlacesThreeEnterprises = null,
             bool includeTags = false,
@@ -295,8 +285,6 @@ namespace App.DAL
             if (hasHarzard.IsNotEmpty())              q = q.Where(o => o.HasHarzard == hasHarzard.Value);
             if (isChecked.IsNotEmpty())               q = q.Where(o => o.IsChecked == isChecked.Value);
             if (isDel.IsNotEmpty())                   q = q.Where(o => o.IsDel == isDel.Value);
-            if (isDemonstration.IsNotEmpty())         q = q.Where(o => o.IsDemonstration == isDemonstration.Value);
-            if (isKeySupervision.IsNotEmpty())        q = q.Where(o => o.IsKeySupervision == isKeySupervision.Value);
 
             return q;
         }

@@ -180,3 +180,10 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
         <EleSwitch For="Item.IsIn141Platform" Label="录入141平台"></EleSwitch>
             item.IsInOnlinePlatform = req.IsInOnlinePlatform;
             item.IsIn141Platform = req.IsIn141Platform;
+
+
+        <EleInput For="Item.InternalRewardMechanism" Label="内部奖励机制"></EleInput>
+        <EleSwitch For="Item.IsKeySupervision" Label="重点监管"></EleSwitch>
+        <EleSwitch For="Item.IsDemonstration" Label="示范企业"></EleSwitch>
+        <EleSwitch For="Item.SafetySteward" Label="有安全管家"></EleSwitch>
+
