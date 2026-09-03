@@ -261,7 +261,10 @@ namespace App.DAL
                 .Include(o => o.Checker)
                 ;
             var dutyNetOrgIds = GetOrgIds(dutyOrgIds, dutyOrgId);
-            var allTagIds = GetTagIds(tagIds);
+            // 注意：GetTagIds 已把每个用户勾选标签展开为"该标签+它所有子孙标签"；
+            // AND 语义：最终结果对象，对于每个用户勾选的标签，都要"命中该标签或其任一子孙标签"。
+            // 所以用用户勾选的原始 tagIds 做外层 AND 循环，每一项在已展开的子集合里做 OR。
+            var tagIdGroups = GetTagIdGroups(tagIds);
             if (includeTags)                          q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
             if (includeContacts)                      q = q.Include(o => o.Contacts);
             if (dutyNetOrgIds.Count > 0)              q = q.Where(o => o.DutyOrgId.HasValue && dutyNetOrgIds.Contains(o.DutyOrgId.Value));
@@ -270,7 +273,13 @@ namespace App.DAL
             if (code.IsNotEmpty())                    q = q.Where(o => o.Code.Contains(code.Trim()));
             if (address.IsNotEmpty())                 q = q.Where(o => o.Address.Contains(address.Trim()));
             if (dutyUserName.IsNotEmpty())            q = q.Where(o => o.DutyUserName.Contains(dutyUserName.Trim()));
-            if (allTagIds.Count > 0)                  q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && allTagIds.Contains(t.TagId)));
+            // AND 过滤：用户勾选的每一个 tag，对象都必须"包含该 tag 或包含其任意子孙 tag"
+            foreach (var grp in tagIdGroups)
+            {
+                if (grp.Count == 0) continue;
+                var group = grp;
+                q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && group.Contains(t.TagId)));
+            }
             if (objectType.IsNotEmpty())              q = q.Where(o => o.ObjectType == objectType.Value);
             if (scope.IsNotEmpty())                   q = q.Where(o => o.Scope == scope.Value);
             if (scale.IsNotEmpty())                   q = q.Where(o => o.Scale == scale.Value);
@@ -311,17 +320,35 @@ namespace App.DAL
         /// <summary>（兼容旧签名）递归获取单个网格及其子网格Id。</summary>
         private static List<long> GetOrgIds(long? orgId) => GetOrgIds(null, orgId);
 
-        /// <summary>递归获取标签及其子标签Id。</summary>
+        /// <summary>
+        /// 根据用户勾选的标签列表，返回“每个勾选标签一组”的 ID 集合（每组 = 该标签 + 所有子孙标签）。
+        /// Search 中将把每一组做 AND：最终对象必须“命中每一组中至少一个 tagId”。
+        /// </summary>
+        private static List<List<long>> GetTagIdGroups(List<long> tagIds)
+        {
+            var list = new List<List<long>>();
+            if (tagIds == null || tagIds.Count == 0) return list;
+
+            // 对每个用户勾选的 tagId 单独展开 → 一组
+            var distinct = tagIds.Distinct().ToList();
+            foreach (var tid in distinct)
+            {
+                var group = CheckTag.All
+                    .GetDescendants(tid)
+                    .Select(t => t.Id)
+                    .Distinct()
+                    .ToList();
+                if (group.Count > 0) list.Add(group);
+            }
+            return list;
+        }
+
+        /// <summary>（兼容旧调用）递归获取标签及其子标签Id。返回所有输入标签+子孙的扁平化合集。</summary>
         private static List<long> GetTagIds(List<long> tagIds)
         {
-            if (tagIds == null || tagIds.Count == 0)
-                return new List<long>();
-
-            return CheckTag.All
-                .GetDescendants(tagIds.Distinct().ToList())
-                .Select(t => t.Id)
-                .Distinct()
-                .ToList();
+            var flat = new List<long>();
+            foreach (var grp in GetTagIdGroups(tagIds)) flat.AddRange(grp);
+            return flat.Distinct().ToList();
         }
 
         /// <summary>修复所有检查对象的IsChecked字段</summary>
