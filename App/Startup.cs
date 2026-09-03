@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,7 +20,6 @@ using App.Components;
 using App.Entities;
 using App.Pages.Chats;
 using System.IO;
-using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace App
@@ -130,9 +131,23 @@ namespace App
                     hasOwn = powerIds.Contains(Power.DataDuty);
                 }
 
-                // 无数据权限标识时默认按责任数据收敛，避免越权。
+                    // 无数据权限标识时默认按责任数据收敛，避免越权。
                 if (!hasAll && !hasOrg && !hasOwn)
                     hasOwn = true;
+
+                var orgId = user.OrgId;
+                var authOrgIds = user.AuthOrgIds ?? new List<long>();
+                if (authOrgIds.Count == 0)
+                {
+                    // 兼容：直接用当前 db 上下文查 UserOrgs
+                    authOrgIds = db.UserOrgs
+                        .Where(t => t.UserId == user.Id && t.OrgId != null)
+                        .Select(t => t.OrgId.Value)
+                        .Distinct()
+                        .ToList();
+                }
+                long? primaryAuthOrgId = authOrgIds.FirstOrDefault(t => t > 0);
+                if (primaryAuthOrgId <= 0) primaryAuthOrgId = null;
 
                 return new DataAccessScope
                 {
@@ -141,7 +156,7 @@ namespace App
                     AllowOrg = hasOrg,
                     AllowOwn = hasOwn,
                     UserId = user.Id,
-                    OrgId = user.AuthOrgId ?? user.OrgId,
+                    OrgId = primaryAuthOrgId ?? orgId,
                     IncludeSubOrgs = true,
                 };
             };
@@ -158,11 +173,24 @@ namespace App
                 if (user == null)
                     return new DataAuditScope { Enabled = false };
 
+                // 审计 OrgId：优先用 AuthOrgIds.First 或 UserOrgs 首个，空时用所属组织
+                var auditAuthOrgIds = user.AuthOrgIds ?? new List<long>();
+                if (auditAuthOrgIds.Count == 0)
+                {
+                    auditAuthOrgIds = db.UserOrgs
+                        .Where(t => t.UserId == user.Id && t.OrgId != null)
+                        .Select(t => t.OrgId.Value)
+                        .Distinct()
+                        .ToList();
+                }
+                long? auditPrimary = auditAuthOrgIds.FirstOrDefault(t => t > 0);
+                if (auditPrimary <= 0) auditPrimary = null;
+
                 return new DataAuditScope
                 {
                     Enabled = true,
                     UserId = user.Id,
-                    OrgId = user.AuthOrgId ?? user.OrgId,
+                    OrgId = auditPrimary ?? user.OrgId,
                 };
             };
         }

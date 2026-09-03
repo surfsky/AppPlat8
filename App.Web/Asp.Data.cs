@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -58,12 +58,21 @@ namespace App.Web
         // Session
         //
         /// <summary>获取Session数据（会话期有效）</summary>
-        public static T GetSessionData<T>(string key, Func<object> creator = null) where T : class
+        public static T GetSessionData<T>(string key, Func<object> creator = null, Func<bool> validate = null) where T : class
         {
             if (Asp.Current.Session == null)
                 return null;
 
-            if (!Asp.Current.Session.Keys.Contains(key) && creator != null)
+            bool needCreate = !Asp.Current.Session.Keys.Contains(key);
+            // 有缓存但校验器返回 false → 缓存失效（如权限版本变化）
+            if (!needCreate && validate != null && !validate())
+            {
+                // 移除旧缓存后重建
+                try { Asp.Current.Session.Remove(key); } catch { }
+                needCreate = true;
+            }
+
+            if (needCreate && creator != null)
                 Asp.Current.Session.Set(key, creator().ToObjectBytes());
             return Asp.Current.Session.Get(key).ToObject() as T;
         }

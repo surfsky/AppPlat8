@@ -61,6 +61,8 @@ namespace App.Pages.Admins
             item.SortId = req.SortId;
             item.Level = req.Level;
             item.Remark = req.Remark;
+            item.Gps = req.Gps;
+            item.GeoData = req.GeoData;
             item.Save();
             App.DAL.Org.ClearCache(); // Refresh cache
             return BuildResult(0, "保存成功");

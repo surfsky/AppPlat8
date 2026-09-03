@@ -233,6 +233,7 @@ namespace App.DAL
             string address = "",
             string dutyUserName = "",
             long? dutyOrgId = null,
+            List<long> dutyOrgIds = null,
             List<long> tagIds = null,
             long? checkerId = null,
             CheckObjectType? objectType = null,
@@ -259,7 +260,7 @@ namespace App.DAL
                 .Include(o => o.DutyOrg)
                 .Include(o => o.Checker)
                 ;
-            var dutyNetOrgIds = GetOrgIds(dutyOrgId);
+            var dutyNetOrgIds = GetOrgIds(dutyOrgIds, dutyOrgId);
             var allTagIds = GetTagIds(tagIds);
             if (includeTags)                          q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
             if (includeContacts)                      q = q.Include(o => o.Contacts);
@@ -289,18 +290,26 @@ namespace App.DAL
             return q;
         }
 
-        /// <summary>递归获取网格及其子网格Id。</summary>
-        private static List<long> GetOrgIds(long? orgId)
+        /// <summary>递归获取网格及其子网格Id。先取 dutyOrgIds 列表，为空再回退 dutyOrgId 单个值。</summary>
+        private static List<long> GetOrgIds(List<long> dutyOrgIds, long? dutyOrgId)
         {
-            if (!orgId.IsNotEmpty())
+            // 合并两个来源 + 去重
+            var list = new List<long>();
+            if (dutyOrgIds != null && dutyOrgIds.Count > 0) list.AddRange(dutyOrgIds);
+            if (dutyOrgId.IsNotEmpty()) list.Add(dutyOrgId.Value);
+            list = list.Distinct().ToList();
+            if (list.Count == 0)
                 return new List<long>();
 
             return Org.All
-                .GetDescendants(orgId.Value)
+                .GetDescendants(list)
                 .Select(t => t.Id)
                 .Distinct()
                 .ToList();
         }
+
+        /// <summary>（兼容旧签名）递归获取单个网格及其子网格Id。</summary>
+        private static List<long> GetOrgIds(long? orgId) => GetOrgIds(null, orgId);
 
         /// <summary>递归获取标签及其子标签Id。</summary>
         private static List<long> GetTagIds(List<long> tagIds)

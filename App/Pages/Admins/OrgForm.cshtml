@@ -4,12 +4,24 @@
     ViewData["Title"] = "组织表单";
 }
 
+@section head {
+    <style>
+        .geojson-picker .el-input__inner {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+}
+
 @section body {
     <EleForm LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreeSelect For="Item.ParentId" Label="上级组织" Api="/httpapi/orgs/GetAuthOrgTree"  Clearable="true" CheckStrictly="true"></EleTreeSelect>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
         <EleSelect For="Item.Level" Label="级别" Required="true"></EleSelect>
+        <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="定位" Class="gps-picker" PopupUrl="../gis/Locator" Icon="Location" Editable="true"></ElePicker>
+        <ElePicker For="Item.GeoData" TextFor="Item.GeoData" Label="图形数据" Class="geojson-picker" PopupUrl="../gis/GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></ElePicker>
         <EleInput For="Item.Remark" Label="备注" Rows="3"></EleInput>
     
         <Bottom>
@@ -17,4 +29,79 @@
             <EleButton Command="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
+}
+
+@section script {
+    <script>
+        (function () {
+            const storageKey = '__gis_geometry_editor_reference_gps';
+            const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+            const gpsSelectors = [
+                '[data-ele-control-id="field:gps"]',
+                '.gps-picker'
+            ];
+            const geoJsonSelectors = [
+                '[data-ele-control-id="field:geoData"]',
+                '.geojson-picker'
+            ];
+
+            function findHost(selectors) {
+                for (let i = 0; i < selectors.length; i += 1) {
+                    const el = document.querySelector(selectors[i]);
+                    if (el) return el;
+                }
+                return null;
+            }
+
+            function getGpsInputValue() {
+                const host = findHost(gpsSelectors);
+                if (!host) return '';
+                const input = host.querySelector('input,textarea');
+                return String(input?.value || '').trim();
+            }
+
+            function syncReferenceGps() {
+                try {
+                    const gps = getGpsInputValue();
+                    storages.forEach(storage => {
+                        if (gps) storage.setItem(storageKey, gps);
+                        else storage.removeItem(storageKey);
+                    });
+                } catch {
+                }
+            }
+
+            function bindGpsSync() {
+                const host = findHost(gpsSelectors);
+                if (!host) return false;
+                const input = host.querySelector('input,textarea');
+                if (input && !input.__gisGpsSyncBound) {
+                    input.__gisGpsSyncBound = true;
+                    ['input', 'change', 'blur'].forEach(name => {
+                        input.addEventListener(name, syncReferenceGps, true);
+                    });
+                }
+                syncReferenceGps();
+                return !!input;
+            }
+
+            ['pointerdown', 'mousedown', 'click'].forEach(name => {
+                document.addEventListener(name, function (evt) {
+                    if (!evt.target || !evt.target.closest) return;
+                    if (evt.target.closest(geoJsonSelectors.join(','))) {
+                        syncReferenceGps();
+                    }
+                }, true);
+            });
+
+            let retry = 0;
+            const timer = setInterval(() => {
+                retry++;
+                const ok = bindGpsSync();
+                if (ok || retry >= 20) {
+                    clearInterval(timer);
+                }
+            }, 300);
+        })();
+    </script>
 }

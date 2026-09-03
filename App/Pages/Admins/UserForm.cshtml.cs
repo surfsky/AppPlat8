@@ -59,7 +59,6 @@ namespace App.Pages.Admins
             user.RealName = req.RealName;
             user.OrgId = req.OrgId;
             var authOrgIds = (req.AuthOrgIds ?? new List<long>()).Where(t => t > 0).Distinct().ToList();
-            user.AuthOrgId = authOrgIds.Count > 0 ? authOrgIds[0] : req.OrgId;
             user.Title = req.Title;
             user.Mobile = req.Mobile;
             user.Email = req.Email;
@@ -68,16 +67,8 @@ namespace App.Pages.Admins
             user.Remark = req.Remark;
             user.Photo = Uploader.SaveFile(nameof(User), req.Photo);
             user.SetRoles(req.RoleIds);
+            user.SetAuthOrgs(authOrgIds);
             user.Save();
-            UserOrg.Delete(t => t.UserId == user.Id);
-            foreach (var authOrgId in authOrgIds)
-            {
-                new UserOrg
-                {
-                    UserId = user.Id,
-                    OrgId = authOrgId
-                }.Save();
-            }
             return BuildResult(0, "保存成功");
         }
     }

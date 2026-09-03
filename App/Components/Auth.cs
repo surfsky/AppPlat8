@@ -243,18 +243,34 @@ namespace App.Components
         /// <summary>获取当前登录用户拥有的全部权限列表</summary>
         public static List<Power> GetUserPowers(HttpContext context)
         {
-            // 将用户拥有的权限列表保存在Session中，这样就避免每个请求多次查询数据库
             return Asp.GetSessionData<List<Power>>("UserPowers", () =>
             {
                 var name = GetUserName(context);
                 if (name.IsEmpty())
                     return new List<Power>();
-
                 if (name == "admin")
                     return Enum.GetValues(typeof(Power)).Cast<Power>().ToList();
-
                 var user = User.Set.FirstOrDefault(t => t.Name == name);
+                if (user == null)
+                    return new List<Power>();
+
+                // 版本号（long/秒级ticks）写入 Session：下次请求对比DB版本，不同则缓存失效
+                var ver = user.GetPermissionVersion();
+                Asp.SetSession("UserPowersVer", ver);
                 return user.GetPowers();
+            },
+            // 版本检查器：每次命中缓存前先判断版本是否变化，变化则重取权限
+            validate: () =>
+            {
+                var name = GetUserName(context);
+                if (name.IsEmpty() || name == "admin") return true;
+
+                var cachedVerObj = Asp.GetSession("UserPowersVer");
+                long cachedVer = (cachedVerObj is long lv) ? lv : (cachedVerObj is int iv ? iv : -1);
+                var user = User.Set.FirstOrDefault(t => t.Name == name);
+                long curVer = user?.GetPermissionVersion() ?? -2;
+                if (curVer == -2) return true;
+                return cachedVer == curVer;
             });
         }
     }

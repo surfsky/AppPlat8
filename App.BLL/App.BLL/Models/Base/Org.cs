@@ -28,6 +28,8 @@ namespace App.DAL
     {
         [UI("备注")] public string Remark { get; set; }
         [UI("级别")] public OrgLevel? Level { get; set; }
+        [UI("定位")] public string Gps { get; set; }
+        [UI("图形数据")] public string GeoData { get; set; }
 
         public override object Export(ExportMode mode = ExportMode.Normal)
         {
@@ -41,7 +43,9 @@ namespace App.DAL
                 Remark,
                 SortId,
                 TreeLevel,
-                Children
+                Children,
+                Gps,
+                GeoData
             };
         }
         
@@ -50,6 +54,8 @@ namespace App.DAL
             return base.Clone()
                 .SetValue(t => t.Remark, this.Remark)
                 .SetValue(t => t.Level, this.Level)
+                .SetValue(t => t.Gps, this.Gps)
+                .SetValue(t => t.GeoData, this.GeoData)
                 ;
         }
 

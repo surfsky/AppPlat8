@@ -129,9 +129,12 @@ namespace App.API
             }
             else
             {
-                var authOrgId = user.AuthOrgId ?? user.OrgId;
+                var authOrgIds = user.AuthOrgIds ?? new List<long>();
+                long? authOrgId = authOrgIds.FirstOrDefault(t => t > 0);
+                if (authOrgId <= 0) authOrgId = null;
+                var orgId = authOrgId ?? user.OrgId;
                 visible = allTags
-                    .Where(t => t.OrgId == null || t.OrgId == authOrgId)
+                    .Where(t => t.OrgId == null || t.OrgId == orgId)
                     .ToList();
             }
 

@@ -46,11 +46,9 @@ namespace App.DAL
         [UI("上次登录时间")]     public DateTime? LastLoginDt { get; set; }
         [UI("职务")]            public string  Title { get; set; }
         [UI("所属组织")]        public long? OrgId { get; set; }
-        [UI("授权组织")]        public long? AuthOrgId { get; set; }
 
         // Relations
         [UI("所属组织")]        public virtual Org Org { get; set; }
-        [UI("授权组织")]        public virtual Org AuthOrg { get; set; }
         [UI("用户角色")]        public virtual List<Role> Roles { get; set; } = new List<Role>();
         [UI("授权组织")]        public virtual List<UserOrg> UserOrgs { get; set; } = new List<UserOrg>();
 
@@ -60,8 +58,12 @@ namespace App.DAL
         //------------------------------------------------------
         public string OrgName => this.Org?.Name;
         public string OrgFullName => this.Org?.FullName;
-        public string AuthOrgName => this.AuthOrg?.Name;
-        public string AuthOrgFullName => this.AuthOrg?.FullName ?? this.AuthOrg?.Name;
+        public string AuthOrgName => GetAuthorizedOrgs()
+            .Select(t => t.Name)
+            .FirstOrDefault(t => t.IsNotEmpty());
+        public string AuthOrgFullName => GetAuthorizedOrgs()
+            .Select(t => t.FullName ?? t.Name)
+            .FirstOrDefault(t => t.IsNotEmpty());
         public string MobileMasked => this.Mobile?.Mask(3, 4);
         public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
         public string AuthOrgNames => GetAuthorizedOrgs()
@@ -109,11 +111,22 @@ namespace App.DAL
             {
                 if (_authOrgIds != null)
                     return _authOrgIds;
-                return GetAuthorizedOrgs()
-                    .Where(t => t != null)
-                    .Select(t => t.Id)
+                // 仅返回 UserOrgs 中显式保存的授权组织 (不自动合并 OrgId，
+                // 否则每次保存都会把所属部门也写进 UserOrgs 造成重复 & UI 回显脏数据)
+                var ids = (this.UserOrgs ?? new List<UserOrg>())
+                    .Where(t => t != null && t.OrgId.HasValue && t.OrgId.Value > 0)
+                    .Select(t => t.OrgId.Value)
                     .Distinct()
                     .ToList();
+                if (ids.Count == 0 && this.Id > 0)
+                {
+                    ids = UserOrg.Set
+                        .Where(t => t.UserId == this.Id && t.OrgId != null && t.OrgId > 0)
+                        .Select(t => t.OrgId.Value)
+                        .Distinct()
+                        .ToList();
+                }
+                return ids;
             }
             set
             {
@@ -145,7 +158,7 @@ namespace App.DAL
                 .ToList();
         }
 
-        /// <summary>获取用户直接授权的组织列表（含主组织、默认授权组织）。</summary>
+        /// <summary>获取用户直接授权的组织列表（含主组织、UserOrgs）。</summary>
         public List<Org> GetAuthorizedOrgs()
         {
             var orgs = new List<Org>();
@@ -158,7 +171,6 @@ namespace App.DAL
             }
 
             addOrg(this.Org);
-            addOrg(this.AuthOrg);
             foreach (var item in this.UserOrgs ?? new List<UserOrg>())
                 addOrg(item?.Org);
 
@@ -167,7 +179,6 @@ namespace App.DAL
 
             var ids = new List<long>();
             if (this.OrgId.HasValue && this.OrgId.Value > 0) ids.Add(this.OrgId.Value);
-            if (this.AuthOrgId.HasValue && this.AuthOrgId.Value > 0) ids.Add(this.AuthOrgId.Value);
             if (this.Id > 0)
                 ids.AddRange(UserOrg.Set.Where(t => t.UserId == this.Id && t.OrgId != null).Select(t => t.OrgId.Value).ToList());
 
@@ -215,9 +226,68 @@ namespace App.DAL
             else
             {
                 var roleIds = this.Roles.Select(t => t.Id).ToList();
-                RolePower.Search(t => roleIds.Contains(t.RoleId)).ToList().ForEach(t => powers.Add(t.PowerId));
+                if (roleIds.Count == 0 && this.Id > 0)
+                {
+                    // 兼容：从 Join Table UserRole(EF 命名 RolesId+UsersId) 查
+                    roleIds = QueryUserRoleIds(this.Id);
+                }
+                if (roleIds.Count > 0)
+                {
+                    RolePower.Search(t => roleIds.Contains(t.RoleId))
+                        .ToList().ForEach(t => powers.Add(t.PowerId));
+                }
+                powers = powers.Distinct().ToList();
             }
             return powers;
+        }
+
+        /// <summary>
+        /// 权限版本戳：当前用户权限的最新更新时间（Tick 秒）。
+        /// Auth 层用此版本戳判断 Session 缓存的权限列表是否过期，避免：
+        /// 管理员改了角色权限/用户角色后，用户 Session 期内仍然拿老权限导致 403。
+        ///
+        /// 版本包含：
+        ///   - 用户主表 UpdateDt
+        ///   - 用户关联的 UserRole (多对多) 最新 UpdateDt（角色变了）
+        ///   - 用户角色的 Role.UpdateDt
+        ///   - 用户所有角色对应 RolePower 最新 UpdateDt
+        /// 4 者中最大的 DateTime.Ticks / 1e7 (秒) 作为版本号
+        /// </summary>
+        public long GetPermissionVersion()
+        {
+            if (this.Name == "admin")
+            {
+                // admin 无需失效，给固定值即可
+                return 0L;
+            }
+            long maxTicks = 0;
+            void feed(DateTime? dt)
+            {
+                if (dt == null) return;
+                var t = dt.Value.Ticks / 10_000_000L;
+                if (t > maxTicks) maxTicks = t;
+            }
+
+            feed(this.UpdateDt);
+
+            // 取角色ID (从导航属性或 Join Table)
+            var roleIds = this.Roles?.Select(t => t.Id).ToList() ?? new List<long>();
+            if (roleIds.Count == 0 && this.Id > 0)
+                roleIds = QueryUserRoleIds(this.Id);
+            if (roleIds.Count == 0)
+                return maxTicks;
+            // 2. Role.UpdateDt + 3. RolePower.UpdateDt
+            var roleUps = Role.Set
+                .Where(r => roleIds.Contains(r.Id))
+                .Select(r => r.UpdateDt)
+                .ToList();
+            foreach (var d in roleUps) feed(d);
+
+            var rpUps = RolePower.Search(p => roleIds.Contains(p.RoleId))
+                .Select(p => p.UpdateDt)
+                .ToList();
+            foreach (var d in rpUps) feed(d);
+            return maxTicks;
         }
 
         /// <summary>用户是否拥有指定权限</summary>
@@ -226,6 +296,53 @@ namespace App.DAL
             if (this.Name == "admin") return true;
             var powers = this.GetPowers();
             return powers.Contains(power);
+        }
+
+        //------------------------------------------------------
+        // 内部辅助
+        //------------------------------------------------------
+        /// <summary>
+        /// 从 EF 生成的 UserRole 跳过导航表（列名 RolesId+UsersId）中查某用户的所有角色ID。
+        /// 用于导航属性 Roles 未 Include 时兜底，避免 GetPowers() 返回空集合。
+        /// 直接复用 EntityBase.Db 上下文，不 new 新的 DbContext。
+        /// </summary>
+        private static List<long> QueryUserRoleIds(long userId)
+        {
+            if (userId <= 0) return new List<long>();
+            try
+            {
+                var conn = Db.Database.GetDbConnection();
+                var wasClosed = conn.State == System.Data.ConnectionState.Closed;
+                if (wasClosed) conn.Open();
+                try
+                {
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT RolesId FROM UserRole WHERE UsersId = @uid";
+                        var p = cmd.CreateParameter();
+                        p.ParameterName = "@uid";
+                        p.Value = userId;
+                        cmd.Parameters.Add(p);
+                        var list = new List<long>();
+                        using (var rdr = cmd.ExecuteReader())
+                        {
+                            while (rdr.Read())
+                            {
+                                if (!rdr.IsDBNull(0)) list.Add(rdr.GetInt64(0));
+                            }
+                        }
+                        return list;
+                    }
+                }
+                finally
+                {
+                    if (wasClosed) conn.Close();
+                }
+            }
+            catch
+            {
+                return new List<long>();
+            }
         }
 
 
@@ -244,7 +361,6 @@ namespace App.DAL
                 this.OrgId,
                 this.OrgName,
                 this.OrgFullName,
-                this.AuthOrgId,
                 this.AuthOrgName,
                 this.AuthOrgFullName,
                 AuthOrgIds = this.AuthOrgIds,
@@ -274,7 +390,6 @@ namespace App.DAL
         {
             var user = DataSet
                 .Include(u => u.Org)
-                .Include(u => u.AuthOrg)
                 .Include(u => u.Roles)
                 .Include(u => u.UserOrgs)
                     .ThenInclude(t => t.Org)
@@ -282,7 +397,13 @@ namespace App.DAL
             if (user == null)
                 return null;
             user.RoleIds = user.Roles.Select(r => r.Id).ToList();
-            user.AuthOrgIds = user.GetAuthorizedOrgs().Select(t => t.Id).Distinct().ToList();
+            // UI 回显只取显式保存的 UserOrgs 授权 (不包含 OrgId 所属部门,
+            // 否则每次保存都会把部门也写进 UserOrgs 造成越积越多)
+            user.AuthOrgIds = (user.UserOrgs ?? new List<UserOrg>())
+                .Where(t => t != null && t.OrgId.HasValue && t.OrgId.Value > 0)
+                .Select(t => t.OrgId.Value)
+                .Distinct()
+                .ToList();
             return user;
         }
 
@@ -291,7 +412,6 @@ namespace App.DAL
         {
             var q = DataSet
                 .Include(u => u.Org)
-                .Include(u => u.AuthOrg)
                 .Include(u => u.Roles)
                 .Include(u => u.UserOrgs)
                     .ThenInclude(t => t.Org)

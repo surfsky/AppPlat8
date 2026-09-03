@@ -16,7 +16,43 @@ namespace App.Pages.Checks
     {
         public CheckObject Item { get; set; } = new CheckObject();
 
-        public void OnGet() {}
+        /// <summary>
+        /// 所属网格（多选）默认值：
+        ///   1) URL 参数 dutyOrgIds 传了就用（逗号分隔 long）；
+        ///   2) 否则取当前用户 AuthOrgIds（授权组织，可多个）；
+        ///   3) 若 AuthOrgIds 空则回退 OrgId（用户归属部门）；
+        ///   4) 最后还是空 → 不做默认过滤（显示全部）。
+        /// </summary>
+        public List<long> DutyOrgIds { get; set; } = new List<long>();
+
+        public void OnGet()
+        {
+            // 先解析 URL 参数（若有）
+            var qs = Request.Query["dutyOrgIds"].ToString();
+            if (!string.IsNullOrWhiteSpace(qs))
+            {
+                foreach (var s in qs.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (long.TryParse(s.Trim(), out var id)) DutyOrgIds.Add(id);
+                }
+                if (DutyOrgIds.Count > 0) return;
+            }
+
+            // 默认值逻辑：取当前用户授权组织 → 空则回退归属组织
+            var user = GetUser();
+            if (user != null)
+            {
+                var authOrgIds = user.AuthOrgIds;
+                if (authOrgIds != null && authOrgIds.Count > 0)
+                {
+                    DutyOrgIds = authOrgIds.Distinct().ToList();
+                }
+                else if (user.OrgId > 0)
+                {
+                    DutyOrgIds = new List<long> { user.OrgId.Value };
+                }
+            }
+        }
 
         public IActionResult OnGetData(
             Paging pi, 
@@ -28,6 +64,7 @@ namespace App.Pages.Checks
             bool? hasHarzard=null,
             bool? isChecked=null,
             long? dutyOrgId=null, 
+            List<long> dutyOrgIds=null,
             long? checkerId=null, 
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
@@ -52,7 +89,8 @@ namespace App.Pages.Checks
                 socialCreditCode: socialCreditCode, 
                 address: address,
                 dutyUserName: dutyUserName,
-                dutyOrgId: dutyOrgId, 
+                dutyOrgId: dutyOrgId,
+                dutyOrgIds: dutyOrgIds,
                 tagIds: tagIds,
                 checkerId: checkerId, 
                 objectType: objectType, 
@@ -81,7 +119,8 @@ namespace App.Pages.Checks
             string dutyUserName="",
             bool? hasHarzard=null,
             bool? isChecked=null,
-            long? dutyOrgId=null, 
+            long? dutyOrgId=null,
+            List<long> dutyOrgIds=null,
             long? checkerId=null, 
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
@@ -106,7 +145,8 @@ namespace App.Pages.Checks
                 socialCreditCode: socialCreditCode, 
                 address: address,
                 dutyUserName: dutyUserName,
-                dutyOrgId: dutyOrgId, 
+                dutyOrgId: dutyOrgId,
+                dutyOrgIds: dutyOrgIds,
                 tagIds: tagIds,
                 checkerId: checkerId, 
                 objectType: objectType, 
