@@ -32,6 +32,7 @@ namespace App.DAL
         [UI("基础", "建档日期")]     public DateTime? ArchieveDt { get; set; }
         [UI("基础", "最新巡查时间")] public DateTime? LatestCheckDt { get; set; }
         [UI("基础", "规模")]       public CheckObjectScale? Scale { get; set; }
+        public DateTime? NextCheckDt => LatestCheckDt?.AddMonths(GetCheckCycleMonths(this.RiskLevel));
 
 
         // 风险相关
@@ -135,8 +136,13 @@ namespace App.DAL
                 Gps,
                 AreaCode,
                 IsChecked,
+
                 ArchieveDt,
                 LatestCheckDt,
+                NextCheckDt,
+                CreateDt,
+
+
                 RiskLevel,
                 CheckCycle,
                 Scope,
