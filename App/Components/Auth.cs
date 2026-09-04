@@ -57,39 +57,39 @@ namespace App.Components
         /// <summary>登录</summary>
         public static int Login(string userName, string password, string verifyCode)
         {
-            // Backdoor for automated testing
             if (string.IsNullOrEmpty(GetVerifyCode()) || GetVerifyCode().ToLower() != verifyCode?.ToLower())
             {
-                Logger.LogAudit("Auth", "LoginFail", $"账号={userName} 登录失败：验证码错误。IP={Asp.ClientIP}");
+                var ip = Asp.ClientIP;
+                // 登录尚未成功，Cookie Claim 还没写，必须显式传 operator/userName/ip 给 Logger，否则 LogDb 里取 Auth.GetUserName() 是空
+                Logger.LogDb(LogLevel.Info, user: userName,
+                    from: "Auth/LoginFail",
+                    message: $"账号={userName} 登录失败：验证码错误。IP={ip}");
                 return -4;
             }
             return Login(userName, password);
         }
 
         /// <summary>登录</summary>
-        /// <returns>
-        /// 0  : 登录成功
-        /// -1 : 用户不存在 / 密码错误
-        /// -2 : 用户未启用
-        /// -3 : 用户名或密码错误
-        /// </returns>
         public static int Login(string userName, string password)
         {
             User user = App.DAL.User.GetDetail(u => u.Name == userName);
             string ip = Asp.ClientIP;
             if (user == null)
             {
-                Logger.LogAudit("Auth", "LoginFail", $"账号={userName} 登录失败：用户不存在。IP={ip}");
+                Logger.LogDb(LogLevel.Info, user: userName, from: "Auth/LoginFail",
+                    message: $"账号={userName} 登录失败：用户不存在。IP={ip}");
                 return -1;
             }
             if (!PasswordUtil.ComparePasswords(user.Password, password))
             {
-                Logger.LogAudit("Auth", "LoginFail", $"账号={userName} 登录失败：密码错误。IP={ip}");
+                Logger.LogDb(LogLevel.Info, user: userName, from: "Auth/LoginFail",
+                    message: $"账号={userName} 登录失败：密码错误。IP={ip}");
                 return -3;
             }
             if (user.IsDel == true)
             {
-                Logger.LogAudit("Auth", "LoginFail", $"账号={userName} 登录失败：用户已失效（IsDel=true）。IP={ip}");
+                Logger.LogDb(LogLevel.Info, user: userName, from: "Auth/LoginFail",
+                    message: $"账号={userName} 登录失败：用户已失效（IsDel=true）。IP={ip}");
                 return -2;
             }
             LoginSuccess(user);
@@ -108,12 +108,18 @@ namespace App.Components
             RegisterOnlineUser(user.Id);
 
             // Aspnetcore 标准登录代码: Ticket验票--Principal主角--Identity身份--(1:n)--Claim属性
-            var roleIds = user.Roles.Select(r => r.Id).Aggregate("", (a, b) => a + "," + b).TrimStart(','); // 用户角色Id列表字符串
+            var roleIds = user.Roles.Select(r => r.Id).Aggregate("", (a, b) => a + "," + b).TrimStart(',');
             AuthHelper.Login(user.Id.ToString(), user.Name, roleIds, DateTime.Now.AddDays(7));
 
-            // 登录审计日志
+            // 登录审计日志：注意 AuthHelper.Login 先写了 ClaimsPrincipal，再写日志
+            // 此时如果走默认的 LogAudit→Auth.GetUserName()，部分场景（Auth.GetUserName 取 Session）仍取不到，
+            // 所以直接显式传 operator + IP（Asp.ClientIP 与 Request 无关，可独立取）
             var ua = Asp.Request?.Headers["User-Agent"].FirstOrDefault();
-            Logger.LogAudit("Auth", "Login", $"用户登录成功。账号={user.Name} 姓名={user.NickName ?? user.RealName ?? "-"} 手机号={user.Mobile ?? "-"} IP={Asp.ClientIP} 浏览器={ua ?? "-"}");
+            var ip = Asp.ClientIP;
+            Logger.LogDb(LogLevel.Info,
+                user: user.Name,
+                from: "Auth/Login",
+                message: $"用户登录成功。账号={user.Name} 姓名={user.NickName ?? user.RealName ?? "-"} 手机号={user.Mobile ?? "-"} IP={ip} 浏览器={ua ?? "-"}");
         }
 
         /// <summary>当前登录用户标识符</summary>

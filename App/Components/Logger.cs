@@ -38,11 +38,7 @@ namespace App.Components
         // 数据库日志
         //------------------------------------------------------
         /// <summary>保存到数据库（完整参数）</summary>
-        /// <param name="level">等级</param>
-        /// <param name="user">用户名</param>
-        /// <param name="message">信息</param>
-        /// <param name="from">来自那个客户端/模块</param>
-        public static void LogDb(LogLevel level, string user, string message, string from)
+        public static void LogDb(LogLevel level, string user, string message, string from, string ip = null)
         {
             var log = new DAL.Log();
             log.LogDt = DateTime.Now;
@@ -50,25 +46,43 @@ namespace App.Components
             log.Message = message;
             log.Summary = message.Summary(256);
             log.From = from;
-            log.Operator = user;
+
+            // Operator：优先使用显式传的 user，否则兜底取当前登录用户名
+            if (!string.IsNullOrWhiteSpace(user))
+                log.Operator = user;
+            else
+                log.Operator = Auth.GetUserName(Asp.Current) ?? "";
+
+            // 若传了显式 IP 直接用；否则尝试从请求上下文获取
+            if (!string.IsNullOrWhiteSpace(ip))
+                log.IP = ip;
+
             if (Asp.Request != null)
             {
                 log.URL = Asp.Url;
-                log.IP = Asp.ClientIP;
                 log.Method = Asp.Request.Method;
                 log.Referrer = Asp.GetUrlReferrer();
+                if (string.IsNullOrWhiteSpace(log.IP))
+                    log.IP = Asp.ClientIP;
+            }
+            else
+            {
+                // 无请求上下文时再兜底（非 Web 请求的后台写日志，Asp.ClientIP 走 try/catch 已安全）
+                if (string.IsNullOrWhiteSpace(log.IP) && Asp.IsWeb)
+                {
+                    try { log.IP = Asp.ClientIP; } catch { }
+                }
             }
             log.Save();
         }
 
         /// <summary>保存到数据库（自动取当前登录用户名）</summary>
         public static void LogDb(LogLevel level, string message, string from)
-            => LogDb(level, user: Auth.GetUserName(Asp.Current) ?? "", message: message, from: from);
+            => LogDb(level, user: null, message: message, from: from);
 
-
-        /// <summary>审计日志（Info）统一入口：module 形如 "Checks/CheckObjects"，action 形如 "Delete/Save/Import/Export/Login/Logout"，自动拼接 From=module+action </summary>
-        public static void LogAudit(string module, string action, string message)
-            => LogDb(LogLevel.Info, message, from: $"{module}/{action}");
+        /// <summary>审计日志统一入口。显式传 operatorName/ip 的，会优先覆盖"自动取当前登录上下文"（例如登录成功/失败此时 User Claim 还没写入）</summary>
+        public static void LogAudit(string module, string action, string message, string operatorName = null, string ip = null)
+            => LogDb(LogLevel.Info, user: operatorName, message: message, from: $"{module}/{action}", ip: ip);
 
         /// <summary>记录实体删除审计：自动构造 "删除 [类型]: 主键,名称" 消息；传入 ids/names 列表</summary>
         public static void LogDelete<T>(string module, IList<long> ids, IList<string> names = null)

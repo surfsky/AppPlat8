@@ -112,6 +112,11 @@ namespace App
                 var type = entity.GetType();
                 if (!EntityAuditHelper.ShouldAudit(type)) return;        // 黑名单：Log/History/Att/Online 等不写
 
+                // 启动期（如 EF Seed 初始化 / 后台 console 作业）没有 HTTP 上下文 → 直接跳过，
+                // 否则会写一堆"操作者空 / IP 空"的脏日志（比如首次启动 Seed 初始用户/角色/字典等）。
+                if (!Asp.IsWeb || !Asp.IsRequestOk)
+                    return;
+
                 try
                 {
                     string action = op.GetTitle();
