@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -182,10 +182,39 @@ namespace App.Entities
                 this.UpdateDt = DateTime.Now;
             }
 
+            // 保存前：Diff 快照（仅 Edit）
+            string diff = null;
+            if (op == EntityOp.Edit)
+            {
+                try { diff = EntityAuditHelper.DiffOriginalVsCurrent(Db.Entry(this)); } catch { }
+            }
+
             // 保存
             BeforeSave(op.Value);
             Db.SaveChanges();
             Log(log, op == EntityOp.New ? "新增" : "更新", this.Id, this);
+
+            // 审计：发事件，宿主决定写日志/更新二级索引等（低层不依赖任何 Logger 类）
+            try
+            {
+                if (EntityAuditHelper.ShouldAudit(typeof(T)))
+                {
+                    string typeName = typeof(T).Name;
+                    string primary = $"Id={this.Id}";
+                    string title = EntityAuditHelper.GetTitle(this);
+                    if (op == EntityOp.New)
+                    {
+                        EntityConfig.RaiseEntityAudit(EntityOp.New, this, $"新增 [{typeName}]。{primary} 名称={title}");
+                    }
+                    else
+                    {
+                        if (string.IsNullOrWhiteSpace(diff)) diff = "<未检测到字段变更>";
+                        EntityConfig.RaiseEntityAudit(EntityOp.Edit, this, $"修改 [{typeName}]。{primary} 名称={title}。变更: {diff}");
+                    }
+                }
+            }
+            catch { }
+
             AfterChange(op.Value);
             return this as T;
         }
@@ -266,6 +295,11 @@ namespace App.Entities
         /// <summary>删除。若类实现了IDeleteLogic接口则采用逻辑删除；若类实现了IDeleteRecursive接口则实现递归删除；默认采用物理删除；</summary>
         public override void Delete(bool log = false)
         {
+            // 保存删除前的关键信息（名称+主键），避免后面 Save 后对象被 Detach
+            string typeName = typeof(T).Name;
+            long id = this.Id;
+            string title = "";
+            try { title = EntityAuditHelper.GetTitle(this); } catch { }
             Log(log, "删除", this.Id, this);
             // 逻辑删除
             if (this is IDeleteLogic)
@@ -285,6 +319,16 @@ namespace App.Entities
 
             // 删除后处理
             AfterChange(EntityOp.Delete);
+
+            // 审计：发事件，宿主决定写 Logs/其它（低层不依赖 Logger）
+            try
+            {
+                if (EntityAuditHelper.ShouldAudit(typeof(T)))
+                {
+                    EntityConfig.RaiseEntityAudit(EntityOp.Delete, this, $"删除 [{typeName}]。Id={id} 名称={title}");
+                }
+            }
+            catch { }
         }
 
         /*

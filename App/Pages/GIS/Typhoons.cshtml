@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="台风轨迹" EnableBatch="false" FormPage="TyphoonForm" SortFor="Item.Code" SortDirection="DESC">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="台风轨迹" EnableBatch="false" FormPage="TyphoonForm" SortField="Code" SortDirection="DESC">
         <Toolbar>
             <Filters>
                 <EleNumber For="Item.Year" Width="120px" Label="年份" LabelWidth="60px"></EleNumber>

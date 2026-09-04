@@ -17,11 +17,12 @@ namespace App.Pages.Checks
 
         public void OnGet() { }
 
-        /// <summary>获取菜单树</summary>
-        public IActionResult OnGetData()
+        /// <summary>获取标签树（支持按名称模糊、按组织过滤）</summary>
+        public IActionResult OnGetData(string name = "", long? orgId = null)
         {
-            var items = CheckTag.GetTree();
-            //var items = CheckTag.Query(orgId:Auth.GetUser().AuthOrgId).ToList().ToTree();
+            // 先按条件过滤（名称模糊包含 + 组织精确匹配），再 ToTree 形成父子结构
+            var list = new CheckTag().Query(name: name, orgId: orgId).ToList();
+            var items = list.ToTree();
             return BuildResult(0, "success", items);
         }
 

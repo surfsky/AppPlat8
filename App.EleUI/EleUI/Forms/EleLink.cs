@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace App.EleUI
 {
-    public enum EleLinkDisplay
+    /// <summary>
+    /// 超链接点击行为
+    /// </summary>
+    public enum EleLinkTarget
     {
         Blank,
         Drawer,
@@ -14,9 +17,9 @@ namespace App.EleUI
 
     /// <summary>
     /// 强类型链接控件。
-    /// 示例：<Link For="Item.Url" Display="Blank" Text="查看" class="text-xs text-blue-600" />
-    /// 示例：<Link For="Item.Url" Display="Drawer" Text="查看" DrawerTitle="附件预览" />
-    /// 示例：<Link For="Item.Url" Display="Drawer" Icon="View" Text="" class="text-xs text-blue-600" />
+    /// 示例：<Link For="Item.Url" Target="Blank" Text="查看" class="text-xs text-blue-600" />
+    /// 示例：<Link For="Item.Url" Target="Drawer" Text="查看" DrawerTitle="附件预览" />
+    /// 示例：<Link For="Item.Url" Target="Drawer" Icon="View" Text="" class="text-xs text-blue-600" />
     /// </summary>
     [HtmlTargetElement("Link", Attributes = "For")]
     [HtmlTargetElement("EleLink")]
@@ -24,7 +27,7 @@ namespace App.EleUI
     {
         [HtmlAttributeName("For")]           public ModelExpression For { get; set; }
         [HtmlAttributeName("Href")]          public string Href { get; set; }
-        [HtmlAttributeName("Display")]       public EleLinkDisplay Display { get; set; } = EleLinkDisplay.Blank;
+        [HtmlAttributeName("Target")]        public EleLinkTarget Target { get; set; } = EleLinkTarget.Blank;
         [HtmlAttributeName("Text")]          public string Text { get; set; } = "";
         [HtmlAttributeName("Icon")]          public EleIcons Icon { get; set; } = EleIcons.None;
         [HtmlAttributeName("DrawerTitle")]   public string DrawerTitle { get; set; }
@@ -70,7 +73,7 @@ namespace App.EleUI
 
             var (hrefValue, isExpression) = ResolveHref();
 
-            if (Display == EleLinkDisplay.Drawer)
+            if (Target == EleLinkTarget.Drawer)
             {
                 output.Attributes.SetAttribute("href", "javascript:void(0)");
 

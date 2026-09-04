@@ -166,6 +166,7 @@ namespace App.Pages.Checks
 
             var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"检查对象列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+            Logger.Info($"导出检查对象列表，共 {list.Count} 条记录");
             return new EmptyResult();
         }
 

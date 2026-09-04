@@ -487,59 +487,100 @@ Done
             IGeometry.RawId, ItemUrl
             GisMenu.ItemUrl -> DataItemUrl
 
-
-2026/8/31
-    /删除检查对象的“是否重点监管”、“是否示范企业”、“是否有安全管家“三个属性，并增加“安全管家”名称文本属性
-    /知识库优化
-        /导航页面，可以直接将文件也显示出来
-        /知识库导入“白海豚”的资料和目录
-        /提供导入目录功能，选择一个本地目录，批量生成kbmenu以及对应的附件；
-    导入数据
-        /导入账户
-        /导入141对象数据
-        /导入企业花名册表，并调整标签
+2026/07/31
+    /完善日志模块，增加Entity.Instance.OnAudit()方法，统一注入实体数据操作日志；
+    /核对数据和权限
+    /测试 /httpapi/gis/getobjects 的tagNames, dutyOrgId 等参数，配置好目录中的数据；
+    日志 IP 和操作人信息丢失，请查一下原因
+    检查对象
+        如何批量设置对象的属性
+        统一的页面loading
+        针对花名册，给企业打标签，补缺补漏
+        
+    检查表
+        配置一个超大的检查表（****）
         隐患查找和统计
-        导入新141检查表（可以慢一点）
-        批量处理对象坐标
-            根据企业归属的园区批量定位
-            用地图接口批量获取定位信息，并转化为wgs84坐标；
-            手动处理一个园区的企业数据，作为示例；
-        导入基础数据：
-            - 将 CheckObjects 表清空，若有关联数据也请删除；
-            - 将 data/260831-对象清单.xls 中的数据导入到 checkobjects 表，请分析对应关系后再导入，注意设置好责任网格和责任人；
-            - 写好脚本 /data/importobjects.py 可供下次使用；
-        继续完善数据
-            - 根据 /data/260828-工矿企业花名册.xlsx 中的数据，更新checkobject 表匹配记录的相关属性；
-            - 其中标黄的列，设置为对象的标签属性（CheckObjectTag）。标签清单可查看 CheckTag表（如图2）；
-            - 先分析好数据后，再进行更新，写好脚本 /data/fix.py，可供日后复用；
 
+    性能文笔
+        迁移数据库到postgresql
+            id 要改为雪花id
+            数据拷贝到新数据库
+            用以迁移到国产数据库，如（KingbaseDb）
+            向量数据库如何迁移？
+        实现页面Loading效果：
+            弄一个不依赖于Element的Loading.js 模块，可显示和隐藏全页面蒙版和loading；优于其它模块加载；
+            有时候页面加载会白屏一会，不友好；
+            感觉不是数据加载慢，而是element vue页面创建慢。能否页面vue结构渲染前就显示loading效果；找个页面做一下示例；
+            检查一下 EleForm、EleTable 在每次加载数据时是否带了 loading 效果，如果没有就加上。（其实加上了，但是没用）
+            这样有两层loading逻辑，第一次的页面创建，每次的数据加载，会优化用户体验；
 
-
-    把基础科的 AI 知识库弄起来 RAG
-        针对一个目录，直接上传若干文件或压缩文件，后台生成rag 向量数据库
+    知识库
+        把基础科的 AI 知识库弄起来 RAG
+        /针对一个目录，直接上传若干文件或压缩文件，后台生成rag 向量数据库
+        AI RAG向量数据库
         传统方案：拆分文本分析写到向量数据库
         图像方案：pixcel rag，graphy rag
+        文档保存目录要考虑一下，集中入口，或者迁移到OSS（预留）
 
-2026/07/31
-    文档保存目录要考虑一下，集中入口，或者迁移到OSS（预留）
-    测试 /httpapi/gis/getobjects 的tagNames, dutyOrgId 等参数，配置好目录中的数据；
-    简单的扩展系统功能的办法：
+    简单的扩展系统功能（也许就是XX表）
         上传一个excel
         可直接web编辑该excel
         也可以生成对应的列表和表单页面
         可设置过滤条件？保存到哪里？
         考察一下Notion软件
-    Gis
-        数字孪生粗模编辑器、精模裁剪器
+
+    Gis优化
+        实现数字孪生粗模编辑器、精模裁剪器
         接入雪亮工程监控
         点位编辑器页面性能很差，如何优化（注：配置和展示剥离是合理的，后台再怎么卡也不会影响前台展示，就是要注意一些代码要复用，也可以避免渲染逻辑不一致的情况）
         台风图层似乎未能自动刷新
-    实现页面Loading效果：
-        有时候页面加载会白屏一会，不友好；
-        感觉不是数据加载慢，而是element vue页面创建慢。能否页面vue结构渲染前就显示loading效果；找个页面做一下示例；
-        检查一下 EleForm、EleTable 在每次加载数据时是否带了 loading 效果，如果没有就加上。
-        这样有两层loading逻辑，第一次的页面创建，每次的数据加载，会优化用户体验；
+
+
     实现 Feedback 处理流程，重新熟悉一下 liteflow 工作流引擎
+
+
+
+
+2026/9/3
+    /删除检查对象的“是否重点监管”、“是否示范企业”、“是否有安全管家“三个属性，并增加“安全管家”名称文本属性
+    /知识库优化
+        /导航页面，可以直接将文件也显示出来
+        /知识库导入“白海豚”的资料和目录
+        /提供导入目录功能，选择一个本地目录，批量生成kbmenu以及对应的附件；
+    /导入数据
+        /导入账户
+        /导入141对象数据
+        /导入企业花名册表，并调整标签
+        /批量处理对象坐标
+            /根据企业归属的园区批量定位
+            /用地图接口批量获取定位信息，并转化为wgs84坐标；
+            /手动处理一个园区的企业数据，作为示例；
+        /导入基础数据：
+            - 将 CheckObjects 表清空，若有关联数据也请删除；
+            - 将 data/260831-对象清单.xls 中的数据导入到 checkobjects 表，请分析对应关系后再导入，注意设置好责任网格和责任人；
+            - 写好脚本 /data/importobjects.py 可供下次使用；
+        /继续完善数据
+            - 根据 /data/260828-工矿企业花名册.xlsx 中的数据，更新checkobject 表匹配记录的相关属性；
+            - 其中标黄的列，设置为对象的标签属性（CheckObjectTag）。标签清单可查看 CheckTag表（如图2）；
+            - 先分析好数据后，再进行更新，写好脚本 /data/fix.py，可供日后复用；
+    /配置人员密集场所
+        Checks/CheckObjectForm?id={0}
+        /HttpApi/Gis/GetCheckObjects?tagNames=商场、市场
+        /HttpApi/Gis/GetCheckObjects?tagNames=宾馆、饭店
+        /HttpApi/Gis/GetCheckObjects?tagNames=公共娱乐场所
+        /HttpApi/Gis/GetCheckObjects?tagNames=电影院
+        /HttpApi/Gis/GetCheckObjects?tagNames=医院、诊所、托育机构
+        /HttpApi/Gis/GetCheckObjects?tagNames=养老院、福利院
+        /HttpApi/Gis/GetCheckObjects?tagNames=中小学校幼儿园
+        /HttpApi/Gis/GetCheckObjects?tagNames=校外培训机构
+        /HttpApi/Gis/GetCheckObjects?tagNames=宗教活动场所
+        /HttpApi/Gis/GetCheckObjects?tagNames=文物保护单位
+        /HttpApi/Gis/GetCheckObjects?tagNames=其他人员密集场所
+        /HttpApi/Gis/GetCheckObjects?tagNames=矿山
+        /HttpApi/Gis/GetCheckObjects?tagNames=烟花爆竹
+        /HttpApi/Gis/GetCheckObjects?tagNames=人员密集场所
+        /HttpApi/Gis/GetCheckObjects?tagNames=
+
 
 2026/08/14
     /换个目录存储？如/files/KB，根据当前UniId来判断存储位置

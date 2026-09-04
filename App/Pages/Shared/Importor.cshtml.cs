@@ -131,6 +131,14 @@ namespace App.Pages.Shared
                     ? $"导入完成，成功{success}条"
                     : $"导入完成，成功{success}条，失败{fail}条";
 
+                // 导入审计：记录实体类型、文件名、成功/失败条数
+                try
+                {
+                    string module = entityType.Namespace?.Contains(".DAL") == true ? entityType.Name : $"{entityType.Namespace}/{entityType.Name}";
+                    App.Components.Logger.LogImport(module, file.FileName, success, fail);
+                }
+                catch { }
+
                 return BuildResult(0, msg, new
                 {
                     total = rows.Count,

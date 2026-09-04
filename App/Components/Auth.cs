@@ -32,6 +32,13 @@ namespace App.Components
         /// <summary>注销</summary>
         public static void Logout()
         {
+            var name = GetUserName(Asp.Current) ?? "";
+            var userId = GetUserId(Asp.Current);
+            try
+            {
+                Logger.LogAudit("Auth", "Logout", $"用户注销。账号={name} UserId={userId} IP={Asp.ClientIP}");
+            }
+            catch { }
             Asp.Current.SignOutAsync();
             Asp.Current.Session.Clear();
             Asp.Response.Redirect("/Login");
@@ -52,37 +59,41 @@ namespace App.Components
         {
             // Backdoor for automated testing
             if (string.IsNullOrEmpty(GetVerifyCode()) || GetVerifyCode().ToLower() != verifyCode?.ToLower())
+            {
+                Logger.LogAudit("Auth", "LoginFail", $"账号={userName} 登录失败：验证码错误。IP={Asp.ClientIP}");
                 return -4;
+            }
             return Login(userName, password);
         }
 
         /// <summary>登录</summary>
         /// <returns>
         /// 0  : 登录成功
-        /// -1 : 用户不存在
+        /// -1 : 用户不存在 / 密码错误
         /// -2 : 用户未启用
         /// -3 : 用户名或密码错误
         /// </returns>
         public static int Login(string userName, string password)
         {
             User user = App.DAL.User.GetDetail(u => u.Name == userName);
+            string ip = Asp.ClientIP;
             if (user == null)
-                return -1;
-            else
             {
-                if (!PasswordUtil.ComparePasswords(user.Password, password))
-                    return -1;
-                else
-                {
-                    if (user.IsDel == true)
-                        return -2;
-                    else
-                    {
-                        LoginSuccess(user);
-                        return 0;
-                    }
-                }
+                Logger.LogAudit("Auth", "LoginFail", $"账号={userName} 登录失败：用户不存在。IP={ip}");
+                return -1;
             }
+            if (!PasswordUtil.ComparePasswords(user.Password, password))
+            {
+                Logger.LogAudit("Auth", "LoginFail", $"账号={userName} 登录失败：密码错误。IP={ip}");
+                return -3;
+            }
+            if (user.IsDel == true)
+            {
+                Logger.LogAudit("Auth", "LoginFail", $"账号={userName} 登录失败：用户已失效（IsDel=true）。IP={ip}");
+                return -2;
+            }
+            LoginSuccess(user);
+            return 0;
         }
 
         public static string CreateBearerToken()
@@ -99,6 +110,10 @@ namespace App.Components
             // Aspnetcore 标准登录代码: Ticket验票--Principal主角--Identity身份--(1:n)--Claim属性
             var roleIds = user.Roles.Select(r => r.Id).Aggregate("", (a, b) => a + "," + b).TrimStart(','); // 用户角色Id列表字符串
             AuthHelper.Login(user.Id.ToString(), user.Name, roleIds, DateTime.Now.AddDays(7));
+
+            // 登录审计日志
+            var ua = Asp.Request?.Headers["User-Agent"].FirstOrDefault();
+            Logger.LogAudit("Auth", "Login", $"用户登录成功。账号={user.Name} 姓名={user.NickName ?? user.RealName ?? "-"} 手机号={user.Mobile ?? "-"} IP={Asp.ClientIP} 浏览器={ua ?? "-"}");
         }
 
         /// <summary>当前登录用户标识符</summary>

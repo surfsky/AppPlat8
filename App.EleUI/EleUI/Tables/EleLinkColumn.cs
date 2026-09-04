@@ -12,7 +12,7 @@ namespace App.EleUI
         [HtmlAttributeName("TextFor")] public ModelExpression TextFor { get; set; }
         [HtmlAttributeName("TextProp")] public string TextProp { get; set; }
         [HtmlAttributeName("Text")] public string Text { get; set; }
-        [HtmlAttributeName("Display")] public EleLinkDisplay Display { get; set; } = EleLinkDisplay.Blank;
+        [HtmlAttributeName("Target")] public EleLinkTarget Target { get; set; } = EleLinkTarget.Blank;
         [HtmlAttributeName("DrawerTitle")] public string DrawerTitle { get; set; }
         [HtmlAttributeName("DrawerSize")] public string DrawerSize { get; set; }
 
@@ -33,7 +33,7 @@ namespace App.EleUI
                 ? $"(scope.row.{textProp} ?? scope.row.{hrefProp} ?? '')"
                 : $"'{EscapeJs(Text)}'";
 
-            if (Display == EleLinkDisplay.Drawer)
+            if (Target == EleLinkTarget.Drawer)
             {
                 var title = string.IsNullOrWhiteSpace(DrawerTitle) ? (Label ?? "查看") : DrawerTitle;
                 var sizeArg = string.IsNullOrWhiteSpace(DrawerSize) ? "null" : $"'{EscapeJs(DrawerSize)}'";

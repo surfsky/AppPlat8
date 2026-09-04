@@ -31,28 +31,28 @@ namespace App.DAL
         [UI("基础", "是否巡查")]     public bool? IsChecked { get; set; } 
         [UI("基础", "建档日期")]     public DateTime? ArchieveDt { get; set; }
         [UI("基础", "最新巡查时间")] public DateTime? LatestCheckDt { get; set; }
-        [UI("基础", "领域")]        public string Field { get; set; }  // 需枚举
-
-        [UI("基础", "风险等级")]    public CheckRiskLevel? RiskLevel { get; set; }
-        [UI("基础", "领域")]       public CheckScope? Scope { get; set; }  
         [UI("基础", "规模")]       public CheckObjectScale? Scale { get; set; }
-        [UI("基础", "类型")]       public CheckObjectType? ObjectType { get; set; }
 
+
+        // 风险相关
+        [UI("基础", "风险等级")]    public CheckRiskLevel? RiskLevel { get; set; }     // 141 风险等级
+        [UI("基础", "领域")]       public CheckScope? Scope { get; set; }   // 141 领域
+        [UI("基础", "类型")]       public CheckObjectType? ObjectType { get; set; }   // 141 类型
+        [UI("风险", "行业类型")]    public CheckIndustryType? IndustryType { get; set; }  // 工业类型
+        [UI("风险", "行业风险")]    public CheckIndustryRiskType? IndustryRisk { get; set; }  // 工业风险
+
+
+        //
         [UI("基础", "责任网格")]    public long? DutyOrgId { get; set; }
-
-
         [UI("基础", "检查员")] public long? CheckerId { get; set; }
+
+        //
         [UI("基础", "电表号")] public string EleMeeterNum { get; set; }
         [UI("基础", "员工人数")] public int? EmployeeCount { get; set; }
 
         [UI("基础", "生产内容")] public string ProductContent { get; set; }
         [UI("基础", "外观图片")] public string OutlookImage { get; set; }
         [UI("基础", "工商执照")] public string LicenseImage { get; set; }
-
-
-        // 风险相关
-        [UI("风险", "行业类型")] public CheckIndustryType? IndustryType { get; set; }  // 枚举（考虑用tag实现，更容易扩展维护）
-        [UI("风险", "行业风险")] public CheckIndustryRiskType? IndustryRisk { get; set; }  // 枚举（考虑用tag实现，更容易扩展维护）
 
         // 人员相关
         [UI("人员", "三方机构")] public string ThirdPartySafetyAgency { get; set; }
@@ -137,7 +137,6 @@ namespace App.DAL
                 IsChecked,
                 ArchieveDt,
                 LatestCheckDt,
-                Field,
                 RiskLevel,
                 CheckCycle,
                 Scope,

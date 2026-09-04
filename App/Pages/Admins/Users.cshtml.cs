@@ -51,6 +51,7 @@ namespace App.Pages.Admins
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
             var list = App.DAL.User.Search(name, realName, deptId, roleId).SortPageExport(exportPi);
             ExcelExporter.Export(list, $"用户列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+            Logger.Info($"导出用户列表，共 {list.Count} 条记录");
             return new EmptyResult();
         }
 

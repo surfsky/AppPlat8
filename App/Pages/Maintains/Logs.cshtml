@@ -6,7 +6,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="日志管理" FormPage="/Maintains/LogForm" EnableBatch="false" >
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="日志管理" FormPage="/Maintains/LogForm" EnableBatch="false" SortField="CreateDt" SortDirection="DESC" >
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Operator" Label="操作者"></EleInput>

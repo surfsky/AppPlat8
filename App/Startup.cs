@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -21,11 +22,15 @@ using App.Entities;
 using App.Pages.Chats;
 using System.IO;
 using System.Text.Json.Serialization;
+using App.Utils;
 
 namespace App
 {
     public class Startup
     {
+        // 防止实体审计回调里写 Log 实体再次触发 OnEntityAudit 产生自激循环
+        private static readonly AsyncLocal<bool> _writingAudit = new AsyncLocal<bool>();
+
         public IConfiguration Configuration { get; }
         public Startup(IConfiguration configuration)
         {
@@ -83,15 +88,43 @@ namespace App
                 op.ClientTimeoutInterval = new TimeSpan(0, 0, 20);  // 20 sec
             });
 
+            SetDbService(services);
+        }
 
+        /// <summary>设置数据库服务</summary>
+        private void SetDbService(IServiceCollection services)
+        {
             // db
             var sqlite = Configuration.GetConnectionString("Sqlite");
-            services.AddDbContext<AppPlatContext>(options => {
+            services.AddDbContext<AppPlatContext>(options =>
+            {
                 options.UseSqlite(sqlite, builder => builder.MigrationsAssembly("App"));
             });
 
             // EntityBase
             EntityConfig.Instance.OnGetDb += () => Common.GetDbConnection();
+            
+            // 实体变更审计：写 Logs 表（统一入口，宿主完全控制行为，低层类库不感知具体日志实现）
+            EntityConfig.Instance.OnEntityAudit += (op, entity, message) =>
+            {
+                if (_writingAudit.Value) return;                         // 防重入：当前正在写 Log 实体，避免递归循环
+                if (entity == null) return;
+                var type = entity.GetType();
+                if (!EntityAuditHelper.ShouldAudit(type)) return;        // 黑名单：Log/History/Att/Online 等不写
+
+                try
+                {
+                    string action = op.GetTitle();
+                    _writingAudit.Value = true;
+                    Logger.LogAudit(type.Name, action, message ?? "");
+                }
+                finally
+                {
+                    _writingAudit.Value = false;
+                }
+            };
+
+            // 数据权限范围：根据用户角色、组织、责任数据收敛。
             EntityConfig.Instance.OnGetDataAccessScope += () =>
             {
                 var db = Common.GetDbConnection();
@@ -131,7 +164,7 @@ namespace App
                     hasOwn = powerIds.Contains(Power.DataDuty);
                 }
 
-                    // 无数据权限标识时默认按责任数据收敛，避免越权。
+                // 无数据权限标识时默认按责任数据收敛，避免越权。
                 if (!hasAll && !hasOrg && !hasOwn)
                     hasOwn = true;
 
@@ -161,7 +194,7 @@ namespace App
                 };
             };
 
-            // 数据审计权限
+            // 数据审计权限（看不懂，和OnGetDataAccessScope 的区别？）
             EntityConfig.Instance.OnGetDataAuditScope += () =>
             {
                 var db = Common.GetDbConnection();
@@ -244,7 +277,7 @@ namespace App
             app.UseHttpApi(o =>                             // HttpApi 配置（代码见 /Apis 目录）
             {
                 o.TypePrefix = "App.API.";
-                o.FormatEnum = EnumFomatting.Int;
+                o.FormatEnum = App.HttpApi.EnumFomatting.Int;
                 o.FormatIndented = Formatting.Indented;
                 o.FormatDateTime = "yyyy-MM-dd";
                 o.FormatLowCamel = true;

@@ -187,3 +187,10 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
         <EleSwitch For="Item.IsDemonstration" Label="示范企业"></EleSwitch>
         <EleSwitch For="Item.SafetySteward" Label="有安全管家"></EleSwitch>
 
+
+删除领域
+        [UI("基础", "领域")]        public string Field { get; set; }  // 需枚举
+
+                Field,
+            item.Field = req.Field;
+

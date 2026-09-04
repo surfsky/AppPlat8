@@ -8,6 +8,7 @@
     <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="检查项标签管理" FormPage="CheckTagForm" EnableBatch="false"  RowKey="id" >
         <Toolbar>
             <Filters>
+                <EleInput For="Item.Name" Width="200px" Label="名称" Placeholder="请输入标签名称" Clearable="true"></EleInput>
                 <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Width="200px" ></EleTreeSelect>
             </Filters>
             <Buttons>

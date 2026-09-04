@@ -57,8 +57,8 @@ namespace App.EleUI
         [HtmlAttributeName("PageSize")]
         public int? PageSize { get; set; } = 20;
 
-        [HtmlAttributeName("SortFor")]
-        public string SortFor { get; set; }
+        [HtmlAttributeName("SortField")]
+        public string SortField { get; set; } = "Id";
 
         [HtmlAttributeName("SortDirection")]
         public string SortDirection { get; set; } = "ASC";
@@ -157,7 +157,7 @@ namespace App.EleUI
         {
             var formDrawerSize = string.IsNullOrWhiteSpace(FormDrawerSize) ? "" : FormDrawerSize.Trim();
             var defaultPageSize = ResolveDefaultPageSize();
-            var defaultSortField = ResolveSortField();
+            var defaultSortField = this.SortField;
             var defaultSortDirection = ResolveSortDirection();
             return $@"
 <script>
@@ -180,38 +180,9 @@ namespace App.EleUI
         /**构建默认排序属性 */
         private string BuildDefaultSortAttr()
         {
-            var prop = ResolveSortProp();
-            if (string.IsNullOrWhiteSpace(prop))
-                return "";
-
-            var order = ResolveSortDirection().Equals("DESC", StringComparison.OrdinalIgnoreCase)
-                ? "descending"
-                : "ascending";
+            var prop = this.SortField;
+            var order = ResolveSortDirection().Equals("DESC", StringComparison.OrdinalIgnoreCase)  ? "descending" : "ascending";
             return $@":default-sort=""{{ prop: '{prop}', order: '{order}' }}""";
-        }
-
-        /**解析服务端排序字段 */
-        private string ResolveSortField()
-        {
-            var field = string.IsNullOrWhiteSpace(SortFor) ? "" : SortFor.Trim();
-            if (string.IsNullOrWhiteSpace(field))
-                return "Id";
-
-            if (field.Contains("."))
-                field = field.Substring(field.LastIndexOf('.') + 1);
-
-            return field;
-        }
-
-        /**解析客户端列属性 */
-        private string ResolveSortProp()
-        {
-            var field = ResolveSortField();
-            if (string.IsNullOrWhiteSpace(field))
-                return "";
-            if (char.IsUpper(field[0]))
-                field = char.ToLowerInvariant(field[0]) + field.Substring(1);
-            return field;
         }
 
         /**解析排序方向 */

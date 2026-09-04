@@ -48,7 +48,6 @@ namespace App.Pages.Checks
             item.SocialCreditId = req.SocialCreditId;
             item.LatestCheckDt = req.LatestCheckDt;
             item.ObjectType = req.ObjectType;
-            item.Field = req.Field;
             item.DutyUserName = req.DutyUserName;
             item.SafetyAdminName = req.SafetyAdminName;
             item.EleMeeterNum = req.EleMeeterNum;
