@@ -53,7 +53,12 @@ export const treePickerMethods = {
             ? this.getControlTreeData(target, fallbackData)
             : (Array.isArray(fallbackData) ? fallbackData : []);
         const flat = this.flattenTreeNodes(treeData, idField, nameField, childrenField, []);
-        const nameMap = new Map(flat.map(item => [item.id, item.name || item.id]));
+        const nameMap = new Map(flat.map(item => {
+            const displayName = item.raw && item.raw.displayName ? String(item.raw.displayName) : (item.name || String(item.id));
+            const idText = item.id === null || item.id === undefined ? '' : String(item.id);
+            const labelText = idText ? `${displayName} (${idText})` : displayName;
+            return [item.id, labelText];
+        }));
         const labels = values.map(v => nameMap.get(String(v)) || String(v));
 
         return {
@@ -197,10 +202,12 @@ export const treePickerMethods = {
                                 view.values = [...state.values];
                             } else {
                                 view.values = state.current ? [state.current] : [];
+                                const flat = form.flattenTreeNodes(state.nodes, idField, nameField, childrenField, []);
                                 const picked = view.values.map(v => {
-                                    const flat = form.flattenTreeNodes(state.nodes, idField, nameField, childrenField, []);
                                     const hit = flat.find(item => item.id === v);
-                                    return hit ? hit.name : v;
+                                    if (!hit) return v;
+                                    const displayName = hit.raw && hit.raw.displayName ? String(hit.raw.displayName) : (hit.name || String(hit.id));
+                                    return v ? `${displayName} (${v})` : displayName;
                                 });
                                 view.labels = picked;
                                 view.displayLabels = picked;

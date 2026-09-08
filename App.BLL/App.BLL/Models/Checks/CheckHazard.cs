@@ -41,6 +41,7 @@ namespace App.DAL
 
         //
         [UI("录入141")] public bool? IsIn141 { get; set; }
+        [UI("常见隐患")] public bool? IsCommonHazard { get; set; }
 
         //
         public virtual CheckObject CheckObject { get; set; }
@@ -56,8 +57,6 @@ namespace App.DAL
         public string CheckerName => Checker?.Name ?? string.Empty;
         public string CheckSheetName => CheckSheet?.Name ?? string.Empty;
         public string CheckItemName => CheckItem?.Name ?? string.Empty;
-        public bool? IsCommonHazard => CheckItem?.IsCommon;
-
 
         //
         public override object Export(ExportMode mode)

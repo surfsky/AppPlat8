@@ -29,7 +29,7 @@ namespace App.Web
             //response.ContentEncoding = Encoding.UTF8;
             response.ContentType = "application/vnd.ms-excel; charset=utf-8";
             response.Headers["Content-Disposition"] = "attachment;filename=" + fileName;
-            response.Body.Write(bytes, 0, bytes.Length); 
+            response.Body.WriteAsync(bytes, 0, bytes.Length).GetAwaiter().GetResult();
             //response.End();
         }
 
@@ -43,7 +43,7 @@ namespace App.Web
             //response.ContentEncoding = Encoding.UTF8;
             response.ContentType = "application/vnd.ms-excel; charset=utf-8";
             response.Headers["Content-Disposition"] = "attachment;filename=" + fileName;
-            response.Body.Write(bytes, 0, bytes.Length); // 还是用xml吧，每个字段都是字符串类型，避免客户输入不同格式的数据
+            response.Body.WriteAsync(bytes, 0, bytes.Length).GetAwaiter().GetResult();
             //response.End();
         }
 

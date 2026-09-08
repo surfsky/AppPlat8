@@ -353,6 +353,23 @@ namespace App.DAL
         /// <summary>导出数据（可根据不同场景导出不同字段）</summary>
         public override object Export(ExportMode type = ExportMode.Normal)
         {
+            var authOrgs = this.GetAuthorizedOrgs()
+                .Select(t => new
+                {
+                    t.Id,
+                    t.ParentId,
+                    t.Name,
+                    t.FullName,
+                    Level = (int?)t.Level,
+                    t.Remark,
+                    t.SortId,
+                    t.TreeLevel,
+                    Gps = type == ExportMode.Detail ? t.Gps : null,
+                    GeoData = type == ExportMode.Detail ? t.GeoData : null,
+                })
+                .ToList();
+            var roles = this.Roles.Export(type);
+
             return new
             {
                 this.Id,
@@ -380,8 +397,8 @@ namespace App.DAL
                 this.IsDel,
                 RoleIds = this.GetRoleIds(),
                 this.RoleNames,
-                Roles = this.Roles.Export(type),
-                AuthOrgs = this.GetAuthorizedOrgs().Export(type),
+                Roles = roles,
+                AuthOrgs = authOrgs,
             };
         }
 
@@ -418,7 +435,13 @@ namespace App.DAL
                 .AsQueryable();
             if (name.IsNotEmpty())     q = q.Where(t => t.Name.Contains(name));
             if (realName.IsNotEmpty()) q = q.Where(t => t.RealName.Contains(realName));
-            if (deptId != null)        q = q.Where(t => t.OrgId == deptId);
+            if (deptId != null)
+            {
+                var subIds = Org.GetChildIds(deptId.Value) ?? new List<long>();
+                if (subIds.Count == 0)
+                    subIds = new List<long> { deptId.Value };
+                q = q.Where(t => t.OrgId.HasValue && subIds.Contains(t.OrgId.Value));
+            }
             if (roleId != null)        q = q.Where(t => t.Roles.Any(r => r.Id == roleId));
             if (isDel == true)         q = q.Where(t => t.IsDel == true);
             if (isDel == false)        q = q.Where(t => t.IsDel == false || t.IsDel == null);

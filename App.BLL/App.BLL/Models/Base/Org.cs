@@ -45,7 +45,7 @@ namespace App.DAL
                 TreeLevel,
                 Children,
                 Gps,
-                GeoData
+                GeoData = mode == ExportMode.Detail ? GeoData : null,
             };
         }
         

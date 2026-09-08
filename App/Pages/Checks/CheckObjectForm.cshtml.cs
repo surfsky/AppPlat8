@@ -48,8 +48,8 @@ namespace App.Pages.Checks
             item.SocialCreditId = req.SocialCreditId;
             item.LatestCheckDt = req.LatestCheckDt;
             item.ObjectType = req.ObjectType;
-            item.DutyUserName = req.DutyUserName;
-            item.SafetyAdminName = req.SafetyAdminName;
+            item.DutyMan = req.DutyMan;
+            item.SafeMan = req.SafeMan;
             item.EleMeeterNum = req.EleMeeterNum;
             item.EmployeeCount = req.EmployeeCount;
             item.Scale = req.Scale;
@@ -68,7 +68,7 @@ namespace App.Pages.Checks
             item.LicenseImage = req.LicenseImage;
             item.IndustryType = req.IndustryType;
             item.IndustryRisk = req.IndustryRisk;
-            item.SafetySteward = req.SafetySteward;
+            item.SafeSteward = req.SafeSteward;
             item.BuildingType = req.BuildingType;
             item.FactoryUsageType = req.FactoryUsageType;
             item.BuildingStructure = req.BuildingStructure;

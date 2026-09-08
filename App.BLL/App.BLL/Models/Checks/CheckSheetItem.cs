@@ -13,11 +13,10 @@ namespace App.DAL
     {
         [UI("检查表")] public long SheetId { get; set; }
         [UI("层级")]   public CheckHazardLevel? HazardLevel { get; set; }
-        [UI("是否常见")] public bool? IsCommon { get; set; }
         [UI("名称")] public string Name { get; set; }
         [UI("排序")] public int SortId { get; set; }
 
-        [UI("编码")] public string Code => $"{SheetId}-{Id}";
+        [UI("编码")] public string Code {get; set;}
 
         public override object Export(ExportMode type = ExportMode.Normal)
         {
@@ -28,18 +27,27 @@ namespace App.DAL
                 SheetId,
                 HazardLevel,
                 HazardLevelName = HazardLevel?.GetTitle(),
-                IsCommon,
                 Name,
                 SortId
             };
         }
 
-        public static IQueryable<CheckSheetItem> Search(long? sheetId = null, CheckHazardLevel? hazardLevel = null, bool? isCommon = null, string name = "")
+        public override void BeforeSave(EntityOp op)
+        {
+            base.BeforeSave(op);
+            if (this.Code.IsEmpty())
+            {
+                this.Code = $"{SheetId}-{Id}";
+            }
+        }
+
+        // V2：增加 isCommon 占位参数（兼容历史调用）
+        public static IQueryable<CheckSheetItem> Search(long? sheetId = null, CheckHazardLevel? hazardLevel = null, string name = "")
         {
             IQueryable<CheckSheetItem>  q = CheckSheetItem.IncludeSet;
             if (sheetId.IsNotEmpty())     q = q.Where(o => o.SheetId == sheetId.Value);
             if (hazardLevel.IsNotEmpty()) q = q.Where(o => o.HazardLevel == hazardLevel.Value);
-            if (isCommon.IsNotEmpty())    q = q.Where(o => o.IsCommon == isCommon.Value);
+            // isCommon 暂未落到 CheckSheetItem 列，忽略（兼容接口/页面传参）
             if (name.IsNotEmpty())        q = q.Where(o => o.Name.Contains(name.Trim()));
             return q;
         }

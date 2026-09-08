@@ -16,18 +16,13 @@ namespace App.Pages.Checks
     {
         public CheckObject Item { get; set; } = new CheckObject();
 
-        /// <summary>
-        /// 所属网格（多选）默认值：
-        ///   1) URL 参数 dutyOrgIds 传了就用（逗号分隔 long）；
-        ///   2) 否则取当前用户 AuthOrgIds（授权组织，可多个）；
-        ///   3) 若 AuthOrgIds 空则回退 OrgId（用户归属部门）；
-        ///   4) 最后还是空 → 不做默认过滤（显示全部）。
-        /// </summary>
         public List<long> DutyOrgIds { get; set; } = new List<long>();
+
+        public long? DefaultCheckerId { get; set; }
+        public string DefaultCheckerName { get; set; }
 
         public void OnGet()
         {
-            // 先解析 URL 参数（若有）
             var qs = Request.Query["dutyOrgIds"].ToString();
             if (!string.IsNullOrWhiteSpace(qs))
             {
@@ -35,10 +30,9 @@ namespace App.Pages.Checks
                 {
                     if (long.TryParse(s.Trim(), out var id)) DutyOrgIds.Add(id);
                 }
-                if (DutyOrgIds.Count > 0) return;
+                if (DutyOrgIds.Count > 0) goto parseChecker;
             }
 
-            // 默认值逻辑：取当前用户授权组织 → 空则回退归属组织
             var user = GetUser();
             if (user != null)
             {
@@ -51,6 +45,19 @@ namespace App.Pages.Checks
                 {
                     DutyOrgIds = new List<long> { user.OrgId.Value };
                 }
+            }
+
+        parseChecker:
+            // URL 参数兼容: 标准名 checkerId + 别名 checkId（用户口头简称）
+            var rawCheckerId = Request.Query["checkerId"].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(rawCheckerId))
+                rawCheckerId = Request.Query["checkId"].FirstOrDefault();
+            if (long.TryParse(rawCheckerId, out var cid))
+            {
+                DefaultCheckerId = cid;
+                var u = App.DAL.User.Get(cid);
+                if (u != null)
+                    DefaultCheckerName = u.RealName.IsNotEmpty() ? u.RealName : u.Name;
             }
         }
 
@@ -65,7 +72,8 @@ namespace App.Pages.Checks
             bool? isChecked=null,
             long? dutyOrgId=null, 
             List<long> dutyOrgIds=null,
-            long? checkerId=null, 
+            long? checkerId=null,
+            long? checkId=null, 
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
             CheckObjectScale? scale=null, 
@@ -81,6 +89,7 @@ namespace App.Pages.Checks
             bool? isDel=null
             )
         {
+            var effCheckerId = checkId ?? checkerId;
             var q = CheckObject.Search(
                 name: name, 
                 code: code,
@@ -88,11 +97,11 @@ namespace App.Pages.Checks
                 hasHarzard: hasHarzard,
                 socialCreditCode: socialCreditCode, 
                 address: address,
-                dutyUserName: dutyUserName,
+                dutyMan: dutyUserName,
                 dutyOrgId: dutyOrgId,
                 dutyOrgIds: dutyOrgIds,
                 tagIds: tagIds,
-                checkerId: checkerId, 
+                checkerId: effCheckerId, 
                 objectType: objectType, 
                 scope: scope,
                 scale: scale,
@@ -121,7 +130,8 @@ namespace App.Pages.Checks
             bool? isChecked=null,
             long? dutyOrgId=null,
             List<long> dutyOrgIds=null,
-            long? checkerId=null, 
+            long? checkerId=null,
+            long? checkId=null,
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
             CheckObjectScale? scale=null, 
@@ -136,7 +146,8 @@ namespace App.Pages.Checks
             List<long> tagIds=null,
             bool? isDel=null)
         {
-            var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
+            var effCheckerId = checkId ?? checkerId;
+            var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var q = CheckObject.Search(
                 name: name, 
                 code: code,
@@ -144,11 +155,11 @@ namespace App.Pages.Checks
                 hasHarzard: hasHarzard,
                 socialCreditCode: socialCreditCode, 
                 address: address,
-                dutyUserName: dutyUserName,
+                dutyMan: dutyUserName,
                 dutyOrgId: dutyOrgId,
                 dutyOrgIds: dutyOrgIds,
                 tagIds: tagIds,
-                checkerId: checkerId, 
+                checkerId: effCheckerId, 
                 objectType: objectType, 
                 scope: scope,
                 scale: scale,

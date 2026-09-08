@@ -24,7 +24,18 @@ namespace App.EleUI
 
             if (IsSelectMode())
             {
-                content += "<el-button type='success' v-on:click=\"invokeCommand('Select')\">选择</el-button>";
+                // Select 模式下，若用户显式写了 Select 按钮（<EleButton Command="Select">选择</EleButton>），则不再自动追加
+                var hasExplicitSelect = !string.IsNullOrWhiteSpace(content) && (
+                    content.Contains("选择") ||
+                    content.Contains("invokeCommand", StringComparison.OrdinalIgnoreCase) && (content.Contains("'Select'") || content.Contains("\"Select\"") || content.Contains("Select")) ||
+                    content.Contains("Command=\"Select\"", StringComparison.OrdinalIgnoreCase) ||
+                    content.Contains("Command='Select'", StringComparison.OrdinalIgnoreCase) ||
+                    content.Contains("v-on:click=\"invokeCommand('Select')\"", StringComparison.OrdinalIgnoreCase) ||
+                    content.Contains("v-on:click=\"invokeCommand(\\\"Select\\\")\"", StringComparison.OrdinalIgnoreCase));
+                if (!hasExplicitSelect)
+                {
+                    content += "<el-button type='success' v-on:click=\"invokeCommand('Select')\">选择</el-button>";
+                }
             }
 
             output.TagName = null;

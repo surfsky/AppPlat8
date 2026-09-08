@@ -248,15 +248,41 @@ namespace App.EleUI
 
         private bool ShouldHideInSelectMode()
         {
-            if (Command == Command.Add || Command == Command.Edit || Command == Command.Delete || Command == Command.BatchDelete)
-                return true;
+            // 白名单模式：Select 模式下仅允许 Search / Select / Data 命令，其余全部隐藏
+            string cmdStr = null;
+            if (Command != Command.None)
+                cmdStr = Command.ToString();
+
+            if (!string.IsNullOrWhiteSpace(cmdStr))
+            {
+                if (string.Equals(cmdStr, "Search", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(cmdStr, "Select", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(cmdStr, "Data", StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
 
             var handler = (Handler ?? string.Empty).Trim();
-            if (string.Equals(handler, "Add", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(handler, "Edit", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(handler, "Delete", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(handler, "BatchDelete", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(handler))
+            {
+                if (string.Equals(handler, "search", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(handler, "select", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(handler, "data", StringComparison.OrdinalIgnoreCase) ||
+                    // allow case like invokeCommand('Select') / postHandler('Search')
+                    string.Equals(handler, "Search", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(handler, "Select", StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                // 非 Search/Select 的 Handler 一律隐藏
                 return true;
+            }
+
+            // 有 PopupUrl / NavigateUrl / 普通按钮（无Command/Handler）在 Select 模式下都隐藏
+            // 除非 Command 已经在白名单里返回了 false
+            if (!string.IsNullOrWhiteSpace(cmdStr))
+                return true; // 其他 Command（Add/Edit/Delete/Export/BatchDelete 等）隐藏
+
+            if (!string.IsNullOrWhiteSpace(PopupUrl) || !string.IsNullOrWhiteSpace(NavigateUrl))
+                return true; // 弹窗/导航按钮在选择模式下隐藏（如 Orgs 组织管理、Import 导入等）
 
             return false;
         }

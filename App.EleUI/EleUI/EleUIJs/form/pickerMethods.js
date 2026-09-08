@@ -8,6 +8,11 @@ export function initPickerState(form, vueApi) {
     form.pickerMulti = ref(false);
 }
 
+function _formHolder(ctx) {
+    if (ctx?.filters?.value) return ctx.filters;
+    return ctx?.form ?? null;
+}
+
 export const pickerMethods = {
     normalizePickerField(field) {
         if (!field) return '';
@@ -128,9 +133,8 @@ export const pickerMethods = {
         const keyId = this.normalizePickerField(propId);
         if (keyId !== 'geoJson') return url;
 
-        const rawGps = this.form?.value
-            ? (this.form.value.gps ?? this.form.value.Gps ?? '')
-            : '';
+        const holder = _formHolder(this);
+        const rawGps = holder?.value ? (holder.value.gps ?? holder.value.Gps ?? '') : '';
         const gps = rawGps == null ? '' : String(rawGps).trim();
         if (!gps) return url;
         return this.appendQuery(url, 'gps', gps);
@@ -142,7 +146,8 @@ export const pickerMethods = {
         const mode = modeRaw === 'url/storage' ? 'auto' : modeRaw;
 
         const keyId = this.normalizePickerField(propId);
-        const rawValue = this.form?.value ? (this.form.value[keyId] ?? '') : '';
+        const holder = _formHolder(this);
+        const rawValue = holder?.value ? (holder.value[keyId] ?? '') : '';
         const value = rawValue == null ? '' : String(rawValue);
 
         const useStorage = mode === 'storage' || (mode === 'auto' && value.length > 1200);
@@ -160,7 +165,8 @@ export const pickerMethods = {
         url = this.appendQuery(url, 'geojson', value);
 
         if (keyId === 'region') {
-            const attValue = this.form?.value ? (this.form.value.att ?? '') : '';
+            const holder = _formHolder(this);
+            const attValue = holder?.value ? (holder.value.att ?? '') : '';
             url = this.appendQuery(url, 'att', attValue == null ? '' : String(attValue));
         }
         return this.appendGeometryReferenceGps(url, keyId);
@@ -211,20 +217,22 @@ export const pickerMethods = {
         let keyText = this.normalizePickerField(this.pickerTargetText.value);
         if (!keyText) keyText = keyId;
 
+        const holder = _formHolder(this);
+
         if (this.pickerMulti.value) {
-            this.form.value[keyId] = rows.map(r => r.id).join(',');
-            this.form.value[keyText] = rows.map(r => r.name).join(',');
+            holder.value[keyId] = rows.map(r => r.id).join(',');
+            holder.value[keyText] = rows.map(r => r.name).join(',');
         } else if (rows.length > 0) {
             const first = rows[0] || {};
             const dataKey = first.dataKey || first.dk || '';
             const storedValue = dataKey ? this.readPickerPayloadFromStorage(String(dataKey)) : '';
             const nextValue = storedValue || first.id;
             const nextText = storedValue || first.name || first.id;
-            this.form.value[keyId] = nextValue;
-            this.form.value[keyText] = nextText;
+            holder.value[keyId] = nextValue;
+            holder.value[keyText] = nextText;
 
-            if (Object.prototype.hasOwnProperty.call(first, 'att') && this.form?.value && Object.prototype.hasOwnProperty.call(this.form.value, 'att')) {
-                this.form.value.att = first.att;
+            if (Object.prototype.hasOwnProperty.call(first, 'att') && holder?.value && Object.prototype.hasOwnProperty.call(holder.value, 'att')) {
+                holder.value.att = first.att;
             }
         }
 
@@ -236,7 +244,8 @@ export const pickerMethods = {
         const keyId = this.normalizePickerField(propId);
         let keyText = this.normalizePickerField(propText);
         if (!keyText) keyText = keyId;
-        this.form.value[keyId] = null;
-        this.form.value[keyText] = null;
+        const holder = _formHolder(this);
+        holder.value[keyId] = null;
+        holder.value[keyText] = null;
     }
 };

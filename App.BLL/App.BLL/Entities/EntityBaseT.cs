@@ -120,7 +120,17 @@ namespace App.Entities
         //--------------------------------------
         // 缓存
         //--------------------------------------
-        /// <summary>单例</summary>
+        /// <summary>
+        /// 单例。
+        /// 若 DB 尚未 Seed（表空），C# 字段默认值在 FirstOrDefault==null 时走 `new T()`：
+        ///   但此时 无参构造/字段初始化 会被 CLR 执行——对 auto-property { get; set; } = xxx 而言，
+        ///   field initializer 在构造函数前运行，所以默认值是可以进入 new T() 的。
+        /// 但如果 EF Core 从 DB 读出的行里某些新列为 NULL（Migrate 时未回填），那么 实体属性会被
+        ///   materializer 覆盖回 null/默认值，此时就需要【属性级】null-coalescing 兜底。
+        ///
+        /// 因此 SiteConfig.PublicKey/PrivateKey 等新字段 采用 property-level fallback 写法，
+        /// 不再依赖这里的 ?? new T()。
+        /// </summary>
         public static T Instance => Cacher.Get(typeof(T).Name, () => Set.OrderBy(t=>t.Id).FirstOrDefault() ?? new T());
 
         /// <summary>所有数据的缓存</summary>

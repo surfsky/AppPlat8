@@ -2,15 +2,17 @@ import { initPaginationState, paginationMethods } from './table/paginationMethod
 import { commandMethods } from './table/commandMethods.js';
 import { initDrawerState, drawerMethods } from './table/drawerMethods.js';
 import { messageMethods } from './table/messageMethods.js';
+import { initPickerState, pickerMethods } from './form/pickerMethods.js';
 
 // Encapsulates common logic for List pages using Vue 3 + Element Plus
 export class EleTable {
     constructor(options = {}) {
         this.config = options;
 
-        // Split domains: pagination/data loading, command dispatch, drawer, message
+        // Split domains: pagination/data loading, command dispatch, drawer, message, picker
         initPaginationState(this, Vue, options);
         initDrawerState(this, Vue);
+        initPickerState(this, Vue);
     }
 
     // Dynamic options (for TreeSelect etc)
@@ -392,5 +394,6 @@ Object.assign(
     paginationMethods,
     commandMethods,
     drawerMethods,
-    messageMethods
+    messageMethods,
+    pickerMethods
 );

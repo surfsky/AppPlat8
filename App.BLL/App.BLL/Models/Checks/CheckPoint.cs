@@ -19,8 +19,8 @@ namespace App.DAL
 
         public virtual CheckObject CheckObject { get; set; }
         [UI("检查对象名称")]  public string CheckObjectName => CheckObject?.Name ?? string.Empty;
-        [UI("安全管理员名称")] public string SafetyAdminName => CheckObject?.SafetyAdminName ?? string.Empty;
-        [UI("责任人名称")]    public string DutyUserName => CheckObject?.DutyUserName ?? string.Empty;
+        [UI("安全管理员名称")] public string SafetyAdminName => CheckObject?.SafeMan ?? string.Empty;
+        [UI("责任人名称")]    public string DutyMan => CheckObject?.DutyMan ?? string.Empty;
 
         //
         public override object Export(ExportMode mode)
@@ -35,7 +35,7 @@ namespace App.DAL
                 CheckObjectId,
                 CheckObjectName,
                 SafetyAdminName,
-                DutyUserName,
+                DutyMan,
             };
         }
 

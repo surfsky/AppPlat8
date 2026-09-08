@@ -194,3 +194,5 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
                 Field,
             item.Field = req.Field;
 
+
+删除 IsCommon 字段

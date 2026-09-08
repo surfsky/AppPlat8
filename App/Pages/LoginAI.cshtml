@@ -1,0 +1,132 @@
+@page
+@model App.Pages.LoginAIModel
+@using App.Components
+@using App.Entities
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Primitives
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@*
+  =====================================================================
+  LoginAI —— AI 调试专用快速登录页面
+  ---------------------------------------------------------------------
+  作用：
+    绕开 Login.cshtml 里的滑块验证 + 人机交互，直接通过带 HMAC 签名的
+    URL 一次性登录成功，用于 AI 自动化脚本 / 集成浏览器 / 回归测试。
+
+  用法（示例）：
+    GET /LoginAI
+      ?userId   = admin
+      &password = Abc@123
+      &timestamp= 1788800000000           （毫秒级 UTC Unix 时间戳）
+      &nonce    = abc123def456            （可选但强烈推荐，6-64 位，防重放）
+      &sign     = 0123456789abcdef...     （HMAC-SHA256 小写 hex 64 字符）
+
+  签名算法详见 App/Components/SignHelper.cs，要点：
+    - 按 key 字母序拼接：nonce & password & publicKey & timestamp & userId
+      （每个值用 key=value 形式，& 连接）
+    - sign = HMACSHA256( SiteConfig.PrivateKey UTF8 bytes, payload UTF8 bytes ).ToLowerHex()
+    - 窗口：timestamp ±30 分钟（= 链接 1 小时内有效）
+
+  生产安全开关：
+    - ASPNETCORE_ENVIRONMENT=Production 下默认自动禁用，除非在
+      SiteConfig.EnableLoginAI 里显式设为 true。
+    - PublicKey/PrivateKey 绝对不要提交到公网 Git；上线生产请立即替换
+      为随机 Guid，或干脆把 EnableLoginAI=false。
+  =====================================================================
+*@
+
+@{
+    Layout = null;
+    object result = Model?.LastResult;
+    bool HasResult() => result != null;
+    bool ResultOk()
+    {
+        var p = result?.GetType().GetProperty("LoginOk")?.GetValue(result);
+        return p is bool b && b;
+    }
+    string ResultPublicMsg()
+    {
+        var p = result?.GetType().GetProperty("PublicMsg")?.GetValue(result);
+        return p?.ToString() ?? "";
+    }
+    string ResultDebugText()
+    {
+        var p = result?.GetType().GetProperty("DebugText")?.GetValue(result);
+        return p?.ToString() ?? "";
+    }
+    StringValues debugSv = ViewContext.HttpContext.Request.Query["debug"];
+    var debug = debugSv.Count > 0 && debugSv[0] == "1";
+    var env  = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+    var prod = string.Equals(env, "Production", StringComparison.OrdinalIgnoreCase);
+}
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LoginAI · 调试登录</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f5f7fb; margin:0; padding:48px 16px; }
+        .wrap { max-width:760px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 6px 24px rgba(30,50,90,.08); padding:28px 32px; }
+        h1 { margin:0 0 8px; font-size:20px; }
+        .sub { color:#64748b; margin-bottom:20px; font-size:13px; }
+        .code { background:#0f172a; color:#e2e8f0; padding:14px 16px; border-radius:8px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; white-space:pre-wrap; word-break:break-all; margin:12px 0 0; }
+        .tag  { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+        .ok   { background:#dcfce7; color:#166534; }
+        .fail { background:#fee2e2; color:#991b1b; }
+        .warn { background:#fef3c7; color:#92400e; }
+        hr { border:0; border-top:1px dashed #cbd5e1; margin:18px 0; }
+        a.back { color:#2563eb; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>LoginAI · 调试登录</h1>
+        <div class="sub">@(prod ? "【当前=Production】生产环境需显式启用，否则默认拒绝。" : "【当前=" + env + "】AI 调试模式已开启。")</div>
+
+        @if (HasResult())
+        {
+            var ok  = ResultOk();
+            var msg = ResultPublicMsg();
+            <div>
+                <span class="tag @(ok ? "ok" : "fail")">@(ok ? "登录成功" : "登录失败")</span>
+                <span style="margin-left:12px; color:#334155; font-size:13px;">@msg</span>
+            </div>
+
+            if (ok)
+            {
+                <hr />
+                <div style="font-size:13px; color:#334155;">
+                    即将跳转到 <a class="back" href="/Index">/Index</a>
+                    （若 2 秒内未跳转请直接点击链接）。
+                </div>
+                <meta http-equiv="refresh" content="1;url=/Index" />
+            }
+
+            if (debug)
+            {
+                <hr />
+                <div class="tag warn">DEBUG=1 · AI 调试详情输出（仅展示给开发者，生产请勿带 debug）</div>
+                <div class="code">@ResultDebugText()</div>
+            }
+        }
+        else
+        {
+            <div>
+                <span class="tag warn">未执行</span>
+                <span style="margin-left:12px; color:#334155; font-size:13px;">
+                    请使用带签名的 URL 访问，或在本地调试时打开 <a class="back" href="?debug=1&amp;sample=1">?debug=1&amp;sample=1</a> 查看生成 URL 的示例。
+                </span>
+            </div>
+            if (debug)
+            {
+                <hr />
+                <div class="tag warn">本地生成示例 URL（请在实际 AI 脚本里走 SignHelper.BuildLoginAIUrl）</div>
+                <div class="code">@Model?.BuildSampleDebugText()</div>
+            }
+        }
+    </div>
+</body>
+</html>

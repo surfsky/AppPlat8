@@ -43,31 +43,61 @@ export const commandMethods = {
     },
 
     selectCurrentItem() {
-        const selectedRow = (Array.isArray(this.selectedRows.value) && this.selectedRows.value.length > 0)
-            ? this.selectedRows.value[0]
-            : this.currentRow.value;
+        function pickId(row) {
+            if (row == null) return null;
+            if (row.id !== null && typeof row.id !== 'undefined') return row.id;
+            if (row.Id !== null && typeof row.Id !== 'undefined') return row.Id;
+            return null;
+        }
+        function pickName(row) {
+            if (row == null) return '';
+            const v = row.name ?? row.Name ?? row.realName ?? row.RealName ?? row.title ?? row.Title;
+            return (v === null || typeof v === 'undefined') ? '' : `${v}`;
+        }
+        // 从 URL 解析 multi 参数（允许 ?multi=true / 1 / yes 或 ElePicker 打开时带 multi）
+        function resolveMulti() {
+            try {
+                const qs = new URLSearchParams(window.location.search);
+                const m = (qs.get('multi') || '').toString().trim().toLowerCase();
+                return m === 'true' || m === '1' || m === 'yes' || m === 'on';
+            } catch (_) { return false; }
+        }
+        const multi = resolveMulti();
+        const hasSelectedRows = Array.isArray(this.selectedRows.value) && this.selectedRows.value.length > 0;
+        let rows = [];
+        if (hasSelectedRows) {
+            rows = this.selectedRows.value.slice();
+        } else if (this.currentRow.value) {
+            rows = [this.currentRow.value];
+        }
 
-        if (!selectedRow) {
-            EleManager.showWarning('请先选择一条记录');
+        if (!rows.length) {
+            EleManager.showWarning(multi ? '请先选择记录' : '请先选择一条记录');
             return;
         }
 
-        const id = selectedRow.id ?? selectedRow.Id;
-        const name = selectedRow.name ?? selectedRow.Name ?? selectedRow.title ?? selectedRow.Title;
-
-        if (id === null || typeof id === 'undefined') {
-            EleManager.showError('当前记录缺少 id，无法回传');
+        // 非 multi 场景只取第一行（兼容单选）
+        const finalRows = multi ? rows : [rows[0]];
+        const data = [];
+        for (const r of finalRows) {
+            const id = pickId(r);
+            if (id === null || typeof id === 'undefined') continue;
+            const nm = pickName(r);
+            // 脱 Proxy，避免 postMessage 跨窗口传 Proxy 失败
+            data.push({
+                id: (typeof id === 'number' || typeof id === 'string' || typeof id === 'bigint') ? id : String(id),
+                name: nm || String(id)
+            });
+        }
+        if (!data.length) {
+            EleManager.showError('所选记录缺少 id，无法回传');
             return;
         }
 
         const payload = {
             type: 'ElePicker',
-            data: [{
-                id,
-                name: (name === null || typeof name === 'undefined') ? `${id}` : `${name}`
-            }]
+            data
         };
-
         EleManager.closePage(payload);
     },
 

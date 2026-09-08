@@ -40,6 +40,7 @@ namespace App.DAL
         public virtual User Creator { get; set; }                       // 发布人
         public virtual List<CheckTaskOrg> Orgs { get; set; }            // 承接组织
         public virtual List<CheckTaskObject> CheckObjects { get; set; } // 要检查的对象
+        public virtual List<CheckTaskHazard> CheckHazards { get; set; } // 要检查的风险
         public virtual List<CheckTaskSheet> CheckSheets { get; set; }   // 使用的检查表
         public virtual List<Check> Checks { get; set; } = new List<Check>(); // 关联检查记录
 
@@ -88,104 +89,6 @@ namespace App.DAL
         public List<CheckSheet> GetCheckSheets()
         {
             return CheckTaskSheet.Search(this.Id, null).Select(o => o.Sheet).ToList();
-        }
-    }
-
-
-    //==================================================================
-    /// <summary>检查任务-组织关联</summary>
-    public class CheckTaskOrg: EntityBase<CheckTaskOrg>
-    {
-        [UI("任务")] public long? TaskId { get; set; }
-        [UI("组织")] public long? OrgId { get; set; }
-
-        // Relations
-        public virtual CheckTask Task { get; set; }
-        public virtual Org Org { get; set; }
-
-        public override object Export(ExportMode type = ExportMode.Normal)
-        {
-            return new
-            {
-                Id,
-                TaskId,
-                TaskName = Task?.Name,
-                OrgId,
-                OrgName = Org?.Name
-            };
-        }
-
-        public static IQueryable<CheckTaskOrg> Search(long? taskId, long? orgId)
-        {
-            var q = IncludeSet.AsQueryable();
-            if (taskId.IsNotEmpty())       q = q.Where(o => o.TaskId == taskId.Value);
-            if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value);
-            return q;
-        }
-    }
-
-    //==================================================================
-    /// <summary>检查任务-要检查的对象</summary>
-    public class CheckTaskObject : EntityBase<CheckTaskObject>
-    {
-        [UI("任务")] public long? TaskId { get; set; }
-        [UI("检查对象")] public long? ObjectId { get; set; }
-        [UI("是否检查")] public bool? IsChecked { get; set;}
-
-        // Relations
-        public virtual CheckTask Task { get; set; }
-        public virtual CheckObject Object { get; set; }
-
-        public override object Export(ExportMode type = ExportMode.Normal)
-        {
-            return new
-            {
-                Id,
-                TaskId,
-                TaskName = Task?.Name,
-                ObjectId,
-                ObjectName = Object?.Name,
-                IsChecked
-            };
-        }
-
-        public static IQueryable<CheckTaskObject> Search(long? taskId)
-        {
-            var q = IncludeSet.AsQueryable();
-            if (taskId.IsNotEmpty())       q = q.Where(o => o.TaskId == taskId.Value);
-            return q;
-        }
-    }
-
-    //==================================================================
-    /// <summary>检查任务-检查表关联</summary>
-    public class CheckTaskSheet: EntityBase<CheckTaskSheet>
-    {
-        [UI("任务")] public long? TaskId { get; set; }
-        [UI("检查表")] public long? SheetId { get; set; }
-
-        // Relations
-        public virtual CheckTask Task { get; set; }
-        public virtual CheckSheet Sheet { get; set; }
-
-        public override object Export(ExportMode type = ExportMode.Normal)
-        {
-            return new
-            {
-                Id,
-                TaskId,
-                TaskName = Task?.Name,
-                SheetId,
-                SheetName = Sheet?.Name
-            };
-        }
-
-        public static IQueryable<CheckTaskSheet> Search(long? taskId, long? sheetId)
-        {
-            var q = IncludeSet.AsQueryable();
-            if (taskId.IsNotEmpty())       q = q.Where(o => o.TaskId == taskId.Value);
-            if (sheetId.IsNotEmpty()) q = q.Where(o => o.SheetId == sheetId.Value);
-            return q;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace App.DAL
 
         //
         [UI("基础", "责任网格")]    public long? DutyOrgId { get; set; }
-        [UI("基础", "检查员")] public long? CheckerId { get; set; }
+        [UI("基础", "网格员")]      public long? CheckerId { get; set; }
 
         //
         [UI("基础", "电表号")] public string EleMeeterNum { get; set; }
@@ -57,9 +57,9 @@ namespace App.DAL
 
         // 人员相关
         [UI("人员", "三方机构")] public string ThirdPartySafetyAgency { get; set; }
-        [UI("人员", "负责人信息")] public string DutyUserName { get; set; }
-        [UI("人员", "安全管理员")] public string SafetyAdminName { get; set; }
-        [UI("人员", "安全管家")] public string SafetySteward { get; set; }
+        [UI("人员", "企业负责人")] public string DutyMan { get; set; }   // 格式如：张三/15300000000。Man 是 Manager 的简写
+        [UI("人员", "企业安全管理员")] public string SafeMan { get; set; }  // 格式如：张三/15300000000
+        [UI("人员", "企业安全管家")] public string SafeSteward { get; set; }  // 格式如：张三/15300000000
 
         // 建筑相关
         [UI("建筑", "建筑类型")] public CheckBuildingType? BuildingType { get; set; }
@@ -165,9 +165,9 @@ namespace App.DAL
                 OutlookImage,
                 LicenseImage,
                 ThirdPartySafetyAgency,
-                DutyUserName,
-                SafetyAdminName,
-                SafetySteward,
+                DutyMan,
+                SafeMan,
+                SafeSteward,
                 BuildingType,
                 LandArea,
                 BuildingArea,
@@ -211,7 +211,7 @@ namespace App.DAL
                     DutyOrgName,
                     CheckerId,
                     CheckerName,
-                    DutyUserName,
+                    DutyMan,
                     TagNames,
                     IsDel
                 }),
@@ -236,7 +236,7 @@ namespace App.DAL
             string code = "",
             string socialCreditCode = "",
             string address = "",
-            string dutyUserName = "",
+            string dutyMan = "",
             long? dutyOrgId = null,
             List<long> dutyOrgIds = null,
             List<long> tagIds = null,
@@ -277,7 +277,7 @@ namespace App.DAL
             if (name.IsNotEmpty())                    q = q.Where(o => o.Name.Contains(name.Trim()));
             if (code.IsNotEmpty())                    q = q.Where(o => o.Code.Contains(code.Trim()));
             if (address.IsNotEmpty())                 q = q.Where(o => o.Address.Contains(address.Trim()));
-            if (dutyUserName.IsNotEmpty())            q = q.Where(o => o.DutyUserName.Contains(dutyUserName.Trim()));
+            if (dutyMan.IsNotEmpty())            q = q.Where(o => o.DutyMan.Contains(dutyMan.Trim()));
             // AND 过滤：用户勾选的每一个 tag，对象都必须"包含该 tag 或包含其任意子孙 tag"
             foreach (var grp in tagIdGroups)
             {

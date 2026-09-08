@@ -130,7 +130,7 @@ namespace App.API
                     t.ObjectType,
                     t.Scale,
                     DutyOrgId = t.DutyOrgId,
-                    t.DutyUserName,
+                    t.DutyMan,
                 })
                 .ToList();
 
@@ -159,7 +159,7 @@ namespace App.API
                         item.ObjectType,
                         item.Scale,
                         item.DutyOrgId,
-                        item.DutyUserName,
+                        item.DutyMan,
                     }
                 });
 

@@ -30,6 +30,9 @@ namespace App.EleUI
     [RestrictChildren("Toolbar", "Columns")]
     public class EleTable : EleControl
     {
+        private static readonly object _idLock = new();
+        private static int _idCounter = 0;
+
         [HtmlAttributeName("Title")]
         public string Title { get; set; } = "列表";
 
@@ -74,16 +77,21 @@ namespace App.EleUI
             if (!CheckPower(output)) return;
             output.TagName = "div";
             AddCommonAttributes(context, output);
-            output.Attributes.SetAttribute("id", "app");  // 用于挂载 Vue 应用，有潜在id冲突问题
+            string appId;
+            lock (_idLock)
+            {
+                _idCounter++;
+                appId = $"app-etbl-{_idCounter}";
+            }
+            output.Attributes.SetAttribute("id", appId);
             output.Attributes.SetAttribute("class", "h-full flex flex-col overflow-hidden");
 
-            // 编撰表格网页面结构，包含工具栏、表格、分页、弹窗等
-            await output.GetChildContentAsync(); // Execute children to populate TableContext
+            await output.GetChildContentAsync();
             var tableContext = (TableContext)context.Items[typeof(TableContext)];
             string toolbarHtml = tableContext.ToolbarHtml?.ToString();
             string tableHtml = CreateTable(tableContext);
             string footerHtml = CreateFooter();
-            string scriptHtml = (this.BuildMode == EleAppBuildMode.Client) ? CreateScript() : "";
+            string scriptHtml = (this.BuildMode == EleAppBuildMode.Client) ? CreateScript(appId) : "";
 
             output.Content.AppendHtml(" <el-container class='h-full w-full flex flex-col overflow-hidden'>");
             output.Content.AppendHtml(toolbarHtml);
@@ -153,7 +161,7 @@ namespace App.EleUI
         }
 
         // 3. Script
-        private string CreateScript()
+        private string CreateScript(string appId)
         {
             var formDrawerSize = string.IsNullOrWhiteSpace(FormDrawerSize) ? "" : FormDrawerSize.Trim();
             var defaultPageSize = ResolveDefaultPageSize();
@@ -161,8 +169,9 @@ namespace App.EleUI
             var defaultSortDirection = ResolveSortDirection();
             return $@"
 <script>
-    document.addEventListener('DOMContentLoaded', function() {{
-        new EleTableAppBuilder().mount('#app', {{
+    (function() {{
+        var MOUNT_ID = '#{appId}';
+        var CONFIG = {{
             drawerTitle: '{Title}',
             dataHandler: '{DataHandler}',
             deleteHandler: '{DeleteHandler}',
@@ -171,8 +180,26 @@ namespace App.EleUI
             pageSize: {defaultPageSize},
             defaultSortField: '{defaultSortField}',
             defaultSortDirection: '{defaultSortDirection}'
-        }});
-    }});
+        }};
+        function mountTable(retry) {{
+            if (typeof retry === 'undefined') retry = 0;
+            if (!window.EleTableAppBuilder) {{
+                if (retry < 400) {{ setTimeout(function() {{ mountTable(retry + 1); }}, 25); return; }}
+                console.error('EleTableAppBuilder 不可用，请确保 /_content/App.EleUI/eleui/eleui.js (ES module) 已成功加载。');
+                return;
+            }}
+            try {{
+                new window.EleTableAppBuilder().mount(MOUNT_ID, CONFIG);
+            }} catch (err) {{
+                console.error('EleTable mount(' + MOUNT_ID + ') 失败：', err);
+            }}
+        }}
+        if (document.readyState === 'loading') {{
+            document.addEventListener('DOMContentLoaded', function() {{ mountTable(); }}, {{ once: true }});
+        }} else {{
+            mountTable();
+        }}
+    }})();
 </script>
 ";
         }

@@ -41,7 +41,6 @@ namespace App.Pages.Checks
                 sheetDisplay = display,
                 name = item.Name,
                 hazardLevel = item.HazardLevel,
-                isCommon = item.IsCommon,
                 sortId = item.SortId
             };
         }
@@ -97,7 +96,7 @@ namespace App.Pages.Checks
             item.SheetId = sheetId;
             item.Name = req.Name;
             item.HazardLevel = req.HazardLevel;
-            item.IsCommon = req.IsCommon;
+            item.Code = req.Code;
             item.SortId = req.SortId;
             item.Save();
 

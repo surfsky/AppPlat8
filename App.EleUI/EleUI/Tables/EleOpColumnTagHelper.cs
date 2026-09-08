@@ -104,11 +104,27 @@ namespace App.EleUI
 
         private bool ShouldHideInSelectMode()
         {
+            // 白名单模式：行操作在 Select 模式下只允许 Search/Select，其他全部隐藏（含 Edit/Delete/BatchDelete/自定义 Handler/Popup 如 resetPassword 等）
             var cmd = (Command ?? string.Empty).Trim();
-            return string.Equals(cmd, "Add", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(cmd, "Edit", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(cmd, "Delete", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(cmd, "BatchDelete", StringComparison.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(cmd))
+            {
+                if (string.Equals(cmd, "Search", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(cmd, "Select", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(cmd, "Data", StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            var handler = (Handler ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(handler))
+            {
+                if (string.Equals(handler, "search", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(handler, "select", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(handler, "data", StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            // 其他：Command.Add/Edit/Delete/BatchDelete，自定义 Popup/Handler（如 resetPasswordToDefault）等 → 一律隐藏
+            return true;
         }
     }
 

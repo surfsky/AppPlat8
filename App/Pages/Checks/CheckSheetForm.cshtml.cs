@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.EleUI;
+using App.Entities;
 using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -48,11 +49,23 @@ namespace App.Pages.Checks
             item.Scope = req.Scope;
             item.SetTags(req.TagIds);
             item.Save();
-            return BuildResult(0, "保存成功");
+            return BuildResult(0, "保存成功", item.Export(ExportMode.Normal));
         }
 
 
-        /// <summary>显示检查项</summary>
+        /// <summary>EleList 数据接口：按 SortId 升序返回检查项（分页）</summary>
+        public IActionResult OnGetItemsData(Paging pi, long sheetId, CheckHazardLevel? hazardLevel, string name)
+        {
+            if (sheetId <= 0)
+            {
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+            }
+            var q = CheckSheetItem.Search(sheetId, hazardLevel,  name);
+            var list = q.SortPageExport(pi);
+            return BuildResult(0, "success", list, pi);
+        }
+
+        /// <summary>显示检查项（旧入口：保留兼容历史调用）</summary>
         public IActionResult OnPostShowItems([FromBody] CheckSheet req)
         {
             var sheetId = req?.Id ?? 0;

@@ -24,9 +24,26 @@ namespace App.EleUI
 
             if (IsSelectMode() && !content.Contains("ele-table-buttons-block", StringComparison.OrdinalIgnoreCase))
             {
-                content += @"<div class='ele-table-buttons-block w-auto md:w-full shrink-0 flex items-center gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible'>
+                var hasExplicitSelect = !string.IsNullOrWhiteSpace(content) && (
+                    content.Contains("选择") ||
+                    content.Contains("invokeCommand", StringComparison.OrdinalIgnoreCase) && (content.Contains("'Select'") || content.Contains("\"Select\"") || content.Contains("Select")) ||
+                    content.Contains("Command=\"Select\"", StringComparison.OrdinalIgnoreCase) ||
+                    content.Contains("Command='Select'", StringComparison.OrdinalIgnoreCase));
+                if (!hasExplicitSelect)
+                {
+                    content += @"<div class='ele-table-buttons-block w-auto md:w-full shrink-0 flex items-center gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible'>
     <el-button type='success' v-on:click=""invokeCommand('Select')"">选择</el-button>
 </div>";
+                }
+                else
+                {
+                    // 即便用户显式有 Select 按钮，也要包 buttons-block 容器，让 CSS 排版一致
+                    if (!content.Contains("ele-table-buttons-block", StringComparison.OrdinalIgnoreCase))
+                    {
+                        content = @"<div class='ele-table-buttons-block w-auto md:w-full shrink-0 flex items-center gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible'>"
+                                + content + "</div>";
+                    }
+                }
             }
                 const string toolbarClass = "ele-table-toolbar w-full flex-none shrink-0 min-h-[40px] flex flex-wrap items-center gap-1.5 bg-white px-6 pt-4 pb-0 overflow-visible relative z-10";
                 const string toolbarStyle = "display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%;min-height:40px;flex-shrink:0;overflow:visible;position:relative;z-index:10;";

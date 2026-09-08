@@ -39,17 +39,19 @@ namespace App.Pages.Admins
         }
 
         /// <summary>获取用户列表</summary>
-        public IActionResult OnGetData(Paging pi, string name, string realName, long? deptId, long? roleId, bool? isDel)
+        public IActionResult OnGetData(Paging pi, string name, string realName, long? orgId, long? deptId, long? roleId, bool? isDel)
         {
-            var list = App.DAL.User.Search(name, realName, deptId, roleId, isDel).SortPageExport(pi);
+            var orgFilter = orgId ?? deptId;
+            var list = App.DAL.User.Search(name, realName, orgFilter, roleId, isDel).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
         // 导出用户列表到 Excel
-        public IActionResult OnPostExport(Paging pi, string name, string realName, long? deptId, long? roleId)
+        public IActionResult OnPostExport(Paging pi, string name, string realName, long? orgId, long? deptId, long? roleId)
         {
+            var orgFilter = orgId ?? deptId;
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
-            var list = App.DAL.User.Search(name, realName, deptId, roleId).SortPageExport(exportPi);
+            var list = App.DAL.User.Search(name, realName, orgFilter, roleId).SortPageExport(exportPi);
             ExcelExporter.Export(list, $"用户列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             Logger.Info($"导出用户列表，共 {list.Count} 条记录");
             return new EmptyResult();

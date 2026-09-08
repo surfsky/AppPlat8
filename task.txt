@@ -492,19 +492,45 @@ Done
     /核对数据和权限
     /测试 /httpapi/gis/getobjects 的tagNames, dutyOrgId 等参数，配置好目录中的数据；
     /日志操作人信息 IP 丢失，请查一下原因
+    /实现EleTable的select模式
+    /CheckSheetItem 增加物理 Code 属性，便于自定义以及排序
+    /为了便于ai调试，创建 /pages/LoginAI 页面, 提供快速登录方式以绕开滑动模块，格式为：LoginAI?userId=xxx&password=xxx&timestamp=xxx&sign=xxx
+        其中 
+        - sign 的值为 userId,password,timestampe + nonce + 公钥 加密的结果
+        - 该链接时间戳过期时间为1个小时；
+        - 给 SiteConfig 类增加 PublicKey, PrivateKey 键值对属性，并填充一组值；
+        - 给该页面做好注释，便于ai理解和调试；
+        2、将其验证逻辑写到一个独立的工具类中 /app/components/SignHelper.cs
+        检测是否有什么风险或漏洞 ，可完善它；
+    /检查CheckObjects 页面，将网格员输入框改为 picker
+    /实现EleTable页面的 Select 模式
+        （1）在该模式下，禁止所有编辑功能（包括相关按钮和行命令，除了command=search和select的按钮其它按钮都隐藏）；
+        （2）选择数据后，点击选择按钮（Command为Select），可将选择数据的id/name等信息传递给picker 控件；
+        （3）支持单选和多选；
+    /配置高频风险检查表
+
+    实现批量设置多个记录属性的能力
+        如给 CheckObjects 页面增加批量修改网格员的能力
+        <EleButton Command="UpdateBatch" Label="批量修改网格员">
+            <Template>
+                <ElePicker For="Item.CheckerId" PopupUrl=".....">网格员</ElePicker>
+            </Template>
+        </EleButton>
+        选择数据行后，点击该按钮，就会用drawer 弹出编辑页面，编辑 CheckerId 字段（用ElePicker来展示）
+        
+    优化eletable 的 枚举显示方式，自动计算颜色值（绿色-》红色）
+
+
     检查对象
         /创建时间、检查时间、下次检查时间空缺
-        如何批量设置对象的属性
         针对花名册，给企业打标签，补缺补漏
         化工及危化企业怎么数据不对
 
     检查表
-        配置一个超大的检查表（****董局）
+        配置八大风险检查表（****董局）
         隐患查找和统计
 
     换几个统计面板，和企业统计、应急力量统计
-
-
     性能文笔
         迁移数据库到postgresql
             id 要改为雪花id
@@ -544,6 +570,8 @@ Done
     实现 Feedback 处理流程，重新熟悉一下 liteflow 工作流引擎
 
 
+2026/09/08
+    /优化接口，默认情况不反悔geodata：http://172.20.165.221:6060/httpapi/orgs/GetAuthOrgTree f
 
 
 2026/9/3

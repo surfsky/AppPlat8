@@ -1,249 +1,459 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using App.Components;
 using App.DAL;
+using App.Entities;
+using App.Utils;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Me
 {
     public class WorkDeskModel : AdminModel
     {
-        public string SiteTitle { get; set; }
-        public List<WorkDeskSummaryCard> SummaryCards { get; set; } = new();
-        public List<WorkDeskEntryCard> EntryCards { get; set; } = new();
-        public List<WorkDeskTaskBoard> TaskBoards { get; set; } = new();
+        //---------------------------------------------------------------------
+        // 筛选条件（来自 URL 查询参数；页面顶部人员 picker 绑定到这些）
+        //---------------------------------------------------------------------
+        [BindProperty(SupportsGet = true)] public long? OrgId { get; set; }
+        [BindProperty(SupportsGet = true)] public long? UserId { get; set; }
+        [BindProperty(SupportsGet = true)] public string UserName { get; set; }
 
-        /// <summary>初始化工作台展示数据。</summary>
+        /// <summary>根据 UserId 反查的真实姓名（SSR 回显 / 初始值）。</summary>
+        public string UserRealName { get; private set; }
+
+        // 管理员（有用户查看权限）可切换到其它中心/人员视图，非管理员只能看自己
+        public bool CanChangeScope => Auth.CheckPower(Power.UserView);
+
+        // 实际要查询的目标用户：URL(管理员) > 当前登录用户
+        public long EffectiveUserId
+        {
+            get
+            {
+                if (CanChangeScope && UserId.HasValue && UserId.Value > 0)
+                    return UserId.Value;
+                var uid = GetUserId();
+                return uid ?? 0L;
+            }
+        }
+
+        // 实际责任网格命中范围：URL(管理员) > 用户 OrgId + AuthOrgIds 展开后的全部子孙
+        public List<long> EffectiveOrgIds => ResolveEffectiveOrgIds();
+
+        //---------------------------------------------------------------------
+        // 角标计数（对象 4 卡，隐患 3 卡）
+        //---------------------------------------------------------------------
+        public int CountMyObjects            { get; set; }
+        public int CountUncheckedObjects     { get; set; }
+        public int CountNearExpireObjects    { get; set; }
+        public int CountOverdueObjects       { get; set; }
+        public int CountMyHazards            { get; set; }
+        public int CountPendingHazards       { get; set; }
+        public int CountOverdueHazards       { get; set; }
+
+        //---------------------------------------------------------------------
+        // 简单绑定用列表（SSR 输出）
+        //---------------------------------------------------------------------
+        public List<WorkDeskLink> QuickEntries { get; } = new()
+        {
+            new WorkDeskLink { Title = "一张图",   Url = "/GIS/Index",    Target = "_blank" },
+            new WorkDeskLink { Title = "知识库",   Url = "/KB/Index",     Target = "_self"  },
+            new WorkDeskLink { Title = "值班表",   Url = "/Duty/Index",   Target = "_self"  },
+            new WorkDeskLink { Title = "通讯录",   Url = "/CRM/Contacts", Target = "_self"  },
+        };
+        public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
+        public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();
+
+        //---------------------------------------------------------------------
+        // 页面加载：统计计数 + 卡片初始化
+        //---------------------------------------------------------------------
         public void OnGet()
         {
-            SiteTitle = SiteConfig.Instance.Title;
-            EntryCards = BuildEntryCards();
-            TaskBoards = BuildTaskBoards();
-            SummaryCards = BuildSummaryCards(TaskBoards);
-        }
+            ResolveUserRealName();
+            var today = DateTime.Today;
+            var near  = today.AddDays(7);
 
-        /// <summary>构建顶部摘要卡片。</summary>
-        private static List<WorkDeskSummaryCard> BuildSummaryCards(List<WorkDeskTaskBoard> boards)
-        {
-            var allTasks = (boards ?? new List<WorkDeskTaskBoard>()).SelectMany(t => t.Tasks ?? new List<WorkDeskTaskItem>()).ToList();
-            var avgProgress = allTasks.Count == 0 ? 0 : (int)Math.Round(allTasks.Average(t => t.Progress));
-            var totalCount = allTasks.Count;
-            var inProgressCount = allTasks.Count(t => string.Equals(t.Status, "进行中", StringComparison.OrdinalIgnoreCase));
-            var completedCount = allTasks.Count(t => string.Equals(t.Status, "已完成", StringComparison.OrdinalIgnoreCase));
+            var objects = BuildObjectScopeQuery();
+            CountMyObjects = objects.Count();
 
-            return new List<WorkDeskSummaryCard>
+            // NextCheckDt 是实体 getter-only 计算属性（NotMapped），EF Core 无法翻译为 SQL。
+            // 解决办法：先把 LatestCheckDt / RiskLevel / IsChecked 投影到内存，再本地计数。
+            var projection = objects
+                .Select(o => new
+                {
+                    o.IsChecked,
+                    o.LatestCheckDt,
+                    o.RiskLevel
+                })
+                .AsNoTracking()
+                .ToList();
+            CountUncheckedObjects = projection
+                .Count(o => (o.IsChecked == null || o.IsChecked == false) || o.LatestCheckDt == null);
+            CountNearExpireObjects = projection
+                .Count(o =>
+                {
+                    var next = ComputeNextCheckDt(o.LatestCheckDt, o.RiskLevel);
+                    return next.HasValue && next.Value > today && next.Value <= near;
+                });
+            CountOverdueObjects = projection
+                .Count(o =>
+                {
+                    var next = ComputeNextCheckDt(o.LatestCheckDt, o.RiskLevel);
+                    return next.HasValue && next.Value <= today;
+                });
+
+            ObjectStatCards = new List<WorkDeskStatCard>
             {
-                new() { Title = "任务总数", Value = totalCount.ToString(), Remark = "演示任务面板合计" },
-                new() { Title = "平均进度", Value = $"{avgProgress}%", Remark = "按当前示例数据计算" },
-                new() { Title = "进行中", Value = inProgressCount.ToString(), Remark = "持续跟进事项" },
-                new() { Title = "已完成", Value = completedCount.ToString(), Remark = "已进入收尾阶段" },
+                new WorkDeskStatCard("我的对象",         CountMyObjects,         "/Checks/CheckObjects"),
+                new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  "/Checks/CheckObjects?isChecked=false"),
+                new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, "/Checks/CheckObjects"),
+                new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    "/Checks/CheckObjects"),
+            };
+
+            var hazards = BuildHazardScopeQuery();
+            CountMyHazards       = hazards.Count();
+            CountPendingHazards  = hazards.Where(h => h.Status == CheckHazardStatus.Pending || h.Status == CheckHazardStatus.Rectifying).Count();
+            CountOverdueHazards  = hazards.Where(h => h.Status != CheckHazardStatus.Closed && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
+            HazardStatCards = new List<WorkDeskStatCard>
+            {
+                new WorkDeskStatCard("我发现的隐患",   CountMyHazards,      "/Checks/CheckHazards"),
+                new WorkDeskStatCard("待处理隐患",     CountPendingHazards, "/Checks/CheckHazards?status=0"),
+                new WorkDeskStatCard("超期隐患",       CountOverdueHazards,"/Checks/CheckHazards"),
             };
         }
 
-        /// <summary>构建系统入口卡片。</summary>
-        private static List<WorkDeskEntryCard> BuildEntryCards()
+        //---------------------------------------------------------------------
+        // Helpers：计算下一次巡查时间（与 CheckObject.NextCheckDt 实现保持一致）
+        //---------------------------------------------------------------------
+        private static DateTime? ComputeNextCheckDt(DateTime? latestCheckDt, CheckRiskLevel? riskLevel)
         {
-            return new List<WorkDeskEntryCard>
+            if (!latestCheckDt.HasValue) return null;
+            int months = GetCheckCycleMonths(riskLevel);
+            return latestCheckDt.Value.AddMonths(months);
+        }
+
+        private static int GetCheckCycleMonths(CheckRiskLevel? riskLevel)
+        {
+            return riskLevel switch
             {
-                new()
-                {
-                    Title = "应急一张图",
-                    Badge = "GIS",
-                    Description = "进入全局应急一张图地图，查看图层、点位、场景面板和空间信息。",
-                    Url = "/GIS/Index",
-                    Target = "_blank",
-                    Icon = "fas fa-earth-asia",
-                    IconBg = "bg-gradient-to-br from-sky-500 to-blue-600",
-                    Stats = new List<WorkDeskEntryStat>
-                    {
-                        new() { Title = "入口地址", Value = "/GIS/Index" },
-                        new() { Title = "适用场景", Value = "地图浏览与态势分析" },
-                    }
-                },
-                new()
-                {
-                    Title = "知识库",
-                    Badge = "KB",
-                    Description = "进入知识库导航，快速打开目录、文档和资料沉淀页面。",
-                    Url = "/KB/Index",
-                    Icon = "fas fa-book-open-reader",
-                    IconBg = "bg-gradient-to-br from-violet-500 to-fuchsia-600",
-                    Stats = new List<WorkDeskEntryStat>
-                    {
-                        new() { Title = "入口地址", Value = "/KB/Index" },
-                        new() { Title = "适用场景", Value = "资料检索与文档学习" },
-                    }
-                },
-                new()
-                {
-                    Title = "通讯录",
-                    Badge = "CRM",
-                    Description = "检索应急通讯录。",
-                    Url = "/CRM/Contacts",
-                    Icon = "fas fa-book-open-reader",
-                    IconBg = "bg-gradient-to-br from-violet-500 to-fuchsia-600",
-                },
-                new()
-                {
-                    Title = "值班表",
-                    Badge = "DUTY",
-                    Description = "查看近期值班表。",
-                    Url = "/Duty/Index",
-                    Icon = "fas fa-book-open-reader",
-                    IconBg = "bg-gradient-to-br from-violet-500 to-fuchsia-600",
-                },
+                CheckRiskLevel.None   => 12,
+                CheckRiskLevel.Low    => 9,
+                CheckRiskLevel.Medium => 6,
+                CheckRiskLevel.High   => 3,
+                _ => 12
             };
         }
 
-        /// <summary>构建演示任务看板数据。</summary>
-        private static List<WorkDeskTaskBoard> BuildTaskBoards()
+        //---------------------------------------------------------------------
+        // 表格 1：我的任务（我创建 OR 分派到我命中的责任网格）
+        //---------------------------------------------------------------------
+        public IActionResult OnGetMyTasks(Paging pi)
         {
-            var boards = new List<WorkDeskTaskBoard>
+            var uid    = EffectiveUserId;
+            var orgIds = EffectiveOrgIds;
+
+            var taskOrgQry = App.DAL.CheckTaskOrg.ValidSet.AsNoTracking();
+            List<long> taskIdsFromOrg = null;
+            if (orgIds.Count > 0)
+                taskIdsFromOrg = taskOrgQry
+                    .Where(to => to.OrgId != null && orgIds.Contains(to.OrgId.Value) && to.TaskId != null)
+                    .Select(to => to.TaskId.Value)
+                    .Distinct()
+                    .ToList();
+
+            var q = App.DAL.CheckTask.Search(null, null, null)
+                .AsNoTracking()
+                .Include(t => t.Creator).ThenInclude(u => u.Org)
+                .Include(t => t.Orgs).ThenInclude(o => o.Org)
+                .Where(t => t.CreatorId == uid
+                         || (taskIdsFromOrg != null && taskIdsFromOrg.Count > 0 && taskIdsFromOrg.Contains(t.Id)));
+            return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
+        }
+
+        //---------------------------------------------------------------------
+        // 表格 2：基础科任务（当前目标用户所在科室级，含下属）
+        //---------------------------------------------------------------------
+        public IActionResult OnGetSectionTasks(Paging pi)
+        {
+            var sectionIds = GetSectionScopeOrgIds();
+            var taskIds = sectionIds.Count == 0
+                ? new List<long>()
+                : App.DAL.CheckTaskOrg.ValidSet.AsNoTracking()
+                    .Where(to => to.OrgId != null && sectionIds.Contains(to.OrgId.Value) && to.TaskId != null)
+                    .Select(to => to.TaskId.Value)
+                    .Distinct()
+                    .ToList();
+
+            var q = App.DAL.CheckTask.Search(null, null, null)
+                .AsNoTracking()
+                .Include(t => t.Creator).ThenInclude(u => u.Org)
+                .Include(t => t.Orgs).ThenInclude(o => o.Org)
+                .Where(t => taskIds.Contains(t.Id));
+            return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
+        }
+
+        //---------------------------------------------------------------------
+        // 表格 3：分派中心任务（当前目标用户所在单位级，含下属；若枚举没 Center，退回到 Unit）
+        //---------------------------------------------------------------------
+        public IActionResult OnGetCenterTasks(Paging pi)
+        {
+            var centerIds = GetCenterScopeOrgIds();
+            var taskIds = centerIds.Count == 0
+                ? new List<long>()
+                : App.DAL.CheckTaskOrg.ValidSet.AsNoTracking()
+                    .Where(to => to.OrgId != null && centerIds.Contains(to.OrgId.Value) && to.TaskId != null)
+                    .Select(to => to.TaskId.Value)
+                    .Distinct()
+                    .ToList();
+
+            var q = App.DAL.CheckTask.Search(null, null, null)
+                .AsNoTracking()
+                .Include(t => t.Creator).ThenInclude(u => u.Org)
+                .Include(t => t.Orgs).ThenInclude(o => o.Org)
+                .Where(t => taskIds.Contains(t.Id));
+            return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
+        }
+
+        //---------------------------------------------------------------------
+        // 内部：EF 查询先 ToList（避免 EF 翻译本地函数/字符串拼接失败），再手动 SortPage 成 WorkDeskTaskRow
+        //---------------------------------------------------------------------
+        private static List<object> MaterializeAndProject(IQueryable<CheckTask> query, Paging pi)
+        {
+            // 1) 排序前统一默认值
+            if (pi == null) pi = new Paging();
+            if (pi.SortField.IsEmpty()) { pi.SortField = "Id"; pi.SortDirection = "DESC"; }
+
+            // 2) 先做 Total + 内存化（含 Orgs 导航，需要 Include 时 IncludeSet 已在 Search 里完成）
+            pi.SetTotal(query.Count());
+            var sorted = query.SortBy(pi.SortField + " " + pi.SortDirection).AsQueryable();
+            var page = sorted.SortAndPage(pi).ToList();
+
+            // 3) 内存投影为 WorkDeskTaskRow → object 输出（前台列是扁平的 Prop）
+            return page
+                .Select(t => (object)new WorkDeskTaskRow
+                {
+                    Id           = t.Id,
+                    Name         = t.Name,
+                    LevelText    = t.Orgs != null && t.Orgs.Count > 0
+                                 ? string.Join("/", t.Orgs.Select(o => o.Org?.FullName ?? o.Org?.Name ?? "").Take(3))
+                                 : "",
+                    CreatorText  = t.CreatorName,
+                    CreatorOrg   = t.Creator?.Org?.Name ?? "",
+                    Progress     = (int)(t.Progress ?? 0),
+                    ProgressText = ComputeProgressText(t),
+                    StartDt      = t.StartDt,
+                    ExpireDt     = t.ExpireDt,
+                    DetailUrl    = $"/Checks/CheckTaskObjects?taskId={t.Id}",
+                })
+                .ToList();
+        }
+
+        //---------------------------------------------------------------------
+        // 内部：Scope 解析
+        //---------------------------------------------------------------------
+
+        /// <summary>根据 UserId/UserName 反查目标用户的真实姓名，SSR 回显人员 picker 显示名。</summary>
+        private void ResolveUserRealName()
+        {
+            if (UserId.HasValue && UserId.Value > 0)
             {
-                new()
+                var u = App.DAL.User.Get(UserId.Value);
+                if (u != null)
                 {
-                    Title = "交办任务",
-                    Description = "领导交办和专项推进事项",
-                    Icon = "fas fa-list-check",
-                    IconBg = "bg-gradient-to-br from-blue-500 to-cyan-500",
-                    Tasks = new List<WorkDeskTaskItem>
-                    {
-                        CreateTask("台风防御演练方案上报", "整理演练流程与附件材料，等待局办审核。", "徐建泽", "进行中", 78, DateTime.Today.AddDays(3), "/Tasks/ToDo"),
-                        CreateTask("防汛仓库设备清单复核", "核对库存数量与领用记录，补齐缺失设备照片。", "陈晓燕", "进行中", 55, DateTime.Today.AddDays(6), "/Tasks/ToDo"),
-                        CreateTask("应急值守月报归档", "已完成归档与签批流转。", "张瑞", "已完成", 100, DateTime.Today.AddDays(-1), "/Tasks/ToDo"),
-                    }
-                },
-                new()
-                {
-                    Title = "隐患排查任务",
-                    Description = "检查对象、隐患处理和复查事项",
-                    Icon = "fas fa-triangle-exclamation",
-                    IconBg = "bg-gradient-to-br from-amber-500 to-orange-500",
-                    Tasks = new List<WorkDeskTaskItem>
-                    {
-                        CreateTask("危化企业专项排查", "重点核查储罐区和消防设施，待补录整改照片。", "林志恒", "进行中", 64, DateTime.Today.AddDays(2), "/Checks/CheckTasks"),
-                        CreateTask("老旧厂房安全复查", "针对上次发现的电气线路问题开展复查。", "王梦洁", "待开始", 20, DateTime.Today.AddDays(8), "/Checks/CheckTasks"),
-                        CreateTask("校园周边燃气隐患核验", "已完成现场核验，待形成闭环报告。", "周晓峰", "已完成", 100, DateTime.Today.AddDays(-2), "/Checks/CheckTasks"),
-                    }
-                },
-                new()
-                {
-                    Title = "科室任务",
-                    Description = "科室内部协同事项与周计划",
-                    Icon = "fas fa-users-gear",
-                    IconBg = "bg-gradient-to-br from-emerald-500 to-teal-500",
-                    Tasks = new List<WorkDeskTaskItem>
-                    {
-                        CreateTask("八月份值班表发布", "完成科室排班汇总并同步到共享目录。", "孙宁", "已完成", 100, DateTime.Today.AddDays(-4), "/Duty/Index"),
-                        CreateTask("应急预案修订意见汇总", "收集各条线反馈，形成修订对照稿。", "黄诗雅", "进行中", 72, DateTime.Today.AddDays(5), "/Me/WorkDesk"),
-                        CreateTask("视频会议设备巡检", "核对会议室音视频设备状态，安排缺陷报修。", "郑豪", "待开始", 15, DateTime.Today.AddDays(10), "/Me/WorkDesk"),
-                    }
+                    UserRealName = (u.RealName ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(UserRealName))
+                        UserRealName = (u.Name ?? string.Empty).Trim();
+                    return;
                 }
-            };
-
-            foreach (var board in boards)
-                board.RefreshStats();
-            return boards;
+            }
+            if (!string.IsNullOrWhiteSpace(UserName))
+            {
+                var key = UserName.Trim();
+                var u = App.DAL.User.Set.FirstOrDefault(x => x.Name == key || x.RealName == key);
+                if (u != null)
+                {
+                    UserRealName = (u.RealName ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(UserRealName))
+                        UserRealName = (u.Name ?? string.Empty).Trim();
+                    if (!UserId.HasValue || UserId.Value <= 0)
+                        UserId = u.Id;
+                    return;
+                }
+            }
+            var selfId = GetUserId();
+            if (selfId.HasValue && selfId.Value > 0)
+            {
+                var u = App.DAL.User.Get(selfId.Value);
+                if (u != null)
+                {
+                    UserRealName = (u.RealName ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(UserRealName))
+                        UserRealName = (u.Name ?? string.Empty).Trim();
+                    if (!UserId.HasValue || UserId.Value <= 0)
+                        UserId = u.Id;
+                }
+            }
         }
 
-        /// <summary>创建单条任务演示数据。</summary>
-        private static WorkDeskTaskItem CreateTask(string title, string summary, string owner, string status, int progress, DateTime dueDate, string url = "", string target = "_self")
+        private List<long> ResolveEffectiveOrgIds()
         {
-            var safeProgress = Math.Max(0, Math.Min(100, progress));
-            var normalizedStatus = string.IsNullOrWhiteSpace(status) ? "进行中" : status.Trim();
-            var statusClass = normalizedStatus switch
-            {
-                "已完成" => "bg-emerald-100 text-emerald-700",
-                "待开始" => "bg-slate-200 text-slate-600",
-                _ => "bg-amber-100 text-amber-700",
-            };
-            //var progressBarClass = normalizedStatus switch
-            //{
-            //    "已完成" => "bg-emerald-500",
-            //    "待开始" => "bg-slate-400",
-            //    _ => "bg-gradient-to-r from-blue-500 to-cyan-500",
-            //};
-            var progressBarClass = normalizedStatus switch
-            {
-                "已完成" => "bg-emerald-500",
-                "待开始" => "bg-emerald-500",
-                _ => "bg-emerald-500",
-            };
+            if (CanChangeScope && OrgId.HasValue && OrgId.Value > 0)
+                return OrgDescendants(OrgId.Value);
 
-            return new WorkDeskTaskItem
-            {
-                Title = title,
-                Summary = summary,
-                Owner = owner,
-                Status = normalizedStatus,
-                Progress = safeProgress,
-                DueDate = dueDate,
-                DueDateText = dueDate.ToString("yyyy-MM-dd"),
-                StatusClass = statusClass,
-                ProgressBarClass = progressBarClass,
-                Url = url,
-                Target = string.IsNullOrWhiteSpace(target) ? "_self" : target,
-            };
+            var user = App.DAL.User.Get(EffectiveUserId);
+            if (user == null) return new List<long>();
+
+            var ids = new List<long>();
+            if (user.OrgId.HasValue) ids.Add(user.OrgId.Value);
+            if (user.AuthOrgIds != null) ids.AddRange(user.AuthOrgIds);
+            ids = ids.Distinct().Where(x => x > 0).ToList();
+            if (ids.Count == 0) return new List<long>();
+
+            return OrgDescendants(ids);
         }
-    }
 
-    public class WorkDeskSummaryCard
-    {
-        public string Title { get; set; }
-        public string Value { get; set; }
-        public string Remark { get; set; }
-    }
-
-    public class WorkDeskEntryCard
-    {
-        public string Title { get; set; }
-        public string Badge { get; set; }
-        public string Description { get; set; }
-        public string Url { get; set; }
-        public string Target { get; set; } = "_self";
-        public string Icon { get; set; }
-        public string IconBg { get; set; }
-        public List<WorkDeskEntryStat> Stats { get; set; } = new();
-    }
-
-    public class WorkDeskEntryStat
-    {
-        public string Title { get; set; }
-        public string Value { get; set; }
-    }
-
-    public class WorkDeskTaskBoard
-    {
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string Icon { get; set; }
-        public string IconBg { get; set; }
-        public List<WorkDeskTaskItem> Tasks { get; set; } = new();
-        public int AverageProgress { get; set; }
-        public int InProgressCount { get; set; }
-        public int CompletedCount { get; set; }
-
-        /// <summary>刷新看板统计值。</summary>
-        public void RefreshStats()
+        private List<long> GetSectionScopeOrgIds()
         {
-            var items = Tasks ?? new List<WorkDeskTaskItem>();
-            AverageProgress = items.Count == 0 ? 0 : (int)Math.Round(items.Average(t => t.Progress));
-            InProgressCount = items.Count(t => string.Equals(t.Status, "进行中", StringComparison.OrdinalIgnoreCase));
-            CompletedCount = items.Count(t => string.Equals(t.Status, "已完成", StringComparison.OrdinalIgnoreCase));
+            var user    = App.DAL.User.Get(EffectiveUserId);
+            var org     = user?.OrgId.HasValue == true ? OrgGet(user.OrgId.Value) : null;
+            var section = org?.GetAncestor(OrgLevel.Section) ?? org;
+            return section == null ? new List<long>() : OrgDescendants(section.Id);
+        }
+
+        private List<long> GetCenterScopeOrgIds()
+        {
+            var user   = App.DAL.User.Get(EffectiveUserId);
+            var org    = user?.OrgId.HasValue == true ? OrgGet(user.OrgId.Value) : null;
+            var center = org?.GetAncestor(OrgLevel.Unit)
+                      ?? org?.GetAncestor(OrgLevel.District)
+                      ?? org;
+            return center == null ? new List<long>() : OrgDescendants(center.Id);
+        }
+
+        //---------------------------------------------------------------------
+        // 内部：对象 / 隐患 范围
+        //---------------------------------------------------------------------
+        private IQueryable<CheckObject> BuildObjectScopeQuery()
+        {
+            var uid    = EffectiveUserId;
+            var orgIds = EffectiveOrgIds;
+            return App.DAL.CheckObject.Search(isDel: false)
+                .Where(o => (orgIds.Count > 0 && o.DutyOrgId.HasValue && orgIds.Contains(o.DutyOrgId.Value))
+                         || (o.CheckerId == uid));
+        }
+
+        private IQueryable<CheckHazard> BuildHazardScopeQuery()
+        {
+            var uid    = EffectiveUserId;
+            var orgIds = EffectiveOrgIds;
+            return App.DAL.CheckHazard.Search(null, null, null, null, null, null)
+                .Where(h => h.CheckerId == uid
+                         || (orgIds.Count > 0
+                             && h.CheckObject != null
+                             && h.CheckObject.DutyOrgId.HasValue
+                             && orgIds.Contains(h.CheckObject.DutyOrgId.Value)));
+        }
+
+        //---------------------------------------------------------------------
+        // 内部：CheckTask → 前台表格行（SortPageExport 支持 Func 投影，避免 EF 翻译本地函数）
+        //---------------------------------------------------------------------
+        private static object BuildTaskRow(CheckTask t)
+        {
+            return new WorkDeskTaskRow
+            {
+                Id           = t.Id,
+                Name         = t.Name,
+                LevelText    = t.Orgs != null && t.Orgs.Count > 0
+                             ? string.Join("/", t.Orgs.Select(o => o.Org?.FullName ?? o.Org?.Name ?? "").Take(3))
+                             : "",
+                CreatorText  = t.CreatorName,
+                CreatorOrg   = t.Creator?.Org?.Name ?? "",
+                Progress     = (int)(t.Progress ?? 0),
+                ProgressText = ComputeProgressText(t),
+                StartDt      = t.StartDt,
+                ExpireDt     = t.ExpireDt,
+                DetailUrl    = $"/Checks/CheckTaskObjects?taskId={t.Id}",
+            };
+        }
+
+        private static string ComputeProgressText(CheckTask t)
+        {
+            if (t.ExpireDt.HasValue && t.ExpireDt.Value <= DateTime.Now) return "超期";
+            if (t.TotalCount > 0 && t.FinishCount >= t.TotalCount)      return "已完成";
+            return "进行中";
+        }
+
+        //---------------------------------------------------------------------
+        // 内部：兼容封装（避免 WorkDesk.cs 中同名冲突，以及和命名空间 App.Pages.Me.Org 冲突，统一用完整类型别名）
+        //---------------------------------------------------------------------
+        private static List<App.DAL.Org> OrgAll()                         => App.DAL.Org.All;
+        private static App.DAL.Org        OrgGet(long id)                 => App.DAL.Org.Get(id);
+        private static List<long> OrgDescendants(long rootOrgId)
+        {
+            return OrgAll()
+                .GetDescendants(rootOrgId)
+                .Cast<App.DAL.Org>()
+                .Select(o => o.Id)
+                .Distinct()
+                .ToList();
+        }
+        private static List<long> OrgDescendants(List<long> rootOrgIds)
+        {
+            return OrgAll()
+                .GetDescendants(rootOrgIds)
+                .Cast<App.DAL.Org>()
+                .Select(o => o.Id)
+                .Distinct()
+                .ToList();
         }
     }
 
-    public class WorkDeskTaskItem
+    //-------------------------------------------------------------------------
+    // 页面级 DTO
+    //-------------------------------------------------------------------------
+    public class WorkDeskLink
     {
-        public string Title { get; set; }
-        public string Summary { get; set; }
-        public string Owner { get; set; }
-        public string Status { get; set; }
-        public int Progress { get; set; }
-        public DateTime DueDate { get; set; }
-        public string DueDateText { get; set; }
-        public string StatusClass { get; set; }
-        public string ProgressBarClass { get; set; }
-        public string Url { get; set; }
+        public string Title  { get; set; }
+        public string Url    { get; set; }
         public string Target { get; set; } = "_self";
+    }
+
+    public class WorkDeskStatCard
+    {
+        public WorkDeskStatCard() { }
+        public WorkDeskStatCard(string title, int count, string url)
+        {
+            Title = title; Count = count; Url = url;
+        }
+        public string Title { get; set; }
+        public int    Count { get; set; }
+        public string Url   { get; set; }
+        public bool   ShowBadge => Count > 0;
+    }
+
+    public class WorkDeskTaskRow : IExport
+    {
+        public long      Id           { get; set; }
+        public string    Name         { get; set; }
+        public string    LevelText    { get; set; }
+        public string    CreatorText  { get; set; }
+        public string    CreatorOrg   { get; set; }
+        public int       Progress     { get; set; }
+        public string    ProgressText { get; set; }
+        public DateTime? StartDt      { get; set; }
+        public DateTime? ExpireDt     { get; set; }
+        public string    DetailUrl    { get; set; }
+
+        public object Export(ExportMode mode = ExportMode.Normal)
+        {
+            return new
+            {
+                Id, Name, LevelText,
+                CreatorText, CreatorOrg,
+                Progress, ProgressText,
+                StartDt, ExpireDt,
+                DetailUrl,
+            };
+        }
     }
 }

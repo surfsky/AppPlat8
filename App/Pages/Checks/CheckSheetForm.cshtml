@@ -11,9 +11,40 @@
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleSelect For="Item.Scope" Label="领域"></EleSelect>
         <EleTreeSelect For="Item.TagIds" Label="匹配标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?sheetId=@sheetId" Multiple="true" CollapseTags="false" FillRow="true"></EleTreeSelect>
-
-        <EleLabel Label="更多" FillRow="true"></EleLabel>
-        <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowItems" EnabledFor="Item.Id">检查项</EleButton>
+        <EleList Label="检查项"
+                 FillRow="true"
+                 DataHandler="?handler=ItemsData&sheetId=@sheetId"
+                 PageSize="5"
+                 Height="600px"
+                 MinHeight="160px"
+                 EmptyText="暂无数据"
+                 LastText=" "
+                 SortField="SortId"
+                 SortDirection="ASC"
+                 ScrollClass="flex-1 overflow-auto"
+                 ItemsClass="space-y-0.5"
+                 ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="inline-flex items-center justify-center min-w-[24px] h-[20px] px-1.5 rounded bg-gray-100 text-gray-600 text-xs shrink-0">
+                        {{ idx + 1 }}
+                    </span>
+                    <span class="inline-flex items-center px-2 h-[22px] rounded-full text-xs whitespace-nowrap shrink-0"
+                          :class="[
+                            (item.hazardLevel == 2 || (item.hazardLevelName && item.hazardLevelName.indexOf('重大') >= 0)) ? 'bg-red-50 text-red-600 border border-red-200' :
+                            (item.hazardLevel == 3 || (item.hazardLevelName && item.hazardLevelName.indexOf('重点') >= 0)) ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                            'bg-green-50 text-green-700 border border-green-200'
+                          ]"
+                          v-if="item.hazardLevel != null || (item.hazardLevelName && item.hazardLevelName.length > 0)">
+                        {{ item.hazardLevelName ?? (item.hazardLevel == null ? '' : (typeof item.hazardLevel === 'string' ? item.hazardLevel : String(item.hazardLevel))) }}
+                    </span>
+                    <span class="truncate flex-1 font-medium text-gray-800" :title="item.name">{{ item.name }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Text" Handler="ShowItems" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
     
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

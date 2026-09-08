@@ -42,6 +42,7 @@ export class EleAppBuilder {
 
     collectFilterDefaults(rootSelector = '#app') {
         const defaults = {};
+        const textDefaults = {};
         const root = document.querySelector(rootSelector) || document.getElementById('app');
         if (!root) return defaults;
 
@@ -59,16 +60,30 @@ export class EleAppBuilder {
             const raw = (el.getAttribute('data-filter-default') || '').trim();
             if (raw === 'true' || raw === 'false') {
                 defaults[key] = raw === 'true';
-                return;
-            }
-
-            if (raw !== '' && !Number.isNaN(Number(raw))) {
+            } else if (raw !== '' && !Number.isNaN(Number(raw))) {
                 defaults[key] = Number(raw);
-                return;
+            } else if (raw !== '') {
+                defaults[key] = raw;
             }
 
-            defaults[key] = raw;
+            // ElePicker: also collect TEXT default value (e.g. checkerName -> display name)
+            // so the picker shows the user's name / org name instead of the placeholder.
+            const textKey = (el.getAttribute('data-filter-text-model') || '').trim();
+            const textRaw = (el.getAttribute('data-filter-text-default') || '').trim();
+            if (textKey && textRaw !== '') {
+                if (textRaw === 'true' || textRaw === 'false')
+                    textDefaults[textKey] = textRaw === 'true';
+                else if (!Number.isNaN(Number(textRaw)))
+                    textDefaults[textKey] = Number(textRaw);
+                else
+                    textDefaults[textKey] = textRaw;
+            }
         });
+
+        // Merge TEXT defaults into the same defaults object so they're applied together
+        for (const [k, v] of Object.entries(textDefaults)) {
+            defaults[k] = v;
+        }
 
         return defaults;
     }
