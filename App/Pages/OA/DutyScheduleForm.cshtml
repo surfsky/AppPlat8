@@ -1,0 +1,34 @@
+@page
+@model App.Pages.OA.DutyScheduleFormModel
+@{
+    ViewData["Title"] = "值班表表单";
+}
+
+@section body {
+    <EleForm LabelWidth="110px">
+        <EleGridLayout Cols="2">
+            <EleDatePicker For="Item.Day"        Label="值班日期" Required="true" Type="Date"></EleDatePicker>
+            <EleInput      For="Item.Leader"     Label="值班领导"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Chief"      Label="值班长"    Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member1"    Label="值班员1"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member2"    Label="值班员2"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member3"    Label="值班员3"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member4"    Label="值班员4"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member5"    Label="值班员5"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member6"    Label="值班员6"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member7"    Label="值班员7"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member8"    Label="值班员8"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member9"    Label="值班员9"  Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member10"   Label="值班员10" Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member11"   Label="值班员11" Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member12"   Label="值班员12" Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member13"   Label="值班员13" Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member14"   Label="值班员14" Placeholder="姓名/手机号"></EleInput>
+            <EleInput      For="Item.Member15"   Label="值班员15" Placeholder="姓名/手机号"></EleInput>
+        </EleGridLayout>
+        <Bottom>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

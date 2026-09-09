@@ -108,6 +108,7 @@ namespace App.DAL
 
         // OA
         public DbSet<Announce> Announces { get; set; }
+        public DbSet<App.DAL.OA.DutySchedule> DutySchedules { get; set; }
 
         // 财务
         public DbSet<Asset> Assets { get; set; }

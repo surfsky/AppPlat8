@@ -125,6 +125,12 @@ namespace App.DAL
         [UI("公告", "公告修改")]               AnnounceEdit = 72,
         [UI("公告", "公告删除")]               AnnounceDelete = 73,
 
+        [UI("值班表", "值班表查看")]             DutyScheduleView = 74,
+        [UI("值班表", "值班表新增")]             DutyScheduleNew = 75,
+        [UI("值班表", "值班表修改")]             DutyScheduleEdit = 76,
+        [UI("值班表", "值班表删除")]             DutyScheduleDelete = 77,
+        [UI("值班表", "值班表导出")]             DutyScheduleExport = 78,
+
 
         [UI("评论", "评论查看")]               CommentView = 210,
         [UI("评论", "评论新增")]               CommentNew = 211,
