@@ -196,3 +196,17 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
 
 
 删除 IsCommon 字段
+
+
+        [HttpApi("获取角色菜单ID列表", AuthLogin = true, CacheSeconds = 60)]
+        public static APIResult GetRoleMenus(long? roleId = null)
+        {
+            if (roleId.HasValue && roleId.Value > 0)
+                return RoleMenu.GetRoleMenuIds(roleId.Value).ToResult();
+
+            var userId = App.Components.Auth.GetUserId(Asp.Current);
+            if (!userId.HasValue)
+                return new APIResult(401, "用户未登录");
+
+            return RoleMenu.GetUserMenuIds(userId.Value).ToResult();
+        }

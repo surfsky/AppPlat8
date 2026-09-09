@@ -56,17 +56,17 @@ namespace App.DAL
         [UI("基础", "工商执照")] public string LicenseImage { get; set; }
 
         // 人员相关
-        [UI("人员", "三方机构")] public string ThirdPartySafetyAgency { get; set; }
         [UI("人员", "企业负责人")] public string DutyMan { get; set; }   // 格式如：张三/15300000000。Man 是 Manager 的简写
         [UI("人员", "企业安全管理员")] public string SafeMan { get; set; }  // 格式如：张三/15300000000
         [UI("人员", "企业安全管家")] public string SafeSteward { get; set; }  // 格式如：张三/15300000000
+        [UI("人员", "三方安全机构")] public string SafeAgency { get; set; }  // 格式如：张三/15300000000
 
         // 建筑相关
         [UI("建筑", "建筑类型")] public CheckBuildingType? BuildingType { get; set; }
         [UI("建筑", "占地面积")] public double? LandArea { get; set; }
         [UI("建筑", "建筑面积")] public double? BuildingArea { get; set; }
-        [UI("建筑", "厂房使用权")] public CheckFactoryUsageType? FactoryUsageType { get; set; }  // 需枚举
-        [UI("建筑", "房屋结构")] public CheckBuildingStructure? BuildingStructure { get; set; }   // 需枚举
+        [UI("建筑", "厂房使用权")] public CheckFactoryUsageType? FactoryUsageType { get; set; }
+        [UI("建筑", "房屋结构")] public CheckBuildingStructure? BuildingStructure { get; set; }
 
 
         // Relations
@@ -164,7 +164,7 @@ namespace App.DAL
                 ProductContent,
                 OutlookImage,
                 LicenseImage,
-                ThirdPartySafetyAgency,
+                SafeAgency,
                 DutyMan,
                 SafeMan,
                 SafeSteward,

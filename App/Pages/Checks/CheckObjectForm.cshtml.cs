@@ -59,7 +59,7 @@ namespace App.Pages.Checks
             item.HasHarzard = req.HasHarzard;
             item.LandArea = req.LandArea;
             item.BuildingArea = req.BuildingArea;
-            item.ThirdPartySafetyAgency = req.ThirdPartySafetyAgency;
+            item.SafeAgency = req.SafeAgency;
 
             item.RiskLevel = req.RiskLevel;
             item.Scope = req.Scope;
