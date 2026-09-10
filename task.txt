@@ -486,17 +486,6 @@ Done
         BadSmell
             IGeometry.RawId, ItemUrl
             GisMenu.ItemUrl -> DataItemUrl
-
-    实现批量设置多个记录属性的能力
-        如给 CheckObjects 页面增加批量修改网格员的能力
-        <EleButton Command="EditBatch" Label="批量修改网格员">
-            <Popup>
-                <ElePicker For="Item.CheckerId" PopupUrl=".....">网格员</ElePicker>
-                <EleInput For="Item.DutyMan" >企业责任人</ElePicker>
-            </Popup>
-        </EleButton>
-        选择数据行后，点击该按钮，就会用elemanager drawer 弹出编辑页面，编辑 CheckerId 字段
-
     优化eletable 的 枚举显示方式，自动计算颜色值（绿色-》红色）
 
 
@@ -588,6 +577,18 @@ Done
 
 
     实现 Feedback 处理流程，重新熟悉一下 liteflow 工作流引擎
+
+
+2026/09/10
+    /实现批量设置多个记录属性的能力
+        如给 CheckObjects 页面增加批量修改网格员的能力
+        <EleButton Command="EditBatch" Label="批量修改网格员">
+            <Popup>
+                <ElePicker For="Item.CheckerId" PopupUrl=".....">网格员</ElePicker>
+                <EleInput For="Item.DutyMan" >企业责任人</ElePicker>
+            </Popup>
+        </EleButton>
+        选择数据行后，点击该按钮，就会用elemanager drawer 弹出编辑页面，编辑 CheckerId 字段
 
 
 2026/09/08

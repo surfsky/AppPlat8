@@ -27,6 +27,9 @@ namespace App.Pages.Shared
                 id = u.Id, 
                 name = u.RealName ?? u.Name, 
                 username = u.Name, 
+                mobile = u.Mobile,
+                realName = u.RealName,
+                displayName = $"{u.RealName ?? u.Name}({u.Mobile})",
                 dept = u.Org != null ? u.Org.Name : "" 
             }).ToList();
 

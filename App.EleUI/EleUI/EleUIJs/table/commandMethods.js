@@ -49,12 +49,39 @@ export const commandMethods = {
             if (row.Id !== null && typeof row.Id !== 'undefined') return row.Id;
             return null;
         }
-        function pickName(row) {
+        function pickMobile(row) {
             if (row == null) return '';
-            const v = row.name ?? row.Name ?? row.realName ?? row.RealName ?? row.title ?? row.Title;
-            return (v === null || typeof v === 'undefined') ? '' : `${v}`;
+            const keys = ['mobile', 'Mobile', 'phone', 'Phone', 'tel', 'Tel'];
+            for (const k of keys) {
+                const v = row[k];
+                if (v !== null && v !== undefined && String(v).trim() !== '') return String(v).trim();
+            }
+            return '';
         }
-        // 从 URL 解析 multi 参数（允许 ?multi=true / 1 / yes 或 ElePicker 打开时带 multi）
+        function pickRealName(row) {
+            if (row == null) return '';
+            const keys = ['realName', 'RealName', 'name', 'Name', 'title', 'Title', 'username', 'UserName', 'UserName'];
+            for (const k of keys) {
+                const v = row[k];
+                if (v !== null && v !== undefined && String(v).trim() !== '') return String(v).trim();
+            }
+            return '';
+        }
+        function pickDisplayName(row) {
+            if (row == null) return '';
+            const dnKeys = ['displayName', 'DisplayName', 'display_name'];
+            for (const k of dnKeys) {
+                const v = row[k];
+                if (v !== null && v !== undefined && String(v).trim() !== '') return String(v).trim();
+            }
+            const real = pickRealName(row);
+            const mob = pickMobile(row);
+            if (real && mob) return `${real}(${mob})`;
+            if (real) return real;
+            if (mob) return mob;
+            return '';
+        }
+        // 从 URL 解析 multi 参数
         function resolveMulti() {
             try {
                 const qs = new URLSearchParams(window.location.search);
@@ -76,18 +103,34 @@ export const commandMethods = {
             return;
         }
 
-        // 非 multi 场景只取第一行（兼容单选）
         const finalRows = multi ? rows : [rows[0]];
         const data = [];
         for (const r of finalRows) {
             const id = pickId(r);
             if (id === null || typeof id === 'undefined') continue;
-            const nm = pickName(r);
-            // 脱 Proxy，避免 postMessage 跨窗口传 Proxy 失败
-            data.push({
+            const display = pickDisplayName(r);
+            const realName = pickRealName(r);
+            const mobile = pickMobile(r);
+            const out = {
                 id: (typeof id === 'number' || typeof id === 'string' || typeof id === 'bigint') ? id : String(id),
-                name: nm || String(id)
-            });
+                name: display || realName || String(id)
+            };
+            if (realName) out.realName = realName;
+            if (mobile) out.mobile = mobile;
+            if (display) out.displayName = display;
+            for (const k of Object.keys(r)) {
+                if (['id', 'Id'].includes(k)) continue;
+                if (out[k] !== undefined) continue;
+                const v = r[k];
+                if (v === null || typeof v === 'undefined') continue;
+                const tv = typeof v;
+                if (tv === 'string' || tv === 'number' || tv === 'boolean' || tv === 'bigint') {
+                    out[k] = v;
+                } else if (tv === 'object' && (Array.isArray(v) === false) && JSON.stringify(v).length < 500) {
+                    try { out[k] = JSON.parse(JSON.stringify(v)); } catch (_) {}
+                }
+            }
+            data.push(out);
         }
         if (!data.length) {
             EleManager.showError('所选记录缺少 id，无法回传');
@@ -262,12 +305,11 @@ export const commandMethods = {
         this._mountEditBatchDrawer({
             title,
             fields,
-            size: this.config?.formDrawerSize || (window.innerWidth < 768 ? '100%' : '60%'),
             ids: this.selectedIds.value.slice()
         });
     },
 
-    _mountEditBatchDrawer({ title, fields, size, ids }) {
+    _mountEditBatchDrawer({ title, fields, ids }) {
         // 创建 Drawer 容器：优先使用 EleManager 统一全局 Drawer（避免父容器 z-index 影响）
         const safeNum = Array.isArray(ids) ? ids.length : 0;
         const instance = this;
@@ -330,8 +372,6 @@ export const commandMethods = {
         if (old) old.remove();
         const wrap = document.createElement('div');
         wrap.id = drawerId;
-        wrap.style.cssText = 'position:absolute;inset:0;z-index:3000;';
-        host.style.position = host.style.position || 'relative';
         host.appendChild(wrap);
 
         const { createApp, ref, reactive } = Vue;
@@ -344,6 +384,11 @@ export const commandMethods = {
                 const getUpdateFields = () => collectUpdates(formState);
                 const idsLen = safeNum;
                 const instanceRef = instance;
+                const defaultSize = window.innerWidth < 768 ? '100%' : '50%';
+                function handleClosed() {
+                    try { app.unmount(); } catch {}
+                    try { if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap); } catch {}
+                }
                 async function submit() {
                     const updates = getUpdateFields();
                     const n = Object.keys(updates).length;
@@ -388,38 +433,87 @@ export const commandMethods = {
                     if (!url) { EleManager.showWarning(`字段 ${f.label || key} 未配置 PopupUrl`); return; }
                     const multi = !!f.multi;
                     const pickerTitle = f.label || key;
+                    // 解析 ElePicker close payload：递归解包多层 data.data.data，兼容 closePage 的包壳
+                    function resolvePickerCloseData(payload) {
+                        if (!payload || typeof payload !== 'object') return null;
+                        if (payload.type === 'ElePicker' || payload.type === 'user-selected') return payload;
+                        const nested = payload.data;
+                        if (nested && typeof nested === 'object') {
+                            if (nested.type === 'ElePicker' || nested.type === 'user-selected') return nested;
+                            if (nested.data && typeof nested.data === 'object') {
+                                const d2 = nested.data;
+                                if (d2.type === 'ElePicker' || d2.type === 'user-selected') return d2;
+                                if (d2.data && typeof d2.data === 'object') {
+                                    const d3 = d2.data;
+                                    if (d3.type === 'ElePicker' || d3.type === 'user-selected') return d3;
+                                }
+                            }
+                        }
+                        return null;
+                    }
+                    // 和 pickerMethods.handlePickerMessage 对齐：兼容多种 rows 排列格式
+                    // User Picker 显示优化：优先用 displayName / RealName(Mobile)，兜底 name / Name
+                    function makeDisplayName(r) {
+                        if (!r || typeof r !== 'object') return '';
+                        if (r.displayName && String(r.displayName).trim()) return String(r.displayName).trim();
+                        const real = r.realName ?? r.RealName ?? r.name ?? r.Name ?? '';
+                        const mob  = r.mobile ?? r.Mobile ?? '';
+                        if (real && mob) return `${real}(${mob})`;
+                        if (real) return String(real);
+                        if (mob) return String(mob);
+                        const id = r.id !== undefined ? r.id : r.Id;
+                        return id !== undefined ? String(id) : '';
+                    }
+                    function applyPickerRows(msgData) {
+                        if (!msgData) return;
+                        const src = msgData.data || msgData;
+                        let rows = Array.isArray(src) ? src
+                                 : (src && Array.isArray(src.rows)) ? src.rows
+                                 : (src && (src.id !== undefined || src.Id !== undefined)) ? [src]
+                                 : (src && src.data && (src.data.id !== undefined || src.data.Id !== undefined)) ? [src.data]
+                                 : [];
+                        if (!rows || rows.length === 0) return;
+                        if (multi) {
+                            const idsArr   = rows.map(r => (r.id !== undefined ? r.id : r.Id));
+                            const names = rows.map(r => makeDisplayName(r));
+                            formState[key]     = idsArr.join(',');
+                            formState[textKey] = names.join(',');
+                        } else {
+                            const first = rows[0] || {};
+                            const idVal   = first.id   !== undefined ? first.id   : first.Id;
+                            const nameVal = makeDisplayName(first);
+                            formState[key]     = idVal;
+                            formState[textKey] = nameVal;
+                        }
+                    }
+                    let handled = false;
+                    const tryHandle = (pickerData) => {
+                        if (handled || !pickerData) return;
+                        applyPickerRows(pickerData);
+                        handled = true;
+                        window.removeEventListener('message', onMsg);
+                    };
+                    const onMsg = (ev) => {
+                        try {
+                            const outer = (typeof ev.data === 'string') ? JSON.parse(ev.data) : ev.data;
+                            if (!outer || typeof outer !== 'object') return;
+                            const pickerData = resolvePickerCloseData(outer);
+                            if (pickerData) tryHandle(pickerData);
+                        } catch {}
+                    };
+                    window.addEventListener('message', onMsg);
                     const options = {
                         title: pickerTitle,
                         url,
                         direction: 'rtl',
                         destroyOnClose: true,
                         resizable: true,
-                        size: (window.innerWidth < 768 ? '100%' : '70%'),
-                        closeHandler: () => {}
-                    };
-                    const onPick = (ev) => {
-                        if (!ev || ev.type !== 'ElePicker' || !Array.isArray(ev.data) || ev.data.length === 0) return;
-                        const first = ev.data[0];
-                        if (multi) {
-                            const idsArr   = ev.data.map(d => d.id);
-                            const names = ev.data.map(d => d.name);
-                            formState[key]     = idsArr.join(',');
-                            formState[textKey] = names.join(',');
-                        } else {
-                            formState[key]     = first.id;
-                            formState[textKey] = first.name || String(first.id);
+                        size: (window.innerWidth < 768 ? '100%' : ''),
+                        closeHandler: (payload) => {
+                            const pickerData = resolvePickerCloseData(payload);
+                            if (pickerData) tryHandle(pickerData);
                         }
                     };
-                    const onMsg = (ev) => {
-                        try {
-                            const data = (typeof ev.data === 'string') ? JSON.parse(ev.data) : ev.data;
-                            if (data && data.type === 'ElePicker') {
-                                onPick(data);
-                                window.removeEventListener('message', onMsg);
-                            }
-                        } catch {}
-                    };
-                    window.addEventListener('message', onMsg);
                     if (window.EleManager && typeof window.EleManager.openDrawer === 'function') {
                         window.EleManager.openDrawer(options);
                     } else {
@@ -427,10 +521,10 @@ export const commandMethods = {
                     }
                 }
 
-                return { visible, submitting, fields, title, size, formState, submit, openPickerField, idsLen };
+                return { visible, submitting, fields, title, formState, submit, openPickerField, idsLen, handleClosed, defaultSize };
             },
             template: `
-<el-drawer v-model="visible" :title="title" :size="size" direction="rtl" :destroy-on-close="true" custom-class="eleui-batch-edit-drawer">
+<el-drawer v-model="visible" :title="title" :size="defaultSize" direction="rtl" :destroy-on-close="true" @closed="handleClosed" custom-class="eleui-batch-edit-drawer">
   <div class="flex flex-col gap-4 p-2">
     <el-alert type="info" :closable="false" show-icon>
       <template #title>已准备 <b>{{ fields.length }}</b> 个字段，将更新 <b>{{ idsLen }}</b> 条记录；<span class="text-gray-600">留空的字段将跳过不更新</span>。</template>

@@ -56,14 +56,11 @@ namespace App.DAL
         //------------------------------------------------------
         // 计算属性
         //------------------------------------------------------
+        public string DisplayName => $"{this.RealName}({this.Mobile})";
         public string OrgName => this.Org?.Name;
         public string OrgFullName => this.Org?.FullName;
-        public string AuthOrgName => GetAuthorizedOrgs()
-            .Select(t => t.Name)
-            .FirstOrDefault(t => t.IsNotEmpty());
-        public string AuthOrgFullName => GetAuthorizedOrgs()
-            .Select(t => t.FullName ?? t.Name)
-            .FirstOrDefault(t => t.IsNotEmpty());
+        public string AuthOrgName => GetAuthorizedOrgs().Select(t => t.Name).FirstOrDefault(t => t.IsNotEmpty());
+        public string AuthOrgFullName => GetAuthorizedOrgs().Select(t => t.FullName ?? t.Name).FirstOrDefault(t => t.IsNotEmpty());
         public string MobileMasked => this.Mobile?.Mask(3, 4);
         public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
         public string AuthOrgNames => GetAuthorizedOrgs()
@@ -375,6 +372,7 @@ namespace App.DAL
                 this.Id,
                 this.Name,
                 this.RealName,
+                DisplayName = this.DisplayName,
                 this.OrgId,
                 this.OrgName,
                 this.OrgFullName,
@@ -430,8 +428,7 @@ namespace App.DAL
             var q = DataSet
                 .Include(u => u.Org)
                 .Include(u => u.Roles)
-                .Include(u => u.UserOrgs)
-                    .ThenInclude(t => t.Org)
+                .AsNoTracking()
                 .AsQueryable();
             if (name.IsNotEmpty())     q = q.Where(t => t.Name.Contains(name));
             if (realName.IsNotEmpty()) q = q.Where(t => t.RealName.Contains(realName));

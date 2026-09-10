@@ -219,15 +219,28 @@ export const pickerMethods = {
 
         const holder = _formHolder(this);
 
+        // 兼容 User 选择器的 DisplayName 格式：优先 displayName / RealName(Mobile)，兜底 name
+        function makeDisplayName(r) {
+            if (!r || typeof r !== 'object') return '';
+            if (r.displayName && String(r.displayName).trim()) return String(r.displayName).trim();
+            const real = r.realName ?? r.RealName ?? r.name ?? r.Name ?? '';
+            const mob  = r.mobile ?? r.Mobile ?? '';
+            if (real && mob) return `${real}(${mob})`;
+            if (real) return String(real);
+            if (mob) return String(mob);
+            const id = r.id !== undefined ? r.id : r.Id;
+            return id !== undefined ? String(id) : '';
+        }
+
         if (this.pickerMulti.value) {
             holder.value[keyId] = rows.map(r => r.id).join(',');
-            holder.value[keyText] = rows.map(r => r.name).join(',');
+            holder.value[keyText] = rows.map(r => makeDisplayName(r)).join(',');
         } else if (rows.length > 0) {
             const first = rows[0] || {};
             const dataKey = first.dataKey || first.dk || '';
             const storedValue = dataKey ? this.readPickerPayloadFromStorage(String(dataKey)) : '';
             const nextValue = storedValue || first.id;
-            const nextText = storedValue || first.name || first.id;
+            const nextText = storedValue || makeDisplayName(first) || first.name || first.id;
             holder.value[keyId] = nextValue;
             holder.value[keyText] = nextText;
 

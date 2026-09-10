@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace App.EleUI
 {
@@ -15,37 +17,54 @@ namespace App.EleUI
         Picker
     }
 
-    /// <summary>BatchField 元数据定义（纯帮助类，不作为 TagHelper 注册）。
-    /// Razor 中写的 &lt;BatchField ... /&gt; 保持为纯字符串，由 EleButton 通过
-    /// BatchFieldExtractor 正则解析，避免 TagHelper 管道因 ParentTag/Items 时序吞掉子标签。</summary>
-    public class BatchFieldTagHelper
+    /// <summary>批量字段上下文：存放在 EleButton 的 context.Items 中，供 BatchField 子标签写入元数据。</summary>
+    public class BatchFieldsContext
     {
-        public EleBatchFieldControl Control { get; set; } = EleBatchFieldControl.Input;
-        public string Field { get; set; }
-        public string Label { get; set; }
-        public string Placeholder { get; set; }
-        public bool Required { get; set; } = false;
-        public bool Enabled { get; set; } = true;
+        public List<Dictionary<string, object>> Fields { get; } = new List<Dictionary<string, object>>();
+    }
 
-        public string PopupUrl { get; set; }
-        public string TextFor { get; set; }
-        public bool Multi { get; set; } = false;
+    //-------------------------------------------------------------------------
+    // BatchField 子标签：直接写 Control/Field/Label/Options 等强类型属性
+    //-------------------------------------------------------------------------
+    /// <summary>单个批量字段声明。必须作为 <BatchFields> 的直接子元素使用。</summary>
+    [HtmlTargetElement("BatchField", ParentTag = "BatchFields")]
+    public class BatchFieldTagHelper : TagHelper
+    {
+        [HtmlAttributeName("Control")]      public EleBatchFieldControl Control { get; set; } = EleBatchFieldControl.Input;
+        [HtmlAttributeName("Field")]        public string Field { get; set; }
+        [HtmlAttributeName("Label")]        public string Label { get; set; }
+        [HtmlAttributeName("Placeholder")]  public string Placeholder { get; set; }
+        [HtmlAttributeName("Required")]     public bool Required { get; set; } = false;
+        [HtmlAttributeName("Enabled")]      public bool Enabled { get; set; } = true;
 
-        public string Options { get; set; }
-        public double? Min { get; set; }
-        public double? Max { get; set; }
-        public double? Step { get; set; }
-        public int Rows { get; set; } = 3;
+        [HtmlAttributeName("PopupUrl")]     public string PopupUrl { get; set; }
+        [HtmlAttributeName("TextFor")]      public string TextFor { get; set; }
+        [HtmlAttributeName("Multi")]        public bool Multi { get; set; } = false;
 
-        public Dictionary<string, object> ToMeta()
+        [HtmlAttributeName("Options")]      public string Options { get; set; }
+        [HtmlAttributeName("Min")]          public double? Min { get; set; }
+        [HtmlAttributeName("Max")]          public double? Max { get; set; }
+        [HtmlAttributeName("Step")]         public double? Step { get; set; }
+        [HtmlAttributeName("Rows")]         public int Rows { get; set; } = 3;
+
+        public override void Process(TagHelperContext context, TagHelperOutput output)
         {
-            var d = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            d["control"]    = Control.ToString().ToLowerInvariant();
-            d["field"]      = Field ?? "";
-            d["label"]      = Label ?? Field ?? "";
-            d["placeholder"]= Placeholder ?? "";
-            d["required"]   = Required;
-            d["enabled"]    = Enabled;
+            // 从父级 EleButton 放进来的 BatchFieldsContext 拿列表
+            if (!(context.Items[typeof(BatchFieldsContext)] is BatchFieldsContext ctx))
+            {
+                output.SuppressOutput();
+                return;
+            }
+
+            var d = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["control"]     = Control.ToString().ToLowerInvariant(),
+                ["field"]       = Field ?? "",
+                ["label"]       = Label ?? Field ?? "",
+                ["placeholder"] = Placeholder ?? "",
+                ["required"]    = Required,
+                ["enabled"]     = Enabled
+            };
             if (!string.IsNullOrEmpty(PopupUrl)) d["popupUrl"] = PopupUrl;
             if (!string.IsNullOrEmpty(TextFor))  d["textFor"]  = TextFor;
             if (Multi)                           d["multi"]    = true;
@@ -68,10 +87,30 @@ namespace App.EleUI
             if (Max.HasValue)  d["max"]  = Max.Value;
             if (Step.HasValue) d["step"] = Step.Value;
             if (Rows > 0)      d["rows"] = Rows;
-            return d;
+
+            ctx.Fields.Add(d);
+            output.SuppressOutput();
         }
     }
 
-    /// <summary>占位帮助类；真实的 <BatchFields> 包裹标签不作为 TagHelper 执行，保留为纯字符串以便正则提取。</summary>
-    public class BatchFieldsTagHelper { }
+    //-------------------------------------------------------------------------
+    // BatchFields 包裹容器：ParentTag = EleButton，负责触发子 BatchField 执行
+    //-------------------------------------------------------------------------
+    /// <summary>批量字段声明容器。直接内嵌在 EleButton 标签内使用。</summary>
+    [HtmlTargetElement("BatchFields", ParentTag = "EleButton")]
+    public class BatchFieldsTagHelper : TagHelper
+    {
+        public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
+        {
+            // 确保父 EleButton 的 Init 已经写入 BatchFieldsContext
+            if (!(context.Items[typeof(BatchFieldsContext)] is BatchFieldsContext _))
+            {
+                output.SuppressOutput();
+                return;
+            }
+            // 执行子 BatchField（他们会把自己写入 BatchFieldsContext.Fields）
+            await output.GetChildContentAsync();
+            output.SuppressOutput();
+        }
+    }
 }

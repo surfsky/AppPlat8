@@ -19,6 +19,48 @@ namespace App.BLL
         public record UpdateSummary(int Total, int Updated, int Skipped, List<string> Errors);
         public record BatchResult(int Code, string Message, UpdateSummary Data);
 
+        /// <summary>将 System.Text.Json.JsonElement / Newtonsoft JValue 等 JSON 包装类型解壳为基础值类型，供 Convertor.To / Convert.ChangeType 正常转换</summary>
+        private static object UnwrapValue(object val)
+        {
+            if (val == null) return null;
+            var t = val.GetType();
+            var ns = t.Namespace ?? "";
+            if (ns == "System.Text.Json" && t.Name == "JsonElement")
+            {
+                try
+                {
+                    dynamic je = val;
+                    int kind = (int)je.ValueKind;
+                    switch (kind)
+                    {
+                        case 7: return null;
+                        case 5: return true;
+                        case 6: return false;
+                        case 3: return (string)je.GetString();
+                        case 4:
+                            try { return (long)je.GetInt64(); }
+                            catch { return (double)je.GetDouble(); }
+                        default:
+                            return je.ToString();
+                    }
+                }
+                catch { return val.ToString(); }
+            }
+            if (ns.StartsWith("Newtonsoft.Json.Linq", StringComparison.Ordinal))
+            {
+                try
+                {
+                    dynamic jv = val;
+                    string typeName = jv.Type?.ToString() ?? "";
+                    if (!string.IsNullOrEmpty(typeName) && typeName != "Object" && typeName != "Array")
+                        return (object)jv.Value;
+                    return jv?.ToString();
+                }
+                catch { return val.ToString(); }
+            }
+            return val;
+        }
+
         /// <summary>尝试通过上层 App 程序集的 App.Components.Auth.CheckPower(Power) 解析权限（无循环依赖，通过反射解耦）</summary>
         private static bool ResolvePower(Power power)
         {
@@ -70,7 +112,7 @@ namespace App.BLL
                 foreach (var kv in fields)
                 {
                     if (string.IsNullOrWhiteSpace(kv.Key)) continue;
-                    var val = kv.Value;
+                    var val = UnwrapValue(kv.Value);
                     if (skipNullOrEmpty)
                     {
                         if (val == null) continue;

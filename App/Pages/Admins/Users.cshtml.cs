@@ -42,7 +42,10 @@ namespace App.Pages.Admins
         public IActionResult OnGetData(Paging pi, string name, string realName, long? orgId, long? deptId, long? roleId, bool? isDel)
         {
             var orgFilter = orgId ?? deptId;
-            var list = App.DAL.User.Search(name, realName, orgFilter, roleId, isDel).SortPageExport(pi);
+            var md = Request.Query["md"].FirstOrDefault();
+            var isSelectMode = !string.IsNullOrEmpty(md) && md.Equals("Select", StringComparison.OrdinalIgnoreCase);
+            var exportMode = isSelectMode ? ExportMode.Detail : ExportMode.Normal;
+            var list = App.DAL.User.Search(name, realName, orgFilter, roleId, isDel).SortPageExport(pi, exportMode);
             return BuildResult(0, "success", list, pi);
         }
 

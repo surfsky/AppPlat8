@@ -104,7 +104,7 @@ namespace App.EleUI
         // 创建表格HTML，包含表头、数据行、选择列等
         private string CreateTable(TableContext tableContext)
         {
-            var selectionCol = EnableBatch ? @"<el-table-column type=""selection"" width=""55""></el-table-column>" : "";
+            var selectionCol = EnableBatch ? @"<el-table-column type=""selection"" width=""55"" fixed=""left""></el-table-column>" : "";
             var rowKeyAttr = !string.IsNullOrEmpty(RowKey) ? $@"row-key=""{RowKey}""" : "";
             var highlightAttr = !EnableBatch ? "highlight-current-row" : "";
             var selectionEvent = EnableBatch ? @"v-on:selection-change=""onSelectionChange""" : @"v-on:current-change=""onCurrentChange""";
