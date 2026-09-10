@@ -18,7 +18,7 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@AuthPower(Power.ContactNew)">新增</EleButton>
                 <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@AuthPower(Power.ContactNew)">导入</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="@AuthPower(Power.ContactDelete)">删除</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@AuthPower(Power.ContactDelete)">删除</EleButton>
                 <EleButton Type="Info" PopupUrl="ContactMenus" Icon="FolderOpened" Visible="false">目录管理</EleButton>
             </Buttons>
         </Toolbar>

@@ -288,7 +288,7 @@ namespace App
                 o.FormatLowCamel = true;
                 o.FormatLongNumber = "Int64,Decimal";
                 o.Language = "en";
-                o.OnVisit += args => Logger.Info("[API] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
+                //o.OnVisit += args => Logger.Info("[API] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
                 o.OnBan += args => Logger.Warn("[BAN] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
                 o.OnAuth += args =>
                 {

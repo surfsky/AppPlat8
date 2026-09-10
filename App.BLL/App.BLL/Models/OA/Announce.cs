@@ -20,8 +20,7 @@ namespace App.DAL
     {
         [UI("标题")]                                   public string Title { get; set; }
         [UI("组织")]                                   public long? OrgId { get; set; }
-        [UI("创建时间")]                               public DateTime? CreateTime { get; set; }
-        [UI("发布时间")]                               public DateTime? PublishTime { get; set; }
+        [UI("发布时间")]                               public DateTime? PublishDt { get; set; }
         [UI("作者")]                                   public string Author { get; set; }
         [UI("作者Id")]                                 public long? AuthorId { get; set; }
         [UI("内容", Editor = EditorType.Html)]         public string Content { get; set; }
@@ -46,8 +45,8 @@ namespace App.DAL
                 this.Author,
                 this.Status,
                 this.StatusName,
-                this.PublishTime,
-                this.CreateTime,
+                this.PublishDt,
+                this.CreateDt,
                 this.Priority,
                 this.ViewCount,
                 this.IsTop,
@@ -63,8 +62,8 @@ namespace App.DAL
             if (status != null)       q = q.Where(a => a.Status == status);
             if (title.IsNotEmpty())   q = q.Where(a => a.Title.Contains(title));
             if (author.IsNotEmpty())  q = q.Where(a => a.Author.Contains(author));
-            if (fromDt != null)       q = q.Where(a => a.PublishTime >= fromDt);
-            if (toDt != null)         q = q.Where(a => a.PublishTime <= toDt);
+            if (fromDt != null)       q = q.Where(a => a.PublishDt >= fromDt);
+            if (toDt != null)         q = q.Where(a => a.PublishDt <= toDt);
             if (orgId != null)        q = q.Where(a => a.OrgId == orgId);
             return q;
         }        

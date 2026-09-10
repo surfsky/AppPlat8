@@ -53,19 +53,11 @@ namespace App.DAL.OA
         public static IQueryable<DutySchedule> Search(
             DateTime? fromDt = null,
             DateTime? toDt = null,
-            DateTime? day = null,
             string keyword = "")
         {
             var q = IncludeSet.AsQueryable();
-            if (day.IsNotEmpty())
-                q = q.Where(o => o.Day == day.Value.Date);
-            else
-            {
-                if (fromDt.IsNotEmpty())
-                    q = q.Where(o => o.Day >= fromDt.Value.Date);
-                if (toDt.IsNotEmpty())
-                    q = q.Where(o => o.Day <= toDt.Value.Date);
-            }
+            if (fromDt.IsNotEmpty())     q = q.Where(o => o.Day >= fromDt);
+            if (toDt.IsNotEmpty())       q = q.Where(o => o.Day <= toDt);
             if (keyword.IsNotEmpty())
             {
                 var k = keyword.Trim();

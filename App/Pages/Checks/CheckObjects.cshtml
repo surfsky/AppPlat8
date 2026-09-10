@@ -29,10 +29,8 @@
                 <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Width="250px" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0"
                            Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QString("checkerId"))"
                            TextValue="@Model.DefaultCheckerName"></ElePicker>
-                <EleDatePicker Prop="createStartDt"   Width="250px" Label="创建时间起"        Type="DateTime" Value="@QString("createStartDt")"></EleDatePicker>
-                <EleDatePicker Prop="createEndDt"     Width="250px" Label="创建时间止"        Type="DateTime" Value="@QString("createEndDt")"></EleDatePicker>
-                <EleDatePicker Prop="latestCheckStartDt" Width="250px" Label="巡查时间起"     Type="DateTime" Value="@QString("latestCheckStartDt")"></EleDatePicker>
-                <EleDatePicker Prop="latestCheckEndDt"   Width="250px" Label="巡查时间止"     Type="DateTime" Value="@QString("latestCheckEndDt")"></EleDatePicker>
+                <EleDatePicker For="Item.CreateDt" Type="DateRange" Width="250px" Label="创建时间"        Type="DateTime" Value="@QString("createStartDt")"></EleDatePicker>
+                <EleDatePicker For="Item.LastCheckDt" Type="DateRange" Width="250px" Label="巡查时间"     Type="DateTime" Value="@QString("lastCheckStartDt")"></EleDatePicker>
                 <EleSelect For="Item.IndustryRisk"     Width="250px" Label="行业风险类型"     Value="@QString("industryRisk")"></EleSelect>
                 <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QString("tagIds")"></EleTreePicker>
                 <EleSelect For="Item.IsDel"            Width="250px" Label="已删除"           Value="@QString("isDel", "false")"></EleSelect>
@@ -42,7 +40,7 @@
                 <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.CheckObjectNew)">新增</EleButton>
                 <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">导入</EleButton>
                 <EleButton Type="Primary" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.CheckObjectExport)">导出</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckObjectDelete)">删除</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckObjectDelete)">删除</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
@@ -74,7 +72,7 @@
 
             <EleColumn For="Item.Scale" Label="规模" Width="100"></EleColumn>
             <EleColumn For="Item.ArchieveDt" Label="建档日期" Width="110" FormatString="yyyy-MM-dd"></EleColumn>
-            <EleColumn For="Item.LatestCheckDt" Label="巡查时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.LastCheckDt" Label="巡查时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleColumn For="Item.NextCheckDt" Label="下次巡查时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
 
             <EleColumn For="Item.DutyOrgName" Label="责任网格" Width="200"></EleColumn>

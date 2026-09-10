@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -142,6 +143,22 @@ namespace App.Utils
         //---------------------------------------------------
         // 检索和遍历
         //---------------------------------------------------
+        /// <summary>获取列表元素（引用类型；找不到返回 null）</summary>
+        public static T? Get<T>(this List<T> list, int index) where T : class
+        {
+            if (list != null && index >= 0 && index < list.Count)
+                return list[index];
+            return null;
+        }
+
+        /// <summary>获取列表元素（值类型；找不到返回 Nullable<T>.None=null）</summary>
+        public static T? GetVal<T>(this List<T> list, int index) where T : struct
+        {
+            if (list != null && index >= 0 && index < list.Count)
+                return list[index];
+            return null;
+        }
+
         /// <summary>遍历过滤（同Where，但名字会冲突; 可考虑用 Query; Search; Filter）</summary>
         public static List<T> Search<T>(this IEnumerable<T> source, Func<T, bool> func)
         {

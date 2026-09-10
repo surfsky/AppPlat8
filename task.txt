@@ -487,36 +487,14 @@ Done
             IGeometry.RawId, ItemUrl
             GisMenu.ItemUrl -> DataItemUrl
 
-2026/07/31
-    /完善日志模块，增加Entity.Instance.OnAudit()方法，统一注入实体数据操作日志；
-    /核对数据和权限
-    /测试 /httpapi/gis/getobjects 的tagNames, dutyOrgId 等参数，配置好目录中的数据；
-    /日志操作人信息 IP 丢失，请查一下原因
-    /实现EleTable的select模式
-    /CheckSheetItem 增加物理 Code 属性，便于自定义以及排序
-    /为了便于ai调试，创建 /pages/LoginAI 页面, 提供快速登录方式以绕开滑动模块，格式为：LoginAI?userId=xxx&password=xxx&timestamp=xxx&sign=xxx
-        其中 
-        - sign 的值为 userId,password,timestampe + nonce + 公钥 加密的结果
-        - 该链接时间戳过期时间为1个小时；
-        - 给 SiteConfig 类增加 PublicKey, PrivateKey 键值对属性，并填充一组值；
-        - 给该页面做好注释，便于ai理解和调试；
-        2、将其验证逻辑写到一个独立的工具类中 /app/components/SignHelper.cs
-        检测是否有什么风险或漏洞 ，可完善它；
-    /检查CheckObjects 页面，将网格员输入框改为 picker
-    /实现EleTable页面的 Select 模式
-        （1）在该模式下，禁止所有编辑功能（包括相关按钮和行命令，除了command=search和select的按钮其它按钮都隐藏）；
-        （2）选择数据后，点击选择按钮（Command为Select），可将选择数据的id/name等信息传递给picker 控件；
-        （3）支持单选和多选；
-    /配置高频风险检查表
-
     实现批量设置多个记录属性的能力
         如给 CheckObjects 页面增加批量修改网格员的能力
-        <EleButton Command="UpdateBatch" Label="批量修改网格员">
-            <Template>
+        <EleButton Command="EditBatch" Label="批量修改网格员">
+            <Popup>
                 <ElePicker For="Item.CheckerId" PopupUrl=".....">网格员</ElePicker>
-            </Template>
+            </Popup>
         </EleButton>
-        选择数据行后，点击该按钮，就会用drawer 弹出编辑页面，编辑 CheckerId 字段（用ElePicker来展示）
+        选择数据行后，点击该按钮，就会用elemanager drawer 弹出编辑页面，编辑 CheckerId 字段
 
     优化eletable 的 枚举显示方式，自动计算颜色值（绿色-》红色）
 
@@ -544,6 +522,47 @@ Done
             感觉不是数据加载慢，而是element vue页面创建慢。能否页面vue结构渲染前就显示loading效果；找个页面做一下示例；
             检查一下 EleForm、EleTable 在每次加载数据时是否带了 loading 效果，如果没有就加上。（其实加上了，但是没用）
             这样有两层loading逻辑，第一次的页面创建，每次的数据加载，会优化用户体验；
+
+    解决性能问题：http://172.20.165.221:6060/httpapi/orgs/GetAuthOrgTree 
+    实现权限管理
+        知识库目录角色授权管理
+        角色是否也要弄成树状的，这样便于管理角色的授权，如应急局管理员》可授权管理该角色下的所有角色？过于复杂。
+        写个页面，列出所有页面需要的权限
+    实现专项检查任务分派及认领逻辑
+        专项检查任务创建、选择清单、认领和分配
+        专项检查任务报表及清单
+        隐患清单查询
+            可根据 任务名称、检查项标签来过滤，以获得具体的清单
+            检查项增加标签，可根据标签来进行分项统计
+            检查时可选多个任务
+        检查项合并及调整：做一张大的检查总表，可过滤查询：类别、领域、名称、编号
+        日报统计
+
+    知识库
+        实现文件和目录管理
+            实现递归检索
+            实现目录和文件的混合展示
+            实现多目录文件的批量上传加载
+            实现大文件的上传和下载
+        实现检索页面
+            实现全文检索
+            实现AI RAG增强检索
+        测试瑞泽的权限，让他自己编辑
+    参考
+        也修正drawer 的拖拽调整宽度的bug：drawer向左拖动时问题不大，可以保持跟踪实时调整drawer的大小，但是往右拖动时经常会丢失跟踪，导致drawer无法调整宽度。另外拖动时也感觉不平滑，会抖动；
+            我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
+            <el-drawer v-model="drawer" :direction="direction" resizable>
+                This is drawer content.
+            </el-drawer>
+            word渲染丢失文字格式
+            excel渲染丢失合并行逻辑
+    把 AI 对话页面（AI/Chat）中的语音用 QWen3 ASR 0.6B 服务替代 
+    实现会议导入：组织、日期、类别、图片、内容
+    实现值班表导入：
+    如何封装这个网站项目，作为跨平台单机工具使用，先给方案先不编程（算了）
+    检查一下角色权限，为什么董局无法查看安全生成/管理对象页面
+    组织表不能随便删除啊，要做成逻辑删除的
+
 
     知识库
         把基础科的 AI 知识库弄起来 RAG
@@ -614,6 +633,29 @@ Done
         /HttpApi/Gis/GetCheckObjects?tagNames=人员密集场所
         /HttpApi/Gis/GetCheckObjects?tagNames=
 
+2026/08/31
+    /完善日志模块，增加Entity.Instance.OnAudit()方法，统一注入实体数据操作日志；
+    /核对数据和权限
+    /测试 /httpapi/gis/getobjects 的tagNames, dutyOrgId 等参数，配置好目录中的数据；
+    /日志操作人信息 IP 丢失，请查一下原因
+    /实现EleTable的select模式
+    /CheckSheetItem 增加物理 Code 属性，便于自定义以及排序
+    /为了便于ai调试，创建 /pages/LoginAI 页面, 提供快速登录方式以绕开滑动模块，格式为：LoginAI?userId=xxx&password=xxx&timestamp=xxx&sign=xxx
+        其中 
+        - sign 的值为 userId,password,timestampe + nonce + 公钥 加密的结果
+        - 该链接时间戳过期时间为1个小时；
+        - 给 SiteConfig 类增加 PublicKey, PrivateKey 键值对属性，并填充一组值；
+        - 给该页面做好注释，便于ai理解和调试；
+        2、将其验证逻辑写到一个独立的工具类中 /app/components/SignHelper.cs
+        检测是否有什么风险或漏洞 ，可完善它；
+    /检查CheckObjects 页面，将网格员输入框改为 picker
+    /实现EleTable页面的 Select 模式
+        （1）在该模式下，禁止所有编辑功能（包括相关按钮和行命令，除了command=search和select的按钮其它按钮都隐藏）；
+        （2）选择数据后，点击选择按钮（Command为Select），可将选择数据的id/name等信息传递给picker 控件；
+        （3）支持单选和多选；
+    /配置高频风险检查表
+
+
 
 2026/08/14
     /换个目录存储？如/files/KB，根据当前UniId来判断存储位置
@@ -629,44 +671,11 @@ Done
         /自动根据标签，选择对应的检查表和检查项目
         /检查项可根据名称、编号、类别、状态等过滤
         /检查对象的实效原因改为枚举
-    实现权限管理
-        知识库目录角色授权管理
-        角色是否也要弄成树状的，这样便于管理角色的授权，如应急局管理员》可授权管理该角色下的所有角色？过于复杂。
-        写个页面，列出所有页面需要的权限
-    实现专项检查任务分派及认领逻辑
-        专项检查任务创建、选择清单、认领和分配
-        专项检查任务报表及清单
-        隐患清单查询
-            可根据 任务名称、检查项标签来过滤，以获得具体的清单
-            检查项增加标签，可根据标签来进行分项统计
-            检查时可选多个任务
-        检查项合并及调整：做一张大的检查总表，可过滤查询：类别、领域、名称、编号
-        日报统计
-
-    知识库
-        实现文件和目录管理
-            实现递归检索
-            实现目录和文件的混合展示
-            实现多目录文件的批量上传加载
-            实现大文件的上传和下载
-        实现检索页面
-            实现全文检索
-            实现AI RAG增强检索
-        测试瑞泽的权限，让他自己编辑
-    参考
-        也修正drawer 的拖拽调整宽度的bug：drawer向左拖动时问题不大，可以保持跟踪实时调整drawer的大小，但是往右拖动时经常会丢失跟踪，导致drawer无法调整宽度。另外拖动时也感觉不平滑，会抖动；
-            我查了官方文档，只需要一个 resizable 参数就可以的，不知道我们现在的DrawerHelper时如何实现的，如果官方的实现方法没问题，就切换回官方的逻辑以简化代码：
-            <el-drawer v-model="drawer" :direction="direction" resizable>
-                This is drawer content.
-            </el-drawer>
-            word渲染丢失文字格式
-            excel渲染丢失合并行逻辑
-    把 AI 对话页面（AI/Chat）中的语音用 QWen3 ASR 0.6B 服务替代 
-    实现会议导入：组织、日期、类别、图片、内容
-    实现值班表导入：
-    如何封装这个网站项目，作为跨平台单机工具使用，先给方案先不编程（算了）
-    检查一下角色权限，为什么董局无法查看安全生成/管理对象页面
-    组织表不能随便删除啊，要做成逻辑删除的
+    /日期选择框忽然坏了
+    /Announce.CreateTime -> CreateDt
+    /Announce.PublishTime -> CreateDt
+    /将起止时间字段改为 type=DateRange 格式，缩小屏幕控件数量
+    /检查表加OrderId字段
 
 2026/08/18
     /EleManager 服务器端重命名为 EleServer（or EleHandler， ElePatcher），避免与客户的混淆

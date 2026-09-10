@@ -8,15 +8,14 @@
     <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="值班表" FormPage="DutyScheduleForm" EnableBatch="true">
         <Toolbar>
             <Filters>
-                <EleDatePicker Prop="fromDt"  Width="220px" Label="日期起" Type="Date" Value="@QString("fromDt")"></EleDatePicker>
-                <EleDatePicker Prop="toDt"    Width="220px" Label="日期止" Type="Date" Value="@QString("toDt")"></EleDatePicker>
+                <EleDatePicker For="Item.Day" Type="DateRange"  Width="220px" Label="日期" Type="Date" Value="@QString("fromDt")"></EleDatePicker>
                 <EleInput    Prop="keyword"   Width="320px" Label="值班人员/手机" Value="@QString("keyword")"></EleInput>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add"    Icon="Plus"   Visible="@Auth.CheckPower(Power.DutyScheduleNew)">新增值班</EleButton>
                 <EleButton Type="Primary" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.DutyScheduleExport)">导出</EleButton>
-                <EleButton Type="Danger"  Command="BatchDelete" Icon="Delete" Visible="@Auth.CheckPower(Power.DutyScheduleDelete)">删除</EleButton>
+                <EleButton Type="Danger"  Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.DutyScheduleDelete)">删除</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

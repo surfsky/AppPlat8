@@ -15,9 +15,7 @@ namespace App.Pages.Checks
     public class CheckObjectsModel : AdminModel
     {
         public CheckObject Item { get; set; } = new CheckObject();
-
         public List<long> DutyOrgIds { get; set; } = new List<long>();
-
         public long? DefaultCheckerId { get; set; }
         public string DefaultCheckerName { get; set; }
 
@@ -28,7 +26,8 @@ namespace App.Pages.Checks
             {
                 foreach (var s in qs.Split(',', StringSplitOptions.RemoveEmptyEntries))
                 {
-                    if (long.TryParse(s.Trim(), out var id)) DutyOrgIds.Add(id);
+                    if (long.TryParse(s.Trim(), out var id)) 
+                        DutyOrgIds.Add(id);
                 }
                 if (DutyOrgIds.Count > 0) goto parseChecker;
             }
@@ -38,13 +37,9 @@ namespace App.Pages.Checks
             {
                 var authOrgIds = user.AuthOrgIds;
                 if (authOrgIds != null && authOrgIds.Count > 0)
-                {
                     DutyOrgIds = authOrgIds.Distinct().ToList();
-                }
                 else if (user.OrgId > 0)
-                {
                     DutyOrgIds = new List<long> { user.OrgId.Value };
-                }
             }
 
         parseChecker:
@@ -79,16 +74,16 @@ namespace App.Pages.Checks
             CheckObjectScale? scale=null, 
             CheckRiskLevel? riskLevel=null,
             CheckIndustryType? industryType=null,
-            DateTime? createStartDt=null,
-            DateTime? createEndDt=null,
-            DateTime? updateStartDt=null,
-            DateTime? updateEndDt=null,
-            DateTime? latestCheckStartDt=null,
-            DateTime? latestCheckEndDt=null,
+            List<DateTime> createDt=null,
+            List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
             bool? isDel=null
             )
         {
+            DateTime? createStartDt = createDt.GetVal(0);
+            DateTime? createEndDt = createDt.GetVal(1);
+            DateTime? lastCheckStartDt = lastCheckDt.GetVal(0);
+            DateTime? lastCheckEndDt = lastCheckDt.GetVal(1);
             var effCheckerId = checkId ?? checkerId;
             var q = CheckObject.Search(
                 name: name, 
@@ -109,10 +104,8 @@ namespace App.Pages.Checks
                 industryType: industryType,
                 createStartDt: createStartDt,
                 createEndDt: createEndDt,
-                updateStartDt: updateStartDt,
-                updateEndDt: updateEndDt,
-                latestCheckStartDt: latestCheckStartDt,
-                latestCheckEndDt: latestCheckEndDt,
+                lastCheckStartDt: lastCheckStartDt,
+                lastCheckEndDt: lastCheckEndDt,
                 isDel: isDel,
                 includeTags: true
                 );
@@ -137,15 +130,15 @@ namespace App.Pages.Checks
             CheckObjectScale? scale=null, 
             CheckRiskLevel? riskLevel=null,
             CheckIndustryType? industryType=null,
-            DateTime? createStartDt=null,
-            DateTime? createEndDt=null,
-            DateTime? updateStartDt=null,
-            DateTime? updateEndDt=null,
-            DateTime? latestCheckStartDt=null,
-            DateTime? latestCheckEndDt=null,
+            List<DateTime> createDt=null,
+            List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
             bool? isDel=null)
         {
+            DateTime? createStartDt = createDt.GetVal(0);
+            DateTime? createEndDt = createDt.GetVal(1);
+            DateTime? lastCheckStartDt = lastCheckDt.GetVal(0);
+            DateTime? lastCheckEndDt = lastCheckDt.GetVal(1);
             var effCheckerId = checkId ?? checkerId;
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var q = CheckObject.Search(
@@ -167,10 +160,8 @@ namespace App.Pages.Checks
                 industryType: industryType,
                 createStartDt: createStartDt,
                 createEndDt: createEndDt,
-                updateStartDt: updateStartDt,
-                updateEndDt: updateEndDt,
-                latestCheckStartDt: latestCheckStartDt,
-                latestCheckEndDt: latestCheckEndDt,
+                lastCheckStartDt: lastCheckStartDt,
+                lastCheckEndDt: lastCheckEndDt,
                 isDel: isDel,
                 includeTags: true
                 );

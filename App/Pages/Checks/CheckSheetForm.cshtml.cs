@@ -46,6 +46,7 @@ namespace App.Pages.Checks
             }
 
             item.Name = req.Name;
+            item.SortId = req.SortId;
             item.Scope = req.Scope;
             item.SetTags(req.TagIds);
             item.Save();

@@ -37,7 +37,7 @@ namespace App.Pages.Checks
                 .ToList();
 
             SheetOptions = CheckSheet.Set
-                .OrderBy(t => t.Id)
+                .OrderBy(t => t.SortId)
                 .Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.Name })
                 .ToList();
         }
@@ -158,7 +158,7 @@ namespace App.Pages.Checks
             if (obj != null)
             {
                 obj.IsChecked = true;
-                obj.LatestCheckDt = checkDt;
+                obj.LastCheckDt = checkDt;
                 obj.HasHarzard = hazardCount > 0;
                 obj.Save();
             }

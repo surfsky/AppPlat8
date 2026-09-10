@@ -12,12 +12,11 @@ using Microsoft.EntityFrameworkCore;
 namespace App.DAL
 {
     [UI("检查", "检查表")]
-    public class CheckSheet : EntityBase<CheckSheet>
+    public class CheckSheet : EntityBase<CheckSheet>, ISort
     {
-        [UI("名称")] public string Name { get; set; }
-        [UI("领域")] public CheckScope Scope { get; set; }
-
-
+        [UI("名称")]     public string Name { get; set; }
+        [UI("排序ID")]   public int SortId {get; set;}
+        [UI("领域")]     public CheckScope Scope { get; set; }
         [UI("检查项数目"), NotMapped] public int ItemCount { get; set; }
 
         // 匹配的标签ID列表
@@ -34,7 +33,8 @@ namespace App.DAL
                 Name,
                 Scope,
                 TagIds,
-                CreateDt
+                CreateDt,
+                SortId,
             };
         }
 

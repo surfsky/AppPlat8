@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.Entities;
+using App.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Admin
@@ -18,9 +19,11 @@ namespace App.Pages.Admin
 
 
         /// <summary>查询</summary>
-        public IActionResult OnGetData(Paging pi, string title, AnnounceStatus? status, List<DateTime> createTime)
+        public IActionResult OnGetData(Paging pi, string title, AnnounceStatus? status, List<DateTime> createDt)
         {
-            var q = createTime.Count > 0 ? Announce.Search(title, status, fromDt:createTime[0], toDt:createTime[1]) : Announce.Search(title, status);
+            DateTime? startDt = createDt.GetVal(0);
+            DateTime? endDt = createDt.GetVal(1);
+            var q = Announce.Search(title, status, fromDt:startDt, toDt:endDt);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }

@@ -20,12 +20,13 @@
         <!-- 其他类型 -->
         <EleLabel Label="日期/切换" Size="16px" FillRow="true"></EleLabel>
         <EleDatePicker For="Item.Birthday"></EleDatePicker>
+        <EleDatePicker For="Item.Birthday" Type="DateRange"></EleDatePicker>
         <EleSwitch For="Item.IsEnabled"></EleSwitch>
 
         <!-- 列表控件 -->
         <EleLabel Label="选择框" Size="16px" FillRow="true"></EleLabel>
-        <EleRadio For="Item.Gender" Items="男, 女, 未知"></EleRadio>
-        <EleRadio For="Item.Gender" Items="男, 女, 未知" IsButton="true"></EleRadio>
+        <EleRadio For="Item.Gender" Items="男, 女, 未知" Label="性别"></EleRadio>
+        <EleRadio For="Item.Gender" Items="男, 女, 未知" IsButton="true" Label="性别"></EleRadio>
         <EleSelect For="Item.City" Items="Model.CityList"></EleSelect>
         <EleSelect For="Item.Types" Items="Model.TypeList" Multiple="true"></EleSelect> 
         <EleSelect For="Item.RoleIds" Items="Model.RoleList" Multiple="true"></EleSelect> 

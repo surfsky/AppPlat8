@@ -8,6 +8,7 @@ using App.Entities;
 using App.Utils;
 using App.EleUI;
 using App.Web;
+using System.Collections.Generic;
 
 namespace App.Pages.OA
 {
@@ -21,12 +22,12 @@ namespace App.Pages.OA
         /// <summary>查询</summary>
         public IActionResult OnGetData(
             Paging pi,
-            DateTime? fromDt = null,
-            DateTime? toDt = null,
-            DateTime? day = null,
+            List<DateTime> day,
             string keyword = "")
         {
-            var q = DutySchedule.Search(fromDt: fromDt, toDt: toDt, day: day, keyword: keyword);
+            DateTime? startDay = day.GetVal(0);
+            DateTime? endDay = day.GetVal(1);
+            var q = DutySchedule.Search(fromDt: startDay, toDt: endDay, keyword: keyword);
             var list = q.OrderByDescending(t => t.Day).SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
@@ -34,16 +35,16 @@ namespace App.Pages.OA
         /// <summary>导出</summary>
         public IActionResult OnPostExport(
             Paging pi,
-            DateTime? fromDt = null,
-            DateTime? toDt = null,
-            DateTime? day = null,
+            List<DateTime> day,
             string keyword = "")
         {
             if (!CheckPower(Power.DutyScheduleExport))
                 return BuildResult(403, "无权导出");
 
+            DateTime? startDay = day.GetVal(0);
+            DateTime? endDay = day.GetVal(1);
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
-            var q = DutySchedule.Search(fromDt: fromDt, toDt: toDt, day: day, keyword: keyword);
+            var q = DutySchedule.Search(fromDt: startDay, toDt: endDay, keyword: keyword);
             var list = q.OrderByDescending(t => t.Day).SortPageExport(exportPi);
             ExcelExporter.Export(list, $"值班表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             Logger.Info($"导出值班表 {list.Count} 条");

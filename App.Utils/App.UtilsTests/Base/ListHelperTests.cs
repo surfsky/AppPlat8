@@ -1,5 +1,7 @@
 using App.Utils;
+using App.Utils.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 
 namespace App.UtilsTests.Base
@@ -9,6 +11,7 @@ namespace App.UtilsTests.Base
     {
         private readonly List<int> _list1 = new() { 0, 1, 2, 3, 4, 5 };
         private readonly List<int> _list2 = new() { 4, 5, 6, 7, 8, 9 };
+        private readonly List<User> _users = new() { new User("kevin", Sex.Male), new User("lisa", Sex.Female)};
 
         [TestMethod]
         public void ToJoinStringTest()
@@ -110,6 +113,23 @@ namespace App.UtilsTests.Base
 
             Assert.AreEqual(3, newIndex);
             CollectionAssert.AreEqual(new List<int> { 0, 1, 3, 2, 4, 5 }, list);
+        }
+
+        [TestMethod]
+        public void GetTest()
+        {
+            Assert.AreEqual(2, _list1.GetVal(2));
+            Assert.AreEqual(default(int?), _list1.GetVal(99));
+            Assert.AreEqual("kevin", _users.Get(0)?.Name);
+            Assert.AreEqual(null, _users.Get(99));
+
+            var now = DateTime.Now;
+            var times = new List<DateTime>(){ now, now.AddHours(1), now.AddDays(1) };
+            DateTime? dt = times.GetVal(99);
+            Assert.AreEqual(now, times.GetVal(0));
+            Assert.AreEqual(now.AddHours(1), times.GetVal(1));
+            Assert.AreEqual(now.AddDays(1), times.GetVal(2));
+            Assert.AreEqual(null, dt);
         }
 
         [TestMethod]

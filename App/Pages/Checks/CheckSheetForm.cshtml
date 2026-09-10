@@ -10,6 +10,7 @@
     <EleForm Model="form" LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleSelect For="Item.Scope" Label="领域"></EleSelect>
+        <EleInput For="Item.SortId" Label="排序ID" Required="true"></EleInput>
         <EleTreeSelect For="Item.TagIds" Label="匹配标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?sheetId=@sheetId" Multiple="true" CollapseTags="false" FillRow="true"></EleTreeSelect>
         <EleList Label="检查项"
                  FillRow="true"

@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="检查表" FormPage="CheckSheetForm" EnableBatch="true" >
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="检查表" FormPage="CheckSheetForm" EnableBatch="true" SortField="SortId">
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Name" Width="250px" Label="名称" ></EleInput>
@@ -14,7 +14,7 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">删除</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
@@ -27,6 +27,7 @@
             <EleColumn For="Item.TagNames" Label="对应标签列表" MinWidth="220"></EleColumn>
             <EleColumn For="Item.ItemCount" Label="检查项数目" Width="120"></EleColumn>
             <EleColumn For="Item.Scope" Label="领域" Width="120"></EleColumn>
+            <EleColumn For="Item.SortId" Label="排序ID" Width="120"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建日期" Width="200" FormatString="yyyy-MM-dd"></EleColumn>
         </Columns>
     </EleTable>

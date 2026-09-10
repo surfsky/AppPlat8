@@ -18,7 +18,7 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" PopupUrl="/Checks/CheckFlow?objectId=@Model.ObjectId&objectName=@objectNameEncoded" Icon="DocumentChecked" Visible="@(Model.ObjectId.GetValueOrDefault() > 0 && Auth.CheckPower(Power.CheckNew))">开始排查</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
-                <EleButton Type="Danger" Command="BatchDelete" Icon="Delete">删除</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">删除</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

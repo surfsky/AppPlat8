@@ -46,7 +46,7 @@ namespace App.Pages.Checks
             item.Address = req.Address;
             item.Gps = req.Gps;
             item.SocialCreditId = req.SocialCreditId;
-            item.LatestCheckDt = req.LatestCheckDt;
+            item.LastCheckDt = req.LastCheckDt;
             item.ObjectType = req.ObjectType;
             item.DutyMan = req.DutyMan;
             item.SafeMan = req.SafeMan;

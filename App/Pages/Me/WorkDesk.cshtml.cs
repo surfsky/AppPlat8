@@ -82,23 +82,23 @@ namespace App.Pages.Me
                 .Select(o => new
                 {
                     o.IsChecked,
-                    o.LatestCheckDt,
+                    o.LastCheckDt,
                     o.RiskLevel
                 })
                 .AsNoTracking()
                 .ToList();
             CountUncheckedObjects = projection
-                .Count(o => (o.IsChecked == null || o.IsChecked == false) || o.LatestCheckDt == null);
+                .Count(o => (o.IsChecked == null || o.IsChecked == false) || o.LastCheckDt == null);
             CountNearExpireObjects = projection
                 .Count(o =>
                 {
-                    var next = ComputeNextCheckDt(o.LatestCheckDt, o.RiskLevel);
+                    var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
                     return next.HasValue && next.Value > today && next.Value <= near;
                 });
             CountOverdueObjects = projection
                 .Count(o =>
                 {
-                    var next = ComputeNextCheckDt(o.LatestCheckDt, o.RiskLevel);
+                    var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
                     return next.HasValue && next.Value <= today;
                 });
 

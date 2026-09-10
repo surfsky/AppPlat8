@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace App.Utils.Tests
 {
-    public class User
+    public enum Sex
     {
-        public string Name { get; set; }
-        public string Sex { get; set; }
+        Male,
+        Female,
     }
+    public record User(string Name, Sex Sex){}
 
     [TestClass()]
     public class SerializeHelperTests
@@ -20,7 +21,7 @@ namespace App.Utils.Tests
         [TestMethod()]
         public void ToJsonTest()
         {
-            var user = new User() { Name = "kevin", Sex = "Male" };
+            var user = new User("kevin", Sex.Male);
             var txt = user.ToJson();
             System.Diagnostics.Trace.Write(txt);
         }

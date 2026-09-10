@@ -30,9 +30,9 @@ namespace App.DAL
         [UI("基础", "GPS")]        public string Gps { get; set; }
         [UI("基础", "是否巡查")]     public bool? IsChecked { get; set; } 
         [UI("基础", "建档日期")]     public DateTime? ArchieveDt { get; set; }
-        [UI("基础", "最新巡查时间")] public DateTime? LatestCheckDt { get; set; }
+        [UI("基础", "最新巡查时间")] public DateTime? LastCheckDt { get; set; }
         [UI("基础", "规模")]       public CheckObjectScale? Scale { get; set; }
-        public DateTime? NextCheckDt => LatestCheckDt?.AddMonths(GetCheckCycleMonths(this.RiskLevel));
+        public DateTime? NextCheckDt => LastCheckDt?.AddMonths(GetCheckCycleMonths(this.RiskLevel));
 
 
         // 风险相关
@@ -138,7 +138,7 @@ namespace App.DAL
                 IsChecked,
 
                 ArchieveDt,
-                LatestCheckDt,
+                LastCheckDt,
                 NextCheckDt,
                 CreateDt,
 
@@ -250,8 +250,8 @@ namespace App.DAL
             DateTime? createEndDt = null,
             DateTime? updateStartDt = null,
             DateTime? updateEndDt = null,
-            DateTime? latestCheckStartDt = null,
-            DateTime? latestCheckEndDt = null,
+            DateTime? lastCheckStartDt = null,
+            DateTime? lastCheckEndDt = null,
             bool? hasHarzard = null,
             bool? isChecked = null,
             bool? isDel = null,
@@ -295,8 +295,8 @@ namespace App.DAL
             if (createEndDt.IsNotEmpty())             q = q.Where(o => o.CreateDt <= createEndDt.Value);
             if (updateStartDt.IsNotEmpty())           q = q.Where(o => o.UpdateDt >= updateStartDt.Value);
             if (updateEndDt.IsNotEmpty())             q = q.Where(o => o.UpdateDt <= updateEndDt.Value);
-            if (latestCheckStartDt.IsNotEmpty())      q = q.Where(o => o.LatestCheckDt >= latestCheckStartDt.Value);
-            if (latestCheckEndDt.IsNotEmpty())        q = q.Where(o => o.LatestCheckDt <= latestCheckEndDt.Value);
+            if (lastCheckStartDt.IsNotEmpty())        q = q.Where(o => o.LastCheckDt >= lastCheckStartDt.Value);
+            if (lastCheckEndDt.IsNotEmpty())          q = q.Where(o => o.LastCheckDt <= lastCheckEndDt.Value);
             if (hasHarzard.IsNotEmpty())              q = q.Where(o => o.HasHarzard == hasHarzard.Value);
             if (isChecked.IsNotEmpty())               q = q.Where(o => o.IsChecked == isChecked.Value);
             if (isDel.IsNotEmpty())                   q = q.Where(o => o.IsDel == isDel.Value);
@@ -367,10 +367,10 @@ namespace App.DAL
             foreach (var item in list)
             {
                 var isChecked = false; // 计算得到的新值
-                if (item.RiskLevel.HasValue && item.LatestCheckDt.HasValue)
+                if (item.RiskLevel.HasValue && item.LastCheckDt.HasValue)
                 {
                     var checkCycleMonths = GetCheckCycleMonths(item.RiskLevel);
-                    isChecked = item.LatestCheckDt.Value.AddMonths(checkCycleMonths) > now; // 已到检查周期需要检查了（检查状态为false）
+                    isChecked = item.LastCheckDt.Value.AddMonths(checkCycleMonths) > now; // 已到检查周期需要检查了（检查状态为false）
                 }
                 else
                 {

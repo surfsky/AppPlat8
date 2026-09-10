@@ -34,8 +34,8 @@ namespace App.Pages.Admin
                     Author = GetUser()?.RealName,
                     AuthorId = GetUserId(),
                     Status = AnnounceStatus.Draft,
-                    CreateTime = DateTime.Now,
-                    PublishTime = null,
+                    CreateDt = DateTime.Now,
+                    PublishDt = null,
                     Priority = null,
                     ViewCount = null,
                     IsTop = false,
@@ -77,12 +77,12 @@ namespace App.Pages.Admin
             a.Priority = req.Priority;
             a.ViewCount = req.ViewCount;
             a.IsTop = req.IsTop;
-            a.PublishTime = req.PublishTime;
-            a.CreateTime = (req.CreateTime ?? a.CreateTime) ?? DateTime.Now;
+            a.PublishDt = req.PublishDt;
+            a.CreateDt = (req.CreateDt ?? a.CreateDt) ?? DateTime.Now;
 
             // 已发布但未设置发布时间时自动补齐
-            if (a.Status == AnnounceStatus.Published && !a.PublishTime.HasValue)
-                a.PublishTime = DateTime.Now;
+            if (a.Status == AnnounceStatus.Published && !a.PublishDt.HasValue)
+                a.PublishDt = DateTime.Now;
             a.Save(null, log: true);
             return BuildResult(0, "保存成功", new { id = a.Id });
         }

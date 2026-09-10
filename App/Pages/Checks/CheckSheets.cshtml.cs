@@ -70,7 +70,8 @@ namespace App.Pages.Checks
                         s.Scope,
                         TagNames = tagNames ?? string.Empty,
                         ItemCount = itemCount,
-                        s.CreateDt
+                        s.CreateDt,
+                        s.SortId,
                     };
                 })
                 .Cast<object>()
