@@ -82,7 +82,7 @@ namespace App.DAL
         [UI("基础", "责任区县")]   public string DutyDistrictName => this.DutyOrg?.GetAncestor(OrgLevel.District)?.Name;         // 责任区县
         [UI("基础", "责任乡镇")]   public string DutyTownName => this.DutyOrg?.GetAncestor(OrgLevel.Town)?.Name;         // 责任乡镇
         [UI("基础", "责任社区")]   public string DutyCommunityName => this.DutyOrg?.GetAncestor(OrgLevel.Community)?.Name;         // 责任社区
-        [UI("基础", "技术检查员")] public string CheckerName => Checker?.Name;
+        [UI("基础", "技术检查员")] public string CheckerName => $"{Checker?.RealName}/{Checker?.Mobile}";
         [UI("基础", "检查周期")]   public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
 
 

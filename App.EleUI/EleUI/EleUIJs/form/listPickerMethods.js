@@ -276,7 +276,7 @@ export const listPickerMethods = {
             v-if="state.filterable"
             v-model="state.keyword"
             clearable
-            :placeholder="${JSON.stringify(placeholder)}">
+            :placeholder='${JSON.stringify(placeholder)}'>
             <template #prefix>
                 <el-icon><Search /></el-icon>
             </template>

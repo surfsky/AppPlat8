@@ -8,6 +8,7 @@ import { initPickerState, pickerMethods } from './form/pickerMethods.js';
 export class EleTable {
     constructor(options = {}) {
         this.config = options;
+        this._hostId = (options.hostId || '').toString().replace(/^#/, '');
 
         // Split domains: pagination/data loading, command dispatch, drawer, message, picker
         initPaginationState(this, Vue, options);
@@ -237,7 +238,7 @@ export class EleTable {
         <el-input
             :model-value="state.keyword"
             clearable
-            :placeholder="${JSON.stringify(placeholder)}"
+            :placeholder='${JSON.stringify(placeholder)}'
             @update:model-value="onFilterChange"
         >
             <template #prefix>

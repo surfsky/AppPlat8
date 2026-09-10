@@ -223,7 +223,7 @@ export const treePickerMethods = {
         <el-input
             :model-value="state.keyword"
             clearable
-            :placeholder="${JSON.stringify(placeholder)}"
+            :placeholder='${JSON.stringify(placeholder)}'
             @update:model-value="onFilterChange"
         >
             <template #prefix>

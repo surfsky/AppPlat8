@@ -21,6 +21,7 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     dataHandler: config.dataHandler,
                     deleteHandler: config.deleteHandler,
                     pageSize: config.pageSize,
+                    hostId: (selector || '').toString().replace(/^#/, ''),
                     ...config
                 });
 

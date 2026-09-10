@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System;
+using System.Text.Json;
+using System.Text.Encodings.Web;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using App.Components;
 using App.Utils;
@@ -98,6 +101,14 @@ namespace App.EleUI
                 return;
             }
 
+            // 先读取子内容，解析内嵌的 <BatchField .../> 元数据（不作为 TagHelper 执行，保持纯字符串形式）。
+            // 必须在计算 primaryExpr 前完成，因为可能需要自动提升 Command=EditBatch。
+            var childContent = await output.GetChildContentAsync();
+            var rawChildHtml = childContent.GetContent();
+            var batchMeta = BatchFieldExtractor.Extract(rawChildHtml);
+            if (batchMeta != null && batchMeta.Count > 0 && Command == Command.None && string.IsNullOrEmpty(Handler))
+                Command = Command.EditBatch;
+
             output.TagName = "el-button";
             AddCommonAttributes(context, output);
             
@@ -105,6 +116,16 @@ namespace App.EleUI
             output.Attributes.SetAttribute("type", Type.ToString().ToLower());
             if (Look != EleButtonLook.Fill)  // Fill 是默认外观，不需要生成额外属性
                 output.Attributes.Add(new TagHelperAttribute(Look.ToString().ToLower(), null, HtmlAttributeValueStyle.Minimized));  // 生成<el-button plain>，而不是<el-button plain="">
+
+            // Collect BatchField metadata：输出 data-batch-fields dataset
+            if (batchMeta != null && batchMeta.Count > 0)
+            {
+                var json = JsonSerializer.Serialize(batchMeta, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+                output.Attributes.SetAttribute("data-batch-fields", json);
+                var debugInfo = new { raw = rawChildHtml.Length > 2000 ? rawChildHtml.Substring(0, 2000) : rawChildHtml, rawLen = rawChildHtml.Length, hasBatchField = rawChildHtml.IndexOf("BatchField", StringComparison.OrdinalIgnoreCase) >= 0, parseDebug = BatchFieldExtractor.ParseHtmlAttributesDebug(rawChildHtml) };
+                var debugJson = JsonSerializer.Serialize(debugInfo, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+                output.Attributes.SetAttribute("data-debug-batch", debugJson);
+            }
             
             // click priority:
             // 1) Handler -> v-on:click (direct post with form data)
@@ -159,6 +180,9 @@ namespace App.EleUI
 
             if (!string.IsNullOrEmpty(primaryExpr))
             {
+                // EditBatch 需要把事件对象透传给 invokeCommand 以便找到当前按钮的 dataset
+                if (Command == Command.EditBatch && primaryExpr.StartsWith("invokeCommand("))
+                    primaryExpr = "invokeCommand('EditBatch', $event)";
                 if (!string.IsNullOrWhiteSpace(ConfirmText))
                 {
                     var confirmText = ConfirmText.Replace("'", "\\'");
@@ -183,12 +207,17 @@ namespace App.EleUI
             if (!string.IsNullOrEmpty(Loading)) 
                 output.Attributes.SetAttribute(":loading", Loading);
 
-            // text
-            var childContent = await output.GetChildContentAsync();
-            var buttonText = childContent.GetContent();
+            // text：剥离 BatchFields / BatchField 伪标签，只保留可见按钮文本
+            var buttonText = rawChildHtml;
             var textExpr = GetBindPath(TextFor);
             if (!string.IsNullOrWhiteSpace(textExpr))
                 buttonText = $"{{{{ {textExpr} }}}}";
+            else if (batchMeta != null && batchMeta.Count > 0)
+            {
+                buttonText = Regex.Replace(buttonText, @"<\s*/?\s*BatchFields?[^>]*>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                buttonText = Regex.Replace(buttonText, @"<\s*BatchField\b[^>]*/?>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                buttonText = buttonText.Trim();
+            }
 
             // icon
             var iconHtml = "";

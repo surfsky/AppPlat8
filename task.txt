@@ -492,6 +492,7 @@ Done
         <EleButton Command="EditBatch" Label="批量修改网格员">
             <Popup>
                 <ElePicker For="Item.CheckerId" PopupUrl=".....">网格员</ElePicker>
+                <EleInput For="Item.DutyMan" >企业责任人</ElePicker>
             </Popup>
         </EleButton>
         选择数据行后，点击该按钮，就会用elemanager drawer 弹出编辑页面，编辑 CheckerId 字段

@@ -8,6 +8,8 @@ using App.Utils;
 using Microsoft.AspNetCore.Mvc;
 using App.EleUI;
 using App.Web;
+using App.BLL;
+using App.HttpApi;
 
 namespace App.Pages.Checks
 {
@@ -187,6 +189,21 @@ namespace App.Pages.Checks
                     item.Delete();
             }
             return BuildResult(0, "删除成功");
+        }
+
+        public record BatchUpdateRequest(long[] Ids, Dictionary<string, object> Fields);
+
+        /// <summary>批量修改检查对象字段（空字段不覆盖）</summary>
+        public IActionResult OnPostBatchSave([FromBody] BatchUpdateRequest req)
+        {
+            var ids = req?.Ids ?? Array.Empty<long>();
+            var fields = req?.Fields ?? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            var r = BatchUpdater.Update<CheckObject>(
+                ids: ids,
+                fields: fields,
+                requirePower: Power.CheckObjectEdit,
+                logTitle: "检查对象批量修改");
+            return BuildResult(r.Code, r.Message, r.Data);
         }
 
         public IActionResult OnPostImport()
