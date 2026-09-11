@@ -133,6 +133,17 @@
             padding: 14px 12px;
             gap: 6px;
         }
+        .sidebar-nav-panel + .sidebar-nav-panel {
+            margin-top: 0;
+            padding-top: 0;
+        }
+        #sidebarMobile {
+            border-right: 0 !important;
+            border-left: 0 !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background-clip: padding-box;
+        }
         .sidebar-menu-item {
             padding: 8px 10px;
         }
@@ -217,15 +228,21 @@
 
         .sidebar-toggle-zone {
             position: relative;
-            width: 12px;
-            flex: 0 0 12px;
+            width: 0 !important;
+            flex: 0 0 0 !important;
+            flex-basis: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
+            overflow: visible !important;
             height: 100%;
             z-index: 25;
+            padding: 0 !important;
+            margin: 0 !important;
         }
 
         .sidebar-toggle-btn {
             position: absolute;
-            left: 50%;
+            left: 0;
             top: 50%;
             transform: translate(-50%, -50%);
             width: 18px;
@@ -237,7 +254,8 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.18s ease;
+            transition: opacity .18s ease, transform .18s ease, background-color .18s ease;
+            z-index: 26;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -300,12 +318,12 @@
         </div>
 
         <!-- Main Container - single main content, mobile only hides sidebar -->
-        <div class="flex flex-1 overflow-hidden pt-16 pb-0 box-border">
+        <div class="flex flex-1 overflow-hidden pt-16 pb-0 box-border bg-slate-100">
             <div
                 id="sidebarMobile"
                 class="sidebar w-60 md:w-auto bg-[#3B71F8] fixed md:relative left-0 top-16 md:top-0 h-[calc(100vh-64px)] md:h-full z-40 md:z-auto flex flex-col overflow-y-auto overflow-x-hidden -translate-x-full md:translate-x-0 transition-transform duration-300"
                 :class="{ 'sidebar-desktop-collapsed': !isMobile && desktopSidebarCollapsed }"
-                :style="!isMobile ? { width: desktopSidebarCollapsed ? '0px' : (sidebarPanelSize + 'px') } : null"
+                :style="!isMobile ? { width: desktopSidebarCollapsed ? '0px' : (sidebarPanelSize + 'px'), flexShrink: 0 } : null"
             >
                 <div class="sidebar-nav-panel flex-1 flex flex-col gap-1 pt-4 px-3">
                     <menu-tree 
@@ -327,7 +345,7 @@
                 </div>
             </div>
 
-            <div class="sidebar-toggle-zone hidden md:block">
+            <div class="sidebar-toggle-zone hidden md:block" style="width:0;flex:0 0 0;flex-basis:0;min-width:0;max-width:0;overflow:visible;padding:0;margin:0;">
                 <button
                     class="sidebar-toggle-btn"
                     :class="{ 'is-visible': desktopSidebarCollapsed }"

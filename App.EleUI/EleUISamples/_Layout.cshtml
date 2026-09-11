@@ -6,20 +6,63 @@
     <title>@(ViewData["Title"] ?? "EleUI Samples")</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=rocket2" />
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=rocket2" />
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script src="https://unpkg.com/element-plus"></script>
-    <script src="https://unpkg.com/element-plus/dist/locale/zh-cn.min.js"></script>
-    <script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
-    <script src="https://unpkg.com/dayjs/locale/zh-cn.js"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <script src="https://unpkg.com/@@element-plus/icons-vue"></script>
-    <script src="https://unpkg.com/@@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/lib/element-plus-2.14.5/dist/index.css" />
+    <link rel="stylesheet" href="/lib/font-awesome-6.4.0/css/all.min.css" />
+    <script src="/lib/vue/vue.global.prod.js"></script>
+    <script src="/lib/element-plus-2.14.5/dist/index.full.min.js"></script>
+    <script src="/lib/element-plus-2.14.5/dist/locale/zh-cn.min.js"></script>
+    <script src="/lib/dayjs/dayjs.min.js"></script>
+    <script src="/lib/dayjs/locale/zh-cn.js"></script>
+    <script src="/js/axios.min.js"></script>
+    <script src="/lib/element-plus-icons-vue/index.js"></script>
+    <script src="/lib/tailwindcss/browser.js"></script>
+    <script src="/ui/tailwindConfig.js"></script>
+    <style>
+        @@theme {
+          --breakpoint-sm: 640px;
+          --breakpoint-md: 768px;
+          --breakpoint-lg: 1024px;
+          --breakpoint-xl: 1280px;
+          --breakpoint-2xl: 1536px;
+          --color-slate-50: #f8fafc;
+          --color-slate-100: #f1f5f9;
+          --color-slate-200: #e2e8f0;
+          --color-slate-500: #64748b;
+          --color-slate-600: #475569;
+          --color-slate-700: #334155;
+          --color-slate-800: #1e293b;
+          --color-gray-50: #f9fafb;
+          --color-gray-100: #f3f4f6;
+          --color-gray-200: #e5e7eb;
+          --color-gray-300: #d1d5db;
+          --color-gray-400: #9ca3af;
+          --color-gray-500: #6b7280;
+          --color-gray-600: #4b5563;
+          --color-gray-700: #374151;
+          --color-gray-800: #1f2937;
+          --color-gray-900: #111827;
+          --color-indigo-50: #eef2ff;
+          --color-indigo-100: #e0e7ff;
+          --color-indigo-500: #6366f1;
+          --color-indigo-700: #4338ca;
+          --color-indigo-900: #312e81;
+          --color-blue-500: #3b82f6;
+          --color-blue-600: #2563eb;
+          --color-blue-700: #1d4ed8;
+          --color-white: #ffffff;
+          --color-black: #000000;
+        }
+        html { box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: inherit; }
+        html, body { margin: 0; padding: 0; min-height: 100%; background: var(--color-slate-50); }
+    </style>
 
     <script>
         if (window.dayjs && typeof window.dayjs.locale === 'function') {
             window.dayjs.locale('zh-cn');
+        }
+        if (window.ElementPlus && window.ElementPlusLocaleZhCn) {
+            try { window.ElementPlus.config ? window.ElementPlus.config.globalProperties : 0; } catch (_) {}
         }
     </script>
 
