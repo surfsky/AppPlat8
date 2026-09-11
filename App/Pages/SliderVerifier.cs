@@ -150,8 +150,8 @@ public class SliderVerifier
         }
         var minPeakIndex = (int)Math.Floor(velocities.Count * 0.10);
         var maxPeakIndex = (int)Math.Ceiling(velocities.Count * 0.90);
-        if (peakIndex < minPeakIndex || peakIndex > maxPeakIndex)
-            return (false, "轨迹异常: 速度峰值位置异常");
+        //if (peakIndex < minPeakIndex || peakIndex > maxPeakIndex)
+        //    return (false, "轨迹异常: 速度峰值位置异常");
 
         // 速度峰值必须明显高于均值
         if (peak < meanV * 1.15)

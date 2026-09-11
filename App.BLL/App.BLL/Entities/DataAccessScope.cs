@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using App.DAL;
 using App.Utils;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Entities
 {
@@ -26,6 +28,20 @@ namespace App.Entities
     /// </summary>
     public static class DataAccessFilter
     {
+        // 系统级实体白名单（不参与数据权限过滤）
+        private static readonly HashSet<Type> _systemTypes = new HashSet<Type>
+        {
+            typeof(User), typeof(Role), typeof(RolePower), typeof(RoleMenu), typeof(UserOrg),
+            typeof(Org), typeof(Menu), typeof(Online), typeof(Log), typeof(SiteConfig),
+            typeof(AIConfig), typeof(Sequence), typeof(VerifyCode), typeof(IPFilter),
+            typeof(Message), typeof(Att), typeof(Application), typeof(OpenApp), typeof(Site),
+            typeof(AliDingConfig), typeof(AliSmsConfig),
+            // KB 知识库：目录属于全局内容，模块内部用 OrgId 自行控制可见性
+            typeof(KbMenu),
+            // CMS 文档库：目录和内容按模块内 OrgId 自行控制
+            typeof(Article), typeof(ArticleMenu),
+        };
+
         public static IQueryable<T> Apply<T>(IQueryable<T> query, DataAccessScope scope)
             where T : EntityBase, new()
         {
@@ -34,10 +50,7 @@ namespace App.Entities
             if (scope == null || !scope.Enabled || scope.AllowAll)
                 return query;
 
-            if (typeof(T) == typeof(User)
-                || typeof(T) == typeof(Role)
-                || typeof(T) == typeof(RolePower)
-                || typeof(T) == typeof(Org))
+            if (_systemTypes.Contains(typeof(T)))
                 return query;
 
             var hasOrgId = typeof(T).GetProperty("OrgId") != null;
@@ -57,7 +70,52 @@ namespace App.Entities
                 ? ResolveOrgIds(scope.OrgId, scope.IncludeSubOrgs)
                 : new HashSet<long>();
 
-            return query.Where(t => MatchScope((long?)t.GetValue("OrgId"), t.OwnerId, scope, orgIds));
+            return query.Where(BuildScopePredicate<T>(useOrg, useOwn, scope, orgIds));
+        }
+
+        /// <summary>构造可被 EF 翻译的强类型表达式树（避免反射 GetValue 无法翻译）</summary>
+        private static Expression<Func<T, bool>> BuildScopePredicate<T>(
+            bool useOrg, bool useOwn, DataAccessScope scope, HashSet<long> orgIds)
+            where T : EntityBase, new()
+        {
+            var param = Expression.Parameter(typeof(T), "t");
+            Expression body = null;
+
+            if (useOrg)
+            {
+                var orgIdProp = typeof(T).GetProperty("OrgId");
+                Expression orgExpr;
+                if (orgIdProp != null)
+                {
+                    orgExpr = Expression.Property(param, orgIdProp);
+                }
+                else
+                {
+                    var efProp = typeof(EF).GetMethod(nameof(EF.Property), BindingFlags.Public | BindingFlags.Static)
+                        ?.MakeGenericMethod(typeof(long?));
+                    orgExpr = Expression.Call(null, efProp, param, Expression.Constant("OrgId"));
+                }
+                // orgIds.Contains(entityOrgId.Value)  (当 entityOrgId.HasValue)
+                var hasValue = Expression.Property(orgExpr, nameof(Nullable<long>.HasValue));
+                var valueExpr = Expression.Property(orgExpr, nameof(Nullable<long>.Value));
+                var contains = Expression.Call(
+                    Expression.Constant(orgIds ?? new HashSet<long>()),
+                    typeof(HashSet<long>).GetMethod(nameof(HashSet<long>.Contains), new[] { typeof(long) }),
+                    valueExpr);
+                var orgMatch = Expression.AndAlso(hasValue, contains);
+                body = orgMatch;
+            }
+
+            if (useOwn)
+            {
+                var ownerExpr = Expression.Property(param, nameof(EntityBase.OwnerId));
+                Expression<Func<long?, long?, bool>> ownCompare =
+                    (owner, uid) => owner.HasValue && uid.HasValue && owner.Value == uid.Value;
+                var ownMatch = Expression.Invoke(ownCompare, ownerExpr, Expression.Constant(scope.UserId, typeof(long?)));
+                body = (body == null) ? ownMatch : Expression.OrElse(body, ownMatch);
+            }
+
+            return Expression.Lambda<Func<T, bool>>(body ?? Expression.Constant(false), param);
         }
 
         public static bool MatchScope(long? entityOrgId, long? entityOwnerId, DataAccessScope scope, ISet<long> orgIds)

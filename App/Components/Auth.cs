@@ -168,7 +168,7 @@ namespace App.Components
         {
             if (userId == null)
                 return;
-            Online.Get(t => t.UserId == userId)?.Let(x => x.UpdateDt = DateTime.Now).Save();
+            Online.Set.FirstOrDefault(t => t.UserId == userId)?.Let(x => x.UpdateDt = DateTime.Now).Save();
 
             DateTime now = DateTime.Now;
             object lastUpdateTime = Asp.Session.GetObject<DateTime>(MSG_ONLINE_UPDATE_TIME);
@@ -181,7 +181,7 @@ namespace App.Components
 
         public static void RegisterOnlineUser(long userId)
         {
-            var online = Online.Get(t => t.UserId == userId) ?? new Online();
+            var online = Online.Set.FirstOrDefault(t => t.UserId == userId) ?? new Online();
             online.UserId = userId;
             online.LastIP = Asp.Request.HttpContext.Connection.RemoteIpAddress.ToString();
             online.LastLoginDt = DateTime.Now;

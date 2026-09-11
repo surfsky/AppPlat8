@@ -50,12 +50,22 @@
     dotnet run --project App.Consoler
 
 
-    # 测试项目
-    dotnet test App.Utils/App.UtilsTests/App.UtilsTests.csproj
    ```
 4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
 
-其它
+## 单元测试和系统调试
+
+``` bash
+    # 测试项目
+    dotnet test App.Utils/App.UtilsTests/App.UtilsTests.csproj
+    # 或点击左侧调试图标面板（烧瓶图标）进行调试，会细化到每一个方法的测试结果（含运行时间）
+
+    # 调试项目
+    # 若使用原生VSCode 环境，可以直接点左侧的调试标签图标（Bug图标），进行调试；
+    # 若使用三方网页，需安装三方调试插件：C# (with netcoredbg)，并点击页面右上角的调试图标，进行调试；
+```
+
+## 其它
 
 1. 数据库迁移: 运行
 
@@ -68,6 +78,8 @@
 ```bash
     lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
 ```
+
+
 
 ## 部署
 
