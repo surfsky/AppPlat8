@@ -23,18 +23,27 @@
     <style>
         .kb-manager-shell {
             height: 100%;
+            width: 100%;
             min-width: 0;
             min-height: 0;
             background: #fff;
+            display: flex;
+            flex-direction: column;
         }
 
         .kb-manager-split-shell {
             height: 100%;
+            width: 100%;
             min-width: 0;
             min-height: 0;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: row;
+            position: relative;
+            background: #fff;
         }
 
-        .kb-manager-panel-fill {
+        .kb-manager-split-panel {
             height: 100%;
             min-width: 0;
             min-height: 0;
@@ -44,9 +53,92 @@
             background: #fff;
         }
 
-        .kb-manager-tree-panel {
+        .kb-manager-split-panel[data-role="aside"] {
+            flex: 0 0 auto;
             border-right: 1px solid #f1f5f9;
         }
+
+        .kb-manager-split-panel[data-role="content"] {
+            flex: 1 1 auto;
+        }
+
+        .kb-manager-split-bar {
+            position: relative;
+            flex: 0 0 10px;
+            width: 10px;
+            height: 100%;
+            cursor: col-resize;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-left: 1px solid #eef2f7;
+            border-right: 1px solid #eef2f7;
+            transition: background-color .15s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            z-index: 3;
+        }
+
+        .kb-manager-split-bar:hover,
+        .kb-manager-split-bar.is-active {
+            background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+        }
+
+        .kb-manager-split-bar::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 40px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px solid #dbeafe;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
+        }
+
+        .kb-manager-split-bar:hover::after,
+        .kb-manager-split-bar.is-active::after {
+            background: #eff6ff;
+        }
+
+        .kb-manager-collapse-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: transparent;
+            color: #475569;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            z-index: 2;
+            padding: 0;
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        .kb-manager-collapse-btn:hover {
+            background: rgba(59, 130, 246, .1);
+            color: #1d4ed8;
+        }
+
+        .kb-manager-panel-fill {
+            height: 100%;
+            width: 100%;
+            min-width: 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .kb-manager-tree-panel {}
 
         .kb-manager-mobile-shell {
             height: 100%;
@@ -56,27 +148,6 @@
             flex-direction: column;
             overflow: hidden;
             background: #fff;
-        }
-
-        .kb-manager-split-shell .el-splitter__bar {
-            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-            border-left: 1px solid #eef2f7;
-            border-right: 1px solid #eef2f7;
-        }
-
-        .kb-manager-split-shell .el-splitter__bar:hover,
-        .kb-manager-split-shell .el-splitter__bar.is-active {
-            background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
-        }
-
-        .kb-manager-split-shell .el-splitter__trigger {
-            background: #fff;
-            border: 1px solid #dbeafe;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
-        }
-
-        .kb-manager-split-shell .el-splitter__trigger:hover {
-            background: #eff6ff;
         }
 
         .kb-manager-empty {
@@ -125,21 +196,17 @@
 }
 
 @section body {
-    <div id="kbMgr3" class="h-screen overflow-hidden">
+    <div id="kbMgr3" class="h-screen w-screen max-w-full overflow-hidden min-h-0 min-w-0">
         <input id="kbDirUploadInput" type="file" style="display:none" webkitdirectory directory multiple @@change="onDirectorySelected" />
         <div class="kb-manager-shell h-full">
-            <el-splitter
+            <div
                 v-if="!isMobileLayout"
                 class="kb-manager-split-shell"
-                @@resize-start="onResizeStart"
-                @@resize-end="onResizeEnd"
-                @@collapse="onSplitterCollapse">
-                <el-splitter-panel
-                    v-model:size="asideWidth"
-                    :min="0"
-                    :max="MAX_ASIDE_WIDTH"
-                    :collapsible="true"
-                    class="kb-manager-tree-panel">
+                ref="splitShellRef">
+                <div
+                    class="kb-manager-split-panel kb-manager-tree-panel"
+                    data-role="aside"
+                    :style="{ width: asideCollapsed ? '0px' : asideWidth + 'px', visibility: asideCollapsed ? 'hidden' : 'visible' }">
                     <div class="kb-manager-panel-fill">
                         <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100 shrink-0">
                             <div class="flex gap-1">
@@ -163,7 +230,7 @@
                                 </el-button>
                             </div>
                         </div>
-                        <div class="flex-1 min-h-0 overflow-auto px-2 py-1">
+                        <div class="flex-1 min-h-0 min-w-0 overflow-auto px-2 py-1">
                             <el-tree
                                 ref="treeRef"
                                 :data="treeData"
@@ -187,9 +254,29 @@
                             </el-tree>
                         </div>
                     </div>
-                </el-splitter-panel>
+                </div>
 
-                <el-splitter-panel>
+                <div
+                    class="kb-manager-split-bar"
+                    :class="{ 'is-active': isResizing }"
+                    role="separator"
+                    :aria-valuenow="asideWidth"
+                    :aria-valuemin="MIN_ASIDE_WIDTH"
+                    :aria-valuemax="MAX_ASIDE_WIDTH"
+                    @@mousedown="onSplitBarMouseDown">
+                    <button
+                        type="button"
+                        class="kb-manager-collapse-btn"
+                        :title="asideCollapsed ? '展开目录' : '收起目录'"
+                        @@mousedown.stop
+                        @@click.stop="onToggleCollapse">
+                        <i :class="asideCollapsed ? 'fa-solid fa-angle-right' : 'fa-solid fa-angle-left'" aria-hidden="true"></i>
+                    </button>
+                </div>
+
+                <div
+                    class="kb-manager-split-panel"
+                    data-role="content">
                     <div class="kb-manager-panel-fill">
                         <div v-if="!hasSelection" class="kb-manager-empty">
                             <div class="kb-manager-empty-card">
@@ -200,13 +287,13 @@
                             v-else
                             id="kbAttsFrame3"
                             :class="{ 'pointer-events-none': isResizing }"
-                            class="w-full h-full block bg-white border-0"
+                            class="w-full h-full block bg-white border-0 flex-1 min-w-0 min-h-0"
                             frameborder="0"
                             :src="attsUrl">
                         </iframe>
                     </div>
-                </el-splitter-panel>
-            </el-splitter>
+                </div>
+            </div>
 
             <aside
                 v-else
@@ -297,6 +384,8 @@
             const DEFAULT_ASIDE_WIDTH = 300;
             const MIN_ASIDE_WIDTH = 220;
             const MAX_ASIDE_WIDTH = 520;
+            const MIN_CONTENT_WIDTH = 360;
+            const MAX_CONTENT_WIDTH = 4000;
 
             // 递归收集：默认展开到指定层数的节点 + 当前选中节点的祖先链
             function computeDefaultExpandedKeys(root, targetCurrentId, maxLevel) {
@@ -403,10 +492,16 @@
                     const treeData = ref(initialTreeData || []);
                     const currentMenuId = ref(initialCurrentId);
                     const treeRef = ref(null);
+                    const splitShellRef = ref(null);
                     const isMobileLayout = ref(window.innerWidth < DESKTOP_BREAKPOINT);
                     const asideWidth = ref(DEFAULT_ASIDE_WIDTH);
+                    const asideCollapsed = ref(false);
                     const isResizing = ref(false);
                     const lastExpandedAsideWidth = ref(DEFAULT_ASIDE_WIDTH);
+                    let _dragMoveHandler = null;
+                    let _dragUpHandler = null;
+                    let _dragStartX = 0;
+                    let _dragStartWidth = 0;
 
                     // 默认展开：DEFAULT_EXPAND_TREE_LEVEL 指定层级 + 当前选中节点的祖先
                     const defaultExpandedKeys = ref(computeDefaultExpandedKeys(initialTreeData || [], initialCurrentId, DEFAULT_EXPAND_TREE_LEVEL));
@@ -600,12 +695,35 @@
                             showMessage('请求失败', 'error');
                             return;
                         }
-                        if (body.code !== 0 && body.code !== '0') {
-                            // 失败：保证只弹这一条，优先使用服务器返回的真实原因
-                            // （C# 侧已输出：无权操作/请先选择要删除的目录/存在下级目录，无法删除/目录不存在 等）
+                        const d = body.data || {};
+                        const errors = Array.isArray(d.errors) ? d.errors.slice() : [];
+                        const isPartial = Number(body.code) === 602;
+                        if (body.code !== 0 && body.code !== '0' && !isPartial) {
                             showMessage(body.msg || '操作失败', 'error');
                         } else {
-                            showMessage(body.msg || (fallbackOkMsg || '操作成功'), 'success');
+                            showMessage(body.msg || (fallbackOkMsg || '操作成功'), isPartial ? 'warning' : 'success');
+                        }
+                        if (errors.length > 0) {
+                            try {
+                                const EP = window.ElementPlus || {};
+                                const titles = ['上传失败明细'];
+                                const first = errors.slice(0, 8);
+                                const lines = first.map(function (e, i) {
+                                    const name = (e && (e.file || e.fileName) ? (e.file || e.fileName) : '第' + (i + 1) + '个文件');
+                                    const reason = (e && e.reason) ? e.reason : '未知错误';
+                                    return '· ' + name + '：' + reason;
+                                });
+                                const text = lines.join('\n') + (errors.length > first.length ? '\n……另有 ' + (errors.length - first.length) + ' 个文件未展示' : '');
+                                if (EP.ElMessageBox && EP.ElMessageBox.alert) {
+                                    EP.ElMessageBox.alert(text, '失败明细（' + errors.length + '）', {
+                                        confirmButtonText: '知道了',
+                                        type: 'error',
+                                        showClose: true
+                                    });
+                                } else {
+                                    alert('失败明细：\n' + text);
+                                }
+                            } catch (_) {}
                         }
                     }
 
@@ -729,15 +847,88 @@
                                 if (manager && typeof manager.closeDrawer === 'function') manager.closeDrawer();
                             } catch (_) {}
                         }
-                        if (!mobile && (Number(asideWidth.value) || 0) <= 0) {
-                            asideWidth.value = lastExpandedAsideWidth.value || DEFAULT_ASIDE_WIDTH;
+                        if (!mobile) {
+                            if (asideCollapsed.value) return;
+                            if ((Number(asideWidth.value) || 0) <= 0) {
+                                asideWidth.value = lastExpandedAsideWidth.value || DEFAULT_ASIDE_WIDTH;
+                            }
                         }
+                    }
+
+                    function clampAsideWidthForViewport(widthPx) {
+                        const shellEl = (splitShellRef && splitShellRef.value) ? splitShellRef.value : null;
+                        const clientW = shellEl && typeof shellEl.clientWidth === 'number'
+                            ? shellEl.clientWidth
+                            : (typeof window !== 'undefined' ? window.innerWidth : 1280);
+                        const barW = 10;
+                        const avail = Math.max(MIN_CONTENT_WIDTH + 4, clientW - MIN_CONTENT_WIDTH - barW);
+                        const hi = Math.min(MAX_ASIDE_WIDTH, Math.max(MIN_ASIDE_WIDTH, avail));
+                        const lo = Math.min(hi, MIN_ASIDE_WIDTH);
+                        const size = Number(widthPx);
+                        if (!Number.isFinite(size) || size <= 0) return lo;
+                        return Math.min(hi, Math.max(lo, Math.round(size)));
                     }
 
                     function normalizeAsideWidth(value) {
                         const size = Number(value);
                         if (!Number.isFinite(size) || size <= 0) return 0;
-                        return Math.min(MAX_ASIDE_WIDTH, Math.max(MIN_ASIDE_WIDTH, Math.round(size)));
+                        return clampAsideWidthForViewport(size);
+                    }
+
+                    function removeDragListeners() {
+                        if (_dragMoveHandler) {
+                            try { window.removeEventListener('mousemove', _dragMoveHandler); } catch (_) {}
+                            _dragMoveHandler = null;
+                        }
+                        if (_dragUpHandler) {
+                            try { window.removeEventListener('mouseup', _dragUpHandler); } catch (_) {}
+                            _dragUpHandler = null;
+                        }
+                    }
+
+                    function onSplitBarMouseDown(e) {
+                        if (!e || typeof e.button !== 'number' || e.button !== 0) return;
+                        e.preventDefault && e.preventDefault();
+                        e.stopPropagation && e.stopPropagation();
+                        if (asideCollapsed.value) {
+                            asideCollapsed.value = false;
+                            asideWidth.value = lastExpandedAsideWidth.value || DEFAULT_ASIDE_WIDTH;
+                            return;
+                        }
+                        onResizeStart();
+                        _dragStartX = Number(e && typeof e.clientX === 'number' ? e.clientX : 0) || 0;
+                        _dragStartWidth = Number(asideWidth.value) || MIN_ASIDE_WIDTH;
+                        _dragMoveHandler = function (ev) {
+                            if (!ev) return;
+                            const dx = (Number(ev.clientX) || 0) - _dragStartX;
+                            const next = clampAsideWidthForViewport(_dragStartWidth + dx);
+                            asideWidth.value = next;
+                        };
+                        _dragUpHandler = function () {
+                            removeDragListeners();
+                            onResizeEnd();
+                        };
+                        window.addEventListener('mousemove', _dragMoveHandler);
+                        window.addEventListener('mouseup', _dragUpHandler);
+                    }
+
+                    function onToggleCollapse(e) {
+                        if (e) {
+                            try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+                        }
+                        if (asideCollapsed.value) {
+                            asideCollapsed.value = false;
+                            const restore = lastExpandedAsideWidth.value || DEFAULT_ASIDE_WIDTH;
+                            asideWidth.value = clampAsideWidthForViewport(restore);
+                            onSplitterCollapse();
+                            return;
+                        }
+                        const current = Number(asideWidth.value) || 0;
+                        if (current > 0) {
+                            lastExpandedAsideWidth.value = clampAsideWidthForViewport(current);
+                        }
+                        asideCollapsed.value = true;
+                        onSplitterCollapse();
                     }
 
                     function onResizeStart() {
@@ -759,6 +950,7 @@
                     function onSplitterCollapse() {
                         window.setTimeout(function () {
                             const size = Number(asideWidth.value) || 0;
+                            if (asideCollapsed.value) return;
                             if (size > 0) {
                                 lastExpandedAsideWidth.value = normalizeAsideWidth(size) || DEFAULT_ASIDE_WIDTH;
                                 return;
@@ -768,6 +960,7 @@
                     }
 
                     watch(asideWidth, function (next) {
+                        if (asideCollapsed.value) return;
                         const raw = Number(next);
                         if (!Number.isFinite(raw) || raw <= 0) return;
                         const normalized = normalizeAsideWidth(raw);
@@ -779,6 +972,10 @@
                     });
 
                     onMounted(function () {
+                        // 启动时根据初始视口对默认 aside 宽度做一次约束，避免右侧内容区 < MIN_CONTENT_WIDTH
+                        try {
+                            asideWidth.value = clampAsideWidthForViewport(asideWidth.value || DEFAULT_ASIDE_WIDTH);
+                        } catch (_) {}
                         updateLayoutState();
                         window.addEventListener('resize', updateLayoutState);
 
@@ -804,13 +1001,20 @@
 
                     onBeforeUnmount(function () {
                         window.removeEventListener('resize', updateLayoutState);
+                        removeDragListeners();
+                        try {
+                            document.body.style.cursor = '';
+                            document.body.style.userSelect = '';
+                        } catch (_) {}
                     });
 
                     return {
+                        splitShellRef,
                         treeRef,
                         treeData,
                         currentMenuId,
                         asideWidth,
+                        asideCollapsed,
                         defaultExpandedKeys,
                         hasSelection,
                         currentMenuName,
@@ -821,7 +1025,12 @@
                         canEdit,
                         canDelete,
                         canUploadDir,
+                        MIN_ASIDE_WIDTH,
                         MAX_ASIDE_WIDTH,
+                        MIN_CONTENT_WIDTH,
+                        MAX_CONTENT_WIDTH,
+                        onSplitBarMouseDown,
+                        onToggleCollapse,
                         onResizeStart,
                         onResizeEnd,
                         onSplitterCollapse,

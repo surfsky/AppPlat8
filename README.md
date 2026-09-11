@@ -48,14 +48,12 @@
     # 运行Consoler项目
     # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
     dotnet run --project App.Consoler
-
-
    ```
 4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
 
 ## 单元测试和系统调试
 
-``` bash
+```bash
     # 测试项目
     dotnet test App.Utils/App.UtilsTests/App.UtilsTests.csproj
     # 或点击左侧调试图标面板（烧瓶图标）进行调试，会细化到每一个方法的测试结果（含运行时间）
@@ -78,8 +76,6 @@
 ```bash
     lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
 ```
-
-
 
 ## 部署
 

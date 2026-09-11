@@ -296,7 +296,7 @@ namespace App.Pages.KB
             var importedFileCount = 0;
             var importedMenuIds = new List<long>();
             long? importedRootMenuId = null;
-            var pendingFileAtts = new List<(long parentId, IFormFile file, string fileName)>();
+            var pendingFileAtts = new List<(long parentId, IFormFile file, string fileName, string relativePath)>();
 
             foreach (var (file, relativePath) in filePairs)
             {
@@ -328,7 +328,7 @@ namespace App.Pages.KB
                 if (!fileGroupKeys.ContainsKey(groupParent))
                     fileGroupKeys[groupParent] = new List<string>();
                 fileGroupKeys[groupParent].Add(fileName);
-                pendingFileAtts.Add((groupParent, file, fileName));
+                pendingFileAtts.Add((groupParent, file, fileName, relativePath));
             }
 
             var fileSortStart = new Dictionary<long, int>();
@@ -341,43 +341,132 @@ namespace App.Pages.KB
             }
             var fileGroupCursor = fileGroupKeys.ToDictionary(k => k.Key, _ => 0);
 
+            // 2. 保存文件附件（逐文件独立错误捕获，不中断整体流程，明细返回前端）
             var processedGroupIndex = new Dictionary<long, int>();
-            foreach (var (parentId, file, fileName) in pendingFileAtts)
+            var errors = new List<object>();
+            var skippedFileCount = 0;
+            foreach (var (parentId, file, fileName, relativePath) in pendingFileAtts)
             {
                 var pid = parentId;
-                if (!processedGroupIndex.ContainsKey(pid)) processedGroupIndex[pid] = 0;
-                processedGroupIndex[pid]++;
-                var nextSortId = fileSortStart.ContainsKey(pid)
-                    ? fileSortStart[pid] + processedGroupIndex[pid]
-                    : processedGroupIndex[pid];
-
-                var folder = nameof(KbMenu);
-                var url = Uploader.SaveFile(folder, file);
-                new Att
+                var displayFile = relativePath.IsNotEmpty() ? relativePath : (fileName.IsNotEmpty() ? fileName : file?.FileName ?? "");
+                var ext = (file?.FileName?.GetFileExtension() ?? fileName?.GetFileExtension() ?? "").Trim();
+                try
                 {
-                    Key = $"KbMenu-{pid}",
-                    Content = url,
-                    FileName = fileName.IsNotEmpty() ? fileName : file.FileName,
-                    SortId = nextSortId,
-                    Protect = true,
-                    FileSize = file.Length
-                }.Save();
-                importedFileCount++;
+                    if (!processedGroupIndex.ContainsKey(pid)) processedGroupIndex[pid] = 0;
+                    processedGroupIndex[pid]++;
+                    var nextSortId = fileSortStart.ContainsKey(pid)
+                        ? fileSortStart[pid] + processedGroupIndex[pid]
+                        : processedGroupIndex[pid];
+
+                    // 前置扩展名预校验，给出精确错误原因
+                    if (ext.IsEmpty())
+                    {
+                        throw new InvalidOperationException("无法识别的文件扩展名");
+                    }
+                    if (!SiteConfig.IsSupportFile(ext))
+                    {
+                        throw new NotSupportedException($"文件扩展名不支持：{ext}");
+                    }
+
+                    var folder = nameof(KbMenu);
+                    string url;
+                    try
+                    {
+                        url = Uploader.SaveFile(folder, file);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message?.Contains("禁止上传该类型文件") == true)
+                            throw new NotSupportedException($"文件扩展名不支持：{ext}");
+                        if (ex is IOException || ex is UnauthorizedAccessException)
+                            throw new IOException($"文件保存失败：{ex.Message}", ex);
+                        throw new InvalidOperationException($"文件上传失败：{ex.Message}", ex);
+                    }
+
+                    try
+                    {
+                        new Att
+                        {
+                            Key = $"KbMenu-{pid}",
+                            Content = url,
+                            FileName = fileName.IsNotEmpty() ? fileName : file.FileName,
+                            SortId = nextSortId,
+                            Protect = true,
+                            FileSize = file.Length
+                        }.Save();
+                    }
+                    catch (Exception ex)
+                    {
+                    try { System.IO.File.Delete(App.Web.Asp.MapPath(url)); } catch { }
+                        throw new InvalidOperationException($"保存附件信息失败：{ex.Message}", ex);
+                    }
+                    importedFileCount++;
+                }
+                catch (Exception ex)
+                {
+                    skippedFileCount++;
+                    errors.Add(new
+                    {
+                        file = displayFile,
+                        fileName = fileName.IsNotEmpty() ? fileName : file?.FileName,
+                        size = file?.Length ?? 0L,
+                        ext,
+                        reason = FriendlyUploadError(ex, ext)
+                    });
+                }
             }
 
             KbMenu.ClearCache();
             var tree = KbMenu.GetTree();
             var nextMenuId = importedRootMenuId ?? targetParent?.Id ?? 0;
-            return OkBuildResult(0, $"导入成功，共{importedFileCount}个文件", new
+            var totalFiles = pendingFileAtts.Count;
+            var hasErrors = errors.Count > 0;
+            string summaryMsg;
+            if (!hasErrors)
+                summaryMsg = totalFiles == 0 ? "没有可导入的文件" : $"导入成功，共{importedFileCount}个文件";
+            else if (importedFileCount == 0)
+                summaryMsg = $"导入失败，共{errors.Count}个文件出现错误";
+            else
+                summaryMsg = $"导入完成：成功{importedFileCount}个，失败{errors.Count}个";
+
+            return OkBuildResult(hasErrors ? 602 : 0, summaryMsg, new
             {
-                refreshTree = true,
+                refreshTree = importedFileCount > 0,
                 tree,
                 managerMenuTree = tree,
                 managerCurrentMenuId = (long?)nextMenuId,
                 nextMenuId = (long?)nextMenuId,
                 importedFileCount,
-                importedMenuCount = importedMenuIds.Distinct().Count()
+                skippedFileCount,
+                totalFileCount = totalFiles,
+                importedMenuCount = importedMenuIds.Distinct().Count(),
+                hasErrors,
+                errors
             });
+        }
+
+        /// <summary>为上传异常产出对用户友好的具体原因。</summary>
+        private static string FriendlyUploadError(Exception ex, string ext)
+        {
+            if (ex == null) return "未知错误";
+            if (ex is NotSupportedException) return ex.Message;
+            if (ex is UnauthorizedAccessException) return $"文件保存失败（无写入权限）：{ex.Message}";
+            if (ex is IOException ioEx)
+            {
+                if (ex.Message?.Contains("磁盘") == true || ex.Message?.Contains("space") == true ||
+                    (ioEx.HResult != 0 && (uint)ioEx.HResult == 0x80070070))
+                    return $"磁盘空间不足或文件写入失败：{ex.Message}";
+                return $"文件保存失败：{ex.Message}";
+            }
+            if (ex is InvalidOperationException) return ex.Message;
+            if (ex is OutOfMemoryException) return "文件过大，服务器内存不足，请压缩后再上传";
+            if (ex is ArgumentException argEx) return $"参数错误：{argEx.Message}";
+            var msg = (ex.Message ?? "").Trim();
+            if (msg.Contains("禁止上传该类型文件") || msg.Contains("不支持"))
+                return $"文件扩展名不支持：{ext}";
+            if (msg.Contains("路径") || msg.Contains("Path"))
+                return $"文件路径无效：{msg}";
+            return msg.IsEmpty() ? "未知错误" : msg;
         }
 
         // 排序前归一化：如果当前节点与目标邻居的 SortId 相同（典型是都为 0），

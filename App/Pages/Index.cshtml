@@ -28,18 +28,19 @@
 
 
     <title>@Model.SiteTitle - Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
-    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/element-plus"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/lib/tailwindcss/browser.js"></script>
+    <link rel="stylesheet" href="/lib/element-plus/dist/index.css">
+    <script src="/lib/vue/vue.global.prod.js"></script>
+    <script src="/lib/element-plus/index.js"></script>
+    <link rel="stylesheet" href="/lib/font-awesome-6.4.0/css/all.min.css">
     <script src="/ui/tailwindConfig.js"></script>
     <script src="/ui/MenuTree.js?v=@DateTime.Now.Ticks"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
+        html {
             box-sizing: border-box;
+        }
+        *, *::before, *::after {
+            box-sizing: inherit;
         }
         /* 全局核心优化：防飘、防拖动、防回弹、防横向滑动 */
         html, body {
@@ -112,10 +113,32 @@
 
         #topHeader {
             animation: slideDown 0.3s ease-out forwards;
+            box-sizing: border-box;
         }
 
         #topHeader.hide-mobile {
             animation: slideUp 0.3s ease-out forwards;
+        }
+
+        .user-pill {
+            min-width: 88px;
+            padding: 6px 14px !important;
+            line-height: 1.25;
+            gap: 8px !important;
+        }
+        .user-pill .user-label {
+            padding: 0 4px;
+        }
+        .sidebar-nav-panel {
+            padding: 14px 12px;
+            gap: 6px;
+        }
+        .sidebar-menu-item {
+            padding: 8px 10px;
+        }
+        .frame-container {
+            padding-top: 0.25rem;
+            min-height: 0;
         }
 
         /* Sub-items collapse/expand animation */
@@ -256,10 +279,10 @@
 
 
             <!-- Right Section: Toolbar Icons -->
-            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                <div class="hidden md:flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-sm text-white backdrop-blur-sm">
+            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0 pr-1">
+                <div class="user-pill hidden md:flex items-center rounded-full bg-white/15 px-3 py-2 text-sm text-white backdrop-blur-sm border border-white/15">
                     <i class="fas fa-user text-xs opacity-90"></i>
-                    <span class="max-w-40 truncate" title="@Model.DisplayName">@Model.DisplayName</span>
+                    <span class="user-label max-w-[160px] truncate" title="@Model.DisplayName">@Model.DisplayName</span>
                 </div>
                 <!-- AI Chat Button -->
                 <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="AI Chat" @@click="openAiChatDrawer">
@@ -277,14 +300,14 @@
         </div>
 
         <!-- Main Container - single main content, mobile only hides sidebar -->
-        <div class="flex flex-1 overflow-hidden pt-16">
+        <div class="flex flex-1 overflow-hidden pt-16 pb-0 box-border">
             <div
                 id="sidebarMobile"
                 class="sidebar w-60 md:w-auto bg-[#3B71F8] fixed md:relative left-0 top-16 md:top-0 h-[calc(100vh-64px)] md:h-full z-40 md:z-auto flex flex-col overflow-y-auto overflow-x-hidden -translate-x-full md:translate-x-0 transition-transform duration-300"
                 :class="{ 'sidebar-desktop-collapsed': !isMobile && desktopSidebarCollapsed }"
                 :style="!isMobile ? { width: desktopSidebarCollapsed ? '0px' : (sidebarPanelSize + 'px') } : null"
             >
-                <div class="flex-1 flex flex-col gap-1 pt-4 px-3">
+                <div class="sidebar-nav-panel flex-1 flex flex-col gap-1 pt-4 px-3">
                     <menu-tree 
                         :menu-data="mainMenuItems" 
                         default-target="contentFrame" 
@@ -293,7 +316,7 @@
                         @@navigate="handleMenuNavigate"
                     ></menu-tree>
                 </div>
-                <div class="flex flex-col gap-2 px-3 py-3">
+                <div class="sidebar-nav-panel flex-col gap-2 px-3 py-3">
                     <menu-tree 
                         :menu-data="bottomMenuItems" 
                         default-target="contentFrame" 
@@ -317,8 +340,8 @@
 
             <div id="sidebarOverlay" class="sidebar-overlay md:hidden" @@click="closeSidebar"></div>
 
-            <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden h-full">
-                <div class="flex-1 overflow-hidden">
+            <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden h-full box-border px-1 py-1">
+                <div class="frame-container flex-1 overflow-hidden">
                     <iframe id="contentFrame" src="/me/WorkDesk" class="w-full h-full"></iframe>
                 </div>
             </div>
