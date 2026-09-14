@@ -21,11 +21,13 @@
 - 项目网址：https://github.com/surfsky/AppPlat8
 - License: MIT
 
-![web](./Doc/images/web.png)
-![mobile](./Doc/images/mobile.png)
-![gis](./Doc/images/gis.png)
-![gisglobal](./Doc/images/gisGlobal.png)
-![cityweather](./Doc/images/cityWeather.png)
+<!-- 图片路径必须严格大小写，因为 GitHub(Linux ext4) 大小写敏感，而 macOS APFS 默认不敏感：
+     目录是 Doc/Images（I 大写），文件名全小写 gisglobal/cityweather -->
+![web](./Doc/Images/web.png)
+![mobile](./Doc/Images/mobile.png)
+![gis](./Doc/Images/gis.png)
+![gisglobal](./Doc/Images/gisglobal.png)
+![cityweather](./Doc/Images/cityweather.png)
 
 ## 快速开始
 
