@@ -344,16 +344,18 @@ namespace App.DAL
             var list = new List<List<long>>();
             if (tagIds == null || tagIds.Count == 0) return list;
 
-            // 对每个用户勾选的 tagId 单独展开 → 一组
             var distinct = tagIds.Distinct().ToList();
             foreach (var tid in distinct)
             {
+                // 叶子节点（无子孙）也要保留自身作为单元素组；非叶子展开自身+子孙
                 var group = CheckTag.All
                     .GetDescendants(tid)
                     .Select(t => t.Id)
+                    .DefaultIfEmpty(tid)
                     .Distinct()
                     .ToList();
-                if (group.Count > 0) list.Add(group);
+                if (group.Count == 0) group = new List<long> { tid };
+                list.Add(group);
             }
             return list;
         }

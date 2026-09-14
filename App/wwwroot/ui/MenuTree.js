@@ -38,9 +38,9 @@ const MenuTree = {
                 <!-- Recursive Children Container -->
                 <div class="nav-sub-items flex flex-col overflow-hidden" 
                      :class="{ 'collapsed': !item.isOpen }">
-                    <!-- Recursive Call -->
+                    <!-- Recursive Call (去掉左侧白色指引线：移除 border-l / border-white / border-opacity-10) -->
                     <menu-tree 
-                        class="ml-3 border-l border-white border-opacity-10"
+                        class="ml-3"
                         :menu-data="item.children" 
                         :default-target="defaultTarget" 
                         :text-color="textColor"

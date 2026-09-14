@@ -159,10 +159,26 @@
             overflow: hidden;
         }
 
-        /* Use 'collapsed' instead of 'hidden' to avoid conflict with Tailwind's display:none */
         .nav-sub-items.collapsed {
             max-height: 0;
             opacity: 0;
+        }
+
+        /* 统一侧边栏菜单项 hover / active 外观：
+           - 父级分组（nav-item-parent）hover、叶子节点（nav-item）hover、
+             叶子 active（当前页选中）均用 rgba(255,255,255,0.2)，
+             与截图中「标签」选中态完全一致，避免 Tailwind browser 模式
+             扫描不到 menu-tree 内部 class 导致 hover 显示成全白。 */
+        .nav-item,
+        .nav-item-parent {
+            transition: background-color .18s ease;
+        }
+        .nav-item:hover,
+        .nav-item-parent:hover {
+            background-color: rgba(255, 255, 255, 0.20) !important;
+        }
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.20) !important;
         }
 
         /* Sidebar overlay for mobile - fixed positioning */

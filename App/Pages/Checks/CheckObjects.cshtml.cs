@@ -21,6 +21,25 @@ namespace App.Pages.Checks
         public long? DefaultCheckerId { get; set; }
         public string DefaultCheckerName { get; set; }
 
+        /// <summary>解析 tagIds 参数：兼容表单提交（List<long>）+ EleTreePicker 的「?tagIds=127,136,138」逗号字符串，统一去重去空。</summary>
+        static List<long> ParseTagIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
+        {
+            var list = new List<long>();
+            if (fromBinder != null) list.AddRange(fromBinder);
+            if (raw.Count > 0)
+            {
+                foreach (var s in raw)
+                {
+                    if (string.IsNullOrWhiteSpace(s)) continue;
+                    foreach (var seg in s.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (long.TryParse(seg.Trim(), out var id) && id > 0) list.Add(id);
+                    }
+                }
+            }
+            return list.Distinct().OrderBy(t => t).ToList();
+        }
+
         public void OnGet()
         {
             var qs = Request.Query["dutyOrgIds"].ToString();
@@ -82,6 +101,7 @@ namespace App.Pages.Checks
             bool? isDel=null
             )
         {
+            tagIds = ParseTagIds(tagIds, Request.Query["tagIds"]);
             DateTime? createStartDt = createDt.GetVal(0);
             DateTime? createEndDt = createDt.GetVal(1);
             DateTime? lastCheckStartDt = lastCheckDt.GetVal(0);
@@ -126,7 +146,7 @@ namespace App.Pages.Checks
             long? dutyOrgId=null,
             List<long> dutyOrgIds=null,
             long? checkerId=null,
-            long? checkId=null,
+            long? checkId=null, 
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
             CheckObjectScale? scale=null, 
@@ -137,6 +157,7 @@ namespace App.Pages.Checks
             List<long> tagIds=null,
             bool? isDel=null)
         {
+            tagIds = ParseTagIds(tagIds, Request.Form["tagIds"]);
             DateTime? createStartDt = createDt.GetVal(0);
             DateTime? createEndDt = createDt.GetVal(1);
             DateTime? lastCheckStartDt = lastCheckDt.GetVal(0);
