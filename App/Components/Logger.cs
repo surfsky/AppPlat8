@@ -19,10 +19,13 @@ namespace App.Components
         static Serilog.Core.Logger _log = new Lazy<Serilog.Core.Logger>(() => CreateLogger()).Value;
         static Serilog.Core.Logger CreateLogger()
         {
-            var sp = Path.DirectorySeparatorChar;
+            // 日志路径统一从 Paths 取，允许配置外部目录；启动期 Paths 不依赖任何 Web/DAL
+            var logDir = Paths.LogsRoot;
+            IO.PrepareDirectory(Path.Combine(logDir, "_.txt"));
+            var logFile = Path.Combine(logDir, "log.txt");
             return new LoggerConfiguration()
                 .WriteTo.Console()
-                .WriteTo.File($"Logs{sp}log.txt", rollingInterval: RollingInterval.Day)
+                .WriteTo.File(logFile, rollingInterval: RollingInterval.Day)
                 .CreateLogger()
                 ;
         }

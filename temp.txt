@@ -210,3 +210,25 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
 
             return RoleMenu.GetUserMenuIds(userId.Value).ToResult();
         }
+
+
+            // 1) 外部显式注入 + 源项目回溯（Program.cs 通过 SetContentRoot 塞 builder 的 ContentRoot；
+            //    开发环境它是 bin/Debug/net8.0，但源项目目录在上级；所以仍要做 LooksLikeSourceProject 回溯）
+            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPPLAT_CONTENT_ROOT")))
+            {
+                var env = Environment.GetEnvironmentVariable("APPPLAT_CONTENT_ROOT").Trim();
+                if (Directory.Exists(env))
+                {
+                    var candidates = new System.Collections.Generic.List<string>();
+                    CollectCandidates(candidates, env);
+                    foreach (var d in candidates)
+                    {
+                        if (HasAppSettings(d) && LooksLikeSourceProject(d))
+                            return SafeFull(d);
+                    }
+                    // 外部注入但找不到源项目（纯发布/生产部署），就信任外部注入值
+                    return SafeFull(env);
+                }
+            }
+
+            // 2) 候选目录收集器（当前工作目录 + AppContext.BaseDirectory 分别向上回溯）

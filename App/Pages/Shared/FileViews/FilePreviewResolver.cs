@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using App.DAL;
 using App.Entities;
+using App.Utils;
 
 namespace App.Pages.Shared.FileViews
 {
@@ -90,7 +91,7 @@ namespace App.Pages.Shared.FileViews
                     || safePath.Contains("..", StringComparison.Ordinal))
                     return string.Empty;
 
-                var root = Path.Combine(Directory.GetCurrentDirectory(), "Files");
+                var root = Paths.FilesRoot;
                 var fullPath = Path.GetFullPath(Path.Combine(root, safePath.Replace('/', Path.DirectorySeparatorChar)));
                 var rootPath = Path.GetFullPath(root);
                 if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))

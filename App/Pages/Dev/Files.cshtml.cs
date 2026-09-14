@@ -13,7 +13,7 @@ namespace App.Pages.Dev
 
         public void OnGet()
         {
-            var root = Path.Combine(Directory.GetCurrentDirectory(), "Files");
+            var root = Paths.FilesRoot;
             var samplesRoot = Path.Combine(root, "Samples");
             if (!Directory.Exists(samplesRoot))
                 Directory.CreateDirectory(samplesRoot);

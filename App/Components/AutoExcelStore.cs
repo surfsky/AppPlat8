@@ -160,7 +160,7 @@ namespace App.Components
             if (ext != ".xls" && ext != ".xlsx")
                 throw new InvalidOperationException("仅支持 xls/xlsx 文件");
 
-            var root = Path.Combine(Directory.GetCurrentDirectory(), "Files");
+            var root = Paths.FilesRoot;
             var path = Path.GetFullPath(Path.Combine(root, rel.Replace('/', Path.DirectorySeparatorChar)));
             var rootPath = Path.GetFullPath(root);
             if (!path.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))

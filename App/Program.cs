@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using App.DAL;
+using App.Utils;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -23,8 +24,17 @@ namespace App
                 .CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder => {
                     webBuilder.UseStartup<Startup>();
+                    // 在 Host 构建前把 ContentRootPath 注入给 Paths（最准）
+                    webBuilder.ConfigureAppConfiguration((ctx, _) =>
+                    {
+                        Paths.SetContentRoot(ctx.HostingEnvironment.ContentRootPath);   // 增加 appsettings.json 中的相关路径解析
+                    });
                 });
             var host = builder.Build();
+            // 启动早期：确保 4 个目录存在 + 做写测试 + 打印汇总到 Console（Logger 此时可能还没完全初始化，写 Console 更稳）
+            var summary = Paths.EnsureAll(testWritable: true);
+            Console.WriteLine(summary);
+            Components.Logger.Info(summary);
             CreateDbIfNotExists(host);
             host.Run();
         }

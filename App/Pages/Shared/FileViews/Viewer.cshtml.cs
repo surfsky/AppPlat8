@@ -5,6 +5,7 @@ using System.Linq;
 using App.Components;
 using App.DAL;
 using App.Entities;
+using App.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 
@@ -182,7 +183,7 @@ namespace App.Pages.Shared.FileViews
                 return false;
             }
 
-            var root = Path.Combine(Directory.GetCurrentDirectory(), "Files");
+            var root = Paths.FilesRoot;
             fullPath = Path.GetFullPath(Path.Combine(root, safePath.Replace('/', Path.DirectorySeparatorChar)));
             var rootPath = Path.GetFullPath(root);
             if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))

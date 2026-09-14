@@ -13,6 +13,8 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.IO;
+using System.Text.Json.Serialization;
 using App.HttpApi;
 using App.Middlewares;
 using App.Web;
@@ -20,8 +22,6 @@ using App.DAL;
 using App.Components;
 using App.Entities;
 using App.Pages.Chats;
-using System.IO;
-using System.Text.Json.Serialization;
 using App.Utils;
 
 namespace App
@@ -257,10 +257,10 @@ namespace App
             // 允许通过 /Files/* 访问项目根目录 Files 下的上传文件。
             app.UseStaticFiles();
 
-            // 允许下载Files目录下的各种静态文件
+            // 允许下载Files目录下的各种静态文件（物理路径从 Paths.FilesRoot 取，允许配置到网站外跨盘目录）
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "Files")),
+                FileProvider = new PhysicalFileProvider(Paths.FilesRoot),
                 RequestPath = "/Files",
                 ContentTypeProvider = GetFileProvider(),
             });

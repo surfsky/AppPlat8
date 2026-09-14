@@ -1,5 +1,6 @@
 using App.DAL;
 using App.Entities;
+using App.Utils;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 using Quartz.Impl;
@@ -10,6 +11,9 @@ using System.Text;
 using System.Threading;
 
 
+//---------------------------------------------------------------
+// 启动参数检测
+//---------------------------------------------------------------
 // 解析检查对象点位接口基础URL
 var apiBaseUrl = args
 	.FirstOrDefault(t => t.StartsWith("--api-base=", StringComparison.OrdinalIgnoreCase))
@@ -41,6 +45,9 @@ if (!CanConnect(conn))
 }
 ConfigureEntity(conn);
 
+//---------------------------------------------------------------
+// 任务参数检测（主入口）
+//---------------------------------------------------------------
 // 检测直接启动任务参数
 if (args.Any(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase)))
 {
@@ -68,6 +75,10 @@ if (args.Any(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase)))
 await RunSchedulerAsync();
 
 
+
+//---------------------------------------------------------------
+// 以下是调度任务的实现
+//---------------------------------------------------------------
 /// <summary>获取指定任务实例</summary>
 IJob? GetJob(string? jobName)
 {
@@ -83,9 +94,6 @@ IJob? GetJob(string? jobName)
 	};
 }
 
-//---------------------------------------------------------------
-// 以下是调度任务的实现
-//---------------------------------------------------------------
 /// <summary>启动Quartz调度任务</summary>
 /// <param name="conn"></param>
 /// <param name="cron"></param>
@@ -125,32 +133,32 @@ static async Task RunSchedulerAsync()
 //---------------------------------------------------------------
 // 以下是一些辅助方法
 //---------------------------------------------------------------
+static void AddPath(List<string> paths, string path)
+{
+	if (string.IsNullOrWhiteSpace(path))
+		return;
+	paths.Add(Path.GetFullPath(path));
+}
+
+
 /// <summary>解析默认数据库路径</summary>
 static string ResolveDefaultDbPath()
 {
+	// 候选路径
 	var candidates = new List<string>();
-
-	void AddCandidate(string path)
-	{
-		if (string.IsNullOrWhiteSpace(path))
-			return;
-		candidates.Add(Path.GetFullPath(path));
-	}
-
-	AddCandidate(Path.Combine(Directory.GetCurrentDirectory(), "App", "Db", "sqlite.db"));
-	AddCandidate(Path.Combine(AppContext.BaseDirectory, "App", "Db", "sqlite.db"));
-
+	AddPath(candidates, Path.Combine(Directory.GetCurrentDirectory(), "App", "Db", "sqlite.db"));
+	AddPath(candidates, Path.Combine(AppContext.BaseDirectory, "App", "Db", "sqlite.db"));
 	var current = new DirectoryInfo(AppContext.BaseDirectory);
 	for (var i = 0; i < 8 && current != null; i++)
 	{
-		AddCandidate(Path.Combine(current.FullName, "App", "Db", "sqlite.db"));
+		AddPath(candidates, Path.Combine(current.FullName, "App", "Db", "sqlite.db"));
 		current = current.Parent;
 	}
 
+	// 选择第一个存在的路径
 	var firstExists = candidates.FirstOrDefault(File.Exists);
 	if (!string.IsNullOrWhiteSpace(firstExists))
 		return firstExists;
-
 	return candidates.First();
 }
 

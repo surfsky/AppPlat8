@@ -238,6 +238,9 @@ namespace App.Web
                 return "";
             if (virtualPath.Contains("/"))
             {
+                // 识别已知前缀：/Files/* /Caches/* → 直接映射到 Paths 对应物理根（不受 ContentRoot 限制，允许跨盘/外网盘）
+                var known = Paths.TryMapKnownPrefix(virtualPath);
+                if (known.IsNotEmpty()) return known;
                 if (baseWwwroot)
                     return Path.Combine(_hostFolder, "wwwroot", virtualPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
                 return Path.Combine(_hostFolder, virtualPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
