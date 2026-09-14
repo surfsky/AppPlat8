@@ -42,7 +42,7 @@ namespace App.EleUI
             {
                 baseDisabledExpr = context.AllAttributes.ContainsName("Enabled")
                     ? (!Enabled).ToString().ToLower()
-                    : "readOnly";
+                    : (context.Items.ContainsKey("IsEleForm") ? "readOnly" : "false");
             }
 
             var target = ResolveControlTarget(context);

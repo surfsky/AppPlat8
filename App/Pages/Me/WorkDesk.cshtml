@@ -9,6 +9,15 @@
         ? (Model.UserId.HasValue && Model.UserId.Value > 0 ? ("ID=" + Model.UserId.Value) : "请选择人员")
         : Model.UserRealName);
     var scopeDisabled = Model.CanChangeScope ? "false" : "true";
+
+    // 快捷入口配置：直接在这里增删改，无需重新编译 PageModel
+    var quickEntries = new List<App.Pages.Me.WorkDeskLink>
+    {
+        new App.Pages.Me.WorkDeskLink { Title = "一张图", Url = "/GIS/Index", Target = "_blank" },
+        new App.Pages.Me.WorkDeskLink { Title = "知识库", Url = "/KB/Index",  Target = "_self"  },
+        new App.Pages.Me.WorkDeskLink { Title = "值班表", Url = "/OA/DutySchedules", Target = "_self" },
+        new App.Pages.Me.WorkDeskLink { Title = "通讯录", Url = "/CRM/Contacts", Target = "_self" },
+    };
 }
 
 @section body {
@@ -49,7 +58,7 @@
             <section class="mb-8">
                 <h2 class="mb-4 text-base font-semibold text-slate-900">快捷入口</h2>
                 <div class="flex flex-wrap gap-4">
-                    @foreach (var item in Model.QuickEntries)
+                    @foreach (var item in quickEntries)
                     {
                         <a href="@item.Url" target="@item.Target"
                            class="inline-flex h-12 min-w-[112px] items-center justify-center rounded-lg border border-slate-300 bg-white px-6 text-sm font-medium text-slate-800 transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-md">

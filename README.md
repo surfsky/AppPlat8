@@ -39,11 +39,15 @@
     dotnet run --project App
     dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
     dotnet app.dll --urls=http://localhost:6060;http://abc.org
+    # 若端口被占用，查找并杀掉占用端口 6060 的进程
+    lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
 
     # 编译EleUI示例项目
     dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
     dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
-    调试： vscode 左侧的调试图标页面打开，选择 Debug EleUISamples 进行调试。或者顶部的命令行中输入：Debug EleUISamples；
+    # 调试： vscode 左侧的调试图标页面打开，选择 Debug EleUISamples 进行调试。或者顶部的命令行中输入：Debug EleUISamples；
+    # 若端口被占用，查找并杀掉占用端口 6070 的进程
+    lsof -nP -iTCP:6070 -sTCP:LISTEN && lsof -ti tcp:6070 | xargs -n 1 kill -9  
 
     # 运行Consoler项目
     # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
@@ -72,10 +76,6 @@
 ```
 
 2. 若端口被占用，查找占用 6060 的进程，然后kill
-
-```bash
-    lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
-```
 
 ## 部署
 

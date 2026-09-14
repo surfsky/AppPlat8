@@ -86,7 +86,7 @@ namespace App.EleUI
             }
             else
             {
-                baseDisabledExpr = "readOnly";
+                baseDisabledExpr = context.Items.ContainsKey("IsEleForm") ? "readOnly" : "false";
             }
 
             var targetSafe = EscapeJs(target);

@@ -54,13 +54,10 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         // 简单绑定用列表（SSR 输出）
         //---------------------------------------------------------------------
-        public List<WorkDeskLink> QuickEntries { get; } = new()
-        {
-            new WorkDeskLink { Title = "一张图",   Url = "/GIS/Index",    Target = "_blank" },
-            new WorkDeskLink { Title = "知识库",   Url = "/KB/Index",     Target = "_self"  },
-            new WorkDeskLink { Title = "值班表",   Url = "/Duty/Index",   Target = "_self"  },
-            new WorkDeskLink { Title = "通讯录",   Url = "/CRM/Contacts", Target = "_self"  },
-        };
+        // 已废弃：快捷入口配置已移到 WorkDesk.cshtml 顶部代码块中（List<WorkDeskLink> quickEntries），
+        // 调整标题/链接/打开方式直接改 .cshtml 即可，无需重新编译 PageModel。
+        [Obsolete("快捷入口配置已移到 WorkDesk.cshtml 顶部，此字段保留为空占位")]
+        public List<WorkDeskLink> QuickEntries { get; } = new();
         public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
         public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();
 

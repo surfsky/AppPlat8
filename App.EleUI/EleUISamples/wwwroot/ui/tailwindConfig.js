@@ -95,6 +95,10 @@ if (document.readyState === 'loading') {
  * 设置Tailwind CSS配置，使用CSS变量
  * 这样可以在运行时修改主题，只需改变CSS变量的值
  */
+// Tailwind v3 Play CDN 在 window 暴露全局对象 tailwind；
+// Tailwind v4 @tailwindcss/browser 未再暴露该全局（用 <script type="tailwindcss-config"> 或 @@theme 替代）。
+// 这里做存在性判断，避免抛 "tailwind is not defined" 打断后续脚本。
+if (typeof tailwind !== 'undefined' && tailwind && typeof tailwind.config !== 'undefined') {
 tailwind.config = {
     theme: {
         extend: {
@@ -125,5 +129,6 @@ tailwind.config = {
         }
     }
 }
+} // typeof tailwind guard
 
 

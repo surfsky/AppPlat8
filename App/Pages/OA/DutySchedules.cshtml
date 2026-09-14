@@ -8,8 +8,8 @@
     <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="值班表" FormPage="DutyScheduleForm" EnableBatch="true">
         <Toolbar>
             <Filters>
-                <EleDatePicker For="Item.Day" Type="DateRange"  Width="220px" Label="日期" Type="Date" Value="@QString("fromDt")"></EleDatePicker>
-                <EleInput    Prop="keyword"   Width="320px" Label="值班人员/手机" Value="@QString("keyword")"></EleInput>
+                <EleDatePicker For="Item.Day" Type="DateRange"  Width="220px" Label="日期" Type="Date"> </EleDatePicker>
+                <EleInput    VModel="filters.keyword" Prop="keyword"   Width="320px" Label="值班人员/手机" ></EleInput>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

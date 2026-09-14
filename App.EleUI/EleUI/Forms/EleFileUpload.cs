@@ -49,9 +49,11 @@ namespace App.EleUI
             var vVisibleExpr = string.IsNullOrWhiteSpace(target)
                 ? "true"
                 : $"(typeof resolveControlVisible === 'function' ? resolveControlVisible('{targetSafe}', true) : true)";
+            // Filter 上下文没有 readOnly 变量默认 false，EleForm 用 readOnly
+            string defaultDisabled = context.Items.ContainsKey("IsEleForm") ? "readOnly" : "false";
             var vDisabledExpr = string.IsNullOrWhiteSpace(target)
-                ? "readOnly"
-                : $"(typeof resolveControlDisabled === 'function' ? resolveControlDisabled('{targetSafe}', readOnly) : readOnly)";
+                ? defaultDisabled
+                : $"(typeof resolveControlDisabled === 'function' ? resolveControlDisabled('{targetSafe}', {defaultDisabled}) : {defaultDisabled})";
             var dataControlAttr = string.IsNullOrWhiteSpace(target)
                 ? string.Empty
                 : $" data-ele-control-id=\"{target}\"";

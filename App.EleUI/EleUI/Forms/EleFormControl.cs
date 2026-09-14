@@ -40,9 +40,25 @@ namespace App.EleUI
         protected string GetVModel(TagHelperContext context)
         {
             // Prefer VModel if set explicitly in base
-            // Prefer Prop if set (manual override)
             if (!string.IsNullOrEmpty(VModel)) return VModel;
-            if (!string.IsNullOrEmpty(Prop)) return Prop;
+
+            bool isEleForm = context.Items.ContainsKey("IsEleForm");
+
+            // Prefer Prop if set (manual override) — align context semantics with For branch
+            if (!string.IsNullOrEmpty(Prop))
+            {
+                var camelProp = ToCamelCase(Prop);
+                if (isEleForm)
+                {
+                    var formModel = context.Items.ContainsKey("EleFormModel") ? context.Items["EleFormModel"] as string : "form";
+                    return $"{formModel}.{camelProp}";
+                }
+                else
+                {
+                    // Filter context (EleTable toolbar)
+                    return $"filters.{camelProp}";
+                }
+            }
 
             if (For != null)
             {
@@ -52,7 +68,6 @@ namespace App.EleUI
                     propName = propName.Substring(propName.LastIndexOf('.') + 1);
                 var camelName = ToCamelCase(propName);
                 
-                bool isEleForm = context.Items.ContainsKey("IsEleForm");
                 if (isEleForm)
                 {
                     var formModel = context.Items.ContainsKey("EleFormModel") ? context.Items["EleFormModel"] as string : "form";
@@ -273,7 +288,9 @@ namespace App.EleUI
             }
             else
             {
-                baseDisabledExpr = "readOnly";
+                // Filter 上下文（EleTable）没有 readOnly 变量，默认不禁用；
+                // EleForm 上下文有 form.readOnly ref，保持原语义。
+                baseDisabledExpr = context.Items.ContainsKey("IsEleForm") ? "readOnly" : "false";
             }
 
             var target = ResolveControlTarget(context);
