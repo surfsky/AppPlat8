@@ -137,67 +137,7 @@
                     </EleTable>
                 </section>
 
-                <!-- 表 2：基础科任务 -->
-                <section class="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
-                    <h2 class="mb-4 text-base font-semibold text-slate-900">基础科任务</h2>
-                    <EleTable PageSize="10"
-                              Title=""
-                              EnableBatch="false"
-                              RowKey="id"
-                              DataHandler="?handler=SectionTasks&orgId=@orgVal&userId=@userVal">
-                        <Toolbar>
-                            <Filters></Filters>
-                            <Buttons></Buttons>
-                        </Toolbar>
-                        <Columns>
-                            <EleNumColumn Width="60"></EleNumColumn>
-                            <EleColumn Prop="name"          Label="名称"     MinWidth="220"></EleColumn>
-                            <EleColumn Prop="levelText"     Label="级别"     MinWidth="220"></EleColumn>
-                            <EleColumn Prop="creatorOrg"    Label="发起组织" MinWidth="180"></EleColumn>
-                            <EleColumn Prop="progress"      Label="进度"     MinWidth="140">
-                                <template #default="{ row }">
-                                    <el-progress :percentage="(row && row.progress!=null)? Number(row.progress) : 0"
-                                                 :stroke-width="10"></el-progress>
-                                </template>
-                            </EleColumn>
-                            <EleColumn Prop="progressText"  Label="进度状态" Width="120"></EleColumn>
-                            <EleColumn Prop="startDt"       Label="开始日期" Width="120" FormatString="yyyy/M/d"></EleColumn>
-                            <EleColumn Prop="expireDt"      Label="结束日期" Width="120" FormatString="yyyy/M/d"></EleColumn>
-                            <EleColumn Prop="detailUrl"     Label="详情"     Width="100" Link="true"></EleColumn>
-                        </Columns>
-                    </EleTable>
-                </section>
 
-                <!-- 表 3：分派中心任务 -->
-                <section class="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
-                    <h2 class="mb-4 text-base font-semibold text-slate-900">分派中心任务</h2>
-                    <EleTable PageSize="10"
-                              Title=""
-                              EnableBatch="false"
-                              RowKey="id"
-                              DataHandler="?handler=CenterTasks&orgId=@orgVal&userId=@userVal">
-                        <Toolbar>
-                            <Filters></Filters>
-                            <Buttons></Buttons>
-                        </Toolbar>
-                        <Columns>
-                            <EleNumColumn Width="60"></EleNumColumn>
-                            <EleColumn Prop="name"          Label="名称"     MinWidth="220"></EleColumn>
-                            <EleColumn Prop="levelText"     Label="级别"     MinWidth="220"></EleColumn>
-                            <EleColumn Prop="creatorOrg"    Label="发起组织" MinWidth="180"></EleColumn>
-                            <EleColumn Prop="progress"      Label="进度"     MinWidth="140">
-                                <template #default="{ row }">
-                                    <el-progress :percentage="(row && row.progress!=null)? Number(row.progress) : 0"
-                                                 :stroke-width="10"></el-progress>
-                                </template>
-                            </EleColumn>
-                            <EleColumn Prop="progressText"  Label="进度状态" Width="120"></EleColumn>
-                            <EleColumn Prop="startDt"       Label="开始日期" Width="120" FormatString="yyyy/M/d"></EleColumn>
-                            <EleColumn Prop="expireDt"      Label="结束日期" Width="120" FormatString="yyyy/M/d"></EleColumn>
-                            <EleColumn Prop="detailUrl"     Label="详情"     Width="100" Link="true"></EleColumn>
-                        </Columns>
-                    </EleTable>
-                </section>
             </section>
         </div>
     </div>
