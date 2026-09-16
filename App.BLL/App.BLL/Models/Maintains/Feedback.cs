@@ -54,6 +54,7 @@ namespace App.DAL
         [UI("应用版本")]     public string AppVersion { get; set; }
         [UI("应用模块")]     public string AppModule { get; set; }
         [UI("失效")]        public bool? IsDel { get; set; } = false;
+        [UI("失效时间")]           public DateTime? DeleteDt { get; set; }
 
         // 提交人
         [UI("提交人")]      public long? UserID { get; set; }

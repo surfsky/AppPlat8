@@ -60,16 +60,50 @@ namespace App.EleUI
         [HtmlAttributeName("PageSize")]
         public int? PageSize { get; set; } = 20;
 
+        [HtmlAttributeName("ShowPage")]
+        public bool ShowPage { get; set; } = true;
+
         [HtmlAttributeName("SortField")]
-        public string SortField { get; set; } = "Id";
+        public string SortField { get; set; } = "";
 
         [HtmlAttributeName("SortDirection")]
         public string SortDirection { get; set; } = "ASC";
 
+        /// <summary>全局表头对齐（left/center/right，可被单个列的 HeaderAlign/LabelAlign 覆盖。别名：TitleAlign。默认 center。</summary>
+        [HtmlAttributeName("HeaderAlign")]
+        public string HeaderAlign { get; set; } = "center";
+
+        [HtmlAttributeName("TitleAlign")]
+        public string TitleAlign { get; set; }
+
+        /// <summary>表头长文字是否自动换行。true 时表头 cell 的 white-space 改为 normal + line-height:1.4。别名：HeadWrap。</summary>
+        [HtmlAttributeName("HeaderWrap")]
+        public bool HeaderWrap { get; set; }
+
+        [HtmlAttributeName("HeadWrap")]
+        public bool HeadWrap { get; set; }
+
+        /// <summary>全局表头垂直对齐（top/middle/bottom，可被单个列的 HeaderVAlign/LabelVAlign 覆盖。别名：TitleVAlign。默认 middle。</summary>
+        [HtmlAttributeName("HeaderVerticalAlign")]
+        public string HeaderVerticalAlign { get; set; } = "middle";
+
+        [HtmlAttributeName("HeaderVAlign")]
+        public string HeaderVAlign { get; set; }
+
+        [HtmlAttributeName("TitleVAlign")]
+        public string TitleVAlign { get; set; }
+
         public override void Init(TagHelperContext context)
         {
             base.Init(context);
+            var ha = string.IsNullOrWhiteSpace(TitleAlign) ? null : TitleAlign.Trim();
+            if (!string.IsNullOrWhiteSpace(ha)) HeaderAlign = ha;
+            var hva = string.IsNullOrWhiteSpace(TitleVAlign) ? (string.IsNullOrWhiteSpace(HeaderVAlign) ? null : HeaderVAlign.Trim()) : TitleVAlign.Trim();
+            if (!string.IsNullOrWhiteSpace(hva)) HeaderVerticalAlign = hva;
+            if (HeadWrap) HeaderWrap = true;
             context.Items[typeof(TableContext)] = new TableContext();
+            context.Items["TableHeaderAlign"] = HeaderAlign;
+            context.Items["TableHeaderVerticalAlign"] = HeaderVerticalAlign;
         }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
@@ -84,21 +118,84 @@ namespace App.EleUI
                 appId = $"app-etbl-{_idCounter}";
             }
             output.Attributes.SetAttribute("id", appId);
-            output.Attributes.SetAttribute("class", "h-full flex flex-col overflow-hidden");
+            // FullHeight 模式（Height 已由 AddCommonAttributes 注入 style=height:xxx）：独立占视口，不再依赖父容器 h-full
+            var rootStyle = output.Attributes["style"]?.Value?.ToString() ?? "";
+            var hasExplicitHeight = !string.IsNullOrWhiteSpace(Height);
+            if (hasExplicitHeight)
+            {
+                if (!rootStyle.Contains("min-height"))
+                    rootStyle += " min-height: 600px;";
+                rootStyle += " width: 100%; box-sizing: border-box;";
+                output.Attributes.SetAttribute("style", rootStyle.Trim());
+                output.Attributes.SetAttribute("class", "w-full overflow-hidden flex flex-col bg-white");
+            }
+            else
+            {
+                output.Attributes.SetAttribute("class", "h-full min-h-[420px] flex flex-col overflow-hidden");
+            }
 
             await output.GetChildContentAsync();
             var tableContext = (TableContext)context.Items[typeof(TableContext)];
             string toolbarHtml = tableContext.ToolbarHtml?.ToString();
+            string scopeCssHtml = CreateHeaderScopeCss(appId);
             string tableHtml = CreateTable(tableContext);
             string footerHtml = CreateFooter();
             string scriptHtml = (this.BuildMode == EleAppBuildMode.Client) ? CreateScript(appId) : "";
 
+            output.PreElement.AppendHtml(scopeCssHtml);
             output.Content.AppendHtml(" <el-container class='h-full w-full flex flex-col overflow-hidden'>");
             output.Content.AppendHtml(toolbarHtml);
             output.Content.AppendHtml(tableHtml);
             output.Content.AppendHtml(footerHtml);
             output.Content.AppendHtml("    </el-container>");
-            output.Content.AppendHtml(scriptHtml);
+            output.PostElement.AppendHtml(scriptHtml);
+        }
+
+        // 作用域 CSS：覆盖 Element Plus 的表头对齐与换行（放在 #app-etbl-N 根，避免被 Vue el-main 吞掉）
+        private string CreateHeaderScopeCss(string appId)
+        {
+            var haVar = string.IsNullOrWhiteSpace(HeaderAlign) ? "center" : HeaderAlign;
+            var hvaVar = string.IsNullOrWhiteSpace(HeaderVerticalAlign) ? "middle" : HeaderVerticalAlign;
+            var scope = $"#{appId}";
+            var wrap = HeaderWrap || HeadWrap;
+
+            // 对齐映射：水平 justify-content（flex-col 下用 align-items 做水平），垂直 justify-content
+            string Jc(string align) => (align ?? "center").ToLower() switch { "left" => "flex-start", "right" => "flex-end", _ => "center" };
+            string Ai(string align) => (align ?? "center").ToLower() switch { "left" => "flex-start", "right" => "flex-end", _ => "center" };
+            string Va(string align) => (align ?? "middle").ToLower() switch { "top" => "top", "bottom" => "bottom", _ => "middle" };
+
+            var cellBase = $@"
+  display: inline-flex !important; flex-direction: column !important;
+  justify-content: {Jc(hvaVar)} !important; align-items: {Ai(haVar)} !important;
+  width: 100% !important; min-height: 32px !important; box-sizing: border-box !important;
+  padding: 6px 8px !important; height: 100% !important; text-align: {haVar} !important;";
+
+            var wrapStyles = wrap
+                ? $"line-height: 1.4 !important; white-space: normal !important; word-break: break-word !important;"
+                : $"white-space: nowrap !important; line-height: 1.2 !important;";
+
+            var caretStyles = $@"
+{scope} th.el-table__cell .cell .sort-caret,
+{scope} th.el-table__cell .cell .caret-wrapper {{
+  display: inline-flex !important; margin: 2px 0 0 2px !important; flex: none !important; align-self: flex-end;
+}}";
+            // 水平居中时，caret 放在文字末尾水平居中组（下方）
+            if (haVar.Equals("center", StringComparison.OrdinalIgnoreCase))
+                caretStyles = $@"
+{scope} th.el-table__cell .cell .sort-caret,
+{scope} th.el-table__cell .cell .caret-wrapper {{
+  display: inline-flex !important; margin: 2px auto 0 !important; flex: none !important; align-self: center;
+}}";
+
+            return $@"<style>
+{scope} th.el-table__cell {{ text-align: {haVar} !important; vertical-align: {Va(hvaVar)} !important; }}
+{scope} th.el-table__cell .cell {{
+{cellBase}
+{wrapStyles}
+}}
+{scope} th.el-table__cell .cell > span {{ display: inline; max-width: 100%; }}
+{caretStyles}
+</style>";
         }
 
         // 创建表格HTML，包含表头、数据行、选择列等
@@ -109,15 +206,22 @@ namespace App.EleUI
             var highlightAttr = !EnableBatch ? "highlight-current-row" : "";
             var selectionEvent = EnableBatch ? @"v-on:selection-change=""onSelectionChange""" : @"v-on:current-change=""onCurrentChange""";
             var defaultSortAttr = BuildDefaultSortAttr();
+            var globalHeaderAlign = string.IsNullOrWhiteSpace(HeaderAlign) ? "" : $"header-align=\"{HeaderAlign}\"";
+            var haVar = string.IsNullOrWhiteSpace(HeaderAlign) ? "center" : HeaderAlign;
+            var wrap = HeaderWrap || HeadWrap;
+            var headerWrapStyle = wrap
+                ? " --el-table-header-cell-white-space: normal; --el-table-header-cell-line-height: 1.4; "
+                : "";
             var tableHtml = $@"
-        <el-main class=""flex-1 p-0 bg-white overflow-hidden flex flex-col"">
+        <el-main class=""flex-1 p-0 bg-white overflow-hidden flex flex-col"" style=""min-height: 420px;"">
             <el-table
                 :data=""items""
                 border
+                {globalHeaderAlign}
                 {selectionEvent}
                 v-on:sort-change=""onSortChange""
                 height=""100%""
-                style=""width: 100%; flex: 1;""
+                style=""--tbl-ha: {haVar}; width: 100%; flex: 1; min-height: 400px; --el-border-color: #909399; --el-table-border-color: #909399; --el-table-header-border-color: #909399; --el-table-row-border-color: #909399; --el-border-color-light: #a8abb2;{headerWrapStyle}""
                 {rowKeyAttr}
                 {highlightAttr}
                 {defaultSortAttr}
@@ -134,6 +238,10 @@ namespace App.EleUI
         // 2. Footer (Pagination) -> el-footer
         private string CreateFooter()
         {
+            if (!ShowPage)
+                return @"
+        <el-footer class=""h-auto flex-none p-0 bg-white"" style=""min-height: 12px;""></el-footer>
+";
             var defaultPageSize = ResolveDefaultPageSize();
             var pageSizeOptions = BuildPageSizeOptions(defaultPageSize);
             return $@"
@@ -208,6 +316,8 @@ namespace App.EleUI
         private string BuildDefaultSortAttr()
         {
             var prop = this.SortField;
+            if (string.IsNullOrWhiteSpace(prop))
+                return "";
             var order = ResolveSortDirection().Equals("DESC", StringComparison.OrdinalIgnoreCase)  ? "descending" : "ascending";
             return $@":default-sort=""{{ prop: '{prop}', order: '{order}' }}""";
         }

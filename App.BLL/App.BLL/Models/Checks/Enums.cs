@@ -12,10 +12,10 @@ namespace App.DAL
     [UI("检查", "风险等级")]
     public enum CheckRiskLevel
     {
-        [UI("无风险")] None = 0,
-        [UI("低风险")] Low = 1,
-        [UI("中风险")] Medium = 2,
-        [UI("高风险")] High = 3
+        [UI("无风险（白）")] None = 0,
+        [UI("低风险（黄）")] Low = 1,
+        [UI("中风险（橙）")] Medium = 2,
+        [UI("高风险（红）")] High = 3
     }
 
 

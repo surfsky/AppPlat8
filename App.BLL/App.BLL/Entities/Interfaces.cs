@@ -22,6 +22,7 @@ namespace App.Entities
     public interface IDeleteLogic
     {
         bool? IsDel { get; set; }
+        DateTime? DeleteDt { get; set; }
     }
 
     /// <summary>排序索引接口</summary>

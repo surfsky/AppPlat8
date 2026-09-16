@@ -44,7 +44,6 @@ namespace App.Pages.Checks
             item.ParentId = req.ParentId;
             item.SortId = req.SortId;
             item.OrgId = req.OrgId;
-            item.IsExtra = req.IsExtra;
             item.Save();
             CheckTag.ClearCache();
             return BuildResult(0, "保存成功");

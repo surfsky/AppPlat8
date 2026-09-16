@@ -33,6 +33,7 @@ namespace App.EleUI
 
     /// <summary>文本列</summary> 
     [HtmlTargetElement("EleColumn", ParentTag = "Columns")] 
+    [HtmlTargetElement("EleColumn", ParentTag = "EleColumnGroup")] 
     public class EleColumn : EleColumnBase
     {
         /// <summary>绑定的模型表达式，用于自动解析属性名</summary>
@@ -88,6 +89,8 @@ namespace App.EleUI
 
             SetupColumnShell(output);
 
+            var tableHeaderAlign = context.Items.ContainsKey("TableHeaderAlign") ? context.Items["TableHeaderAlign"] as string : null;
+
             string propName = Prop;
             string labelText = Label;
 
@@ -129,7 +132,7 @@ namespace App.EleUI
 
             if (!string.IsNullOrEmpty(propName))
                 output.Attributes.SetAttribute("prop", propName);
-            ApplyBaseColumnAttributes(output, labelText);
+            ApplyBaseColumnAttributes(output, labelText, tableHeaderAlign);
 
             output.Attributes.SetAttribute("class-name", Wrap ? "ele-col-wrap" : "ele-col-nowrap");
             if (!Wrap)

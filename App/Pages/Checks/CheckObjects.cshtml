@@ -38,10 +38,10 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.CheckObjectNew)">新增</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckObjectDelete)">删除</EleButton>
                 <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">导入</EleButton>
                 <EleButton Type="Primary" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.CheckObjectExport)">导出</EleButton>
-                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckObjectDelete)">删除</EleButton>
-                <EleButton Type="Warning" Icon="Edit" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">批量修改网格员
+                <EleButton Type="Warning" Icon="Edit" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">批量修改
                     <BatchFields>
                         <BatchField Control="Picker"  Field="CheckerId" TextFor="CheckerName" Label="网格员" PopupUrl="/Admins/Users?multi=false&md=Select" />
                         <BatchField Control="Input"   Field="DutyMan"   Label="企业负责人" Placeholder="留空则不更新" />

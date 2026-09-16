@@ -7,6 +7,7 @@ namespace App.EleUI
 {
     /// <summary>表格超链接列</summary>
     [HtmlTargetElement("EleLinkColumn", ParentTag = "Columns")]
+    [HtmlTargetElement("EleLinkColumn", ParentTag = "EleColumnGroup")]
     public class EleLinkColumn : EleColumn
     {
         [HtmlAttributeName("TextFor")] public ModelExpression TextFor { get; set; }

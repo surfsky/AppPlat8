@@ -88,6 +88,7 @@ namespace App.Entities
             if (this is IDeleteLogic)
             {
                 (this as IDeleteLogic).IsDel = true;
+                (this as IDeleteLogic).DeleteDt = DateTime.Now;
             }
             // 物理删除
             else

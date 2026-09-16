@@ -4,6 +4,7 @@ namespace App.EleUI
 {
     /// <summary>编号列标签助手。</summary>
     [HtmlTargetElement("EleNumColumn", ParentTag = "Columns")]
+    [HtmlTargetElement("EleNumColumn", ParentTag = "EleColumnGroup")]
     public class EleNumColumn : EleColumnBase
     {
         public EleNumColumn()
@@ -21,7 +22,8 @@ namespace App.EleUI
                 return;
 
             SetupColumnShell(output);
-            ApplyBaseColumnAttributes(output);
+            var tableHeaderAlign = context.Items.ContainsKey("TableHeaderAlign") ? context.Items["TableHeaderAlign"] as string : null;
+            ApplyBaseColumnAttributes(output, null, tableHeaderAlign);
             output.Attributes.SetAttribute("type", "index");
         }
     }

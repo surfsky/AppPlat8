@@ -9,7 +9,7 @@
         <EleInput For="Item.Name" Label="姓名" Required="true"></EleInput>
         <EleInput For="Item.Phone" Label="电话"></EleInput>
         <EleInput For="Item.Title" Label="职务"></EleInput>
-        <EleTreeSelect For="Item.MenuId" Label="目录" Api="/httpapi/oa/GetContactMenuTree" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleTreePicker For="Item.MenuId" Label="目录" Api="/httpapi/oa/GetContactMenuTree" Clearable="true" CheckStrictly="true"></EleTreePicker>
         <EleProperty For="Item.DataJson" Label="属性" Rows="4" FillRow="true"></EleProperty>
 
         <Bottom>

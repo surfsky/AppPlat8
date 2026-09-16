@@ -8,6 +8,7 @@ namespace App.EleUI
 {
     /// <summary>表格图标列，用于显示 Element Plus 字体图标（如 el-icon-xxx）。</summary>
     [HtmlTargetElement("EleIconColumn", ParentTag = "Columns")]
+    [HtmlTargetElement("EleIconColumn", ParentTag = "EleColumnGroup")]
     public class EleIconColumn : EleColumn
     {
         /// <summary>图标外层 &lt;i&gt; 的额外 class，如 text-lg text-primary-600。</summary>

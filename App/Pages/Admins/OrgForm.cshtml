@@ -17,7 +17,7 @@
 @section body {
     <EleForm LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleTreeSelect For="Item.ParentId" Label="上级组织" Api="/httpapi/orgs/GetAuthOrgTree"  Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleTreePicker For="Item.ParentId" Label="上级组织" Api="/httpapi/orgs/GetAuthOrgTree"  Clearable="true" CheckStrictly="true"></EleTreePicker>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
         <EleSelect For="Item.Level" Label="级别" Required="true"></EleSelect>
         <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="定位" Class="gps-picker" PopupUrl="../gis/Locator" Icon="Location" Editable="true"></ElePicker>

@@ -12,6 +12,7 @@ namespace App.EleUI
 {
     /// <summary>表格图片列，显示缩略图，点击可预览</summary> 
     [HtmlTargetElement("EleImageColumn", ParentTag = "Columns")] 
+    [HtmlTargetElement("EleImageColumn", ParentTag = "EleColumnGroup")] 
     public class EleImageColumn : EleColumn
     {
         [HtmlAttributeName("ThumbnailWidth")]

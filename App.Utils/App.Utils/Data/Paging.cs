@@ -7,15 +7,14 @@ namespace App.Components
     /// </summary>
     public class Paging
     {
-        // 请求信息
-        public int PageSize { get; set; } = 50;
-        public int PageIndex { get; set; } = 0;
-        public string SortField { get; set; }
-        public string SortDirection { get; set; } = "ASC";
+        public int PageSize { get; set; } = 50;                // 每页记录数
+        public int PageIndex { get; set; } = 0;                // 当前页索引（0-based）
+        public string SortField { get; set; }                  // 排序字段
+        public string SortDirection { get; set; } = "ASC";      // 排序方向（ASC/DESC）
 
-        // 附加返回信息
-        public int Total { get; set; }
-        public int PageCount { get; set; }
+        // 附加信息
+        public int Total { get; set; }       // 记录总数
+        public int PageCount { get; set; }   // 页数
 
         /// <summary>
         /// 设置记录总数并计算页数。

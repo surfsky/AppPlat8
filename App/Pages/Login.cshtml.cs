@@ -45,13 +45,11 @@ namespace App.Pages
         /// <summary>登录</summary>
         public IActionResult OnPost(string userName, string password)
         {
-            // Get verifycode from session
-            var verifyCode = Auth.GetVerifyCode();
-            if (string.IsNullOrEmpty(verifyCode))
+            var sessVc = Auth.GetVerifyCode();
+            if (string.IsNullOrEmpty(sessVc))
                  return BuildResult(-1, "请先完成滑块验证");
 
-            // 调用 Auth.Login 进行登录
-            var n = Auth.Login(userName, password, verifyCode);
+            int n = Auth.Login(userName, password, sessVc);
             if (n == 0)
                 return BuildResult(0, "登录成功", new { redirect = "/Index" });
             else
@@ -62,7 +60,7 @@ namespace App.Pages
                     case -1: msg = "用户名或密码错"; break;
                     case -2: msg = "用户未启用"; break;
                     case -3: msg = "用户名或密码错"; break;
-                    case -4: msg = "验证码失效，请重新滑动"; break; // verifyCode mismatch
+                    case -4: msg = "验证码失效，请重新滑动"; break;
                 }
                 return BuildResult(n, msg);
             }

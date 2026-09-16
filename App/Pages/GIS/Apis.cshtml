@@ -13,7 +13,7 @@
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Name" Width="220px" Label="名称"></EleInput>
-                <EleTreeSelect For="Item.MenuId" Width="240px" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@queryMenuId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+                <EleTreePicker For="Item.MenuId" Width="240px" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@queryMenuId" Clearable="true" CheckStrictly="true"></EleTreePicker>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

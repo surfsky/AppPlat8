@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -119,14 +119,24 @@ namespace App.Entities
         /// <summary>排序分页导出</summary>
         public static List<object> SortPageExport<T>(this IQueryable<T> q, Paging pi, ExportMode exportMode = ExportMode.Normal) where T : IExport
         {
-            if (pi == null || pi.SortField.IsEmpty())
-            {
-                pi.SortField = "Id";
-                pi.SortDirection = "ASC";
-            }
-            pi.SetTotal(q.Count());  // 会自动设置分页数量
+            if (pi == null) pi = new Paging();
+            pi.SortField = ResolveValidSortField(typeof(T), pi.SortField);
+            if (pi.SortDirection.IsEmpty()) pi.SortDirection = "ASC";
+            pi.SetTotal(q.Count());
             q = q.SortAndPage(pi);
             return q.Select(o => o.Export(exportMode)).ToList();
+        }
+
+        /// <summary>校验排序字段：空/非法字段时，取 Id/ID/首属性或返回空，避免 Expression.Property 抛异常</summary>
+        static string ResolveValidSortField(Type entityType, string sortField)
+        {
+            if (!string.IsNullOrEmpty(sortField) && entityType.GetProperty(sortField) != null)
+                return sortField;
+            if (entityType.GetProperty("Id") != null) return "Id";
+            if (entityType.GetProperty("ID") != null) return "ID";
+            var firstProp = entityType.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .FirstOrDefault(p => p.CanRead);
+            return firstProp?.Name ?? "";
         }
 
 

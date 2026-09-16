@@ -1,0 +1,147 @@
+@page
+@model App.Pages.Checks.Reports.CheckObjectStatModel
+@{
+    ViewData["Title"] = "企业分类统计表";
+    Model.StartDt = DateTime.Today.AddMonths(-1);
+    Model.EndDt   = DateTime.Today;
+}
+
+@section body {
+<EleTable
+    Id="tblStat"
+    DataHandler="?handler=Data"
+    Title="企业分类统计"
+    RowKey="index"
+    SortField=""
+    ShowPage="false"
+    HeaderAlign="center"
+    HeadWrap="true"
+    Height="calc(100vh - 140px)">
+  <Toolbar>
+    <Filters>
+      <EleDatePicker For="StartDt" Label="开始时间" Width="200px"
+                     Value="@Model.StartDt.ToString("yyyy-MM-dd")"
+                     Placeholder="开始日期"
+                     Type="@EleDatePickerType.Date">
+      </EleDatePicker>
+      <EleDatePicker For="EndDt"   Label="结束时间" Width="200px"
+                     Value="@Model.EndDt.ToString("yyyy-MM-dd")"
+                     Placeholder="结束日期"
+                     Type="@EleDatePickerType.Date">
+      </EleDatePicker>
+    </Filters>
+    <Buttons>
+      <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+      <EleButton Type="Warning" Command="Export" Icon="Download">导出</EleButton>
+      <EleButton Type="Default" Id="btnResetStat" Icon="Refresh">重置</EleButton>
+    </Buttons>
+  </Toolbar>
+  <Columns>
+    <EleNumColumn Label="序号"    Width="60"  Fixed="left" Align="center" HeaderAlign="center" Sortable="false" />
+    <EleColumn For="Item.SectionName"   Label="组织" Width="80" Fixed="left" Sortable="false" LabelAlign="center" />
+    <EleColumnGroup Label="企业数" LabelAlign="center" Sortable="false">
+      <EleColumn For="Item.BaseCount"   Label="个数"     Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.NewCount"    Label="新增企业" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.CloseCount"  Label="关停企业" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+    </EleColumnGroup>
+
+    <EleColumnGroup Label="厂房类型" LabelAlign="center" Sortable="false">
+      <EleColumnGroup Label="独立厂房" LabelAlign="center" Sortable="false">
+        <EleColumn For="Item.FactoryIndependentInside"  Label="集居区内" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.FactoryIndependentOutside" Label="集居区外" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      </EleColumnGroup>
+      <EleColumnGroup Label="厂中厂" LabelAlign="center" Sortable="false">
+        <EleColumn For="Item.FactoryWorkshopInside"     Label="集居区内" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.FactoryWorkshopOutside"    Label="集居区外" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      </EleColumnGroup>
+      <EleColumnGroup Label="园中园" LabelAlign="center" Sortable="false">
+        <EleColumn For="Item.FactoryParkInside"         Label="集居区内" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.FactoryParkOutside"        Label="集居区外" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      </EleColumnGroup>
+    </EleColumnGroup>
+
+    <EleColumnGroup Label="产值规模" LabelAlign="center" Sortable="false">
+      <EleColumn For="Item.ScaleAboveBillion" Label="规上企业（亿元以上）" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.ScaleBelowBillion" Label="规上企业（亿元以下）" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.ScaleSmall"        Label="规下企业"             Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.ScaleMicro"        Label="小微企业"             Width="80" Align="right" Sortable="false" LabelAlign="center" />
+    </EleColumnGroup>
+
+    <EleColumnGroup Label="行业分类" LabelAlign="center" Sortable="false">
+      <EleColumnGroup Label="印刷行业" LabelAlign="center" Sortable="false">
+        <EleColumn For="Item.IndPrintJiaoYin" Label="胶印"   Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.IndPrintAoBan"   Label="凹版"   Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.IndPrintOther"   Label="其他印刷业" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      </EleColumnGroup>
+      <EleColumnGroup Label="塑料制品行业" LabelAlign="center" Sortable="false">
+        <EleColumn For="Item.IndPlasticWoven" Label="塑编行业"       Width="80"  Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.IndPlasticOther" Label="其他塑料制品行业" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      </EleColumnGroup>
+      <EleColumnGroup Label="其他行业" LabelAlign="center" Sortable="false">
+        <EleColumn For="Item.IndPaper"          Label="纸制品业"   Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.IndMechanic"       Label="机械行业"   Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.IndMetal"          Label="金属制品业" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.IndTrade"          Label="商贸行业"   Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.IndOther"          Label="其他行业"   Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      </EleColumnGroup>
+    </EleColumnGroup>
+
+    <EleColumnGroup Label="八类危险性较高工业企业" LabelAlign="center" Sortable="false">
+        <EleColumn For="Item.RiskAppliance"      Label="家电制造" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskElectroplating" Label="电镀类"     Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskBamboo"         Label="竹木加工类" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskShoe"           Label="制鞋类"     Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskSponge"         Label="海绵生产类" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskTextile"        Label="纺织印染类" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskSprayPaint"     Label="喷漆作业（非水性漆）"   Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskInkPrint"       Label="油墨印刷（非水性油墨）" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+    </EleColumnGroup>
+
+    <EleColumnGroup Label="三场所三企业" LabelAlign="center" Sortable="false">
+        <EleColumn For="Item.RiskConfinedSpace" Label="有限空间作业场所"      Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskDust"          Label="可燃爆粉尘作业场所"    Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskPainting"      Label="喷涂作业场所"          Width="80" Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskMetalSmelt"    Label="金属冶炼企业"          Width="80"  Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskAmmonia"       Label="涉氨制冷企业"          Width="80"  Align="right" Sortable="false" LabelAlign="center" />
+        <EleColumn For="Item.RiskShipBuilding"  Label="船舶修造企业"          Width="80"  Align="right" Sortable="false" LabelAlign="center" />
+    </EleColumnGroup>
+
+    <EleColumnGroup Label="关注风险" LabelAlign="center" Sortable="false">
+      <EleColumn For="Item.FocusChemical"      Label="危化品使用企业"  Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.FocusInflammable"   Label="易燃企业"       Width="80"  Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.FocusEnvProtection" Label="有环保设备"     Width="80"  Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.FocusMine"          Label="非煤矿山"       Width="80"  Align="right" Sortable="false" LabelAlign="center" />
+    </EleColumnGroup>
+
+    <EleColumnGroup Label="分级管控四色等级" LabelAlign="center" Sortable="false">
+      <EleColumn For="Item.ColorNone"   Label="白名单" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.ColorLow"    Label="黄名单" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.ColorMedium" Label="橙名单" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+      <EleColumn For="Item.ColorHigh"   Label="红名单" Width="80" Align="right" Sortable="false" LabelAlign="center" />
+    </EleColumnGroup>
+  </Columns>
+</EleTable>
+
+<script>
+(function () {
+  var mount = null;
+  function retry() {
+    var btn = document.getElementById('btnResetStat');
+    var el = document.getElementById('tblStat');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (window.EleTableAppBuilder) {
+          var app = window.EleTableAppBuilder.getInstance(el ? el.id : 'tblStat');
+          if (app && app.resetFilters) app.resetFilters();
+        }
+      });
+    } else if (!mount && !window.__tblStatResetInstalled) {
+      window.__tblStatResetInstalled = true;
+      setTimeout(retry, 50);
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', retry);
+  else retry();
+})();
+</script>
+}

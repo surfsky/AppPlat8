@@ -11,9 +11,10 @@
             <Filters>
                 <EleInput For="Item.Name" Label="账号" Width="260px"></EleInput>
                 <EleInput For="Item.RealName" Label="姓名" Width="260px"></EleInput>
-                <EleTreePicker For="Item.OrgId" Label="部门" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" Width="280px"></EleTreePicker>
                 <EleSelect For="RoleId" Label="角色" Items="Model.RoleList" Clearable="true" Width="220px"></EleSelect>
                 <EleSelect For="Item.IsDel" Label="是否失效" Items="new []{false,true}" Value="false"></EleSelect>
+                <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" Width="280px"></EleTreePicker>
+                <EleSwitch For="IncludeSubOrg" Checked="true" Label="含子组织"></EleSwitch>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

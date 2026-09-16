@@ -10,7 +10,7 @@
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleInput For="Item.Initiator" Label="发起人"></EleInput>
         <EleInput For="Item.PersonInCharge" Label="责任人" Required="true"></EleInput>
-        <EleTreeSelect For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
+        <EleTreePicker For="Item.OrgId" Label="责任组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreePicker>
         <EleInput For="Item.Cycle" Label="提交周期"></EleInput>
         <EleDatePicker For="Item.StartDt" Label="开始日期"></EleDatePicker>
         <EleDatePicker For="Item.NextReportDt" Label="下次填报"></EleDatePicker>

@@ -12,7 +12,7 @@
                 <EleInput For="Item.Name" Width="180px" Label="姓名"></EleInput>
                 <EleInput For="Item.Phone" Width="180px" Label="电话"></EleInput>
                 <EleInput For="Item.Title" Width="180px" Label="职务"></EleInput>
-                <EleTreeSelect For="Item.MenuId" Width="220px" Label="目录" Value="@QString("menuId")" Api="/httpapi/oa/GetContactMenuTree?selectedId=@queryMenuId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+                <EleTreePicker For="Item.MenuId" Width="220px" Label="目录" Value="@QString("menuId")" Api="/httpapi/oa/GetContactMenuTree?selectedId=@queryMenuId" Clearable="true" CheckStrictly="true"></EleTreePicker>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

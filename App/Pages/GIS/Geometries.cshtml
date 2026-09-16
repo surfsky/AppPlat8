@@ -19,14 +19,14 @@
                 <EleInput For="Item.Name" Width="200px" Label="名称" ></EleInput>
                 <EleSelect For="Item.Type" Width="160px" Label="类别" Clearable="true"></EleSelect>
                 <EleSelect For="Item.IsVisible" Width="160px" Label="是否可见" Clearable="true"></EleSelect>
-                <EleTreeSelect For="Item.MenuId"
+                <EleTreePicker For="Item.MenuId"
                                Width="220px"
                                Label="所属菜单"
                                Api="/httpapi/gis/GetMenuTree?selectedId=@queryMenuId&_ts=@menuTreeTs"
                                data-filter-default="@queryMenuId"
                                data-filter-model="menuId"
                                Clearable="true"
-                               CheckStrictly="true"></EleTreeSelect>
+                               CheckStrictly="true"></EleTreePicker>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

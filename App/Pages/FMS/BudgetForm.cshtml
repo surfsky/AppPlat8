@@ -10,7 +10,7 @@
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleNumber For="Item.Year" Label="年份" Required="true" Precision="0" Step="1"></EleNumber>
         <EleSelect For="Item.TypeId" Label="分类" Items="Model.BudgetTypes" Required="true"></EleSelect>
-        <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Required="true"></EleTreeSelect>
+        <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Required="true"></EleTreePicker>
         <EleInput For="Item.Company" Label="厂商"></EleInput>
         <EleInput For="Item.Project" Label="关联项目"></EleInput>
         <EleDatePicker For="Item.PayDt" Label="支付日期"></EleDatePicker>

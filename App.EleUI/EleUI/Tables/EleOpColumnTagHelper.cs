@@ -156,13 +156,13 @@ namespace App.EleUI
             await output.GetChildContentAsync();
             var opCtx = context.Items[typeof(OpColumnContext)] as OpColumnContext ?? new OpColumnContext();
             var ops = opCtx.Items.Where(c => c.Visible &&
-                (!string.IsNullOrWhiteSpace(c.Command) || !string.IsNullOrWhiteSpace(c.Popup) || !string.IsNullOrWhiteSpace(c.Handler)))
-                .ToList();
+                (!string.IsNullOrWhiteSpace(c.Command) || !string.IsNullOrWhiteSpace(c.Popup) || !string.IsNullOrWhiteSpace(c.Handler))).ToList();
 
             NormalizePopupUrls(ops);
 
             SetupColumnShell(output);
-            ApplyBaseColumnAttributes(output);
+            var tableHeaderAlign = context.Items.ContainsKey("TableHeaderAlign") ? context.Items["TableHeaderAlign"] as string : null;
+            ApplyBaseColumnAttributes(output, null, tableHeaderAlign);
 
             var maxInline = Math.Max(0, Shows);
             var inlineOps = ops.Take(maxInline).ToList();

@@ -93,6 +93,7 @@ dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/i
   - `EleDatePicker`
   - `EleSelect`
   - `EleTreeSelect`
+  - `EleTreePicker`
   - `EleRadio`
   - `EleSwitch`
   - `EleHidden`

@@ -38,6 +38,14 @@ namespace App.EleUI
         [HtmlAttributeName("Align")]
         public string Align { get; set; }
 
+        /// <summary>表头对齐方式；若为空则回退到 EleTable.HeaderAlign。别名：LabelAlign。</summary>
+        [HtmlAttributeName("HeaderAlign")]
+        public string HeaderAlign { get; set; }
+
+        /// <summary>HeaderAlign 的别名（用户习惯写法）。</summary>
+        [HtmlAttributeName("LabelAlign")]
+        public string LabelAlign { get; set; }
+
         protected bool CheckVisible(TagHelperOutput output)
         {
             if (!Visible)
@@ -55,7 +63,7 @@ namespace App.EleUI
             output.TagMode = TagMode.StartTagAndEndTag;
         }
 
-        protected void ApplyBaseColumnAttributes(TagHelperOutput output, string labelOverride = null)
+        protected void ApplyBaseColumnAttributes(TagHelperOutput output, string labelOverride = null, string tableHeaderAlign = null)
         {
             var label = labelOverride ?? Label;
             if (!string.IsNullOrWhiteSpace(label))
@@ -69,7 +77,7 @@ namespace App.EleUI
                 output.Attributes.SetAttribute("min-width", MinWidth);
 
             if (Sortable.HasValue)
-                output.Attributes.SetAttribute("sortable", Sortable.Value ? "custom" : "false");
+                output.Attributes.SetAttribute(":sortable", Sortable.Value ? "'custom'" : "false");
 
             if (Resizable.HasValue)
                 output.Attributes.SetAttribute(":resizable", Resizable.Value.ToString().ToLower());
@@ -79,6 +87,11 @@ namespace App.EleUI
 
             if (!string.IsNullOrWhiteSpace(Align))
                 output.Attributes.SetAttribute("align", Align);
+
+            // Header alignment: explicit HeaderAlign / LabelAlias > EleTable default header-align
+            var ha = HeaderAlign ?? LabelAlign ?? tableHeaderAlign;
+            if (!string.IsNullOrWhiteSpace(ha))
+                output.Attributes.SetAttribute("header-align", ha);
         }
     }
 }

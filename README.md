@@ -23,6 +23,7 @@
 
 <!-- 图片路径必须严格大小写，因为 GitHub(Linux ext4) 大小写敏感，而 macOS APFS 默认不敏感：
      目录是 Doc/Images（I 大写），文件名全小写 gisglobal/cityweather -->
+
 ![web](./Doc/Images/web.png)
 ![mobile](./Doc/Images/mobile.png)
 ![gis](./Doc/Images/gis.png)
@@ -55,7 +56,7 @@
     # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
     dotnet run --project App.Consoler
    ```
-4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
+4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。	
 
 ## 单元测试和系统调试
 
@@ -74,7 +75,7 @@
 1. 数据库迁移: 运行
 
 ```bash
-   dotnet ef migrations add CheckSheetSortId --project App/App.csproj --startup-project App/App.csproj
+   dotnet ef migrations add EntityDeleteDt --project App/App.csproj --startup-project App/App.csproj
 ```
 
 2. 若端口被占用，查找占用 6060 的进程，然后kill
@@ -112,7 +113,7 @@ vscode copilot：
     C# 代码调试：内置支持；
     20260601更改付费逻辑后，10美元一天就用完了，提高一档要39美元
 trae：
-    C# 补全和重构：编程提示需安装ReSharper 插件，重构经常不能完全生效；
+    C# 补全和重构：编程提示需安装ReSharper 插件（个人可免费），重构经常不能完全生效；或其他插件如OmniSharp。
     C# 代码调试：调试需要安装 C# with NetCoreDbg，
     lite $3，pro $10, pro+$30, Ultra $200；
 Cursor：

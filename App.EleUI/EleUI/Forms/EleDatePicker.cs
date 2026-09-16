@@ -55,6 +55,17 @@ namespace App.EleUI
             // right value and the list auto-loads with the filter applied.
             TrySetFilterDefault(context, output);
 
+            // Also set initial model-value so the picker shows a date on first
+            // paint (before the table builder runs data-filter-default scan).
+            if (Value != null && !context.Items.ContainsKey("IsEleForm"))
+            {
+                var defaultExpr = GetDefaultValueExpression();
+                if (!string.IsNullOrWhiteSpace(defaultExpr) && !output.Attributes.ContainsName(":model-value"))
+                {
+                    output.Attributes.SetAttribute(":model-value", defaultExpr);
+                }
+            }
+
             await RenderWrapper(output);
         }
     }

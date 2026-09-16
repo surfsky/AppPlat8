@@ -29,6 +29,7 @@ namespace App.DAL
     public class User : EntityBase<User>, IDeleteLogic
     {
         [UI("是否失效")]   public bool? IsDel { get; set; } = false;
+        [UI("失效时间")]    public DateTime? DeleteDt { get; set; }
         [UI("用户名")]     public string Name { get; set; }
         [UI("邮箱")]       public string Email { get; set; }
         [UI("密码")]       public string Password { get; set; }
@@ -423,7 +424,7 @@ namespace App.DAL
         }
 
         /// <summary>搜索用户列表</summary>
-        public static IQueryable<User> Search(string name, string realName, long? deptId=null, long? roleId=null, bool? isDel=null)
+        public static IQueryable<User> Search(string name, string realName, long? deptId = null, long? roleId = null, bool? isDel = null, bool includeSubOrg = true)
         {
             var q = DataSet
                 .Include(u => u.Org)
@@ -434,10 +435,17 @@ namespace App.DAL
             if (realName.IsNotEmpty()) q = q.Where(t => t.RealName.Contains(realName));
             if (deptId != null)
             {
-                var subIds = Org.GetChildIds(deptId.Value) ?? new List<long>();
-                if (subIds.Count == 0)
-                    subIds = new List<long> { deptId.Value };
-                q = q.Where(t => t.OrgId.HasValue && subIds.Contains(t.OrgId.Value));
+                if (includeSubOrg)
+                {
+                    var subIds = Org.GetChildIds(deptId.Value) ?? new List<long>();
+                    if (subIds.Count == 0)
+                        subIds = new List<long> { deptId.Value };
+                    q = q.Where(t => t.OrgId.HasValue && subIds.Contains(t.OrgId.Value));
+                }
+                else
+                {
+                    q = q.Where(t => t.OrgId.HasValue && t.OrgId.Value == deptId.Value);
+                }
             }
             if (roleId != null)        q = q.Where(t => t.Roles.Any(r => r.Id == roleId));
             if (isDel == true)         q = q.Where(t => t.IsDel == true);

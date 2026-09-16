@@ -232,3 +232,75 @@ CREATE TABLE IF NOT EXISTS RoleContactMenus (
             }
 
             // 2) 候选目录收集器（当前工作目录 + AppContext.BaseDirectory 分别向上回溯）
+
+
+完善 CheckTags 页面，默认行数=100，增加查询按钮
+删除 CheckTag.IsExtra
+        [UI("是否是扩展标签")]            public bool? IsExtra {get;set;}   // 非141系统的标签
+
+
+
+<script>
+  // 导出 & 重置（EleTable 自带 Search command，Export/Reset 自定义挂载在命令钩子）
+  (function(){
+    var POLL_LIMIT = 200, polled = 0;
+    function onReady(){
+      var app = window.__tblStat;
+      if (!app) {
+        var vueRoot = document.getElementById('tblStat');
+        if (!vueRoot || !vueRoot.__vue_app__) {
+          if (++polled < POLL_LIMIT) { setTimeout(onReady, 50); return; }
+          return;
+        }
+        app = vueRoot.__vue_app__.config.globalProperties.$vm;
+        window.__tblStat = app;
+      }
+      if (typeof app.onCommand === 'function' && !app.__statPatched) {
+        var orig = app.onCommand.bind(app);
+        app.onCommand = function(cmd){
+          if (cmd === 'Export') {
+            var form = new URLSearchParams();
+            form.append('StartDt', app.filters && app.filters.startDt ? app.filters.startDt : '');
+            form.append('EndDt',   app.filters && app.filters.endDt   ? app.filters.endDt   : '');
+            var csrf = document.querySelector('input[name="__RequestVerificationToken"]');
+            fetch(window.location.pathname + '?handler=Export', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'RequestVerificationToken': csrf ? csrf.value : ''
+              },
+              body: form.toString()
+            }).then(function(r){ return r.blob(); }).then(function(blob){
+              var a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              var sd = (app.filters && app.filters.startDt ? app.filters.startDt : '').replace(/-/g,'');
+              var ed = (app.filters && app.filters.endDt   ? app.filters.endDt   : '').replace(/-/g,'');
+              a.download = '企业分类统计_' + sd + '-' + ed + '.xlsx';
+              document.body.appendChild(a); a.click(); a.remove();
+              setTimeout(function(){ URL.revokeObjectURL(a.href); }, 60000);
+            });
+            return;
+          }
+          if (cmd === 'Reset') {
+            if (app.filters) {
+              app.filters.startDt = '2025-01-01';
+              var today = new Date();
+              app.filters.endDt = today.getFullYear() + '-' +
+                String(today.getMonth()+1).padStart(2,'0') + '-' +
+                String(today.getDate()).padStart(2,'0');
+            }
+            if (typeof app.loadData === 'function') app.loadData();
+            return;
+          }
+          return orig(cmd);
+        };
+        app.__statPatched = true;
+      }
+    }
+    if (document.readyState === 'loading')
+      document.addEventListener('DOMContentLoaded', onReady, { once: true });
+    else
+      onReady();
+  })();
+</script>

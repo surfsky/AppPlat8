@@ -25,6 +25,7 @@ namespace App.Pages.Admins
         public long? RoleId { get; set; }
         public List<SelectListItem> RoleList { get; set; }
         public bool CanResetPassword { get; set; }
+        public bool IncludeSubOrg { get; set; } = true;
 
         public void OnGet()
         {
@@ -39,22 +40,22 @@ namespace App.Pages.Admins
         }
 
         /// <summary>获取用户列表</summary>
-        public IActionResult OnGetData(Paging pi, string name, string realName, long? orgId, long? deptId, long? roleId, bool? isDel)
+        public IActionResult OnGetData(Paging pi, string name, string realName, long? orgId, long? roleId, bool? isDel, bool includeSubOrg = true)
         {
-            var orgFilter = orgId ?? deptId;
+            var orgFilter = orgId;
             var md = Request.Query["md"].FirstOrDefault();
             var isSelectMode = !string.IsNullOrEmpty(md) && md.Equals("Select", StringComparison.OrdinalIgnoreCase);
             var exportMode = isSelectMode ? ExportMode.Detail : ExportMode.Normal;
-            var list = App.DAL.User.Search(name, realName, orgFilter, roleId, isDel).SortPageExport(pi, exportMode);
+            var list = App.DAL.User.Search(name, realName, orgFilter, roleId, isDel, includeSubOrg).SortPageExport(pi, exportMode);
             return BuildResult(0, "success", list, pi);
         }
 
         // 导出用户列表到 Excel
-        public IActionResult OnPostExport(Paging pi, string name, string realName, long? orgId, long? deptId, long? roleId)
+        public IActionResult OnPostExport(Paging pi, string name, string realName, long? orgId, long? deptId, long? roleId, bool includeSubOrg = true)
         {
             var orgFilter = orgId ?? deptId;
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
-            var list = App.DAL.User.Search(name, realName, orgFilter, roleId).SortPageExport(exportPi);
+            var list = App.DAL.User.Search(name, realName, orgFilter, roleId, includeSubOrg: includeSubOrg).SortPageExport(exportPi);
             ExcelExporter.Export(list, $"用户列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             Logger.Info($"导出用户列表，共 {list.Count} 条记录");
             return new EmptyResult();

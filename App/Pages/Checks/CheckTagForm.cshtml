@@ -9,9 +9,8 @@
 @section body {
     <EleForm LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleTreeSelect For="Item.ParentId" Label="上级" Api="/httpapi/checks/GetCheckTagTree?excludeId=@currentId&selectedId=@selectedId"></EleTreeSelect>
-        <EleTreeSelect For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreeSelect>
-        <EleSwitch For="Item.IsExtra" Label="是否扩展标签"></EleSwitch>
+        <EleTreePicker For="Item.ParentId" Label="上级" Api="/httpapi/checks/GetCheckTagTree?excludeId=@currentId&selectedId=@selectedId"></EleTreePicker>
+        <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreePicker>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
         
         <Bottom>

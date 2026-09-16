@@ -15,7 +15,6 @@ namespace App.DAL
     public class CheckTag : TreeEntity<CheckTag>
     {
         [UI("组织")]                    public long? OrgId { get; set; }
-        [UI("是否是扩展标签")]            public bool? IsExtra {get;set;}   // 非141系统的标签
 
 
         [UI("组织")]                    public virtual Org Org { get; set; }
@@ -29,7 +28,6 @@ namespace App.DAL
             return base.Clone().Let(t => {
                 t.OrgId = this.OrgId;
                 t.SheetIds = this.SheetIds;
-                t.IsExtra = this.IsExtra;
             });
         }
 
@@ -40,7 +38,6 @@ namespace App.DAL
             {
                 this.Id,
                 this.Name,
-                this.IsExtra,
                 this.ParentId,
                 this.TreeLevel,
                 this.OrgId,
@@ -60,13 +57,12 @@ namespace App.DAL
         }
 
         //
-        public IQueryable<CheckTag> Query(string name="", long? sheetId=null, long? orgId=null, bool? isExtra=null)
+        public IQueryable<CheckTag> Query(string name="", long? sheetId=null, long? orgId=null)
         {
             IQueryable<CheckTag> q = CheckTag.IncludeSet;
             if (name.IsNotEmpty())  q = q.Where(t => t.Name.Contains(name));
             if (sheetId != null)    q = q.Where(t => t.Sheets.Any(s => s.Id == sheetId));
             if (orgId != null)      q = q.Where(t => t.OrgId == orgId);
-            if (isExtra != null)    q = q.Where(t => t.IsExtra == isExtra);
             return q;
         }
     }

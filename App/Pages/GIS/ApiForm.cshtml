@@ -9,7 +9,7 @@
 @section body {
     <EleForm LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleTreeSelect For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?excludeId=@currentId&selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreeSelect>
+        <EleTreePicker For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?excludeId=@currentId&selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreePicker>
         <EleInput For="Item.DataUrl" Label="接口地址" Required="true" FillRow="true" Placeholder="如: http://localhost:6060/httpapi/gis/GetCheckObjectPoints"></EleInput>
         <EleNumber For="Item.DataCnt" Label="最后数据量" Min="0" Max="100000000"></EleNumber>
         <EleDatePicker For="Item.DataDt" Label="最后更新时间" Type="DateTime"></EleDatePicker>
