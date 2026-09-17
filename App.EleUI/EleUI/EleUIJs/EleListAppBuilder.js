@@ -10,6 +10,10 @@ export class EleListAppBuilder extends EleAppBuilder {
         const { ref, onMounted, onUnmounted, nextTick } = this.Vue;
         const builder = this;
 
+        // SSR 默认值快照：见 EleTableAppBuilder.mount 中的同一根因说明，同样在 app.mount() 之前
+        // 收集 SSR 原始 DOM，避免 Element Plus/自定义组件 hydrate 后把 data-filter-* 删除
+        const snapshotDefaults = builder.collectFilterDefaults(selector || '#app');
+
         const app = this.createConfiguredApp(config, {
             setup() {
                 const listScrollEl = ref(null);
@@ -25,8 +29,14 @@ export class EleListAppBuilder extends EleAppBuilder {
 
                 onMounted(async () => {
                     await nextTick();
-                    const filterDefaults = builder.collectFilterDefaults(selector || '#app');
+                    const hasSnapshot = snapshotDefaults && Object.keys(snapshotDefaults).length > 0;
+                    const filterDefaults = hasSnapshot
+                        ? snapshotDefaults
+                        : builder.collectFilterDefaults(selector || '#app');
                     builder.applyFilterDefaults(list.filters, filterDefaults);
+                    // 把 SSR 快照挂到 EleList 实例上，供 commandMethods.js 里的
+                    // EleList.resetFilters() 优先使用（若其内部有使用）
+                    list._snapshotDefaults = filterDefaults;
                     await list.loadData(true);
                     await nextTick();
                     await list.ensureScrollable(listScrollEl.value);

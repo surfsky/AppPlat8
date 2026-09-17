@@ -21,6 +21,9 @@ namespace App.Pages.Checks
         public long? DefaultCheckerId { get; set; }
         public string DefaultCheckerName { get; set; }
 
+        /// <summary>dutyOrgId（单值）从 URL 注入的原始值，用于 ElePicker/Select 控件单独匹配</summary>
+        public long? DutyOrgId { get; set; }
+
         /// <summary>解析 tagIds 参数：兼容表单提交（List<long>）+ EleTreePicker 的「?tagIds=127,136,138」逗号字符串，统一去重去空。</summary>
         static List<long> ParseTagIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
         {
@@ -42,6 +45,17 @@ namespace App.Pages.Checks
 
         public void OnGet()
         {
+            // 兼容：dutyOrgId（单值，来自报表跳转）→ 优先写入 DutyOrgId 和 DutyOrgIds
+            var rawDutyOrgId = Request.Query["dutyOrgId"].FirstOrDefault();
+            if (long.TryParse(rawDutyOrgId, out var singleOrgId) && singleOrgId > 0)
+            {
+                DutyOrgId = singleOrgId;
+                Item.DutyOrgId = singleOrgId;
+                if (DutyOrgIds.Count == 0)
+                    DutyOrgIds = new List<long> { singleOrgId };
+                goto parseChecker;
+            }
+
             var qs = Request.Query["dutyOrgIds"].ToString();
             if (!string.IsNullOrWhiteSpace(qs))
             {
@@ -71,6 +85,7 @@ namespace App.Pages.Checks
             if (long.TryParse(rawCheckerId, out var cid))
             {
                 DefaultCheckerId = cid;
+                Item.CheckerId = cid;
                 var u = App.DAL.User.Get(cid);
                 if (u != null)
                     DefaultCheckerName = u.RealName.IsNotEmpty() ? u.RealName : u.Name;

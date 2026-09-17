@@ -144,8 +144,12 @@ namespace App.EleUI
                 primaryExpr = $"postHandler('{EscapeJs(Handler)}')";
             else if (Command != Command.None)
             {
-                // 统一把 Search 路由到 Data，确保查询走 OnGetData。
-                var commandName = Command == Command.Search ? "Data" : Command.ToString();
+                // Reset 单独处理：直接调用 resetFilters（客户端还原筛选默认值 + 自动重新加载数据）
+                // 其他命令：Search→Data；其余按枚举字符串转（Add/Delete/Export/...）
+                string commandName;
+                if (Command == Command.Search) commandName = "Data";
+                else if (Command == Command.Reset) commandName = "Reset";
+                else commandName = Command.ToString();
                 primaryExpr = $"invokeCommand('{EscapeJs(commandName)}')";
             }
             else if (!string.IsNullOrEmpty(PopupUrl))

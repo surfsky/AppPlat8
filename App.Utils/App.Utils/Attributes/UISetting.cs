@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -47,7 +47,7 @@ namespace App.Utils
             BuildGroups();
         }
 
-        /// <summary>构建组结构</summary>
+        /// <summary>构建组结构（仅一层扁平分组，向后兼容）</summary>
         public UISetting BuildGroups()
         {
             this.Groups = new Dictionary<string, List<UIAttribute>>();
@@ -60,6 +60,54 @@ namespace App.Utils
                 Groups[item.Group].Add(item);
             }
             return this;
+        }
+
+        /// <summary>
+        /// 根据 UISetting.Items 构建 Excel 导出用的多层列配置（ExportColumnConfig）。
+        /// 约定：
+        ///   1. UIAttribute.Group 允许带 "/" 分隔多层路径，如 "厂房类型/独立厂房"。
+        ///   2. UIAttribute.Title 为最底层叶子列的中文标题（例如 "集居区内"）。
+        ///   3. UIAttribute.Export 控制该属性是否出现在导出里（ExportMode.None 或 Column=ColumnType.None 都不导出）。
+        ///   4. Items 的原始顺序即为最终 Excel 叶子列的左→右顺序；分组节点合并按该顺序自然跨列。
+        /// </summary>
+        public ExportColumnConfig BuildExportColumnConfig(int freezeCols = 0, ExportMode mode = ExportMode.Normal)
+        {
+            var cfg = new ExportColumnConfig
+            {
+                SheetName = string.IsNullOrEmpty(this.Title) ? "Sheet1" : this.Title,
+                FreezeCols = freezeCols
+            };
+            var roots = new List<ExportColumn>();
+
+            foreach (var ui in (Items ?? new List<UIAttribute>()))
+            {
+                if (ui.Column == ColumnType.None) continue;
+                var exp = ui.Export;
+                if (exp == ExportMode.None) continue;
+                if (!exp.HasFlag(mode)) continue;
+
+                string[] groups = (ui.Group ?? "").Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                var parent = roots;
+                foreach (var g in groups)
+                {
+                    var existing = parent.FirstOrDefault(x =>
+                        !x.IsLeaf && string.Equals(x.Label, g, StringComparison.Ordinal));
+                    if (existing == null)
+                    {
+                        existing = new ExportColumn { Label = g };
+                        parent.Add(existing);
+                    }
+                    parent = existing.Children;
+                }
+                parent.Add(new ExportColumn
+                {
+                    Label = ui.Title.IsEmpty() ? (ui.Name ?? "") : ui.Title,
+                    PropertyName = ui.Name,
+                    Width = ui.ColumnWidth > 0 ? (double?)ui.ColumnWidth : null
+                });
+            }
+            cfg.Columns = roots;
+            return cfg;
         }
 
         /// <summary>

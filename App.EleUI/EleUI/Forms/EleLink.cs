@@ -92,8 +92,15 @@ namespace App.EleUI
                 else
                     output.Attributes.SetAttribute("href", hrefValue);
 
-                output.Attributes.SetAttribute("target", "_blank");
-                output.Attributes.SetAttribute("rel", "noopener noreferrer");
+                if (Target == EleLinkTarget.Blank)
+                {
+                    output.Attributes.SetAttribute("target", "_blank");
+                    output.Attributes.SetAttribute("rel", "noopener noreferrer");
+                }
+                else if (Target == EleLinkTarget.Self)
+                {
+                    output.Attributes.SetAttribute("target", "_self");
+                }
             }
 
             output.Attributes.RemoveAll("For");

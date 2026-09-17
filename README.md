@@ -56,7 +56,7 @@
     # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
     dotnet run --project App.Consoler
    ```
-4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。	
+4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
 
 ## 单元测试和系统调试
 
@@ -137,46 +137,46 @@ CodeGraphy 代码图谱以减少token消耗
 以实际运行时的菜单为准
 
 ```
-｜目录｜名称    ｜网页                     ｜ 访问权限            ｜
-｜---｜--------｜------------------------｜--------------------｜
+｜目录｜名称    ｜网页                     ｜ 
+｜---｜--------｜------------------------｜
 排查
-    对象      Checks/CheckObjects           CheckObjectView
-    排查      Checks/CheckLogs              CheckLogView
-    检查表    Checks/CheckSheets            CheckSheetView
-    隐患      Checks/CheckHarzards          CheckHarzardView
-    任务      Checks/CheckTasks             CheckTaskView
-    报表      Checks/CheckReports           CheckReportView
+    对象      Checks/CheckObjects       
+    排查      Checks/CheckLogs          
+    检查表    Checks/CheckSheets        
+    隐患      Checks/CheckHarzards      
+    任务      Checks/CheckTasks         
+    报表      Checks/CheckReports       
 OA
-    资产      OA/Assets                     AssetView
-    预算      OA/Budgets                    BudgetView
-    公告      OA/Annouces                   AnnouceView
-    公司      OA/Company                    CompanyView
+    资产      OA/Assets                 
+    预算      OA/Budgets                
+    公告      OA/Annouces               
+    公司      OA/Company                
 知识库
-    文档      Articles/Articles             ArticleView
-    目录      Articles/ArticleDirs          ArticleView
+    文档      Articles/Articles         
+    目录      Articles/ArticleDirs      
 交办
-    项目      OA/Projects                   ProjectView
-    交办      OA/Tasks                      TaskView
-    事件      OA/Events                     EventView
+    项目      OA/Projects               
+    交办      OA/Tasks                  
+    事件      OA/Events                 
 驾驶舱
-    驾驶舱    GIS/Index                     GisIndexView
-    菜单      GIS/Menu                      GisMenuView
-    点位      GIS/Geometry                  GisGeometryView
-    面板      GIS/Panels                    GisPanelView
+    驾驶舱    GIS/Index                 
+    菜单      GIS/Menu                  
+    点位      GIS/Geometry              
+    面板      GIS/Panels                
 账户
-    组织      Admins/Orgs                   OrgView
-    用户      Admins/Users                  UserView
-    权限      Admins/Roles                  RoleView
+    组织      Admins/Orgs               
+    用户      Admins/Users              
+    权限      Admins/Roles              
 运维
-    菜单      Maintains/Menus               MenuView
-    在线      Maintains/Onlines             OnlineView
-    配置      Maintains/Config              ConfigView
-    日志      Maintains/Logs                LogView
+    菜单      Maintains/Menus           
+    在线      Maintains/Onlines         
+    配置      Maintains/Config          
+    日志      Maintains/Logs            
 开发
-    图标     Dev/Icons                      Dev
-    API     Dev/API                        Dev
-    控件库   EleUI/Index                    Dev
-修改密码     Admins/ChangePassword          Site
-安全退出     Logout                         Site
-登陆        Login                          Site
+    图标     Dev/Icons                  
+    API     Dev/API                     
+    控件库   EleUI/Index                
+修改密码     Admins/ChangePassword      
+安全退出     Logout                     
+登陆        Login
 ```

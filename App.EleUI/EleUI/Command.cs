@@ -19,5 +19,6 @@ namespace App.EleUI
         Close,
         Select,
         Export,
+        Reset,
     }
 }

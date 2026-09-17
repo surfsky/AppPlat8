@@ -212,11 +212,63 @@ export const commandMethods = {
         }
     },
 
+    // 还原筛选条件到默认值（从 SSR 快照 / data-filter-default 收集），并重新加载数据
+    resetFilters() {
+        const hostId = this.config?.hostId;
+        const hostSelector = hostId ? ('#' + hostId)
+            : ((document.querySelector('[id^="app-etbl-"]') ? document.querySelector('[id^="app-etbl-"]').id : '#app'));
+        const hostEl = document.querySelector(hostSelector);
+        if (hostEl && !hostId) {
+            const found = hostEl.id ? ('#' + hostEl.id) : hostSelector;
+        }
+        // 优先读取 SSR 挂载时预存的快照（见 EleTableAppBuilder/EleListAppBuilder onMounted）
+        // 因为 Element Plus 组件 hydrate 完成后会把自定义 HTML attr（data-filter-*）
+        // 从 DOM 中 remove，此时再从 DOM collect 只会得到空对象。
+        let defaults = (this._snapshotDefaults && typeof this._snapshotDefaults === 'object')
+            ? this._snapshotDefaults
+            : null;
+        if (!defaults) {
+            let builder = null;
+            if (window.EleAppBuilder && typeof window.EleAppBuilder.prototype?.collectFilterDefaults === 'function') {
+                builder = Object.create(window.EleAppBuilder.prototype);
+            } else if (window.EleTableAppBuilder && typeof window.EleTableAppBuilder.prototype?.collectFilterDefaults === 'function') {
+                builder = Object.create(window.EleTableAppBuilder.prototype);
+            } else if (window.EleListAppBuilder && typeof window.EleListAppBuilder.prototype?.collectFilterDefaults === 'function') {
+                builder = Object.create(window.EleListAppBuilder.prototype);
+            }
+            defaults = (builder && typeof builder.collectFilterDefaults === 'function')
+                ? builder.collectFilterDefaults(hostSelector)
+                : {};
+        }
+        let builder = null;
+        if (window.EleAppBuilder && typeof window.EleAppBuilder.prototype?.applyFilterDefaults === 'function') {
+            builder = Object.create(window.EleAppBuilder.prototype);
+        } else if (window.EleTableAppBuilder && typeof window.EleTableAppBuilder.prototype?.applyFilterDefaults === 'function') {
+            builder = Object.create(window.EleTableAppBuilder.prototype);
+        } else if (window.EleListAppBuilder && typeof window.EleListAppBuilder.prototype?.applyFilterDefaults === 'function') {
+            builder = Object.create(window.EleListAppBuilder.prototype);
+        }
+        if (builder && typeof builder.applyFilterDefaults === 'function' && this.filters) {
+            builder.applyFilterDefaults(this.filters, defaults);
+        } else if (this.filters) {
+            if (!this.filters.value || typeof this.filters.value !== 'object') {
+                this.filters.value = {};
+            }
+            for (const [k, v] of Object.entries(defaults || {})) {
+                this.filters.value[k] = v;
+            }
+        }
+        return this.loadData(true);
+    },
+
     async invokeCommand(commandName, evt) {
         if (!commandName) return;
         const name = commandName;
         const key = ('' + name).trim().toLowerCase();
 
+        if (name === 'Reset' || key === 'reset') {
+            return typeof this.resetFilters === 'function' ? this.resetFilters() : this.loadData(true);
+        }
         if (name === 'Data') {
             return this.loadData();
         }

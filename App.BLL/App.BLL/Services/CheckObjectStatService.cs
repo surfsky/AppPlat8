@@ -11,111 +11,104 @@ namespace App.Services
     /// <summary>企业分类统计行（对应截图 6 行：应急局/新城/城北/城西/城中/协调）</summary>
     public class CheckObjectStatRow : IExport
     {
-        [UI("序号")]          public int    Index            { get; set; }
-        [UI("组织科室")]      public string SectionName      { get; set; }
-        [UI("组织说明")]      public string SectionRemark    { get; set; }
-        [UI("企业数-个数")]   public int    BaseCount        { get; set; }
-        [UI("新增企业")]      public int    NewCount         { get; set; }
-        [UI("关停企业")]      public int    CloseCount       { get; set; }
+        [UI("序号")]                                    public int    Index            { get; set; }
+        [UI("组织科室")]                                public string SectionName      { get; set; }
+        [UI("组织说明",  Column = ColumnType.None)]     public string SectionRemark    { get; set; }
+        [UI("组织科室Id", Column = ColumnType.None)]    public long?  OrgId            { get; set; }
 
-        // --- 厂房类型 × 集聚区内/外 ---
-        [UI("厂房-独立厂房-区内")]  public int FactoryIndependentInside   { get; set; }
-        [UI("厂房-独立厂房-区外")]  public int FactoryIndependentOutside  { get; set; }
-        [UI("厂房-厂中厂-区内")]    public int FactoryWorkshopInside      { get; set; }
-        [UI("厂房-厂中厂-区外")]    public int FactoryWorkshopOutside     { get; set; }
-        [UI("厂房-园中园-区内")]    public int FactoryParkInside          { get; set; }
-        [UI("厂房-园中园-区外")]    public int FactoryParkOutside         { get; set; }
+        // --- 企业数 ---
+        [UI("企业数", "个数")]                                  public int BaseCount      { get; set; }
+        [UI("企业数", "新增企业")]                              public int NewCount       { get; set; }
+        [UI("企业数", "关停企业")]                              public int CloseCount     { get; set; }
+
+        // --- 厂房类型 ---
+        [UI("厂房类型/独立厂房",   "集居区内")]                 public int FactoryIndependentInside   { get; set; }
+        [UI("厂房类型/独立厂房",   "集居区外")]                 public int FactoryIndependentOutside  { get; set; }
+        [UI("厂房类型/厂中厂",     "集居区内")]                 public int FactoryWorkshopInside      { get; set; }
+        [UI("厂房类型/厂中厂",     "集居区外")]                 public int FactoryWorkshopOutside     { get; set; }
+        [UI("厂房类型/园中园",     "集居区内")]                 public int FactoryParkInside          { get; set; }
+        [UI("厂房类型/园中园",     "集居区外")]                 public int FactoryParkOutside         { get; set; }
 
         // --- 产值规模 ---
-        [UI("产值-规上亿+")]       public int ScaleAboveBillion  { get; set; }
-        [UI("产值-规上亿-")]       public int ScaleBelowBillion  { get; set; }
-        [UI("产值-规下企业")]      public int ScaleSmall         { get; set; }
-        [UI("产值-小微企业")]      public int ScaleMicro         { get; set; }
-        [UI("产值-规下及小微合计")] public int ScaleSmallMicro   { get { return ScaleSmall + ScaleMicro; } set { /* IExport 兼容 */ } }
+        [UI("产值规模", "规上企业(亿元以上)")]                  public int ScaleAboveBillion  { get; set; }
+        [UI("产值规模", "规上企业(亿元以下)")]                  public int ScaleBelowBillion  { get; set; }
+        [UI("产值规模", "规下企业")]                            public int ScaleSmall         { get; set; }
+        [UI("产值规模", "小微企业")]                            public int ScaleMicro         { get; set; }
 
-        // --- 印刷行业 ---
-        [UI("印刷-胶印")]          public int IndPrintJiaoYin        { get; set; }
-        [UI("印刷-凹版")]          public int IndPrintAoBan          { get; set; }
-        [UI("印刷-其他印刷")]      public int IndPrintOther          { get; set; }
+        // --- 行业分类/印刷行业 ---
+        [UI("行业分类/印刷行业", "胶印")]                       public int IndPrintJiaoYin        { get; set; }
+        [UI("行业分类/印刷行业", "凹版")]                       public int IndPrintAoBan          { get; set; }
+        [UI("行业分类/印刷行业", "其他印刷业")]                 public int IndPrintOther          { get; set; }
 
-        // --- 塑料制品行业 ---
-        [UI("塑料-塑编")]          public int IndPlasticWoven        { get; set; }
-        [UI("塑料-其他塑料")]      public int IndPlasticOther        { get; set; }
+        // --- 行业分类/塑料制品行业 ---
+        [UI("行业分类/塑料制品行业", "塑编行业")]               public int IndPlasticWoven        { get; set; }
+        [UI("行业分类/塑料制品行业", "其他塑料制品行业")]       public int IndPlasticOther        { get; set; }
 
-        // --- 行业分类（11 类核心） ---
-        [UI("行业-纸制品业")]      public int IndPaper            { get; set; }
-        [UI("行业-珍珠棉")]        public int IndEpe               { get; set; }
-        [UI("行业-印刷行业")]      public int IndPrint             { get; set; }
-        [UI("行业-塑料制品业")]    public int IndPlastic           { get; set; }
-        [UI("行业-机械行业")]      public int IndMechanic          { get; set; }
-        [UI("行业-金属制品业")]    public int IndMetal             { get; set; }
-        [UI("行业-商贸行业")]      public int IndTrade             { get; set; }
-        [UI("行业-其他行业")]      public int IndOther             { get; set; }
+        // --- 行业分类/其他行业 ---
+        [UI("行业分类/其他行业", "纸制品业")]                   public int IndPaper            { get; set; }
+        [UI("行业分类/其他行业", "珍珠棉")]                     public int IndEpe               { get; set; }
+        [UI("行业分类/其他行业", "印刷行业合计")]               public int IndPrint             { get; set; }
+        [UI("行业分类/其他行业", "塑料制品业合计")]             public int IndPlastic           { get; set; }
+        [UI("行业分类/其他行业", "机械行业")]                   public int IndMechanic          { get; set; }
+        [UI("行业分类/其他行业", "金属制品业")]                 public int IndMetal             { get; set; }
+        [UI("行业分类/其他行业", "商贸行业")]                   public int IndTrade             { get; set; }
+        [UI("行业分类/其他行业", "其他行业")]                   public int IndOther             { get; set; }
 
         // --- 八类危险性较高工业企业 ---
-        [UI("高危-家电制造")]            public int RiskAppliance         { get; set; }
-        [UI("高危-电镀类")]              public int RiskElectroplating    { get; set; }
-        [UI("高危-竹木加工")]            public int RiskBamboo            { get; set; }
-        [UI("高危-制鞋类")]              public int RiskShoe              { get; set; }
-        [UI("高危-海绵生产")]            public int RiskSponge            { get; set; }
-        [UI("高危-纺织印染")]            public int RiskTextile           { get; set; }
-        [UI("高危-喷漆(非水性)")]        public int RiskSprayPaint       { get; set; }
-        [UI("高危-油墨印刷(非水性)")]     public int RiskInkPrint         { get; set; }
-
+        [UI("八类危险性较高工业企业", "家电制造")]              public int RiskAppliance         { get; set; }
+        [UI("八类危险性较高工业企业", "电镀类")]                 public int RiskElectroplating    { get; set; }
+        [UI("八类危险性较高工业企业", "竹木加工类")]            public int RiskBamboo            { get; set; }
+        [UI("八类危险性较高工业企业", "制鞋类")]                 public int RiskShoe              { get; set; }
+        [UI("八类危险性较高工业企业", "海绵生产类")]            public int RiskSponge            { get; set; }
+        [UI("八类危险性较高工业企业", "纺织印染类")]            public int RiskTextile           { get; set; }
+        [UI("八类危险性较高工业企业", "喷漆作业(非水性漆)")]    public int RiskSprayPaint       { get; set; }
+        [UI("八类危险性较高工业企业", "油墨印刷(非水性油墨)")]  public int RiskInkPrint         { get; set; }
 
         // --- 三场所三企业 ---
-        [UI("三场所三企业")]              public int RiskChangSuo         { get; set; }
-        [UI("高危-有限空间作业")]          public int RiskConfinedSpace    { get; set; }
-        [UI("高危-可燃爆粉尘作业场所")]     public int RiskDust             { get; set; }
-        [UI("高危-喷涂作业场所")]          public int RiskPainting         { get; set; }
-        [UI("高危-金属冶炼企业")]          public int RiskMetalSmelt       { get; set; }
-        [UI("高危-涉氨制冷企业")]          public int RiskAmmonia          { get; set; }
-        [UI("高危-船舶修造企业")]          public int RiskShipBuilding     { get; set; }
+        [UI("三场所三企业", "有限空间作业场所")]                public int RiskConfinedSpace    { get; set; }
+        [UI("三场所三企业", "可燃爆粉尘作业场所")]              public int RiskDust             { get; set; }
+        [UI("三场所三企业", "喷涂作业场所")]                     public int RiskPainting         { get; set; }
+        [UI("三场所三企业", "金属冶炼企业")]                     public int RiskMetalSmelt       { get; set; }
+        [UI("三场所三企业", "涉氨制冷企业")]                     public int RiskAmmonia          { get; set; }
+        [UI("三场所三企业", "船舶修造企业")]                     public int RiskShipBuilding     { get; set; }
 
         // --- 关注风险 ---
-        [UI("关注-使用危险化学品企业")]   public int FocusChemical        { get; set; }
-        [UI("关注-易燃企业")]           public int FocusInflammable     { get; set; }
-        [UI("关注-有环保设备")]         public int FocusEnvProtection   { get; set; }
-        [UI("关注-非煤矿山")]           public int FocusMine            { get; set; }
+        [UI("关注风险", "危化品使用企业")]                      public int FocusChemical        { get; set; }
+        [UI("关注风险", "易燃企业")]                             public int FocusInflammable     { get; set; }
+        [UI("关注风险", "有环保设备")]                           public int FocusEnvProtection   { get; set; }
+        [UI("关注风险", "非煤矿山")]                             public int FocusMine            { get; set; }
 
         // --- 分级管控四色等级 ---
-        [UI("四色-白名单(None)")]    public int ColorNone   { get; set; }
-        [UI("四色-黄(Low)")]        public int ColorLow    { get; set; }
-        [UI("四色-橙(Medium)")]     public int ColorMedium { get; set; }
-        [UI("四色-红(High)")]       public int ColorHigh   { get; set; }
+        [UI("分级管控四色等级", "白名单数")]                     public int ColorNone   { get; set; }
+        [UI("分级管控四色等级", "黄名单数")]                     public int ColorLow    { get; set; }
+        [UI("分级管控四色等级", "橙名单数")]                     public int ColorMedium { get; set; }
+        [UI("分级管控四色等级", "红名单数")]                     public int ColorHigh   { get; set; }
 
-        /// <summary>IExport 接口实现：供 SortPageExport/ExcelExporter 使用</summary>
+        /// <summary>IExport 接口实现：供 SortPageExport/ExcelExporter 使用；
+        /// 注意：此处字段名与类属性名严格一致，不做任何重命名，
+        /// 以便与 Razor 视图 EleColumn For="Item.Xxx"、以及 UIAttribute.GroupPath 层级一一对应。
+        /// 需要隐藏/保留的字段，由 UIAttribute.Export 控制。
+        /// </summary>
         public virtual object Export(ExportMode mode = ExportMode.Normal)
         {
             return new
             {
-                Index, SectionName, SectionRemark,
+                Index, SectionName, SectionRemark, OrgId,
                 BaseCount, NewCount, CloseCount,
                 FactoryIndependentInside, FactoryIndependentOutside,
                 FactoryWorkshopInside, FactoryWorkshopOutside,
                 FactoryParkInside, FactoryParkOutside,
-                ScaleAboveBillion, ScaleBelowBillion, ScaleSmall, ScaleMicro, ScaleSmallMicro,
-                PrintJiaoYin = IndPrintJiaoYin,
-                PrintAoBan = IndPrintAoBan,
-                PrintOther = IndPrintOther,
-                PlasticWoven = IndPlasticWoven,
-                PlasticOther = IndPlasticOther,
+                ScaleAboveBillion, ScaleBelowBillion, ScaleSmall, ScaleMicro,
+                IndPrintJiaoYin, IndPrintAoBan, IndPrintOther,
+                IndPlasticWoven, IndPlasticOther,
                 IndPaper, IndEpe, IndPrint, IndPlastic, IndMechanic, IndMetal,
                 IndTrade, IndOther,
-                IndAppliance = RiskAppliance,
-                IndElectroplating = RiskElectroplating,
-                IndBamboo = RiskBamboo,
-                IndShoe = RiskShoe,
-                IndSponge = RiskSponge,
-                IndTextile = RiskTextile,
-                RiskSprayPaint, RiskInkPrint, RiskConfinedSpace, RiskDust,
+                RiskAppliance, RiskElectroplating, RiskBamboo, RiskShoe,
+                RiskSponge, RiskTextile, RiskSprayPaint, RiskInkPrint,
+                RiskConfinedSpace, RiskDust,
                 RiskPainting, RiskMetalSmelt, RiskAmmonia, RiskShipBuilding,
-                SanChangSuo = RiskChangSuo,
                 FocusChemical, FocusInflammable, FocusEnvProtection, FocusMine,
-                FourColorNone = ColorNone,
-                FourColorLow = ColorLow,
-                FourColorMedium = ColorMedium,
-                FourColorHigh = ColorHigh,
+                ColorNone, ColorLow, ColorMedium, ColorHigh,
             };
         }
     }
@@ -123,45 +116,35 @@ namespace App.Services
     /// <summary>网格员对象统计行（在 CheckObjectStatRow 基础上增加网格员两列）</summary>
     public class CheckObjectCheckerStatRow : CheckObjectStatRow
     {
-        [UI("网格员Id")]   public long?  CheckerId    { get; set; }
-        [UI("网格员")]     public string CheckerName  { get; set; }
+        [UI("组织科室Id", Column = ColumnType.None)] public long?  DutyOrgId    { get; set; }
+        [UI("网格员Id",   Column = ColumnType.None)] public long?  CheckerId    { get; set; }
+        [UI("网格员")]              public string CheckerName  { get; set; }
 
         public override object Export(ExportMode mode = ExportMode.Normal)
         {
-            var b = (dynamic)base.Export(mode);
             return new
             {
                 Index,
                 SectionName,
                 SectionRemark,
+                DutyOrgId,
                 CheckerId,
                 CheckerName,
                 BaseCount, NewCount, CloseCount,
                 FactoryIndependentInside, FactoryIndependentOutside,
                 FactoryWorkshopInside, FactoryWorkshopOutside,
                 FactoryParkInside, FactoryParkOutside,
-                ScaleAboveBillion, ScaleBelowBillion, ScaleSmall, ScaleMicro, ScaleSmallMicro,
-                PrintJiaoYin = IndPrintJiaoYin,
-                PrintAoBan = IndPrintAoBan,
-                PrintOther = IndPrintOther,
-                PlasticWoven = IndPlasticWoven,
-                PlasticOther = IndPlasticOther,
+                ScaleAboveBillion, ScaleBelowBillion, ScaleSmall, ScaleMicro,
+                IndPrintJiaoYin, IndPrintAoBan, IndPrintOther,
+                IndPlasticWoven, IndPlasticOther,
                 IndPaper, IndEpe, IndPrint, IndPlastic, IndMechanic, IndMetal,
                 IndTrade, IndOther,
-                IndAppliance = RiskAppliance,
-                IndElectroplating = RiskElectroplating,
-                IndBamboo = RiskBamboo,
-                IndShoe = RiskShoe,
-                IndSponge = RiskSponge,
-                IndTextile = RiskTextile,
-                RiskSprayPaint, RiskInkPrint, RiskConfinedSpace, RiskDust,
+                RiskAppliance, RiskElectroplating, RiskBamboo, RiskShoe,
+                RiskSponge, RiskTextile, RiskSprayPaint, RiskInkPrint,
+                RiskConfinedSpace, RiskDust,
                 RiskPainting, RiskMetalSmelt, RiskAmmonia, RiskShipBuilding,
-                SanChangSuo = RiskChangSuo,
                 FocusChemical, FocusInflammable, FocusEnvProtection, FocusMine,
-                FourColorNone = ColorNone,
-                FourColorLow = ColorLow,
-                FourColorMedium = ColorMedium,
-                FourColorHigh = ColorHigh,
+                ColorNone, ColorLow, ColorMedium, ColorHigh,
             };
         }
     }
@@ -227,6 +210,7 @@ namespace App.Services
                     Index         = i + 1,
                     SectionName   = s.Name,
                     SectionRemark = s.Remark,
+                    OrgId         = s.OrgId,
                 };
                 AccumulateRow(row, ctx, orgSet, InRange, o => true);
                 rows.Add(row);
@@ -277,6 +261,7 @@ namespace App.Services
                     var checkerRow = new CheckObjectCheckerStatRow
                     {
                         Index         = ++idx,
+                        DutyOrgId     = s.OrgId,
                         SectionName   = $"{s.Name}",
                         SectionRemark = $"根据 CheckObjectStat.DutyOrgId= 统计",
                         CheckerId     = cid,
@@ -400,7 +385,7 @@ namespace App.Services
                 if (HasTag(ctx.ObjTags, oid, 124)) row.RiskAmmonia++;
                 if (HasTag(ctx.ObjTags, oid, 125)) row.RiskShipBuilding++;
 
-                if (HasTag(ctx.ObjTags, oid, 84)) row.RiskChangSuo++;
+                //if (HasTag(ctx.ObjTags, oid, 84)) row.RiskChangSuo++;
 
                 if (HasTag(ctx.ObjTags, oid, 126)) row.FocusChemical++;
                 if (HasTag(ctx.ObjTags, oid, 127)) row.FocusInflammable++;

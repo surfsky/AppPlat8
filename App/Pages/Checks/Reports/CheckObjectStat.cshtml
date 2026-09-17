@@ -34,12 +34,13 @@
     <Buttons>
       <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
       <EleButton Type="Warning" Command="Export" Icon="Download">导出</EleButton>
-      <EleButton Type="Default" Id="btnResetStat" Icon="Refresh">重置</EleButton>
+      <EleButton Type="Default" Command="Reset" Icon="Refresh">重置</EleButton>
     </Buttons>
   </Toolbar>
   <Columns>
     <EleNumColumn Label="序号"    Width="60"  Fixed="left" Align="center" HeaderAlign="center" Sortable="false" />
-    <EleColumn For="Item.SectionName"   Label="组织" Width="80" Fixed="left" Sortable="false" LabelAlign="center" />
+    <EleColumn For="Item.SectionName"   Label="组织" Width="80" Fixed="left" Sortable="false" LabelAlign="center"
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?dutyOrgId={orgId}&isDel=false" />
     <EleColumnGroup Label="企业数" LabelAlign="center" Sortable="false">
       <EleColumn For="Item.BaseCount"   Label="个数"     Width="80" Align="right" Sortable="false" LabelAlign="center" />
       <EleColumn For="Item.NewCount"    Label="新增企业" Width="80" Align="right" Sortable="false" LabelAlign="center" />
@@ -122,28 +123,5 @@
     </EleColumnGroup>
   </Columns>
 </EleTable>
-
-<script>
-(function () {
-  var mount = null;
-  function retry() {
-    var btn = document.getElementById('btnResetStat');
-    var el = document.getElementById('tblStat');
-    if (btn) {
-      btn.addEventListener('click', function () {
-        if (window.EleTableAppBuilder) {
-          var app = window.EleTableAppBuilder.getInstance(el ? el.id : 'tblStat');
-          if (app && app.resetFilters) app.resetFilters();
-        }
-      });
-    } else if (!mount && !window.__tblStatResetInstalled) {
-      window.__tblStatResetInstalled = true;
-      setTimeout(retry, 50);
-    }
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', retry);
-  else retry();
-})();
-</script>
 </div>
 }

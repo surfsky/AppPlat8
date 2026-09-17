@@ -257,22 +257,47 @@ namespace App.EleUI
             }
         }
 
-        /// <summary>构造Popup超链接模板</summary>
+        /// <summary>构造Popup/超链接模板（根据 LinkTarget 支持 Drawer / Blank 新窗口 / Self 本页跳转三种方式）</summary>
         private string BuildPopupTemplate(string propName)
         {
             var urlExpr = BuildPopupUrlExpr(PopupUrl);
             var titleExpr = BuildPopupTextExpr(!string.IsNullOrEmpty(PopupTitle) ? PopupTitle : (Label ?? "查看"));
             var dir = EscapeSingleQuoted(PopupDirection ?? "rtl");
             var popupSize = PopupSize?.Trim();
-            var openDrawerArgs = !string.IsNullOrEmpty(popupSize)
-                ? $"{urlExpr}, '{EscapeSingleQuoted(popupSize)}', '{dir}', {titleExpr}"
-                : $"{urlExpr}, null, '{dir}', {titleExpr}";
 
+            if (LinkTarget == EleLinkTarget.Drawer)
+            {
+                var openDrawerArgs = !string.IsNullOrEmpty(popupSize)
+                    ? $"{urlExpr}, '{EscapeSingleQuoted(popupSize)}', '{dir}', {titleExpr}"
+                    : $"{urlExpr}, null, '{dir}', {titleExpr}";
+                return $@"
+                            <template #default=""scope"">
+                                <span class=""text-blue-600 cursor-pointer hover:text-blue-700 no-underline"" @click=""openDrawer({openDrawerArgs})"">
+                                    {{{{ scope.row.{propName} ?? '' }}}}
+                                </span>
+                            </template>
+                        ";
+            }
+
+            if (LinkTarget == EleLinkTarget.Blank)
+            {
+                // 新窗口：用原生 <a :href="">，浏览器直接处理，不依赖 Vue click 监听器
+                return $@"
+                            <template #default=""scope"">
+                                <a :href=""{urlExpr}"" target=""_blank"" rel=""noopener noreferrer"" class=""text-blue-600 cursor-pointer hover:text-blue-700 underline-offset-2 hover:underline"">
+                                    {{{{ scope.row.{propName} ?? '' }}}}
+                                </a>
+                            </template>
+                        ";
+            }
+
+            // Self：本页跳转——同样使用原生 <a :href="" target=""_self"">，兼容所有浏览器/Vue 版本
+            // （@click 方案在某些 Element Plus 作用域下可能无法把 scope.row 变量正确传导到 window 全局）
             return $@"
                         <template #default=""scope"">
-                            <span class=""text-blue-600 cursor-pointer hover:text-blue-700 no-underline"" @click=""openDrawer({openDrawerArgs})"">
+                            <a :href=""{urlExpr}"" target=""_self"" class=""text-blue-600 cursor-pointer hover:text-blue-700 underline-offset-2 hover:underline"">
                                 {{{{ scope.row.{propName} ?? '' }}}}
-                            </span>
+                            </a>
                         </template>
                     ";
         }

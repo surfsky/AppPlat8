@@ -57,7 +57,16 @@ namespace App.EleUI
 
             // Also set initial model-value so the picker shows a date on first
             // paint (before the table builder runs data-filter-default scan).
-            if (Value != null && !context.Items.ContainsKey("IsEleForm"))
+            // NOTE: In filter context (EleTable toolbar) we MUST NOT emit a
+            // static :model-value, because the same element already has
+            // v-model="filters.xxx". Element Plus v3 treats :model-value as
+            // one-way controlled prop when paired with value-format, causing
+            // the calendar panel's @update:model-value to be swallowed and
+            // the user to be unable to change the date. The initial value is
+            // still propagated via data-filter-default →
+            // EleAppBuilder.applyFilterDefaults on mount, which writes into
+            // the reactive filters ref (backed by v-model).
+            if (Value != null && context.Items.ContainsKey("IsEleForm"))
             {
                 var defaultExpr = GetDefaultValueExpression();
                 if (!string.IsNullOrWhiteSpace(defaultExpr) && !output.Attributes.ContainsName(":model-value"))

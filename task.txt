@@ -583,7 +583,7 @@ Done
     /QString -> QStr
     /完善 CheckTags 页面，默认行数=100，增加查询按钮
     /实现分类统计报表
-    实现科室、人员统计报表
+    /实现科室、人员统计报表
     修正知识库目录和本地知识库程序
     实现EleTable 左右布局能力，增加<Filter><SidePanel>....</SidePanlel>
 

@@ -34,13 +34,15 @@
     <Buttons>
       <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
       <EleButton Type="Warning" Command="Export" Icon="Download">导出</EleButton>
-      <EleButton Type="Default" Id="btnResetCheckerStat" Icon="Refresh">重置</EleButton>
+      <EleButton Type="Default" Command="Reset" Icon="Refresh">重置</EleButton>
     </Buttons>
   </Toolbar>
   <Columns>
     <EleNumColumn Label="序号"    Width="60"  Fixed="left" Align="center" HeaderAlign="center" Sortable="false" />
-    <EleColumn For="Item.SectionName"   Label="组织/科室" Width="130" Fixed="left" Sortable="false" LabelAlign="center" />
-    <EleColumn For="Item.CheckerName"   Label="网格员"             Width="130" Fixed="left" Sortable="false" LabelAlign="center" />
+    <EleColumn For="Item.SectionName" Label="组织/科室" Width="130" Fixed="left" Sortable="false" LabelAlign="center"
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?dutyOrgId={dutyOrgId}&isDel=false" />
+    <EleColumn For="Item.CheckerName" Label="网格员"     Width="130" Fixed="left" Sortable="false" LabelAlign="center"
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?checkerId={checkerId}&dutyOrgId={dutyOrgId}&isDel=false" />
     <EleColumnGroup Label="企业数" LabelAlign="center" Sortable="false">
       <EleColumn For="Item.BaseCount"   Label="个数"     Width="80" Align="right" Sortable="false" LabelAlign="center" />
       <EleColumn For="Item.NewCount"    Label="累计新增企业" Width="80" Align="right" Sortable="false" LabelAlign="center" />
@@ -123,27 +125,5 @@
     </EleColumnGroup>
   </Columns>
 </EleTable>
-
-<script>
-(function () {
-  function retry() {
-    var btn = document.getElementById('btnResetCheckerStat');
-    var el = document.getElementById('tblCheckerStat');
-    if (btn) {
-      btn.addEventListener('click', function () {
-        if (window.EleTableAppBuilder) {
-          var app = window.EleTableAppBuilder.getInstance(el ? el.id : 'tblCheckerStat');
-          if (app && app.resetFilters) app.resetFilters();
-        }
-      });
-    } else if (!window.__chkStatResetInstalled) {
-      window.__chkStatResetInstalled = true;
-      setTimeout(retry, 50);
-    }
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', retry);
-  else retry();
-})();
-</script>
 </div>
 }

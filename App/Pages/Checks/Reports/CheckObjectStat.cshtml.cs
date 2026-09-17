@@ -49,7 +49,8 @@ namespace App.Pages.Checks.Reports
             var pi = new Paging { PageIndex = 1, PageSize = int.MaxValue, Total = Rows.Count };
             pi.SetTotal(Rows.Count);
             var list = Rows.AsQueryable().SortPageExport(pi);
-            ExcelExporter.Export(list, $"企业分类统计_{StartDt:yyyyMMdd}-{EndDt:yyyyMMdd}_{DateTime.Now:HHmmss}.xlsx");
+            var cfg = new UISetting(typeof(CheckObjectStatRow), "企业分类统计表").BuildExportColumnConfig(freezeCols: 2);
+            ExcelExporter.Export(list, cfg, $"企业分类统计_{StartDt:yyyyMMdd}-{EndDt:yyyyMMdd}_{DateTime.Now:HHmmss}.xls");
             Logger.Info($"导出企业分类统计报表，日期 {StartDt:yyyy-MM-dd} ~ {EndDt:yyyy-MM-dd}，共 {Rows.Count} 行");
             return new EmptyResult();
         }
