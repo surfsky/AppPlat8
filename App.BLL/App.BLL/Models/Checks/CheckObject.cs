@@ -19,9 +19,12 @@ namespace App.DAL
     [UI("检查", "检查对象")]
     public class CheckObject : EntityBase<CheckObject>, IDeleteLogic, IFixAll
     {
+        //  IDeleteLogic 实现
+        [UI("基础", "是否失效")] public bool? IsDel { get; set; } = false;
+        [UI("基础", "失效时间")] public DateTime? DeleteDt { get; set; }
+
+        //
         [UI("基础", "编码")]      public string Code { get; set; }
-        [UI("基础", "是否失效")]    public bool? IsDel { get; set; } = false;
-        [UI("基础", "失效时间")]    public DateTime? DeleteDt { get; set; }
         [UI("基础", "失效原因")]    public CheckObjectFailReason? FailReason { get; set; }
         [UI("基础", "是否存在隐患")] public bool? HasHarzard { get; set; } = false;
         [UI("基础", "名称")]        public string Name { get; set;}

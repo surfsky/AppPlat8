@@ -65,8 +65,26 @@ if (args.Any(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase)))
 		return;
 	}
 
-	// 直接运行指定任务
-	await job.Execute(default!);
+	// 解析其他 --key=value 参数，通过 AsyncLocal 上下文传递给 Job
+	var extras = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+	foreach (var a in args)
+	{
+		var m = System.Text.RegularExpressions.Regex.Match(a, @"^--(?<k>[A-Za-z0-9_\-]+)=(?<v>.*)$");
+		if (!m.Success) continue;
+		var k = m.Groups["k"].Value;
+		if (k.Equals("run", StringComparison.OrdinalIgnoreCase)) continue;
+		if (k.Equals("conn", StringComparison.OrdinalIgnoreCase)) continue;
+		if (k.Equals("api-base", StringComparison.OrdinalIgnoreCase)) continue;
+		if (k.Equals("amap-key", StringComparison.OrdinalIgnoreCase)) continue;
+		extras[k] = m.Groups["v"].Value;
+	}
+	extras["conn"] = conn ?? "";
+	JobExtras.Current = extras;
+
+	// 直接运行指定任务（Quartz context 接口用 FakeJobExecutionContext 仅满足 Execute 签名）
+	var fireCtx = new FakeJobExecutionContext(extras);
+	await job.Execute(fireCtx);
+	JobExtras.Current = null;
 	Console.WriteLine($"任务 {run} 执行完成");
 	return;
 }
@@ -90,6 +108,7 @@ IJob? GetJob(string? jobName)
 		"checkobjectgpsfixjob" => new CheckObjectGpsFixJob(),
 		"gismenustatjob" => new GisMenuStatJob(),
 		"typhoonimportjob" => new TyphoonImportJob(),
+		"checkerusermergejob" => new CheckerUserMergeJob(),
 		_ => null,
 	};
 }
@@ -189,4 +208,49 @@ static void ConfigureEntity(string conn)
 	{
 		Enabled = false,
 	};
+}
+
+/// <summary>简单的命令行参数 → Job 参数的 AsyncLocal 传递容器</summary>
+public static class JobExtras
+{
+	public static readonly AsyncLocal<Dictionary<string, string>?> _current = new();
+	public static Dictionary<string, string>? Current { get => _current.Value; set => _current.Value = value; }
+}
+
+/// <summary>
+/// 简化版 IJobExecutionContext：所有 Quartz 接口字段以最小可用方式实现，
+/// 真正的命令行参数通过 JobExtras.Current 获取，MergedJobDataMap 仅作 fallback 兜底
+/// </summary>
+public class FakeJobExecutionContext : Quartz.IJobExecutionContext
+{
+	readonly Dictionary<string, string> _extras;
+	readonly Quartz.JobDataMap _jdm;
+	public FakeJobExecutionContext(Dictionary<string, string> extras)
+	{
+		_extras = extras ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		_jdm = new Quartz.JobDataMap();
+		foreach (var kv in _extras) _jdm[kv.Key] = kv.Value;
+	}
+	public Quartz.IScheduler Scheduler => null!;
+	public Quartz.ITrigger Trigger => null!;
+	public Quartz.ICalendar Calendar => null!;
+	public bool Recovering => false;
+	public Quartz.TriggerKey RecoveringTriggerKey => null!;
+	public int RefireCount => 0;
+	public Quartz.JobDataMap MergedJobDataMap => _jdm;
+	public Quartz.IJobDetail JobDetail => null!;
+	public Quartz.IJob JobInstance => null!;
+	public DateTimeOffset FireTimeUtc => DateTimeOffset.UtcNow;
+	public DateTimeOffset? ScheduledFireTimeUtc => null;
+	public DateTimeOffset? PreviousFireTimeUtc => null;
+	public DateTimeOffset? NextFireTimeUtc => null;
+	public TimeSpan JobRunTime => TimeSpan.Zero;
+	public object? Result { get; set; }
+	public System.Threading.CancellationToken CancellationToken => System.Threading.CancellationToken.None;
+	public void Put(object key, object objectValue) => _jdm[key.ToString() ?? ""] = objectValue;
+	public object? Get(object key) => _extras.TryGetValue(key?.ToString() ?? "", out var v) ? v : _jdm[key?.ToString() ?? ""];
+	public bool ContainsKey(object key) => _extras.ContainsKey(key?.ToString() ?? "") || _jdm.ContainsKey(key?.ToString() ?? "");
+	public System.Collections.IDictionary ContextMap => _extras;
+	public string FireInstanceId => Guid.NewGuid().ToString();
+	public long? FireInstanceIdLong { get; set; }
 }

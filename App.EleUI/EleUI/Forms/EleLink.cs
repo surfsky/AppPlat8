@@ -11,8 +11,9 @@ namespace App.EleUI
     /// </summary>
     public enum EleLinkTarget
     {
-        Blank,
         Drawer,
+        Blank,
+        Self
     }
 
     /// <summary>

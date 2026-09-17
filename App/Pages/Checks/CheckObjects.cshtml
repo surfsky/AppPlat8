@@ -10,30 +10,30 @@
             <Filters>
                 @* 过滤器支持 URL 参数预填充：
                    - ?orgId=730 走 Model.Item.DutyOrgId（OnGet 中已经按 orgId 查到 Org 实体并绑定到 Item）；
-                   - 其它参数（?name=xxx&address=yyy 等）直接用 QString("key") 读取（_ViewImports 全局 @using static 导入），
+                   - 其它参数（?name=xxx&address=yyy 等）直接用 QStr("key") 读取（_ViewImports 全局 @using static 导入），
                      无需 Model. 前缀，简单清晰。*@
                 <EleTreePicker For="DutyOrgIds" Width="300px" Label="所属网格" Multiple="true" CollapseTags="false"
                                Api="/httpapi/orgs/GetAuthOrgTree"
-                               Value="@QString("dutyOrgIds", Model.DutyOrgIds != null && Model.DutyOrgIds.Count > 0 ? string.Join(",", Model.DutyOrgIds) : "")" ></EleTreePicker>
-                <EleInput For="Item.Name"              Width="250px" Label="检查对象名称"     Value="@QString("name")"></EleInput>
-                <EleInput For="Item.Address"           Width="250px" Label="详细地址"         Value="@QString("address")"></EleInput>
-                <EleSelect For="Item.Scope"            Width="250px" Label="所属领域"         Value="@QString("scope")"></EleSelect>
-                <EleSelect For="Item.IsChecked"        Width="250px" Label="是否检查"         Value="@QString("isChecked")"></EleSelect>
-                <EleSelect For="Item.HasHarzard"       Width="250px" Label="存在隐患"         Value="@QString("hasHarzard")"></EleSelect>
-                <EleInput For="Item.SocialCreditId"  Width="250px" Label="统一社会信用代码"  Value="@QString("socialCreditCode")"></EleInput>
-                <EleSelect For="Item.ObjectType"       Width="250px" Label="类型"            Value="@QString("objectType")"></EleSelect>
-                <EleSelect For="Item.RiskLevel"        Width="250px" Label="风险等级"         Value="@QString("riskLevel")"></EleSelect>
-                <EleInput For="Item.Code"              Width="250px" Label="对象标识"         Value="@QString("code")"></EleInput>
-                <EleSelect For="Item.IndustryType"     Width="250px" Label="行业"            Value="@QString("industryType")"></EleSelect>
-                <EleInput For="Item.DutyMan"      Width="250px" Label="企业责任人"          Value="@QString("dutyUserName")"></EleInput>
+                               Value="@QStr("dutyOrgIds", Model.DutyOrgIds != null && Model.DutyOrgIds.Count > 0 ? string.Join(",", Model.DutyOrgIds) : "")" ></EleTreePicker>
+                <EleInput For="Item.Name"              Width="250px" Label="检查对象名称"     Value="@QStr("name")"></EleInput>
+                <EleInput For="Item.Address"           Width="250px" Label="详细地址"         Value="@QStr("address")"></EleInput>
+                <EleSelect For="Item.Scope"            Width="250px" Label="所属领域"         Value="@QStr("scope")"></EleSelect>
+                <EleSelect For="Item.IsChecked"        Width="250px" Label="是否检查"         Value="@QStr("isChecked")"></EleSelect>
+                <EleSelect For="Item.HasHarzard"       Width="250px" Label="存在隐患"         Value="@QStr("hasHarzard")"></EleSelect>
+                <EleInput For="Item.SocialCreditId"  Width="250px" Label="统一社会信用代码"  Value="@QStr("socialCreditCode")"></EleInput>
+                <EleSelect For="Item.ObjectType"       Width="250px" Label="类型"            Value="@QStr("objectType")"></EleSelect>
+                <EleSelect For="Item.RiskLevel"        Width="250px" Label="风险等级"         Value="@QStr("riskLevel")"></EleSelect>
+                <EleInput For="Item.Code"              Width="250px" Label="对象标识"         Value="@QStr("code")"></EleInput>
+                <EleSelect For="Item.IndustryType"     Width="250px" Label="行业"            Value="@QStr("industryType")"></EleSelect>
+                <EleInput For="Item.DutyMan"      Width="250px" Label="企业责任人"          Value="@QStr("dutyUserName")"></EleInput>
                 <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Width="250px" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0"
-                           Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QString("checkerId"))"
+                           Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QStr("checkerId"))"
                            TextValue="@Model.DefaultCheckerName"></ElePicker>
-                <EleDatePicker For="Item.CreateDt" Type="DateRange" Width="250px" Label="创建时间"        Type="DateTime" Value="@QString("createStartDt")"></EleDatePicker>
-                <EleDatePicker For="Item.LastCheckDt" Type="DateRange" Width="250px" Label="巡查时间"     Type="DateTime" Value="@QString("lastCheckStartDt")"></EleDatePicker>
-                <EleSelect For="Item.IndustryRisk"     Width="250px" Label="行业风险类型"     Value="@QString("industryRisk")"></EleSelect>
-                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QString("tagIds")"></EleTreePicker>
-                <EleSelect For="Item.IsDel"            Width="250px" Label="已删除"           Value="@QString("isDel", "false")"></EleSelect>
+                <EleDatePicker For="Item.CreateDt" Type="DateRange" Width="250px" Label="创建时间"        Type="DateTime" Value="@QStr("createStartDt")"></EleDatePicker>
+                <EleDatePicker For="Item.LastCheckDt" Type="DateRange" Width="250px" Label="巡查时间"     Type="DateTime" Value="@QStr("lastCheckStartDt")"></EleDatePicker>
+                <EleSelect For="Item.IndustryRisk"     Width="250px" Label="行业风险类型"     Value="@QStr("industryRisk")"></EleSelect>
+                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QStr("tagIds")"></EleTreePicker>
+                <EleSelect For="Item.IsDel"            Width="250px" Label="已删除"           Value="@QStr("isDel", "false")"></EleSelect>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

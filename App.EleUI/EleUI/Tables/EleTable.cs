@@ -123,7 +123,8 @@ namespace App.EleUI
             var hasExplicitHeight = !string.IsNullOrWhiteSpace(Height);
             if (hasExplicitHeight)
             {
-                if (!rootStyle.Contains("min-height"))
+                // ShowPage=false 且有显式 Height：不塞保底 min-height，避免与视口 calc 叠加产生底部空白
+                if (ShowPage && !rootStyle.Contains("min-height"))
                     rootStyle += " min-height: 600px;";
                 rootStyle += " width: 100%; box-sizing: border-box;";
                 output.Attributes.SetAttribute("style", rootStyle.Trim());
@@ -143,8 +144,14 @@ namespace App.EleUI
             string scriptHtml = (this.BuildMode == EleAppBuildMode.Client) ? CreateScript(appId) : "";
 
             output.PreElement.AppendHtml(scopeCssHtml);
-            output.Content.AppendHtml(" <el-container class='h-full w-full flex flex-col overflow-hidden'>");
-            output.Content.AppendHtml(toolbarHtml);
+            // ShowPage=false 且 Height 显式设置时：去掉 footer 的 min-height 占位以消除底部空白
+            bool showFooterSpace = ShowPage || !hasExplicitHeight;
+            var containerCls = showFooterSpace
+                ? " <el-container class='h-full w-full flex flex-col overflow-hidden'>"
+                : " <el-container class='h-full w-full flex flex-col overflow-hidden' style='min-height:0;'>";
+            output.Content.AppendHtml(containerCls);
+            if (!string.IsNullOrWhiteSpace(toolbarHtml))
+                output.Content.AppendHtml(toolbarHtml);
             output.Content.AppendHtml(tableHtml);
             output.Content.AppendHtml(footerHtml);
             output.Content.AppendHtml("    </el-container>");
@@ -159,42 +166,39 @@ namespace App.EleUI
             var scope = $"#{appId}";
             var wrap = HeaderWrap || HeadWrap;
 
-            // 对齐映射：水平 justify-content（flex-col 下用 align-items 做水平），垂直 justify-content
+            // 对齐映射：水平 justify-content（row 主轴），垂直垂直居中由 align-items:center 统一，多行用 align-content
             string Jc(string align) => (align ?? "center").ToLower() switch { "left" => "flex-start", "right" => "flex-end", _ => "center" };
-            string Ai(string align) => (align ?? "center").ToLower() switch { "left" => "flex-start", "right" => "flex-end", _ => "center" };
             string Va(string align) => (align ?? "middle").ToLower() switch { "top" => "top", "bottom" => "bottom", _ => "middle" };
-
-            var cellBase = $@"
-  display: inline-flex !important; flex-direction: column !important;
-  justify-content: {Jc(hvaVar)} !important; align-items: {Ai(haVar)} !important;
-  width: 100% !important; min-height: 32px !important; box-sizing: border-box !important;
-  padding: 6px 8px !important; height: 100% !important; text-align: {haVar} !important;";
 
             var wrapStyles = wrap
                 ? $"line-height: 1.4 !important; white-space: normal !important; word-break: break-word !important;"
                 : $"white-space: nowrap !important; line-height: 1.2 !important;";
 
-            var caretStyles = $@"
-{scope} th.el-table__cell .cell .sort-caret,
-{scope} th.el-table__cell .cell .caret-wrapper {{
-  display: inline-flex !important; margin: 2px 0 0 2px !important; flex: none !important; align-self: flex-end;
-}}";
-            // 水平居中时，caret 放在文字末尾水平居中组（下方）
-            if (haVar.Equals("center", StringComparison.OrdinalIgnoreCase))
-                caretStyles = $@"
-{scope} th.el-table__cell .cell .sort-caret,
-{scope} th.el-table__cell .cell .caret-wrapper {{
-  display: inline-flex !important; margin: 2px auto 0 !important; flex: none !important; align-self: center;
-}}";
+            var wrapFlex = wrap ? "flex-wrap: wrap !important;" : "flex-wrap: nowrap !important;";
+            var caretMargin = haVar.Equals("left", StringComparison.OrdinalIgnoreCase) ? "0 0 0 6px"
+                : haVar.Equals("right", StringComparison.OrdinalIgnoreCase) ? "0 6px 0 0"
+                : "0 0 0 6px";
 
             return $@"<style>
 {scope} th.el-table__cell {{ text-align: {haVar} !important; vertical-align: {Va(hvaVar)} !important; }}
 {scope} th.el-table__cell .cell {{
-{cellBase}
-{wrapStyles}
+  display: inline-flex !important; flex-direction: row !important;
+  justify-content: {Jc(haVar)} !important; align-items: center !important; align-content: {Jc(hvaVar)} !important;
+  width: 100% !important; min-height: 32px !important; box-sizing: border-box !important;
+  padding: 6px 8px !important; height: 100% !important; text-align: {haVar} !important;
+  column-gap: 6px !important;
+  {wrapFlex}
+  {wrapStyles}
 }}
-{scope} th.el-table__cell .cell > span {{ display: inline; max-width: 100%; }}
-{caretStyles}
+{scope} th.el-table__cell .cell > span {{ display: inline-flex; align-items: center; line-height: inherit; white-space: inherit; word-break: inherit; }}
+{scope} th.el-table__cell .cell .sort-caret,
+{scope} th.el-table__cell .cell .caret-wrapper {{
+  display: inline-flex !important; margin: {caretMargin} !important; flex: 0 0 auto !important; align-self: center !important;
+  position: relative !important; top: auto !important; transform: none !important; width: 14px; height: 14px;
+}}
+{scope} th.el-table__cell .cell .caret-wrapper {{ width: 14px !important; height: 14px !important; flex-shrink: 0 !important; }}
+{scope} th.el-table__cell .cell::after,
+{scope} th.el-table__cell .cell::before {{ display: none !important; }}
 </style>";
         }
 
@@ -213,7 +217,7 @@ namespace App.EleUI
                 ? " --el-table-header-cell-white-space: normal; --el-table-header-cell-line-height: 1.4; "
                 : "";
             var tableHtml = $@"
-        <el-main class=""flex-1 p-0 bg-white overflow-hidden flex flex-col"" style=""min-height: 420px;"">
+        <el-main class=""flex-1 p-0 bg-white overflow-hidden flex flex-col"" style=""min-height: 0;"">
             <el-table
                 :data=""items""
                 border
@@ -221,7 +225,7 @@ namespace App.EleUI
                 {selectionEvent}
                 v-on:sort-change=""onSortChange""
                 height=""100%""
-                style=""--tbl-ha: {haVar}; width: 100%; flex: 1; min-height: 400px; --el-border-color: #909399; --el-table-border-color: #909399; --el-table-header-border-color: #909399; --el-table-row-border-color: #909399; --el-border-color-light: #a8abb2;{headerWrapStyle}""
+                style=""--tbl-ha: {haVar}; width: 100%; flex: 1; min-height: 0; --el-border-color: #909399; --el-table-border-color: #909399; --el-table-header-border-color: #909399; --el-table-row-border-color: #909399; --el-border-color-light: #a8abb2;{headerWrapStyle}""
                 {rowKeyAttr}
                 {highlightAttr}
                 {defaultSortAttr}
@@ -239,8 +243,9 @@ namespace App.EleUI
         private string CreateFooter()
         {
             if (!ShowPage)
+                // 无分页：彻底不留空白（无 min-height 占位），让 el-table flex:1 占满容器
                 return @"
-        <el-footer class=""h-auto flex-none p-0 bg-white"" style=""min-height: 12px;""></el-footer>
+        <el-footer class=""flex-none p-0 bg-transparent"" style=""height:0;min-height:0;display:none""></el-footer>
 ";
             var defaultPageSize = ResolveDefaultPageSize();
             var pageSizeOptions = BuildPageSizeOptions(defaultPageSize);

@@ -7,7 +7,7 @@ namespace App.Components
     /// Razor 表达式全局帮助方法。
     /// <para>
     /// 在 <c>_ViewImports.cshtml</c> 中通过 <c>@using static</c> 导入后，
-    /// 所有 .cshtml 页面可以直接使用 <c>@QString("key")</c> 读取当前 URL 查询参数，
+    /// 所有 .cshtml 页面可以直接使用 <c>@QStr("key")</c> 读取当前 URL 查询参数，
     /// 无需 <c>@Model.</c> 前缀。
     /// </para>
     /// <code>
@@ -15,17 +15,17 @@ namespace App.Components
     /// @using static App.Components.RazorHelpers
     ///
     /// // 任意 .cshtml
-    /// &lt;EleInput Value="@QString("name")" /&gt;
-    /// &lt;EleSelect Value="@QString("objectType")" /&gt;
+    /// &lt;EleInput Value="@QStr("name")" /&gt;
+    /// &lt;EleSelect Value="@QStr("objectType")" /&gt;
     /// </code>
     /// </summary>
     public static class RazorHelpers
     {
-        /// <summary>
-        /// 读取当前 URL 的查询参数（querystring）。
-        /// 无对应参数时返回 <paramref name="defaultValue"/>。
-        /// </summary>
-        public static string QString(string key, string defaultValue = null)
+        /// <summary>QStr 的短别名</summary>
+        public static string Q(string key, string defaultValue = null) => QStr(key, defaultValue);
+
+        /// <summary>读取当前 URL 的查询参数（querystring）。无对应参数时返回 <paramref name="defaultValue"/>。</summary>
+        public static string QStr(string key, string defaultValue = null)
         {
             if (string.IsNullOrEmpty(key)) return defaultValue;
             var req = App.Web.Asp.Request;
@@ -35,8 +35,9 @@ namespace App.Components
                 : defaultValue;
         }
 
-        /// <summary>QString 的短别名</summary>
-        public static string Q(string key, string defaultValue = null) => QString(key, defaultValue);
+        /// <summary>获取查询参数的整数值。无对应参数时返回 <paramref name="defaultValue"/>。</summary>
+        public static int QInt(string key, int defaultValue = 0) => int.TryParse(QStr(key), out var v) ? v : defaultValue;
+
 
         /// <summary>检查当前用户是否有指定权限</summary>
         public static bool AuthPower(Power power) => Auth.CheckPower(power);

@@ -60,6 +60,13 @@ namespace App.EleUI
         [HtmlAttributeName("Link")]
         public bool Link { get; set; }
 
+        /// <summary>超链接目标，默认Drawer</summary>
+        [HtmlAttributeName("LinkTarget")]
+        public EleLinkTarget LinkTarget { get; set; } = EleLinkTarget.Drawer;
+
+        //
+        // Popup
+        //
         /// <summary>弹窗页面URL，支持{xxx}占位符（如{id}、{fileName}），点击列文本后使用EleManager.Drawer打开</summary>
         [HtmlAttributeName("PopupUrl")]
         public string PopupUrl { get; set; }

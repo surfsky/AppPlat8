@@ -2,243 +2,271 @@
 @model App.Pages.Me.WorkDeskModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "工作台";
-    var orgVal = Model.OrgId.HasValue && Model.OrgId > 0 ? Model.OrgId.Value.ToString() : "";
+    ViewData["Title"] = "个人工作台";
     var userVal = Model.UserId.HasValue && Model.UserId > 0 ? Model.UserId.Value.ToString() : "";
     var userDisplay = (string.IsNullOrWhiteSpace(Model.UserRealName)
         ? (Model.UserId.HasValue && Model.UserId.Value > 0 ? ("ID=" + Model.UserId.Value) : "请选择人员")
         : Model.UserRealName);
     var scopeDisabled = Model.CanChangeScope ? "false" : "true";
+    var activeTab = Request.Query["taskTab"].FirstOrDefault() ?? "unfinished";
 
-    // 快捷入口配置：直接在这里增删改，无需重新编译 PageModel
     var quickEntries = new List<App.Pages.Me.WorkDeskLink>
     {
-        new App.Pages.Me.WorkDeskLink { Title = "一张图", Url = "/GIS/Index", Target = "_blank" },
-        new App.Pages.Me.WorkDeskLink { Title = "知识库", Url = "/KB/Index",  Target = "_self"  },
-        new App.Pages.Me.WorkDeskLink { Title = "值班表", Url = "/OA/DutySchedules", Target = "_self" },
-        new App.Pages.Me.WorkDeskLink { Title = "通讯录", Url = "/CRM/Contacts", Target = "_self" },
+        new App.Pages.Me.WorkDeskLink { Title = "一张图",   Url = "/GIS/Index",           Target = "_blank" },
+        new App.Pages.Me.WorkDeskLink { Title = "知识库",   Url = "/KB/Index",            Target = "_self"  },
+        new App.Pages.Me.WorkDeskLink { Title = "值班表",   Url = "/OA/DutySchedules",    Target = "_self"  },
+        new App.Pages.Me.WorkDeskLink { Title = "通讯录",   Url = "/CRM/Contacts",        Target = "_self"  },
     };
 }
 
 @section body {
-    <div class="h-full bg-slate-50 overflow-auto">
-        <div class="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+<div class="w-full min-h-screen bg-[#f5f5f5] text-[15px] text-[#333] font-sans" style="font-family:PingFang SC,Microsoft YaHei,Helvetica Neue,Arial,sans-serif;">
+  <div class="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
 
-            <!-- 顶部筛选区：合并简化为单个「人员」picker（模拟 ElePicker 外观 + 原生 JS 调 EleManager.openDrawer 弹窗），避免 Vue mount 清空 SSR -->
-            <section id="scope-zone" class="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div class="flex flex-wrap items-center gap-6">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-slate-700">人员</label>
-                        <div id="user-picker-wrap"
-                             class="el-input el-input--suffix @(Model.CanChangeScope ? "cursor-pointer" : "opacity-60 pointer-events-none cursor-not-allowed is-disabled")"
-                             style="width:240px;"
-                             @(Model.CanChangeScope ? "" : "aria-disabled=\"true\"")>
-                            <div class="el-input__wrapper" style="width:100%;min-height:36px;">
-                                <div class="flex flex-wrap gap-1 items-center w-full py-1 pl-2" style="min-height:30px;">
-                                    <span id="user-picker-name" class="text-sm text-slate-700 truncate max-w-[190px]">@userDisplay</span>
-                                    <input id="user-picker-id" type="hidden" value="@(Model.UserId.HasValue && Model.UserId.Value > 0 ? Model.UserId.Value.ToString() : "")" />
-                                </div>
-                                <span class="el-input__suffix" @(Model.CanChangeScope ? "" : "style=\"pointer-events:none;\"")>
-                                    <span class="el-input__suffix-inner @(Model.CanChangeScope ? "cursor-pointer" : "cursor-not-allowed")" style="pointer-events:auto;font-weight:700;color:#94a3b8;" title="打开选择人员窗口">
-                                        <span class="inline-block align-middle text-base leading-none">&rsaquo;</span>
-                                    </span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    @if (!Model.CanChangeScope)
-                    {
-                        <span class="inline-flex items-center text-xs text-slate-400">仅管理员可见</span>
-                    }
-                </div>
-            </section>
-
-            <!-- 快捷入口 -->
-            <section class="mb-8">
-                <h2 class="mb-4 text-base font-semibold text-slate-900">快捷入口</h2>
-                <div class="flex flex-wrap gap-4">
-                    @foreach (var item in quickEntries)
-                    {
-                        <a href="@item.Url" target="@item.Target"
-                           class="inline-flex h-12 min-w-[112px] items-center justify-center rounded-lg border border-slate-300 bg-white px-6 text-sm font-medium text-slate-800 transition hover:-translate-y-0.5 hover:border-blue-300 hover:text-blue-600 hover:shadow-md">
-                            @item.Title
-                        </a>
-                    }
-                </div>
-            </section>
-
-            <!-- 我的管理对象（4 卡片，带角标） -->
-            <section class="mb-8">
-                <h2 class="mb-4 text-base font-semibold text-slate-900">我的管理对象</h2>
-                <div class="flex flex-wrap gap-4">
-                    @foreach (var c in Model.ObjectStatCards)
-                    {
-                        <a href="@c.Url" class="group relative inline-flex h-14 min-w-[128px] items-center justify-center rounded-lg border border-slate-300 bg-white px-6 text-sm font-medium text-slate-800 transition hover:-translate-y-0.5 hover:border-blue-400 hover:text-blue-600 hover:shadow-md">
-                            @c.Title
-                            @if (c.ShowBadge)
-                            {
-                                <span class="absolute -right-2 -top-2 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full bg-orange-500 px-2 text-xs font-semibold text-white shadow-md">@c.Count</span>
-                            }
-                        </a>
-                    }
-                </div>
-            </section>
-
-            <!-- 我的隐患（3 卡片，待处理隐患角标） -->
-            <section class="mb-10">
-                <h2 class="mb-4 text-base font-semibold text-slate-900">我的隐患</h2>
-                <div class="flex flex-wrap gap-4">
-                    @foreach (var c in Model.HazardStatCards)
-                    {
-                        var showBadge = c.Title.Contains("待处理") && c.ShowBadge;
-                        <a href="@c.Url" class="group relative inline-flex h-14 min-w-[128px] items-center justify-center rounded-lg border border-slate-300 bg-white px-6 text-sm font-medium text-slate-800 transition hover:-translate-y-0.5 hover:border-blue-400 hover:text-blue-600 hover:shadow-md">
-                            @c.Title
-                            @if (showBadge)
-                            {
-                                <span class="absolute -right-2 -top-2 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full bg-orange-500 px-2 text-xs font-semibold text-white shadow-md">@c.Count</span>
-                            }
-                        </a>
-                    }
-                </div>
-            </section>
-
-            <!-- 三张任务表格。每张 EleTable 互不影响，使用独立的 DataHandler。 -->
-            <section class="space-y-10 pb-16">
-
-                <!-- 表 1：我的任务 -->
-                <section class="rounded-2xl border border-slate-300 bg-white p-5 shadow-sm">
-                    <h2 class="mb-4 text-base font-semibold text-slate-900">我的任务</h2>
-                    <EleTable PageSize="10"
-                              Title=""
-                              EnableBatch="false"
-                              RowKey="id"
-                              DataHandler="?handler=MyTasks&orgId=@orgVal&userId=@userVal">
-                        <Toolbar>
-                            <Filters></Filters>
-                            <Buttons></Buttons>
-                        </Toolbar>
-                        <Columns>
-                            <EleNumColumn Width="60"></EleNumColumn>
-                            <EleColumn Prop="name"          Label="名称"     MinWidth="220"></EleColumn>
-                            <EleColumn Prop="levelText"     Label="级别"     MinWidth="220"></EleColumn>
-                            <EleColumn Prop="creatorOrg"    Label="发起组织" MinWidth="180"></EleColumn>
-                            <EleColumn Prop="progress"      Label="进度"     MinWidth="140">
-                                <template #default="{ row }">
-                                    <el-progress :percentage="(row && row.progress!=null)? Number(row.progress) : 0"
-                                                 :stroke-width="10"></el-progress>
-                                </template>
-                            </EleColumn>
-                            <EleColumn Prop="progressText"  Label="进度状态" Width="120"></EleColumn>
-                            <EleColumn Prop="startDt"       Label="开始日期" Width="120" FormatString="yyyy/M/d"></EleColumn>
-                            <EleColumn Prop="expireDt"      Label="结束日期" Width="120" FormatString="yyyy/M/d"></EleColumn>
-                            <EleColumn Prop="detailUrl"     Label="详情"     Width="100" Link="true"></EleColumn>
-                        </Columns>
-                    </EleTable>
-                </section>
-
-
-            </section>
+    <!-- 顶部：标题 + 用户选择 + 组织科室入口 -->
+    <section class="mb-8 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-5 flex-wrap">
+        <div class="inline-flex items-center">
+          <div id="user-picker-wrap"
+               class="inline-flex items-center border border-[#bbb] rounded h-10 px-4 text-base bg-white @(Model.CanChangeScope ? "cursor-pointer hover:border-blue-500 hover:text-blue-600" : "opacity-60 pointer-events-none cursor-not-allowed")"
+               style="min-width:120px;"
+               @(Model.CanChangeScope ? "" : "aria-disabled=\"true\"")>
+            <span id="user-picker-name" class="mr-1.5 text-[#333]">@userDisplay</span>
+            <span class="text-[#999] text-lg leading-none">&rsaquo;</span>
+            <input id="user-picker-id" type="hidden" value="@(Model.UserId.HasValue && Model.UserId.Value > 0 ? Model.UserId.Value.ToString() : "")" />
+          </div>
         </div>
-    </div>
+        <div class="text-xs text-[#888] leading-snug">
+          <div>默认显示当前用户</div>
+          <div>仅领导或管理员可切换其他用户</div>
+        </div>
+      </div>
+      <a href="/Me/WorkDeskOrg"
+         class="inline-flex h-10 items-center border border-[#bbb] rounded px-4 text-base bg-white text-[#333] hover:border-blue-500 hover:text-blue-600 no-underline">
+        组织/科室入口
+      </a>
+    </section>
 
-    <script>
-    // 顶部筛选：单个「人员」picker，外观模拟 ElePicker，点击用 EleManager.openDrawer 打开 /admins/Users?md=select&multi=false
-    (function () {
-        var wrap = document.getElementById('user-picker-wrap');
-        var nameEl = document.getElementById('user-picker-name');
-        var idEl = document.getElementById('user-picker-id');
-        var canChange = @(Model.CanChangeScope ? "true" : "false");
-        // SSR 初始值（全部用 Html.Raw 输出，避免 Razor 把引号转成 &#x27;）
-        var initUserName = @Html.Raw("'" + System.Web.HttpUtility.JavaScriptStringEncode(userDisplay ?? string.Empty) + "'");
-        var initUserId = @Html.Raw(Model.UserId.HasValue && Model.UserId.Value > 0
-            ? Model.UserId.Value.ToString()
-            : "''");
-        if (idEl) idEl.value = typeof initUserId === 'number' ? String(initUserId) : (initUserId || '');
-        if (nameEl && !nameEl.textContent) nameEl.textContent = initUserName || '请选择人员';
-
-        // DrawerHelper.normalizeClosePayload 会把 payload 嵌套到 data，这里解包
-        function resolvePickerRows(payload) {
-            if (!payload) return [];
-            // 1. 裸的 ElePicker 格式
-            if (payload.type === 'ElePicker' && Array.isArray(payload.data)) return payload.data;
-            var sub = payload.data;
-            if (sub) {
-                if (sub.type === 'ElePicker' && Array.isArray(sub.data)) return sub.data;
-                var sub2 = sub.data;
-                if (sub2) {
-                    if (sub2.type === 'ElePicker' && Array.isArray(sub2.data)) return sub2.data;
-                }
-                // Drawer 关闭结构：{code,message,data:{type:'ElePicker',data:[...]}}
-                if (Array.isArray(sub)) return sub;
-            }
-            if (Array.isArray(payload.rows)) return payload.rows;
-            return [];
+    <!-- 快捷入口 -->
+    <section class="mb-10">
+      <h2 class="mb-5 text-[18px] font-semibold text-[#111]">快捷入口</h2>
+      <div class="flex flex-wrap gap-6">
+        @foreach (var item in quickEntries)
+        {
+          <a href="@item.Url" target="@item.Target"
+             class="inline-flex h-14 min-w-[120px] items-center justify-center border border-[#bbb] rounded bg-white px-8 text-[16px] text-[#333] hover:border-blue-500 hover:text-blue-600 hover:-translate-y-0.5 hover:shadow-md transition no-underline">
+            @item.Title
+          </a>
         }
+      </div>
+    </section>
 
-        function openDrawer() {
-            if (!canChange) return;
-            var mgr = (window.top && window.top.EleManager) ? window.top.EleManager : (window.EleManager || window.$eleManager);
-            if (!mgr || typeof mgr.openDrawer !== 'function') {
-                alert('窗口管理器尚未就绪，请稍后再试');
-                return;
+    <!-- 我的管理对象 -->
+    <section class="mb-10">
+      <h2 class="mb-5 text-[18px] font-semibold text-[#111]">我的管理对象</h2>
+      <div class="flex flex-wrap gap-6">
+        @foreach (var c in Model.ObjectStatCards)
+        {
+          <a href="@c.Url" class="group relative inline-flex h-16 min-w-[140px] items-center justify-center border border-[#bbb] rounded bg-white px-8 text-[16px] text-[#333] hover:border-blue-500 hover:text-blue-600 hover:-translate-y-0.5 hover:shadow-md transition no-underline">
+            @c.Title
+            @if (c.ShowBadge)
+            {
+              <span class="absolute -right-3 -top-3 inline-flex h-7 min-w-[28px] items-center justify-center rounded-full px-2 text-[12px] font-bold text-white shadow" style="background: linear-gradient(135deg, #f59e0b, #d97706);">@c.Count</span>
             }
-            var curId = idEl ? ((idEl.value || '').trim()) : '';
-            var curName = nameEl ? (nameEl.textContent || '').trim() : '';
-            var url = '/Admins/Users?md=select&multi=false' + (curId ? ('&pickerValue=' + encodeURIComponent(curId) + '&pickerText=' + encodeURIComponent(curName)) : '');
-            mgr.openDrawer({
-                title: '选择人员',
-                url: url,
-                direction: 'rtl',
-                size: '72%',
-                resizable: true,
-                closeOnClickModal: false,
-                destroyOnClose: true,
-                closeHandler: function (payload) {
-                    var rows = resolvePickerRows(payload);
-                    if (!rows.length && payload && payload.data && Array.isArray(payload.data)) {
-                        // 可能是 closePage 传入的 payload 直接作为 data 部分
-                        if (payload.data[0] && (payload.data[0].id != null || payload.data[0].name != null)) {
-                            rows = payload.data;
-                        }
-                    }
-                    if (!rows.length) {
-                        return;
-                    }
-                    var first = rows[0];
-                    var uid = first.id != null ? String(first.id) : '';
-                    var rawReal = (first.realName != null && first.realName !== '') ? String(first.realName).trim() : '';
-                    var rawName = (first.name != null && first.name !== '') ? String(first.name).trim() : '';
-                    var unm = rawReal || rawName || (uid ? ('ID=' + uid) : '');
-                    if (idEl) idEl.value = uid;
-                    if (nameEl) {
-                        nameEl.textContent = unm || '请选择人员';
-                    }
-                    // 立即应用筛选，重新 SSR 刷新计数和三张表
-                    applyScope();
+          </a>
+        }
+      </div>
+    </section>
+
+    <!-- 我的隐患 -->
+    <section class="mb-10">
+      <h2 class="mb-5 text-[18px] font-semibold text-[#111]">我的隐患</h2>
+      <div class="flex flex-wrap gap-6">
+        @foreach (var c in Model.HazardStatCards)
+        {
+          var showBadge = (c.Title.Contains("待处理") || c.Title.Contains("超期")) && c.ShowBadge;
+          <a href="@c.Url" class="group relative inline-flex h-16 min-w-[140px] items-center justify-center border border-[#bbb] rounded bg-white px-8 text-[16px] text-[#333] hover:border-blue-500 hover:text-blue-600 hover:-translate-y-0.5 hover:shadow-md transition no-underline">
+            @c.Title
+            @if (showBadge)
+            {
+              <span class="absolute -right-3 -top-3 inline-flex h-7 min-w-[28px] items-center justify-center rounded-full px-2 text-[12px] font-bold text-white shadow" style="background: linear-gradient(135deg, #f59e0b, #d97706);">@c.Count</span>
+            }
+          </a>
+        }
+      </div>
+    </section>
+
+    <!-- 我的任务（4 个 Tab + 单个 EleTable，Tab 控制 url query 的 taskTab） -->
+    <section class="mb-10">
+      <h2 class="mb-4 text-[18px] font-semibold text-[#111]">我的任务</h2>
+
+      @{
+          var tabs = new[]
+          {
+              new { Key = "unfinished", Label = "未完成" },
+              new { Key = "all",        Label = "全部"   },
+              new { Key = "created",    Label = "我发起的" },
+              new { Key = "handled",    Label = "我经手的" },
+          };
+          string OrgQp()
+          {
+              var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
+              if (Model.UserId.HasValue && Model.UserId.Value > 0) qs["userId"] = Model.UserId.Value.ToString();
+              return qs.ToString();
+          }
+      }
+
+      <div class="mb-4 flex items-center gap-14 border-b border-[#ddd] pb-0">
+        @foreach (var t in tabs)
+        {
+            var active = string.Equals(t.Key, activeTab, StringComparison.OrdinalIgnoreCase);
+            var href = $"{Request.Path}?{OrgQp()}&taskTab={t.Key}";
+            <a href="@href"
+               class="relative inline-flex h-11 items-center text-[16px] px-1 transition no-underline @(active ? "text-[#1677ff] font-semibold" : "text-[#333] hover:text-[#1677ff]")"
+               onclick="event.preventDefault();document.getElementById('taskTabInput').value='@t.Key';document.getElementById('wdTaskForm').submit();">
+              @t.Label
+              @if (active)
+              {
+                  <span class="absolute left-0 right-0 bottom-[-1px] h-[2px]" style="background:#1677ff;"></span>
+              }
+            </a>
+        }
+      </div>
+
+      <form id="wdTaskForm" method="get" action="@Request.Path" class="hidden">
+        @if (Model.UserId.HasValue && Model.UserId.Value > 0) {
+            <input type="hidden" name="userId" value="@Model.UserId.Value" />
+        }
+        <input id="taskTabInput" type="hidden" name="taskTab" value="@activeTab" />
+      </form>
+
+      <div class="border border-[#888] rounded-t bg-white" style="padding:2px 2px 0 2px;">
+        <div style="padding:12px 16px 0 16px;">
+          <div class="text-xs text-[#888] mb-1">点击后可查看清单</div>
+          <EleTable PageSize="10"
+                    Title=""
+                    EnableBatch="false"
+                    RowKey="id"
+                    DataHandler="?handler=MyTasks&userId=@userVal&taskTab=@activeTab">
+            <Toolbar>
+              <Filters></Filters>
+              <Buttons></Buttons>
+            </Toolbar>
+            <Columns>
+              <EleNumColumn Label="序号" Width="70" Align="center" Sortable="false" />
+              <EleColumn Prop="name"         Label="名称"     MinWidth="240" Sortable="false" />
+              <EleColumn Prop="levelText"    Label="级别"     MinWidth="220" Sortable="false" />
+              <EleColumn Prop="creatorOrg"   Label="发起组织" MinWidth="180" Sortable="false" />
+              <EleColumn Prop="progress"     Label="进度"     MinWidth="160" Sortable="false">
+                <template #default="{ row }">
+                  <el-progress :percentage="(row && row.progress!=null)? Number(row.progress) : 0"
+                               :stroke-width="10"></el-progress>
+                </template>
+              </EleColumn>
+              <EleColumn Prop="progressText" Label="进度"     MinWidth="140" Sortable="false">
+                <template #default="{ row }">
+                  <span v-if="row && row.progressText==='超期'"   class="text-[#d4380d] font-semibold">超期</span>
+                  <span v-else-if="row && row.progressText==='已完成'" class="text-[#389e0d] font-semibold">已完成</span>
+                  <span v-else class="text-[#1677ff] font-medium">进行中</span>
+                </template>
+              </EleColumn>
+              <EleColumn Prop="startDt"      Label="开始日期" Width="120" FormatString="yyyy/M/d" Sortable="false" />
+              <EleColumn Prop="expireDt"     Label="结束日期" Width="120" FormatString="yyyy/M/d" Sortable="false" />
+              <EleLinkColumn Prop="detailUrl" Label="详情"    Width="90"  Align="center" Text="清单" Sortable="false" />
+            </Columns>
+          </EleTable>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function () {
+    var wrap = document.getElementById('user-picker-wrap');
+    var nameEl = document.getElementById('user-picker-name');
+    var idEl = document.getElementById('user-picker-id');
+    var canChange = @(Model.CanChangeScope ? "true" : "false");
+    var initUserName = @Html.Raw("'" + System.Web.HttpUtility.JavaScriptStringEncode(userDisplay ?? string.Empty) + "'");
+    var initUserId = @Html.Raw(Model.UserId.HasValue && Model.UserId.Value > 0
+        ? Model.UserId.Value.ToString()
+        : "''");
+    if (idEl) idEl.value = typeof initUserId === 'number' ? String(initUserId) : (initUserId || '');
+    if (nameEl && !nameEl.textContent) nameEl.textContent = initUserName || '请选择人员';
+
+    function resolvePickerRows(payload) {
+        if (!payload) return [];
+        if (payload.type === 'ElePicker' && Array.isArray(payload.data)) return payload.data;
+        var sub = payload.data;
+        if (sub) {
+            if (sub.type === 'ElePicker' && Array.isArray(sub.data)) return sub.data;
+            var sub2 = sub.data;
+            if (sub2 && sub2.type === 'ElePicker' && Array.isArray(sub2.data)) return sub2.data;
+            if (Array.isArray(sub)) return sub;
+        }
+        if (Array.isArray(payload.rows)) return payload.rows;
+        return [];
+    }
+
+    function openDrawer() {
+        if (!canChange) return;
+        var mgr = (window.top && window.top.EleManager) ? window.top.EleManager : (window.EleManager || window.$eleManager);
+        if (!mgr || typeof mgr.openDrawer !== 'function') {
+            alert('窗口管理器尚未就绪，请稍后再试');
+            return;
+        }
+        var curId = idEl ? ((idEl.value || '').trim()) : '';
+        var curName = nameEl ? (nameEl.textContent || '').trim() : '';
+        var url = '/Admins/Users?md=select&multi=false' + (curId ? ('&pickerValue=' + encodeURIComponent(curId) + '&pickerText=' + encodeURIComponent(curName)) : '');
+        mgr.openDrawer({
+            title: '选择人员',
+            url: url,
+            direction: 'rtl',
+            size: '72%',
+            resizable: true,
+            closeOnClickModal: false,
+            destroyOnClose: true,
+            closeHandler: function (payload) {
+                var rows = resolvePickerRows(payload);
+                if (!rows.length && payload && payload.data && Array.isArray(payload.data)
+                    && (payload.data[0] && (payload.data[0].id != null || payload.data[0].name != null))) {
+                    rows = payload.data;
                 }
+                if (!rows.length) return;
+                var first = rows[0];
+                var uid = first.id != null ? String(first.id) : '';
+                var rawReal = (first.realName != null && first.realName !== '') ? String(first.realName).trim() : '';
+                var rawName = (first.name != null && first.name !== '') ? String(first.name).trim() : '';
+                var unm = rawReal || rawName || (uid ? ('ID=' + uid) : '');
+                if (idEl) idEl.value = uid;
+                if (nameEl) nameEl.textContent = unm || '请选择人员';
+                applyScope();
+            }
+        });
+    }
+
+    function init() {
+        if (wrap && canChange) {
+            wrap.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openDrawer();
             });
         }
-
-        function init() {
-            if (wrap && canChange) {
-                wrap.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openDrawer();
-                });
-            }
-        }
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
-        else init();
-    })();
-
-    function applyScope() {
-        var uid = (document.getElementById('user-picker-id') || {}).value || '';
-        var qs = new URLSearchParams();
-        if (uid) qs.set('userId', uid);
-        var url = location.pathname + (qs.toString() ? ('?' + qs.toString()) : '');
-        location.assign(url);
     }
-    </script>
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+    else init();
+})();
+
+function applyScope() {
+    var uid = (document.getElementById('user-picker-id') || {}).value || '';
+    var qs = new URLSearchParams();
+    if (uid) qs.set('userId', uid);
+    var active = (document.getElementById('taskTabInput') || {}).value || '';
+    if (active) qs.set('taskTab', active);
+    var url = location.pathname + (qs.toString() ? ('?' + qs.toString()) : '');
+    location.assign(url);
+}
+</script>
 }

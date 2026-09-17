@@ -142,9 +142,13 @@ namespace App.Pages.Me
         }
 
         //---------------------------------------------------------------------
-        // 表格 1：我的任务（我创建 OR 分派到我命中的责任网格）
+        // 表格 1：我的任务（我创建 OR 分派到我命中的责任网格）+ taskTab 筛选
+        //   taskTab=unfinished(默认)：非已完成且未超期（进行中）+ 超期，两部分合并显示
+        //   taskTab=all：全部
+        //   taskTab=created：我发起（CreatorId == uid）
+        //   taskTab=handled：我经手（CreatorId == uid 或 分配到我的 org）
         //---------------------------------------------------------------------
-        public IActionResult OnGetMyTasks(Paging pi)
+        public IActionResult OnGetMyTasks(Paging pi, string taskTab)
         {
             var uid    = EffectiveUserId;
             var orgIds = EffectiveOrgIds;
@@ -158,12 +162,35 @@ namespace App.Pages.Me
                     .Distinct()
                     .ToList();
 
-            var q = App.DAL.CheckTask.Search(null, null, null)
-                .AsNoTracking()
-                .Include(t => t.Creator).ThenInclude(u => u.Org)
-                .Include(t => t.Orgs).ThenInclude(o => o.Org)
-                .Where(t => t.CreatorId == uid
+            IQueryable<CheckTask> BaseQry()
+                => App.DAL.CheckTask.Search(null, null, null)
+                    .AsNoTracking()
+                    .Include(t => t.Creator).ThenInclude(u => u.Org)
+                    .Include(t => t.Orgs).ThenInclude(o => o.Org);
+
+            var q = BaseQry().Where(t => t.CreatorId == uid
+                     || (taskIdsFromOrg != null && taskIdsFromOrg.Count > 0 && taskIdsFromOrg.Contains(t.Id)));
+
+            var tab = (taskTab ?? string.Empty).ToLower();
+            var now = DateTime.Now;
+            switch (tab)
+            {
+                case "created":
+                    q = BaseQry().Where(t => t.CreatorId == uid);
+                    break;
+                case "handled":
+                    q = BaseQry().Where(t => t.CreatorId == uid
                          || (taskIdsFromOrg != null && taskIdsFromOrg.Count > 0 && taskIdsFromOrg.Contains(t.Id)));
+                    break;
+                case "all":
+                    // 不额外过滤
+                    break;
+                case "unfinished":
+                default:
+                    // 未完成：排除已完成，其余全部（超期+进行中）
+                    q = q.Where(t => !(t.TotalCount > 0 && t.FinishCount >= t.TotalCount));
+                    break;
+            }
             return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
         }
 
