@@ -204,9 +204,20 @@ namespace App.API
             }
 
             // query
+            // 注意：GIS 场景下 mergedTagIds 是"目录筛选"的语义（例如 tagNames=危化 会匹配出多个标签），
+            // 应使用 OR 语义（命中任意一个匹配标签即可）。因此不走 Search 的 tagIds 参数（内部是 AND），
+            // 改为在 query 上追加 Any 形式的 OR 过滤。
             var keyword = name?.Trim();
-            var query = CheckObject.Search(tagIds: mergedTagIds, includeTags: true, dutyOrgId: dutyOrgId)
-                .Where(t => keyword.IsEmpty() || (t.Name ?? string.Empty).Contains(keyword))
+            var query = CheckObject.Search(includeTags: true, dutyOrgId: dutyOrgId)
+                .Where(t => keyword.IsEmpty() || (t.Name ?? string.Empty).Contains(keyword));
+
+            if (hasTagFilter && mergedTagIds.Count > 0)
+            {
+                var tagIdSet = mergedTagIds.ToHashSet();
+                query = query.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && tagIdSet.Contains(t.TagId)));
+            }
+
+            query = query
                 .OrderBy(t => t.IsDel ?? false)
                 .ThenBy(t => t.Name)
                 .ThenBy(t => t.Id);
