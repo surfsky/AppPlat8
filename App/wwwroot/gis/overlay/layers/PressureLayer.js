@@ -727,7 +727,7 @@ export class PressureLayer extends MapLayer {
           }
         });
       }
-      if (!map.getLayer(this.labelLayerId)) {
+      if (map.getStyle()?.glyphs && !map.getLayer(this.labelLayerId)) {
         map.addLayer({
           id: this.labelLayerId,
           type: "symbol",

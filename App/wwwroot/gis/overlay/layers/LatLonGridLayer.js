@@ -151,7 +151,8 @@ export class LatLonGridLayer extends MapLayer {
         });
       }
 
-      if (!map.getLayer(this.lonLabelLayerId)) {
+      const supportsTextSymbols = !!map.getStyle()?.glyphs;
+      if (supportsTextSymbols && !map.getLayer(this.lonLabelLayerId)) {
         map.addLayer({
           id: this.lonLabelLayerId,
           type: "symbol",
@@ -193,7 +194,7 @@ export class LatLonGridLayer extends MapLayer {
         });
       }
 
-      if (!map.getLayer(this.latLabelLayerId)) {
+      if (supportsTextSymbols && !map.getLayer(this.latLabelLayerId)) {
         map.addLayer({
           id: this.latLabelLayerId,
           type: "symbol",

@@ -113,9 +113,6 @@
             if (!template) return '';
             let s = String(template);
             if (tk) s = s.replace(/\{tk\}/g, encodeURIComponent(String(tk)));
-            // {s} 占位符：
-            //   - subdomains 有值 → 保留 {s}，让 MapLibre 自动做子域轮询；
-            //   - subdomains 无值 → 保底替换为 '0'（或传入的 defaultSubdomain），避免 URL 含字面量 {s}。
             if (s.indexOf('{s}') >= 0 && defaultSubdomain !== null) {
                 const sub = (typeof defaultSubdomain === 'string' && defaultSubdomain.length > 0) ? defaultSubdomain : '0';
                 s = s.replace(/\{s\}/g, sub);
@@ -130,23 +127,26 @@
             const subdomains = Array.isArray(styleInfo.subdomains) && styleInfo.subdomains.length > 0
                 ? styleInfo.subdomains
                 : null;
-            // 关键：仅在 subdomains 为 null 时，才在 URL 中把 {s} 预替换为 0 保底；
-            //     如果有 subdomains，则保留 {s} 让 MapLibre 自己做子域轮询。
-            const template = fillTileTemplate(styleInfo.tileTemplate, tk, subdomains ? null : '0');
-            const labelTpl = styleInfo.labelTemplate ? fillTileTemplate(styleInfo.labelTemplate, tk, subdomains ? null : '0') : '';
+            const templates = subdomains
+                ? subdomains.map((subdomain) => fillTileTemplate(styleInfo.tileTemplate, tk, String(subdomain)))
+                : [fillTileTemplate(styleInfo.tileTemplate, tk, '0')];
+            const labelTemplates = styleInfo.labelTemplate
+                ? (subdomains
+                    ? subdomains.map((subdomain) => fillTileTemplate(styleInfo.labelTemplate, tk, String(subdomain)))
+                    : [fillTileTemplate(styleInfo.labelTemplate, tk, '0')])
+                : [];
             const tileSize = Number(styleInfo.tileSize) || 256;
             const maxZoom = Number(styleInfo.maxZoom) || 18;
 
             const sources = {
                 'raster-tiles': {
                     type: 'raster',
-                    tiles: [template],
+                    tiles: templates,
                     tileSize,
                     maxzoom: maxZoom,
                     attribution: styleInfo.attribution || ''
                 }
             };
-            if (subdomains) sources['raster-tiles'].subdomains = subdomains;
 
             const layers = [
                 {
@@ -158,14 +158,13 @@
                 }
             ];
 
-            if (labelTpl) {
+            if (labelTemplates.length > 0) {
                 sources['raster-labels'] = {
                     type: 'raster',
-                    tiles: [labelTpl],
+                    tiles: labelTemplates,
                     tileSize,
                     maxzoom: maxZoom
                 };
-                if (subdomains) sources['raster-labels'].subdomains = subdomains;
                 layers.push({
                     id: 'raster-labels',
                     type: 'raster',

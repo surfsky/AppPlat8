@@ -156,7 +156,7 @@ export class CityHumidityLayer extends MapLayer {
       });
 
       addOrUpdateGeoJsonSource(map, this.sourceId, { type: "FeatureCollection", features });
-      if (!map.getLayer(this.layerId)) {
+      if (map.getStyle()?.glyphs && !map.getLayer(this.layerId)) {
         map.addLayer({
           id: this.layerId,
           type: "symbol",

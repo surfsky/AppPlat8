@@ -334,29 +334,32 @@
                 if (!tpl) return '';
                 let s = String(tpl);
                 if (tk) s = s.replace(/\{tk\}/g, encodeURIComponent(String(tk)));
-                // {s} 保底：没有 subdomains 时替换为 0，保证任何情况下 URL 都不含 {s} 字面量。
                 if (s.indexOf('{s}') >= 0 && !subdomains) {
                     s = s.replace(/\{s\}/g, '0');
                 }
                 return s;
             };
-            const template = fill(styleInfo.tileTemplate);
-            const labelTpl = styleInfo.labelTemplate ? fill(styleInfo.labelTemplate) : '';
+            const templates = subdomains
+                ? subdomains.map((subdomain) => fill(styleInfo.tileTemplate).replace(/\{s\}/g, String(subdomain)))
+                : [fill(styleInfo.tileTemplate)];
+            const labelTemplates = styleInfo.labelTemplate
+                ? (subdomains
+                    ? subdomains.map((subdomain) => fill(styleInfo.labelTemplate).replace(/\{s\}/g, String(subdomain)))
+                    : [fill(styleInfo.labelTemplate)])
+                : [];
             const tileSize = Number(styleInfo.tileSize) || 256;
             const maxZoom = Number(styleInfo.maxZoom) || 18;
             const sources = {
                 'raster-tiles': {
                     type: 'raster',
-                    tiles: [template],
+                    tiles: templates,
                     tileSize,
                     maxzoom: maxZoom
                 }
             };
-            if (subdomains) sources['raster-tiles'].subdomains = subdomains;
             const layers = [{ id: 'raster-tiles', type: 'raster', source: 'raster-tiles', minzoom: 0, maxzoom: 24 }];
-            if (labelTpl) {
-                sources['raster-labels'] = { type: 'raster', tiles: [labelTpl], tileSize, maxzoom: maxZoom };
-                if (subdomains) sources['raster-labels'].subdomains = subdomains;
+            if (labelTemplates.length > 0) {
+                sources['raster-labels'] = { type: 'raster', tiles: labelTemplates, tileSize, maxzoom: maxZoom };
                 layers.push({ id: 'raster-labels', type: 'raster', source: 'raster-labels', minzoom: 0, maxzoom: 24 });
             }
             return { version: 8, sources, layers };

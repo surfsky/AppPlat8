@@ -495,7 +495,8 @@
                 });
             }
 
-            if (!map.getLayer('draw-label-line-layer')) {
+            var supportsTextSymbols = !!(map.getStyle() && map.getStyle().glyphs);
+            if (supportsTextSymbols && !map.getLayer('draw-label-line-layer')) {
                 map.addLayer({
                     id: 'draw-label-line-layer',
                     type: 'symbol',
@@ -519,7 +520,7 @@
                 });
             }
 
-            if (!map.getLayer('draw-label-point-layer')) {
+            if (supportsTextSymbols && !map.getLayer('draw-label-point-layer')) {
                 map.addLayer({
                     id: 'draw-label-point-layer',
                     type: 'symbol',
@@ -2500,7 +2501,8 @@
                 });
             }
 
-            if (!map.getLayer(labelLayerId)) {
+            var supportsTextSymbols = !!(map.getStyle() && map.getStyle().glyphs);
+            if (supportsTextSymbols && !map.getLayer(labelLayerId)) {
                 map.addLayer({
                     id: labelLayerId,
                     type: 'symbol',
@@ -2523,7 +2525,7 @@
                 });
             }
 
-            if (!map.getLayer(lineLabelLayerId)) {
+            if (supportsTextSymbols && !map.getLayer(lineLabelLayerId)) {
                 map.addLayer({
                     id: lineLabelLayerId,
                     type: 'symbol',

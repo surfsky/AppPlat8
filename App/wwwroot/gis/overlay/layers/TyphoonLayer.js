@@ -1789,6 +1789,7 @@ export class TyphoonLayer extends MapLayer {
   /**确保图层 */
   ensureLayers() {
     const { map } = this.runtime;
+    const supportsTextSymbols = !!map.getStyle()?.glyphs;
     if (!map.getLayer(this.wind7FillLayerId)) {
       map.addLayer({
         id: this.wind7FillLayerId,
@@ -1926,7 +1927,7 @@ export class TyphoonLayer extends MapLayer {
         }
       });
     }
-    if (!map.getLayer(this.pointLabelLayerId)) {
+    if (supportsTextSymbols && !map.getLayer(this.pointLabelLayerId)) {
       map.addLayer({
         id: this.pointLabelLayerId,
         type: "symbol",
@@ -1947,7 +1948,7 @@ export class TyphoonLayer extends MapLayer {
         }
       });
     }
-    if (!map.getLayer(this.tailLabelLayerId)) {
+    if (supportsTextSymbols && !map.getLayer(this.tailLabelLayerId)) {
       map.addLayer({
         id: this.tailLabelLayerId,
         type: "symbol",
@@ -1967,7 +1968,7 @@ export class TyphoonLayer extends MapLayer {
         }
       });
     }
-    if (!map.getLayer(this.nameLayerId)) {
+    if (supportsTextSymbols && !map.getLayer(this.nameLayerId)) {
       map.addLayer({
         id: this.nameLayerId,
         type: "symbol",

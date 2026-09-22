@@ -418,7 +418,8 @@ export class TidePanelLayer extends MapLayer {
       });
     }
 
-    if (!map.getLayer(this.labelLayerId)) {
+    const supportsTextSymbols = !!map.getStyle()?.glyphs;
+    if (supportsTextSymbols && !map.getLayer(this.labelLayerId)) {
       map.addLayer({
         id: this.labelLayerId,
         type: "symbol",
