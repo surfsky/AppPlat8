@@ -12,7 +12,6 @@
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="9999"></EleNumber>
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleInput For="Item.Desc" Label="描述" Rows="1" FillRow="false"></EleInput>
-        <EleSwitch For="Item.IsDefault" Label="设为默认"></EleSwitch>
         <EleNumber For="Item.MapZoom" Label="地图缩放级别" Min="1" Max="20"></EleNumber>
         <ElePicker For="Item.MapCenter" TextFor="Item.MapCenter" Label="地图中心坐标" PopupUrl="Locator" Icon="Location" Editable="true" Placeholder="lng, lat"></ElePicker>
         <EleNumber For="Item.MapPitch" Label="地图倾斜角" Min="0" Max="85"></EleNumber>
@@ -20,7 +19,8 @@
         <EleSelect For="Item.MapProjection" Label="地图投影" ></EleSelect>
         <EleSwitch For="Item.Map3D" Label="启用3D"></EleSwitch>
         <EleSwitch For="Item.AutoRotate" Label="自动旋转"></EleSwitch>
-        
+        <EleSwitch For="Item.IsDefault" Label="默认场景"></EleSwitch>
+
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Command="Close">关闭</EleButton>

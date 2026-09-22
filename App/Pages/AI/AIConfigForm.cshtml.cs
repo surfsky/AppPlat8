@@ -57,15 +57,6 @@ namespace App.Pages.AI
             item.Logo = Uploader.SaveFile(nameof(AIConfig), req.Logo);
             item.Save();
 
-            if (item.IsDefault)
-            {
-                var others = AIConfig.Set.Where(t => t.Id != item.Id && t.IsDefault).ToList();
-                foreach (var other in others)
-                {
-                    other.IsDefault = false;
-                    other.Save();
-                }
-            }
 
             return BuildResult(0, "保存成功", item.Export());
         }

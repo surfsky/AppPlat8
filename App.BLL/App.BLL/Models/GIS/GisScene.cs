@@ -30,10 +30,14 @@ namespace App.DAL.GIS
         [UI("地球")]     Globe = 1,
     }
 
+    //==========================================================================
+    // 场景（地图、图层、投影等预设）
+    //==========================================================================
     /// <summary>GIS 场景</summary>
     [UI("GIS", "GIS场景")]
     public class GisScene : EntityBase<GisScene>, ISort
     {
+        /// <summary>地图样式</summary>
         public static List<GisMapStyle> Styles = new List<GisMapStyle>
         {
             //-- 国内图层优先：天地图（需要 SiteConfig.TiandituKey 配置）
@@ -78,6 +82,7 @@ namespace App.DAL.GIS
             new("Outdoors",         "mapbox://styles/mapbox/outdoors-v11",          "Mapbox 户外"),
         };
 
+        /// <summary>场景展示图层定义</summary>
         public static List<GisSceneLayerDef> Layers = new List<GisSceneLayerDef>
         {
             new("typhoon", "台风", "TyphoonLayer"),
@@ -94,11 +99,13 @@ namespace App.DAL.GIS
             new("adminBoundary", "行政边界", "AdminBoundaryLayer"),
         };
 
+        //------------------------------------------------------------------------
+        // 场景属性
+        //------------------------------------------------------------------------
         [UI("名称")] public string Name { get; set; }
         [UI("图标")] public string Icon { get; set; }
         [UI("排序")] public int SortId { get; set; }
         [UI("描述")] public string Desc { get; set; }
-        [UI("是否默认")] public bool? IsDefault { get; set; } = false;
         [UI("缩放级别")] public float? MapZoom { get; set; }
         [UI("中心点")] public string MapCenter { get; set; }
         [UI("倾斜角")] public int? MapPitch { get; set; } = 0;
@@ -106,13 +113,31 @@ namespace App.DAL.GIS
         [UI("自动旋转")] public bool? AutoRotate { get; set; } = false;
         [UI("地图样式")] public string MapStyle { get; set; } = "TiandituSatellite";
         [UI("地图投影")] public GisMapProjection MapProjection { get; set; } = GisMapProjection.Mercator;
+        [UI("默认场景")] public bool IsDefault { get; set; } = false;
 
+        //------------------------------------------------------------------------
+        // 关联属性
+        //------------------------------------------------------------------------
         public virtual User Creator { get; set; }
-        public string CreatorName => Creator?.Name;
-
         public virtual List<GisSceneMenu> SceneMenus { get; set; }
         public virtual List<GisScenePanel> ScenePanels { get; set; }
         public virtual List<GisSceneLayer> SceneLayers { get; set; }
+        public string CreatorName => Creator?.Name;
+
+
+        //------------------------------------------------------------------------
+        // override
+        //------------------------------------------------------------------------
+        public override void BeforeSave(EntityOp op)
+        {
+            if (this.IsDefault)
+            {
+                Set.Where(t => t.Id != this.Id).ToList().Each(t => {
+                    t.IsDefault = false; 
+                    t.Save();
+                });  // 将其它场景设为非默认
+            }
+        }
 
         public override object Export(ExportMode type = ExportMode.Normal)
         {
@@ -122,7 +147,6 @@ namespace App.DAL.GIS
                 Name,
                 SortId,
                 Desc,
-                IsDefault,
                 MapZoom,
                 MapCenter,
                 MapPitch,
@@ -135,108 +159,45 @@ namespace App.DAL.GIS
                 CreateDt,
                 UpdateDt,
                 CreatorName,
+                IsDefault,
             };
         }
 
-        /// <summary>设为默认场景：全局唯一，自动取消其它场景的默认标记</summary>
-        public static APIResult SetDefault(long id)
-        {
-            using var tran = Db.Context.Database.BeginTransaction();
-            try
-            {
-                var target = Get(id);
-                if (target == null) return new APIResult { Code = 404, Message = "场景不存在" };
-
-                // 把所有其它场景的 IsDefault 置为 false
-                foreach (var s in Set.Where(t => t.Id != id).ToList())
-                {
-                    if (s.IsDefault == true)
-                    {
-                        s.IsDefault = false;
-                        Db.Update(s);
-                    }
-                }
-
-                // 目标场景置为默认
-                target.IsDefault = true;
-                Db.Update(target);
-
-                tran.Commit();
-                return new APIResult { Code = 0, Message = "已设为默认场景", Data = target.Export() };
-            }
-            catch
-            {
-                tran.Rollback();
-                throw;
-            }
-        }
-
-        /// <summary>保存场景；若勾选 IsDefault，则自动清除其它默认标记，保证全局唯一</summary>
-        public override void Save(ExportMode saveMode = ExportMode.Normal)
-        {
-            // 如果要设为默认，先清除其它默认场景
-            if (this.IsDefault == true)
-            {
-                var others = Set.Where(t => t.Id != this.Id && t.IsDefault == true).ToList();
-                foreach (var other in others)
-                {
-                    other.IsDefault = false;
-                    Db.Update(other);
-                }
-            }
-            base.Save(saveMode);
-        }
-
+        /// <summary>场景搜索</summary>
         public static IQueryable<GisScene> Search(string name = null)
         {
             var q = IncludeSet.AsQueryable();
             if (name.IsNotEmpty()) q = q.Where(t => t.Name.Contains(name.Trim()));
-            // 默认场景排最前，然后按 SortId、Id
-            return q.OrderByDescending(t => t.IsDefault == true).ThenBy(t => t.SortId).ThenBy(t => t.Id);
+            return q.OrderBy(t => t.SortId);
         }
 
-        public static GisScene GetDefaultScene()
-        {
-            // 先从数据库找 IsDefault=true 的第一条，找不到则回退到按 SortId 取第一条，再找不到返回保底默认
-            var fromDb = Set.AsNoTracking()
-                .OrderByDescending(t => t.IsDefault == true)
-                .ThenBy(t => t.SortId)
-                .ThenBy(t => t.Id)
-                .FirstOrDefault();
-            if (fromDb != null) return fromDb;
 
-            return new GisScene
-            {
-                Name = "默认场景",
-                Icon = "icon-default",
-                SortId = -1,
-                Desc = "默认场景",
-                IsDefault = true,
-                MapZoom = 12,
-                MapCenter = "120.6034,27.5686",
-                MapPitch = 0,
-                Map3D = false,
-                AutoRotate = false,
-                MapStyle = "TiandituSatellite",
-                MapProjection = GisMapProjection.Mercator,
-            };
-        }
-
+        /// <summary>获取或创建默认场景</summary>
         public static GisScene GetOrCreateDefaultScene()
         {
-            var scene = Set.AsNoTracking()
-                .OrderByDescending(t => t.IsDefault == true)
-                .ThenBy(t => t.SortId)
-                .ThenBy(t => t.Id)
-                .FirstOrDefault();
+            var scene = Set.FirstOrDefault(t => t.IsDefault == true);
             if (scene != null)
                 return scene;
-
-            scene = GetDefaultScene();
-            scene.CreateDt = DateTime.Now;
-            scene.CreatorId = 0;
-            scene.Save();
-            return scene;
+            else
+            {
+                scene = new GisScene
+                {
+                    Name = "默认场景",
+                    Icon = "icon-default",
+                    SortId = -1,
+                    Desc = "默认场景",
+                    MapZoom = 12,
+                    MapCenter = "120.6034,27.5686",
+                    MapPitch = 0,
+                    Map3D = false,
+                    AutoRotate = false,
+                    MapStyle = "TiandituSatellite",
+                    MapProjection = GisMapProjection.Mercator,
+                };
+                scene.CreatorId = 0;
+                scene.Save();
+                return scene;
+            }
         }
     }
 }

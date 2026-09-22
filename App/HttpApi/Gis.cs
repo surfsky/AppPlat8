@@ -96,11 +96,6 @@ namespace App.API
             return list.ToResult();
         }
 
-        [HttpApi("Map", "设为默认GIS场景", AuthLogin = true, AuthPowers = new object[] { Power.GisSceneEdit })]
-        public static APIResult SetDefaultScene(long id)
-        {
-            return GisScene.SetDefault(id);
-        }
 
         [HttpApi("Map", "获取GIS场景详情", AuthLogin = true)]
         public static APIResult GetSceneDetail(long id)
@@ -122,7 +117,7 @@ namespace App.API
                 scene.MapCenter,
                 scene.MapPitch,
                 Enable3D = scene.Map3D,
-                AutoRotate = scene.AutoRotate,
+                scene.AutoRotate,
                 scene.MapStyle,
                 scene.MapProjection,
                 menuIds = scene.SceneMenus.Select(m => m.MenuId).ToList(),

@@ -53,7 +53,7 @@ namespace App.Pages.GIS
             item.Name = req.Name;
             item.SortId = req.SortId;
             item.Desc = req.Desc;
-            item.IsDefault = req.IsDefault ?? false;
+            item.IsDefault = req.IsDefault;
             item.MapZoom = req.MapZoom;
             item.MapCenter = req.MapCenter;
             item.MapPitch = req.MapPitch;
@@ -63,7 +63,6 @@ namespace App.Pages.GIS
             item.AutoRotate = req.AutoRotate;
             item.MapProjection = req.MapProjection;
 
-            // Save() 已内部处理 IsDefault 唯一性：如果当前 IsDefault=true，会把其它置为 false
             item.Save();
             return BuildResult(0, "保存成功");
         }

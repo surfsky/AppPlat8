@@ -26,24 +26,20 @@ namespace App.DAL
 
         [UI("API Key(脱敏)")] public string ApiKeyMask => MaskKey(ApiKey);
 
-        public static IQueryable<AIConfig> Search(string name, bool? isEnabled)
+        //------------------------------------------------------------------------
+        // override
+        //------------------------------------------------------------------------
+        public override void BeforeSave(EntityOp op)
         {
-            var q = Set.AsQueryable();
-            if (!string.IsNullOrWhiteSpace(name))
-                q = q.Where(t => t.Name.Contains(name));
-            if (isEnabled != null)
-                q = q.Where(t => t.IsEnabled == isEnabled);
-            return q.OrderByDescending(t => t.IsDefault).ThenBy(t => t.SortId).ThenBy(t => t.Id);
-        }
-
-        public static AIConfig GetDefault()
-        {
-            return Set
-                .Where(t => t.IsEnabled)
-                .OrderByDescending(t => t.IsDefault)
-                .ThenBy(t => t.SortId)
-                .ThenBy(t => t.Id)
-                .FirstOrDefault();
+            base.BeforeSave(op);
+            if (this.IsDefault)
+            {
+                Set.Where(t => t.Id != this.Id).ToList().Each(t =>
+                {
+                    t.IsDefault = false;
+                    t.Save();
+                });
+            }
         }
 
         public override object Export(ExportMode type = ExportMode.Normal)
@@ -68,6 +64,30 @@ namespace App.DAL
                 UpdateDt
             };
         }
+
+        //------------------------------------------------------------------------
+        // 搜索
+        //------------------------------------------------------------------------
+        public static IQueryable<AIConfig> Search(string name, bool? isEnabled)
+        {
+            var q = Set.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(name))
+                q = q.Where(t => t.Name.Contains(name));
+            if (isEnabled != null)
+                q = q.Where(t => t.IsEnabled == isEnabled);
+            return q.OrderByDescending(t => t.IsDefault).ThenBy(t => t.SortId).ThenBy(t => t.Id);
+        }
+
+        public static AIConfig GetDefault()
+        {
+            return Set
+                .Where(t => t.IsEnabled)
+                .OrderByDescending(t => t.IsDefault)
+                .ThenBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .FirstOrDefault();
+        }
+
 
         private static string MaskKey(string key)
         {

@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="GIS场景" FormPage="SceneForm" EnableBatch="true">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="GIS场景" FormPage="SceneForm" EnableBatch="true" SortField="SortId">
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Name" Width="220px" Label="名称"></EleInput>
@@ -18,10 +18,8 @@
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
-            <EleOpColumn Width="220" Fixed="right" Shows="6">
+            <EleOpColumn Width="180" Fixed="right" Shows="5">
                 <Op Command="Edit"   Icon="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.GisSceneEdit)"></Op>
-                <Op Command="Default" Icon="Star"  Text="默认" Tooltip="设为默认场景" CommandUrl="SetDefault" Confirm="true" Visible="@Auth.CheckPower(Power.GisSceneEdit)"
-                    OnClick="(row, api) => api.postCommand('SetDefault', { body: row.id }).then(r => r && api.search())"></Op>
                 <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.GisSceneDelete)"></Op>
                 <Op Popup="SceneMenus?sceneId={id}&objectName={name}" Icon="Location" Text="点位" Visible="@Auth.CheckPower(Power.GisSceneEdit)"></Op>
                 <Op Popup="SceneLayers?sceneId={id}&objectName={name}" Icon="Document" Text="图层" Visible="@Auth.CheckPower(Power.GisSceneEdit)"></Op>
@@ -29,7 +27,6 @@
             </EleOpColumn>
             <EleIconColumn For="Item.Icon" Label="图标" Width="80"></EleIconColumn>
             <EleColumn For="Item.Name" Label="名称" Link="true" MinWidth="150" Sortable="true"></EleColumn>
-            <EleColumn For="Item.IsDefault" Label="默认" Width="90"></EleColumn>
             <EleColumn For="Item.SortId" Label="排序" Width="100" Sortable="true"></EleColumn>
             <EleColumn For="Item.Desc" Label="描述" MinWidth="200"></EleColumn>
             <EleColumn For="Item.MapZoom" Label="缩放" Width="80"></EleColumn>
@@ -40,6 +37,7 @@
             <EleColumn For="Item.Map3D" Label="启用3D"></EleColumn>
             <EleColumn For="Item.AutoRotate" Label="自动旋转"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="160" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.IsDefault" Label="默认场景"></EleColumn>
         </Columns>
     </EleTable>
 }
