@@ -112,6 +112,73 @@ export class Utils {
     }
 
     /**
+     * Get Enum Tag effect override object: { backgroundColor, borderColor, color }
+     * Style - white background + colored border + colored text, matching EleTable primary/plain tag look
+     * (same visual as the "领域" column which is type=primary effect=plain)
+     * @param {*} val
+     * @param {*} options
+     * @returns style object (or {} when no color)
+     */
+    static getEnumTagStyle(val, options) {
+        const typeColor = Utils.getEnumTypeAsColor(val, options);
+        if (!typeColor) return {};
+        return {
+            backgroundColor: '#ffffff',
+            borderColor: typeColor,
+            color: typeColor
+        };
+    }
+
+    /**
+     * Translate semantic enum Color to exact CSS RGB for use in border-color / color
+     * Uses Element Plus 2.x design token equivalents for consistency with EP tags.
+     * @param {*} val
+     * @param {*} options
+     * @returns CSS color string or ''
+     */
+    static getEnumTypeAsColor(val, options) {
+        if (val === null || val === undefined) return '';
+        if (!options || !Array.isArray(options)) return '';
+        const item = options.find((o) => o.Id == val || o.Value == val || o === val);
+        const color = item ? (item.Color || '') : '';
+        if (!color) return '';
+        const c = color.toLowerCase();
+        // 语义色精确映射为 Element Plus 2.x 主色值（与 primary/success/warning/danger plain 标签颜色严格对齐）
+        if (c === 'green' || c === 'success') return '#67C23A';
+        if (c === 'orange' || c === 'warning' || c === 'amber') return '#E6A23C';
+        if (c === 'yellow') return '#c9a615'; // 黄色视觉不突出，取更深的金色，保留和 warning 区分度
+        if (c === 'red' || c === 'danger') return '#F56C6C';
+        if (c === 'blue' || c === 'primary') return '#409EFF';
+        if (c === 'grey' || c === 'gray' || c === 'info') return '#909399';
+        // 精确 CSS 色值原样返回
+        return color;
+    }
+
+    /**
+     * Get Enum Color (CSS color value) from UIAttribute.Color
+     * Returns '' when no color or only semantic color is set.
+     * Use getEnumType() separately for preset semantic types.
+     * @param {*} val
+     * @param {*} options
+     * @returns CSS color string or ''
+     */
+    static getEnumColor(val, options) {
+        // 保留接口兼容，实际外观统一由 getEnumTagStyle 控制
+        return '';
+    }
+
+    /**
+     * Get Enum ElTag type (semantic) from UIAttribute.Color
+     * @param {*} val
+     * @param {*} options
+     * @returns '' | 'success' | 'warning' | 'danger' | 'info' | 'primary'
+     */
+    static getEnumType(val, options) {
+        // 保留接口兼容，实际外观统一由 getEnumTagStyle 控制 → 始终返回 info 作为保底，避免 EP 二次上色
+        return '';
+    }
+
+    /**
      * Get CSRF Token from current document or parent document
      * @returns 
      */

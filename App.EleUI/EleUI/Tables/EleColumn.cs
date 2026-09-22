@@ -231,7 +231,6 @@ namespace App.EleUI
                 }
                 else if (Display == ColumnDisplay.Enum)
                 {
-                    // 获取枚举类型
                     Type enumType = null;
                     if (For != null)
                     {
@@ -240,12 +239,21 @@ namespace App.EleUI
                     }
                     if (enumType != null && enumType.IsEnum)
                     {
-                        // TODO：这段代码展示有问题，请修正
-                        var options = App.Utils.EnumHelper.GetEnumInfos(enumType);
-                        var json = JsonSerializer.Serialize(options);
+                        var options = EnumHelper.GetEnumInfos(enumType)
+                            .Select(e => new { e.Id, e.Title, e.Color })
+                            .ToList();
+                        var jsonOpts = new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
+                        var json = JsonSerializer.Serialize(options, jsonOpts);
                         output.Content.SetHtmlContent($@"
                             <template #default=""scope"">
-                                <span>{{{{ Utils.formatEnum(scope.row.{propName}, {json}) }}}}</span>
+                                <template v-if=""scope.row.{propName} === null || scope.row.{propName} === undefined""></template>
+                                <el-tag v-else
+                                    size=""small""
+                                    effect=""plain""
+                                    disable-transitions
+                                    :style='Utils.getEnumTagStyle(scope.row.{propName}, {json})'>
+                                    {{{{ Utils.formatEnum(scope.row.{propName}, {json}) }}}}
+                                </el-tag>
                             </template>
                         ");
                     }

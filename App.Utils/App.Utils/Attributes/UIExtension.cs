@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -186,6 +186,24 @@ namespace App.Utils
             var ui = GetUIAttribute(enumValue);
             if (ui != null)
                 return ui.Group;
+            return "";
+        }
+
+        /// <summary>获取类型的颜色信息。</summary>
+        public static string GetUIColor(this Type type)
+        {
+            var ui = GetUIAttribute(type);
+            if (ui != null)
+                return ui.Color;
+            return "";
+        }
+
+        /// <summary>获取枚举值的颜色信息。CheckRiskLevel.High.GetUIColor() -> "red"</summary>
+        public static string GetUIColor(this object enumValue)
+        {
+            var ui = GetUIAttribute(enumValue);
+            if (ui != null)
+                return ui.Color;
             return "";
         }
 

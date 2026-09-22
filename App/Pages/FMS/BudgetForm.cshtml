@@ -8,6 +8,7 @@
 @section body {
     <EleForm Model="form" LabelWidth="120px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleNumber For="Item.Fee" Label="金额" Required="true" Precision="2" Step="0.01" Suffix="元"></EleNumber>
         <EleNumber For="Item.Year" Label="年份" Required="true" Precision="0" Step="1"></EleNumber>
         <EleSelect For="Item.TypeId" Label="分类" Items="Model.BudgetTypes" Required="true"></EleSelect>
         <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Required="true"></EleTreePicker>

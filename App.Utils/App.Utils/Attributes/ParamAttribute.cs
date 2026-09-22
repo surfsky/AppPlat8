@@ -158,6 +158,9 @@ namespace App.Utils
         /// <summary>弹窗大小</summary>
         public Size? WinSize { get; set; } = new Size(1000, 800);
 
+        /// <summary>颜色</summary>
+        public string Color {get; set;}
+
         //------------------------------------------------
         // 参数值控制
         // 方式一：直接设置值字典   Values

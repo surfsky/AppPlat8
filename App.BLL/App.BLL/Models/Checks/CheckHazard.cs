@@ -57,6 +57,7 @@ namespace App.DAL
         public string CheckerName => Checker?.Name ?? string.Empty;
         public string CheckSheetName => CheckSheet?.Name ?? string.Empty;
         public string CheckItemName => CheckItem?.Name ?? string.Empty;
+        public CheckHazardLevel? HazardLevel  => CheckItem?.HazardLevel;
 
         //
         public override object Export(ExportMode mode)
@@ -83,6 +84,8 @@ namespace App.DAL
                 CheckerName,
                 CheckSheetName,
                 CheckItemName,
+                HazardLevel,
+                HazardLevelName = HazardLevel.GetTitle(),
             };
         }
         public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)

@@ -175,9 +175,9 @@ namespace App.EleUI
                 : $"white-space: nowrap !important; line-height: 1.2 !important;";
 
             var wrapFlex = wrap ? "flex-wrap: wrap !important;" : "flex-wrap: nowrap !important;";
-            var caretMargin = haVar.Equals("left", StringComparison.OrdinalIgnoreCase) ? "0 0 0 6px"
-                : haVar.Equals("right", StringComparison.OrdinalIgnoreCase) ? "0 6px 0 0"
-                : "0 0 0 6px";
+            var caretMargin = haVar.Equals("left", StringComparison.OrdinalIgnoreCase) ? "0 0 0 4px"
+                : haVar.Equals("right", StringComparison.OrdinalIgnoreCase) ? "0 4px 0 0"
+                : "0 0 0 4px";
 
             return $@"<style>
 {scope} th.el-table__cell {{ text-align: {haVar} !important; vertical-align: {Va(hvaVar)} !important; }}
@@ -191,12 +191,25 @@ namespace App.EleUI
   {wrapStyles}
 }}
 {scope} th.el-table__cell .cell > span {{ display: inline-flex; align-items: center; line-height: inherit; white-space: inherit; word-break: inherit; }}
-{scope} th.el-table__cell .cell .sort-caret,
 {scope} th.el-table__cell .cell .caret-wrapper {{
   display: inline-flex !important; margin: {caretMargin} !important; flex: 0 0 auto !important; align-self: center !important;
-  position: relative !important; top: auto !important; transform: none !important; width: 14px; height: 14px;
+  position: relative !important; top: auto !important; transform: none !important;
+  width: 12px !important; height: 16px !important; flex-shrink: 0 !important;
 }}
-{scope} th.el-table__cell .cell .caret-wrapper {{ width: 14px !important; height: 14px !important; flex-shrink: 0 !important; }}
+{scope} th.el-table__cell .cell .caret-wrapper .sort-caret {{
+  position: absolute !important; left: 50% !important; transform: translateX(-50%) !important;
+  width: 0 !important; height: 0 !important; border-style: solid !important;
+}}
+{scope} th.el-table__cell .cell .caret-wrapper .sort-caret.ascending {{
+  top: 1px !important;
+  border-width: 0 4px 4px 4px !important;
+  border-color: transparent transparent currentColor transparent !important;
+}}
+{scope} th.el-table__cell .cell .caret-wrapper .sort-caret.descending {{
+  bottom: 1px !important;
+  border-width: 4px 4px 0 4px !important;
+  border-color: currentColor transparent transparent transparent !important;
+}}
 {scope} th.el-table__cell .cell::after,
 {scope} th.el-table__cell .cell::before {{ display: none !important; }}
 </style>";

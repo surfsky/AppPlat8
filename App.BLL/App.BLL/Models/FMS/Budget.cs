@@ -39,13 +39,15 @@ namespace App.DAL.OA
         [UI("名称")]           public string Name { get; set; }
         [UI("厂商")]           public string Company { get; set; }
         [UI("关联项目")]        public string Project { get; set; }
-        [UI("金额")]           public decimal? Amount { get; set; }
+        [UI("金额")]           public decimal? Fee { get; set; }
         [UI("备注")]           public string Remark { get; set; }
         [UI("支付日期")]        public DateTime? PayDt { get; set; }
         [UI("支付状态")]        public BudgetPayStatus? PayStatus { get; set; }
 
         public virtual Org Org { get; set; }
         public virtual BudgetType Type { get; set; }
+        public string OrgName => Org?.Name;
+        public string TypeName => Type?.Name;
 
         public override object Export(ExportMode type = ExportMode.Normal)
         {
@@ -54,15 +56,15 @@ namespace App.DAL.OA
                 Id,
                 Year,
                 OrgId,
-                OrgName = Org?.Name,
+                OrgName,
                 TypeId,
-                TypeName = Type?.Name,
+                TypeName,
                 Name,
                 Company,
                 Project,
                 PayDt,
                 PayStatus,
-                Amount,
+                Fee,
                 Remark, 
                 CreateDt,
                 UpdateDt

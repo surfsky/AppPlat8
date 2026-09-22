@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -33,6 +33,9 @@ namespace App.Utils
 
         /// <summary>枚举分组（由UIAttribute设置）</summary>
         public string Group { get; set; }
+
+        /// <summary>颜色（由UIAttribute.Color设置）</summary>
+        public string Color { get; set; }
 
         /// <summary>概述</summary>
         public string FullName => ToString();
@@ -115,12 +118,13 @@ namespace App.Utils
             return infos;
         }
 
-        /// <summary>获取枚举值信息（Id,Name,Value,Group)</summary>
+        /// <summary>获取枚举值信息（Id,Name,Value,Group,Color)</summary>
         public static EnumInfo GetEnumInfo(this object enumValue)
         {
             var title = enumValue.GetTitle();
             var group = enumValue.GetUIGroup();
-            return new EnumInfo() { Title = title, Value = enumValue, Id = (int)enumValue, Group = group };
+            var color = enumValue.GetUIColor();
+            return new EnumInfo() { Title = title, Value = enumValue, Id = (int)enumValue, Group = group, Color = color };
         }
 
         /// <summary>将枚举类型转化为列表{Name=xxx, Value=xxx, Id=x, Group=x}</summary>

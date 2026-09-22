@@ -42,6 +42,7 @@ namespace App.Pages.OA
 
             var item = req.Id > 0 ? Budget.Get(req.Id) : new Budget();
             item.Name = req.Name;
+            item.Fee = req.Fee;
             item.Year = req.Year;
             item.TypeId = req.TypeId;
             item.OrgId = req.OrgId;

@@ -122,20 +122,20 @@ namespace App.Utils
         //
         public UIAttribute() { }
         public UIAttribute(string title) : this("", title, "") { }
+        public UIAttribute(string title, ExportMode export) : this("", title, export) { }
+        public UIAttribute(string title, Type valueType) : this("", title, valueType) { }
         public UIAttribute(string group, string title, string formatString="")
         {
             this.Group = group;
             this.Title = title;
             this.Format = formatString;
         }
-        public UIAttribute(string title, ExportMode export) : this("", title, export) { }
         public UIAttribute(string group, string title, ExportMode export)
         {
             this.Group = group;
             this.Title = title;
             this.Export = export;
         }
-        public UIAttribute(string title, Type valueType) : this("", title, valueType) { }
         public UIAttribute(string group, string title, Type valueType)
         {
             this.Group = group;

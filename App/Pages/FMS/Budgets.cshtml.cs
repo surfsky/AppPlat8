@@ -54,7 +54,7 @@ namespace App.Pages.OA
             item.Year = req.Year;
             item.OrgId = req.OrgId;
             item.TypeId = req.TypeId;
-            item.Amount = req.Amount;
+            item.Fee = req.Fee;
             item.Remark = req.Remark;
             item.Save();
             return BuildResult(0, "保存成功");

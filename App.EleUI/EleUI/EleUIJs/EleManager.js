@@ -289,6 +289,10 @@ class EleManager {
     static getCsrfToken(...args) { return Utils.getCsrfToken(...args); }
     static formatDate(...args) { return Utils.formatDate(...args); }
     static formatEnum(...args) { return Utils.formatEnum(...args); }
+    static getEnumColor(...args) { return Utils.getEnumColor(...args); }
+    static getEnumType(...args) { return Utils.getEnumType(...args); }
+    static getEnumTagStyle(...args) { return Utils.getEnumTagStyle(...args); }
+    static getEnumTypeAsColor(...args) { return Utils.getEnumTypeAsColor(...args); }
     static request(...args) { return Utils.request(...args); }
     static invoke(...args) { return EleManager._core.invoke(...args); }
     static executeServerCommand(...args) { return EleManager._core.executeServerCommand(...args); }
