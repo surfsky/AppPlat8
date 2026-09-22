@@ -454,6 +454,10 @@
                 // Mapbox：直接加载 style path（需要 mapbox accessToken）
                 map.setStyle(style.path);
             }
+            const manager = window.top?.EleManager || window.EleManager;
+            if (manager && typeof manager.toast === 'function') {
+                manager.toast(`已切换至${style.title || style.name}`, 'info');
+            }
             if (options.closeMenu !== false) {
                 closeViewMenu();
             }

@@ -178,8 +178,13 @@
             map.on('style.load', async () => {
                 mapApi.applyChineseLabels();
                 objectApi.buildMarkers(state.objects);
-                const geometryLayerManager = ctx.getGeometryLayerManager();
-                if (geometryLayerManager) {
+                if (state.menuNodeMap && state.menuNodeMap.size > 0) {
+                    await ctx.loadGeometries();
+                }
+
+                const restoreGeometryLayers = () => {
+                    const geometryLayerManager = ctx.getGeometryLayerManager();
+                    if (!geometryLayerManager || !map.isStyleLoaded()) return;
                     geometryLayerManager.setDataFromRows(
                         typeof ctx.getGeometryRowsForDisplay === 'function'
                             ? ctx.getGeometryRowsForDisplay()
@@ -187,12 +192,12 @@
                     );
                     geometryLayerManager.render();
                     ctx.applyGeometryVisibility();
-                }
-                if (state.menuNodeMap && state.menuNodeMap.size > 0) {
-                    await ctx.loadGeometries();
-                }
+                };
+
+                restoreGeometryLayers();
                 viewApi.applyProjection(state.currentProjection, { closeMenu: false });
-                map.once('idle', () => ctx.applyGeometryVisibility());
+                requestAnimationFrame(restoreGeometryLayers);
+                map.once('idle', restoreGeometryLayers);
                 if (state.is3D) viewApi.enable3D({ closeMenu: false, adjustCamera: false });
                 if (state.isAutoRotate) viewApi.enableRotate({ closeMenu: false });
                 else viewApi.disableRotate({ closeMenu: false });
