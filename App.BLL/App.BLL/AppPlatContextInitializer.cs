@@ -46,7 +46,7 @@ namespace App.DAL
                     DefaultPassword = "abc@123",
                     UpFileTypes = ".gif, .png, .jpg, .jpeg, .bmp, .mp3, .mp4, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .pdf, .cdr",
                     UpFileSize = 50,
-                    MapKey = "pk.xxx"
+                    MapboxKey = "pk.xxx"
                 }
             };
 

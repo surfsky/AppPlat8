@@ -245,7 +245,7 @@
 
         const app = createApp({
             setup() {
-                const mapToken = "@SiteConfig.Instance.MapKey";
+                const mapToken = "@SiteConfig.Instance.MapboxKey";
                 const query = new URLSearchParams(window.location.search);
                 const menuId = query.get('menuId') || '';
                 const menuIdsRaw = query.get('menuIds') || '';

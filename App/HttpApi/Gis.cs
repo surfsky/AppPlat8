@@ -69,8 +69,37 @@ namespace App.API
         [HttpApi("Map", "获取GIS场景列表", AuthLogin = true)]
         public static APIResult GetScenes()
         {
-            var list = GisScene.Set.AsNoTracking().OrderBy(t => t.SortId).ToList();
+            // 默认场景优先，其次按 SortId、Id
+            var list = GisScene.Set.AsNoTracking()
+                .OrderByDescending(t => t.IsDefault == true)
+                .ThenBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Name,
+                    t.Icon,
+                    t.SortId,
+                    t.Desc,
+                    t.IsDefault,
+                    t.MapZoom,
+                    t.MapCenter,
+                    t.MapPitch,
+                    t.Map3D,
+                    t.AutoRotate,
+                    t.MapStyle,
+                    t.MapProjection,
+                    t.CreateDt,
+                    t.UpdateDt
+                })
+                .ToList();
             return list.ToResult();
+        }
+
+        [HttpApi("Map", "设为默认GIS场景", AuthLogin = true, AuthPowers = new object[] { Power.GisSceneEdit })]
+        public static APIResult SetDefaultScene(long id)
+        {
+            return GisScene.SetDefault(id);
         }
 
         [HttpApi("Map", "获取GIS场景详情", AuthLogin = true)]

@@ -10,6 +10,19 @@
         const objectApi = ctx.objectApi;
         const panelApi = ctx.panelApi;
 
+        function switchSceneInternal(scene) {
+            // 调用注入的 loadScenes/switchScene 上下文函数
+            if (ctx && typeof ctx.loadScenes === 'function') {
+                return (async () => {
+                    if (!state.scenes || !state.scenes.length) await ctx.loadScenes();
+                    return await (typeof window.switchScene === 'function'
+                        ? window.switchScene(scene)
+                        : (ctx.switchScene && ctx.switchScene(scene)));
+                })();
+            }
+            return Promise.resolve(true);
+        }
+
         function setPageLoading(visible, text) {
             const host = document.getElementById('gis-index-loading');
             if (!host) return;
@@ -125,8 +138,32 @@
 
                 await ctx.loadMapStyles();
                 await ctx.loadScenes();
-                await ctx.loadMenus();
-                await ctx.loadGeometries();
+
+                // -- 根据场景清单，默认选中并应用 IsDefault=true 的场景
+                if (Array.isArray(state.scenes) && state.scenes.length > 0) {
+                    let defScene = state.scenes.find(s => {
+                        const flag = s.isDefault ?? s.IsDefault;
+                        return flag === true || flag === 1 || flag === 'true' || flag === 'True';
+                    });
+                    if (!defScene) defScene = state.scenes[0];
+                    const alreadyHasCurrent = state.currentSceneId != null && state.currentSceneId !== ''
+                        && state.scenes.some(s => Number(s.id ?? s.Id) === Number(state.currentSceneId));
+                    if (!alreadyHasCurrent && defScene) {
+                        try {
+                            await ctx.loadMenus();
+                            await ctx.loadGeometries();
+                            // 应用默认场景：场景切换会负责 样式/投影/3D/旋转/相机/图层 全量设置
+                            const toSwitch = { id: defScene.id ?? defScene.Id, name: defScene.name ?? defScene.Name };
+                            await switchSceneInternal(toSwitch);
+                        } catch (e) {
+                            console.error('应用默认场景失败', e);
+                        }
+                    }
+                }
+
+                if (state.menuNodeMap == null || state.menuNodeMap.size === 0) await ctx.loadMenus();
+                if (state.geometries == null || state.geometries.length === 0) await ctx.loadGeometries();
+
                 await panelApi.loadPanels();
                 mapApi.applyChineseLabels();
 

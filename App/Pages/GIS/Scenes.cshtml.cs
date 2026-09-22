@@ -26,14 +26,28 @@ namespace App.Pages.GIS
                 var scene = GisScene.GetDefaultScene();
                 scene.CreateDt = DateTime.Now;
                 scene.CreatorId = GetUserId();
+                scene.IsDefault = true;
                 scene.Save();
             }
 
             if (pi.SortField.IsEmpty())
-                pi.SortField = "SortId";
+            {
+                pi.SortField = "IsDefault desc,SortId";
+                pi.SortDirection = "desc";
+            }
             var list = GisScene.Search(name)
                 .SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
+        }
+
+        /// <summary>把指定场景设为默认（全局唯一）</summary>
+        [Auth(Power.GisSceneEdit)]
+        public IActionResult OnPostSetDefault([FromBody] long id)
+        {
+            if (!CheckPower(Power.GisSceneEdit))
+                return BuildResult(403, "无权操作");
+            var r = GisScene.SetDefault(id);
+            return BuildResult(r.Code, r.Message, r.Data);
         }
 
         public IActionResult OnPostDelete([FromBody] long[] ids)

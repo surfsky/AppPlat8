@@ -181,7 +181,7 @@
 @section script {
     <script>
         window.__geometryEditorConfig = {
-            accessToken: "@SiteConfig.Instance.MapKey",
+            accessToken: "@SiteConfig.Instance.MapboxKey",
             initGeoJson: `@Html.Raw((Model.GeoJson ?? string.Empty).Replace("\\", "\\\\").Replace("`", "\\`").Replace("$", "\\$"))`,
             initialCenter: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
             initialZoom: @mapZoom.ToString(CultureInfo.InvariantCulture)

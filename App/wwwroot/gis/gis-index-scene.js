@@ -141,7 +141,7 @@
                 });
 
                 const text = document.createElement('span');
-                text.textContent = style.name;
+                text.textContent = style.title || style.name;
 
                 label.appendChild(input);
                 label.appendChild(text);
@@ -191,9 +191,16 @@
                 state.mapStyles = list
                     .map(item => ({
                         name: item.name || item.Name || '',
-                        path: item.path || item.Path || ''
+                        title: item.title || item.Title || item.name || item.Name || '',
+                        path: item.path || item.Path || '',
+                        tileTemplate: item.tileTemplate || item.TileTemplate || '',
+                        labelTemplate: item.labelTemplate || item.LabelTemplate || '',
+                        subdomains: item.subdomains || item.Subdomains || null,
+                        tileSize: item.tileSize ?? item.TileSize ?? null,
+                        maxZoom: item.maxZoom ?? item.MaxZoom ?? null,
+                        attribution: item.attribution || item.Attrib || ''
                     }))
-                    .filter(item => item.name && item.path);
+                    .filter(item => item.name && (item.path || item.tileTemplate));
 
                 if (!state.currentStyle && state.mapStyles.length > 0) {
                     state.currentStyle = state.mapStyles[0].name;

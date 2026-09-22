@@ -15,13 +15,16 @@
 
         function getFallbackStyles() {
             return [
-                { name: 'SatelliteStreets', path: 'mapbox://styles/mapbox/satellite-streets-v12', aliases: ['satellitestreets', 'satellite-streets', 'satellite_streets'] },
-                { name: 'Streets', path: 'mapbox://styles/mapbox/streets-v11', aliases: ['street', 'streets'] },
-                { name: 'Satellite', path: 'mapbox://styles/mapbox/satellite-v9', aliases: ['satellite', 'terrain', 'sat'] },
-                { name: 'Dark', path: 'mapbox://styles/mapbox/dark-v10', aliases: ['dark'] },
-                { name: 'Light', path: 'mapbox://styles/mapbox/light-v10', aliases: ['light'] },
-                { name: 'Outdoors', path: 'mapbox://styles/mapbox/outdoors-v11', aliases: ['outdoors'] },
-                { name: 'Navigation', path: 'mapbox://styles/mapbox/navigation-v1', aliases: ['navigation', 'night'] }
+                { name: 'TiandituSatellite', title: '天地图遥感', path: 'tianditu://satellite', tileTemplate: 'https://t{s}.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}', labelTemplate: 'https://t{s}.tianditu.gov.cn/cia_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cia&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}', subdomains: ['0','1','2','3','4','5','6','7'], tileSize: 256, maxZoom: 18, attribution: '影像：国家基础地理信息中心 Tianditu', aliases: ['tianditusatellite','tianditu-satellite','tianditu-yingxiang','tianditu-img'] },
+                { name: 'TiandituStreets',   title: '天地图街道', path: 'tianditu://streets',   tileTemplate: 'https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}', labelTemplate: 'https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}', subdomains: ['0','1','2','3','4','5','6','7'], tileSize: 256, maxZoom: 18, attribution: '矢量：国家基础地理信息中心 Tianditu', aliases: ['tianditustreets','tianditu-streets','tianditu-vector','tianditu-vec'] },
+                { name: 'OpenStreetMap',    title: 'OpenStreetMap', path: 'osm://default', tileTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: [], tileSize: 256, maxZoom: 19, attribution: '© OpenStreetMap contributors', aliases: ['osm','openstreetmap'] },
+                { name: 'SatelliteStreets', title: 'Mapbox 卫星街道', path: 'mapbox://styles/mapbox/satellite-streets-v12', aliases: ['satellitestreets', 'satellite-streets', 'satellite_streets'] },
+                { name: 'Streets',          title: 'Mapbox 街道', path: 'mapbox://styles/mapbox/streets-v11', aliases: ['street', 'streets'] },
+                { name: 'Satellite',        title: 'Mapbox 卫星', path: 'mapbox://styles/mapbox/satellite-v9', aliases: ['satellite', 'terrain', 'sat'] },
+                { name: 'Dark',             title: 'Mapbox 暗色', path: 'mapbox://styles/mapbox/dark-v10', aliases: ['dark'] },
+                { name: 'Light',            title: 'Mapbox 明亮', path: 'mapbox://styles/mapbox/light-v10', aliases: ['light'] },
+                { name: 'Outdoors',         title: 'Mapbox 户外', path: 'mapbox://styles/mapbox/outdoors-v11', aliases: ['outdoors'] },
+                { name: 'Navigation',       title: 'Mapbox 导航', path: 'mapbox://styles/mapbox/navigation-v1', aliases: ['navigation', 'night'] }
             ];
         }
 
@@ -60,7 +63,14 @@
             if (match) {
                 return {
                     name: match.name,
-                    path: match.path
+                    title: match.title || match.Title || match.name,
+                    path: match.path,
+                    tileTemplate: match.tileTemplate || match.TileTemplate,
+                    labelTemplate: match.labelTemplate || match.LabelTemplate,
+                    subdomains: match.subdomains || match.Subdomains,
+                    tileSize: match.tileSize || match.TileSize,
+                    maxZoom: match.maxZoom || match.MaxZoom,
+                    attribution: match.attribution || match.Attrib
                 };
             }
 
@@ -70,18 +80,110 @@
             if (match) {
                 return {
                     name: match.name,
-                    path: match.path
+                    title: match.title || match.name,
+                    path: match.path,
+                    tileTemplate: match.tileTemplate,
+                    labelTemplate: match.labelTemplate,
+                    subdomains: match.subdomains,
+                    tileSize: match.tileSize,
+                    maxZoom: match.maxZoom,
+                    attribution: match.attribution
                 };
             }
 
             if (styles.length > 0) {
+                const s0 = styles[0];
                 return {
-                    name: styles[0].name,
-                    path: styles[0].path
+                    name: s0.name,
+                    title: s0.title || s0.Title || s0.name,
+                    path: s0.path,
+                    tileTemplate: s0.tileTemplate || s0.TileTemplate,
+                    labelTemplate: s0.labelTemplate || s0.LabelTemplate,
+                    subdomains: s0.subdomains || s0.Subdomains,
+                    tileSize: s0.tileSize || s0.TileSize,
+                    maxZoom: s0.maxZoom || s0.MaxZoom,
+                    attribution: s0.attribution || s0.Attrib
                 };
             }
 
             return null;
+        }
+
+        function fillTileTemplate(template, tk, defaultSubdomain) {
+            if (!template) return '';
+            let s = String(template);
+            if (tk) s = s.replace(/\{tk\}/g, encodeURIComponent(String(tk)));
+            // {s} 占位符：
+            //   - subdomains 有值 → 保留 {s}，让 MapLibre 自动做子域轮询；
+            //   - subdomains 无值 → 保底替换为 '0'（或传入的 defaultSubdomain），避免 URL 含字面量 {s}。
+            if (s.indexOf('{s}') >= 0 && defaultSubdomain !== null) {
+                const sub = (typeof defaultSubdomain === 'string' && defaultSubdomain.length > 0) ? defaultSubdomain : '0';
+                s = s.replace(/\{s\}/g, sub);
+            }
+            return s;
+        }
+
+        function buildTileStyle(styleInfo) {
+            if (!styleInfo || !styleInfo.tileTemplate) return null;
+            const keys = window.__gisKeys || {};
+            const tk = keys.tiandituKey || '';
+            const subdomains = Array.isArray(styleInfo.subdomains) && styleInfo.subdomains.length > 0
+                ? styleInfo.subdomains
+                : null;
+            // 关键：仅在 subdomains 为 null 时，才在 URL 中把 {s} 预替换为 0 保底；
+            //     如果有 subdomains，则保留 {s} 让 MapLibre 自己做子域轮询。
+            const template = fillTileTemplate(styleInfo.tileTemplate, tk, subdomains ? null : '0');
+            const labelTpl = styleInfo.labelTemplate ? fillTileTemplate(styleInfo.labelTemplate, tk, subdomains ? null : '0') : '';
+            const tileSize = Number(styleInfo.tileSize) || 256;
+            const maxZoom = Number(styleInfo.maxZoom) || 18;
+
+            const sources = {
+                'raster-tiles': {
+                    type: 'raster',
+                    tiles: [template],
+                    tileSize,
+                    maxzoom: maxZoom,
+                    attribution: styleInfo.attribution || ''
+                }
+            };
+            if (subdomains) sources['raster-tiles'].subdomains = subdomains;
+
+            const layers = [
+                {
+                    id: 'raster-tiles',
+                    type: 'raster',
+                    source: 'raster-tiles',
+                    minzoom: 0,
+                    maxzoom: 24
+                }
+            ];
+
+            if (labelTpl) {
+                sources['raster-labels'] = {
+                    type: 'raster',
+                    tiles: [labelTpl],
+                    tileSize,
+                    maxzoom: maxZoom
+                };
+                if (subdomains) sources['raster-labels'].subdomains = subdomains;
+                layers.push({
+                    id: 'raster-labels',
+                    type: 'raster',
+                    source: 'raster-labels',
+                    minzoom: 0,
+                    maxzoom: 24
+                });
+            }
+
+            return {
+                version: 8,
+                sources,
+                layers
+            };
+        }
+
+        function isTileStyle(styleInfo) {
+            return !!styleInfo?.tileTemplate;
         }
 
         function syncStyleButtons() {
@@ -342,7 +444,17 @@
             );
             state.currentStyle = style.name;
             syncStyleButtons();
-            map.setStyle(style.path);
+
+            if (isTileStyle(style)) {
+                // OSM / 天地图：构造内联 MapLibre Style Spec 对象加载（天地图需 tiandituKey）
+                const styleObj = buildTileStyle(style);
+                if (styleObj) {
+                    map.setStyle(styleObj);
+                }
+            } else {
+                // Mapbox：直接加载 style path（需要 mapbox accessToken）
+                map.setStyle(style.path);
+            }
             if (options.closeMenu !== false) {
                 closeViewMenu();
             }
@@ -400,7 +512,10 @@
             syncStyleButtons,
             syncProjectionButtons,
             sync3DToggleButton,
-            syncRotateToggleButton
+            syncRotateToggleButton,
+            buildTileStyle,
+            isTileStyle,
+            resolveStyle
         };
     }
 

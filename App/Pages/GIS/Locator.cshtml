@@ -97,7 +97,7 @@
                 let marker = null;
                 const addressSearch = window.GisAddressSearch?.create?.() || null;
                 //const accessToken = (new URLSearchParams(window.location.search).get('token') || window.MAPBOX_ACCESS_TOKEN || '').trim();
-                const accessToken = "@SiteConfig.Instance.MapKey";
+                const accessToken = "@SiteConfig.Instance.MapboxKey";
 
                 const showError = (msg) => {
                     if (window.EleManager && typeof window.EleManager.showError === 'function') {

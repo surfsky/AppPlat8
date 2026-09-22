@@ -199,7 +199,10 @@
 
 @section script {
     <script>
-        mapboxgl.accessToken = "@SiteConfig.Instance.MapKey";
+        mapboxgl.accessToken = "@SiteConfig.Instance.MapboxKey";
+        window.__gisKeys = {
+            tiandituKey: "@(SiteConfig.Instance.TiandituKey ?? "")"
+        };
 
         const state = {
             objects: [],
@@ -215,7 +218,7 @@
             selectedGeometryId: null,
             geometryInteractionBound: false,
             preservedVisibleGeometryIds: new Set(),
-            currentStyle: 'SatelliteStreets',
+            currentStyle: 'TiandituSatellite',
             currentProjection: 'mercator',
             is3D: false,
             isAutoRotate: false,
@@ -293,9 +296,76 @@
             'gis-geometry-label-layer',
             'gis-geometry-line-label-layer'
         ];
+
+        // 初始化默认 style：若已配置天地图 Key，则使用天地图遥感；否则降级到 OSM，最后才回退到 Mapbox。
+        // style 对象统一在 GisIndexView 里构造，避免重复逻辑。
+        const __defaultStyleName = (window.__gisKeys?.tiandituKey) ? 'TiandituSatellite' : 'OpenStreetMap';
+        function __makeInitialStyle(styleName) {
+            const ctx = { map: null, state: { mapStyles: null } };
+            const resolveStyleFn = (typeof window.GisIndexView !== 'undefined' && window.GisIndexView._resolveStyleInternals)
+                ? window.GisIndexView._resolveStyleInternals
+                : (window.GisIndexView && typeof window.GisIndexView.create === 'function'
+                    ? null
+                    : null);
+            if (resolveStyleFn) return resolveStyleFn(styleName);
+            // 保底内联，避免 bootstrap 时序问题。这里复制 gis-index-view.js 的 fallback。
+            const fallback = {
+                'TiandituSatellite': {
+                    name: 'TiandituSatellite', tileTemplate: 'https://t{s}.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}',
+                    labelTemplate: 'https://t{s}.tianditu.gov.cn/cia_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cia&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}',
+                    subdomains: ['0','1','2','3','4','5','6','7'], tileSize: 256, maxZoom: 18
+                },
+                'TiandituStreets': {
+                    name: 'TiandituStreets', tileTemplate: 'https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}',
+                    labelTemplate: 'https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}',
+                    subdomains: ['0','1','2','3','4','5','6','7'], tileSize: 256, maxZoom: 18
+                },
+                'OpenStreetMap': {
+                    name: 'OpenStreetMap', tileTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', tileSize: 256, maxZoom: 19
+                }
+            };
+            return fallback[styleName] || null;
+        }
+        function __buildInitialTileStyle(styleInfo) {
+            if (!styleInfo || !styleInfo.tileTemplate) return 'mapbox://styles/mapbox/satellite-streets-v12';
+            const tk = window.__gisKeys?.tiandituKey || '';
+            const subdomains = Array.isArray(styleInfo.subdomains) && styleInfo.subdomains.length > 0 ? styleInfo.subdomains : null;
+            const fill = (tpl) => {
+                if (!tpl) return '';
+                let s = String(tpl);
+                if (tk) s = s.replace(/\{tk\}/g, encodeURIComponent(String(tk)));
+                // {s} 保底：没有 subdomains 时替换为 0，保证任何情况下 URL 都不含 {s} 字面量。
+                if (s.indexOf('{s}') >= 0 && !subdomains) {
+                    s = s.replace(/\{s\}/g, '0');
+                }
+                return s;
+            };
+            const template = fill(styleInfo.tileTemplate);
+            const labelTpl = styleInfo.labelTemplate ? fill(styleInfo.labelTemplate) : '';
+            const tileSize = Number(styleInfo.tileSize) || 256;
+            const maxZoom = Number(styleInfo.maxZoom) || 18;
+            const sources = {
+                'raster-tiles': {
+                    type: 'raster',
+                    tiles: [template],
+                    tileSize,
+                    maxzoom: maxZoom
+                }
+            };
+            if (subdomains) sources['raster-tiles'].subdomains = subdomains;
+            const layers = [{ id: 'raster-tiles', type: 'raster', source: 'raster-tiles', minzoom: 0, maxzoom: 24 }];
+            if (labelTpl) {
+                sources['raster-labels'] = { type: 'raster', tiles: [labelTpl], tileSize, maxzoom: maxZoom };
+                if (subdomains) sources['raster-labels'].subdomains = subdomains;
+                layers.push({ id: 'raster-labels', type: 'raster', source: 'raster-labels', minzoom: 0, maxzoom: 24 });
+            }
+            return { version: 8, sources, layers };
+        }
+        const __initialStyleInfo = __makeInitialStyle(__defaultStyleName);
+        const __initialMapStyle = __initialStyleInfo ? __buildInitialTileStyle(__initialStyleInfo) : 'mapbox://styles/mapbox/satellite-streets-v12';
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/satellite-streets-v12',
+            style: __initialMapStyle,
             center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
             zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
             pitch: 0,
@@ -462,6 +532,7 @@
             bindGeometryMapInteractions: () => bindGeometryMapInteractions(),
             loadMapStyles: () => loadMapStyles(),
             loadScenes: () => loadScenes(),
+            switchScene: (scene) => switchScene(scene),
             loadMenus: () => loadMenus(),
             loadGeometries: () => loadGeometries(),
             applyGeometryVisibility: () => applyGeometryVisibility(),

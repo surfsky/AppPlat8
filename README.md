@@ -75,7 +75,7 @@
 1. 数据库迁移: 运行
 
 ```bash
-   dotnet ef migrations add BudgetFee --project App/App.csproj --startup-project App/App.csproj
+   dotnet ef migrations add MapboxKey --project App/App.csproj --startup-project App/App.csproj
 ```
 
 2. 若端口被占用，查找占用 6060 的进程，然后kill
