@@ -1203,7 +1203,7 @@ body.layer-panel-resizing * {
 }
 .geo-more-link {
     color: #38bdf8;
-    text-decoration: underline;
+    /*text-decoration: underline;*/
 }
 .geo-att-section {
     margin-top: 12px;
@@ -1236,7 +1236,7 @@ body.layer-panel-resizing * {
 }
 .geo-att-link {
     color: #e2e8f0;
-    text-decoration: underline;
+    /*text-decoration: underline;*/
     font-size: 13px;
     flex: 1;
     min-width: 0;

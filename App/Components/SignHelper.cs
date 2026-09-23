@@ -58,6 +58,13 @@ namespace App.Components
         //------------------------------------------------------------
         // 公开：生成签名 / 生成示例 URL
         //------------------------------------------------------------
+        /// <summary>生成公钥和私钥对</summary>
+        public static (string PublicKey, string PrivateKey) GenerateKeyPair()
+        {
+            var keyPair = App.Utils.EncryptHelper.RSACreateKeyPair();
+            return (keyPair.Key, keyPair.Value);
+        }
+
 
         /// <summary>按用户约定的字段，生成合法 HMAC-SHA256 签名（小写 hex 64 字符）。</summary>
         public static string BuildSign(

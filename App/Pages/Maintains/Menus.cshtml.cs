@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Maintains
 {
-    public class MenusModel : BaseModel
+    public class MenusModel : AdminModel
     {        
         public Menu Item { get; set; }
 

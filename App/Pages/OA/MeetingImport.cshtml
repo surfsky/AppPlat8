@@ -1,0 +1,69 @@
+@page
+@model App.Pages.OA.MeetingImportModel
+@{
+    ViewData["Title"] = "导入会议记录";
+}
+
+@section body {
+    <div id="meeting-import-app" class="h-full flex flex-col gap-4 p-4 bg-white">
+        <div class="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            导入 Excel 的日期、类别、科室、照片、内容列。科室按组织名称匹配，照片列中的内嵌图片将保存为会议附件。
+        </div>
+        <div class="flex items-center gap-2">
+            <el-button @@click="chooseFile">选择 Excel 文件</el-button>
+            <el-button type="primary" :loading="importing" :disabled="!file" @@click="importFile">开始导入</el-button>
+            <input id="meeting-import-file" type="file" accept=".xlsx" class="hidden" @@change="fileChanged" />
+            <span class="text-sm text-slate-600">{{ fileName || '未选择文件' }}</span>
+        </div>
+        <el-input type="textarea" :rows="18" resize="none" readonly v-model="logs" class="flex-1"></el-input>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref } = Vue;
+        createApp({
+            setup() {
+                const file = ref(null);
+                const fileName = ref('');
+                const importing = ref(false);
+                const logs = ref('');
+                const appendLog = text => {
+                    if (!text) return;
+                    logs.value += `${logs.value ? '\n' : ''}${text}`;
+                };
+                const chooseFile = () => document.getElementById('meeting-import-file')?.click();
+                const fileChanged = event => {
+                    file.value = event.target?.files?.[0] || null;
+                    fileName.value = file.value?.name || '';
+                    if (file.value) appendLog(`已选择文件：${fileName.value}`);
+                };
+                const importFile = async () => {
+                    if (!file.value) return;
+                    importing.value = true;
+                    try {
+                        const data = new FormData();
+                        data.append('file', file.value);
+                        const response = await axios.post('?handler=Import', data, {
+                            headers: { 'RequestVerificationToken': window.Utils?.getCsrfToken?.() || '' }
+                        });
+                        const body = response?.data || {};
+                        (body.data?.logs || []).forEach(appendLog);
+                        if (body.code === 0 || body.code === '0') {
+                            EleManager.showSuccess(body.msg || '导入完成');
+                        } else {
+                            EleManager.showError(body.msg || body.info || '导入失败');
+                        }
+                    } catch (error) {
+                        const message = error?.response?.data?.msg || error?.message || '导入失败';
+                        appendLog(message);
+                        EleManager.showError(message);
+                    } finally {
+                        importing.value = false;
+                    }
+                };
+                return { file, fileName, importing, logs, chooseFile, fileChanged, importFile };
+            }
+        }).mount('#meeting-import-app');
+    </script>
+}

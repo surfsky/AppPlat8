@@ -75,7 +75,7 @@
 1. 数据库迁移: 运行
 
 ```bash
-   dotnet ef migrations add MapSceneDefault --project App/App.csproj --startup-project App/App.csproj
+   dotnet ef migrations add AMapKey --project App/App.csproj --startup-project App/App.csproj
 ```
 
 2. 若端口被占用，查找占用 6060 的进程，然后kill
@@ -180,3 +180,12 @@ OA
 安全退出     Logout                   
 登陆        Login
 ```
+
+
+## 进度
+
+详见 ./README-progress.md
+
+## 技术栈
+
+详见 ./README-stack.md

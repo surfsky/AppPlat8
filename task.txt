@@ -572,35 +572,32 @@ Done
         点位编辑器页面性能很差，如何优化（注：配置和展示剥离是合理的，后台再怎么卡也不会影响前台展示，就是要注意一些代码要复用，也可以避免渲染逻辑不一致的情况）
 
 
-2026/09/22
-    /修正预算页面 Amount -》 Fee，TypeName、OrgName
-    /增加枚举色彩选项：检查对象》风险等级
-    /渲染openstreetmap
-    /渲染天地图
-    /增加地图设置配置
-    /优化地图场景，增加更多地图类型、IsDefault 属性
-    泡通隐患排查流程、复查、状态、
-    导出“一企一档”资料：一个企业一个word，可批量筛选企业后导出。该功能需要定制，预计工时4人天。
-    配置一个简单流畅：新建、复查、复查、复查、复查....归档
-    重新梳理权限体系：创建简单的扩展方法，以约束查询，如 q.ApplyUserOrg(userId)，而不是全局进行限制，心里没底（切换角色后就担心无法使用）
 
-
-
-2026/09/18
-    驾驶舱地图框架要改
-        mapbox访问时好时不好，且受到国内政府项目审核的约束
-        先测试一下是mapbox框架不能访问，还是地图不能访问。
-            如果是前者那就更换地图框架，改用mapbtalks 或 maplibre
-            如果是后者则更改地图源头即可（支持天地图、openstreetmap、高德等
-    简化141对象数据更新：
-        步骤：导出141系统excel数据，导入本系统，合并规则及清单、批量更新数据
-        合并规则
-            两个系统的对象都有一个统一的编码，或有一个更新日期，
-            从141系统导出对象清单excel后，导入本系统，若编码一致，且更新日期大于本地，则更新指定字段的数据；或本地服务器都更新了则由用户自己判断；
-            标签是否合并分拆：拆分为141标签以及应急专用标签，更新方便，但是管理复杂；
+2026/09/23
+    /将AMap高德地图的key用数据库进行存储；剔除硬编码；
+    /国密算法库
+    /简化LoginAI 页面
+    对象管理
+        修正对象的隐患清单页面
+        跑通隐患排查流程、复查、状态、
+        专项任务统计
+            导出“一企一档”资料：一个企业一个word，可批量筛选企业后导出。该功能需要定制，预计工时4人天。
+            定制统计表（老旧园区专项检查）
+        流程及后台
+            配置一个简单流畅：新建、复查、复查、复查、复查....归档
+            创建网页，可启动控制台，并显示输出
+        简化141对象数据更新：
+            步骤：导出141系统excel数据，导入本系统，合并规则及清单、批量更新数据
+            合并规则
+                两个系统的对象都有一个统一的编码，或有一个更新日期，
+                从141系统导出对象清单excel后，导入本系统，若编码一致，且更新日期大于本地，则更新指定字段的数据；或本地服务器都更新了则由用户自己判断；
+                标签是否合并分拆：拆分为141标签以及应急专用标签，更新方便，但是管理复杂；
+    权限控制优化
+        重新梳理权限体系：创建简单的扩展方法，以约束查询，如 q.ApplyUserOrg(userId)，而不是全局进行限制，心里没底（切换角色后就担心无法使用）
+        修改PageBase，默认要求AuthLogin，除非显式不要求检测
     报表
         修正报表导出excel格式；
-        实现长时间查询报表返回（用signal R技术）
+        实现长时间查询报表返回（可用signal R技术）
     知识库
         本地知识库程序
         知识库: 知识库管理页面，右侧的部分需要定制，可同时显示目录和文件，操作方式和资源管理器一致；
@@ -609,309 +606,19 @@ Done
     工作流
         实现 Feedback 处理流程，重新熟悉一下 liteflow 工作流引擎
 
-2026/09/15
-    /User页面增加
-    /删除 CheckTag.IsExtra
-    /增加属性 IDeleteLogic.DeleteDt
-    /QString -> QStr
-    /完善 CheckTags 页面，默认行数=100，增加查询按钮
-    /实现分类统计报表
-    /实现科室、人员统计报表
-    /实现Command=Reset 的button
-    /修正知识库目录，导入最新数据
+2026/09/22
+    /修正预算页面 Amount -》 Fee，TypeName、OrgName
+    /增加枚举色彩选项：检查对象》风险等级
+    /驾驶舱地图框架要改
+        /mapbox访问时好时不好，且受到国内政府项目审核的约束
+        /先测试一下是mapbox框架不能访问，还是地图不能访问。
+            /如果是前者那就更换地图框架，改用mapbtalks 或 maplibre
+            /如果是后者则更改地图源头即可（支持天地图、openstreetmap、高德等(正确)
+        /后期再考虑迁移到MapLibre框架（MapBox的开源框架）
+        /新增地图支持
+            /渲染openstreetmap
+            /渲染天地图
+        /增加地图设置配置 SiteConfig.MapboxKey, TiandituKey
+        /优化地图场景，增加更多地图类型、IsDefault 属性
 
-2026/09/14
-    /创建时间、检查时间、下次检查时间空缺
-    /值班表：修复input无法输入的bug
-    /剥离网站程序和文件目录，便于精简部署主程序
-        asp.net 网站程序，有没有保存附件文件目录的限制？可以保存到网站外部的其它目录吗？
-        我想设置本系统中相关文件的存储目录（如日志./Logs、数据库./Db/、附件./Files/， 缓存./Caches/），配置信息可考虑在SiteConfig 实体类中存储。
-    /核对标签
-    /再次和温州对接，梳理标签
-    /将主项目中所有 EleTreeSelect 改为EleTreePicker
-
-
-
-
-2026/09/10
-    /修正瑞泽账户，正常使用知识库
-    /修改所有CDN资源，弄成本地版本
-        /知识库目录上传时报错，要把具体报错原因提示出来；
-    /角色是否也要弄成树状的，这样便于管理角色的授权，如应急局管理员》可授权管理该角色下的所有角色？过于复杂废弃。
-
-
-2026/09/10
-    /实现值班表导入：
-    /如何封装这个网站项目，作为跨平台单机工具使用，先给方案先不编程（算了）
-    /实现批量设置多个记录属性的能力
-        如给 CheckObjects 页面增加批量修改网格员的能力
-        <EleButton Command="EditBatch" Label="批量修改网格员">
-            <Popup>
-                <ElePicker For="Item.CheckerId" PopupUrl=".....">网格员</ElePicker>
-                <EleInput For="Item.DutyMan" >企业责任人</ElePicker>
-            </Popup>
-        </EleButton>
-        选择数据行后，点击该按钮，就会用elemanager drawer 弹出编辑页面，编辑 CheckerId 字段
-
-
-2026/09/08
-    /优化接口，默认情况不反悔geodata：http://172.20.165.221:6060/httpapi/orgs/GetAuthOrgTree f
-        /台风图层似乎未能自动刷新
-
-
-2026/9/3
-    /删除检查对象的“是否重点监管”、“是否示范企业”、“是否有安全管家“三个属性，并增加“安全管家”名称文本属性
-    /知识库优化
-        /导航页面，可以直接将文件也显示出来
-        /知识库导入“白海豚”的资料和目录
-        /提供导入目录功能，选择一个本地目录，批量生成kbmenu以及对应的附件；
-    /导入数据
-        /导入账户
-        /导入141对象数据
-        /导入企业花名册表，并调整标签
-        /批量处理对象坐标
-            /根据企业归属的园区批量定位
-            /用地图接口批量获取定位信息，并转化为wgs84坐标；
-            /手动处理一个园区的企业数据，作为示例；
-        /导入基础数据：
-            - 将 CheckObjects 表清空，若有关联数据也请删除；
-            - 将 data/260831-对象清单.xls 中的数据导入到 checkobjects 表，请分析对应关系后再导入，注意设置好责任网格和责任人；
-            - 写好脚本 /data/importobjects.py 可供下次使用；
-        /继续完善数据
-            - 根据 /data/260828-工矿企业花名册.xlsx 中的数据，更新checkobject 表匹配记录的相关属性；
-            - 其中标黄的列，设置为对象的标签属性（CheckObjectTag）。标签清单可查看 CheckTag表（如图2）；
-            - 先分析好数据后，再进行更新，写好脚本 /data/fix.py，可供日后复用；
-    /配置人员密集场所
-        Checks/CheckObjectForm?id={0}
-        /HttpApi/Gis/GetCheckObjects?tagNames=商场、市场
-        /HttpApi/Gis/GetCheckObjects?tagNames=宾馆、饭店
-        /HttpApi/Gis/GetCheckObjects?tagNames=公共娱乐场所
-        /HttpApi/Gis/GetCheckObjects?tagNames=电影院
-        /HttpApi/Gis/GetCheckObjects?tagNames=医院、诊所、托育机构
-        /HttpApi/Gis/GetCheckObjects?tagNames=养老院、福利院
-        /HttpApi/Gis/GetCheckObjects?tagNames=中小学校幼儿园
-        /HttpApi/Gis/GetCheckObjects?tagNames=校外培训机构
-        /HttpApi/Gis/GetCheckObjects?tagNames=宗教活动场所
-        /HttpApi/Gis/GetCheckObjects?tagNames=文物保护单位
-        /HttpApi/Gis/GetCheckObjects?tagNames=其他人员密集场所
-        /HttpApi/Gis/GetCheckObjects?tagNames=矿山
-        /HttpApi/Gis/GetCheckObjects?tagNames=烟花爆竹
-        /HttpApi/Gis/GetCheckObjects?tagNames=人员密集场所
-        /HttpApi/Gis/GetCheckObjects?tagNames=
-
-2026/08/31
-    /完善日志模块，增加Entity.Instance.OnAudit()方法，统一注入实体数据操作日志；
-    /核对数据和权限
-    /测试 /httpapi/gis/getobjects 的tagNames, dutyOrgId 等参数，配置好目录中的数据；
-    /日志操作人信息 IP 丢失，请查一下原因
-    /实现EleTable的select模式
-    /CheckSheetItem 增加物理 Code 属性，便于自定义以及排序
-    /为了便于ai调试，创建 /pages/LoginAI 页面, 提供快速登录方式以绕开滑动模块，格式为：LoginAI?userId=xxx&password=xxx&timestamp=xxx&sign=xxx
-        其中 
-        - sign 的值为 userId,password,timestampe + nonce + 公钥 加密的结果
-        - 该链接时间戳过期时间为1个小时；
-        - 给 SiteConfig 类增加 PublicKey, PrivateKey 键值对属性，并填充一组值；
-        - 给该页面做好注释，便于ai理解和调试；
-        2、将其验证逻辑写到一个独立的工具类中 /app/components/SignHelper.cs
-        检测是否有什么风险或漏洞 ，可完善它；
-    /检查CheckObjects 页面，将网格员输入框改为 picker
-    /实现EleTable页面的 Select 模式
-        （1）在该模式下，禁止所有编辑功能（包括相关按钮和行命令，除了command=search和select的按钮其它按钮都隐藏）；
-        （2）选择数据后，点击选择按钮（Command为Select），可将选择数据的id/name等信息传递给picker 控件；
-        （3）支持单选和多选；
-    /配置高频风险检查表
-
-
-
-2026/08/14
-    /换个目录存储？如/files/KB，根据当前UniId来判断存储位置
-    /请使用splitter来改造manager页面  ，并启用 Collapsible，这样左侧树有时候可以根据需求进行折叠。注意保持响应式布局逻辑；
-    /修正用户新建时用户名不可填写的bug
-    /把columnformat 中bool类型的展示方式改为 标签
-    /调整CheckTask字段，增加startDt
-    /删除eleui、numberinput、prepend、append，就用原始的 prefix、suffix
-    /将 elecolumn 的 format 属性更名为display，避免混淆
-    /导入专项行动
-    /优化 gis/index 点位展示方式：调整为：“仅图标”、“图标和文本”（原普通模式，默认）、“文本靠边停靠”（原停靠模式）
-    /优化检查任务和隐患创建
-        /自动根据标签，选择对应的检查表和检查项目
-        /检查项可根据名称、编号、类别、状态等过滤
-        /检查对象的实效原因改为枚举
-    /日期选择框忽然坏了
-    /Announce.CreateTime -> CreateDt
-    /Announce.PublishTime -> CreateDt
-    /将起止时间字段改为 type=DateRange 格式，缩小屏幕控件数量
-    /检查表加OrderId字段
-
-2026/08/18
-    /EleManager 服务器端重命名为 EleServer（or EleHandler， ElePatcher），避免与客户的混淆
-    /用户列表页面，删除有提示，但是用户还在
-    /用户列表页面，显示角色列表
-    /剥离 EleUI 库对 HttpApi 库的依赖（可用同结构的 APIResult 数据接口）
-    /点击修改“重设密码”后，前端无反馈，可考虑用 EleServer.ShowToast 显示一个 toast到前端
-    /新建 me/WorkDesk 工作台页面，用于展示：交办任务清单及进度、个人排查任务及进度、科室任务及进度，数据驾驶舱入口（gis/index）
-    /重置数据库迁移，避免脏数据；
-
-
-2026/08/13
-    /优化mananger页面
-        /1、首次进知识库manager页面时，会报错（估计是menuid未设置导致的），请修正；
-        /2、左侧目录树默认只展开根，根据113行所示，我将参数DEFAULT_EXPAND_TREE_LEVEL设置为1，但是确展开了2层（如图），该参数若设置为0，树就全部展开了。请核查一下方法computeDefaultExpandedKeys 的逻辑。
-        /3、优化该页面，中间放一个spliter，可调整左右模块的宽度；
-        /4、优化该页面，支持响应式布局，窄屏时默认只显示菜单页，点击节点后用elemanger drawer显示文件列表页面；
-    /解决 spliter bar 拖动丢失问题，同样的逻辑也可用于drawer的调整宽度；
-
-
-2026/08/12
-    /知识库框架
-        /文件和目录管理
-            /文档管理和查看、排序
-            /实现目录的移动
-            /上传错误时要正确提示；
-        /实现文件预览能力
-            /office系列、pdf、脑图、三维模型
-            /doc文件查看、wps文件查看（算了，仅下载）
-            /解决公文字体问题
-        /实现检索首页
-            /一个输入对话框
-            /一个知识地图图谱
-
-2026/08/06
-    /优化MayLayer及LayerManager，增加Cron调度方案，并做好日志；
-
-2026/08/05
-    /修正EleTreePicker故障
-    /如何快速的获取某个页面的url？日志要记录；前端在页面右键》查看框架的源代码，看地址栏即可；
-    /bug：新建标签时，组织老是自动设置为“新城应消中心”
-    /将检查对象 checkobject 的风险类标签合并到 Tags（原风险类别字段尚未删除）
-    /检索页面增加多标签检索的能力；
-
-
-2026/08/04
-    /实现 Feedback 列表和窗口；
-    /优化,普通点位详情，缺失网站展示行（有数据的时候会显示出来，点击后用drawer显示）
-    /通讯录目录改为响应式布局
-    /简化了RoleContactMenu，删除复杂的多重缓存逻辑，统一用一个All缓存。
-    /增加CRM主题
-        /内置：公司、通讯录、角色通讯录管理
-        /优化通讯录：实现通讯录访问权限控制（RoleContactMenu），可用于应急指挥
-        /做好安全管控和脱敏处理；
-
-
-2026/08/03
-    /实现 feedback 反馈页面
-    /重新调整 power 枚举，根据领域拆分
-    /调整菜单，增加CRM、财务、运维等目录；
-    /el-message-box 调整图层避免被遮挡
-    /删除Company 数据表和相关ui
-    /扩展 ContactMenu，支持AbbrName、Addr、SocialCreditId
-    /调整power顺序：view优先，分类，顺序
-    /TreeEntity 新增 GetChildIds
-    /统一DataJson
-    /实现 EleProperty 控件，默认情况显示为只读双列表格，用于存储key-value数据，点击编辑会跳到编辑页面。可用于各种DataJson
-    /优化 EleColumn 增加属性 AutoExpand，可自动扩展宽度；不用，不填写width就会自动扩展
-
-
-2026/07/30
-    /优化事件页面（Tasks/Events），加个定时刷新switch按钮，若为true，则根据当前检索条件，自动刷新页面。实现EleRefreshSwitch控件；
-    /美化AI页面
-        /补充AI图标
-        /弄成可对话的，支持语音输入和语音播报；
-        /接入联网搜索能力: 使用火山引擎、并开通联网搜索能力；
-        /接入图像识别能力：要用其它引擎, doubao-seed-2.0-mini
-        /解决记忆缺失情况，发送请求时会将对话历史发给ai；为了减轻服务器压力，本服务器不做聊天记录存储；
-
-2026/07/29
-    /打通区域相关网页-》区域企业清单
-    /把相关附属资源（如联系人、事件、隐患等）全部改为列表方式附在下面
-        /并显示”更多“图标，点击后跳出完整的列表窗口：
-        /需对 EleList 控件进行优化，增加更多按钮，点击后可跳到编辑页面；
-    /将对象扩展数据全部列出来（点位）
-
-
-2026/07/25
-    /使用API的点位清单面板显示后，地图上的点位就消失了
-    /登陆页面：去掉默认的admin账户
-    /显示一个园区的企业清单
-        /彩虹智慧创造园（或找个新城的园区 电镀电雕园）
-        /http://localhost:6060/checks/checkobjects?dutyOrgId=730
-
-
-2026/07/24
-    /隐患增加“是否高频”属性: 检查项表增加IsCommon属性，CheckHarzard增加IsCommonHazard方法属性；
-    /物理删除 admin以外的所有用户
-    /优化角色权限管理
-        - 鉴于现有的 Menu 绑定权限的逻辑，不能直观的反应角色可以访问的页面和数据范围，现做重构调整；
-        - 创建管理页面/pages/admins/RoleManager，统一管理角色对应的权限和访问能力：
-            - 用IFrame进行分隔，左侧是角色列表，右侧是标签页
-            - 标签页面现在为：操作权限，系统菜单、Gis菜单，以后可以扩展
-            - 点击左侧角色名称，右侧的标签页链接参数将自动变化
-            - 角色权限页面（admins/RolePower）：
-                - 参考原有RolePowerOld页面进行简化改造，只需要显示老页面右侧的权限部分；
-            - 角色菜单页面（admins/RoleMenu：
-                - 顶部固定显示工具栏按钮区（全选/反选、保存），下面放系统菜单树
-                - 创建 RoleMenu 实体类，字段：RoleId，MenuId；
-                - 删除 Menu.Power 及相关逻辑代码；
-                - 用新的RoleMenu 逻辑，来调整 pages/Index 页面左侧的菜单展示逻辑；
-                - 可用HttpApi 接口来实现（/HttpApi/Auth/GetRoleMenus），并启用缓存，以减少数据库的访问；
-            - 角色Gis菜单页面（Gis/RoleGisMenu）：
-                - 创建RoleGisMenu 实体类，用于管理角色和授权的gismenu，字段：RoleId, MenuId, CanSee, CanEdit;
-                - 顶部工具栏，下面显示GisMenu树，每个节点都显示“能看”、“能编辑”两个checkbox；
-                - 某个用户登录后，会根据该用户的角色，在gis/index中显示可见的gismenu，在gis/geometrymanager左侧的菜单树中显示授权编辑的菜单；
-                - 点位导入时会检查 gismenuid 是否被当前用户角色授权（gis/GeometryImporter）
-                - 修改相关的数据接口
-    /用接口获取的点位详情面板错误，无法正常展示，请检查相关api接口，接口同 IGeometry；
-        /gis/index 数据列表窗口，增加显示配置模版，如：{Alias}/n{Name}/n{Addr}
-        /显示点位详情页面 ItemUrl
-        /增加name查询参数
-
-
-2026/07/23
-    /登陆现支持cookie和header bareer两种方式
-
-2026.07/21
-    /优化首页，默认显示统计面板
-    /优化GisManager页面，可多选图层进行编辑
-    /GisMenu数据来源
-        字段 DataFrom =Geometry/Api，区分数据来源；
-        修改 list/form 页面
-        修改 /gis/GeometryManager 页面，左侧菜单只显示 DataFrom = Geometry 的菜单
-        修改 /gis/apiManager 页面，左侧菜单只显示 DataFrom = Api 的菜单
-        修改 /gis/index 页面，根据 DataFrom 类型，取对应的数据，并展示；
-    /实现点位 excel 导入页面
-        只取通用的列（id编号、menu菜单、name名称、alias别称、gps坐标、type类别、geojson图形数据），其它列都存储到datajson中
-        写一个通用方法，可设置列名兼容
-        可解析gps坐标，支持: lng,lat    xxxxE, xxxxN
-    /将气象地图图层（这些图层定制图层）迁移到gis/index页面，考虑：
-        把这些图层加到顶部的视图图层去？
-        或融合到左侧图层面板？
-    /UI
-        弄个半透明遮罩层（中奖部分亮，两侧暗），在统计模式时显示（便于展示统计面板），在图层模式时隐藏；
-        调整统计模式页面布局：左右侧各放置一个容器，可上下滚动，内部可放置多个面板，这样可以容纳和展示更多统计数据；
-
-
-2026/07/20
-    /修正登录页面滑块校验
-    /修改admin默认密码：Ad3..@.......
-    /修复me/passwordform页面
-    /修正工业园区数据，划分到4个中心
-    /导入积水点清单（修复了部分位置）
-    /给点位增加一个“编号”字段，是否用SortId就行（序号，仅数字类型）？
-    /完善点位
-        /拆分四个应消中心区域
-        /拆分社区联合党委为多个点位（一个形状一个点位）
-        /拆分社区点位为多个点位（一个形状一个点位）
-    /完善场景
-        /增加图层背景设置
-        /变更场景时，先缩放定位，结束后再更换地图
-
-
-2026/07/16
-    /实现地图点位优化展示方案，适合截图后做挂图(dock 模式)
-        痛点：地图上点位过多时，标签及文本会被遮挡，无法查看和检索
-        解决方案：
-            - 地图上仍然保留图标
-            - 但文本分布在地图四周，并用一根连线连接到图标。文本位置尽可能接近图标，如图标在左上角，那么对应的文本在左侧或上侧；
-        根据该思路做一个实验页面 Doc/Map/Markers.html
-        测试成功后部署到 gis/index
 

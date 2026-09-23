@@ -202,7 +202,7 @@ namespace App.Services
             {
                 var s = _sections[i];
                 var orgSet = s.IncludeSub
-                    ? Org.GetChildIds(s.OrgId)?.ToHashSet() ?? new HashSet<long> { s.OrgId }
+                    ? App.DAL.Org.GetChildIds(s.OrgId)?.ToHashSet() ?? new HashSet<long> { s.OrgId }
                     : new HashSet<long> { s.OrgId };
 
                 var row = new CheckObjectStatRow
@@ -242,7 +242,7 @@ namespace App.Services
             foreach (var s in _checkerSections)
             {
                 var orgSet = s.IncludeSub
-                    ? Org.GetChildIds(s.OrgId)?.ToHashSet() ?? new HashSet<long> { s.OrgId }
+                    ? App.DAL.Org.GetChildIds(s.OrgId)?.ToHashSet() ?? new HashSet<long> { s.OrgId }
                     : new HashSet<long> { s.OrgId };
 
                 // 该科室下有对象的 CheckerId（distinct 升序）

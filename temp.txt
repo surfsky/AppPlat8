@@ -16,3 +16,24 @@
                 ? v.ToString()
                 : defaultValue;
         }
+
+
+            // dict
+            var kv = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                {"password", Password ?? ""},
+                {"publicKey", cfg.PublicKey ?? ""},
+                {"timestamp", Timestamp.ToString()},
+                {"userId", UserId ?? ""},
+                {"nonce", Nonce ?? ""}
+            };
+
+            // payload
+            var sb = new StringBuilder();
+            foreach (var p in kv) 
+                sb.Append(p.Key).Append('=').Append(p.Value).Append('&');
+            if (sb.Length > 0) sb.Length--;
+            var payload = sb.ToString();
+
+
+                "PAYLOAD    = " + payload + "\n" +

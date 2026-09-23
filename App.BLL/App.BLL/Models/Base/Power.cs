@@ -131,6 +131,13 @@ namespace App.DAL
         [UI("值班表", "值班表删除")]             DutyScheduleDelete = 77,
         [UI("值班表", "值班表导出")]             DutyScheduleExport = 78,
 
+        [UI("会议", "会议查看")]                 MeetingView = 79,
+        [UI("会议", "会议新增")]                 MeetingNew = 80,
+        [UI("会议", "会议修改")]                 MeetingEdit = 81,
+        [UI("会议", "会议删除")]                 MeetingDelete = 82,
+        [UI("会议", "会议导出")]                 MeetingExport = 83,
+        [UI("会议", "会议导入")]                 MeetingImport = 84,
+
 
         [UI("评论", "评论查看")]               CommentView = 210,
         [UI("评论", "评论新增")]               CommentNew = 211,

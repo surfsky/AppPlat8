@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using App.DAL;
 using App.Utils;
 using App.Utils.Gis;
 
@@ -29,7 +30,7 @@ namespace App.Components
         public string Name { get; set; }
         public string Key { get; set; }
         public string SecurityKey { get; set; }
-        public bool PreferSignature { get; set; }
+        public bool PreferSignature { get; set; }  // 是否优先签名？
     }
 
     /// <summary>高德地图接口返回的结果结构</summary>
@@ -74,7 +75,7 @@ namespace App.Components
     // 高德地图 API 调用辅助类
     //=====================================================================
     /// <summary>
-    /// 高德地图 API 调用辅助类
+    /// 高德地图 API 调用辅助类（TODO：里面的json解析过于繁琐，建议用反序列化库解析）
     /// </summary>
     public class AmapHelper
     {
@@ -84,17 +85,10 @@ namespace App.Components
             new AmapCredential
             {
                 Name = "WebServer",
-                Key = "5eaa3c7ad8e09e3fdce1fb4fcf3e02f7",
+                Key = SiteConfig.Instance.AmapKey,
                 SecurityKey = string.Empty,
                 PreferSignature = false
             },
-            new AmapCredential
-            {
-                Name = "WebJs",
-                Key = "b264475ba4e7ca7df2d147cc575cf645",
-                SecurityKey = "d6347d4e9b4f4bbf6f6d92a4d9c5e78e",
-                PreferSignature = true
-            }
         };
 
         /// <summary>获取高德地图凭证列表（供外部遍历使用）</summary>
@@ -219,6 +213,7 @@ namespace App.Components
         public static bool GetAmapResult<T>(string path, Dictionary<string, string> query, out T result, out string failInfo, AmapCredential credential)
             where T : AmapResponseBase
         {
+            Logger.Info($"调用AMap接口：{path} {query} {credential.Name}");
             result = null;
             var includeSignature = credential.PreferSignature;
             var body = Fetch(BuildAmapUrl(path, query, credential, includeSignature), out var error);

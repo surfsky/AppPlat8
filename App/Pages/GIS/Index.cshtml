@@ -362,7 +362,12 @@
                 sources['raster-labels'] = { type: 'raster', tiles: labelTemplates, tileSize, maxzoom: maxZoom };
                 layers.push({ id: 'raster-labels', type: 'raster', source: 'raster-labels', minzoom: 0, maxzoom: 24 });
             }
-            return { version: 8, sources, layers };
+            return {
+                version: 8,
+                glyphs: 'mapbox://fonts/mapbox/{fontstack}/{range}.pbf',
+                sources,
+                layers
+            };
         }
         const __initialStyleInfo = __makeInitialStyle(__defaultStyleName);
         const __initialMapStyle = __initialStyleInfo ? __buildInitialTileStyle(__initialStyleInfo) : 'mapbox://styles/mapbox/satellite-streets-v12';

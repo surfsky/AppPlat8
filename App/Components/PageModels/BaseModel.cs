@@ -17,7 +17,7 @@ using App.HttpApi;
 namespace App
 {
     /// <summary>
-    /// 页面模型基类，提供一些公共方法和属性
+    /// 页面模型基类，提供一些公共方法和属性（默认无需进行安全验证）
     /// </summary>
     public partial class BaseModel : PageModel
     {

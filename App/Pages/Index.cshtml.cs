@@ -14,8 +14,7 @@ using App.Entities;
 
 namespace App.Pages
 {
-    [Authorize]
-    public class IndexModel : BaseModel
+    public class IndexModel : AdminModel
     {
         public List<Menu> Menus { get; set; } = new List<Menu>();
         public string UserName { get; set; }

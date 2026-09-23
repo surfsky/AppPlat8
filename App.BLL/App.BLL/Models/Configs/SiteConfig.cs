@@ -35,8 +35,9 @@ namespace App.DAL
         [UI("UI", "登陆页背景图片")]        public string LoginBg { get; set; }
 
         // 地图
-        [UI("地图", "Mapbox Key)")]        public string MapboxKey { get; set; }
-        [UI("地图", "天地图 Key")]          public string TiandituKey { get; set; }
+        [UI("地图", "Mapbox Key)")]        public string MapboxKey { get; set; }    // 用于地图底图
+        [UI("地图", "天地图 Key")]          public string TiandituKey { get; set; }  // 用于地图底图
+        [UI("地图", "高德地图 Key")]        public string AmapKey { get; set; }      // 用于地址检索
         [UI("地图", "驾驶舱标题")]           public string GisTitle { get; set; } = "数据驾驶舱";
 
         // 数据

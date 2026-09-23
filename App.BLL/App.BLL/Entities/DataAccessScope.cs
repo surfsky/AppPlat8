@@ -32,7 +32,7 @@ namespace App.Entities
         private static readonly HashSet<Type> _systemTypes = new HashSet<Type>
         {
             typeof(User), typeof(Role), typeof(RolePower), typeof(RoleMenu), typeof(UserOrg),
-            typeof(Org), typeof(Menu), typeof(Online), typeof(Log), typeof(SiteConfig),
+            typeof(DAL.Org), typeof(Menu), typeof(Online), typeof(Log), typeof(SiteConfig),
             typeof(AIConfig), typeof(Sequence), typeof(VerifyCode), typeof(IPFilter),
             typeof(Message), typeof(Att), typeof(Application), typeof(OpenApp), typeof(Site),
             typeof(AliDingConfig), typeof(AliSmsConfig),
@@ -154,7 +154,7 @@ namespace App.Entities
                 return ids;
             }
 
-            var orgIds = Org.All.GetDescendants(rootOrgId).Select(t => t.Id).Distinct().ToList();
+            var orgIds = App.DAL.Org.All.GetDescendants(rootOrgId).Select(t => t.Id).Distinct().ToList();
             foreach (var id in orgIds)
                 ids.Add(id);
             return ids;

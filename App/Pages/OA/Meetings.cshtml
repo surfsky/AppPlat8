@@ -1,0 +1,38 @@
+@page
+@model App.Pages.OA.MeetingsModel
+@{
+    ViewData["Title"] = "会议管理";
+}
+
+@section body {
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="会议" FormPage="MeetingForm" EnableBatch="true">
+        <Toolbar>
+            <Filters>
+                <EleDatePicker For="Item.Day" Type="DateRange" Width="220px" Label="日期" Type="Date"></EleDatePicker>
+                <EleSelect For="Item.Type" Label="类型" Width="130px"></EleSelect>
+                <EleTreePicker For="Item.OrgId" Label="科室" Width="220px" Api="/httpapi/orgs/GetAuthOrgTree"></EleTreePicker>
+                <EleInput VModel="filters.keyword" Prop="keyword" Width="260px" Label="内容"></EleInput>
+            </Filters>
+            <Buttons>
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.MeetingNew)">新增</EleButton>
+                <EleButton Type="Warning" Handler="Import" Icon="Upload" Visible="@Auth.CheckPower(Power.MeetingImport)">导入</EleButton>
+                <EleButton Type="Primary" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.MeetingExport)">导出</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.MeetingDelete)">删除</EleButton>
+            </Buttons>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleOpColumn Width="120" Fixed="right" Shows="2">
+                <Op Command="Edit" Icon="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.MeetingEdit)"></Op>
+                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.MeetingDelete)"></Op>
+            </EleOpColumn>
+            <EleColumn For="Item.Day" Label="日期" Width="120" FormatString="yyyy-MM-dd" Sortable="true"></EleColumn>
+            <EleColumn For="Item.TypeName" Label="类别" Width="100"></EleColumn>
+            <EleColumn For="Item.OrgName" Label="科室" Width="220"></EleColumn>
+            <EleImageColumn For="Item.Image" Label="照片" Width="130"></EleImageColumn>
+            <EleColumn For="Item.Content" Label="内容" MinWidth="360"></EleColumn>
+            <EleColumn For="Item.UpdateDt" Label="更新时间" Width="155" FormatString="yyyy-MM-dd HH:mm" Sortable="true"></EleColumn>
+        </Columns>
+    </EleTable>
+}

@@ -67,6 +67,7 @@ This library supports many useful convinient extensions and methods, such as:
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
     <PackageReference Include="Jint" Version="3.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />

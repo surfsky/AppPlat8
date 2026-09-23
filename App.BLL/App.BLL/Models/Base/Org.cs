@@ -19,7 +19,7 @@ namespace App.DAL
         [UI("乡镇街道")]  Town = 4,
         [UI("社区")]  Community = 5,
         [UI("网格")]  Net = 6,
-        [UI("单位")]  Unit = 7,
+        [UI("单位", Color = "Red")]  Unit = 7,
         [UI("科室")]  Section = 8,
     }
 

@@ -114,6 +114,7 @@ namespace App.DAL
         public DbSet<Asset> Assets { get; set; }
         public DbSet<Budget> Budgets { get; set; }
         public DbSet<BudgetType> BudgetTypes { get; set; }
+        public DbSet<Meeting> Meetings { get; set; }
 
         // CRM
         public DbSet<ContactMenu> ContactMenus { get; set; }

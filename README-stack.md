@@ -73,3 +73,32 @@
 - App.BLL 仅依赖 App.Utils
 - App.EleUI 为独立 Razor 类库（RCL），被 App 引用
 - App.Consoler（Quartz 后台任务）为独立进程，通过业务层访问数据库
+
+
+
+## 地图方案
+
+地图框架
+
+    - MapBox 本地部署（支持2D/3D、样式丰富、扩展性强），需Key
+    - 计划迁移至 MapLibre GL（三方 MapBox 开源版本）
+
+地图源
+
+   - 天地图（不偏移，同 WGS84）
+   - MapBox （外网）
+   - OpenStreetMap （外网）
+   
+地址检索
+
+   - 高德地图
+
+
+
+## 访问外部接口（含潜在）
+
+高德地图： 地址查找接口
+短信接口： 
+   移动开放平台短信接口（尚未上线）
+   阿里云短信接口（尚未上线）
+三方Gis图层数据接口

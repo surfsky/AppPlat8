@@ -43,7 +43,8 @@ namespace App.Pages.Maintains
             cfg.UpFileSize = req.UpFileSize;
             cfg.MapboxKey = req.MapboxKey;
             cfg.TiandituKey = req.TiandituKey;
-            cfg.GisTitle = string.IsNullOrWhiteSpace(req.GisTitle) ? "数据驾驶舱" : req.GisTitle.Trim();
+            cfg.AmapKey = req.AmapKey;
+            cfg.GisTitle = req.GisTitle;
             cfg.PrivateKey = req.PrivateKey;
             cfg.PublicKey = req.PublicKey;
             cfg.EnableLoginAI = req.EnableLoginAI;
