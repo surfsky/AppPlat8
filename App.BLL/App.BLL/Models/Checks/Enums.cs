@@ -170,15 +170,15 @@ namespace App.DAL
         [UI("无")] None = 0,
         [UI("少量")] Minor = 1,
         [UI("一般")] Average = 2,
-        [UI("大量")] Major = 3,
+        [UI("大量", Color="Red")] Major = 3,
     }
 
     [UI("检查", "隐患等级")]
     public enum CheckHazardLevel
     {
-        [UI("一般隐患")] NormalHazard = 1,
-        [UI("重大隐患")] HighHazard = 2,
-        [UI("重点问题")] HighProblem = 3
+        [UI("一般隐患", Color="Blue")] NormalHazard = 1,
+        [UI("重大隐患", Color="Red")] HighHazard = 2,
+        [UI("重点问题", Color="Red")] HighProblem = 3
     }
 
 }

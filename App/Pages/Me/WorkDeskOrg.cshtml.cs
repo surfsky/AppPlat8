@@ -253,9 +253,9 @@ namespace App.Pages.Me
             var orgIds = EffectiveOrgIds;
             return App.DAL.CheckHazard.Search(null, null, null, null, null, null)
                 .Where(h => orgIds.Count > 0
-                         && h.CheckObject != null
-                         && h.CheckObject.DutyOrgId.HasValue
-                         && orgIds.Contains(h.CheckObject.DutyOrgId.Value));
+                         && h.Object != null
+                         && h.Object.DutyOrgId.HasValue
+                         && orgIds.Contains(h.Object.DutyOrgId.Value));
         }
 
         // 兼容封装（避免与同命名空间 DAL.Org 冲突）

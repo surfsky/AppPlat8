@@ -7,11 +7,11 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="隐患列表" FormPage="CheckHazardForm" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId&objectName=@objectNameEncoded" >
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="隐患" FormPage="CheckHazardForm" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId&objectName=@objectNameEncoded" >
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Description" Width="250px" Label="描述" ></EleInput>
-                <EleInput For="Item.Check.CheckObject.Name" Width="250px" Label="对象" ></EleInput>
+                <EleInput For="Item.Check.CheckObject.Name" Prop="objectName" Width="250px" Label="对象" Value="@Q("objectName")" ></EleInput>
                 <EleSelect For="Item.Status" Width="250px" Label="状态" Clearable="true" ></EleSelect>
             </Filters>
             <Buttons>
@@ -27,13 +27,15 @@
                 <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckHazardDelete)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.ObjectName" Label="检查对象" MinWidth="150"></EleColumn>
-            <EleColumn For="Item.CheckItemText" Label="检查项" MinWidth="150" ShowOverflowTooltip="true"></EleColumn>
-            <EleColumn For="Item.HazardLevel" Label="隐患等级" Width="100" Display="Tag"></EleColumn>
+            <EleColumn For="Item.CheckSheetName" Label="检查表" MinWidth="150" ></EleColumn>
+            <EleColumn For="Item.CheckerName" Label="检查人" MinWidth="100" ></EleColumn>
+            <EleColumn For="Item.CheckItemText" Label="检查项" MinWidth="250" ShowOverflowTooltip="true"></EleColumn>
             <EleColumn For="Item.Description" Label="隐患描述" MinWidth="200" ShowOverflowTooltip="true"></EleColumn>
+            <EleColumn For="Item.HazardLevel" Label="隐患等级" Width="100" ></EleColumn>
             <EleColumn For="Item.Status" Label="状态" Width="100"></EleColumn>
             <EleColumn For="Item.ExpireDt" Label="整改期限" Width="200" FormatString="yyyy-MM-dd"></EleColumn>
             <EleColumn For="Item.RectifyDt" Label="整改日期" Width="200" FormatString="yyyy-MM-dd"></EleColumn>
-            <EleColumn For="Item.IsIn141" Label="141" Width="80" ></EleColumn>
+            <EleColumn For="Item.IsIn141" Label="入141" Width="80" ></EleColumn>
         </Columns>
     </EleTable>
 }

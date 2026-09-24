@@ -19,14 +19,14 @@
         <EleInput For="Item.TagNames" Label="标签" Enabled="false" FillRow="true"></EleInput>
 
         <EleLabel Label="检查信息" FillRow="true"></EleLabel>
-        <EleInput For="Item.CheckLogId" Label="检查记录标识" Enabled="false" FillRow="true"></EleInput>
-        <EleDatePicker For="Item.CheckDt" Label="检查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
-        <EleSelect For="Item.TaskIds" Label="检查任务" Items="Model.TaskOptions" Multiple="true" Filterable="true"></EleSelect>
-        <EleInput For="Item.PatrolOrgName" Label="巡查单位" Enabled="false"></EleInput>
+        <EleInput For="Item.CheckLogId" Label="检查记录标识" Enabled="false" ></EleInput>
+        <EleInput For="Item.PatrolOrgName" Label="检查单位" Enabled="false"></EleInput>
         <EleInput For="Item.PatrolOrgLevel" Label="单位类型" Enabled="false"></EleInput>
+        <EleDatePicker For="Item.CheckDt" Label="检查时间" Type="@EleDatePickerType.DateTime" Enabled="false"></EleDatePicker>
 
         <EleLabel Label="检查表" FillRow="true"></EleLabel>
-        <EleSelect For="Item.SheetIds" Label="检查表" Items="Model.SheetOptions" Multiple="true" Filterable="true" FillRow="true" OnChange="SheetItems"></EleSelect>
+        <EleListPicker For="Item.TaskIds" Label="检查任务" Items="Model.TaskOptions" Multiple="true" Filterable="true" FillRow="true" Clearable="true"></EleListPicker>
+        <EleListPicker For="Item.SheetIds" Label="检查表" Items="Model.SheetOptions" Multiple="true" Filterable="true" FillRow="true" OnChange="SheetItems"></EleListPicker>
 
         <EleLabel Label="检查项" FillRow="true"></EleLabel>
         <div class="col-span-full">

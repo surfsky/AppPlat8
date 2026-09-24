@@ -28,7 +28,7 @@ namespace App.DAL
                 HazardId,
                 HazardDescription = Hazard?.Description,
                 ObjectId = Hazard?.ObjectId,
-                ObjectName = Hazard?.CheckObject?.Name,
+                ObjectName = Hazard?.Object?.Name,
                 SortId,
                 IsFinished
             };

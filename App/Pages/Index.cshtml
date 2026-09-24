@@ -120,6 +120,17 @@
             animation: slideUp 0.3s ease-out forwards;
         }
 
+        .topHeader-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            pointer-events: none;
+            opacity: 0.2;
+        }
+
         .user-pill {
             min-width: 88px;
             padding: 6px 14px !important;
@@ -289,6 +300,7 @@
     <div id="app" class="flex flex-col h-screen overflow-hidden">
         <!-- Unified Top Header Bar - Fixed Position, Always Visible -->
         <div id="topHeader" class="fixed top-0 left-0 right-0 z-50 bg-[#3B71F8] h-16 flex items-center justify-between px-4 shadow-lg">
+            <img src="/images/topbar.svg" class="topHeader-svg" alt="" />
             <!-- Left Section -->
             <div class="flex items-center gap-2 flex-shrink-0">
                 <!-- Desktop: icon + site title -->

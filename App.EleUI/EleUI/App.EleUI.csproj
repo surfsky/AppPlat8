@@ -29,9 +29,39 @@
     <Content Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <Target Name="BuildEleUiAssets" BeforeTargets="Build">
-    <!-- Build EleUI static assets once per build so consumers can load one module entry. -->
-    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)" />
-    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  <PropertyGroup>
+    <!-- 增量构建开关：默认 true；命令行可 /p:BuildEleUI=false 强制跳过 -->
+    <BuildEleUI Condition="'$(BuildEleUI)' == ''">true</BuildEleUI>
+    <EleUiMarkerFile>node_modules/.npm-installed-marker</EleUiMarkerFile>
+  </PropertyGroup>
+
+  <!-- 先把前端源码 Glob 展开成 Item，再在 Target Inputs 里引用，跨平台最稳 -->
+  <ItemGroup>
+    <EleUiSrc Include="build.mjs" />
+    <EleUiSrc Include="package.json" />
+    <EleUiSrc Include="EleUIJs/**/*.js" />
+    <EleUiSrc Include="EleUIJs/**/*.css" />
+  </ItemGroup>
+
+  <!-- 仅当 package.json / package-lock.json 变动时才 npm install，跑一次 touch marker -->
+  <Target Name="InstallEleUiDeps"
+          Condition="$(BuildEleUI) == true"
+          BeforeTargets="BuildEleUiAssets"
+          Inputs="package.json;package-lock.json"
+          Outputs="$(EleUiMarkerFile)">
+    <Message Importance="high" Text="[EleUI] npm install (deps changed)" />
+    <Exec Command="npm install --no-audit --no-fund" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <Touch Files="$(EleUiMarkerFile)" AlwaysCreate="true" />
+  </Target>
+
+  <!-- 仅当前端源码变动时才 npm run build（@(EleUiSrc) 里任何文件比 Outputs 新即触发） -->
+  <Target Name="BuildEleUiAssets"
+          Condition="$(BuildEleUI) == true"
+          BeforeTargets="Build"
+          DependsOnTargets="InstallEleUiDeps"
+          Inputs="@(EleUiSrc);$(EleUiMarkerFile)"
+          Outputs="wwwroot/eleui/eleui.js;wwwroot/eleui/eleui.js.map">
+    <Message Importance="high" Text="[EleUI] npm run build (assets changed)" />
+    <Exec Command="node ./build.mjs" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
 </Project>

@@ -373,9 +373,9 @@ namespace App.Pages.Me
             return App.DAL.CheckHazard.Search(null, null, null, null, null, null)
                 .Where(h => h.CheckerId == uid
                          || (orgIds.Count > 0
-                             && h.CheckObject != null
-                             && h.CheckObject.DutyOrgId.HasValue
-                             && orgIds.Contains(h.CheckObject.DutyOrgId.Value)));
+                             && h.Object != null
+                             && h.Object.DutyOrgId.HasValue
+                             && orgIds.Contains(h.Object.DutyOrgId.Value)));
         }
 
         //---------------------------------------------------------------------

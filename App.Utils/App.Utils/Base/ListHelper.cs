@@ -34,8 +34,8 @@ namespace App.Utils
         //---------------------------------------------------
         // Dictionary -- List
         //---------------------------------------------------
-        /// <summary>查找匹配的字典值（关键字可忽略大小写）</summary>
-        public static T GetItem<T>(this Dictionary<string, T> dict, string key, bool ignoreCase)
+        /// <summary>查找匹配的字典值（关键字可忽略大小写）；未找到返回 default(T)，引用类型即为 null</summary>
+        public static T? GetItem<T>(this Dictionary<string, T> dict, string key, bool ignoreCase)
         {
             foreach (var k in dict.Keys)
             {
@@ -50,7 +50,7 @@ namespace App.Utils
                         return dict[k];
                 }
             }
-            return default(T);
+            return default;
         }
 
 
@@ -189,13 +189,13 @@ namespace App.Utils
         //public delegate void ActionRef<T1, T2>(ref T1 o1, ref T2 o2);
 
         /// <summary>遍历并处理（替代ForEach，有返回值）</summary>
-        /// <param name="action">参数1为当前元素；参数2为前一个元素（可能为空）</param>
-        public static List<T> Each2<T>(this List<T> source, Action<T, T> action)
+        /// <param name="action">参数1为当前元素；参数2为前一个元素（首次调用为 null）</param>
+        public static List<T> Each2<T>(this List<T> source, Action<T, T?> action)
         {
             var result = new List<T>();
             if (source != null)
             {
-                T preItem = default(T);
+                T? preItem = default;
                 foreach (var item in source)
                 {
                     action(item, preItem);
@@ -258,7 +258,7 @@ namespace App.Utils
             return source.Cast<int>(t =>
                 t.IsEnum()
                     ? Convert.ToInt32(t)
-                    : int.Parse(t.ToString())
+                    : int.Parse(t.ToString()!)
                     );
         }
         /// <summary>转化为整型列表</summary>
@@ -267,14 +267,14 @@ namespace App.Utils
             return source.Cast<Int64>(t =>
                 t.IsEnum()
                     ? Convert.ToInt64(t)
-                    : long.Parse(t.ToString())
+                    : long.Parse(t.ToString()!)
                     );
         }
 
         /// <summary>转化为整型列表</summary>
         public static List<string> CastString(this IEnumerable source)
         {
-            return source.Cast<string>(t => t.ToString());
+            return source.Cast<string>(t => t.ToString()!);
         }
 
         /// <summary>转化为枚举列表</summary>
