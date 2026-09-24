@@ -15,62 +15,40 @@ namespace App.EleUI
     [HtmlTargetElement("Ele")]
     public abstract class EleControl : TagHelper
     {
-        [HtmlAttributeNotBound]
-        [ViewContext]
-        public ViewContext ViewContext { get; set; }
+        [HtmlAttributeNotBound, ViewContext]        public ViewContext ViewContext { get; set; }
 
 
-        [HtmlAttributeName("Width")]
-        public string Width { get; set; }
+        [HtmlAttributeName("Width")]                public string Width { get; set; }
+        [HtmlAttributeName("Height")]               public string Height { get; set; }
+        [HtmlAttributeName("Radius")]               public string Radius { get; set; }
+        [HtmlAttributeName("Border")]               public string Border { get; set; }
+        [HtmlAttributeName("BorderColor")]          public string BorderColor { get; set; }
+        [HtmlAttributeName("Rounded")]              public string Rounded { get; set; }
+        [HtmlAttributeName("Shadow")]               public string Shadow { get; set; }
+        [HtmlAttributeName("Enabled")]              public bool Enabled { get; set; } = true; // Static enabled state (true/false)
+        [HtmlAttributeName("EnabledFor")]           public ModelExpression EnabledFor { get; set; } // Strongly typed sugar for enabled binding
+        [HtmlAttributeName("Visible")]              public bool Visible { get; set; } = true;
 
-        [HtmlAttributeName("Height")]
-        public string Height { get; set; }
 
-        [HtmlAttributeName("Radius")]
-        public string Radius { get; set; }
-
-        [HtmlAttributeName("Border")]
-        public string Border { get; set; }
-
-        [HtmlAttributeName("BorderColor")]
-        public string BorderColor { get; set; }
-
-        [HtmlAttributeName("Rounded")]
-        public string Rounded { get; set; }
-
-        [HtmlAttributeName("Shadow")]
-        public string Shadow { get; set; }
-
-        [HtmlAttributeName("Enabled")]
-        public bool Enabled { get; set; } = true; // Static enabled state (true/false)
-
-        [HtmlAttributeName("EnabledFor")]
-        public ModelExpression EnabledFor { get; set; } // Strongly typed sugar for enabled binding
-
-        /// <summary>控件是否可见。默认 true</summary>
-        [HtmlAttributeName("Visible")]
-        public bool Visible { get; set; } = true;
-
+        //
+        //
+        //
         /// <summary>控件标识。用于服务端精确控制。</summary>
-        [HtmlAttributeName("ControlId")]
-        public string ControlId { get; set; }
+        [HtmlAttributeName("ControlId")]            public string ControlId { get; set; }
 
-        /// <summary>字段表达式。默认会由子类推导，例如 For="Item.Name" -> name。</summary>
-        [HtmlAttributeName("FieldExpress")]
-        public string FieldExpress { get; set; }
+        /// <summary>字段表达式。默认会由子类推导，例如 For="Item.Name" -> name</summary>
+        [HtmlAttributeName("FieldExpress")]         public string FieldExpress { get; set; }
 
         /// <summary>服务端 OnChange 处理器名称。设置后将触发 postHandler。</summary>
-        [HtmlAttributeName("OnChange")]
-        public string OnChange { get; set; }
+        [HtmlAttributeName("OnChange")]             public string OnChange { get; set; }
 
-        //
-        // vue 相关属性
-        //
         /// <summary>渲染为Vue v-model</summary>
-        [HtmlAttributeName("VModel")]
-        public string VModel { get; set; }
+        [HtmlAttributeName("VModel")]               public string VModel { get; set; }
 
 
+        //----------------------------------------------------------------
+        // Methods
+        //----------------------------------------------------------------
         /// <summary>检查可见性</summary>
         protected bool CheckPower(TagHelperOutput output)
         {

@@ -11,9 +11,9 @@ namespace App.DAL.OA
     public enum MeetingType
     {
         [UI("周会")] Week = 1,
-        [UI("月会")] Month = 2,
-        [UI("培训会")] Training = 3,
-        [UI("其它")] Other = 9,
+        [UI("月会",  Color="Orange")] Month = 2,
+        [UI("培训会", Color="Green")] Training = 3,
+        [UI("其它",   Color="Gray")] Other = 9,
     }
 
     [UI("OA", "会议表")]
@@ -42,6 +42,9 @@ namespace App.DAL.OA
                 Image,
                 CreateDt,
                 UpdateDt,
+                
+                TypeName,
+                OrgName,
             };
         }
 

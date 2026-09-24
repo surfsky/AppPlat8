@@ -28,11 +28,10 @@
                 <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.MeetingDelete)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Day" Label="日期" Width="120" FormatString="yyyy-MM-dd" Sortable="true"></EleColumn>
-            <EleColumn For="Item.TypeName" Label="类别" Width="100"></EleColumn>
+            <EleColumn For="Item.Type" Label="类别" Width="100"></EleColumn>
             <EleColumn For="Item.OrgName" Label="科室" Width="220"></EleColumn>
             <EleImageColumn For="Item.Image" Label="照片" Width="130"></EleImageColumn>
             <EleColumn For="Item.Content" Label="内容" MinWidth="360"></EleColumn>
-            <EleColumn For="Item.UpdateDt" Label="更新时间" Width="155" FormatString="yyyy-MM-dd HH:mm" Sortable="true"></EleColumn>
         </Columns>
     </EleTable>
 }

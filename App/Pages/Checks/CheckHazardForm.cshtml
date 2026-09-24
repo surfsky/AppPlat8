@@ -12,23 +12,57 @@
         <ElePicker For="Item.CheckSheetId" TextFor="Item.CheckSheetName" Label="检查单" Visible="false"  Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheets?md=select"></ElePicker>
         <ElePicker For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheetItems?md=select"></ElePicker>
         <EleInput For="Item.CheckItemText" Label="检查项内容" Enabled="false" FillRow="true"></EleInput>
-        <EleSwitch For="Item.IsCommonHazard" Label="常见隐患" Enabled="false"></EleSwitch>
 
         <EleLabel Label="隐患内容" FillRow="true"></EleLabel>
-        <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true" FillRow="true"></EleImageUpload>
-        <EleInput For="Item.Description" Label="隐患描述" Rows="3" FillRow="true"></EleInput>
-        
-        <EleLabel Label="整改信息" FillRow="true"></EleLabel>
-        <EleSelect For="Item.Status" Label="状态"></EleSelect>
-        <EleDatePicker For="Item.ExpireDt" Label="整改期限"></EleDatePicker>
+        <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true" FillRow="true" Enabled="false"></EleImageUpload>
+        <EleSelect For="Item.Status" Label="状态" Enabled="false"></EleSelect>
+        <EleInput For="Item.Description" Label="隐患描述" Rows="3" FillRow="true" Enabled="false"></EleInput>
+        <EleDatePicker For="Item.ExpireDt" Label="整改期限" Enabled="false"></EleDatePicker>
         <EleDatePicker For="Item.RectifyDt" Label="整改日期" Enabled="false"></EleDatePicker>
-        
-        <EleLabel Label="记录的系统" FillRow="true"></EleLabel>
         <EleSwitch For="Item.IsIn141" Label="是否录入141"></EleSwitch>
+
+        <EleLabel Label="处理过程" FillRow="true"></EleLabel>
+        @if (Model.Mode != PageMode.New)
+        {
+            <EleList FillRow="true"
+                     DataHandler="?handler=LogsData&hazardId=@Model.Item.Id"
+                     PageSize="20" Height="200px" EmptyText="暂无处理记录"
+                     SortField="ReviewDt" SortDirection="DESC"
+                     ScrollClass="flex-1 overflow-auto"
+                     ItemsClass="space-y-1"
+                     ItemClass="py-2 px-3 border border-gray-100 rounded-md bg-gray-50">
+                <ItemTemplate>
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between gap-2 text-xs">
+                            <span class="text-gray-400">{{ item.reviewDt }}</span>
+                            <span class="text-gray-400">{{ item.reviewerName }}</span>
+                            <el-tag v-if="item.statusName" size="small" :type="statusTagType(item.status)">{{ item.statusName }}</el-tag>
+                        </div>
+                        <div class="text-sm text-gray-700">{{ item.content }}</div>
+                        <div v-if="item.image" class="mt-1">
+                            <el-image :src="item.image" :preview-src-list="[item.image]" fit="cover" style="width:60px;height:60px;border-radius:4px"></el-image>
+                        </div>
+                    </div>
+                </ItemTemplate>
+                <Footer>
+                    <EleButton Type="Success" Handler="AddLog" EnabledFor="Item.Id"
+                               Visible="@(Model.Mode != PageMode.View && Model.Item.Status != CheckHazardStatus.Rectified && Model.Item.Status != CheckHazardStatus.Closed)">处理</EleButton>
+                </Footer>
+            </EleList>
+        }
     
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Command="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
+}
+
+@section script {
+    <script>
+        window.statusTagType = function(status) {
+            const map = { 0: 'info', 1: 'warning', 2: 'success', 3: 'primary' };
+            return map[status] || 'info';
+        };
+    </script>
 }

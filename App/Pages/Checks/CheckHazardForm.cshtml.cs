@@ -2,14 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using App.Components;
-using App.DAL;
-using App.HttpApi;
-using App.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using App.Components;
+using App.DAL;
+using App.EleUI;
+using App.Entities;
+using App.HttpApi;
+using App.Utils;
 
 namespace App.Pages.Checks
 {
@@ -18,8 +20,9 @@ namespace App.Pages.Checks
     {
         public CheckHazard Item { get; set; }
 
-        public void OnGet()
+        public void OnGet(long id = 0)
         {
+            Item = CheckHazard.GetDetail(id) ?? new CheckHazard();
         }
 
         public IActionResult OnGetData(
@@ -58,7 +61,6 @@ namespace App.Pages.Checks
                 CheckSheetName = sheetName,
                 item.CheckItemId,
                 item.CheckItemText,
-                IsCommonHazard = item.IsCommonHazard,
                 item.Description,
                 item.Status,
                 item.ExpireDt,
@@ -78,9 +80,6 @@ namespace App.Pages.Checks
             var item = CheckHazard.Get(req.Id);
             if (item == null)
             {
-                // Typically hazards are created via API from mobile app or check process, not manually created here from scratch usually.
-                // But for admin purpose, let's allow basic edit.
-                //return BuildResult(404, "隐患不存在");
                 item = new CheckHazard();
                 item.ObjectId = req.ObjectId;
                 item.CheckItemId = req.CheckItemId;
@@ -97,7 +96,6 @@ namespace App.Pages.Checks
             item.IsIn141 = req.IsIn141;
             item.Save();
 
-            // 保存图片
             item.AddAtt(Uploader.SaveFiles(nameof(CheckHazard), req.ImageUrls));
 
             if (item.CheckLogId.HasValue)
@@ -127,5 +125,23 @@ namespace App.Pages.Checks
             return BuildResult(0, "保存成功");
         }
 
+        public IActionResult OnGetLogsData(Paging pi, long hazardId)
+        {
+            if (hazardId <= 0)
+                return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+
+            var list = CheckHazardLog.Search(hazardId, null, null).SortPageExport(pi);
+            return BuildResult(0, "success", list, pi);
+        }
+
+        public IActionResult OnPostAddLog([FromBody] CheckHazard req)
+        {
+            var hazardId = req?.Id ?? 0;
+            if (hazardId <= 0)
+                return EleHandler.ShowNotify("请先保存隐患，再录入处理记录", NotifyType.Warning, "提示");
+
+            var url = $"/Checks/CheckHazardLogForm?hazardId={hazardId}";
+            return EleHandler.ShowDrawer(title: "处理隐患", url: url, size: "50%");
+        }
     }
 }

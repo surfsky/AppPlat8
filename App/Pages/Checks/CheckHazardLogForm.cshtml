@@ -1,0 +1,18 @@
+@page
+@model App.Pages.Checks.CheckHazardLogFormModel
+@{
+    ViewData["Title"] = "处理隐患";
+    Layout = "_Layout";
+}
+@section body {
+    <EleForm Model="form" LabelWidth="100px" Height="calc(100vh - 130px)">
+        <EleInput For="Item.Content" Label="处理内容" Rows="3" FillRow="true" Required></EleInput>
+        <EleSelect For="Item.Status" Label="处理后状态" FillRow="true" Required></EleSelect>
+        <EleDatePicker For="Item.ReviewDt" Label="处理时间" Type="DateTime" FillRow="true" Required></EleDatePicker>
+        <EleImageUpload For="Item.Image" Label="图片" FillRow="true" Required></EleImageUpload>
+        <Bottom Height="48px">
+            <EleButton Type="Primary" Command="SaveClose">保存</EleButton>
+            <EleButton Command="Close">取消</EleButton>
+        </Bottom>
+    </EleForm>
+}
