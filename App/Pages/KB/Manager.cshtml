@@ -210,24 +210,29 @@
                     <div class="kb-manager-panel-fill">
                         <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100 shrink-0">
                             <div class="flex gap-1">
-                                <el-button v-if="canNew" type="primary" circle @@click="onNewMenu" title="新建子目录">
-                                    <i class="fa-solid fa-plus" style="font-size:14px;"></i>
-                                </el-button>
-                                <el-button v-if="canUploadDir" type="warning" circle @@click="onOpenUploadDirectory" title="上传目录">
-                                    <i class="fa-solid fa-folder-plus" style="font-size:14px;"></i>
-                                </el-button>
-                                <el-button v-if="canEdit" type="success" circle :disabled="!currentMenuId" @@click="onEditMenu" title="编辑目录">
-                                    <i class="fa-solid fa-pen" style="font-size:14px;"></i>
-                                </el-button>
-                                <el-button v-if="canDelete" type="danger" circle :disabled="!currentMenuId" @@click="onDeleteMenu" title="删除目录">
-                                    <i class="fa-solid fa-trash" style="font-size:14px;"></i>
-                                </el-button>
-                                <el-button v-if="canEdit" circle :disabled="!currentMenuId" @@click="onMoveUp" title="上移">
-                                    <i class="fa-solid fa-arrow-up" style="font-size:14px;"></i>
-                                </el-button>
-                                <el-button v-if="canEdit" circle :disabled="!currentMenuId" @@click="onMoveDown" title="下移">
-                                    <i class="fa-solid fa-arrow-down" style="font-size:14px;"></i>
-                                </el-button>
+                                <el-button-group class="mb-4">
+                                    <el-button v-if="canNew" type="primary" @@click="onNewMenu" title="新建子目录" size="small">
+                                        <i class="fa-solid fa-plus" style="font-size:14px;"></i>
+                                    </el-button>
+                                    <el-button v-if="canUploadDir" type="warning" @@click="onOpenUploadDirectory" title="上传目录" size="small">
+                                        <i class="fa-solid fa-folder-plus" style="font-size:14px;"></i>
+                                    </el-button>
+                                    <el-button v-if="canEdit" type="success" :disabled="!currentMenuId" @@click="onEditMenu" title="编辑目录" size="small">
+                                        <i class="fa-solid fa-pen" style="font-size:14px;"></i>
+                                    </el-button>
+                                    <el-button v-if="canDelete" type="danger" :disabled="!currentMenuId" @@click="onDeleteMenu" title="删除目录" size="small">
+                                        <i class="fa-solid fa-trash" style="font-size:14px;"></i>
+                                    </el-button>
+                                    <el-button  @@click="onGoHome" title="HOME" size="small">
+                                        <i class="fa-solid fa-house" style="font-size:14px;"></i>
+                                    </el-button>
+                                    <el-button v-if="canEdit" :disabled="!currentMenuId" @@click="onMoveUp" title="上移" size="small">
+                                        <i class="fa-solid fa-arrow-up" style="font-size:14px;"></i>
+                                    </el-button>
+                                    <el-button v-if="canEdit" :disabled="!currentMenuId" @@click="onMoveDown" title="下移" size="small">
+                                        <i class="fa-solid fa-arrow-down" style="font-size:14px;"></i>
+                                    </el-button>
+                                </el-button-group>
                             </div>
                         </div>
                         <div class="flex-1 min-h-0 min-w-0 overflow-auto px-2 py-1">
@@ -770,6 +775,10 @@
                         });
                     }
 
+                    function onGoHome() {
+                        location.href = 'index';
+                    }
+
                     function onMoveUp() {
                         const id = Number(currentMenuId.value) || 0;
                         if (!id) return;
@@ -1040,6 +1049,7 @@
                         onDirectorySelected,
                         onEditMenu,
                         onDeleteMenu,
+                        onGoHome,
                         onMoveUp,
                         onMoveDown
                     };

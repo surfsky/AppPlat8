@@ -73,11 +73,26 @@ namespace App.EleUI
         /// <summary>点击事件（Vue 表达式，输出 v-on:click）。作用域是当前 Vue 实例（组件实例），可以直接访问实例的 data、methods、props 等</summary>
         [HtmlAttributeName("VClick")]          public string VClick { get; set; }
 
+        /// <summary>服务器端处理方法。如Delete 对应到模型方法为 OnPostDelete。优先级高于 Command</summary>
+        [HtmlAttributeName("Handler")]         public string Handler { get; set; }
+
+        /// <summary>
+        /// 按钮请求时要带上的结构体数据类型（可枚举，可多个逗号分隔）。
+        /// 取值：FilterInfo | PageInfo | SelectInfo | RowsInfo | ContextInfo，
+        /// 或预设字符串 "All"、"StandardPaging"、"Move"。
+        /// <example>
+        /// <code><![CDATA[
+        ///  <EleButton Handler="Test" Payload="FilterInfo, PageInfo, SelectInfo" />
+        ///  <EleButton Handler="MoveUp" Payload="Move" />
+        /// ]]></code>
+        /// </example>
+        /// 点击时会自动调用 postHandler(name, payload_envelope)，envelope 包含对应结构体字段。
+        /// </summary>
+        [HtmlAttributeName("Payload")]         public string Payload { get; set; }
+
         /// <summary>命令类型。如果设置了命令类型，点击事件将自动绑定为 invokeCommand('{Command.ToString()}')</summary>
         [HtmlAttributeName("Command")]         public Command Command { get; set; } // Default is None (0)
 
-        /// <summary>命令名称。优先级高于 Command 属性，直接使用该字符串作为 v-on:click 的值</summary>
-        [HtmlAttributeName("Handler")]         public string Handler { get; set; }
 
         /// <summary>弹窗URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。会生成：v-on:click="openForm(0, '...')"。</summary>
         [HtmlAttributeName("PopupUrl")]        public string PopupUrl { get; set; }
@@ -130,7 +145,37 @@ namespace App.EleUI
                 var json = JsonSerializer.Serialize(batchMeta, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
                 output.Attributes.SetAttribute("data-batch-fields", json);
             }
-            
+
+            // 将 Payload 规范化为 "FilterInfo|PageInfo|..." 形式并写入 data-payload-kinds dataset
+            string payloadKindsExpr = null;
+            string payloadKindsJsStr = null;
+            if (!string.IsNullOrWhiteSpace(Payload))
+            {
+                payloadKindsExpr = NormalizePayloadKinds(Payload.Trim());
+                if (!string.IsNullOrWhiteSpace(payloadKindsExpr))
+                    output.Attributes.SetAttribute("data-payload-kinds", payloadKindsExpr);
+                payloadKindsJsStr = EscapeJs(payloadKindsExpr);
+            }
+
+            // 构造 Payload 实参表达式：
+            // - 没配置 Payload → 不传（传 null）
+            // - payload 是 JSON 字面量（{ 或 [ 开头）→ 直接透传（兼容历史场景）
+            // - 其他（ElePayloadKinds）→ 传 'FilterInfo|PageInfo|...' 字面量，让 postHandler 按 kind 组装结构体
+            string payloadArg = null;
+            if (!string.IsNullOrWhiteSpace(Payload))
+            {
+                var raw = Payload.Trim();
+                if (raw.StartsWith("{") || raw.StartsWith("["))
+                    payloadArg = raw;
+                else if (!string.IsNullOrWhiteSpace(payloadKindsJsStr))
+                    payloadArg = $"'{payloadKindsJsStr}'";
+            }
+            string BuildCall(string fn, string arg1)
+            {
+                if (payloadArg == null) return $"{fn}('{EscapeJs(arg1)}')";
+                return $"{fn}('{EscapeJs(arg1)}', {payloadArg})";
+            }
+
             // click priority:
             // 1) Handler -> v-on:click (direct post with form data)
             // 2) Command -> v-on:click (inner command pipeline)
@@ -141,7 +186,7 @@ namespace App.EleUI
             //    如设置 ConfirmText，则先弹出确认框，确认后再执行上述动作。
             string primaryExpr;
             if (!string.IsNullOrEmpty(Handler))
-                primaryExpr = $"postHandler('{EscapeJs(Handler)}')";
+                primaryExpr = BuildCall("postHandler", Handler);
             else if (Command != Command.None)
             {
                 // Reset 单独处理：直接调用 resetFilters（客户端还原筛选默认值 + 自动重新加载数据）
@@ -150,7 +195,7 @@ namespace App.EleUI
                 if (Command == Command.Search) commandName = "Data";
                 else if (Command == Command.Reset) commandName = "Reset";
                 else commandName = Command.ToString();
-                primaryExpr = $"invokeCommand('{EscapeJs(commandName)}')";
+                primaryExpr = BuildCall("invokeCommand", commandName);
             }
             else if (!string.IsNullOrEmpty(PopupUrl))
             {
@@ -195,14 +240,32 @@ namespace App.EleUI
                 {
                     var confirmText = ConfirmText.Replace("'", "\\'");
                     var confirmTitle = (ConfirmTitle ?? "提示").Replace("'", "\\'");
+                    // 【最稳健的 Confirm 链】：
+                    //   1) act 定义在 IIFE 最外层（不在 try 里），避免任何作用域问题导致 act 未定义
+                    //   2) 优先级：window.EleManager.coreElMessageboxConfirm → ElementPlus.ElMessageBox.confirm
+                    //   3) 任何一方抛异常 / 用户取消 → 最终兜底：window.confirm（阻塞式、不依赖任何第三方库，100% 能执行）
+                    //   4) 最顶层 catch：就算前两者都 ReferenceError/undefined，也强制走兜底+act，保证"点按钮绝不会无反应"
                     var wrapped =
-                        "(Promise.resolve(window.EleManager ? window.EleManager : window.$eleManager)" +
-                        " .then(m => m ? m.coreElMessageboxConfirm : Promise.reject())" +
-                        " .catch(() => ElementPlus.ElMessageBox.confirm(" +
-                        $"'{confirmText}','{confirmTitle}'," +
-                        " { confirmButtonClass: 'el-button--primary', type: 'warning' }))" +
-                        $" .then(() => {{ {primaryExpr} }})" +
-                        " .catch(() => {}))";
+                        "(async function(){" +
+                        "  var act = function(){ try{ " + primaryExpr + @" }catch(err){ console.error('[EleButton Confirm action]', err); } };" +
+                        "  try{" +
+                        "    var ran=false;" +
+                        "    var EM = window.EleManager || window.$eleManager;" +
+                        "    if (EM && typeof EM.coreElMessageboxConfirm === 'function') {" +
+                        $"      try {{ await EM.coreElMessageboxConfirm('{confirmText}','{confirmTitle}'); ran=true; act(); return; }}" +
+                        "        catch(eh){ /* user cancel / internal error, fall through */ }" +
+                        "    }" +
+                        "    if (window.ElementPlus && window.ElementPlus.ElMessageBox && typeof window.ElementPlus.ElMessageBox.confirm === 'function') {" +
+                        $"      try {{ await window.ElementPlus.ElMessageBox.confirm('{confirmText}','{confirmTitle}',{{ confirmButtonClass:'el-button--primary', type:'warning' }}); ran=true; act(); return; }}" +
+                        "        catch(eh){ /* cancel */ }" +
+                        "    }" +
+                        $"    if (window.confirm('{confirmTitle}：{confirmText}')) {{ ran=true; act(); return; }}" +
+                        "  } catch(topErr){" +
+                        "    console.error('[EleButton Confirm top-level]', topErr);" +
+                        // 最顶层兜底：上面任何路径都没成功时，最后一次用 window.confirm 阻塞式保证 act()
+                        $"    try {{ if (window.confirm('{confirmTitle}：{confirmText}（异常兜底）')) act(); }} catch(lastErr){{ try{{ act(); }}catch(_){{}} }}" +
+                        "  }" +
+                        "})();";
                     output.Attributes.SetAttribute("v-on:click", wrapped);
                 }
                 else
@@ -316,6 +379,46 @@ namespace App.EleUI
                 return true; // 弹窗/导航按钮在选择模式下隐藏（如 Orgs 组织管理、Import 导入等）
 
             return false;
+        }
+
+        /// <summary>
+        /// 规范化 payload kinds 字符串：
+        ///   ① 替换预设名（All / StandardPaging / Move）；
+        ///   ② 处理 '|'、','、';' 或空白分隔；
+        ///   ③ 去重 + 按 Flags 枚举名排序；
+        ///   ④ 返回 "FilterInfo|PageInfo|..." 规范形式；
+        ///   ⑤ 非法项全部剔除。
+        /// </summary>
+        public static string NormalizePayloadKinds(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+            // 替换预设别名
+            raw = raw.Trim();
+            if (raw.Equals("All", StringComparison.OrdinalIgnoreCase))
+                raw = ElePayloadPreset.All;
+            else if (raw.Equals("StandardPaging", StringComparison.OrdinalIgnoreCase))
+                raw = ElePayloadPreset.StandardPaging;
+            else if (raw.Equals("Move", StringComparison.OrdinalIgnoreCase))
+                raw = ElePayloadPreset.Move;
+            // 切分
+            var parts = raw.Split(new[] { ',', '|', ';', '\r', '\n', '\t', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var p in parts)
+            {
+                var t = p.Trim();
+                if (string.IsNullOrWhiteSpace(t)) continue;
+                if (Enum.TryParse<ElePayloadKinds>(t, ignoreCase: true, out var kind))
+                {
+                    // 展开组合枚举（比如未来有组合枚举）
+                    if ((kind & ElePayloadKinds.FilterInfo)  != 0) result.Add(nameof(ElePayloadKinds.FilterInfo));
+                    if ((kind & ElePayloadKinds.PageInfo)    != 0) result.Add(nameof(ElePayloadKinds.PageInfo));
+                    if ((kind & ElePayloadKinds.SelectInfo)  != 0) result.Add(nameof(ElePayloadKinds.SelectInfo));
+                    if ((kind & ElePayloadKinds.ContextInfo) != 0) result.Add(nameof(ElePayloadKinds.ContextInfo));
+                }
+            }
+            if (result.Count == 0) return null;
+            var ordered = new SortedSet<string>(result, StringComparer.Ordinal);
+            return string.Join("|", ordered);
         }
     }
 }

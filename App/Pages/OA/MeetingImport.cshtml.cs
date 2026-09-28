@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using App.Components;
 using App.DAL;
 using App.DAL.OA;
@@ -40,8 +43,11 @@ namespace App.Pages.OA
             var failed = 0;
             try
             {
-                using var stream = file.OpenReadStream();
-                using var workbook = new XSSFWorkbook(stream);
+                var fileBytes = new byte[file.Length];
+                using (var readStream = file.OpenReadStream())
+                    readStream.ReadExactly(fileBytes, 0, fileBytes.Length);
+
+                using var workbook = new XSSFWorkbook(new MemoryStream(fileBytes));
                 var sheet = workbook.GetSheetAt(0) as XSSFSheet;
                 if (sheet == null) return BuildResult(400, "Excel 中没有工作表");
 
@@ -56,7 +62,11 @@ namespace App.Pages.OA
                 }
 
                 columns.TryGetValue("照片", out var imageColumn);
-                var picturesByRow = GetPicturesByRow(sheet, imageColumn);
+
+                var picturesByRow = new Dictionary<int, (byte[] Data, string Ext)>();
+                MergePictures(picturesByRow, GetStandardPicturesByRow(sheet, imageColumn));
+                MergePictures(picturesByRow, GetDispImgPicturesByRow(fileBytes, sheet, imageColumn));
+
                 var orgsByName = App.DAL.Org.All
                     .Where(org => !string.IsNullOrWhiteSpace(org.Name))
                     .GroupBy(org => org.Name.Trim(), StringComparer.OrdinalIgnoreCase)
@@ -74,15 +84,15 @@ namespace App.Pages.OA
                         var orgName = GetText(row?.GetCell(orgColumn));
                         var content = GetText(row?.GetCell(contentColumn));
                         if (!day.HasValue) throw new InvalidOperationException("日期格式无效");
-                        if (!TypeMap.TryGetValue(typeText, out var type)) throw new InvalidOperationException($"类别“{typeText}”无效");
-                        if (!orgsByName.TryGetValue(orgName, out var matchedOrgs)) throw new InvalidOperationException($"未找到科室“{orgName}”");
-                        if (matchedOrgs.Count != 1) throw new InvalidOperationException($"科室“{orgName}”存在重名，无法确定组织");
+                        if (!TypeMap.TryGetValue(typeText, out var type)) throw new InvalidOperationException($"类别\"{typeText}\"无效");
+                        if (!orgsByName.TryGetValue(orgName, out var matchedOrgs)) throw new InvalidOperationException($"未找到科室\"{orgName}\"");
+                        if (matchedOrgs.Count != 1) throw new InvalidOperationException($"科室\"{orgName}\"存在重名，无法确定组织");
 
                         string image = string.Empty;
-                        if (picturesByRow.TryGetValue(rowIndex, out var picture))
+                        if (picturesByRow.TryGetValue(rowIndex, out var pic))
                         {
-                            var mediaType = GetImageMediaType(picture.SuggestFileExtension());
-                            var dataUrl = $"data:{mediaType};base64,{Convert.ToBase64String(picture.Data)}";
+                            var mediaType = GetImageMediaType(pic.Ext);
+                            var dataUrl = $"data:{mediaType};base64,{Convert.ToBase64String(pic.Data)}";
                             image = Uploader.SaveFile(nameof(Meeting), dataUrl);
                             if (string.IsNullOrEmpty(image)) throw new InvalidOperationException("照片保存失败");
                         }
@@ -114,6 +124,10 @@ namespace App.Pages.OA
             return BuildResult(0, message, new { logs, success, failed });
         }
 
+        //======================================================================
+        // 列解析
+        //======================================================================
+
         private static Dictionary<string, int> GetColumns(IRow headerRow)
         {
             var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -126,17 +140,178 @@ namespace App.Pages.OA
             return result;
         }
 
-        private static Dictionary<int, IPictureData> GetPicturesByRow(XSSFSheet sheet, int imageColumn)
+        //======================================================================
+        // 标准 Excel 嵌入图片（NPOI DrawingPatriarch）
+        //======================================================================
+
+        private static Dictionary<int, (byte[] Data, string Ext)> GetStandardPicturesByRow(XSSFSheet sheet, int imageColumn)
         {
-            var result = new Dictionary<int, IPictureData>();
+            var result = new Dictionary<int, (byte[], string)>();
             if (imageColumn < 0 || sheet.DrawingPatriarch is not XSSFDrawing drawing) return result;
             foreach (var shape in drawing.GetShapes().OfType<XSSFPicture>())
             {
                 var anchor = shape.GetAnchor() as XSSFClientAnchor;
                 if (anchor == null || anchor.Col1 != imageColumn) continue;
-                result[anchor.Row1] = shape.PictureData;
+                var picData = shape.PictureData;
+                result[anchor.Row1] = (picData.Data, picData.SuggestFileExtension());
             }
             return result;
+        }
+
+        //======================================================================
+        // WPS DISPIMG 单元格内图片（xl/cellimages.xml）
+        //======================================================================
+
+        private static readonly XNamespace MainNs = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+        private static readonly XNamespace WpsNs = "http://www.wps.cn/officeDocument/2017/etCustomData";
+        private static readonly XNamespace XdrNs = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing";
+        private static readonly XNamespace DrawMainNs = "http://schemas.openxmlformats.org/drawingml/2006/main";
+        private static readonly XNamespace RelNs = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+        private static readonly XNamespace PkgRelNs = "http://schemas.openxmlformats.org/package/2006/relationships";
+        private static readonly Regex DispIdPattern = new(@"ID_[A-F0-9]+", RegexOptions.IgnoreCase);
+        private static readonly Regex ColLetterPattern = new(@"([A-Z]+)", RegexOptions.Compiled);
+
+        private static Dictionary<int, (byte[] Data, string Ext)> GetDispImgPicturesByRow(byte[] fileBytes, XSSFSheet sheet, int imageColumn)
+        {
+            var result = new Dictionary<int, (byte[], string)>();
+            if (imageColumn < 0) return result;
+
+            using var archive = new ZipArchive(new MemoryStream(fileBytes), ZipArchiveMode.Read);
+            var sheetRelPath = GetSheetRelPath(archive, sheet);
+            if (sheetRelPath == null) return result;
+
+            var dispIdsByRow = ParseDispImgIdsByRow(archive, sheetRelPath, imageColumn);
+            if (dispIdsByRow.Count == 0) return result;
+
+            var idToRid = ParseCellImageIdToRid(archive);
+            if (idToRid.Count == 0) return result;
+
+            var ridToPath = ParseCellImageRidToPath(archive);
+            if (ridToPath.Count == 0) return result;
+
+            var mediaPathPrefix = GetCellImageMediaPrefix(archive);
+
+            foreach (var (rowIndex, dispId) in dispIdsByRow)
+            {
+                if (!idToRid.TryGetValue(dispId, out var rid)) continue;
+                if (!ridToPath.TryGetValue(rid, out var mediaPath)) continue;
+                var fullPath = mediaPathPrefix + mediaPath.Replace("../", "").Replace('/', '/');
+                var ext = Path.GetExtension(mediaPath).TrimStart('.');
+                var entry = archive.GetEntry(fullPath);
+                if (entry == null) continue;
+                using var stream = entry.Open();
+                using var ms = new MemoryStream();
+                stream.CopyTo(ms);
+                result[rowIndex] = (ms.ToArray(), ext);
+            }
+
+            return result;
+        }
+
+        private static string GetSheetRelPath(ZipArchive archive, XSSFSheet sheet)
+        {
+            var sheetIndex = sheet.Workbook.GetSheetIndex(sheet.SheetName);
+            return $"xl/worksheets/sheet{sheetIndex + 1}.xml";
+        }
+
+        private static Dictionary<int, string> ParseDispImgIdsByRow(ZipArchive archive, string sheetPath, int imageColumn)
+        {
+            var result = new Dictionary<int, string>();
+            var entry = archive.GetEntry(sheetPath);
+            if (entry == null) return result;
+
+            var colLetter = ColumnIndexToLetter(imageColumn);
+            using var stream = entry.Open();
+            var doc = XDocument.Load(stream);
+
+            foreach (var row in doc.Descendants(MainNs + "row"))
+            {
+                if (!int.TryParse(row.Attribute("r")?.Value, out var rowNum)) continue;
+                var rowIndex = rowNum - 1;
+
+                foreach (var cell in row.Elements(MainNs + "c"))
+                {
+                    var refAttr = cell.Attribute("r")?.Value ?? "";
+                    var match = ColLetterPattern.Match(refAttr);
+                    if (!match.Success || match.Groups[1].Value != colLetter) continue;
+
+                    var f = cell.Element(MainNs + "f");
+                    if (f == null || string.IsNullOrEmpty(f.Value)) continue;
+                    var idMatch = DispIdPattern.Match(f.Value);
+                    if (idMatch.Success) result[rowIndex] = idMatch.Value;
+                }
+            }
+
+            return result;
+        }
+
+        private static Dictionary<string, string> ParseCellImageIdToRid(ZipArchive archive)
+        {
+            var result = new Dictionary<string, string>();
+            var entry = archive.GetEntry("xl/cellimages.xml");
+            if (entry == null) return result;
+
+            using var stream = entry.Open();
+            var doc = XDocument.Load(stream);
+
+            foreach (var cellImage in doc.Descendants(WpsNs + "cellImage"))
+            {
+                var cNvPr = cellImage.Descendants(XdrNs + "cNvPr").FirstOrDefault();
+                var blip = cellImage.Descendants(DrawMainNs + "blip").FirstOrDefault();
+                if (cNvPr == null || blip == null) continue;
+
+                var name = cNvPr.Attribute("name")?.Value;
+                var rid = blip.Attribute(RelNs + "embed")?.Value;
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(rid))
+                    result[name] = rid;
+            }
+
+            return result;
+        }
+
+        private static Dictionary<string, string> ParseCellImageRidToPath(ZipArchive archive)
+        {
+            var result = new Dictionary<string, string>();
+            var entry = archive.GetEntry("xl/_rels/cellimages.xml.rels");
+            if (entry == null) return result;
+
+            using var stream = entry.Open();
+            var doc = XDocument.Load(stream);
+
+            foreach (var rel in doc.Descendants(PkgRelNs + "Relationship"))
+            {
+                var id = rel.Attribute("Id")?.Value;
+                var target = rel.Attribute("Target")?.Value;
+                if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(target) && !string.Equals(target, "NULL", StringComparison.OrdinalIgnoreCase))
+                    result[id] = target;
+            }
+
+            return result;
+        }
+
+        private static string GetCellImageMediaPrefix(ZipArchive archive) => "xl/";
+
+        private static string ColumnIndexToLetter(int index)
+        {
+            var result = string.Empty;
+            index++;
+            while (index > 0)
+            {
+                index--;
+                result = (char)('A' + index % 26) + result;
+                index /= 26;
+            }
+            return result;
+        }
+
+        //======================================================================
+        // 公共辅助
+        //======================================================================
+
+        private static void MergePictures(Dictionary<int, (byte[] Data, string Ext)> target, Dictionary<int, (byte[] Data, string Ext)> source)
+        {
+            foreach (var item in source)
+                target.TryAdd(item.Key, item.Value);
         }
 
         private static bool IsEmpty(IRow row) => row == null || row.Cells.All(cell => string.IsNullOrWhiteSpace(GetText(cell)));

@@ -118,6 +118,9 @@ namespace App.Pages.KB
             });
         }
 
+        //----------------------------------------------------------------
+        // 移动目录
+        //----------------------------------------------------------------
         /// <summary>移动目录上</summary>
         public IActionResult OnPostMenuMoveUp([FromBody] JsonElement payload)
         {
@@ -257,6 +260,9 @@ namespace App.Pages.KB
             });
         }
 
+        //----------------------------------------------------------------
+        // 批量导入知识库目录和附件
+        //----------------------------------------------------------------
         /// <summary>按本地目录结构批量导入知识库目录和附件。</summary>
         public IActionResult OnPostUploadDirectory(long? menuId)
         {

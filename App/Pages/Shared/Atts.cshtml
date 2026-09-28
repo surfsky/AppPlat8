@@ -8,7 +8,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="附件管理@titleSuffix" EnableBatch="true" DataHandler="?handler=Data&uniId=@uniIdEncoded" DeleteHandler="?handler=Delete&uniId=@uniIdEncoded">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="附件管理@titleSuffix" EnableBatch="true" DataHandler="?handler=Data&uniId=@uniIdEncoded" DeleteHandler="?handler=Delete&uniId=@uniIdEncoded" SortField="SortId">
         <Toolbar>
             <Filters>
                 <EleInput For="Item.FileName" Width="240px" Label="文件名"></EleInput>
@@ -20,6 +20,8 @@
                 <EleButton Type="Primary" Icon="Upload" VClick="openAttUpload">上传</EleButton>
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">删除</EleButton>
                 <EleButton Type="Warning" Icon="Share" VClick="openMoveTo">移动到</EleButton>
+                <EleButton Type="Info" Icon="ArrowUp"   Handler="MoveUp"   Payload="SelectInfo,ContextInfo" ConfirmText="确认将选中的附件上移？">上移</EleButton>
+                <EleButton Type="Info" Icon="ArrowDown" Handler="MoveDown" Payload="SelectInfo,ContextInfo" ConfirmText="确认将选中的附件下移？">下移</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
@@ -40,6 +42,7 @@
             <EleColumn For="Item.FileName" Label="文件" MinWidth="400" PopupUrl="/Shared/FileViews/Viewer?id={id}" PopupTitle="{fileName}" PopupSize="80%"></EleColumn>
             <EleColumn For="Item.FileSizeText" Label="大小" Width="120"></EleColumn>
             <EleImageColumn Prop="imageUrl" Label="缩略图" Width="80" ThumbnailWidth="44" ThumbnailHeight="44"></EleImageColumn>
+            <EleColumn For="Item.SortId" Label="排序" Width="100" Visible="true"></EleColumn>
             <EleColumn For="Item.Type" Label="类型" Width="100" Visible="false"></EleColumn>
             <EleColumn For="Item.FileExtension" Label="扩展名" Width="100"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="上传时间" Width="180" Display="DateTime"></EleColumn>
@@ -316,7 +319,59 @@
                     } finally {
                         if (input) input.value = '';
                     }
-                }
+                },
+                // 获取要移动的附件ID：优先第一个勾选项，否则取当前页当前行（若只有一条数据也允许）
+                __getSelectedMoveId() {
+                    const ids = Array.isArray(this.selectedIds?.value) ? [...this.selectedIds.value] : [];
+                    if (ids.length > 0) return Number(ids[0]) || 0;
+                    const rows = Array.isArray(this.dataSource?.rows) ? this.dataSource.rows : (Array.isArray(this.tableData) ? this.tableData : []);
+                    if (rows.length === 1) {
+                        const only = rows[0];
+                        return Number(only?.id ?? only?.Id ?? 0);
+                    }
+                    return 0;
+                },
+                // 调用排序接口（MoveUp / MoveDown），然后刷新
+                async __postMoveSort(direction) {
+                    const id = this.__getSelectedMoveId();
+                    if (!id) {
+                        EleManager.showWarning('请先选择（勾选）一个附件');
+                        return;
+                    }
+                    const handlerName = direction === 'up' ? 'MoveUp' : 'MoveDown';
+                    const uniId = decodeURIComponent('@uniIdEncoded');
+                    try {
+                        const res = await axios.post('?handler=' + handlerName, {
+                            Id: id,
+                            UniId: uniId,
+                            Direction: direction
+                        }, {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': (window.Utils && Utils.getCsrfToken) ? Utils.getCsrfToken() : ''
+                            }
+                        });
+                        const body = res?.data;
+                        const code = body && (body.code ?? body.Code ?? -1);
+                        if (String(code) === '0' || String(code) === '200') {
+                            EleManager.showSuccess(window.__attsExtractMsg(body, direction === 'up' ? '上移成功' : '下移成功'));
+                            if (typeof this._triggerAttsRefresh === 'function') {
+                                await this._triggerAttsRefresh('[' + handlerName + '-success]');
+                            } else {
+                                try { if (typeof this.loadData === 'function') await this.loadData(); } catch (_) { }
+                                try { if (typeof this.search === 'function') await this.search(); } catch (_) { }
+                                try { if (typeof this.invokeCommand === 'function') this.invokeCommand('Search'); } catch (_) { }
+                            }
+                        } else {
+                            EleManager.showError(window.__attsExtractMsg(body, direction === 'up' ? '上移失败' : '下移失败'));
+                        }
+                    } catch (e) {
+                        console.error('[Atts:__postMoveSort] direction=' + direction, e);
+                        EleManager.showError(window.__attsExtractMsg(e && e.response ? e.response.data : (e || null), direction === 'up' ? '上移失败' : '下移失败'));
+                    }
+                },
+                async onMoveUp() { return this.__postMoveSort('up'); },
+                async onMoveDown() { return this.__postMoveSort('down'); }
             }
         };
 

@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../App.BLL/App.BLL.csproj" />
+    <ProjectReference Include="../../App.EleUI/EleUI/App.EleUI.csproj" />
   </ItemGroup>
 
 </Project>

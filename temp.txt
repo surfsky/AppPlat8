@@ -1,39 +1,58 @@
-        //-------------------------------------------------
-        // URL 查询参数便捷访问
-        //-------------------------------------------------
-        /// <summary>
-        /// 读取当前 URL 的查询参数（querystring）。
-        /// <para>用法（.cshtml 中）：</para>
-        /// <code>
-        /// &lt;EleInput For="Item.Name" Value="@QString("name")" /&gt;
-        /// </code>
-        /// <para>无对应参数时返回 <paramref name="defaultValue"/>（默认为 <c>null</c>）。</para>
-        /// </summary>
-        public string QString(string key, string defaultValue = null)
+                <EleButton Type="Info" Icon="Search" Handler="Test" Payload="SelectInfo" Visible="false">测试</EleButton>
+        //----------------------------------------------------------------
+        // 移动到
+        //----------------------------------------------------------------
+        /// <summary>测试按钮：验证 ElePayloadEnvelope（SelectInfo 先调通 → 再扩展其它）</summary>
+        public IActionResult OnPostTest([FromBody] ElePayload env)
         {
-            if (string.IsNullOrEmpty(key) || Request?.Query == null) return defaultValue;
-            return Request.Query.TryGetValue(key, out var v) && !Microsoft.Extensions.Primitives.StringValues.IsNullOrEmpty(v)
-                ? v.ToString()
-                : defaultValue;
-        }
+            if (env == null)
+                return OkResult(400, "未收到 ElePayloadEnvelope，请确认按钮设置了 Payload 参数");
 
+            // 结构化优先，扁平兜底
+            var selectIds   = env.SafeSelectedIds;
+            var firstSelId  = env.SafeFirstSelectedId ?? 0L;
+            var filterKeys  = env.SafeFilterKeys;
+            var uniqId      = string.IsNullOrWhiteSpace(env.SafeUniId) ? Request.Query["uniId"].ToString() : env.SafeUniId;
+            var page        = env.SafePage;
+            var pageInfo    = $"{page.PageIndex}/{page.PageSize}/{page.SortField}/{page.SortDirection}";
+            var ctxPath     = env.Context?.Path;
+            var ctxUrl      = env.Context?.Url;
 
-            // dict
-            var kv = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            // 诊断：当前 payload 到底哪些字段有值（便于判断 Payload=SelectInfo 是否只传了 Select）
+            var diagnostics = new
             {
-                {"password", Password ?? ""},
-                {"publicKey", cfg.PublicKey ?? ""},
-                {"timestamp", Timestamp.ToString()},
-                {"userId", UserId ?? ""},
-                {"nonce", Nonce ?? ""}
+                Structured_Select_Has  = env.Select  != null,
+                Structured_Filter_Has  = env.Filter  != null,
+                Structured_Page_Has    = env.Page    != null,
+                Structured_Context_Has = env.Context != null,
+                Flat_SelectedIds_Has   = env.SelectedIds_Flat?.Count > 0,
+                Flat_Filters_Has       = env.Filters_Flat?.Count > 0,
+                Flat_PageIndex_Has     = env.PageIndex_Flat.HasValue,
+                Flat_UniId_Has         = !string.IsNullOrWhiteSpace(env.UniId_Flat),
+                ExtensionData_Keys     = env.ExtensionData?.Count > 0 ? string.Join(",", env.ExtensionData.Keys) : ""
             };
 
-            // payload
-            var sb = new StringBuilder();
-            foreach (var p in kv) 
-                sb.Append(p.Key).Append('=').Append(p.Value).Append('&');
-            if (sb.Length > 0) sb.Length--;
-            var payload = sb.ToString();
-
-
-                "PAYLOAD    = " + payload + "\n" +
+            var payload = new
+            {
+                UniId         = uniqId,
+                SelectedIds   = selectIds,
+                SelectedCount = selectIds.Count,
+                FirstSelId    = firstSelId,
+                FilterKeys    = filterKeys,
+                PageInfo      = pageInfo,
+                ContextPath   = ctxPath,
+                ContextUrl    = ctxUrl,
+                Diagnostics   = diagnostics
+            };
+            // 服务端日志同步输出（用户要"打印出完整的 data 数据"）
+            try
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(payload,
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                System.Console.WriteLine("[ElePayload.Test] {0} SelectedIds={1} PayloadJSON={2}{3}",
+                    uniqId, string.Join(",", selectIds ?? new()), Environment.NewLine, json);
+                Logger.Info("[ElePayload.Test] UniId={0} SelectedIds={1} JSON={2}", uniqId, string.Join(",", selectIds ?? new()), json);
+            }
+            catch { /* 日志失败不影响接口成功返回 */ }
+            return OkResult(0, "ElePayload 链路正常（完整 data 已在弹窗中展示，详见 Test 返回对话框）", payload);
+        }

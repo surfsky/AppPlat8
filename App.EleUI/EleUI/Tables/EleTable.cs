@@ -218,7 +218,15 @@ namespace App.EleUI
         // 创建表格HTML，包含表头、数据行、选择列等
         private string CreateTable(TableContext tableContext)
         {
-            var selectionCol = EnableBatch ? @"<el-table-column type=""selection"" width=""55"" fixed=""left""></el-table-column>" : "";
+            // ============ 选择恢复稳定性（MoveUp/Down 连点不丢选中） ============
+            // 1) 当 EnableBatch 开启时，如果用户没手动指定 RowKey，默认用 "id"（EleTable 默认行都有 id 字段）
+            // 2) <el-table ref="eleTableHost">：让 setup 里的 EleTableAppBuilder 可以拿到 $refs.eleTableHost.toggleRowSelection 直接勾选恢复
+            // 3) selection 列开启 reserve-selection：配合 row-key 在 patch sortId / loadData 之后也能稳定勾回来
+            var haveRowKey = !string.IsNullOrWhiteSpace(RowKey);
+            if (EnableBatch && !haveRowKey) RowKey = "id";
+            var selectionCol = EnableBatch
+                ? @"<el-table-column type=""selection"" width=""55"" fixed=""left"" reserve-selection=""true""></el-table-column>"
+                : "";
             var rowKeyAttr = !string.IsNullOrEmpty(RowKey) ? $@"row-key=""{RowKey}""" : "";
             var highlightAttr = !EnableBatch ? "highlight-current-row" : "";
             var selectionEvent = EnableBatch ? @"v-on:selection-change=""onSelectionChange""" : @"v-on:current-change=""onCurrentChange""";
@@ -232,6 +240,7 @@ namespace App.EleUI
             var tableHtml = $@"
         <el-main class=""flex-1 p-0 bg-white overflow-hidden flex flex-col"" style=""min-height: 0;"">
             <el-table
+                ref=""eleTableHost""
                 :data=""items""
                 border
                 {globalHeaderAlign}

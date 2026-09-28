@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
@@ -71,6 +71,7 @@ namespace App.Entities
                 ImageUrl      = this.Type == AttType.Image ? this.Url : null,
                 this.FileSizeText,
                 this.Type,
+                this.SortId,
                 this.CreateDt,
                 this.CreatorId,
                 CreatorName = this.Creator?.Name,
