@@ -46,11 +46,11 @@ namespace App.Pages
         /// <summary>登录</summary>
         public IActionResult OnPost(string userName, string password)
         {
-            var sessVc = Auth.GetVerifyCode();
-            if (string.IsNullOrEmpty(sessVc))
+            var code = Auth.GetVerifyCode();
+            if (string.IsNullOrEmpty(code))
                  return BuildResult(-1, "请先完成滑块验证");
 
-            int n = Auth.Login(userName, password, sessVc);
+            int n = Auth.Login(userName, password, code);
             if (n == 0)
                 return BuildResult(0, "登录成功", new { redirect = "/Index" });
             else

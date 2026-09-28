@@ -21,30 +21,35 @@ namespace App.Components
 			if (string.IsNullOrWhiteSpace(dbPassword) || string.IsNullOrEmpty(userPassword))
 				return false;
 
+            // dbPwd.length = userPwd.length + saltLength
 			byte[] dbPwd = Convert.FromBase64String(dbPassword);
-			byte[] hashedPwd = HashString(userPassword);
-			if(dbPwd.Length ==0 || hashedPwd.Length ==0 || dbPwd.Length !=hashedPwd.Length + saltLength)
+			byte[] userPwd = HashString(userPassword);
+			if(dbPwd.Length != userPwd.Length + saltLength)
 				return false;
 
-			byte[] saltValue = new byte[saltLength];
-			int saltOffset = hashedPwd.Length;
+			// get salt from db password last n bytes
+			int saltOffset = userPwd.Length;
+			byte[] salt = new byte[saltLength];
 			for (int i = 0; i < saltLength; i++)
-				saltValue[i] = dbPwd[saltOffset + i];
-			byte[] saltedPassword = CreateSaltedPassword(saltValue, hashedPwd);
+				salt[i] = dbPwd[saltOffset + i];
+            
+            // create salted password
+			byte[] saltPwd = CreateSaltedPassword(salt, userPwd);
 		
 			// compare the values
-			return CompareByteArray(dbPwd, saltedPassword);
+			return CompareByteArray(dbPwd, saltPwd);
 		}
 
         /// <summary>创建数据库密码（加密后的密码）</summary>
 		public static string CreateDbPassword(string userPassword)
 		{
-			byte[] unsaltedPassword = HashString(userPassword);
-
-			//Create a salt value
+			// Create a salt value bytes
 			byte[] saltValue = new byte[saltLength];
 			var rng = RandomNumberGenerator.Create(); // new RNGCryptoServiceProvider();
 			rng.GetBytes(saltValue);
+
+			//
+			byte[] unsaltedPassword = HashString(userPassword);
 			byte[] saltedPassword = CreateSaltedPassword(saltValue, unsaltedPassword);
 			return Convert.ToBase64String(saltedPassword);
 		}
@@ -87,7 +92,7 @@ namespace App.Components
 			// add the salt value to the salted hash
 			byte[] dbPassword  = new byte[saltedPassword.Length + saltValue.Length];
 			saltedPassword.CopyTo(dbPassword,0);
-			saltValue.CopyTo(dbPassword,saltedPassword.Length);
+			saltValue.CopyTo(dbPassword, saltedPassword.Length);
 
 			return dbPassword;
 		}

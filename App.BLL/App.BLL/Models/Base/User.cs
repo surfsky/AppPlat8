@@ -409,7 +409,8 @@ namespace App.DAL
                 .Include(u => u.Roles)
                 .Include(u => u.UserOrgs)
                     .ThenInclude(t => t.Org)
-                .FirstOrDefault(predicate);
+                .FirstOrDefault(predicate)
+                ;
             if (user == null)
                 return null;
             user.RoleIds = user.Roles.Select(r => r.Id).ToList();

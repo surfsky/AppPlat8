@@ -63,7 +63,7 @@ namespace App.Components
                 // 登录尚未成功，Cookie Claim 还没写，必须显式传 operator/userName/ip 给 Logger，否则 LogDb 里取 Auth.GetUserName() 是空
                 Logger.LogDb(LogLevel.Info, user: userName,
                     from: "Auth/LoginFail",
-                    message: $"账号={userName} 登录失败：验证码错误。IP={ip}");
+                    message: $"账号 {userName} 登录失败：验证码错误。IP={ip}");
                 return -4;
             }
             return Login(userName, password);
@@ -77,19 +77,19 @@ namespace App.Components
             if (user == null)
             {
                 Logger.LogDb(LogLevel.Info, user: userName, from: "Auth/LoginFail",
-                    message: $"账号={userName} 登录失败：用户不存在。IP={ip}");
+                    message: $"账号 {userName} 登录失败：用户不存在。IP={ip}");
                 return -1;
             }
             if (!PasswordUtil.ComparePasswords(user.Password, password))
             {
-                Logger.LogDb(LogLevel.Info, user: userName, from: "Auth/LoginFail",
-                    message: $"账号={userName} 登录失败：密码错误。IP={ip}");
+                Logger.Info("账号 {0} 登录失败：密码错误。IP={1}", userName, ip);
+                Logger.LogDb(LogLevel.Info, user: userName, from: "Auth/LoginFail",  message: $"账号 {userName} 登录失败：密码错误。IP={ip}");
                 return -3;
             }
             if (user.IsDel == true)
             {
                 Logger.LogDb(LogLevel.Info, user: userName, from: "Auth/LoginFail",
-                    message: $"账号={userName} 登录失败：用户已失效（IsDel=true）。IP={ip}");
+                    message: $"账号 {userName} 登录失败：用户已失效（IsDel=true）。IP={ip}");
                 return -2;
             }
             LoginSuccess(user);
