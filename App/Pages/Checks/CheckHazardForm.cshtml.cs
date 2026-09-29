@@ -142,13 +142,13 @@ namespace App.Pages.Checks
         //-------------------------------------------------------
         // 处理按钮（自动写处理日志 + 更新状态 + 刷新父级）
         //-------------------------------------------------------
-        public IActionResult OnPostLog([FromBody] CheckHazard req)      => ProcessLog(req, CheckHazardStatus.Processing, "复查");
+        public IActionResult OnPostLog([FromBody] CheckHazard req)      => ProcessForm(req, CheckHazardStatus.Processing, "复查");
         public IActionResult OnPostFinish([FromBody] CheckHazard req)   => Process(req, CheckHazardStatus.Finished, "整改完成");
-        public IActionResult OnPostMonitor([FromBody] CheckHazard req)  => ProcessLog(req, CheckHazardStatus.Monitor, "督查");
+        public IActionResult OnPostMonitor([FromBody] CheckHazard req)  => ProcessForm(req, CheckHazardStatus.Monitor, "督查");
         public IActionResult OnPostArchive([FromBody] CheckHazard req)  => Process(req, CheckHazardStatus.Archived, "归档");
 
         // 弹窗处理
-        private static IActionResult ProcessLog(CheckHazard req, CheckHazardStatus status, string action)
+        private static IActionResult ProcessForm(CheckHazard req, CheckHazardStatus status, string action)
         {
             var hazardId = req?.Id ?? 0;
             if (hazardId <= 0)

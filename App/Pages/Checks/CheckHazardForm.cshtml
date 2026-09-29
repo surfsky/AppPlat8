@@ -28,21 +28,63 @@
                  PageSize="20" Height="260px" EmptyText="暂无处理记录"
                  SortField="CreateDt" SortDirection="ASC"
                  ScrollClass="flex-1 overflow-auto"
-                 ItemsClass="space-y-1.5 py-1"
-                 ItemClass="py-2.5 px-3 border border-gray-100 rounded-md bg-white"
+                 ItemsClass="py-1 px-0.5"
+                 ItemClass="bg-white"
                  ShowHeader="false">
             <ItemTemplate>
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between gap-2 text-xs">
-                        <span class="text-gray-400">{{ (item.reviewDt || '').toString().replace('T', ' ').slice(0, 16) }}</span>
-                        <span class="text-gray-500">{{ item.reviewerName || '系统' }}</span>
-                        <el-tag v-if="item.statusName" size="small"  :type="item.status==0?'info':(item.status==1?'warning':(item.status==2?'success':(item.status==3?'primary':'info')))">
-                            {{ item.statusName }}
-                        </el-tag>
+                <div class="relative flex gap-3 py-3 pr-1">
+                    <!-- 左侧时间轴：flex 默认 stretch，左列高度自动 = 右列卡片真实高度 -->
+                    <div class="relative flex-shrink-0 w-[76px] pt-0.5">
+                        <span
+                            class="inline-flex items-center justify-center min-w-[60px] px-2 py-[3px] rounded-md border text-[12px] font-semibold"
+                            :class="item.status==0 ? 'border-orange-300 bg-orange-50 text-orange-700' :
+                                    item.status==1 ? 'border-emerald-300 bg-emerald-50 text-emerald-700' :
+                                    item.status==2 ? 'border-blue-300 bg-blue-50 text-blue-700' :
+                                    item.status==3 ? 'border-sky-300 bg-sky-50 text-sky-700' :
+                                                     'border-gray-300 bg-gray-50 text-gray-500'">
+                            {{ ({0:'新建',1:'复查',2:'完成',3:'督查',9:'归档'})[item.status ?? 0] ?? (item.statusName || '处理') }}
+                        </span>
+                        <!-- 归档状态不画箭头和连线，其它状态才画；微调 left 以对齐状态标签的几何正中（状态胶囊比左列总宽窄，略向左移 6px） -->
+                        <template v-if="(item.status ?? 0) !== 9">
+                            <div class="absolute w-px bg-gray-200 pointer-events-none"
+                                 style="left: calc(50% - 6px); top: 34px; bottom: 12px;"></div>
+                            <svg width="10" height="12" viewBox="0 0 10 12"
+                                 class="absolute text-gray-300 pointer-events-none"
+                                 style="left: calc(50% - 5px - 6px); bottom: 0;">
+                                <path d="M5 0 L5 6 L1 6 L5 11 L9 6 L5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </template>
                     </div>
-                    <div class="text-sm text-gray-700 whitespace-pre-wrap break-words">{{ item.content }}</div>
-                    <div v-if="item.image && item.image.length > 0" class="mt-1">
-                        <EleImage VueSrc="item.image" Width="64" Height="64" ThumbWidth="128" Rounded="true" ViewerMode="Top"></EleImage>
+
+                    <!-- 右侧主卡片 -->
+                    <div class="flex-1 min-w-0 pb-2 border-b border-gray-100 last:border-b-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <div
+                                    class="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold text-white shrink-0"
+                                    :class="item.status==0 ? 'bg-orange-400' :
+                                            item.status==1 ? 'bg-emerald-400' :
+                                            item.status==2 ? 'bg-blue-400' :
+                                            item.status==3 ? 'bg-sky-400' :
+                                                             'bg-gray-400'">
+                                    {{ ((item.reviewerName || '系统').toString().trim().charAt(0) || '系').toUpperCase() }}
+                                </div>
+                                <span class="text-[14px] font-semibold text-gray-800 truncate">
+                                    {{ item.reviewerName || '系统' }}
+                                </span>
+                            </div>
+                            <span class="text-[12px] text-gray-400 shrink-0 tabular-nums">
+                                {{ (item.reviewDt || '').toString().replace('T', ' ').slice(0, 16) }}
+                            </span>
+                        </div>
+
+                        <div class="mt-2 text-[14px] leading-6 text-gray-700 whitespace-pre-wrap break-words pl-0.5">
+                            {{ item.content }}
+                        </div>
+
+                        <div v-if="item.image && item.image.length > 0" class="mt-2 pl-0.5">
+                            <EleImage VueSrc="item.image" Width="88" Height="88" ThumbWidth="176" Rounded="true" ViewerMode="Top"></EleImage>
+                        </div>
                     </div>
                 </div>
             </ItemTemplate>
@@ -56,12 +98,9 @@
             {
                 <EleButton Type="Primary" Handler="Log"        Visible="@(Model.Item.Status == CheckHazardStatus.Waiting)">复查</EleButton>
                 <EleButton Type="Success" Handler="Finish"     Visible="@(Model.Item.Status == CheckHazardStatus.Processing)" prompt="确认归档吗？">整改完成</EleButton>
-                <EleButton Type="Success" Handler="Monitor"    Visible="@(Model.Item.Status == CheckHazardStatus.Finished)">督查</EleButton>
-                <EleButton Type="Info"    Handler="Archive"    Visible="@(Model.Item.Status == CheckHazardStatus.Finished)"  prompt="确认归档吗？">归档</EleButton>
+                <EleButton Type="Success" Handler="Monitor"    Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)">督查</EleButton>
+                <EleButton Type="Info"    Handler="Archive"    Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)"  prompt="确认归档吗？">归档</EleButton>
             }
         </Bottom>
     </EleForm>
-}
-
-@section script {
 }
