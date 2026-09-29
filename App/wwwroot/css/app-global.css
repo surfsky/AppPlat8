@@ -1,0 +1,297 @@
+@theme {
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-500: #6366f1;
+  --color-indigo-700: #4338ca;
+  --color-indigo-900: #312e81;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-white: #ffffff;
+  --color-black: #000000;
+}
+
+html {
+  box-sizing: border-box;
+}
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--color-slate-50);
+}
+
+/* 全局统一 Safari 风滚动条：默认不显示，hover/scroll/focus 时淡入细圆角灰条 */
+
+html,
+body,
+div,
+textarea,
+pre,
+code,
+table,
+ul,
+ol,
+aside,
+nav,
+main,
+section,
+article,
+header,
+footer,
+iframe,
+[data-ele-list-scroll],
+.el-drawer,
+.el-drawer__body,
+.el-table__body-wrapper,
+.el-table__inner-wrapper,
+.el-select-dropdown,
+.el-dialog,
+.el-message-box,
+.el-scrollbar,
+.el-scrollbar__wrap,
+.el-upload-list,
+.el-tree,
+.el-cascader-panel,
+.el-date-picker,
+.el-picker-panel,
+.el-textarea__inner,
+.el-textarea,
+.el-input__textarea,
+.el-color-dropdown,
+.app-sidebar-nav,
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scroll-behavior: smooth;
+}
+
+html:hover,
+body:hover,
+div:hover,
+textarea:hover,
+pre:hover,
+ul:hover,
+ol:hover,
+aside:hover,
+nav:hover,
+main:hover,
+section:hover,
+article:hover,
+iframe:hover,
+[data-ele-list-scroll]:hover,
+.el-drawer:hover,
+.el-drawer__body:hover,
+.el-table__body-wrapper:hover,
+.el-select-dropdown:hover,
+.el-dialog:hover,
+.el-message-box:hover,
+.el-scrollbar:hover,
+.el-scrollbar__wrap:hover,
+textarea:active,
+div:active,
+[data-ele-list-scroll]:active,
+textarea:focus-within,
+div:focus-within,
+[data-ele-list-scroll]:focus-within,
+.sidebar:hover,
+.app-sidebar-nav:hover {
+  scrollbar-color: rgba(100, 116, 139, 0.32) transparent;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+div::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+pre::-webkit-scrollbar,
+code::-webkit-scrollbar,
+table::-webkit-scrollbar,
+ul::-webkit-scrollbar,
+ol::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+nav::-webkit-scrollbar,
+main::-webkit-scrollbar,
+section::-webkit-scrollbar,
+article::-webkit-scrollbar,
+header::-webkit-scrollbar,
+footer::-webkit-scrollbar,
+iframe::-webkit-scrollbar,
+[data-ele-list-scroll]::-webkit-scrollbar,
+.el-drawer::-webkit-scrollbar,
+.el-drawer__body::-webkit-scrollbar,
+.el-table__body-wrapper::-webkit-scrollbar,
+.el-table__inner-wrapper::-webkit-scrollbar,
+.el-select-dropdown::-webkit-scrollbar,
+.el-dialog::-webkit-scrollbar,
+.el-message-box::-webkit-scrollbar,
+.el-scrollbar::-webkit-scrollbar,
+.el-scrollbar__wrap::-webkit-scrollbar,
+.el-upload-list::-webkit-scrollbar,
+.el-tree::-webkit-scrollbar,
+.el-cascader-panel::-webkit-scrollbar,
+.el-date-picker::-webkit-scrollbar,
+.el-picker-panel::-webkit-scrollbar,
+.el-textarea__inner::-webkit-scrollbar,
+.app-sidebar-nav::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+div::-webkit-scrollbar-track,
+textarea::-webkit-scrollbar-track,
+pre::-webkit-scrollbar-track,
+table::-webkit-scrollbar-track,
+ul::-webkit-scrollbar-track,
+aside::-webkit-scrollbar-track,
+nav::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track,
+section::-webkit-scrollbar-track,
+article::-webkit-scrollbar-track,
+iframe::-webkit-scrollbar-track,
+[data-ele-list-scroll]::-webkit-scrollbar-track,
+.el-drawer::-webkit-scrollbar-track,
+.el-table__body-wrapper::-webkit-scrollbar-track,
+.el-select-dropdown::-webkit-scrollbar-track,
+.el-dialog::-webkit-scrollbar-track,
+.el-message-box::-webkit-scrollbar-track,
+.el-scrollbar::-webkit-scrollbar-track,
+.el-scrollbar__wrap::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+div::-webkit-scrollbar-thumb,
+textarea::-webkit-scrollbar-thumb,
+pre::-webkit-scrollbar-thumb,
+table::-webkit-scrollbar-thumb,
+ul::-webkit-scrollbar-thumb,
+aside::-webkit-scrollbar-thumb,
+nav::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb,
+section::-webkit-scrollbar-thumb,
+article::-webkit-scrollbar-thumb,
+iframe::-webkit-scrollbar-thumb,
+[data-ele-list-scroll]::-webkit-scrollbar-thumb,
+.el-drawer::-webkit-scrollbar-thumb,
+.el-drawer__body::-webkit-scrollbar-thumb,
+.el-table__body-wrapper::-webkit-scrollbar-thumb,
+.el-table__inner-wrapper::-webkit-scrollbar-thumb,
+.el-select-dropdown::-webkit-scrollbar-thumb,
+.el-dialog::-webkit-scrollbar-thumb,
+.el-message-box::-webkit-scrollbar-thumb,
+.el-scrollbar::-webkit-scrollbar-thumb,
+.el-scrollbar__wrap::-webkit-scrollbar-thumb,
+.el-upload-list::-webkit-scrollbar-thumb,
+.el-tree::-webkit-scrollbar-thumb,
+.el-cascader-panel::-webkit-scrollbar-thumb,
+.el-date-picker::-webkit-scrollbar-thumb,
+.el-picker-panel::-webkit-scrollbar-thumb,
+.el-textarea__inner::-webkit-scrollbar-thumb,
+.app-sidebar-nav::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 0 solid transparent;
+  -webkit-transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease;
+}
+
+html:hover::-webkit-scrollbar-thumb,
+body:hover::-webkit-scrollbar-thumb,
+div:hover::-webkit-scrollbar-thumb,
+textarea:hover::-webkit-scrollbar-thumb,
+pre:hover::-webkit-scrollbar-thumb,
+table:hover::-webkit-scrollbar-thumb,
+ul:hover::-webkit-scrollbar-thumb,
+aside:hover::-webkit-scrollbar-thumb,
+nav:hover::-webkit-scrollbar-thumb,
+main:hover::-webkit-scrollbar-thumb,
+section:hover::-webkit-scrollbar-thumb,
+article:hover::-webkit-scrollbar-thumb,
+iframe:hover::-webkit-scrollbar-thumb,
+[data-ele-list-scroll]:hover::-webkit-scrollbar-thumb,
+.el-drawer:hover::-webkit-scrollbar-thumb,
+.el-drawer__body:hover::-webkit-scrollbar-thumb,
+.el-table__body-wrapper:hover::-webkit-scrollbar-thumb,
+.el-select-dropdown:hover::-webkit-scrollbar-thumb,
+.el-dialog:hover::-webkit-scrollbar-thumb,
+.el-message-box:hover::-webkit-scrollbar-thumb,
+.el-scrollbar:hover::-webkit-scrollbar-thumb,
+.el-scrollbar__wrap:hover::-webkit-scrollbar-thumb,
+.el-upload-list:hover::-webkit-scrollbar-thumb,
+.el-tree:hover::-webkit-scrollbar-thumb,
+.el-cascader-panel:hover::-webkit-scrollbar-thumb,
+.el-picker-panel:hover::-webkit-scrollbar-thumb,
+.el-textarea__inner:hover::-webkit-scrollbar-thumb,
+html:active::-webkit-scrollbar-thumb,
+body:active::-webkit-scrollbar-thumb,
+div:active::-webkit-scrollbar-thumb,
+textarea:active::-webkit-scrollbar-thumb,
+[data-ele-list-scroll]:active::-webkit-scrollbar-thumb,
+textarea:focus-within::-webkit-scrollbar-thumb,
+div:focus-within::-webkit-scrollbar-thumb,
+[data-ele-list-scroll]:focus-within::-webkit-scrollbar-thumb,
+.el-textarea__inner:focus::-webkit-scrollbar-thumb,
+.sidebar:hover::-webkit-scrollbar-thumb,
+.app-sidebar-nav:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 116, 139, 0.22);
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+div::-webkit-scrollbar-thumb:hover,
+textarea::-webkit-scrollbar-thumb:hover,
+pre::-webkit-scrollbar-thumb:hover,
+table::-webkit-scrollbar-thumb:hover,
+[data-ele-list-scroll]::-webkit-scrollbar-thumb:hover,
+.el-table__body-wrapper::-webkit-scrollbar-thumb:hover,
+.el-dialog::-webkit-scrollbar-thumb:hover,
+.el-scrollbar::-webkit-scrollbar-thumb:hover,
+.el-scrollbar__wrap::-webkit-scrollbar-thumb:hover,
+.el-picker-panel::-webkit-scrollbar-thumb:hover,
+.el-textarea__inner::-webkit-scrollbar-thumb:hover,
+.sidebar::-webkit-scrollbar-thumb:hover,
+.app-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.4);
+}
+
+/* Index 页面浅色侧边栏主题（覆盖原深蓝底样式） */
+:root {
+  --sidebar-bg: #EFF6FF;
+  --sidebar-divider: #e2e8f0;
+  --sidebar-text: #1e293b;
+  --sidebar-text-sub: #475569;
+  --sidebar-hover: #DBEAFE;
+  --sidebar-active: #BFDBFE;
+}

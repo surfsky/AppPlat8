@@ -40,7 +40,26 @@ namespace App.Pages.Checks
                     }
                 }
             }
-            return list.Distinct().OrderBy(t => t).ToList();
+            return list.Distinct().ToList();
+        }
+
+        /// <summary>解析 dutyOrgIds：与 tagIds 同样式（?dutyOrgIds=1,2,3），用于 WorkDesk 多值 scope 透传。</summary>
+        static List<long> ParseOrgIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
+        {
+            var list = new List<long>();
+            if (fromBinder != null) list.AddRange(fromBinder);
+            if (raw.Count > 0)
+            {
+                foreach (var s in raw)
+                {
+                    if (string.IsNullOrWhiteSpace(s)) continue;
+                    foreach (var seg in s.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (long.TryParse(seg.Trim(), out var id) && id > 0) list.Add(id);
+                    }
+                }
+            }
+            return list.Distinct().ToList();
         }
 
         public void OnGet()
@@ -117,11 +136,26 @@ namespace App.Pages.Checks
             )
         {
             tagIds = ParseTagIds(tagIds, Request.Query["tagIds"]);
+            dutyOrgIds = ParseOrgIds(dutyOrgIds, Request.Query["dutyOrgIds"]);
             DateTime? createStartDt = createDt.GetVal(0);
             DateTime? createEndDt = createDt.GetVal(1);
             DateTime? lastCheckStartDt = lastCheckDt.GetVal(0);
             DateTime? lastCheckEndDt = lastCheckDt.GetVal(1);
             var effCheckerId = checkId ?? checkerId;
+
+            DateTime? nextCheckFrom = null;
+            DateTime? nextCheckTo = null;
+            var rawNext = Request.Query["nextCheck"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(rawNext))
+            {
+                var parts = rawNext.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                // 约定：URL 传两个日期时，[from, to] 都是闭区间（含端点当日），按卡片范围 WorkDesk 定义：
+                //   临期 nextCheck={today+1},{today+7}  =>  from=today+1.Date to=today+7.Date.EndOfDay
+                //   超期 nextCheck=,{today}              =>  from=null      to=today.Date.EndOfDay（闭区间，NextCheck<=today）
+                if (parts.Length >= 1 && DateTime.TryParse(parts[0], out var d0)) nextCheckFrom = d0.Date;
+                if (parts.Length >= 2 && DateTime.TryParse(parts[1], out var d1)) nextCheckTo = d1.Date.AddDays(1).AddTicks(-1);
+            }
+
             var q = CheckObject.Search(
                 name: name, 
                 code: code,
@@ -147,6 +181,52 @@ namespace App.Pages.Checks
                 includeTags: true
                 );
             var list = q.SortPageExport(pi);
+
+            // 本地计算下次巡查时间并过滤（NextCheckDt 是 NotMapped getter，EF 无法翻译为 SQL，必须在内存做）。
+            // 注意：SortPageExport 只返回当前页 pi.PageSize 条；但 nextCheck 过滤必须基于 scope 全量数据，
+            // 所以这里重新在 scope 全量基础上计算 NextCheckDt，过滤后再手动分页。
+            if (nextCheckFrom.HasValue || nextCheckTo.HasValue)
+            {
+                static DateTime? Compute(DateTime? lastCheckDt, CheckRiskLevel? riskLv)
+                {
+                    if (!lastCheckDt.HasValue) return null;
+                    var months = riskLv switch
+                    {
+                        CheckRiskLevel.None   => 12,
+                        CheckRiskLevel.Low    => 9,
+                        CheckRiskLevel.Medium => 6,
+                        CheckRiskLevel.High   => 3,
+                        _                    => 12
+                    };
+                    return lastCheckDt.Value.AddMonths(months);
+                }
+
+                var fullProjection = q
+                    .Select(o => new { o.Id, o.LastCheckDt, o.RiskLevel })
+                    .AsEnumerable()
+                    .DistinctBy(r => r.Id)
+                    .Where(r =>
+                    {
+                        var nxt = Compute(r.LastCheckDt, r.RiskLevel);
+                        if (nextCheckFrom.HasValue && (!nxt.HasValue || nxt.Value < nextCheckFrom.Value)) return false;
+                        if (nextCheckTo.HasValue   && (!nxt.HasValue || nxt.Value > nextCheckTo.Value))   return false;
+                        return true;
+                    })
+                    .Select(r => r.Id)
+                    .Distinct()
+                    .ToList();
+                pi.SetTotal(fullProjection.Count);
+                var pageIds = fullProjection
+                    .Skip(pi.PageIndex * pi.PageSize)
+                    .Take(pi.PageSize)
+                    .ToList();
+                var pageRows = q
+                    .Where(o => pageIds.Contains(o.Id))
+                    .SortPageExport(pi);
+                pi.SetTotal(fullProjection.Count);
+                return BuildResult(0, "success", pageRows, pi);
+            }
+
             return BuildResult(0, "success", list, pi);
         }
 

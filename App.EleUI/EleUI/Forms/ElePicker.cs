@@ -102,11 +102,14 @@ namespace App.EleUI
                 : $"(typeof resolveControlDisabled === 'function' ? resolveControlDisabled('{targetSafe}', {vDisabledExpr}) : ({vDisabledExpr}))";
 
             //
-            await RenderWrapper(output);
+            bool isEleFormCtx = context.Items.ContainsKey("IsEleForm");
+            if (isEleFormCtx)
+                await RenderWrapper(output);
 
             //
             output.Attributes.SetAttribute("style", "width: 100%");
             output.TagName = "div";
+            output.TagMode = TagMode.StartTagAndEndTag;
             output.Attributes.SetAttribute("class", "ele-picker-wrapper");
             output.Attributes.SetAttribute("v-show", vVisibleExpr);
             if (!string.IsNullOrWhiteSpace(target))

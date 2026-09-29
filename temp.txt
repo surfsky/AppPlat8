@@ -60,3 +60,14 @@
                 <EleButton Type="Danger"  Handler="ReopenHazard"   Visible="@(Model.Item.Status == CheckHazardStatus.Archived)">重新打开</EleButton>
 
                 <EleButton Type="Warning" Handler="MarkRectifying" Visible="@(Model.Item.Status == CheckHazardStatus.Waiting)">开始整改</EleButton>
+
+
+                                <div
+                                    class="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold text-white shrink-0"
+                                    :class="item.status==0 ? 'bg-orange-400' :
+                                            item.status==1 ? 'bg-emerald-400' :
+                                            item.status==2 ? 'bg-blue-400' :
+                                            item.status==3 ? 'bg-sky-400' :
+                                                             'bg-gray-400'">
+                                    {{ ((item.reviewerName || '系统').toString().trim().charAt(0) || '系').toUpperCase() }}
+                                </div>

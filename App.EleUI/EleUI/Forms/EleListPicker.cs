@@ -107,7 +107,10 @@ namespace App.EleUI
                 onChange: '{onChangeName}'
             }})";
 
-            await RenderWrapper(output);
+            bool isEleFormCtx = context.Items.ContainsKey("IsEleForm");
+            if (isEleFormCtx)
+                await RenderWrapper(output);
+            output.TagMode = TagMode.StartTagAndEndTag;
             output.Attributes.SetAttribute("v-show", visibleExpr);
 
             var content = $@"

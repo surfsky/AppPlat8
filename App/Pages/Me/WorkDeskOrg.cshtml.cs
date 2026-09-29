@@ -63,6 +63,9 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         public void OnGet()
         {
+            var rawOrgId = Request.Query["orgId"].FirstOrDefault();
+            if (long.TryParse(rawOrgId, out var oidQ) && oidQ > 0) OrgId = oidQ;
+
             ResolveOrgDisplay();
             var today = DateTime.Today;
             var near  = today.AddDays(7);
@@ -93,10 +96,10 @@ namespace App.Pages.Me
 
             ObjectStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("科室对象",           CountOrgObjects,        "/Checks/CheckObjects"),
-                new WorkDeskStatCard("未巡查对象",         CountUncheckedObjects,  "/Checks/CheckObjects?isChecked=false"),
-                new WorkDeskStatCard("临期巡查对象",       CountNearExpireObjects, "/Checks/CheckObjects"),
-                new WorkDeskStatCard("超期未巡查对象",     CountOverdueObjects,    "/Checks/CheckObjects"),
+                new WorkDeskStatCard("科室对象",           CountOrgObjects,        AppendObjectScope($"/Checks/CheckObjects?isDel=false")),
+                new WorkDeskStatCard("未巡查对象",         CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false")),
+                new WorkDeskStatCard("临期巡查对象",       CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}")),
+                new WorkDeskStatCard("超期未巡查对象",     CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
             };
 
             var hazards = BuildHazardScopeQuery();
@@ -105,9 +108,9 @@ namespace App.Pages.Me
             CountOverdueHazards = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
             HazardStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("发现的隐患",  CountOrgHazards,     "/Checks/CheckHazards"),
-                new WorkDeskStatCard("待处理隐患",  CountPendingHazards, "/Checks/CheckHazards?status=0"),
-                new WorkDeskStatCard("超期隐患",    CountOverdueHazards,"/Checks/CheckHazards"),
+                new WorkDeskStatCard("发现的隐患",  CountOrgHazards,     AppendHazardScope($"/Checks/CheckHazards")),
+                new WorkDeskStatCard("待处理隐患",  CountPendingHazards, AppendHazardScope($"/Checks/CheckHazards?status=0,1")),
+                new WorkDeskStatCard("超期隐患",    CountOverdueHazards, AppendHazardScope($"/Checks/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}")),
             };
         }
 
@@ -116,8 +119,22 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         public IActionResult OnGetOrgTasks(Paging pi, string taskTab)
         {
+            var rawOrgId = Request.Query["orgId"].FirstOrDefault();
+            if (long.TryParse(rawOrgId, out var oidQ) && oidQ > 0) OrgId = oidQ;
+            var rawTaskTab = Request.Query["taskTab"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(rawTaskTab)) taskTab = rawTaskTab;
+
             var orgIds = EffectiveOrgIds;
-            var taskIds = orgIds.Count == 0
+            var validUsers = App.DAL.User.ValidSet.AsNoTracking()
+                .Where(u => u.OrgId.HasValue)
+                .Select(u => new { u.Id, u.OrgId })
+                .AsEnumerable()
+                .Where(u => orgIds.Contains(u.OrgId!.Value))
+                .Select(u => u.Id)
+                .Distinct()
+                .ToList();
+
+            var taskOrgIds = orgIds.Count == 0
                 ? new List<long>()
                 : App.DAL.CheckTaskOrg.ValidSet.AsNoTracking()
                     .Where(to => to.OrgId != null && orgIds.Contains(to.OrgId.Value) && to.TaskId != null)
@@ -130,7 +147,8 @@ namespace App.Pages.Me
                     .AsNoTracking()
                     .Include(t => t.Creator).ThenInclude(u => u.Org)
                     .Include(t => t.Orgs).ThenInclude(o => o.Org)
-                    .Where(t => taskIds.Contains(t.Id));
+                    .Where(t => (validUsers.Count > 0 && t.CreatorId.HasValue && validUsers.Contains(t.CreatorId.Value))
+                             || (taskOrgIds.Count > 0 && taskOrgIds.Contains(t.Id)));
 
             var q = BaseQry();
             var tab = (taskTab ?? string.Empty).ToLower();
@@ -138,28 +156,21 @@ namespace App.Pages.Me
             {
                 case "created":
                 {
-                    // 科室创建的：创建者的 org 在当前科室 org 范围内
-                    var validUsers = App.DAL.User.ValidSet.AsNoTracking()
-                        .Where(u => u.OrgId.HasValue)
-                        .Select(u => new { u.Id, u.OrgId })
-                        .AsEnumerable()
-                        .Where(u => orgIds.Contains(u.OrgId!.Value))
-                        .Select(u => u.Id)
-                        .Distinct()
-                        .ToList();
                     q = validUsers.Count == 0
                         ? q.Where(t => false)
                         : q.Where(t => t.CreatorId.HasValue && t.CreatorId.Value > 0 && validUsers.Contains(t.CreatorId.Value));
                 }
                 break;
                 case "handled":
-                    // 科室经手 = 任务分派到科室 org（默认 q = 这个）
+                    q = taskOrgIds.Count == 0
+                        ? q.Where(t => false)
+                        : q.Where(t => taskOrgIds.Contains(t.Id));
                     break;
                 case "all":
                     break;
                 case "unfinished":
                 default:
-                    q = q.Where(t => !(t.TotalCount > 0 && t.FinishCount >= t.TotalCount));
+                    q = q.Where(t => !((t.TotalCount ?? 0) > 0 && (t.FinishCount ?? 0) >= (t.TotalCount ?? 0)));
                     break;
             }
             return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
@@ -256,6 +267,33 @@ namespace App.Pages.Me
                          && h.Object != null
                          && h.Object.DutyOrgId.HasValue
                          && orgIds.Contains(h.Object.DutyOrgId.Value));
+        }
+
+        //---------------------------------------------------------------------
+        // 卡片 URL 拼接：scope 默认按当前组织（dutyOrgId 单值）
+        //---------------------------------------------------------------------
+        private string AppendObjectScope(string rawUrl)
+        {
+            if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
+            var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+            if (EffectiveOrgId > 0) qs["dutyOrgId"] = EffectiveOrgId.ToString();
+
+            if (qs.Count == 0) return rawUrl;
+            var sep = rawUrl.Contains('?') ? '&' : '?';
+            return rawUrl + sep + qs.ToString();
+        }
+
+        private string AppendHazardScope(string rawUrl)
+        {
+            if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
+            var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+            if (EffectiveOrgId > 0) qs["dutyOrgId"] = EffectiveOrgId.ToString();
+
+            if (qs.Count == 0) return rawUrl;
+            var sep = rawUrl.Contains('?') ? '&' : '?';
+            return rawUrl + sep + qs.ToString();
         }
 
         // 兼容封装（避免与同命名空间 DAL.Org 冲突）

@@ -89,7 +89,7 @@ namespace App.DAL
                 HazardLevelName = HazardLevel.GetTitle(),
             };
         }
-        public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
+        public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt, long? dutyOrgId = null, DateTime? expireTo = null, List<long> dutyOrgIds = null)
         {
             IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.Object).Include(t => t.Checker).Include(t => t.CheckItem);
             if (objectId.IsNotEmpty())          q = q.Where(o => o.ObjectId == objectId.Value);
@@ -97,8 +97,25 @@ namespace App.DAL
             if (checkerId.IsNotEmpty())         q = q.Where(o => o.CheckerId == checkerId.Value);
             else if (checkerName.IsNotEmpty())  q = q.Where(o => o.Checker.Name.Contains(checkerName.Trim()));
             if (status.IsNotEmpty())            q = q.Where(o => o.Status == status.Value);
+            var dutyNetIds = GetOrgIds(dutyOrgIds, dutyOrgId);
+            if (dutyNetIds.Count > 0)            q = q.Where(o => o.Object != null && o.Object.DutyOrgId.HasValue && dutyNetIds.Contains(o.Object.DutyOrgId.Value));
+            if (expireTo.IsNotEmpty())          q = q.Where(o => o.ExpireDt.HasValue && o.ExpireDt.Value <= expireTo.Value.Date.AddDays(1).AddTicks(-1));
             if (createStartDt.IsNotEmpty())     q = q.Where(o => o.CreateDt >= createStartDt.Value.Date);
             return q;
+        }
+
+        private static List<long> GetOrgIds(List<long> dutyOrgIds, long? dutyOrgId)
+        {
+            var list = new List<long>();
+            if (dutyOrgIds != null && dutyOrgIds.Count > 0) list.AddRange(dutyOrgIds);
+            if (dutyOrgId.IsNotEmpty()) list.Add(dutyOrgId.Value);
+            list = list.Distinct().ToList();
+            if (list.Count == 0) return new List<long>();
+            return Org.All
+                .GetDescendants(list)
+                .Select(t => t.Id)
+                .Distinct()
+                .ToList();
         }
     }
 

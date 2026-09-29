@@ -40,6 +40,9 @@ namespace App.Pages.Me
         // 实际责任网格命中范围：URL(管理员) > 用户 OrgId + AuthOrgIds 展开后的全部子孙
         public List<long> EffectiveOrgIds => ResolveEffectiveOrgIds();
 
+        // 责任网格根节点（未展开）：用于 URL 拼接，避免 Query 超长
+        public List<long> EffectiveRootOrgIds => ResolveEffectiveRootOrgIds();
+
         //---------------------------------------------------------------------
         // 角标计数（对象 4 卡，隐患 3 卡）
         //---------------------------------------------------------------------
@@ -66,6 +69,11 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         public void OnGet()
         {
+            // 任务 handler / EleTable AJAX 通过 Query 传参，这里也优先读 Query，
+            // 避免 BindProperty 只在 SSR 首屏生效（切 tab / 切 picker 后 AJAX 请求不带 BindProperty 值）
+            var rawUserId = Request.Query["userId"].FirstOrDefault();
+            if (long.TryParse(rawUserId, out var uidQ) && uidQ > 0) UserId = uidQ;
+
             ResolveUserRealName();
             var today = DateTime.Today;
             var near  = today.AddDays(7);
@@ -101,10 +109,10 @@ namespace App.Pages.Me
 
             ObjectStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("我的对象",         CountMyObjects,         "/Checks/CheckObjects"),
-                new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  "/Checks/CheckObjects?isChecked=false"),
-                new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, "/Checks/CheckObjects"),
-                new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    "/Checks/CheckObjects"),
+                new WorkDeskStatCard("我的对象",         CountMyObjects,         AppendObjectScope($"/Checks/CheckObjects?isDel=false")),
+                new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false")),
+                new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}")),
+                new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
             };
 
             var hazards = BuildHazardScopeQuery();
@@ -113,9 +121,9 @@ namespace App.Pages.Me
             CountOverdueHazards  = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
             HazardStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("我发现的隐患",   CountMyHazards,      "/Checks/CheckHazards"),
-                new WorkDeskStatCard("待处理隐患",     CountPendingHazards, "/Checks/CheckHazards?status=0"),
-                new WorkDeskStatCard("超期隐患",       CountOverdueHazards,"/Checks/CheckHazards"),
+                new WorkDeskStatCard("我发现的隐患",   CountMyHazards,      AppendHazardScope($"/Checks/CheckHazards")),
+                new WorkDeskStatCard("待处理隐患",     CountPendingHazards, AppendHazardScope($"/Checks/CheckHazards?status=0,1")),
+                new WorkDeskStatCard("超期隐患",       CountOverdueHazards, AppendHazardScope($"/Checks/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}")),
             };
         }
 
@@ -143,13 +151,18 @@ namespace App.Pages.Me
 
         //---------------------------------------------------------------------
         // 表格 1：我的任务（我创建 OR 分派到我命中的责任网格）+ taskTab 筛选
-        //   taskTab=unfinished(默认)：非已完成且未超期（进行中）+ 超期，两部分合并显示
+        //   taskTab=unfinished(默认)：排除已完成，其余全部（进行中+超期）
         //   taskTab=all：全部
         //   taskTab=created：我发起（CreatorId == uid）
         //   taskTab=handled：我经手（CreatorId == uid 或 分配到我的 org）
         //---------------------------------------------------------------------
         public IActionResult OnGetMyTasks(Paging pi, string taskTab)
         {
+            var rawUserId = Request.Query["userId"].FirstOrDefault();
+            if (long.TryParse(rawUserId, out var uidQ) && uidQ > 0) UserId = uidQ;
+            var rawTaskTab = Request.Query["taskTab"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(rawTaskTab)) taskTab = rawTaskTab;
+
             var uid    = EffectiveUserId;
             var orgIds = EffectiveOrgIds;
 
@@ -183,12 +196,10 @@ namespace App.Pages.Me
                          || (taskIdsFromOrg != null && taskIdsFromOrg.Count > 0 && taskIdsFromOrg.Contains(t.Id)));
                     break;
                 case "all":
-                    // 不额外过滤
                     break;
                 case "unfinished":
                 default:
-                    // 未完成：排除已完成，其余全部（超期+进行中）
-                    q = q.Where(t => !(t.TotalCount > 0 && t.FinishCount >= t.TotalCount));
+                    q = q.Where(t => !((t.TotalCount ?? 0) > 0 && (t.FinishCount ?? 0) >= (t.TotalCount ?? 0)));
                     break;
             }
             return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
@@ -321,8 +332,15 @@ namespace App.Pages.Me
 
         private List<long> ResolveEffectiveOrgIds()
         {
+            var ids = ResolveEffectiveRootOrgIds();
+            if (ids.Count == 0) return new List<long>();
+            return OrgDescendants(ids);
+        }
+
+        private List<long> ResolveEffectiveRootOrgIds()
+        {
             if (CanChangeScope && OrgId.HasValue && OrgId.Value > 0)
-                return OrgDescendants(OrgId.Value);
+                return new List<long> { OrgId.Value };
 
             var user = App.DAL.User.Get(EffectiveUserId);
             if (user == null) return new List<long>();
@@ -330,10 +348,7 @@ namespace App.Pages.Me
             var ids = new List<long>();
             if (user.OrgId.HasValue) ids.Add(user.OrgId.Value);
             if (user.AuthOrgIds != null) ids.AddRange(user.AuthOrgIds);
-            ids = ids.Distinct().Where(x => x > 0).ToList();
-            if (ids.Count == 0) return new List<long>();
-
-            return OrgDescendants(ids);
+            return ids.Distinct().Where(x => x > 0).ToList();
         }
 
         private List<long> GetSectionScopeOrgIds()
@@ -405,6 +420,38 @@ namespace App.Pages.Me
             if (t.ExpireDt.HasValue && t.ExpireDt.Value <= DateTime.Now) return "超期";
             if (t.TotalCount > 0 && t.FinishCount >= t.TotalCount)      return "已完成";
             return "进行中";
+        }
+
+        //---------------------------------------------------------------------
+        // 卡片 URL 拼接：把当前 scope（checkerId/dutyOrgId）追加到目标列表页 URL 查询参数上
+        //---------------------------------------------------------------------
+        private string AppendObjectScope(string rawUrl)
+        {
+            if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
+            var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+            var roots = EffectiveRootOrgIds;
+            if (roots != null && roots.Count == 1)
+                qs["dutyOrgId"] = roots[0].ToString();
+            else if (roots != null && roots.Count > 1)
+                qs["dutyOrgIds"] = string.Join(",", roots);
+
+            if (qs.Count == 0) return rawUrl;
+            var sep = rawUrl.Contains('?') ? '&' : '?';
+            return rawUrl + sep + qs.ToString();
+        }
+
+        private string AppendHazardScope(string rawUrl)
+        {
+            if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
+            var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+            var uid = EffectiveUserId;
+            if (uid > 0) qs["checkerId"] = uid.ToString();
+
+            if (qs.Count == 0) return rawUrl;
+            var sep = rawUrl.Contains('?') ? '&' : '?';
+            return rawUrl + sep + qs.ToString();
         }
 
         //---------------------------------------------------------------------

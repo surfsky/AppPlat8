@@ -33,6 +33,7 @@
     <script src="/lib/vue/vue.global.prod.js"></script>
     <script src="/lib/element-plus/index.js"></script>
     <link rel="stylesheet" href="/lib/font-awesome-6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/app-global.css">
     <script src="/ui/tailwindConfig.js"></script>
     <script src="/ui/MenuTree.js?v=@DateTime.Now.Ticks"></script>
     <style>
@@ -186,10 +187,10 @@
         }
         .nav-item:hover,
         .nav-item-parent:hover {
-            background-color: rgba(255, 255, 255, 0.20) !important;
+            background-color: #DBEAFE !important;
         }
         .nav-item.active {
-            background-color: rgba(255, 255, 255, 0.20) !important;
+            background-color: #BFDBFE !important;
         }
 
         /* Sidebar overlay for mobile - fixed positioning */
@@ -349,7 +350,7 @@
         <div class="flex flex-1 overflow-hidden pt-16 pb-0 box-border bg-slate-100">
             <div
                 id="sidebarMobile"
-                class="sidebar w-60 md:w-auto bg-[#3B71F8] fixed md:relative left-0 top-16 md:top-0 h-[calc(100vh-64px)] md:h-full z-40 md:z-auto flex flex-col overflow-y-auto overflow-x-hidden -translate-x-full md:translate-x-0 transition-transform duration-300"
+                class="sidebar w-60 md:w-auto bg-[#EFF6FF] border-r border-slate-200 fixed md:relative left-0 top-16 md:top-0 h-[calc(100vh-64px)] md:h-full z-40 md:z-auto flex flex-col overflow-y-auto overflow-x-hidden -translate-x-full md:translate-x-0 transition-transform duration-300"
                 :class="{ 'sidebar-desktop-collapsed': !isMobile && desktopSidebarCollapsed }"
                 :style="!isMobile ? { width: desktopSidebarCollapsed ? '0px' : (sidebarPanelSize + 'px'), flexShrink: 0 } : null"
             >
@@ -432,7 +433,7 @@
                 const sidebarOpen = ref(false);
                 const navigationHistory = ref([]);
                 const hasHistory = computed(() => navigationHistory.value.length > 0);
-                const menuTextColor = ref('#cbd5e1');
+                const menuTextColor = ref('#1e293b');
                 const aiDrawerVisible = ref(false);
                 const aiDrawerSize = ref('50%');
                 const aiChatUrl = ref('/AI/Chat');

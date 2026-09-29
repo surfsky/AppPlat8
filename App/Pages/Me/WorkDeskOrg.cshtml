@@ -7,71 +7,174 @@
     var orgDisplay = (string.IsNullOrWhiteSpace(Model.OrgDisplay)
         ? (Model.OrgId.HasValue && Model.OrgId.Value > 0 ? ("ID=" + Model.OrgId.Value) : "请选择组织")
         : Model.OrgDisplay);
+    // 把显示名回写到 BindProperty 属性，便于 EleApp BuildAutoExposeModelJson 序列化到 window.model
+    if (string.IsNullOrWhiteSpace(Model.OrgName) && !string.IsNullOrWhiteSpace(Model.OrgDisplay))
+        Model.OrgName = Model.OrgDisplay;
     var activeTab = Request.Query["taskTab"].FirstOrDefault() ?? "unfinished";
+
+    var quickEntries = new List<App.Pages.Me.WorkDeskLink>
+    {
+        new App.Pages.Me.WorkDeskLink { Title = "一张图",   Url = "/GIS/Index",           Target = "_blank" },
+        new App.Pages.Me.WorkDeskLink { Title = "知识库",   Url = "/KB/Index",            Target = "_self"  },
+        new App.Pages.Me.WorkDeskLink { Title = "值班表",   Url = "/OA/DutySchedules",    Target = "_self"  },
+        new App.Pages.Me.WorkDeskLink { Title = "通讯录",   Url = "/CRM/Contacts",        Target = "_self"  },
+    };
 }
 
 @section body {
-<div class="w-full min-h-screen text-[15px] text-[#333] font-sans"
-     style="background:#f5f5f5;font-family:PingFang SC,Microsoft YaHei,Helvetica Neue,Arial,sans-serif;">
+<div class="w-full min-h-screen bg-white text-[15px] text-[#1e293b]">
   <div class="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
-    <div class="w-full h-full rounded bg-[#f5f5f5] p-6">
+    <div class="w-full rounded bg-white p-6">
 
-      <!-- 顶部：组织选择 + 说明 -->
-      <section class="mb-8 flex flex-wrap items-start gap-4">
-        <div class="inline-flex items-center">
-          <div id="org-picker-wrap"
-               class="inline-flex items-center border border-[#bbb] rounded h-10 px-4 text-base bg-white @(Model.CanChangeScope ? "cursor-pointer hover:border-[#1677ff] hover:text-[#1677ff]" : "opacity-60 pointer-events-none cursor-not-allowed")"
-               style="min-width:120px;"
-               @(Model.CanChangeScope ? "" : "aria-disabled=\"true\"")>
-            <span id="org-picker-name" class="mr-1.5 text-[#333]">@orgDisplay</span>
-            <span class="text-[#999] text-lg leading-none">&rsaquo;</span>
+      <!-- 顶部：组织选择 + 说明 + 个人入口 -->
+      <!-- 不使用 ElePicker 避免影响其他列表页：同 WorkDesk 一样用极简自定义 + openDrawer + 直接整页跳转 -->
+      <section class="mb-8 flex flex-wrap items-start justify-between gap-4 w-full">
+        <div class="flex items-center gap-5 flex-wrap">
+          <div class="inline-flex items-center">
+            @{
+                var canChangeOrg = Model.CanChangeScope;
+                var orgPickerCls = canChangeOrg ? "cursor-pointer" : "cursor-not-allowed opacity-75";
+                var orgPopupUrl = "/Maintains/Orgs?md=select&multi=false";
+                var orgPlaceholder = string.IsNullOrWhiteSpace(orgDisplay) ? "请选择组织" : orgDisplay;
+            }
+            <div id="wdo-org-picker"
+                 class="ele-picker-wrapper @orgPickerCls"
+                 style="width: 260px;"
+                 data-can-change="@(canChangeOrg ? "true" : "false")"
+                 data-popup-url="@orgPopupUrl"
+                 data-current-id="@orgVal"
+                 data-current-name="@orgDisplay">
+              <div class="el-input el-input--suffix">
+                <div class="el-input__wrapper">
+                  <div class="flex flex-wrap gap-1 items-center w-full py-1" style="min-height: 30px;">
+                    @if (!string.IsNullOrWhiteSpace(orgDisplay))
+                    {
+                        <span class="el-tag el-tag--info max-w-full overflow-hidden text-ellipsis whitespace-nowrap" disable-transitions>@orgPlaceholder
+                          @if (canChangeOrg)
+                          {
+                              <button id="wdo-org-clear" type="button"
+                                      class="el-tag__close el-icon el-icon--close cursor-pointer ml-1"
+                                      aria-label="remove"
+                                      style="display:inline-flex;align-items:center;justify-content:center;">×</button>
+                          }
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="text-gray-400 text-sm">请选择组织</span>
+                    }
+                  </div>
+                  <span class="el-input__suffix">
+                    <span class="el-input__suffix-inner @orgPickerCls" style="pointer-events:auto;" title="打开选择窗口">
+                      <i class="fas fa-search text-gray-400 text-sm" aria-hidden="true"></i>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
             <input id="org-picker-id" type="hidden" value="@orgVal" />
           </div>
+          <div class="text-xs text-[#64748b] leading-snug pt-1">
+            <div>显示应急管理局、4个中心、基础。</div>
+            <div>默认为当前用户归属的组织。仅管理员或领导可以修改切换。</div>
+          </div>
         </div>
-        <div class="text-xs text-[#666] leading-snug pt-1">
-          <div>显示应急管理局、4个中心、基础。</div>
-          <div>默认为当前用户归属的组织。仅管理员或领导可以修改切换。</div>
+        <EleButton Type="Default"
+                   NavigateUrl="/Me/WorkDesk"
+                   IconCls="fas fa-user">
+          个人工作台
+        </EleButton>
+      </section>
+
+      <!-- 从快捷入口开始，用独立 EleApp Mount 容器包裹：内部 EleButton/el-tabs/EleTable 能正确被 Vue hydrate。
+           顶部组织选择器（#wdo-org-picker）用原生 JS 实现，放在 Vue app 外部避免冲突。 -->
+      <div id="wdo-top">
+
+      <!-- 快捷入口 -->
+      <section class="mb-10">
+        <h2 class="mb-5 text-[18px] font-semibold text-slate-800">快捷入口</h2>
+        <div class="flex flex-wrap gap-4">
+          @foreach (var item in quickEntries)
+          {
+            var blank = string.Equals(item.Target, "_blank", StringComparison.OrdinalIgnoreCase);
+            if (blank)
+            {
+              <a target="_blank" rel="noopener" href="@item.Url" class="inline-block no-underline">
+                <EleButton Type="Default"
+                           Look="Plain"
+                           Height="56"
+                           Width="160"
+                           IconCls="fas fa-bolt text-blue-500">
+                  @item.Title
+                </EleButton>
+              </a>
+            }
+            else
+            {
+              <EleButton Type="Default"
+                         Look="Plain"
+                         Height="56"
+                         Width="160"
+                         IconCls="fas fa-bolt text-blue-500"
+                         NavigateUrl="@item.Url">
+                @item.Title
+              </EleButton>
+            }
+          }
         </div>
       </section>
 
       <!-- 科室管理对象 -->
       <section class="mb-10">
-        <h2 class="mb-5 text-[18px] font-semibold text-[#111]">科室管理对象</h2>
-        <div class="flex flex-wrap gap-6">
+        <h2 class="mb-5 text-[18px] font-semibold text-slate-800">科室管理对象</h2>
+        <div class="flex flex-wrap gap-5">
           @foreach (var c in Model.ObjectStatCards)
           {
-            <a href="@c.Url" class="group relative inline-flex h-16 min-w-[140px] items-center justify-center border border-[#bbb] rounded bg-white px-8 text-[16px] text-[#333] hover:border-[#1677ff] hover:text-[#1677ff] hover:-translate-y-0.5 hover:shadow-md transition no-underline">
-              @c.Title
+            <div class="relative inline-block">
+              <EleButton Type="Default"
+                         Look="Plain"
+                         Height="64"
+                         Width="180"
+                         NavigateUrl="@c.Url">
+                @c.Title
+              </EleButton>
               @if (c.ShowBadge)
               {
-                <span class="absolute -right-3 -top-3 inline-flex h-7 min-w-[28px] items-center justify-center rounded-full px-2 text-[12px] font-bold text-white shadow" style="background:linear-gradient(135deg,#f59e0b,#d97706);">@c.Count</span>
+                <span class="absolute -right-2 -top-2 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full px-2 text-[12px] font-bold text-white shadow"
+                      style="background:linear-gradient(135deg,#f59e0b,#d97706);">@c.Count</span>
               }
-            </a>
+            </div>
           }
         </div>
       </section>
 
       <!-- 科室隐患 -->
       <section class="mb-10">
-        <h2 class="mb-5 text-[18px] font-semibold text-[#111]">科室隐患</h2>
-        <div class="flex flex-wrap gap-6">
+        <h2 class="mb-5 text-[18px] font-semibold text-slate-800">科室隐患</h2>
+        <div class="flex flex-wrap gap-5">
           @foreach (var c in Model.HazardStatCards)
           {
-            var showBadge = (c.Title.Contains("待处理") || c.Title.Contains("超期")) && c.ShowBadge;
-            <a href="@c.Url" class="group relative inline-flex h-16 min-w-[140px] items-center justify-center border border-[#bbb] rounded bg-white px-8 text-[16px] text-[#333] hover:border-[#1677ff] hover:text-[#1677ff] hover:-translate-y-0.5 hover:shadow-md transition no-underline">
-              @c.Title
-              @if (showBadge)
+            <div class="relative inline-block">
+              <EleButton Type="Default"
+                         Look="Plain"
+                         Height="64"
+                         Width="180"
+                         NavigateUrl="@c.Url">
+                @c.Title
+              </EleButton>
+              @if (c.ShowBadge)
               {
-                <span class="absolute -right-3 -top-3 inline-flex h-7 min-w-[28px] items-center justify-center rounded-full px-2 text-[12px] font-bold text-white shadow" style="background:linear-gradient(135deg,#f59e0b,#d97706);">@c.Count</span>
+                <span class="absolute -right-2 -top-2 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full px-2 text-[12px] font-bold text-white shadow"
+                      style="background:linear-gradient(135deg,#f59e0b,#d97706);">@c.Count</span>
               }
-            </a>
+            </div>
           }
         </div>
       </section>
 
-      <!-- 科室任务（未完成 / 全部 Tab） -->
-      <section class="mb-6">
-        <h2 class="mb-4 text-[18px] font-semibold text-[#111]">科室任务</h2>
+      <!-- 科室任务（统一最大宽度，与上方 快捷入口/管理对象/隐患 水平对齐） -->
+      <section class="mb-6 w-full max-w-full">
+        <h2 class="mb-4 text-[18px] font-semibold text-slate-800">科室任务</h2>
 
         @{
             var tabs = new[]
@@ -79,30 +182,14 @@
                 new { Key = "unfinished", Label = "未完成" },
                 new { Key = "all",        Label = "全部"   },
             };
-            string OrgQp()
-            {
-                var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
-                if (Model.OrgId.HasValue && Model.OrgId.Value > 0) qs["orgId"] = Model.OrgId.Value.ToString();
-                return qs.ToString();
-            }
         }
 
-        <div class="mb-4 flex items-center gap-14 border-b border-[#ddd] pb-0">
+        <el-tabs tab-position="top" value="@activeTab" @@tab-change="(k)=>switchTaskTab(k)" class="w-full">
           @foreach (var t in tabs)
           {
-              var active = string.Equals(t.Key, activeTab, StringComparison.OrdinalIgnoreCase);
-              var href = $"{Request.Path}?{OrgQp()}&taskTab={t.Key}";
-              <a href="@href"
-                 class="relative inline-flex h-11 items-center text-[16px] px-1 transition no-underline @(active ? "text-[#1677ff] font-semibold" : "text-[#333] hover:text-[#1677ff]")"
-                 onclick="event.preventDefault();document.getElementById('taskTabInput').value='@t.Key';document.getElementById('wdOrgTaskForm').submit();">
-                @t.Label
-                @if (active)
-                {
-                    <span class="absolute left-0 right-0 bottom-[-1px] h-[2px]" style="background:#1677ff;"></span>
-                }
-              </a>
+            <el-tab-pane label="@t.Label" name="@t.Key"></el-tab-pane>
           }
-        </div>
+        </el-tabs>
 
         <form id="wdOrgTaskForm" method="get" action="@Request.Path" class="hidden">
           @if (Model.OrgId.HasValue && Model.OrgId.Value > 0) {
@@ -111,132 +198,181 @@
           <input id="taskTabInput" type="hidden" name="taskTab" value="@activeTab" />
         </form>
 
-        <div class="border border-[#888] rounded-t bg-white" style="padding:2px 2px 0 2px;">
-          <div style="padding:12px 16px 0 16px;">
-            <div class="text-xs text-[#888] mb-1">点击后可查看清单</div>
-            <EleTable PageSize="10"
-                      Title=""
-                      EnableBatch="false"
-                      RowKey="id"
-                      DataHandler="?handler=OrgTasks&orgId=@orgVal&taskTab=@activeTab">
-              <Toolbar>
-                <Filters></Filters>
-                <Buttons></Buttons>
-              </Toolbar>
-              <Columns>
-                <EleNumColumn Label="序号" Width="70" Align="center" Sortable="false" />
-                <EleColumn Prop="name"         Label="名称"     MinWidth="240" Sortable="false" />
-                <EleColumn Prop="levelText"    Label="级别"     MinWidth="220" Sortable="false" />
-                <EleColumn Prop="creatorOrg"   Label="发起组织" MinWidth="180" Sortable="false" />
-                <EleColumn Prop="progress"     Label="进度"     MinWidth="160" Sortable="false">
-                  <template #default="{ row }">
-                    <el-progress :percentage="(row && row.progress!=null)? Number(row.progress) : 0"
-                                 :stroke-width="10"></el-progress>
-                  </template>
-                </EleColumn>
-                <EleColumn Prop="progressText" Label="进度"     MinWidth="140" Sortable="false">
-                  <template #default="{ row }">
-                    <span v-if="row && row.progressText==='超期'"   class="text-[#d4380d] font-semibold">超期</span>
-                    <span v-else-if="row && row.progressText==='已完成'" class="text-[#389e0d] font-semibold">已完成</span>
-                    <span v-else class="text-[#1677ff] font-medium">进行中</span>
-                  </template>
-                </EleColumn>
-                <EleColumn Prop="startDt"      Label="开始日期" Width="120" FormatString="yyyy/M/d" Sortable="false" />
-                <EleColumn Prop="expireDt"     Label="结束日期" Width="120" FormatString="yyyy/M/d" Sortable="false" />
-                <EleLinkColumn Prop="detailUrl" Label="详情"    Width="90"  Align="center" Text="清单" Sortable="false" />
-              </Columns>
-            </EleTable>
-          </div>
+        <div class="mt-3 rounded w-full overflow-hidden">
+          @{
+              // 把当前 SSR 生效的 orgId/taskTab 直接拼到 DataHandler URL Query 上（原因同 WorkDesk）。
+              var effectiveOrgId = Model.EffectiveOrgId > 0 ? Model.EffectiveOrgId.ToString() : "";
+              var taskDH = "?handler=OrgTasks";
+              if (!string.IsNullOrEmpty(effectiveOrgId)) taskDH += $"&orgId={System.Net.WebUtility.UrlEncode(effectiveOrgId)}";
+              if (!string.IsNullOrWhiteSpace(activeTab))  taskDH += $"&taskTab={System.Net.WebUtility.UrlEncode(activeTab)}";
+          }
+          <EleTable PageSize="10"
+                    Title=""
+                    EnableBatch="false"
+                    RowKey="id"
+                    Width="100%"
+                    DataHandler="@taskDH">
+            <Toolbar>
+              <Filters></Filters>
+              <Buttons></Buttons>
+            </Toolbar>
+            <Columns>
+              <EleNumColumn Label="序号" Width="70" Align="center" Sortable="false" />
+              <EleColumn Prop="name"         Label="名称"     MinWidth="240" Sortable="false" />
+              <EleColumn Prop="levelText"    Label="级别"     MinWidth="220" Sortable="false" />
+              <EleColumn Prop="creatorOrg"   Label="发起组织" MinWidth="180" Sortable="false" />
+              <EleColumn Prop="progress"     Label="进度"     MinWidth="160" Sortable="false">
+                <template #default="{ row }">
+                  <el-progress :percentage="(row && row.progress!=null)? Number(row.progress) : 0"
+                               :stroke-width="10"></el-progress>
+                </template>
+              </EleColumn>
+              <EleColumn Prop="progressText" Label="进度"     MinWidth="140" Sortable="false">
+                <template #default="{ row }">
+                  <span v-if="row && row.progressText==='超期'"   class="text-[#d4380d] font-semibold">超期</span>
+                  <span v-else-if="row && row.progressText==='已完成'" class="text-[#389e0d] font-semibold">已完成</span>
+                  <span v-else class="text-[#1677ff] font-medium">进行中</span>
+                </template>
+              </EleColumn>
+              <EleColumn Prop="startDt"      Label="开始日期" Width="120" FormatString="yyyy/M/d" Sortable="false" />
+              <EleColumn Prop="expireDt"     Label="结束日期" Width="120" FormatString="yyyy/M/d" Sortable="false" />
+              <EleLinkColumn Prop="detailUrl" Label="详情"    Width="90"  Align="center" Text="清单" Sortable="false" />
+            </Columns>
+          </EleTable>
         </div>
       </section>
+
+      </div>  <!-- #wdo-top 结束：保证 快捷入口/管理对象/隐患/任务 全部在 EleApp Vue app 挂载范围内 -->
 
     </div>
   </div>
 </div>
 
 <script>
+// ----- 预挂到 window.__pageExtras.model：在 EleApp setup 里会合并到 setup bindings，
+//       让 el-tabs @@tab-change="(k)=>switchTaskTab(k)" 模板表达式能直接访问，否则报 switchTaskTab is not a function。
+if (typeof window !== 'undefined') {
+    window.__pageExtras = window.__pageExtras || {};
+    window.__pageExtras.model = window.__pageExtras.model || {};
+    window.__pageExtras.model.switchTaskTab = function (key) {
+        var ti = document.getElementById('taskTabInput');
+        if (ti) ti.value = key || 'unfinished';
+        var fm = document.getElementById('wdOrgTaskForm');
+        if (fm) fm.submit();
+    };
+    window.__pageExtras.model.applyOrgScope = function (nextOrgId) {
+        var qs = new URLSearchParams(location.search);
+        if (nextOrgId) qs.set('orgId', nextOrgId); else qs.delete('orgId');
+        var url = location.pathname + (qs.toString() ? ('?' + qs.toString()) : '');
+        location.assign(url);
+    };
+}
+// 同时保留全局声明，便于外部非模板代码直接调用
+function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
+
 (function () {
-    var wrap = document.getElementById('org-picker-wrap');
-    var nameEl = document.getElementById('org-picker-name');
-    var idEl = document.getElementById('org-picker-id');
-    var canChange = @(Model.CanChangeScope ? "true" : "false");
-    var initOrgName = @Html.Raw("'" + System.Web.HttpUtility.JavaScriptStringEncode(orgDisplay ?? string.Empty) + "'");
-    var initOrgId = @Html.Raw(Model.OrgId.HasValue && Model.OrgId.Value > 0 ? Model.OrgId.Value.ToString() : "''");
-    if (idEl) idEl.value = typeof initOrgId === 'number' ? String(initOrgId) : (initOrgId || '');
-    if (nameEl && !nameEl.textContent) nameEl.textContent = initOrgName || '请选择组织';
+    // 选择完组织后直接改 URL 整页刷新：SSR 重算科室对象 / 隐患 / 任务
+    function applyOrgScope(nextOrgId) { window.__pageExtras.model.applyOrgScope(nextOrgId); }
 
-    function resolvePickerRows(payload) {
-        if (!payload) return [];
-        if (payload.type === 'ElePicker' && Array.isArray(payload.data)) return payload.data;
-        var sub = payload.data;
-        if (sub) {
-            if (sub.type === 'ElePicker' && Array.isArray(sub.data)) return sub.data;
-            var sub2 = sub.data;
-            if (sub2 && sub2.type === 'ElePicker' && Array.isArray(sub2.data)) return sub2.data;
-            if (Array.isArray(sub)) return sub;
-        }
-        if (Array.isArray(payload.rows)) return payload.rows;
-        return [];
-    }
-
-    function openDrawer() {
-        if (!canChange) return;
-        var mgr = (window.top && window.top.EleManager) ? window.top.EleManager : (window.EleManager || window.$eleManager);
-        if (!mgr || typeof mgr.openDrawer !== 'function') {
-            alert('窗口管理器尚未就绪，请稍后再试');
-            return;
-        }
-        var curId = idEl ? ((idEl.value || '').trim()) : '';
-        var curName = nameEl ? (nameEl.textContent || '').trim() : '';
-        var url = '/Maintains/Orgs?md=select&multi=false' + (curId ? ('&pickerValue=' + encodeURIComponent(curId) + '&pickerText=' + encodeURIComponent(curName)) : '');
-        mgr.openDrawer({
-            title: '选择组织/科室',
-            url: url,
-            direction: 'rtl',
-            size: '72%',
-            resizable: true,
-            closeOnClickModal: false,
-            destroyOnClose: true,
-            closeHandler: function (payload) {
-                var rows = resolvePickerRows(payload);
-                if (!rows.length && payload && payload.data && Array.isArray(payload.data)
-                    && (payload.data[0] && (payload.data[0].id != null || payload.data[0].name != null))) {
-                    rows = payload.data;
-                }
-                if (!rows.length) return;
-                var first = rows[0];
-                var oid = first.id != null ? String(first.id) : '';
-                var oname = (first.fullName && first.fullName !== '') ? String(first.fullName).trim()
-                          : (first.name && first.name !== '') ? String(first.name).trim()
-                          : (oid ? ('ID=' + oid) : '');
-                if (idEl) idEl.value = oid;
-                if (nameEl) nameEl.textContent = oname || '请选择组织';
-                applyScope();
+    function resolveFirstRow(payload) {
+        if (!payload || typeof payload !== 'object') return null;
+        if (payload.type === 'ElePicker') {
+            var d = payload.data || null;
+            if (Array.isArray(d) && d.length) return d[0];
+            if (d && typeof d === 'object') {
+                if (Array.isArray(d.rows) && d.rows.length) return d.rows[0];
+                if (d.id != null || d.Id != null) return d;
             }
-        });
+        }
+        if (payload.type === 'user-selected') {
+            var d2 = payload.data;
+            if (d2 && typeof d2 === 'object' && (d2.id != null || d2.Id != null)) return d2;
+            if (Array.isArray(d2) && d2.length) return d2[0];
+        }
+        if (payload.__elePageClose === true && payload.data && typeof payload.data === 'object') {
+            return resolveFirstRow(payload.data);
+        }
+        if (Array.isArray(payload) && payload.length) return payload[0];
+        if (payload.id != null || payload.Id != null) return payload;
+        return null;
     }
 
-    function init() {
-        if (wrap && canChange) {
-            wrap.addEventListener('click', function (e) {
-                e.preventDefault();
+    function waitForEleManager(cb, maxMs) {
+        var start = Date.now();
+        var iv = setInterval(function () {
+            try {
+                if (window.EleManager && typeof window.EleManager.openDrawer === 'function') {
+                    clearInterval(iv); cb(); return;
+                }
+            } catch (e) {}
+            if (Date.now() - start > (maxMs || 8000)) { clearInterval(iv); }
+        }, 80);
+    }
+
+    function onOrgSelected(payload) {
+        var row = resolveFirstRow(payload);
+        if (!row) return;
+        var nextId = row.id != null ? String(row.id) : (row.Id != null ? String(row.Id) : '');
+        if (!nextId) return;
+        var idInput = document.getElementById('org-picker-id');
+        if (idInput) idInput.value = nextId;
+        applyOrgScope(nextId);
+    }
+
+    function installOrgPicker() {
+        var wrap = document.getElementById('wdo-org-picker');
+        var idInput = document.getElementById('org-picker-id');
+        if (!wrap || !idInput) return;
+        var canChange = wrap.getAttribute('data-can-change') === 'true';
+        var popupUrl  = wrap.getAttribute('data-popup-url') || '';
+
+        wrap.addEventListener('click', function (ev) {
+            if (!canChange || !popupUrl) return;
+            waitForEleManager(function () {
+                var u = popupUrl + (popupUrl.indexOf('?') >= 0 ? '&' : '?') +
+                    'pickerKey=wdo_org&keyMode=Url' +
+                    '&pickerValue=' + encodeURIComponent(idInput.value || '') +
+                    '&pickerText='  + encodeURIComponent(wrap.getAttribute('data-current-name') || '');
+                window.EleManager.openDrawer({
+                    title: '选择目标组织',
+                    key:   'WdoOrgPicker',
+                    url:   u,
+                    mode:  'drawer',
+                    width: 900,
+                    closeHandler: function (payload) { onOrgSelected(payload); }
+                });
+            });
+        });
+
+        var clearBtn = document.getElementById('wdo-org-clear');
+        if (clearBtn && canChange) {
+            clearBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
-                openDrawer();
+                idInput.value = '';
+                applyOrgScope('');
             });
         }
-    }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
-    else init();
-})();
 
-function applyScope() {
-    var oid = (document.getElementById('org-picker-id') || {}).value || '';
-    var qs = new URLSearchParams();
-    if (oid) qs.set('orgId', oid);
-    var active = (document.getElementById('taskTabInput') || {}).value || '';
-    if (active) qs.set('taskTab', active);
-    var url = location.pathname + (qs.toString() ? ('?' + qs.toString()) : '');
-    location.assign(url);
-}
+        function onPickerMessage(e) {
+            try {
+                if (!e || !e.data) return;
+                var d = e.data;
+                if (typeof d === 'string') { try { d = JSON.parse(d); } catch (e2) { d = null; } }
+                if (!d || typeof d !== 'object') return;
+                if (d.type !== 'ElePicker' && d.type !== 'user-selected' && d.__elePageClose !== true) return;
+                onOrgSelected(d);
+            } catch (err) {}
+        }
+        window.addEventListener('message', onPickerMessage);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', installOrgPicker);
+    } else {
+        installOrgPicker();
+    }
+})();
 </script>
+
+<EleApp Mount="#wdo-top" />
 }

@@ -1,4 +1,5 @@
 //import EleManager from './EleManager.js';
+import { initPickerState, pickerMethods } from './form/pickerMethods.js';
 
 /**
  * Vue + element plus + dotnet razor page 应用构建器
@@ -256,8 +257,12 @@ export class EleAppBuilder {
     }
 
     mount(selector, config = {}) {
-        const { createApp, reactive, toRefs } = this.Vue;
+        const { createApp, reactive, toRefs, ref, onMounted, onUnmounted, nextTick } = this.Vue;
         const builder = this;
+
+        // SSR 默认值快照：见 EleTableAppBuilder.mount 中的同一根因说明，在 app.mount() 之前
+        // 收集 SSR 原始 DOM，避免 Element Plus/自定义组件 hydrate 后把 data-filter-* 删除
+        const snapshotDefaults = builder.collectFilterDefaults(selector || '#app');
 
         const app = this.createConfiguredApp(config, {
             setup() {
@@ -266,6 +271,47 @@ export class EleAppBuilder {
                     ? window[config.exposeName]
                     : {};
                 const state = reactive({ ...exposed });
+
+                // --- Filters + Picker 支持（让 ElePicker / EleSelect 等控件在非 EleTable/EleForm 页面也能正常工作）---
+                const filters = ref({});
+                // 构建 picker 上下文：需要包含 filters ref，pickerMethods 内部通过 _formHolder(ctx) 查找
+                const pickerCtx = { filters };
+                initPickerState(pickerCtx, builder.Vue);
+                // 关键点：pickerMethods 内部方法之间通过 this.xxx 相互调用（例如 clearPicker -> this.normalizePickerField，
+                // openPicker -> this.buildPickerUrl），必须先把整个 pickerMethods 挂载到 pickerCtx 上，
+                // 与 EleForm / EleTable 通过 Object.assign(prototype, pickerMethods) 的方式保持一致。
+                if (pickerMethods && typeof pickerMethods === 'object') {
+                    for (const [k, fn] of Object.entries(pickerMethods)) {
+                        if (typeof fn === 'function' && typeof pickerCtx[k] === 'undefined') {
+                            pickerCtx[k] = fn;
+                        }
+                    }
+                }
+                // 再从 pickerCtx 上取出所有 picker 方法并 bind 到 pickerCtx，交给模板直接调用
+                const boundPickerFns = {};
+                if (pickerMethods && typeof pickerMethods === 'object') {
+                    for (const [k, fn] of Object.entries(pickerMethods)) {
+                        if (typeof fn === 'function' && typeof pickerCtx[k] === 'function') {
+                            boundPickerFns[k] = pickerCtx[k].bind(pickerCtx);
+                        }
+                    }
+                }
+
+                // Cross-window message 监听：ElePicker 弹出窗口选择完成后会 postMessage 回来
+                const pickerMsgHandler = (e) => boundPickerFns.handlePickerMessage && boundPickerFns.handlePickerMessage(e);
+                onMounted(async () => {
+                    await nextTick();
+                    // 优先使用 mount 前快照的 SSR 默认值；如果快照为空，再退化为从 DOM 重新 collect
+                    const hasSnapshot = snapshotDefaults && Object.keys(snapshotDefaults).length > 0;
+                    const filterDefaults = hasSnapshot
+                        ? snapshotDefaults
+                        : builder.collectFilterDefaults(selector || '#app');
+                    builder.applyFilterDefaults(filters, filterDefaults);
+                    window.addEventListener('message', pickerMsgHandler);
+                });
+                onUnmounted(() => {
+                    window.removeEventListener('message', pickerMsgHandler);
+                });
 
                 // 处理POST请求
                 const postHandler = async (name, payload) => {
@@ -300,8 +346,27 @@ export class EleAppBuilder {
                 // 将状态和方法暴露给组件使用
                 const bindings = {
                     ...toRefs(state),
+                    filters,
                     postHandler,
-                    invokeCommand
+                    invokeCommand,
+                    // 把 picker 相关 ref 和方法交给模板，让 ElePicker 能调用 openPicker/clearPicker
+                    pickerVisible: pickerCtx.pickerVisible,
+                    pickerUrl: pickerCtx.pickerUrl,
+                    pickerTitle: pickerCtx.pickerTitle,
+                    pickerTargetId: pickerCtx.pickerTargetId,
+                    pickerTargetText: pickerCtx.pickerTargetText,
+                    pickerMulti: pickerCtx.pickerMulti,
+                    ...boundPickerFns,
+                    Utils: (typeof window !== 'undefined' && window.Utils) ? window.Utils : (typeof globalThis !== 'undefined' && globalThis.Utils) ? globalThis.Utils : null,
+                    openTopImageViewer: (url, list, idx) => {
+                        try {
+                            if (typeof window !== 'undefined' && window.Utils && typeof window.Utils.openImageViewerTop === 'function') {
+                                window.Utils.openImageViewerTop(url, list || null, idx || 0);
+                            } else if (url) {
+                                (window || globalThis).open(String(url), '_blank', 'noopener');
+                            }
+                        } catch (e) { try { console.warn('openTopImageViewer error', e); } catch (_) { } }
+                    }
                 };
                 for (const [key, value] of Object.entries(state)) {
                     if (typeof value === 'function') {
@@ -317,6 +382,33 @@ export class EleAppBuilder {
                         }
                     }
                 }
+
+                // --- 页面局部自定义方法注入：window.__pageExtras.${exposeName || 'page'} ---
+                // 当页面脚本需要在 Vue 模板表达式里（如 el-tabs @tab-change）直接调用自定义函数时，
+                // 把函数挂到 window.__pageExtras 上，此处会合并到 setup bindings，解决"xxx is not a function"问题
+                try {
+                    if (typeof window !== 'undefined') {
+                        const pageExtrasAll = window.__pageExtras;
+                        const scopeKey = (config.exposeName && typeof config.exposeName === 'string') ? config.exposeName : 'page';
+                        if (pageExtrasAll && typeof pageExtrasAll === 'object') {
+                            const scopeExtras = pageExtrasAll[scopeKey];
+                            if (scopeExtras && typeof scopeExtras === 'object') {
+                                for (const [k, v] of Object.entries(scopeExtras)) {
+                                    if (typeof bindings[k] !== 'undefined') continue;
+                                    bindings[k] = (typeof v === 'function') ? v.bind(bindings) : v;
+                                }
+                            }
+                            // 若页面未按 scopeKey 分组，也兜底把 window.__pageExtras 本身的所有 function/值合并
+                            // 仅合并 keys 不是字符串合法 scope 名的场景会误触发，这里显式跳过 exposeName 字段本身
+                            const knownScopeKeys = new Set(Object.keys(pageExtrasAll).filter(sk => sk && pageExtrasAll[sk] && typeof pageExtrasAll[sk] === 'object' && Object.keys(pageExtrasAll[sk]).length > 0));
+                            for (const [k, v] of Object.entries(pageExtrasAll)) {
+                                if (knownScopeKeys.has(k)) continue;
+                                if (typeof bindings[k] !== 'undefined') continue;
+                                bindings[k] = (typeof v === 'function') ? v.bind(bindings) : v;
+                            }
+                        }
+                    }
+                } catch (ex) { try { console.warn('[EleAppBuilder] merge __pageExtras error', ex); } catch (_) { } }
 
                 return bindings;
             }
