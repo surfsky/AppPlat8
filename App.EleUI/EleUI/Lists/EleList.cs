@@ -40,7 +40,7 @@ namespace App.EleUI
         public bool? ShowHeader { get; set; }
 
         [HtmlAttributeName("Title")]
-        public string Title { get; set; } = "列表";
+        public string Title { get; set; } = "";
 
         [HtmlAttributeName("DataHandler")]
         public string DataHandler { get; set; } = "?handler=Data";
@@ -70,7 +70,7 @@ namespace App.EleUI
         public string LoadText { get; set; } = "加载中...";
 
         [HtmlAttributeName("LastText")]
-        public string LastText { get; set; } = "没有更多数据了";
+        public string LastText { get; set; } = "";
 
         [HtmlAttributeName("MinHeight")]
         public string MinHeight { get; set; } = "40px";
@@ -134,7 +134,7 @@ namespace App.EleUI
             var itemClass = string.IsNullOrWhiteSpace(ItemClass) ? "p-4 border border-gray-100 rounded-lg bg-white shadow-sm" : ItemClass.Trim();
             var scrollClass = string.IsNullOrWhiteSpace(ScrollClass) ? "flex-1 overflow-auto px-2" : ScrollClass.Trim();
             var itemsClass = string.IsNullOrWhiteSpace(ItemsClass) ? "space-y-3 pb-3" : ItemsClass.Trim();
-            var title = string.IsNullOrWhiteSpace(Title) ? "列表" : Title.Trim();
+            var title = Title.Trim();
             var stateExpr = $"eleListState(`{listKey}`)";
             var showHeader = ShowHeader ?? !inForm;
             var minHeight = string.IsNullOrWhiteSpace(MinHeight) ? "40px" : MinHeight.Trim();
@@ -169,18 +169,24 @@ namespace App.EleUI
                 {template}
             </div>
 
-            <div v-if='{stateExpr}.loading' class='text-center text-gray-400 py-3'>{LoadText}</div>
-            {(string.IsNullOrWhiteSpace(footerTemplate)
-                ? $"<div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400 py-0'{emptyStyle}>{EmptyText}</div>"
-                : $"<div v-else-if='{stateExpr}.items.length === 0' class='text-gray-400 py-3 px-3 flex items-center justify-between gap-3'{emptyStyle}><span>{EmptyText}</span><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
-            {(string.IsNullOrWhiteSpace(footerTemplate)
-                ? $"<div v-else-if='{stateExpr}.finished' class='text-center text-gray-400 py-3'>{LastText}</div>"
-                : $"<div v-else-if='{stateExpr}.finished' class='text-gray-400 py-3 px-3 flex items-center justify-between gap-3'><span>{LastText}</span><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
-            {(string.IsNullOrWhiteSpace(footerTemplate)
-                ? ""
-                : $"<div v-else class='text-gray-400 py-2 px-3 flex items-center justify-end gap-2'><div class='flex items-center gap-2'>{footerTemplate}</div></div>")}
+            <div v-if='{stateExpr}.loading && {stateExpr}.items.length === 0' class='text-center text-gray-400 py-3'>{LoadText}</div>
+            <div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400{(!string.IsNullOrWhiteSpace(footerTemplate) ? " py-3 px-3 flex items-center justify-between gap-3" : " py-0")}'{emptyStyle}>
+                <span>{EmptyText}</span>
+                {(string.IsNullOrWhiteSpace(footerTemplate) ? "" : $"<div class='flex items-center gap-2'>{footerTemplate}</div>")}
+            </div>
+
+            <div v-if='{stateExpr}.items.length > 0 && {stateExpr}.finished' class='text-center text-gray-400 py-3{(string.IsNullOrWhiteSpace(footerTemplate) ? "" : " px-3 flex items-center justify-between gap-3")}'>
+                {(string.IsNullOrWhiteSpace(footerTemplate) ? LastText : $"<span>{LastText}</span><div class='flex items-center gap-2'>{footerTemplate}</div>")}
+            </div>
         </div>
     </div>
+
+    {(string.IsNullOrWhiteSpace(footerTemplate) ? "" : $@"
+    <div v-if='{stateExpr}.items.length > 0 && !{stateExpr}.finished' class='pt-2 px-3 flex items-center justify-end gap-2 shrink-0 border-t border-gray-50'>
+        <div class='flex items-center gap-2'>
+            {footerTemplate}
+        </div>
+    </div>")}
 </div>
 {endHtml}
 ");

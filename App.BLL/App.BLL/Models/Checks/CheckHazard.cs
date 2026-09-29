@@ -13,13 +13,15 @@ namespace App.DAL
     //-------------------------------------------------------
     // 其他枚举值
     //-------------------------------------------------------
+    // Waiting -> Processing -> Finished -> Monitor -> Archived
     [UI("检查", "隐患状态")]
     public enum CheckHazardStatus
     {
-        [UI("待整改")] Pending = 0,
-        [UI("整改中")] Rectifying = 1,
-        [UI("已整改")] Rectified = 2,
-        [UI("已关闭")] Closed = 3,
+        [UI("待整改")] Waiting = 0,
+        [UI("整改中")] Processing = 1,
+        [UI("已整改")] Finished = 2,
+        [UI("督查")]   Monitor = 3,
+        [UI("已归档")] Archived = 9,
     }
 
     //-------------------------------------------------------
@@ -34,8 +36,8 @@ namespace App.DAL
         [UI("检查表Id")] public long? CheckSheetId { get; set; }
         [UI("检查项Id")] public long? CheckItemId { get; set; }
         [UI("检查项内容")] public string CheckItemText { get; set; } // 冗余存储，防止检查项删除
-        [UI("隐患描述")] public string Description { get; set; }
-        [UI("整改状态")] public CheckHazardStatus? Status { get; set; } = CheckHazardStatus.Pending;
+        [UI("隐患描述")] public string Description { get; set; }     // 隐患详情
+        [UI("整改状态")] public CheckHazardStatus? Status { get; set; } = CheckHazardStatus.Waiting;
         [UI("整改期限")] public DateTime? ExpireDt { get; set; }
         [UI("整改日期")] public DateTime? RectifyDt { get; set; }
 

@@ -101,8 +101,8 @@ namespace App.Pages.Me
 
             var hazards = BuildHazardScopeQuery();
             CountOrgHazards     = hazards.Count();
-            CountPendingHazards = hazards.Where(h => h.Status == CheckHazardStatus.Pending || h.Status == CheckHazardStatus.Rectifying).Count();
-            CountOverdueHazards = hazards.Where(h => h.Status != CheckHazardStatus.Closed && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
+            CountPendingHazards = hazards.Where(h => h.Status == CheckHazardStatus.Waiting || h.Status == CheckHazardStatus.Processing).Count();
+            CountOverdueHazards = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
             HazardStatCards = new List<WorkDeskStatCard>
             {
                 new WorkDeskStatCard("发现的隐患",  CountOrgHazards,     "/Checks/CheckHazards"),

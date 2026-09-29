@@ -43,6 +43,13 @@
     dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
     dotnet app.dll --urls=http://localhost:6060;http://abc.org
     # 若端口被占用，查找并杀掉占用端口 6060 的进程
+
+   lsof -nPiTCP:6060 -sTCP:LISTEN 2>/dev/null \
+     | awk 'NR>1 && ($9=="127.0.0.1:6060" || $9=="[::1]:6060" || $9=="::1:6060" || $9=="localhost:6060" || $9=="localhost4:6060" || $9=="localhost6:6060") {print $2}' \
+     | sort -u \
+     | xargs -r -t kill
+     
+    
     lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
 
     # 编译EleUI示例项目
@@ -141,43 +148,43 @@ CodeGraphy 代码图谱以减少token消耗
 ｜---｜--------｜------------------------｜
 排查
     对象      Checks/CheckObjects   
-    排查      Checks/CheckLogs    
+    排查      Checks/CheckLogs  
     检查表    Checks/CheckSheets  
     隐患      Checks/CheckHarzards  
     任务      Checks/CheckTasks   
     报表      Checks/CheckReports   
 OA
-    资产      OA/Assets           
-    预算      OA/Budgets          
-    公告      OA/Annouces         
-    公司      OA/Company          
+    资产      OA/Assets         
+    预算      OA/Budgets        
+    公告      OA/Annouces       
+    公司      OA/Company        
 知识库
     文档      Articles/Articles   
     目录      Articles/ArticleDirs  
 交办
-    项目      OA/Projects         
-    交办      OA/Tasks            
-    事件      OA/Events           
+    项目      OA/Projects       
+    交办      OA/Tasks          
+    事件      OA/Events         
 驾驶舱
-    驾驶舱    GIS/Index           
-    菜单      GIS/Menu            
-    点位      GIS/Geometry        
-    面板      GIS/Panels          
+    驾驶舱    GIS/Index         
+    菜单      GIS/Menu          
+    点位      GIS/Geometry      
+    面板      GIS/Panels        
 账户
-    组织      Admins/Orgs         
-    用户      Admins/Users        
-    权限      Admins/Roles        
+    组织      Admins/Orgs       
+    用户      Admins/Users      
+    权限      Admins/Roles      
 运维
-    菜单      Maintains/Menus     
+    菜单      Maintains/Menus   
     在线      Maintains/Onlines   
-    配置      Maintains/Config    
-    日志      Maintains/Logs      
+    配置      Maintains/Config  
+    日志      Maintains/Logs    
 开发
-    图标     Dev/Icons            
-    API     Dev/API               
-    控件库   EleUI/Index          
+    图标     Dev/Icons          
+    API     Dev/API             
+    控件库   EleUI/Index        
 修改密码     Admins/ChangePassword  
-安全退出     Logout               
+安全退出     Logout             
 登陆        Login
 ```
 

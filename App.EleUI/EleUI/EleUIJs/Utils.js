@@ -463,6 +463,7 @@ export class Utils {
                 const found = Utils._findAttsInstanceForRefresh(args || {});
                 const w = Utils._resolveWindowScope(args && args.scope);
                 const inst = found.inst;
+                let didFormRefresh = false;
                 if (inst) {
                     console.log(TAG, '命中实例 matchType =', found.matchType);
                     try { if (Array.isArray(inst.selectedIds?.value)) inst.selectedIds.value = []; } catch (_) { }
@@ -482,14 +483,46 @@ export class Utils {
                     if (typeof inst.search === 'function') { try { await inst.search(); } catch (_) { } }
                     if (typeof inst.invokeCommand === 'function' && !did) { try { inst.invokeCommand('Search'); } catch (_) { } }
                 } else {
-                    console.warn(TAG, '未命中任何 Atts 实例；兜底广播 postMessage');
+                    console.warn(TAG, '未命中任何 Atts 实例；兜底：先尝试扫 window.__eleFormInstances__（父级 Drawer 内嵌 EleList 场景）');
+                    // --- 兜底：RefreshData(Parent) 常用于 Drawer 子表单保存后 → 父级 Drawer 里 EleForm + 内嵌 EleList 需要整体刷新 ---
+                    try {
+                        const scopeWin = (w && typeof w === 'object') ? w : (window.parent || window);
+                        const winsToScan = [scopeWin, window.top, window.parent, window].filter((v, i, a) => a.indexOf(v) === i && v && typeof v === 'object');
+                        for (const tw of winsToScan) {
+                            try {
+                                if (!Array.isArray(tw.__eleFormInstances__) || !tw.__eleFormInstances__.length) continue;
+                                const sorted = tw.__eleFormInstances__.slice().sort((a, b) => (b.time || 0) - (a.time || 0));
+                                const argsUniId = (args && args.uniId) ? String(args.uniId) : '';
+                                let pick = sorted[0];
+                                if (argsUniId) {
+                                    const exact = sorted.find(x => x && x.uniId === argsUniId);
+                                    if (exact) pick = exact;
+                                }
+                                if (pick && pick.form) {
+                                    console.log(TAG, '✅ 命中 EleForm 实例 path=', pick.path, 'uniId=', pick.uniId || '(无)');
+                                    if (typeof pick.form.load === 'function') {
+                                        try { await pick.form.load(); didFormRefresh = true; }
+                                        catch (e) { console.error(TAG, 'form.load 异常', e); }
+                                    }
+                                    if (typeof pick.form.refreshAllLists === 'function') {
+                                        try { await pick.form.refreshAllLists(true); didFormRefresh = true; }
+                                        catch (e) { console.error(TAG, 'form.refreshAllLists 异常', e); }
+                                    }
+                                    if (didFormRefresh) break;
+                                }
+                            } catch (scanErr) { console.warn(TAG, '扫 window.__eleFormInstances__ 异常', scanErr); }
+                        }
+                    } catch (_) { }
+                    if (!didFormRefresh) {
+                        console.warn(TAG, '未命中 Atts 和 EleForm，兜底广播 postMessage / CustomEvent');
+                    }
                     // 兜底：给目标 window 广播一个通用刷新事件，让各实例自行订阅
                     try {
                         if (w && typeof w.postMessage === 'function' && w !== window) {
-                            w.postMessage({ __attsMoveToRefresh__: true, needsRefresh: true, fromApplyCommands: true }, '*');
+                            w.postMessage({ __attsMoveToRefresh__: true, needsRefresh: true, fromApplyCommands: true, __eleFormRefreshAll: true }, '*');
                         }
                         if (window && typeof window.dispatchEvent === 'function') {
-                            window.dispatchEvent(new CustomEvent('eleui:refresh-data', { detail: args }));
+                            window.dispatchEvent(new CustomEvent('eleui:refresh-data', { detail: { ...(args || {}), __eleFormRefreshAll: true } }));
                         }
                     } catch (_) { }
                 }
@@ -535,6 +568,65 @@ export class Utils {
                 await new Promise(r => setTimeout(r, 200));
             }
         }
+    }
+
+    /**
+     * 在顶级窗口打开图片浏览器（避免 iframe/Drawer 层级不够被遮住）
+     * @param {string|string[]} url 单张图片或首张图片 URL
+     * @param {string[]|null} urlList 可选：多张图片列表；为空时自动从 url 推断
+     * @param {number} startIndex 从哪一张开始（0 起）
+     */
+    static openImageViewerTop(url, urlList = null, startIndex = 0) {
+        const arr = Array.isArray(urlList) && urlList.length > 0
+            ? urlList
+            : (Array.isArray(url) ? url : [url]);
+        const cleanedList = (arr || []).map(x => x == null ? '' : String(x)).filter(x => !!x && x.trim());
+        if (cleanedList.length === 0) return;
+
+        const safeStart = Number.isFinite(Number(startIndex))
+            ? Math.max(0, Math.min(Math.floor(Number(startIndex)), cleanedList.length - 1))
+            : 0;
+
+        const topWin = (window && window.top && window.top !== window && typeof (window.top ?? 0).document !== 'undefined')
+            ? window.top
+            : (window || globalThis);
+
+        const tryManager = (host) => {
+            if (!host) return false;
+            const m = host.EleManager || (typeof EleManager !== 'undefined' ? EleManager : null);
+            if (m && typeof m.openImageViewer === 'function') {
+                try { m.openImageViewer(cleanedList, safeStart); return true; } catch (_) { return false; }
+            }
+            return false;
+        };
+
+        if (tryManager(topWin)) return;
+        if (topWin !== window && tryManager(window)) return;
+
+        try { topWin.open(cleanedList[safeStart], '_blank', 'noopener'); } catch (_) { }
+    }
+
+    /**
+     * 根据原图片 URL 生成缩略图 URL（追加 ?w=xxx 参数；如果已有 query 则追加 &w=xxx）
+     * data: / blob: 协议直接返回，不走缩略
+     * @param {string} url 原图 URL（静态字符串或 Vue 表达式字符串都行，但仅静态时 URL 拼接有意义）
+     * @param {number} thumbWidth 缩略宽度像素，默认 128
+     * @returns {string}
+     */
+    static withThumbWidth(url, thumbWidth = 128) {
+        if (!url) return '';
+        const s = String(url);
+        if (!s || typeof s !== 'string') return '';
+        if (/^\s*data:|^\s*blob:/i.test(s)) return s;
+        const w = Number.isFinite(Number(thumbWidth)) ? Math.max(1, Math.floor(Number(thumbWidth))) : 128;
+        try {
+            const idx = s.indexOf('#');
+            const main = idx >= 0 ? s.slice(0, idx) : s;
+            const hash = idx >= 0 ? s.slice(idx) : '';
+            if (/[?&](?:w|width|tw|thumbnailWidth)=\d+/i.test(main)) return s;
+            const hasQuery = main.indexOf('?') >= 0;
+            return `${main}${hasQuery ? '&' : '?'}w=${w}${hash}`;
+        } catch (_) { return s; }
     }
 }
 

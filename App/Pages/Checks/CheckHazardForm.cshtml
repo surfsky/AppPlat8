@@ -22,47 +22,46 @@
         <EleSwitch For="Item.IsIn141" Label="是否录入141"></EleSwitch>
 
         <EleLabel Label="处理过程" FillRow="true"></EleLabel>
-        @if (Model.Mode != PageMode.New)
-        {
-            <EleList FillRow="true"
-                     DataHandler="?handler=LogsData&hazardId=@Model.Item.Id"
-                     PageSize="20" Height="200px" EmptyText="暂无处理记录"
-                     SortField="ReviewDt" SortDirection="DESC"
-                     ScrollClass="flex-1 overflow-auto"
-                     ItemsClass="space-y-1"
-                     ItemClass="py-2 px-3 border border-gray-100 rounded-md bg-gray-50">
-                <ItemTemplate>
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between gap-2 text-xs">
-                            <span class="text-gray-400">{{ item.reviewDt }}</span>
-                            <span class="text-gray-400">{{ item.reviewerName }}</span>
-                            <el-tag v-if="item.statusName" size="small" :type="statusTagType(item.status)">{{ item.statusName }}</el-tag>
-                        </div>
-                        <div class="text-sm text-gray-700">{{ item.content }}</div>
-                        <div v-if="item.image" class="mt-1">
-                            <el-image :src="item.image" :preview-src-list="[item.image]" fit="cover" style="width:60px;height:60px;border-radius:4px"></el-image>
-                        </div>
+        <EleList FillRow="true"
+                 MinHeight="600px"
+                 DataHandler="?handler=LogsData&hazardId=@Model.Item.Id"
+                 PageSize="20" Height="260px" EmptyText="暂无处理记录"
+                 SortField="CreateDt" SortDirection="ASC"
+                 ScrollClass="flex-1 overflow-auto"
+                 ItemsClass="space-y-1.5 py-1"
+                 ItemClass="py-2.5 px-3 border border-gray-100 rounded-md bg-white"
+                 ShowHeader="false">
+            <ItemTemplate>
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between gap-2 text-xs">
+                        <span class="text-gray-400">{{ (item.reviewDt || '').toString().replace('T', ' ').slice(0, 16) }}</span>
+                        <span class="text-gray-500">{{ item.reviewerName || '系统' }}</span>
+                        <el-tag v-if="item.statusName" size="small"  :type="item.status==0?'info':(item.status==1?'warning':(item.status==2?'success':(item.status==3?'primary':'info')))">
+                            {{ item.statusName }}
+                        </el-tag>
                     </div>
-                </ItemTemplate>
-                <Footer>
-                    <EleButton Type="Success" Handler="AddLog" EnabledFor="Item.Id"
-                               Visible="@(Model.Mode != PageMode.View && Model.Item.Status != CheckHazardStatus.Rectified && Model.Item.Status != CheckHazardStatus.Closed)">处理</EleButton>
-                </Footer>
-            </EleList>
-        }
-    
+                    <div class="text-sm text-gray-700 whitespace-pre-wrap break-words">{{ item.content }}</div>
+                    <div v-if="item.image && item.image.length > 0" class="mt-1">
+                        <EleImage VueSrc="item.image" Width="64" Height="64" ThumbWidth="128" Rounded="true" ViewerMode="Top"></EleImage>
+                    </div>
+                </div>
+            </ItemTemplate>
+            <Footer>
+            </Footer>
+        </EleList>    
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Command="Close">关闭</EleButton>
+            @if (Model.Mode == PageMode.Edit)
+            {
+                <EleButton Type="Primary" Handler="Log"        Visible="@(Model.Item.Status == CheckHazardStatus.Waiting)">复查</EleButton>
+                <EleButton Type="Success" Handler="Finish"     Visible="@(Model.Item.Status == CheckHazardStatus.Processing)" prompt="确认归档吗？">整改完成</EleButton>
+                <EleButton Type="Success" Handler="Monitor"    Visible="@(Model.Item.Status == CheckHazardStatus.Finished)">督查</EleButton>
+                <EleButton Type="Info"    Handler="Archive"    Visible="@(Model.Item.Status == CheckHazardStatus.Finished)"  prompt="确认归档吗？">归档</EleButton>
+            }
         </Bottom>
     </EleForm>
 }
 
 @section script {
-    <script>
-        window.statusTagType = function(status) {
-            const map = { 0: 'info', 1: 'warning', 2: 'success', 3: 'primary' };
-            return map[status] || 'info';
-        };
-    </script>
 }

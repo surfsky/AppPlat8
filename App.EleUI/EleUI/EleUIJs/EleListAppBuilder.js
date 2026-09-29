@@ -62,7 +62,17 @@ export class EleListAppBuilder extends EleAppBuilder {
                 return {
                     ...bindings,
                     listScrollEl,
-                    Utils: window.Utils
+                    Utils: (typeof window !== 'undefined' && window.Utils) ? window.Utils : (typeof globalThis !== 'undefined' && globalThis.Utils) ? globalThis.Utils : null,
+                    openTopImageViewer: (url, list, idx) => {
+                        try {
+                            if (typeof window !== 'undefined' && window.Utils && typeof window.Utils.openImageViewerTop === 'function') {
+                                window.Utils.openImageViewerTop(url, list || null, idx || 0);
+                                return;
+                            }
+                            // 兜底：无 Utils 时新标签页打开第一张
+                            if (url) (window || globalThis).open(String(url), '_blank', 'noopener');
+                        } catch (e) { try { console.warn('openTopImageViewer error', e); } catch (_) { } }
+                    }
                 };
             }
         });

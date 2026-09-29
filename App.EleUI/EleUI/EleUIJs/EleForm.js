@@ -301,6 +301,30 @@ export class EleForm {
         try { EleManager.closeDrawer(); } catch {}
     }
 
+    /** 刷新当前表单里所有内嵌 EleList（重置分页 + 重新拉数据）。forceReset=true 时强制从 pageIndex=0 开始。**/
+    async refreshAllLists(forceReset = true) {
+        const map = this.eleLists?.value ? this.eleLists.value : null;
+        if (!map) return;
+        const keys = Object.keys(map);
+        if (!keys.length) return;
+        for (const key of keys) {
+            try {
+                const st = this.eleListState(key);
+                if (!st || !st.dataHandler) continue;
+                if (forceReset) {
+                    st.pageIndex = 0;
+                    st.items = [];
+                    st.finished = false;
+                    st.total = 0;
+                }
+                await this.loadEleList(key, !!forceReset);
+            } catch (e) {
+                console.warn('[EleForm.refreshAllLists] key=', key, '异常', e);
+            }
+        }
+        await (Vue && typeof Vue.nextTick === 'function' ? Vue.nextTick() : Promise.resolve());
+    }
+
     async onCloseClick() {
         return this.close();
     }
@@ -338,9 +362,29 @@ export class EleForm {
                 headers: { 'RequestVerificationToken': EleManager.getCsrfToken() }
             });
             if (res.data.code === 0 || res.data.code === '0') {
-                this.success.value = '保存成功';
-                EleManager.showSuccess(res.data.msg || '保存成功');
+                // 兼容三种命令返回：res.data.command / res.data.data.command / res.data.data.commands 数组
+                const payloads = [res.data, res.data ? res.data.data : null].filter(Boolean);
+                const hasAnyCmd = payloads.some(p => (p && (typeof p.command === 'string' || Array.isArray(p.commands))));
+                if (typeof EleManager !== 'undefined' && EleManager) {
+                    for (const p of payloads) {
+                        if (!p || typeof p !== 'object') continue;
+                        if (typeof p.command === 'string') {
+                            try { EleManager.executeServerCommand(p); } catch (_) { }
+                        }
+                        if (Array.isArray(p.commands)) {
+                            for (const item of p.commands) {
+                                try { EleManager.executeServerCommand(item); } catch (_) { }
+                            }
+                        }
+                    }
+                }
+
                 this.originalForm.value = JSON.parse(JSON.stringify(this.form.value));
+                if (!hasAnyCmd) {
+                    this.success.value = '保存成功';
+                    EleManager.showSuccess(res.data.msg || '保存成功');
+                }
+
                 if (newAfterSave) {
                     const url = new URL(window.location.href);
                     url.searchParams.set('id', '0');
@@ -350,7 +394,20 @@ export class EleForm {
                 }
 
                 if (closeAfterSave) {
-                    await this.close({ saved: true });
+                    await this.close({ saved: true, _data: res.data });
+                    // 子表单关闭后：再给父级 Drawer 广播一次刷新信号（双保险：即使 RefreshData(Parent) 没被 Utils 命中，父级也能通过消息收到）
+                    try {
+                        const broascastPayload = { __eleRefreshData: true, __attsMoveToRefresh__: true, __eleFormRefreshAll: true, saved: true };
+                        if (window.parent && window.parent !== window) {
+                            try { window.parent.postMessage(broascastPayload, '*'); } catch (_) { }
+                        }
+                        if (window.top && window.top !== window) {
+                            try { window.top.postMessage(broascastPayload, '*'); } catch (_) { }
+                        }
+                        if (typeof window.dispatchEvent === 'function') {
+                            window.dispatchEvent(new CustomEvent('eleui:refresh-data', { detail: { __eleFormRefreshAll: true, scope: 'parent' } }));
+                        }
+                    } catch (_) { }
                 }
                 return true;
             }
@@ -396,12 +453,29 @@ export class EleForm {
                 headers: { 'RequestVerificationToken': EleManager.getCsrfToken() }
             });
             if (res && (res.data && (res.data.code === 0 || res.data.code === '0'))) {
-                const payload = res.data.data;
-                if (payload && typeof payload === 'object' && payload.command) {
-                    EleManager.executeServerCommand(payload);
+                // 兼容三种命令返回：
+                //  1) res.data.command（单命令）
+                //  2) res.data.data.command（单命令包在 data）
+                //  3) res.data.data.commands（数组，例如 BuildCommandsResult(Toast+CloseDrawer+RefreshData)）
+                const payloads = [res.data, res.data ? res.data.data : null].filter(Boolean);
+                const hasAnyCmd = payloads.some(p => (p && (typeof p.command === 'string' || Array.isArray(p.commands))));
+                if (typeof EleManager !== 'undefined' && EleManager) {
+                    for (const p of payloads) {
+                        if (!p || typeof p !== 'object') continue;
+                        if (typeof p.command === 'string') {
+                            try { EleManager.executeServerCommand(p); } catch (_) { }
+                        }
+                        if (Array.isArray(p.commands)) {
+                            for (const item of p.commands) {
+                                try { EleManager.executeServerCommand(item); } catch (_) { }
+                            }
+                        }
+                    }
                 }
-                this.success.value = res.data.msg || '操作成功';
-                EleManager.showSuccess(res.data.msg || '操作成功');
+                if (!hasAnyCmd) {
+                    this.success.value = res.data.msg || '操作成功';
+                    EleManager.showSuccess(res.data.msg || '操作成功');
+                }
             } else {
                 this.error.value = this.formatServerError('操作失败', res?.data, '操作失败');
                 EleManager.showError(this.error.value);

@@ -313,7 +313,7 @@ namespace App.API
             var hazard = CheckHazard.Get(id);
             if (hazard == null)
                 return new APIResult(400, "隐患不存在");
-            if (hazard.Status == CheckHazardStatus.Closed)
+            if (hazard.Status == CheckHazardStatus.Archived)
                 return new APIResult(400, "隐患已关闭，无法删除");
             if (!Auth.CheckRole("Admins") && hazard.CheckerId != Auth.GetUserId())
                 return new APIResult(403, "无权操作");

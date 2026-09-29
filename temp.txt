@@ -56,3 +56,7 @@
             catch { /* 日志失败不影响接口成功返回 */ }
             return OkResult(0, "ElePayload 链路正常（完整 data 已在弹窗中展示，详见 Test 返回对话框）", payload);
         }
+
+                <EleButton Type="Danger"  Handler="ReopenHazard"   Visible="@(Model.Item.Status == CheckHazardStatus.Archived)">重新打开</EleButton>
+
+                <EleButton Type="Warning" Handler="MarkRectifying" Visible="@(Model.Item.Status == CheckHazardStatus.Waiting)">开始整改</EleButton>
