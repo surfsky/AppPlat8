@@ -17,10 +17,10 @@ namespace App.DAL
     [UI("检查", "隐患状态")]
     public enum CheckHazardStatus
     {
-        [UI("待整改")] Waiting = 0,
+        [UI("新建")] Waiting = 0,
         [UI("整改中")] Processing = 1,
         [UI("已整改")] Finished = 2,
-        [UI("督查")]   Monitor = 3,
+        [UI("督查中")] Monitor = 3,
         [UI("已归档")] Archived = 9,
     }
 

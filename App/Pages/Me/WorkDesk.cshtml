@@ -3,12 +3,10 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "个人工作台";
-    // ResolveUserRealName 已保证：无 URL 参数时 UserId/UserRealName 已填充为当前登录用户
     var userVal = Model.UserId.HasValue && Model.UserId > 0 ? Model.UserId.Value.ToString() : "";
     var userDisplay = (string.IsNullOrWhiteSpace(Model.UserRealName)
         ? (Model.UserId.HasValue && Model.UserId.Value > 0 ? ("ID=" + Model.UserId.Value) : "请选择人员")
         : Model.UserRealName);
-    // SSR 同时把显示名写回 Model.UserName，便于 EleApp BuildAutoExposeModelJson 自动序列化到 window.model
     if (string.IsNullOrWhiteSpace(Model.UserName) && !string.IsNullOrWhiteSpace(Model.UserRealName))
         Model.UserName = Model.UserRealName;
     var activeTab = Request.Query["taskTab"].FirstOrDefault() ?? "unfinished";
@@ -24,26 +22,30 @@
         new App.Pages.Me.WorkDeskLink { Title = "值班表",   Url = "/OA/DutySchedules",    Target = "_self"  },
         new App.Pages.Me.WorkDeskLink { Title = "通讯录",   Url = "/CRM/Contacts",        Target = "_self"  },
     };
+    var tabs = new[]
+    {
+        new { Key = "unfinished", Label = "未完成" },
+        new { Key = "all",        Label = "全部"   },
+        new { Key = "created",    Label = "我发起的" },
+        new { Key = "handled",    Label = "我经手的" },
+    };
+
+    var canChange = Model.CanChangeScope;
+    var placeholderText = string.IsNullOrWhiteSpace(userDisplay) ? "请选择人员" : userDisplay;
+    var userPopupUrl = "/Admins/Users?md=select&multi=false";
+    var taskTabParam = Request.Query["taskTab"].FirstOrDefault();
 }
 
 @section body {
-<div class="w-full min-h-screen bg-white text-[15px] text-[#1e293b]">
+<div id="wdApp" class="w-full min-h-screen bg-white text-[15px] text-[#1e293b]">
   <div class="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
 
-    <!-- 顶部：用户选择 + 组织科室入口 -->
-    <!-- 注意：不使用 ElePicker 避免改动通用控件影响其他列表页。这里用极简样式 + 原生 JS 直接调 EleManager.openDrawer，选完立即改 URL 整页刷新。 -->
+    <!-- 顶部：人员选择 + 组织入口（原生 HTML + 原生 JS） -->
     <section class="mb-8 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-5 flex-wrap">
         <div class="inline-flex items-center">
-          @{
-              var canChange = Model.CanChangeScope;
-              var pickerCls = canChange ? "cursor-pointer" : "cursor-not-allowed opacity-75";
-              var placeholderText = string.IsNullOrWhiteSpace(userDisplay) ? "请选择人员" : userDisplay;
-              var userPopupUrl = "/Admins/Users?md=select&multi=false";
-              var taskTabParam = Request.Query["taskTab"].FirstOrDefault();
-          }
           <div id="wd-user-picker"
-               class="ele-picker-wrapper @pickerCls"
+               class="ele-picker-wrapper @(canChange ? "cursor-pointer" : "cursor-not-allowed opacity-75")"
                style="width: 240px;"
                data-can-change="@(canChange ? "true" : "false")"
                data-popup-url="@userPopupUrl"
@@ -53,240 +55,81 @@
             <div class="el-input el-input--suffix">
               <div class="el-input__wrapper">
                 <div class="flex flex-wrap gap-1 items-center w-full py-1" style="min-height: 30px;">
-                  @if (!string.IsNullOrWhiteSpace(userDisplay))
-                  {
-                      <span class="el-tag el-tag--info max-w-full overflow-hidden text-ellipsis whitespace-nowrap" disable-transitions>@placeholderText
-                        @if (canChange)
-                        {
-                            <button id="wd-user-clear" type="button"
-                                    class="el-tag__close el-icon el-icon--close cursor-pointer ml-1"
-                                    aria-label="remove"
-                                    style="display:inline-flex;align-items:center;justify-content:center;">×</button>
-                        }
-                      </span>
-                  }
-                  else
-                  {
-                      <span class="text-gray-400 text-sm">请选择人员</span>
+                  @if (!string.IsNullOrWhiteSpace(userDisplay)) {
+                    <span class="el-tag el-tag--info max-w-full overflow-hidden text-ellipsis whitespace-nowrap" disable-transitions>@placeholderText
+                      @if (canChange) {
+                        <button id="wd-user-clear" type="button"
+                                class="el-tag__close el-icon el-icon--close cursor-pointer ml-1"
+                                aria-label="remove"
+                                style="display:inline-flex;align-items:center;justify-content:center;">×</button>
+                      }
+                    </span>
+                  } else {
+                    <span class="text-gray-400 text-sm">请选择人员</span>
                   }
                 </div>
                 <span class="el-input__suffix">
-                  <span class="el-input__suffix-inner @pickerCls" style="pointer-events:auto;" title="打开选择窗口">
-                    <el-icon v-if="false"></el-icon>
+                  <span class="el-input__suffix-inner" style="pointer-events:auto;" title="打开选择窗口">
                     <i class="fas fa-search text-gray-400 text-sm" aria-hidden="true"></i>
                   </span>
                 </span>
               </div>
             </div>
           </div>
-          <input id="user-picker-id"    type="hidden" value="@userVal" />
-          <input id="duty-org-id"       type="hidden" value="@dutyOrgSingleVal" />
-          <input id="duty-org-ids"      type="hidden" value="@dutyOrgIdsStr" />
+          <input id="user-picker-id" type="hidden" value="@userVal" />
+          <input id="duty-org-id"    type="hidden" value="@dutyOrgSingleVal" />
+          <input id="duty-org-ids"   type="hidden" value="@dutyOrgIdsStr" />
         </div>
         <div class="text-xs text-[#64748b] leading-snug">
           <div>默认显示当前用户</div>
           <div>仅领导或管理员可切换其他用户</div>
         </div>
       </div>
-      <EleButton Type="Primary"
-                 NavigateUrl="/Me/WorkDeskOrg"
-                 IconCls="fas fa-building">
-        组织/科室入口
-      </EleButton>
+      <a href="/Me/WorkDeskOrg" class="inline-flex items-center gap-2 rounded-md bg-[#1677ff] px-4 py-2 text-white text-sm no-underline hover:bg-[#0d5bd6]">
+        <i class="fas fa-building"></i>
+        <span>组织/科室入口</span>
+      </a>
     </section>
 
-    <!-- 从快捷入口开始用独立的 EleApp Mount 容器包裹：
-         内部包含 EleButton / el-tabs / EleTable 等所有 Vue 组件，保证被 Vue hydrate 出正确样式。
-         顶部人员选择框（#wd-user-picker）用原生 JS 实现，放在 Vue app 外面，避免相互干扰。 -->
-    <div id="wd-top">
+    <!-- 快捷入口 + 我的管理对象 + 我的隐患 + 我的任务 四部分不再用 Razor 输出 el-button/el-badge，
+         改为由挂在 #wdApp 上的单个 Vue 实例通过 JS 模板字符串渲染，避免：
+         1) <template #slot> 被 Razor 吃了；2) <el-button> 因未被 Vue 挂载而失效；3) 原生徽章 span 替换为 Element Plus 的 el-badge。
+         SSR 只输出空壳 #wdTopSection 放原生 HTML（人员选择器 + 组织入口说明文字）+ #wdApp 空壳。 -->
+    <section id="wdQuick"      class="mb-10"></section>
+    <section id="wdObjects"    class="mb-10"></section>
+    <section id="wdHazards"    class="mb-10"></section>
 
-    <!-- 快捷入口 -->
-    <section class="mb-10">
-      <h2 class="mb-5 text-[18px] font-semibold text-slate-800">快捷入口</h2>
-      <div class="flex flex-wrap gap-4">
-        @foreach (var item in quickEntries)
-        {
-          var blank = string.Equals(item.Target, "_blank", StringComparison.OrdinalIgnoreCase);
-          if (blank)
-          {
-            <a target="_blank" rel="noopener" href="@item.Url" class="inline-block no-underline">
-              <EleButton Type="Default"
-                         Look="Plain"
-                         Height="56"
-                         Width="160"
-                         IconCls="fas fa-bolt text-blue-500">
-                @item.Title
-              </EleButton>
-            </a>
-          }
-          else
-          {
-            <EleButton Type="Default"
-                       Look="Plain"
-                       Height="56"
-                       Width="160"
-                       IconCls="fas fa-bolt text-blue-500"
-                       NavigateUrl="@item.Url">
-              @item.Title
-            </EleButton>
-          }
-        }
-      </div>
-    </section>
-
-    <!-- 我的管理对象 -->
-    <section class="mb-10">
-      <h2 class="mb-5 text-[18px] font-semibold text-slate-800">我的管理对象</h2>
-      <div class="flex flex-wrap gap-5">
-        @foreach (var c in Model.ObjectStatCards)
-        {
-          <div class="relative inline-block">
-            <EleButton Type="Default"
-                       Look="Plain"
-                       Height="64"
-                       Width="180"
-                       NavigateUrl="@c.Url">
-              @c.Title
-            </EleButton>
-            @if (c.ShowBadge)
-            {
-              <span class="absolute -right-2 -top-2 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full px-2 text-[12px] font-bold text-white shadow"
-                    style="background: linear-gradient(135deg, #f59e0b, #d97706);">@c.Count</span>
-            }
-          </div>
-        }
-      </div>
-    </section>
-
-    <!-- 我的隐患 -->
-    <section class="mb-10">
-      <h2 class="mb-5 text-[18px] font-semibold text-slate-800">我的隐患</h2>
-      <div class="flex flex-wrap gap-5">
-        @foreach (var c in Model.HazardStatCards)
-        {
-          <div class="relative inline-block">
-            <EleButton Type="Default"
-                       Look="Plain"
-                       Height="64"
-                       Width="180"
-                       NavigateUrl="@c.Url">
-              @c.Title
-            </EleButton>
-            @if (c.ShowBadge)
-            {
-              <span class="absolute -right-2 -top-2 inline-flex h-6 min-w-[24px] items-center justify-center rounded-full px-2 text-[12px] font-bold text-white shadow"
-                    style="background: linear-gradient(135deg, #f59e0b, #d97706);">@c.Count</span>
-            }
-          </div>
-        }
-      </div>
-    </section>
-
-    <!-- 我的任务（统一最大宽度，与上方 快捷入口/管理对象/隐患 水平对齐） -->
+    <!-- 我的任务：SSR 只输出空壳 #myTasksVueApp；真实模板放在 JS 里的 template 字符串里，
+         彻底绕开 Razor 把 <template> 解析成 Razor 语法块 / 吞掉 {{ }} / 转义 && 等所有坑 -->
     <section class="mb-10 w-full max-w-full">
       <h2 class="mb-4 text-[18px] font-semibold text-slate-800">我的任务</h2>
-
-      @{
-          var tabs = new[]
-          {
-              new { Key = "unfinished", Label = "未完成" },
-              new { Key = "all",        Label = "全部"   },
-              new { Key = "created",    Label = "我发起的" },
-              new { Key = "handled",    Label = "我经手的" },
-          };
-      }
-
-      <el-tabs tab-position="top" value="@activeTab" @@tab-change="(k)=>switchTaskTab(k)" class="w-full">
-        @foreach (var t in tabs)
-        {
-          <el-tab-pane label="@t.Label" name="@t.Key"></el-tab-pane>
-        }
-      </el-tabs>
-      <form id="wdTaskForm" method="get" action="@Request.Path" class="hidden">
-        @if (Model.UserId.HasValue && Model.UserId.Value > 0) {
-            <input type="hidden" name="userId" value="@Model.UserId.Value" />
-        }
-        <input id="taskTabInput" type="hidden" name="taskTab" value="@activeTab" />
-      </form>
-
-      <div class="mt-3 rounded w-full overflow-hidden">
-        @{
-            // 把当前 SSR 生效的 userId/taskTab 直接拼到 DataHandler URL Query 上。
-            // 因为 EleTable loadData 用 axios.get(this.dataHandler, { params: {...} })，会覆盖掉原来页面 URL 上
-            // 已有的 ?userId=xxx&taskTab=xxx，所以必须在这儿显式附上，否则 MyTasks handler 读不到它们，
-            // 导致按默认当前用户+unfinished 查询，显示"暂无数据"或对不上。
-            var effectiveUid = Model.EffectiveUserId > 0 ? Model.EffectiveUserId.ToString() : "";
-            var taskDH = "?handler=MyTasks";
-            if (!string.IsNullOrEmpty(effectiveUid)) taskDH += $"&userId={System.Net.WebUtility.UrlEncode(effectiveUid)}";
-            if (!string.IsNullOrWhiteSpace(activeTab))  taskDH += $"&taskTab={System.Net.WebUtility.UrlEncode(activeTab)}";
-        }
-        <EleTable PageSize="10"
-                  Title=""
-                  EnableBatch="false"
-                  RowKey="id"
-                  Width="100%"
-                  DataHandler="@taskDH">
-          <Columns>
-            <EleNumColumn Label="序号" Width="70" Align="center" Sortable="false" />
-            <EleColumn Prop="name"         Label="名称"     MinWidth="240" Sortable="false" />
-            <EleColumn Prop="levelText"    Label="级别"     MinWidth="220" Sortable="false" />
-            <EleColumn Prop="creatorOrg"   Label="发起组织" MinWidth="180" Sortable="false" />
-            <EleColumn Prop="progress"     Label="进度"     MinWidth="160" Sortable="false">
-              <template #default="{ row }">
-                <el-progress :percentage="(row && row.progress!=null)? Number(row.progress) : 0"
-                             :stroke-width="10"></el-progress>
-              </template>
-            </EleColumn>
-            <EleColumn Prop="progressText" Label="进度"     MinWidth="140" Sortable="false">
-              <template #default="{ row }">
-                <span v-if="row && row.progressText==='超期'"   class="text-[#d4380d] font-semibold">超期</span>
-                <span v-else-if="row && row.progressText==='已完成'" class="text-[#389e0d] font-semibold">已完成</span>
-                <span v-else class="text-[#1677ff] font-medium">进行中</span>
-              </template>
-            </EleColumn>
-            <EleColumn Prop="startDt"      Label="开始日期" Width="120" FormatString="yyyy/M/d" Sortable="false" />
-            <EleColumn Prop="expireDt"     Label="结束日期" Width="120" FormatString="yyyy/M/d" Sortable="false" />
-            <EleLinkColumn Prop="detailUrl" Label="详情"    Width="90"  Align="center" Text="清单" Sortable="false" />
-          </Columns>
-        </EleTable>
-      </div>
+      <div id="myTasksVueApp" class="w-full"></div>
     </section>
-
-    </div>  <!-- #wd-top 结束：保证以上快捷入口/管理对象/隐患/任务 全部在 EleApp Vue app 挂载范围内 -->
 
   </div>
 </div>
-
-<script>
-// ----- 预挂到 window.__pageExtras.model：在 EleApp setup 里会合并到 setup bindings，
-//       让 el-tabs @@tab-change="(k)=>switchTaskTab(k)" 模板表达式能直接访问（否则报 switchTaskTab is not a function）。
-//       注意：EleApp 默认 exposeName 是 "model"，对应 window.__pageExtras.model 分组。
-if (typeof window !== 'undefined') {
-    window.__pageExtras = window.__pageExtras || {};
-    window.__pageExtras.model = window.__pageExtras.model || {};
-    window.__pageExtras.model.switchTaskTab = function (key) {
-        var ti = document.getElementById('taskTabInput');
-        if (ti) ti.value = key || 'unfinished';
-        var fm = document.getElementById('wdTaskForm');
-        if (fm) fm.submit();
-    };
 }
-// 同时保留全局声明：外部脚本（非 Vue 模板内）调用时也能正常用
-function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
 
+@section script {
+<script>
+    // 把 SSR 初始化数据（快捷入口 / 对象卡片 / 隐患卡片 / 初始 tab / 人员）安全注入给 JS，
+    // 避免在 Razor 里写任何 el-* / template 标签，Vue 侧只读 window.__WD_INITIAL__ 渲染。
+    window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+        quickEntries  = quickEntries,
+        objectCards   = Model.ObjectStatCards,
+        hazardCards   = Model.HazardStatCards,
+        userId        = userVal,
+        initialTaskTab = activeTab,
+    }, new System.Text.Json.JsonSerializerOptions {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        Encoder              = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+    }));
+
+/* 原生全局辅助：人员选择器（在 Vue app 挂载外操作，避免 Vue 重绘销毁 input value）
+ * 选完人后整页刷新 URL（因为我的管理对象 / 我的隐患两个统计卡由 SSR 渲染，没法局部刷新）
+ * —— 但 我的任务切换 tab 走局部 loadTasks，不触发整页刷新。
+ */
 (function () {
-    // 同时把 applyUserScope 也挂到 pageExtras，将来若有需要在模板里直接调用
-    if (window.__pageExtras && window.__pageExtras.model) {
-        window.__pageExtras.model.applyUserScope = function (nextUserId) {
-            var qs = new URLSearchParams(location.search);
-            if (nextUserId) qs.set('userId', nextUserId); else qs.delete('userId');
-            var url = location.pathname + (qs.toString() ? ('?' + qs.toString()) : '');
-            location.assign(url);
-        };
-    }
-    // 直接拼 URL 整页刷新：SSR 会按 URL userId/TaskTab 重算 我的管理对象 / 我的隐患 / 我的任务
-    function applyUserScope(nextUserId) { window.__pageExtras.model.applyUserScope(nextUserId); }
-
     function makeDisplayName(r) {
         if (!r || typeof r !== 'object') return '';
         if (r.displayName && String(r.displayName).trim()) return String(r.displayName).trim();
@@ -298,11 +141,8 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
         var id = r.id != null ? r.id : r.Id;
         return id != null ? String(id) : '';
     }
-
-    // 从 ElePicker payload 中提取 row（与 pickerMethods.handlePickerMessage / resolvePickerCloseData 对齐）
     function resolveFirstRow(payload) {
         if (!payload || typeof payload !== 'object') return null;
-        // 优先：payload.type === 'ElePicker' || 'user-selected'；data 可能是 array 或对象
         if (payload.type === 'ElePicker') {
             var d = payload.data || null;
             if (Array.isArray(d) && d.length) return d[0];
@@ -316,7 +156,6 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
             if (d2 && typeof d2 === 'object' && (d2.id != null || d2.Id != null)) return d2;
             if (Array.isArray(d2) && d2.length) return d2[0];
         }
-        // 外层是 closeHandler 返回的 wrapper { code, message, data: {type:ElePicker,...}, __elePageClose }
         if (payload.__elePageClose === true && payload.data && typeof payload.data === 'object') {
             return resolveFirstRow(payload.data);
         }
@@ -324,7 +163,6 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
         if (payload.id != null || payload.Id != null) return payload;
         return null;
     }
-
     function waitForEleManager(cb, maxMs) {
         var start = Date.now();
         var iv = setInterval(function () {
@@ -336,7 +174,14 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
             if (Date.now() - start > (maxMs || 8000)) { clearInterval(iv); }
         }, 80);
     }
-
+    function applyUserScope(nextUserId) {
+        var qs = new URLSearchParams(location.search);
+        if (nextUserId) qs.set('userId', nextUserId); else qs.delete('userId');
+        var tb = qs.get('taskTab');
+        if (!tb) qs.set('taskTab', 'unfinished');
+        var url = location.pathname + (qs.toString() ? ('?' + qs.toString()) : '');
+        location.assign(url);
+    }
     function onUserSelected(payload) {
         var row = resolveFirstRow(payload);
         if (!row) return;
@@ -346,15 +191,12 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
         if (idInput) idInput.value = nextId;
         applyUserScope(nextId);
     }
-
     function installUserPicker() {
         var wrap = document.getElementById('wd-user-picker');
         var idInput = document.getElementById('user-picker-id');
         if (!wrap || !idInput) return;
         var canChange = wrap.getAttribute('data-can-change') === 'true';
         var popupUrl  = wrap.getAttribute('data-popup-url') || '';
-
-        // 点击打开用户选择 Drawer
         wrap.addEventListener('click', function (ev) {
             if (!canChange || !popupUrl) return;
             waitForEleManager(function () {
@@ -368,15 +210,10 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
                     url:   u,
                     mode:  'drawer',
                     width: 900,
-                    closeHandler: function (payload) {
-                        // closeHandler 最优先（UserSelector 先 EleManager.closePage(payload)）
-                        onUserSelected(payload);
-                    }
+                    closeHandler: function (payload) { onUserSelected(payload); }
                 });
             });
         });
-
-        // 清空按钮
         var clearBtn = document.getElementById('wd-user-clear');
         if (clearBtn && canChange) {
             clearBtn.addEventListener('click', function (e) {
@@ -385,9 +222,6 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
                 applyUserScope('');
             });
         }
-
-        // 兜底 message 监听（Drawer 内嵌 iframe 场景仍可能通过 window.postMessage 回传）
-        // 兼容 {type:'ElePicker', data:[row]} / {type:'user-selected', data:rowObj} / {__elePageClose,data:{type:ElePicker,...}}
         function onPickerMessage(e) {
             try {
                 if (!e || !e.data) return;
@@ -400,7 +234,6 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
         }
         window.addEventListener('message', onPickerMessage);
     }
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', installUserPicker);
     } else {
@@ -409,5 +242,334 @@ function switchTaskTab(key) { window.__pageExtras.model.switchTaskTab(key); }
 })();
 </script>
 
-<EleApp Mount="#wd-top" />
+<script>
+/* 全页 3 个 + 1 个 局部 Vue App：
+ *   App1 → 挂 #wdQuick     : 快捷入口（el-button 点击跳转）
+ *   App2 → 挂 #wdObjects   : 我的管理对象（el-badge 包 el-button，徽章显示 count）
+ *   App3 → 挂 #wdHazards   : 我的隐患（el-badge 包 el-button，徽章显示 count）
+ *   App4 → 挂 #myTasksVueApp : 我的任务（el-tabs + el-table + el-pagination，已验证通过）
+ * 四个 Vue 实例都挂载在互不影响的空壳 section 上，避免 SSR 输出的人员选择器原生 HTML 被 Vue 清空。
+ * - 所有事件 / 插槽全部用 v-on:xxx / v-slot:xxx 长写法，避开 Razor 对单个 AT 符号的误解析。
+ */
+(function () {
+    // -------- 统一按钮尺寸：快捷入口 / 对象 / 隐患 共用 180 x 64 --------
+    var BUTTON_STYLE = 'height:64px; width:180px; border-radius:8px; font-weight:500;';
+    var ICON_COLOR  = '#2563eb'; // tailwind blue-600，统一图标蓝
+
+    // -------- 图标映射（按 title 匹配 Font Awesome 6 图标） --------
+    var QUICK_ICON_MAP = {
+        '一张图':     'fas fa-map-location-dot',
+        '知识库':     'fas fa-book-open',
+        '值班表':     'fas fa-calendar-days',
+        '通讯录':     'fas fa-address-book',
+    };
+    var OBJECT_ICON_MAP = {
+        '我的对象':         'fas fa-warehouse',
+        '未巡查对象':       'fas fa-circle-check',
+        '临期巡查对象':     'fas fa-clock',
+        '超期未巡查对象':   'fas fa-triangle-exclamation',
+    };
+    var HAZARD_ICON_MAP = {
+        '我发现的隐患': 'fas fa-eye',
+        '待处理隐患':   'fas fa-inbox',
+        '超期隐患':     'fas fa-skull-crossbones',
+    };
+    function pickIcon(map, title, fallback) {
+        var key = title == null ? '' : String(title).trim();
+        return (map && map[key]) || fallback || 'fas fa-bolt';
+    }
+
+    // -------- 初始数据：从 SSR 注入的 window.__WD_INITIAL__ 读取（已做 camelCase） --------
+    var init = (window && window.__WD_INITIAL__) || {};
+    var quickEntries  = Array.isArray(init.quickEntries)  ? init.quickEntries  : [];
+    var objectCards   = Array.isArray(init.objectCards)   ? init.objectCards   : [];
+    var hazardCards   = Array.isArray(init.hazardCards)   ? init.hazardCards   : [];
+
+    // -------- Element Plus 公共 bootstrap（每个 Vue 实例共享） --------
+    function bootstrap(app) {
+        if (window.ElementPlusLocaleZhCn) app.use(ElementPlus, { locale: window.ElementPlusLocaleZhCn });
+        else app.use(ElementPlus);
+        if (window.ElementPlusIconsVue) {
+            for (var [k, v] of Object.entries(window.ElementPlusIconsVue)) app.component(k, v);
+        }
+    }
+
+    //---------------------------------------------------------------------
+    // -------- App1：快捷入口模板 --------
+    //---------------------------------------------------------------------
+    var QUICK_TEMPLATE =
+        '<h2 class="mb-5 text-[18px] font-semibold text-slate-800">快捷入口</h2>'
+        + '<div class="flex flex-wrap gap-5">'
+        + '    <div v-for="item in quickEntries" :key="item.url" class="inline-block">'
+        + '        <el-link :href="item.url" :target="item.target" :underline="false" rel="noopener" style="text-decoration:none;">'
+        + '            <el-button size="large" style="' + BUTTON_STYLE + '">'
+        + '                <template v-slot:default>'
+        + '                    <span style="display:inline-flex; align-items:center; gap:10px;">'
+        + '                        <i :class="item.iconClass" style="color:' + ICON_COLOR + ';"></i>'
+        + '                        <span>{{ item.title }}</span>'
+        + '                    </span>'
+        + '                </template>'
+        + '            </el-button>'
+        + '        </el-link>'
+        + '    </div>'
+        + '</div>';
+
+    function mountQuick() {
+        var { createApp, reactive, toRefs } = Vue;
+        var decorated = quickEntries.slice().map(function (it) {
+            return {
+                title:  it.title,
+                url:    it.url,
+                target: it.target,
+                iconClass: pickIcon(QUICK_ICON_MAP, it.title, 'fas fa-bolt'),
+            };
+        });
+        var app = createApp({
+            template: QUICK_TEMPLATE,
+            setup() {
+                var state = reactive({ quickEntries: decorated });
+                return toRefs(state);
+            }
+        });
+        bootstrap(app);
+        var el = document.getElementById('wdQuick');
+        console.log('[WorkDesk.wdQuick] el=', !!el, 'n=', decorated.length);
+        if (el) app.mount(el);
+    }
+
+    //---------------------------------------------------------------------
+    // -------- 公共徽章模板（对象/隐患共用）：WorkDeskStatCard[] --------
+    //---------------------------------------------------------------------
+    function buildCardsTemplate(titleText) {
+        return  '<h2 class="mb-5 text-[18px] font-semibold text-slate-800">' + titleText + '</h2>'
+              + '<div class="flex flex-wrap gap-5">'
+              + '    <div v-for="c in cards" :key="c.url" class="inline-block">'
+              + '        <el-badge :value="Number(c.count||0)" :hidden="!c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">'
+              + '            <el-link :href="c.url" target="_self" :underline="false" style="text-decoration:none;">'
+              + '                <el-button size="large" style="' + BUTTON_STYLE + '">'
+              + '                    <template v-slot:default>'
+              + '                        <span style="display:inline-flex; align-items:center; gap:10px;">'
+              + '                            <i :class="c.iconClass" style="color:' + ICON_COLOR + ';"></i>'
+              + '                            <span>{{ c.title }}</span>'
+              + '                        </span>'
+              + '                    </template>'
+              + '                </el-button>'
+              + '            </el-link>'
+              + '        </el-badge>'
+              + '    </div>'
+              + '</div>';
+    }
+    var OBJECTS_TEMPLATE = buildCardsTemplate('我的管理对象');
+    var HAZARDS_TEMPLATE = buildCardsTemplate('我的隐患');
+
+    function mountCards(containerId, cardsArray, templateForSection, logTag, iconMap) {
+        var { createApp, reactive, toRefs } = Vue;
+        var decorated = cardsArray.slice().map(function (c) {
+            return {
+                title:     c.title,
+                url:       c.url,
+                count:     Number(c.count || 0),
+                showBadge: c.showBadge === true || c.showBadge === 'true' || Number(c.count || 0) > 0,
+                iconClass: pickIcon(iconMap, c.title, 'fas fa-clipboard-list'),
+            };
+        });
+        var app = createApp({
+            template: templateForSection,
+            setup() {
+                var state = reactive({ cards: decorated });
+                return toRefs(state);
+            }
+        });
+        bootstrap(app);
+        var el = document.getElementById(containerId);
+        console.log('[WorkDesk.' + logTag + '] el=', !!el, 'cards=', decorated.length);
+        if (el) app.mount(el);
+    }
+
+    //---------------------------------------------------------------------
+    // -------- App4：我的任务（已验证模板/逻辑正确，保留原状） --------
+    //---------------------------------------------------------------------
+    var STATUS_OVERDUE  = '超期';
+    var STATUS_FINISHED = '已完成';
+    var TABS = [
+        { key: 'unfinished', label: '未完成' },
+        { key: 'all',        label: '全部'   },
+        { key: 'created',    label: '我发起的' },
+        { key: 'handled',    label: '我经手的' },
+    ];
+    var TASKS_TEMPLATE =
+        '<el-tabs v-model="taskTab" v-on:tab-change="onTaskTabChange" tab-position="top" class="w-full">'
+        + '    <el-tab-pane v-for="t in tabs" :key="t.key" :label="t.label" :name="t.key"></el-tab-pane>'
+        + '</el-tabs>'
+        + ''
+        + '<div class="mt-3 rounded w-full overflow-hidden border border-slate-200 bg-white">'
+        + '    <el-table :data="tasks" v-loading="loading" border stripe style="width:100%; height:520px;">'
+        + '        <el-table-column type="index" label="序号" width="70" align="center" />'
+        + '        <el-table-column prop="name"       label="名称"     min-width="240" show-overflow-tooltip />'
+        + '        <el-table-column prop="levelText"  label="级别"     min-width="220" show-overflow-tooltip />'
+        + '        <el-table-column prop="creatorOrg" label="发起组织" min-width="180" show-overflow-tooltip />'
+        + '        <el-table-column label="进度" min-width="160">'
+        + '            <template v-slot:default="{ row }">'
+        + '                <el-progress :percentage="Number((row && row.progress != null) ? row.progress : 0)" :stroke-width="10"></el-progress>'
+        + '            </template>'
+        + '        </el-table-column>'
+        + '        <el-table-column label="进度" min-width="140">'
+        + '            <template v-slot:default="{ row }">'
+        + '                <span v-if="row && row.progressText===STATUS_OVERDUE"  class="text-[#d4380d] font-semibold">超期</span>'
+        + '                <span v-else-if="row && row.progressText===STATUS_FINISHED" class="text-[#389e0d] font-semibold">已完成</span>'
+        + '                <span v-else class="text-[#1677ff] font-medium">进行中</span>'
+        + '            </template>'
+        + '        </el-table-column>'
+        + '        <el-table-column label="开始日期" width="130">'
+        + '            <template v-slot:default="{ row }"><span>{{ fmtDate(row && row.startDt) }}</span></template>'
+        + '        </el-table-column>'
+        + '        <el-table-column label="结束日期" width="130">'
+        + '            <template v-slot:default="{ row }"><span>{{ fmtDate(row && row.expireDt) }}</span></template>'
+        + '        </el-table-column>'
+        + '        <el-table-column label="详情" width="90" align="center">'
+        + '            <template v-slot:default="{ row }">'
+        + '                <el-link type="primary" v-if="row && row.detailUrl" :href="row.detailUrl" target="_self">清单</el-link>'
+        + '            </template>'
+        + '        </el-table-column>'
+        + '        <template v-slot:empty>'
+        + '            <div class="py-10 text-slate-400 text-sm">暂无数据</div>'
+        + '        </template>'
+        + '    </el-table>'
+        + '    <div class="px-4 py-3 flex items-center justify-between border-t border-slate-200 bg-white">'
+        + '        <div class="text-sm text-slate-500">共 {{ (pager && pager.total!=null) ? Number(pager.total) : 0 }} 条</div>'
+        + '        <el-pagination '
+        + '            background '
+        + '            layout="total, sizes, prev, pager, next, jumper" '
+        + '            v-model:current-page="pageIndex" '
+        + '            v-model:page-size="pageSize" '
+        + '            :page-sizes="[10,20,50,100]" '
+        + '            :total="(pager && pager.total!=null) ? Number(pager.total) : 0" '
+        + '            v-on:current-change="onPageChange" '
+        + '            v-on:size-change="onSizeChange" />'
+        + '    </div>'
+        + '</div>';
+
+    function mountTasks() {
+        if (typeof Vue === 'undefined' || typeof ElementPlus === 'undefined' || typeof axios === 'undefined') {
+            setTimeout(mountTasks, 120); return;
+        }
+        var { createApp, reactive, toRefs, onMounted } = Vue;
+        var app = createApp({
+            template: TASKS_TEMPLATE,
+            setup() {
+                var qs0 = new URLSearchParams(location.search || '');
+                var initialTab = qs0.get('taskTab') || init.initialTaskTab || 'unfinished';
+                var initialUserId = qs0.get('userId') || init.userId || '';
+
+                var state = reactive({
+                    loading: false,
+                    taskTab: initialTab,
+                    tabs: TABS.slice(),
+                    tasks: [],
+                    pager: null,
+                    pageIndex: 1,
+                    pageSize: 10,
+                    userId: initialUserId,
+                });
+
+                function fmtDate(s) {
+                    if (!s) return '';
+                    try {
+                        var d = new Date(s);
+                        if (isNaN(d.getTime())) return String(s).replace(/T.*$/, '').replace(/-/g, '/');
+                        return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+                    } catch (e) { return String(s); }
+                }
+
+                function onTaskTabChange(key) {
+                    if (!key) return;
+                    state.taskTab = key;
+                    state.pageIndex = 1;
+                    try {
+                        var q = new URLSearchParams(location.search || '');
+                        q.set('taskTab', key);
+                        if (history && typeof history.replaceState === 'function') {
+                            history.replaceState(null, '', location.pathname + (q.toString() ? ('?' + q.toString()) : ''));
+                        }
+                    } catch (e) {}
+                    loadTasks();
+                }
+
+                function onPageChange(idx) { state.pageIndex = idx || 1; loadTasks(); }
+                function onSizeChange(sz) { state.pageSize = sz || 10; state.pageIndex = 1; loadTasks(); }
+
+                function loadTasks() {
+                    state.loading = true;
+                    var params = {
+                        handler: 'MyTasks',
+                        pageIndex: state.pageIndex || 1,
+                        pageSize:  state.pageSize  || 10,
+                        sortField: 'Id',
+                        sortDirection: 'DESC',
+                        taskTab:   state.taskTab || 'unfinished',
+                    };
+                    if (state.userId) params.userId = state.userId;
+                    return axios.get(location.pathname, { params: params })
+                        .then(function (res) {
+                            var payload = (res && res.data) ? res.data : null;
+                            if (!payload) { state.tasks = []; state.pager = null; return; }
+                            if (String(payload.code) !== '0' && payload.code !== 0) {
+                                console.warn('[WorkDesk.MyTasks] 后端 code 非 0：', payload);
+                                state.tasks = []; state.pager = null; return;
+                            }
+                            var arr = payload.data;
+                            if (!Array.isArray(arr)) arr = payload.rows;
+                            if (!Array.isArray(arr)) arr = [];
+                            state.pager = payload.pager || null;
+                            state.tasks = arr;
+                        })
+                        .catch(function (e) {
+                            console.error('[WorkDesk.MyTasks] 请求失败：', e);
+                            state.tasks = [];
+                            state.pager = null;
+                        })
+                        .finally(function () { state.loading = false; });
+                }
+
+                onMounted(loadTasks);
+
+                return Object.assign(toRefs(state), {
+                    STATUS_OVERDUE: STATUS_OVERDUE,
+                    STATUS_FINISHED: STATUS_FINISHED,
+                    fmtDate,
+                    onTaskTabChange,
+                    onPageChange,
+                    onSizeChange,
+                    loadTasks,
+                });
+            }
+        });
+        bootstrap(app);
+        var el = document.getElementById('myTasksVueApp');
+        console.log('[WorkDesk.wdTasks] el=', !!el, 'tpl=', TASKS_TEMPLATE.length, 'path=', location.pathname);
+        if (el) app.mount(el);
+    }
+
+    //---------------------------------------------------------------------
+    // -------- 入口：等 Vue / ElementPlus / axios 就绪后，四个区域一起挂载 --------
+    //---------------------------------------------------------------------
+    function mountAll() {
+        if (typeof Vue === 'undefined' || typeof ElementPlus === 'undefined') {
+            setTimeout(mountAll, 120); return;
+        }
+        try { mountQuick(); } catch (e) { console.error('[WorkDesk.QuickMount]', e); }
+        try { mountCards('wdObjects', objectCards, OBJECTS_TEMPLATE, 'wdObjects', OBJECT_ICON_MAP); } catch (e) { console.error('[WorkDesk.ObjectsMount]', e); }
+        try { mountCards('wdHazards', hazardCards, HAZARDS_TEMPLATE, 'wdHazards', HAZARD_ICON_MAP); } catch (e) { console.error('[WorkDesk.HazardsMount]', e); }
+        try { mountTasks(); } catch (e) { console.error('[WorkDesk.TasksMount]', e); }
+    }
+    function start() {
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            mountAll();
+        } else {
+            window.addEventListener('DOMContentLoaded', function () { setTimeout(mountAll, 0); });
+        }
+    }
+    start();
+})();
+</script>
 }

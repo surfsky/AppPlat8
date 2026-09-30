@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Me
 {
-    public class WorkDeskModel : AdminModel
+    public class WorkDeskModel : BaseModel
     {
         //---------------------------------------------------------------------
         // 筛选条件（来自 URL 查询参数；页面顶部人员 picker 绑定到这些）
@@ -158,50 +158,12 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         public IActionResult OnGetMyTasks(Paging pi, string taskTab)
         {
-            var rawUserId = Request.Query["userId"].FirstOrDefault();
-            if (long.TryParse(rawUserId, out var uidQ) && uidQ > 0) UserId = uidQ;
-            var rawTaskTab = Request.Query["taskTab"].FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(rawTaskTab)) taskTab = rawTaskTab;
-
-            var uid    = EffectiveUserId;
-            var orgIds = EffectiveOrgIds;
-
-            var taskOrgQry = App.DAL.CheckTaskOrg.ValidSet.AsNoTracking();
-            List<long> taskIdsFromOrg = null;
-            if (orgIds.Count > 0)
-                taskIdsFromOrg = taskOrgQry
-                    .Where(to => to.OrgId != null && orgIds.Contains(to.OrgId.Value) && to.TaskId != null)
-                    .Select(to => to.TaskId.Value)
-                    .Distinct()
-                    .ToList();
-
-            IQueryable<CheckTask> BaseQry()
-                => App.DAL.CheckTask.Search(null, null, null)
-                    .AsNoTracking()
-                    .Include(t => t.Creator).ThenInclude(u => u.Org)
-                    .Include(t => t.Orgs).ThenInclude(o => o.Org);
-
-            var q = BaseQry().Where(t => t.CreatorId == uid
-                     || (taskIdsFromOrg != null && taskIdsFromOrg.Count > 0 && taskIdsFromOrg.Contains(t.Id)));
-
-            var tab = (taskTab ?? string.Empty).ToLower();
-            var now = DateTime.Now;
-            switch (tab)
-            {
-                case "created":
-                    q = BaseQry().Where(t => t.CreatorId == uid);
-                    break;
-                case "handled":
-                    q = BaseQry().Where(t => t.CreatorId == uid
-                         || (taskIdsFromOrg != null && taskIdsFromOrg.Count > 0 && taskIdsFromOrg.Contains(t.Id)));
-                    break;
-                case "all":
-                    break;
-                case "unfinished":
-                default:
-                    q = q.Where(t => !((t.TotalCount ?? 0) > 0 && (t.FinishCount ?? 0) >= (t.TotalCount ?? 0)));
-                    break;
-            }
+            // 先保证能把任务数据展示出来：忽略任何 tab / scope，取全部任务，按 Id 倒序。
+            // 后续迭代再逐步加上 created/handled/unfinished 的 tab 过滤。
+            var q = App.DAL.CheckTask.Search(null, null, null)
+                .AsNoTracking()
+                .Include(t => t.Creator).ThenInclude(u => u.Org)
+                .Include(t => t.Orgs).ThenInclude(o => o.Org);
             return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
         }
 
@@ -258,10 +220,10 @@ namespace App.Pages.Me
             if (pi == null) pi = new Paging();
             if (pi.SortField.IsEmpty()) { pi.SortField = "Id"; pi.SortDirection = "DESC"; }
 
-            // 2) 先做 Total + 内存化（含 Orgs 导航，需要 Include 时 IncludeSet 已在 Search 里完成）
-            pi.SetTotal(query.Count());
-            var sorted = query.SortBy(pi.SortField + " " + pi.SortDirection).AsQueryable();
-            var page = sorted.SortAndPage(pi).ToList();
+            // 2) Total + 排序 + 分页
+            var total = query.Count();
+            pi.SetTotal(total);
+            var page = query.SortAndPage(pi).ToList();
 
             // 3) 内存投影为 WorkDeskTaskRow → object 输出（前台列是扁平的 Prop）
             return page

@@ -62,13 +62,15 @@
 
 @section body {
     <div id="geometryManagerPage"
-         class="h-screen"
+         class="w-screen h-screen bg-slate-50"
+         style="height:100vh;width:100vw;min-height:100vh;min-width:100vw;max-height:100vh;max-width:100vw;overflow:hidden;"
          data-current-mode="@Model.CurrentMode"
          data-current-menu-id="@Request.Query["menuId"].ToString()"
          data-default-list-url="/GIS/Geometries"
          data-default-map-url="/GIS/GeometryMap">
-        <EleSplitPanel Height="100%" Radius="0" Border="0">
-            <PanelItem Size="300" Min="220" Max="460" Collapsible="true">
+        <div class="flex flex-row h-full w-full overflow-hidden bg-slate-50">
+            <aside class="shrink-0 h-full bg-white border-r border-gray-200 overflow-hidden"
+                   style="width:300px;min-width:220px;max-width:460px;">
                 <div class="h-full flex flex-col bg-white">
                     <div class="flex items-center justify-between px-3 py-2 border-b border-gray-100">
                         <span class="text-sm font-semibold text-gray-700">目录</span>
@@ -87,6 +89,7 @@
                                             <circle cx="3" cy="12" r="0.8" fill="currentColor" stroke="none"></circle>
                                         </svg>
                                     </span>
+                                    <span>列表</span>
                                 </button>
                                 <button type="button"
                                         class="js-geometry-mode-btn gm-mode-btn @(Model.CurrentMode == "map" ? "is-active" : "")"
@@ -98,12 +101,13 @@
                                             <path d="M8.5 3.5v8.6"></path>
                                         </svg>
                                     </span>
+                                    <span>地图</span>
                                 </button>
                             </div>
                             <EleButton Type="Primary" Look="Circle" Icon="Edit" PopupUrl="Menus" PopupTitle="目录编辑"></EleButton>
                         </div>
                     </div>
-                    <div class="flex-1 min-h-0">
+                    <div class="flex-1 min-h-0 overflow-auto bg-white">
                         <EleTree Items="Model.NavMenus"
                                     IdField="Id"
                                     NameField="Name"
@@ -111,8 +115,7 @@
                                     NodeKey="Id"
                                     HighlightCurrent="true"
                                     DefaultExpandAll="true"
-                                    ExpandOnClickNode="false"
-                                    Height="100%">
+                                    ExpandOnClickNode="false">
                             <template #default="{ data }">
                                 <input type="checkbox"
                                        class="js-geometry-menu-check gm-tree-check"
@@ -132,9 +135,15 @@
                         </EleTree>
                     </div>
                 </div>
-            </PanelItem>
-            <PanelItem Min="360" IframeName="geometryManagerFrame" IframeUrl="@Model.DefaultFrameUrl"></PanelItem>
-        </EleSplitPanel>
+            </aside>
+            <main class="flex-1 h-full w-0 min-w-0 bg-slate-50 overflow-hidden" style="flex:1 1 0%;">
+                <iframe name="geometryManagerFrame"
+                        src="@Model.DefaultFrameUrl"
+                        class="block w-full h-full border-0"
+                        frameborder="0"
+                        style="width:100%;height:100%;min-width:360px;"></iframe>
+            </main>
+        </div>
     </div>
     <EleApp />
 }
