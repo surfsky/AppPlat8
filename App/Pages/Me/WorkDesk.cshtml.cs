@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Me
 {
-    public class WorkDeskModel : BaseModel
+    public class WorkDeskModel : AdminModel
     {
         //---------------------------------------------------------------------
         // 筛选条件（来自 URL 查询参数；页面顶部人员 picker 绑定到这些）
