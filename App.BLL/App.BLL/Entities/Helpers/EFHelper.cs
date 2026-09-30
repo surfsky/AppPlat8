@@ -117,7 +117,7 @@ namespace App.Entities
         }
 
         /// <summary>排序分页导出</summary>
-        public static List<object> SortPageExport<T>(this IQueryable<T> q, Paging pi, ExportMode exportMode = ExportMode.Normal) where T : IExport
+        public static List<object> SortPageExport<T>(this IQueryable<T> q, Paging pi=null, ExportMode exportMode = ExportMode.Normal) where T : IExport
         {
             if (pi == null) pi = new Paging();
             pi.SortField = ResolveValidSortField(typeof(T), pi.SortField);

@@ -49,11 +49,11 @@ namespace App.EleUI
 
             var hasText = !string.IsNullOrWhiteSpace(content);
             var hasIcon = Icon != EleIcons.None;
-            var drawerTitleText = hasText ? content : "查看";
+            var drawerTitleText = hasText ? content : Texts.Current.View;
 
             if (!hasText && !hasIcon)
             {
-                content = "查看";
+                content = Texts.Current.View;
                 hasText = true;
                 drawerTitleText = content;
             }

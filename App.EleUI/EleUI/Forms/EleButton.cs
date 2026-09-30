@@ -107,7 +107,7 @@ namespace App.EleUI
         [HtmlAttributeName("ConfirmText")]     public string ConfirmText { get; set; }
 
         /// <summary>二次确认对话框标题，默认"提示"。需与 ConfirmText 同时配置才生效。</summary>
-        [HtmlAttributeName("ConfirmTitle")]    public string ConfirmTitle { get; set; } = "提示";
+        [HtmlAttributeName("ConfirmTitle")]    public string ConfirmTitle { get; set; } = null;
 
 
         /// <summary>处理标签</summary>
@@ -239,7 +239,7 @@ namespace App.EleUI
                 if (!string.IsNullOrWhiteSpace(ConfirmText))
                 {
                     var confirmText = ConfirmText.Replace("'", "\\'");
-                    var confirmTitle = (ConfirmTitle ?? "提示").Replace("'", "\\'");
+                    var confirmTitle = (ConfirmTitle ?? Texts.Current.Prompt).Replace("'", "\\'");
                     // 【最稳健的 Confirm 链】：
                     //   1) act 定义在 IIFE 最外层（不在 try 里），避免任何作用域问题导致 act 未定义
                     //   2) 优先级：window.EleManager.coreElMessageboxConfirm → ElementPlus.ElMessageBox.confirm

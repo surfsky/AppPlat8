@@ -11,13 +11,13 @@ namespace App.EleUI
         public string Icon { get; set; } = "Filter";
 
         [HtmlAttributeName("Title")]
-        public string Title { get; set; } = "筛选";
+        public string Title { get; set; } = null;
 
         [HtmlAttributeName("DrawerTitle")]
-        public string DrawerTitle { get; set; } = "筛选条件";
+        public string DrawerTitle { get; set; } = null;
 
         [HtmlAttributeName("SearchText")]
-        public string SearchText { get; set; } = "查询";
+        public string SearchText { get; set; } = null;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -25,9 +25,11 @@ namespace App.EleUI
             var content = childContent.GetContent();
 
             var icon = string.IsNullOrWhiteSpace(Icon) ? "Filter" : Icon.Trim();
-            var title = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(Title) ? "筛选" : Title.Trim());
-            var drawerTitle = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(DrawerTitle) ? "筛选条件" : DrawerTitle.Trim());
-            var searchText = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(SearchText) ? "查询" : SearchText.Trim());
+            var title = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(Title) ? Texts.Current.FilterConditions : Title.Trim());
+            var drawerTitle = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(DrawerTitle) ? Texts.Current.FilterConditions : DrawerTitle.Trim());
+            var searchText = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(SearchText) ? Texts.Current.Query : SearchText.Trim());
+            var resetText = WebUtility.HtmlEncode(Texts.Current.Reset);
+            var cancelText = WebUtility.HtmlEncode(Texts.Current.Cancel);
 
             output.TagName = null;
             output.Content.SetHtmlContent($@"
@@ -57,7 +59,7 @@ namespace App.EleUI
 
         <template #footer>
             <div class='flex items-center justify-end gap-2'>
-                <el-button v-on:click='closeFiltersDrawer'>取消</el-button>
+                <el-button v-on:click='closeFiltersDrawer'>{cancelText}</el-button>
                 <el-button type='primary' v-on:click='applyFiltersAndSearch'>{searchText}</el-button>
             </div>
         </template>

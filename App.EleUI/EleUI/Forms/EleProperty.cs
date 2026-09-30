@@ -11,11 +11,11 @@ namespace App.EleUI
     {
         [HtmlAttributeName("Rows")] public int Rows { get; set; } = 4;
         [HtmlAttributeName("Editable")] public bool Editable { get; set; } = true;
-        [HtmlAttributeName("AddText")] public string AddText { get; set; } = "新增属性";
-        [HtmlAttributeName("FieldText")] public string FieldText { get; set; } = "字段";
-        [HtmlAttributeName("ValueText")] public string ValueText { get; set; } = "值";
-        [HtmlAttributeName("ActionText")] public string ActionText { get; set; } = "操作";
-        [HtmlAttributeName("EmptyText")] public string EmptyText { get; set; } = "暂无属性";
+        [HtmlAttributeName("AddText")] public string AddText { get; set; } = null;
+        [HtmlAttributeName("FieldText")] public string FieldText { get; set; } = null;
+        [HtmlAttributeName("ValueText")] public string ValueText { get; set; } = null;
+        [HtmlAttributeName("ActionText")] public string ActionText { get; set; } = null;
+        [HtmlAttributeName("EmptyText")] public string EmptyText { get; set; } = null;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -26,6 +26,11 @@ namespace App.EleUI
 
             var propName = GetPropName();
             var formModel = context.Items.ContainsKey("EleFormModel") ? context.Items["EleFormModel"] as string : "form";
+            var addText = AddText ?? Texts.Current.AddAttribute;
+            var fieldText = FieldText ?? Texts.Current.Field_;
+            var valueText = ValueText ?? Texts.Current.Value_;
+            var actionText = ActionText ?? Texts.Current.Operation;
+            var emptyText = EmptyText ?? Texts.Current.NoAttribute;
 
             var enabledForPath = GetBindPath(EnabledFor);
             string baseDisabledExpr;
@@ -64,7 +69,7 @@ namespace App.EleUI
             var content = $@"
 <div class=""ele-property-wrapper"" style=""width:100%;"">
     <div class=""mb-2 flex justify-end"" v-if=""!({finalDisabledExpr})"">
-        <el-button size=""small"" type=""primary"" plain title=""{AddText}"" @click=""addPropertyRow('{propName}')"">
+        <el-button size=""small"" type=""primary"" plain title=""{addText}"" @click=""addPropertyRow('{propName}')"">
             <el-icon><Plus></Plus></el-icon>
         </el-button>
     </div>
@@ -73,14 +78,14 @@ namespace App.EleUI
             <table class=""w-full border-collapse"">
                 <thead>
                     <tr class=""bg-slate-50 text-slate-600 text-xs"">
-                        <th class=""border border-slate-200 px-2 py-2 text-left font-medium"" style=""width:38%;"">{FieldText}</th>
-                        <th class=""border border-slate-200 px-2 py-2 text-left font-medium"">{ValueText}</th>
-                        <th class=""border border-slate-200 px-2 py-2 text-center font-medium"" style=""width:76px;"">{ActionText}</th>
+                        <th class=""border border-slate-200 px-2 py-2 text-left font-medium"" style=""width:38%;"">{fieldText}</th>
+                        <th class=""border border-slate-200 px-2 py-2 text-left font-medium"">{valueText}</th>
+                        <th class=""border border-slate-200 px-2 py-2 text-center font-medium"" style=""width:76px;"">{actionText}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-if=""getPropertyRows('{propName}').length === 0"">
-                        <td colspan=""3"" class=""border border-slate-200 px-2 py-3 text-xs text-slate-400 text-center"">{EmptyText}</td>
+                        <td colspan=""3"" class=""border border-slate-200 px-2 py-3 text-xs text-slate-400 text-center"">{emptyText}</td>
                     </tr>
                     <tr v-for=""(row, idx) in getPropertyRows('{propName}')"" :key=""idx"">
                         <td class=""border border-slate-200 px-1 py-1"">

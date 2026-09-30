@@ -12,7 +12,7 @@ namespace App.EleUI
     public class EleLabel : EleFormControl
     {
         [HtmlAttributeName("Color")]           public string Color { get; set; }
-        [HtmlAttributeName("Size")]            public string Size { get; set; } = "16px";
+        [HtmlAttributeName("Size")]            public string Size { get; set; } = "14px";
         [HtmlAttributeName("Bold")]            public bool Bold { get; set; } = true;
 
         // FillRow is now in base class

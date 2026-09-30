@@ -71,3 +71,21 @@
                                                              'bg-gray-400'">
                                     {{ ((item.reviewerName || '系统').toString().trim().charAt(0) || '系').toUpperCase() }}
                                 </div>
+
+
+            var query = App.DAL.User.Set.Where(u => u.IsDel != true);
+            if (!string.IsNullOrEmpty(keyword))
+            {
+                query = query.Where(u => u.Name.Contains(keyword) || u.RealName.Contains(keyword));
+            }
+
+            var users = query.OrderBy(u => u.RealName ?? u.Name).Take(100).Select(u => new 
+            { 
+                id = u.Id, 
+                name = u.RealName ?? u.Name, 
+                username = u.Name, 
+                mobile = u.Mobile.Mask(),
+                realName = u.RealName,
+                displayName = $"{u.RealName ?? u.Name}({u.Mobile.Mask()})",
+                dept = u.Org != null ? u.Org.Name : "" 
+            }).ToList();

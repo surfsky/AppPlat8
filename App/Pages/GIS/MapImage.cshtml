@@ -34,6 +34,7 @@
 @section head {
     <script src="/lib/mapbox-gl/mapbox-gl.js"></script>
     <link href="/lib/mapbox-gl/mapbox-gl.css" rel="stylesheet" />
+    <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
     <style>
         html, body, #app { height: 100%; margin: 0; }
         #map {
@@ -175,7 +176,12 @@
 
         createApp({
             setup() {
-                const accessToken = "@SiteConfig.Instance.MapboxKey";
+                // 统一通过 MapFactory.setKeys 保存 SiteConfig 下发的 GIS Key
+                MapFactory.setKeys({
+                    mapboxKey:   "@SiteConfig.Instance.MapboxKey",
+                    tiandituKey: "@(SiteConfig.Instance.TiandituKey ?? "")",
+                    amapKey:     "@(SiteConfig.Instance.AmapKey ?? "")"
+                });
                 const initial = {
                     minLng: @tlx.ToString(CultureInfo.InvariantCulture),
                     maxLng: @brx.ToString(CultureInfo.InvariantCulture),
@@ -675,15 +681,9 @@
                 }
 
                 function initMap() {
-                    if (!accessToken) {
-                        showError('缺少 Mapbox Token，请检查系统配置');
-                        return;
-                    }
-
-                    mapboxgl.accessToken = accessToken;
-                    map = new mapboxgl.Map({
+                    // 统一交给 MapFactory：含天地图街道默认底图、Key 解析、默认参数
+                    map = MapFactory.createMap({
                         container: 'map',
-                        style: 'mapbox://styles/mapbox/streets-v11',
                         center: [@initCenterLng.ToString(CultureInfo.InvariantCulture), @initCenterLat.ToString(CultureInfo.InvariantCulture)],
                         zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
                     });

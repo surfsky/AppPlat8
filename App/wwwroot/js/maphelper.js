@@ -1463,19 +1463,16 @@
         }
 
         function init() {
-            if (!accessToken) {
-                onError('缺少 Mapbox Token，请检查系统配置');
-                return;
-            }
+            // 统一交给 MapFactory 处理（逻辑同上），兜底把 options.accessToken / tiandituKey / amapKey 写入 MapFactory
+            var optsKeys = {
+                mapboxKey:   accessToken || '',
+                tiandituKey: (options && options.tiandituKey) || '',
+                amapKey:     (options && options.amapKey) || ''
+            };
+            window.MapFactory.setKeys(optsKeys);
 
-            mapboxgl.accessToken = accessToken;
-            if (typeof mapboxgl.setTelemetryEnabled === 'function') {
-                mapboxgl.setTelemetryEnabled(false);
-            }
-
-            map = new mapboxgl.Map({
+            map = window.MapFactory.createMap({
                 container: mapContainerId,
-                style: 'mapbox://styles/mapbox/streets-v11',
                 center: initialCenter,
                 zoom: initialZoom
             });

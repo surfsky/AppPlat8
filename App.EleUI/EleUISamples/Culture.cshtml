@@ -1,0 +1,171 @@
+@page
+@model App.Pages.EleUISamples.CultureModel
+@using Microsoft.AspNetCore.Html
+
+@{
+    ViewData["Title"] = "Culture 切换示例";
+    var filterItem = Model.Item;
+}
+
+@section head {
+    <script src="/lib/element-plus-2.14.5/dist/locale/en.min.js"></script>
+    <script src="/lib/dayjs/locale/en.js"></script>
+    <script>
+        function applyElementPlusLocale(name) {
+            var isEn = (name || 'Chinese').toLowerCase() === 'english';
+            var dayjsLoc = isEn ? 'en' : 'zh-cn';
+            if (window.dayjs && typeof window.dayjs.locale === 'function') {
+                try { window.dayjs.locale(dayjsLoc); } catch (e) { }
+            }
+            if (window.ElementPlus) {
+                var loc = isEn ? (window.ElementPlusLocaleEn || null) : (window.ElementPlusLocaleZhCn || null);
+                try {
+                    if (loc && window.__eleApp) {
+                        window.__eleApp._context.providers = window.__eleApp._context.providers || {};
+                    }
+                } catch (e) { }
+            }
+        }
+        applyElementPlusLocale('@Model.CultureName');
+    </script>
+}
+
+@section body {
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
+        <div class="bg-white rounded shadow-sm p-4 md:p-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h1 class="text-lg md:text-xl font-semibold text-slate-800">EleUI Texts.Current 文化切换示例</h1>
+                <p class="text-xs md:text-sm text-slate-500 mt-1">
+                    切换下拉后，刷新页面；控件默认文案（按钮/分页/筛选/MsgBox/空数据等）跟随 Texts.Current 切换。
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <label class="text-sm text-slate-600 whitespace-nowrap">Culture:</label>
+                <el-select id="cultureSwitcher" v-model="cultureName" style="width:180px" v-on:change="onCultureChange">
+                    <el-option label="中文 (Chinese)" value="Chinese"></el-option>
+                    <el-option label="English" value="English"></el-option>
+                </el-select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <div class="bg-white rounded shadow-sm p-4 md:p-5 space-y-5">
+                <h2 class="text-base font-medium text-slate-700 border-l-4 border-indigo-500 pl-3">表单 / 基础控件</h2>
+                <EleForm LabelPosition="Right">
+                    <EleInput For="Item.Name"></EleInput>
+
+                    <EleLabel Label="@Texts.Current.DateTime_" Size="16px" FillRow="true"></EleLabel>
+                    <EleDatePicker For="Item.Date" Type="Date"></EleDatePicker>
+                    <EleDatePicker For="Item.DateTimeValue" Type="DateTime"></EleDatePicker>
+                    <EleDatePicker For="Item.StartDate" Type="DateRange"></EleDatePicker>
+
+                    <EleSelect For="Item.Level" Items="1,2,3,4,5"></EleSelect>
+                    <EleSwitch For="Item.Enabled"></EleSwitch>
+
+                    <ElePicker For="Item.UserId" TextFor="Item.UserName" PopupUrl="/EleUISamples/Datas/DeptUsersUsers?multi=0"></ElePicker>
+
+                    <EleInput For="Item.Remark" Type="TextArea" Rows="3"></EleInput>
+                </EleForm>
+
+                <div class="pt-3 border-t border-gray-100 flex flex-wrap items-center gap-2">
+                    <EleButton Type="Primary" Handler="ShowMessageBox">MessageBox</EleButton>
+                    <EleButton Type="Success" Handler="ShowInputBox">InputBox</EleButton>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white rounded shadow-sm p-4 md:p-5">
+                    <h2 class="text-base font-medium text-slate-700 border-l-4 border-emerald-500 pl-3 mb-3">EleTable + Filters + 分页</h2>
+                    <EleTable Title="" DataHandler="?handler=SampleData" FormPage="/EleUISamples/Datas/UserForm" EnableBatch="true" style="height:420px">
+                        <Toolbar>
+                            <Filters>
+                                <EleInput For="Model.Item.Name" Label="@Texts.Current.Name_" Width="200px"></EleInput>
+                                <EleSelect For="Model.Item.Level" Label="@Texts.Current.Level" Items="1,2,3,4,5" Clearable="true" Width="160px"></EleSelect>
+                            </Filters>
+                            <Buttons>
+                                <EleButton Type="Primary" Command="Add" Icon="Plus">@Texts.Current.New</EleButton>
+                                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">@Texts.Current.Delete</EleButton>
+                                <EleButton Type="Warning" Command="EditBatch" Icon="Edit">@Texts.Current.BatchModify</EleButton>
+                            </Buttons>
+                        </Toolbar>
+                        <Columns>
+                            <EleNumColumn Label="@Texts.Current.SerialNumber"></EleNumColumn>
+                            <EleColumn Label="账号" Prop="name" Link="true" MinWidth="140"
+                                PopupUrl="/EleUISamples/Datas/UserForm?md=view&amp;id={id}"></EleColumn>
+                            <EleColumn Label="中文名" Prop="chineseName" MinWidth="140"></EleColumn>
+                            <EleColumn Label="角色" Prop="roleName" MinWidth="120"></EleColumn>
+                            <EleOpColumn>
+                                <Op Command="Edit" Icon="Edit"></Op>
+                                <Op Command="Delete" Icon="Delete"></Op>
+                                <Op Popup="/EleUISamples/Datas/UserForm?md=view&amp;id={id}" Icon="View"></Op>
+                            </EleOpColumn>
+                        </Columns>
+                    </EleTable>
+                </div>
+
+                <div class="bg-white rounded shadow-sm p-4 md:p-5">
+                    <h2 class="text-base font-medium text-slate-700 border-l-4 border-amber-500 pl-3 mb-3">EleList（空数据 / 共X条）</h2>
+                    <EleList Title="" DataHandler="?handler=SampleData&amp;name=__nonexistent__" PageSize="5" style="height:220px">
+                        <ItemTemplate>
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    @{
+                                        var nameExpr = new HtmlString("{{ item.chineseName ? item.chineseName : (item.name || '') }}");
+                                        var idExpr = new HtmlString("{{ item.id }}");
+                                    }
+                                    <div class="font-medium text-gray-900">@nameExpr</div>
+                                    <div class="text-xs text-gray-500 mt-1">ID: @idExpr</div>
+                                </div>
+                            </div>
+                        </ItemTemplate>
+                    </EleList>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+}
+
+@section script {
+<script>
+(function () {
+    function mount() {
+        if (!window.Vue || !window.ElementPlus) { setTimeout(mount, 25); return; }
+        var { createApp, ref } = window.Vue;
+        var app = createApp({
+            setup() {
+                var cultureName = ref('@Model.CultureName');
+                function onCultureChange(val) {
+                    var token = (document.querySelector('input[name="__RequestVerificationToken"]') || {}).value || '';
+                    axios.post('?handler=SwitchCulture', { culture: val || 'Chinese' }, {
+                        headers: { 'RequestVerificationToken': token }
+                    }).then(function () {
+                        window.location.reload();
+                    }).catch(function (err) {
+                        console.error('[culture] switch failed', err);
+                        window.location.reload();
+                    });
+                }
+                return { cultureName, onCultureChange };
+            }
+        });
+        app.use(window.ElementPlus);
+        try {
+            var isEn = (('@Model.CultureName') || '').toLowerCase() === 'english';
+            if (isEn && window.ElementPlusLocaleEn) {
+                app.use(window.ElementPlusLocaleEn);
+            } else if (!isEn && window.ElementPlusLocaleZhCn) {
+                app.use(window.ElementPlusLocaleZhCn);
+            }
+        } catch (e) { }
+        window.__eleApp = app.mount('#cultureSwitcher') || app;
+    }
+    mount();
+})();
+</script>
+}

@@ -14,7 +14,7 @@ namespace App.EleUI
         public int MaxSizeMb { get; set; } = 20;
 
         [HtmlAttributeName("ButtonText")]
-        public string ButtonText { get; set; } = "选择文件";
+        public string ButtonText { get; set; } = null;
 
         [HtmlAttributeName("ViewerUrl")]
         public string ViewerUrl { get; set; } = string.Empty;
@@ -41,7 +41,7 @@ namespace App.EleUI
             var maxSizeMb = MaxSizeMb > 0 ? MaxSizeMb : 20;
             var exts = string.IsNullOrWhiteSpace(Exts) ? string.Empty : Exts.Trim();
             var escapedExts = EscapeJs(exts);
-            var escapedButton = EscapeJs(ButtonText ?? "选择文件");
+            var escapedButton = EscapeJs(ButtonText ?? Texts.Current.SelectFile);
             var escapedViewerUrl = EscapeJs(ViewerUrl ?? string.Empty);
             var placeholder = EscapeJs(Placeholder ?? string.Empty);
             var target = ResolveControlTarget(context);
@@ -57,6 +57,8 @@ namespace App.EleUI
             var dataControlAttr = string.IsNullOrWhiteSpace(target)
                 ? string.Empty
                 : $" data-ele-control-id=\"{target}\"";
+
+            var clearText = Texts.Current.Clear;
 
             var content = $@"
 <div class=""ele-file-upload-client flex items-center gap-2 w-full"" v-show=""{vVisibleExpr}""{dataControlAttr}>
@@ -92,8 +94,8 @@ namespace App.EleUI
         class=""ele-file-upload-clear-btn""
         :disabled=""{vDisabledExpr}""
         @click=""{vModel} = ''""
-        title=""清空""
-        aria-label=""清空""
+        title=""{clearText}""
+        aria-label=""{clearText}""
     >✕</el-button>
 </div>";
 

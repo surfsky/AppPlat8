@@ -4,35 +4,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Collections.Generic;
 using System.Linq;
+using App.Entities;
+using App.Utils;
 
 namespace App.Pages.Shared
 {
     [IgnoreAntiforgeryToken]
     public class UserSelectorModel : AdminModel
     {
-        public void OnGet()
-        {
-        }
+        public void OnGet() { }
 
         public IActionResult OnGetUsers(string keyword)
         {
-            var query = App.DAL.User.Set.Where(u => u.IsDel != true);
-            if (!string.IsNullOrEmpty(keyword))
-            {
-                query = query.Where(u => u.Name.Contains(keyword) || u.RealName.Contains(keyword));
-            }
-
-            var users = query.OrderBy(u => u.RealName ?? u.Name).Take(20).Select(u => new 
-            { 
-                id = u.Id, 
-                name = u.RealName ?? u.Name, 
-                username = u.Name, 
-                mobile = u.Mobile,
-                realName = u.RealName,
-                displayName = $"{u.RealName ?? u.Name}({u.Mobile})",
-                dept = u.Org != null ? u.Org.Name : "" 
-            }).ToList();
-
+            var users = App.DAL.User.Search(keyword: keyword).SortPageExport();
             return BuildResult(0, "ok", users);
         }
     }

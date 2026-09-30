@@ -29,7 +29,7 @@ namespace App.EleUI
         {
             if (!CheckPower(output)) return;
             output.TagName = "el-select";
-            this.Placeholder = string.IsNullOrEmpty(Placeholder) ? "请选择" : Placeholder;
+            this.Placeholder = string.IsNullOrEmpty(Placeholder) ? Texts.Current.PleaseSelect : Placeholder;
             AddCommonAttributes(context, output);
 
             // attributes
@@ -108,8 +108,8 @@ namespace App.EleUI
 
         private List<SelectListItem> AppendFromBool(List<SelectListItem> list)
         {
-            list.Add(new SelectListItem("是", "true"));
-            list.Add(new SelectListItem("否", "false"));
+            list.Add(new SelectListItem(Texts.Current.Yes, "true"));
+            list.Add(new SelectListItem(Texts.Current.No, "false"));
             return list;
         }
 

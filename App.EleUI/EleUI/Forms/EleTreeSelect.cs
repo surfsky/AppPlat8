@@ -28,7 +28,7 @@ namespace App.EleUI
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
             if (!CheckPower(output)) return;
-            this.Placeholder = string.IsNullOrEmpty(Placeholder) ? "请选择" : Placeholder;
+            this.Placeholder = string.IsNullOrEmpty(Placeholder) ? Texts.Current.PleaseSelect : Placeholder;
             output.TagName = "el-tree-select";
             AddCommonAttributes(context, output);
 

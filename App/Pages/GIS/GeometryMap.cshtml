@@ -31,6 +31,7 @@
     <link href="/lib/mapbox-gl-draw/mapbox-gl-draw.css" rel="stylesheet" />
     <script src="/gis/gis-geojson-helper.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-point-marker.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
     <style>
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
         .gm-map-root { position: relative; height: 100vh; overflow: hidden; margin: 0; }
@@ -245,7 +246,12 @@
 
         const app = createApp({
             setup() {
-                const mapToken = "@SiteConfig.Instance.MapboxKey";
+                // 统一通过 MapFactory.setKeys 保存 SiteConfig 下发的 GIS Key
+                MapFactory.setKeys({
+                    mapboxKey:   "@SiteConfig.Instance.MapboxKey",
+                    tiandituKey: "@(SiteConfig.Instance.TiandituKey ?? "")",
+                    amapKey:     "@(SiteConfig.Instance.AmapKey ?? "")"
+                });
                 const query = new URLSearchParams(window.location.search);
                 const menuId = query.get('menuId') || '';
                 const menuIdsRaw = query.get('menuIds') || '';
@@ -1076,10 +1082,8 @@
                     window.addEventListener('keydown', onKeyDown);
                     // 确保 DOM 容器已准备就绪
                     setTimeout(async () => {
-                        mapboxgl.accessToken = mapToken;
-                        map.value = new mapboxgl.Map({
+                        map.value = MapFactory.createMap({
                             container: 'geometryMapCanvas',
-                            style: 'mapbox://styles/mapbox/streets-v12',
                             center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
                             zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
                         });

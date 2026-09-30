@@ -24,15 +24,16 @@ namespace App.EleUI
 
             if (IsSelectMode() && !content.Contains("ele-table-buttons-block", StringComparison.OrdinalIgnoreCase))
             {
+                var selectText = Texts.Current.Select;
                 var hasExplicitSelect = !string.IsNullOrWhiteSpace(content) && (
-                    content.Contains("选择") ||
+                    content.Contains(selectText) ||
                     content.Contains("invokeCommand", StringComparison.OrdinalIgnoreCase) && (content.Contains("'Select'") || content.Contains("\"Select\"") || content.Contains("Select")) ||
                     content.Contains("Command=\"Select\"", StringComparison.OrdinalIgnoreCase) ||
                     content.Contains("Command='Select'", StringComparison.OrdinalIgnoreCase));
                 if (!hasExplicitSelect)
                 {
-                    content += @"<div class='ele-table-buttons-block w-auto md:w-full shrink-0 flex items-center gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible'>
-    <el-button type='success' v-on:click=""invokeCommand('Select')"">选择</el-button>
+                    content += $@"<div class='ele-table-buttons-block w-auto md:w-full shrink-0 flex items-center gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible'>
+    <el-button type='success' v-on:click=""invokeCommand('Select')"">{selectText}</el-button>
 </div>";
                 }
                 else

@@ -373,13 +373,13 @@ namespace App.DAL
                 this.Id,
                 this.Name,
                 this.RealName,
-                DisplayName = this.DisplayName,
+                this.DisplayName,
                 this.OrgId,
                 this.OrgName,
                 this.OrgFullName,
                 this.AuthOrgName,
                 this.AuthOrgFullName,
-                AuthOrgIds = this.AuthOrgIds,
+                this.AuthOrgIds,
                 this.AuthOrgNames,
                 this.Email,
                 this.Gender,
@@ -425,32 +425,33 @@ namespace App.DAL
         }
 
         /// <summary>搜索用户列表</summary>
-        public static IQueryable<User> Search(string name, string realName, long? deptId = null, long? roleId = null, bool? isDel = null, bool includeSubOrg = true)
+        public static IQueryable<User> Search(string keyword="", string name="", string realName="", long? orgId = null, long? roleId = null, bool? isDel = null, bool includeSubOrg = true)
         {
             var q = DataSet
                 .Include(u => u.Org)
                 .Include(u => u.Roles)
                 .AsNoTracking()
                 .AsQueryable();
+            if (keyword.IsNotEmpty()) q = q.Where(t => t.Name.Contains(keyword) || t.RealName.Contains(keyword));
             if (name.IsNotEmpty())     q = q.Where(t => t.Name.Contains(name));
             if (realName.IsNotEmpty()) q = q.Where(t => t.RealName.Contains(realName));
-            if (deptId != null)
+            if (orgId != null)
             {
                 if (includeSubOrg)
                 {
-                    var subIds = Org.GetChildIds(deptId.Value) ?? new List<long>();
+                    var subIds = Org.GetChildIds(orgId.Value) ?? new List<long>();
                     if (subIds.Count == 0)
-                        subIds = new List<long> { deptId.Value };
+                        subIds = new List<long> { orgId.Value };
                     q = q.Where(t => t.OrgId.HasValue && subIds.Contains(t.OrgId.Value));
                 }
                 else
                 {
-                    q = q.Where(t => t.OrgId.HasValue && t.OrgId.Value == deptId.Value);
+                    q = q.Where(t => t.OrgId.HasValue && t.OrgId.Value == orgId.Value);
                 }
             }
             if (roleId != null)        q = q.Where(t => t.Roles.Any(r => r.Id == roleId));
-            if (isDel == true)         q = q.Where(t => t.IsDel == true);
-            if (isDel == false)        q = q.Where(t => t.IsDel == false || t.IsDel == null);
+            if (isDel == true)         q = q.Where(t => t.IsDel == true);                      // 已删除数据
+            if (isDel == false)        q = q.Where(t => t.IsDel == false || t.IsDel == null);  // 未删除数据
 
             return q;
         }

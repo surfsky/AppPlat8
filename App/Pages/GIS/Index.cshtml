@@ -35,6 +35,7 @@
     <script src="/js/echarts.min.js"></script>
     <link rel="stylesheet" href="/gis/gis-index.css?v=@DateTime.Now.Ticks" />
     <script src="/gis/gis-geojson-helper.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/maphelper.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-chart-helper.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-index-panels.js?v=@DateTime.Now.Ticks"></script>
@@ -199,10 +200,12 @@
 
 @section script {
     <script>
-        mapboxgl.accessToken = "@SiteConfig.Instance.MapboxKey";
-        window.__gisKeys = {
-            tiandituKey: "@(SiteConfig.Instance.TiandituKey ?? "")"
-        };
+        // mapbox-gl 全局 token 保留，兼容老代码；新逻辑统一用 MapFactory.setKeys()
+        MapFactory.setKeys({
+            mapboxKey:   "@SiteConfig.Instance.MapboxKey",
+            tiandituKey: "@(SiteConfig.Instance.TiandituKey ?? "")",
+            amapKey:     "@(SiteConfig.Instance.AmapKey ?? "")"
+        });
 
         const state = {
             objects: [],
@@ -218,7 +221,8 @@
             selectedGeometryId: null,
             geometryInteractionBound: false,
             preservedVisibleGeometryIds: new Set(),
-            currentStyle: 'TiandituSatellite',
+            // 用户需求：默认底图改为"天地图街道"。配置有 TiandituKey 时生效；未配置时按 MapFactory 降级规则 OSM → Mapbox。
+            currentStyle: 'TiandituStreets',
             currentProjection: 'mercator',
             is3D: false,
             isAutoRotate: false,
@@ -297,9 +301,10 @@
             'gis-geometry-line-label-layer'
         ];
 
-        // 初始化默认 style：若已配置天地图 Key，则使用天地图遥感；否则降级到 OSM，最后才回退到 Mapbox。
-        // style 对象统一在 GisIndexView 里构造，避免重复逻辑。
-        const __defaultStyleName = (window.__gisKeys?.tiandituKey) ? 'TiandituSatellite' : 'OpenStreetMap';
+        // 初始化默认 style：默认底图改为"天地图街道"。
+        // 有天地图 Key → TiandituStreets；没有 Key → 降级 OpenStreetMap → Mapbox。
+        // style 对象统一由 gis-index-view 或 mapfactory.js 构造，避免重复。
+        const __defaultStyleName = MapFactory.getTiandituKey() ? 'TiandituStreets' : 'OpenStreetMap';
         function __makeInitialStyle(styleName) {
             const ctx = { map: null, state: { mapStyles: null } };
             const resolveStyleFn = (typeof window.GisIndexView !== 'undefined' && window.GisIndexView._resolveStyleInternals)
@@ -328,7 +333,7 @@
         }
         function __buildInitialTileStyle(styleInfo) {
             if (!styleInfo || !styleInfo.tileTemplate) return 'mapbox://styles/mapbox/satellite-streets-v12';
-            const tk = window.__gisKeys?.tiandituKey || '';
+            const tk = MapFactory.getTiandituKey();
             const subdomains = Array.isArray(styleInfo.subdomains) && styleInfo.subdomains.length > 0 ? styleInfo.subdomains : null;
             const fill = (tpl) => {
                 if (!tpl) return '';
@@ -370,17 +375,20 @@
             };
         }
         const __initialStyleInfo = __makeInitialStyle(__defaultStyleName);
-        const __initialMapStyle = __initialStyleInfo ? __buildInitialTileStyle(__initialStyleInfo) : 'mapbox://styles/mapbox/satellite-streets-v12';
-        const map = new mapboxgl.Map({
+        const __initialMapStyle = __initialStyleInfo ? __buildInitialTileStyle(__initialStyleInfo) : null;
+        // 统一交给 MapFactory.createMap：默认天地图街道底图、统一默认参数、Key 解析、字体/署名等
+        var map = MapFactory.createMap({
             container: 'map',
-            style: __initialMapStyle,
+            defaultStyle: __defaultStyleName,
             center: [@mapCenterLng.ToString(CultureInfo.InvariantCulture), @mapCenterLat.ToString(CultureInfo.InvariantCulture)],
             zoom: @mapZoom.ToString(CultureInfo.InvariantCulture),
             pitch: 0,
-            projection: 'mercator',
-            attributionControl: false,
-            localIdeographFontFamily: "'Microsoft YaHei','PingFang SC','Hiragino Sans GB','Noto Sans CJK SC',sans-serif"
+            projection: 'mercator'
         });
+        // 极端情况：MapFactory 内逻辑选出来的默认底图为空，手动把一张图手工生成的底图灌回去（兜底）
+        if (__initialMapStyle && (!map.__mapMeta || !map.__mapMeta.currentStyleInfo)) {
+            try { map.setStyle(__initialMapStyle); } catch (_) { }
+        }
 
         //---------------------------------------------------------------
         // APIs

@@ -69,13 +69,16 @@ namespace App.EleUI
 
             //
             var popupUrl = (this.PopupUrl ?? string.Empty).Replace("'", "\\'");
-            var title = (Label ?? "选择").Replace("'", "\\'");
+            var title = (Label ?? Texts.Current.Select).Replace("'", "\\'");
             var multiStr = Multi.ToString().ToLower();
             var keyMode = (KeyMode ?? "Url").Replace("'", "\\'");
             var iconName = Icon == EleIcons.None ? EleIcons.Search : Icon;
             var rowCount = Rows > 0 ? Rows : 1;
             var isTextArea = rowCount > 1;
-            var placeHolderText = ("请选择或输入" + (Label ?? "")).Replace("'", "\\'");
+            var placeHolderText = (Texts.Current.PleaseSelectOrInput + (Label ?? "")).Replace("'", "\\'");
+            var openSelectWin = Texts.Current.OpenSelectWindow;
+            var labelSafe = (Label ?? "").Replace("'", "\\'");
+            var pleaseSelectLabel = (Texts.Current.PleaseSelect + (string.IsNullOrWhiteSpace(Label) ? "" : labelSafe)).Replace("'", "\\'");
 
             // 禁用状态
             var enabledForPath = GetBindPath(EnabledFor);
@@ -102,14 +105,11 @@ namespace App.EleUI
                 : $"(typeof resolveControlDisabled === 'function' ? resolveControlDisabled('{targetSafe}', {vDisabledExpr}) : ({vDisabledExpr}))";
 
             //
-            bool isEleFormCtx = context.Items.ContainsKey("IsEleForm");
-            if (isEleFormCtx)
-                await RenderWrapper(output);
+            await RenderWrapper(output);
 
             //
             output.Attributes.SetAttribute("style", "width: 100%");
             output.TagName = "div";
-            output.TagMode = TagMode.StartTagAndEndTag;
             output.Attributes.SetAttribute("class", "ele-picker-wrapper");
             output.Attributes.SetAttribute("v-show", vVisibleExpr);
             if (!string.IsNullOrWhiteSpace(target))
@@ -139,7 +139,7 @@ namespace App.EleUI
                     content = $@"
                     <div class=""ele-picker-wrapper ele-picker-editable"" style=""width: 100%; position: relative;"">
                         <el-input v-model=""{formModel}.{textProp}"" {inputTypeHtml} {rowHtml} clearable placeholder=""{placeHolderText}"" :disabled=""{finalDisabledExpr}""></el-input>
-                        <span class=""ele-picker-icon-wrap"" :class=""{classObj}"" style=""position:absolute;top:8px;right:10px;z-index:2;pointer-events:auto;background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 3px;"" @click.stop=""!({finalDisabledExpr}) && openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
+                        <span class=""ele-picker-icon-wrap"" :class=""{classObj}"" style=""position:absolute;top:8px;right:10px;z-index:2;pointer-events:auto;background:rgba(255,255,255,0.92);border-radius:4px;padding:1px 3px;"" @click.stop=""!({finalDisabledExpr}) && openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""{openSelectWin}"">
                             <el-icon><component :is=""({finalDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                         </span>
                     </div>
@@ -151,7 +151,7 @@ namespace App.EleUI
                     <div class=""ele-picker-wrapper ele-picker-editable"" style=""width: 100%;"">
                         <el-input v-model=""{formModel}.{textProp}"" {inputTypeHtml} {rowHtml} clearable placeholder=""{placeHolderText}"" :disabled=""{finalDisabledExpr}"">
                             <template #suffix>
-                                <span class=""ele-picker-icon-wrap"" :class=""{classObj}"" style=""pointer-events:auto;"" @click.stop=""!({finalDisabledExpr}) && openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""打开选择窗口"">
+                                <span class=""ele-picker-icon-wrap"" :class=""{classObj}"" style=""pointer-events:auto;"" @click.stop=""!({finalDisabledExpr}) && openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}', '{keyMode}')"" title=""{openSelectWin}"">
                                     <el-icon><component :is=""({finalDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                                 </span>
                             </template>
@@ -179,10 +179,10 @@ namespace App.EleUI
                                     {{{{ {valueExpr} }}}}
                                 </el-tag>
                             </template>
-                            <span v-else class=""text-gray-400 text-sm"">请选择{Label}</span>
+                            <span v-else class=""text-gray-400 text-sm"">{pleaseSelectLabel}</span>
                         </div>
                         <span class=""el-input__suffix"">
-                            <span class=""el-input__suffix-inner"" :class=""{suffixClassObj}"" style=""pointer-events:auto;"" title=""打开选择窗口"">
+                            <span class=""el-input__suffix-inner"" :class=""{suffixClassObj}"" style=""pointer-events:auto;"" title=""{openSelectWin}"">
                                 <el-icon><component :is=""({finalDisabledExpr}) ? 'Lock' : '{iconName}'""></component></el-icon>
                             </span>
                         </span>

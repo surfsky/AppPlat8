@@ -8,7 +8,7 @@
 @section body {
     <EleForm>
         <EleHidden For="Item.Id"></EleHidden>
-        <EleLabel Label="基础信息" FillRow="true"></EleLabel>
+        <EleLabel Label="基础信息" FillRow="true" Color="#0A79C4" ></EleLabel>
         <EleImageUpload For="Item.OutlookImage" Label="外观图片" FillRow="true"></EleImageUpload>
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleInput For="Item.SocialCreditId" Label="社会信用代码"></EleInput>
@@ -24,7 +24,7 @@
             <EleSelect For="Item.FailReason" Label="失效原因" FillRow="true" ></EleSelect>
         </div>
 
-        <EleLabel Label="营业信息" FillRow="true"></EleLabel>
+        <EleLabel Label="营业信息" FillRow="true" Color="#0A79C4" Bold="true"></EleLabel>
         <EleImageUpload For="Item.LicenseImage" Label="工商执照" FillRow="true"></EleImageUpload>
         <EleSelect For="Item.ObjectType" Label="对象类型" Placeholder="请选择"></EleSelect>
         <EleListPicker For="Item.Scope" Label="领域"></EleListPicker>
@@ -34,7 +34,7 @@
         <EleInput For="Item.EleMeeterNum" Label="电表号"></EleInput>
         <EleNumber For="Item.EmployeeCount" Label="员工数"></EleNumber>
 
-        <EleLabel Label="责任信息" FillRow="true"></EleLabel>
+        <EleLabel Label="责任信息" Color="#0A79C4" FillRow="true"></EleLabel>
         <EleTreePicker For="Item.DutyOrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreePicker>
         <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Label="技术检查员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
         <EleInput For="Item.DutyMan" Label="企业负责人"></EleInput>

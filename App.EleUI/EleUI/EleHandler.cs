@@ -137,10 +137,10 @@ namespace App.EleUI
     /// <summary>MessageBox 参数</summary>
     public record MessageBoxArgs(
         string Text,
-        string Title = "提示",
+        string Title = null,
         NotifyType Type = NotifyType.Info,
-        string ComfirmButtonText = "确定",
-        string CancelButtonText = "取消",
+        string ComfirmButtonText = null,
+        string CancelButtonText = null,
         bool IsAlert = false,
         string ClientHandler = null,
         string ServerHandler = null
@@ -149,11 +149,11 @@ namespace App.EleUI
     /// <summary>InputBox 参数</summary>
     public record InputBoxArgs(
         string Text,
-        string Title = "请输入",
-        string InputPlaceholder = "请输入内容",
+        string Title = null,
+        string InputPlaceholder = null,
         string InputValue = "",
-        string ComfirmButtonText = "确定",
-        string CancelButtonText = "取消",
+        string ComfirmButtonText = null,
+        string CancelButtonText = null,
         NotifyType Type = NotifyType.Info,
         string ClientHandler = null,
         string ServerHandler = null,
@@ -448,10 +448,10 @@ namespace App.EleUI
         /// <param name="serverHandler">服务端回调处理函数名称。</param>
         public static JsonResult ShowMessageBox(
             string text,
-            string title = "提示",
+            string title = null,
             NotifyType type = NotifyType.Info,
-            string comfirmButtonText = "确定",
-            string cancelButtonText = "取消",
+            string comfirmButtonText = null,
+            string cancelButtonText = null,
             bool isAlert = false,
             string clientHandler = null,
             string serverHandler = null)
@@ -460,10 +460,10 @@ namespace App.EleUI
                 ClientCommandType.MessageBox,
                 new MessageBoxArgs(
                     Text: text,
-                    Title: title,
+                    Title: title ?? Texts.Current.Prompt,
                     Type: type,
-                    ComfirmButtonText: comfirmButtonText,
-                    CancelButtonText: cancelButtonText,
+                    ComfirmButtonText: comfirmButtonText ?? Texts.Current.Confirm,
+                    CancelButtonText: cancelButtonText ?? Texts.Current.Cancel,
                     IsAlert: isAlert,
                     ClientHandler: clientHandler,
                     ServerHandler: serverHandler));
@@ -479,11 +479,11 @@ namespace App.EleUI
         /// <param name="inputErrorMessage">验证失败提示信息（可选）。</param>
         public static JsonResult ShowInputBox(
             string text,
-            string title = "请输入",
-            string inputPlaceholder = "请输入内容",
+            string title = null,
+            string inputPlaceholder = null,
             string inputValue = "",
-            string comfirmButtonText = "确定",
-            string cancelButtonText = "取消",
+            string comfirmButtonText = null,
+            string cancelButtonText = null,
             NotifyType type = NotifyType.Info,
             string clientHandler = null,
             string serverHandler = null,
@@ -494,11 +494,11 @@ namespace App.EleUI
                 ClientCommandType.InputBox,
                 new InputBoxArgs(
                     Text: text,
-                    Title: title,
-                    InputPlaceholder: inputPlaceholder,
+                    Title: title ?? Texts.Current.PleaseInput,
+                    InputPlaceholder: inputPlaceholder ?? Texts.Current.PleaseInput,
                     InputValue: inputValue,
-                    ComfirmButtonText: comfirmButtonText,
-                    CancelButtonText: cancelButtonText,
+                    ComfirmButtonText: comfirmButtonText ?? Texts.Current.Confirm,
+                    CancelButtonText: cancelButtonText ?? Texts.Current.Cancel,
                     Type: type,
                     ClientHandler: clientHandler,
                     ServerHandler: serverHandler,

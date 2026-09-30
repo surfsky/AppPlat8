@@ -269,7 +269,7 @@ namespace App.EleUI
         private string BuildPopupTemplate(string propName)
         {
             var urlExpr = BuildPopupUrlExpr(PopupUrl);
-            var titleExpr = BuildPopupTextExpr(!string.IsNullOrEmpty(PopupTitle) ? PopupTitle : (Label ?? "查看"));
+            var titleExpr = BuildPopupTextExpr(!string.IsNullOrEmpty(PopupTitle) ? PopupTitle : (Label ?? Texts.Current.View));
             var dir = EscapeSingleQuoted(PopupDirection ?? "rtl");
             var popupSize = PopupSize?.Trim();
 

@@ -122,11 +122,9 @@
 
         function buildTileStyle(styleInfo) {
             if (!styleInfo || !styleInfo.tileTemplate) return null;
-            const keys = window.__gisKeys || {};
+            const keys = window.MapFactory.getKeys();
             const tk = keys.tiandituKey || '';
-            const subdomains = Array.isArray(styleInfo.subdomains) && styleInfo.subdomains.length > 0
-                ? styleInfo.subdomains
-                : null;
+            const subdomains = Array.isArray(styleInfo.subdomains) && styleInfo.subdomains.length > 0 ? styleInfo.subdomains : null;
             const templates = subdomains
                 ? subdomains.map((subdomain) => fillTileTemplate(styleInfo.tileTemplate, tk, String(subdomain)))
                 : [fillTileTemplate(styleInfo.tileTemplate, tk, '0')];

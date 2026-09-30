@@ -36,7 +36,7 @@ namespace App.EleUI
 
             if (Target == EleLinkTarget.Drawer)
             {
-                var title = string.IsNullOrWhiteSpace(DrawerTitle) ? (Label ?? "查看") : DrawerTitle;
+                var title = string.IsNullOrWhiteSpace(DrawerTitle) ? (Label ?? Texts.Current.View) : DrawerTitle;
                 var sizeArg = string.IsNullOrWhiteSpace(DrawerSize) ? "null" : $"'{EscapeJs(DrawerSize)}'";
                 output.Content.SetHtmlContent($@"
                         <template #default=""scope"">

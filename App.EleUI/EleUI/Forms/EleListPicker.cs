@@ -31,15 +31,17 @@ namespace App.EleUI
         {
             if (!CheckPower(output)) return;
 
-            Placeholder = string.IsNullOrWhiteSpace(Placeholder) ? "请选择" : Placeholder;
+            Placeholder = string.IsNullOrWhiteSpace(Placeholder) ? Texts.Current.PleaseSelect : Placeholder;
 
             var propName = GetPropName();
             var target = ResolveControlTarget(context) ?? $"field:{propName}";
             var targetSafe = EscapeJs(target);
             var modelKeySafe = EscapeJs(propName);
             var onChangeName = EscapeJs(OnChange ?? string.Empty);
-            var labelSafe = EscapeJs(Label ?? "选择");
-            var titleSafe = EscapeJs(string.IsNullOrWhiteSpace(DrawerTitle) ? $"选择{Label}" : DrawerTitle);
+            var labelForSelect = !string.IsNullOrWhiteSpace(Label) ? Label : Texts.Current.Select;
+            var labelSafe = EscapeJs(labelForSelect);
+            var defaultTitle = string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}{1}", Texts.Current.Select, labelForSelect);
+            var titleSafe = EscapeJs(string.IsNullOrWhiteSpace(DrawerTitle) ? defaultTitle : DrawerTitle);
             var sizeSafe = EscapeJs(DrawerSize ?? string.Empty);
             var collapseTags = CollapseTags ?? true;
 
@@ -196,8 +198,8 @@ namespace App.EleUI
 
         private List<SelectListItem> AppendFromBool(List<SelectListItem> list)
         {
-            list.Add(new SelectListItem("是", "true"));
-            list.Add(new SelectListItem("否", "false"));
+            list.Add(new SelectListItem(Texts.Current.Yes, "true"));
+            list.Add(new SelectListItem(Texts.Current.No, "false"));
             return list;
         }
 

@@ -26,7 +26,7 @@ namespace App.EleUI
         {
             if (!CheckPower(output)) return;
 
-            Placeholder = string.IsNullOrEmpty(Placeholder) ? $"请选择{Label}" : Placeholder;
+            Placeholder = string.IsNullOrEmpty(Placeholder) ? $"{Texts.Current.PleaseSelect}{Label}" : Placeholder;
 
             var propName = GetPropName();
             var target = ResolveControlTarget(context) ?? $"field:{propName}";
@@ -93,7 +93,8 @@ namespace App.EleUI
             var visibleExpr = $"(typeof resolveControlVisible === 'function' ? resolveControlVisible('{targetSafe}', true) : true)";
             var disabledExpr = $"(typeof resolveControlDisabled === 'function' ? resolveControlDisabled('{targetSafe}', {baseDisabledExpr}) : ({baseDisabledExpr}))";
             var onChangeName = EscapeJs(OnChange ?? string.Empty);
-            var labelSafe = EscapeJs(Label ?? "选择");
+            var labelSafe = EscapeJs(Label ?? Texts.Current.Select);
+            var openTreeTitle = EscapeJs(Texts.Current.OpenSelectWindow);
             var apiSafe = EscapeJs(Api ?? string.Empty);
             var viewExpr = $"getTreePickerView('{EscapeJs(propName)}', '{targetSafe}', {fallbackExpr}, '{EscapeJs(idField)}', '{EscapeJs(nameField)}', '{EscapeJs(childrenField)}', {(Multiple ? "true" : "false")}, {(collapseTags ? "true" : "false")})";
             var openExpr = $@"openTreePicker({{
@@ -151,7 +152,7 @@ namespace App.EleUI
                 >
                     <Close />
                 </el-icon>
-                <el-icon :class=""{{ 'text-slate-400': ({disabledExpr}) }}"" title=""打开树选择抽屉""><Search /></el-icon>
+                <el-icon :class=""{{ 'text-slate-400': ({disabledExpr}) }}"" title=""{openTreeTitle}""><Search /></el-icon>
             </span>
         </span>
     </div>

@@ -34,7 +34,7 @@ namespace App.EleUI
         private static int _idCounter = 0;
 
         [HtmlAttributeName("Title")]
-        public string Title { get; set; } = "列表";
+        public string Title { get; set; } = null;
 
         [HtmlAttributeName("FormPage")]
         public string FormPage { get; set; }
@@ -92,6 +92,10 @@ namespace App.EleUI
 
         [HtmlAttributeName("TitleVAlign")]
         public string TitleVAlign { get; set; }
+
+        // highlight-current-row
+        [HtmlAttributeName("HighlightCurrentRow")]
+        public bool HighlightCurrentRow { get; set; } = true;
 
         public override void Init(TagHelperContext context)
         {
@@ -237,12 +241,14 @@ namespace App.EleUI
             var headerWrapStyle = wrap
                 ? " --el-table-header-cell-white-space: normal; --el-table-header-cell-line-height: 1.4; "
                 : "";
+            var highlightCurrentRowAttr = HighlightCurrentRow ? "highlight-current-row" : "";
             var tableHtml = $@"
         <el-main class=""flex-1 p-0 bg-white overflow-hidden flex flex-col"" style=""min-height: 0;"">
             <el-table
                 ref=""eleTableHost""
                 :data=""items""
                 border
+                {highlightCurrentRowAttr}
                 {globalHeaderAlign}
                 {selectionEvent}
                 v-on:sort-change=""onSortChange""
@@ -271,12 +277,15 @@ namespace App.EleUI
 ";
             var defaultPageSize = ResolveDefaultPageSize();
             var pageSizeOptions = BuildPageSizeOptions(defaultPageSize);
+            var totalPrefix = Texts.Current.TotalPrefix;
+            var totalSuffix = Texts.Current.TotalSuffix;
+            var pageSizeLabel = Texts.Current.PageSizeLabel;
             return $@"
         <el-footer class=""h-auto flex-none p-0 bg-white"">
-                <div class=""py-1.5 px-4 flex items-center justify-between"">
-                <div class=""text-gray-500 whitespace-nowrap"">共 {{{{ total }}}} 条</div>
+            <div class=""py-1.5 px-4 flex items-center justify-between"">
+                <div class=""text-gray-500 whitespace-nowrap"">{totalPrefix} {{{{ total }}}} {totalSuffix}</div>
                 <div class=""flex items-center space-x-2"">
-                    <span class=""text-gray-500 whitespace-nowrap"">每页记录数</span>
+                    <span class=""text-gray-500 whitespace-nowrap"">{pageSizeLabel}</span>
                     <el-select v-model=""pageSize"" class=""min-w-[80px] w-auto"" v-on:change=""handlePageSizeChange"" style=""max-width:120px;"">
                         {pageSizeOptions}
                     </el-select>
@@ -302,12 +311,13 @@ namespace App.EleUI
             var defaultPageSize = ResolveDefaultPageSize();
             var defaultSortField = this.SortField;
             var defaultSortDirection = ResolveSortDirection();
+            var drawerTitle = string.IsNullOrWhiteSpace(Title) ? Texts.Current.List : Title;
             return $@"
 <script>
     (function() {{
         var MOUNT_ID = '#{appId}';
         var CONFIG = {{
-            drawerTitle: '{Title}',
+            drawerTitle: '{EscapeJs(drawerTitle)}',
             dataHandler: '{DataHandler}',
             deleteHandler: '{DeleteHandler}',
             editPage: '{FormPage}',

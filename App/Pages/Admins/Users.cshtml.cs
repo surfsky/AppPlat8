@@ -42,26 +42,21 @@ namespace App.Pages.Admins
         /// <summary>获取用户列表</summary>
         public IActionResult OnGetData(Paging pi, string name, string realName, long? orgId, long? roleId, bool? isDel, bool includeSubOrg = true)
         {
-            var orgFilter = orgId;
-            var md = Request.Query["md"].FirstOrDefault();
-            var isSelectMode = !string.IsNullOrEmpty(md) && md.Equals("Select", StringComparison.OrdinalIgnoreCase);
-            var exportMode = isSelectMode ? ExportMode.Detail : ExportMode.Normal;
-            var list = App.DAL.User.Search(name, realName, orgFilter, roleId, isDel, includeSubOrg).SortPageExport(pi, exportMode);
+            var exportMode = this.Mode == PageMode.Select ? ExportMode.Simple : ExportMode.Detail;
+            var list = App.DAL.User.Search(name: name, realName: realName, orgId: orgId, roleId: roleId, isDel: isDel, includeSubOrg: includeSubOrg).SortPageExport(pi, exportMode);
             return BuildResult(0, "success", list, pi);
         }
 
         // 导出用户列表到 Excel
-        public IActionResult OnPostExport(Paging pi, string name, string realName, long? orgId, long? deptId, long? roleId, bool includeSubOrg = true)
+        public IActionResult OnPostExport(Paging pi, string name, string realName, long? orgId, long? roleId, bool includeSubOrg = true)
         {
-            var orgFilter = orgId ?? deptId;
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
-            var list = App.DAL.User.Search(name, realName, orgFilter, roleId, includeSubOrg: includeSubOrg).SortPageExport(exportPi);
+            var list = App.DAL.User.Search(name: name, realName: realName, orgId: orgId, roleId: roleId, includeSubOrg: includeSubOrg).SortPageExport(exportPi);
             ExcelExporter.Export(list, $"用户列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             Logger.Info($"导出用户列表，共 {list.Count} 条记录");
             return new EmptyResult();
         }
 
-        // 私有方法：搜索用户列表
 
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {

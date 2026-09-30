@@ -216,6 +216,13 @@ html, body {
     padding: 0 !important;
     vertical-align: middle !important;
     background-color: #f5f7fa !important;
+    font-weight: 400 !important;
+    font-size: 16px;
+}
+@media (min-width: 768px) {
+    .el-table th.el-table__cell {
+        font-size: 14px;
+    }
 }
 
 /* Force Header Cell Content Layout */
@@ -323,6 +330,26 @@ html, body {
     text-overflow: ellipsis !important;
 }
 
+/* --- \u5168\u5C40\u8868\u5355\u6807\u7B7E\uFF1A\u53D6\u6D88\u7C97\u4F53 + \u54CD\u5E94\u5F0F\u5B57\u53F7 ---
+ * \u79FB\u52A8\u7AEF 16px \u4FBF\u4E8E\u89E6\u63A7\u9605\u8BFB\uFF0C\u684C\u9762\u7AEF 12px \u5C55\u793A\u66F4\u591A\u5185\u5BB9\u3002
+ * EleForm \u5185\u5B57\u6BB5\u6807\u7B7E\u3001EleTable \u5DE5\u5177\u680F\u7B5B\u9009\u6807\u7B7E\u3001\u7B5B\u9009\u62BD\u5C49\u5185\u6807\u7B7E\u5168\u90E8\u751F\u6548\u3002
+ */
+.el-form-item__label,
+.el-form-item .el-form-item__label > span,
+.el-form-item__label-wrap .el-form-item__label,
+.ele-form-item-label {
+    font-weight: 400 !important;
+    font-size: 16px !important;
+}
+@media (min-width: 768px) {
+    .el-form-item__label,
+    .el-form-item .el-form-item__label > span,
+    .el-form-item__label-wrap .el-form-item__label,
+    .ele-form-item-label {
+        font-size: 12px !important;
+    }
+}
+
 /* Desktop filter row: keep all controls at a consistent width */
 .ele-table-toolbar .ele-table-filters-desktop .el-form-item {
     flex: 0 0 260px;
@@ -330,15 +357,18 @@ html, body {
     max-width: 260px;
 }
 
-/* EleTable filter labels: bold on both desktop toolbar and mobile drawer */
+/* EleTable filter labels: \u4E0E\u8868\u5355\u6807\u7B7E\u4FDD\u6301\u4E00\u81F4\uFF08\u53D6\u6D88\u7C97\u4F53\uFF0C\u4FDD\u7559\u65E7\u4EE3\u7801\u663E\u5F0F\u8BF4\u660E\u5DF2\u8986\u76D6\uFF09*/
 .ele-table-filters-block .el-form-item__label,
 .ele-table-filters-block .el-form-item__label > span {
-    font-weight: 700 !important;
+    font-weight: 400 !important;
 }
 
-/* EleTable mobile filter drawer: make title bold */
-.el-drawer__header .el-drawer__title {
-    font-weight: 700 !important;
+/* EleTable column header inner cell \u7EE7\u627F\u5916\u5C42\u5B57\u53F7\uFF08\u907F\u514D Element Plus \u5F3A\u5236 14px\uFF09 */
+.el-table th.el-table__cell > .cell,
+.el-table th.el-table__cell .cell .cell-sort-text,
+.el-table__header .cell {
+    font-weight: 400 !important;
+    font-size: inherit !important;
 }
 
 /* EleTable mobile filter drawer: stretch controls to full width */

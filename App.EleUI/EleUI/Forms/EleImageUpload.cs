@@ -45,6 +45,7 @@ namespace App.EleUI
             var limitWidth = LimitWidth > 0 ? LimitWidth : (MaxWidth > 0 ? MaxWidth : 1024);
             var itemImageStyle = $"width:{itemWidth}px; height:{itemWidth}px;";
             var itemBoxStyle = $"width:{itemWidth}px; height:{itemWidth}px;";
+            var delImageText = Texts.Current.DeleteImage;
             
             string content;
             
@@ -65,7 +66,7 @@ namespace App.EleUI
                     <div v-for=""(img, idx) in getImageList({vModel})"" :key=""idx"" class=""relative inline-block group"">
                         <img :src=""img"" style=""{itemImageStyle}"" class=""block object-contain cursor-pointer rounded border border-gray-200"" @click.stop=""openImageViewerTop(img, getImageList({vModel}), idx)"" />
                         <div class=""absolute -top-2 -right-2 z-10"" @click.stop=""{vModel}.splice(idx, 1)"">
-                            <div class=""ele-corner-close-btn"" title=""删除图片"">
+                            <div class=""ele-corner-close-btn"" title=""{delImageText}"">
                                 <el-icon class=""ele-corner-close-elicon""><Close /></el-icon>
                             </div>
                         </div>
@@ -92,7 +93,7 @@ namespace App.EleUI
                 <div v-if=""{vModel}"" class=""relative inline-block group overflow-visible"">
                     <img :src=""{vModel}"" style=""{itemImageStyle}"" class=""block object-contain cursor-pointer rounded border border-gray-200"" @click.stop=""openImageViewerTop({vModel})"" />
                     <div class=""absolute -top-2 -right-2 z-10"" @click.stop=""{deleteClick}"">
-                        <div class=""ele-corner-close-btn"" title=""删除图片"">
+                        <div class=""ele-corner-close-btn"" title=""{delImageText}"">
                             <el-icon class=""ele-corner-close-elicon""><Close /></el-icon>
                         </div>
                     </div>

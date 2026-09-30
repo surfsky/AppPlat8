@@ -1731,19 +1731,19 @@
         }
 
         function init() {
-            if (!accessToken) {
-                onError('缺少 Mapbox Token，请检查系统配置');
-                return;
-            }
+            // 统一交给 MapFactory 处理：
+            // - 若调用方已调用 MapFactory.setKeys(...)：这里会直接用保存好的 Key；
+            // - 否则兜底把 options.accessToken / tiandituKey / amapKey 写入 MapFactory；
+            // - 其余如 setTelemetryEnabled、accessToken 赋值、默认底图选择等，全部在 MapFactory 内部完成，不再重复。
+            var optsKeys = {
+                mapboxKey:   accessToken || '',
+                tiandituKey: (options && options.tiandituKey) || '',
+                amapKey:     (options && options.amapKey) || ''
+            };
+            global.MapFactory.setKeys(optsKeys);
 
-            mapboxgl.accessToken = accessToken;
-            if (typeof mapboxgl.setTelemetryEnabled === 'function') {
-                mapboxgl.setTelemetryEnabled(false);
-            }
-
-            map = new mapboxgl.Map({
+            map = global.MapFactory.createMap({
                 container: mapContainerId,
-                style: 'mapbox://styles/mapbox/streets-v11',
                 center: initialCenter,
                 zoom: initialZoom
             });

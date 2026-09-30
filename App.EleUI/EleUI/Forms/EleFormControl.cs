@@ -350,7 +350,7 @@ namespace App.EleUI
                 var rulesAttr = "";
                 if (Required)
                 {
-                    var msg = $"{Label}不能为空";
+                    var msg = $"{Label}" + Texts.Current.CannotEmpty;
                     rulesAttr = $@":rules=""[{{ required: true, message: '{msg}', trigger: 'blur' }}]""";
                 }
                 

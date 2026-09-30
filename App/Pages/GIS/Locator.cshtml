@@ -28,6 +28,7 @@
     <script src="/lib/mapbox-gl/mapbox-gl.js"></script>
     <link href="/lib/mapbox-gl/mapbox-gl.css" rel="stylesheet" />
     <script src="/gis/gis-address-search.js?v=@DateTime.Now.Ticks"></script>
+    <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
     <style>
         html, body, #app { height: 100%; margin: 0; }
         #map { width: 100%; height: calc(100% - 50px); top: 50px; }
@@ -96,8 +97,12 @@
                 let map = null;
                 let marker = null;
                 const addressSearch = window.GisAddressSearch?.create?.() || null;
-                //const accessToken = (new URLSearchParams(window.location.search).get('token') || window.MAPBOX_ACCESS_TOKEN || '').trim();
-                const accessToken = "@SiteConfig.Instance.MapboxKey";
+                // 统一通过 MapFactory.setKeys 保存 SiteConfig 下发的 GIS Key，内部会同步设置 mapboxgl.accessToken / telemetry
+                MapFactory.setKeys({
+                    mapboxKey:   "@SiteConfig.Instance.MapboxKey",
+                    tiandituKey: "@(SiteConfig.Instance.TiandituKey ?? "")",
+                    amapKey:     "@(SiteConfig.Instance.AmapKey ?? "")"
+                });
 
                 const showError = (msg) => {
                     if (window.EleManager && typeof window.EleManager.showError === 'function') {
@@ -133,15 +138,16 @@
                 };
 
                 const initMap = () => {
-                    // 初始化地图
-                    if (!accessToken) {
-                        showError('缺少 Mapbox Token，请在 URL 追加 token 参数或配置 window.MAPBOX_ACCESS_TOKEN');
+                    // 初始化地图：全部逻辑交给 MapFactory（含默认天地图街道底图、Key 解析、默认参数）
+                    if (!MapFactory) {
+                        showError('mapfactory.js 未加载');
                         return;
                     }
-                    mapboxgl.accessToken = accessToken;
-                    map = new mapboxgl.Map({
+                    if (!MapFactory.getTiandituKey() && !MapFactory.getMapboxKey()) {
+                        showError('缺少天地图 Key 或 Mapbox Token，请在系统配置中设置');
+                    }
+                    map = MapFactory.createMap({
                         container: 'map',
-                        style: 'mapbox://styles/mapbox/streets-v11',
                         center: [lng.value, lat.value],
                         zoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
                     });

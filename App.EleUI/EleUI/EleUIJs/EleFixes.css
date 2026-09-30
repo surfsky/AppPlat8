@@ -20,6 +20,13 @@ html, body {
     padding: 0 !important;
     vertical-align: middle !important;
     background-color: #f5f7fa !important;
+    font-weight: 400 !important;
+    font-size: 16px;
+}
+@media (min-width: 768px) {
+    .el-table th.el-table__cell {
+        font-size: 14px;
+    }
 }
 
 /* Force Header Cell Content Layout */
@@ -127,6 +134,26 @@ html, body {
     text-overflow: ellipsis !important;
 }
 
+/* --- 全局表单标签：取消粗体 + 响应式字号 ---
+ * 移动端 16px 便于触控阅读，桌面端 12px 展示更多内容。
+ * EleForm 内字段标签、EleTable 工具栏筛选标签、筛选抽屉内标签全部生效。
+ */
+.el-form-item__label,
+.el-form-item .el-form-item__label > span,
+.el-form-item__label-wrap .el-form-item__label,
+.ele-form-item-label {
+    font-weight: 400 !important;
+    font-size: 16px !important;
+}
+@media (min-width: 768px) {
+    .el-form-item__label,
+    .el-form-item .el-form-item__label > span,
+    .el-form-item__label-wrap .el-form-item__label,
+    .ele-form-item-label {
+        font-size: 12px !important;
+    }
+}
+
 /* Desktop filter row: keep all controls at a consistent width */
 .ele-table-toolbar .ele-table-filters-desktop .el-form-item {
     flex: 0 0 260px;
@@ -134,15 +161,18 @@ html, body {
     max-width: 260px;
 }
 
-/* EleTable filter labels: bold on both desktop toolbar and mobile drawer */
+/* EleTable filter labels: 与表单标签保持一致（取消粗体，保留旧代码显式说明已覆盖）*/
 .ele-table-filters-block .el-form-item__label,
 .ele-table-filters-block .el-form-item__label > span {
-    font-weight: 700 !important;
+    font-weight: 400 !important;
 }
 
-/* EleTable mobile filter drawer: make title bold */
-.el-drawer__header .el-drawer__title {
-    font-weight: 700 !important;
+/* EleTable column header inner cell 继承外层字号（避免 Element Plus 强制 14px） */
+.el-table th.el-table__cell > .cell,
+.el-table th.el-table__cell .cell .cell-sort-text,
+.el-table__header .cell {
+    font-weight: 400 !important;
+    font-size: inherit !important;
 }
 
 /* EleTable mobile filter drawer: stretch controls to full width */

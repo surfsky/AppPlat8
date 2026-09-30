@@ -40,7 +40,7 @@ namespace App.EleUI
             }
 
             var popupUrl = !string.IsNullOrEmpty(Popup) ? Popup : "/Shared/IconSelector";
-            var title = Label ?? "选择图标";
+            var title = Label ?? Texts.Current.SelectIcon;
             var multiStr = Multi.ToString().ToLower();
             var formModel = context.Items.ContainsKey("EleFormModel") ? context.Items["EleFormModel"] as string : "form";
             var boxWidth = ItemWidth > 0 ? ItemWidth : 100;
@@ -48,11 +48,14 @@ namespace App.EleUI
             var iconFontSize = Math.Max(24, Math.Min(48, boxWidth / 3));
 
             await RenderWrapper(output);
-            
+
             output.Attributes.SetAttribute("style", "width: 100%");
             output.TagName = "div";
             output.Attributes.SetAttribute("class", "ele-picker-wrapper");
-            
+
+            var clearIconTooltip = Texts.Current.ClearIcon.Replace("\"", "&quot;");
+            var selectIconText = Texts.Current.SelectIcon;
+
             // 自定义模板：显示图标预览
             // 当有值时，显示一个类似 ImageUpload 的预览框，但内容是图标
             var content = $@"
@@ -65,7 +68,7 @@ namespace App.EleUI
                      </div>
                      <!-- 删除按钮：橙色填充 + 白色线风格 -->
                      <div class=""absolute -top-3 -right-3 z-20"" @click.stop=""clearPicker('{propName}', '{textProp}')"">
-                        <div class=""ele-corner-close-btn"" title=""清除图标"">
+                        <div class=""ele-corner-close-btn"" title=""{clearIconTooltip}"">
                             <el-icon class=""ele-corner-close-elicon""><Close /></el-icon>
                         </div>
                      </div>
@@ -75,7 +78,7 @@ namespace App.EleUI
                  <div v-else style=""{boxStyle}"" class=""border border-dashed border-gray-300 rounded flex flex-col justify-center items-center cursor-pointer hover:border-blue-400 hover:text-blue-400 transition-colors""
                      @click=""openPicker('{propName}', '{textProp}', '{popupUrl}', {multiStr}, '{title}')"">
                     <el-icon class=""text-3xl text-gray-400""><Plus /></el-icon>
-                    <span class=""text-xs text-gray-400 mt-2"">选择图标</span>
+                    <span class=""text-xs text-gray-400 mt-2"">{selectIconText}</span>
                 </div>
             </div>
             ";

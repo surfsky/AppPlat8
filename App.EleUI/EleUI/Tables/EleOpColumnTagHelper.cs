@@ -139,7 +139,7 @@ namespace App.EleUI
 
         public EleOpColumnTagHelper()
         {
-            Label = "操作";
+            // 由 ProcessAsync 阶段用 Texts.Current.Operation fallback
             Width = "130";
             Fixed = "right";
             Align = "center";
@@ -162,7 +162,7 @@ namespace App.EleUI
 
             SetupColumnShell(output);
             var tableHeaderAlign = context.Items.ContainsKey("TableHeaderAlign") ? context.Items["TableHeaderAlign"] as string : null;
-            ApplyBaseColumnAttributes(output, null, tableHeaderAlign);
+            ApplyBaseColumnAttributes(output, string.IsNullOrWhiteSpace(Label) ? Texts.Current.Operation : Label, tableHeaderAlign);
 
             var maxInline = Math.Max(0, Shows);
             var inlineOps = ops.Take(maxInline).ToList();
@@ -292,7 +292,7 @@ namespace App.EleUI
                 return string.Empty;
 
             if (!string.IsNullOrWhiteSpace(op.Popup))
-                return BuildPopupExpr(op.Popup, op.Text ?? op.Tooltip ?? "详情");
+                return BuildPopupExpr(op.Popup, op.Text ?? op.Tooltip ?? Texts.Current.Details);
 
             if (!string.IsNullOrWhiteSpace(op.Command))
                 return BuildCommandExpr(op.Command);
@@ -327,7 +327,7 @@ namespace App.EleUI
                 ? p
                 : BuildPopupUrlExpr(p);
 
-            var t = EscapeSingleQuoted(title ?? "详情");
+            var t = EscapeSingleQuoted(title ?? Texts.Current.Details);
             return $"openDrawer({urlExpr}, '50%', 'rtl', '{t}')";
         }
 
@@ -411,9 +411,9 @@ namespace App.EleUI
         {
             var source = op?.Command ?? op?.Handler;
             var lower = (source ?? string.Empty).Trim().ToLowerInvariant();
-            if (lower == "edit") return "编辑";
-            if (lower == "delete") return "删除";
-            if (lower == "view") return "详情";
+            if (lower == "edit") return Texts.Current.Edit;
+            if (lower == "delete") return Texts.Current.Delete;
+            if (lower == "view") return Texts.Current.Details;
             if (!string.IsNullOrWhiteSpace(op?.Text)) return op.Text;
             return source ?? string.Empty;
         }

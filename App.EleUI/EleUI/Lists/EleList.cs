@@ -64,13 +64,13 @@ namespace App.EleUI
         public string ItemsClass { get; set; } = "space-y-3 pb-3";
 
         [HtmlAttributeName("EmptyText")]
-        public string EmptyText { get; set; } = "暂无数据";
+        public string EmptyText { get; set; } = null;
 
         [HtmlAttributeName("LoadText")]
-        public string LoadText { get; set; } = "加载中...";
+        public string LoadText { get; set; } = null;
 
         [HtmlAttributeName("LastText")]
-        public string LastText { get; set; } = "";
+        public string LastText { get; set; } = null;
 
         [HtmlAttributeName("MinHeight")]
         public string MinHeight { get; set; } = "40px";
@@ -158,10 +158,19 @@ namespace App.EleUI
                 }
             }
 
+            var emptyText = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(EmptyText) ? Texts.Current.EmptyData : EmptyText);
+            var loadText = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(LoadText) ? Texts.Current.LoadingText : LoadText);
+            var lastText = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(LastText) ? Texts.Current.NoMoreData : LastText);
+            var totalPrefix = Texts.Current.TotalPrefix;
+            var totalSuffix = Texts.Current.TotalSuffix;
+            var headerHtml = showHeader
+                ? $"<div class='px-2 pb-2 text-sm text-gray-500 flex items-center justify-between'><span>{title}</span><span>{totalPrefix} {{{{ {stateExpr}.total }}}} {totalSuffix}</span></div>"
+                : string.Empty;
+
             output.Content.AppendHtml($@"
 {startHtml}
 <div class='w-full h-full flex flex-col overflow-hidden'>
-    {(showHeader ? $"<div class='px-2 pb-2 text-sm text-gray-500 flex items-center justify-between'><span>{title}</span><span>共 {{{{ {stateExpr}.total }}}} 条</span></div>" : string.Empty)}
+    {headerHtml}
 
     <div class='{scrollClass}' data-ele-list-scroll='{listKey}'{scrollStyle} v-on:scroll.passive='onEleListScroll(&quot;{listKey}&quot;, $event)'>
         <div class='{itemsClass}'>
@@ -169,14 +178,14 @@ namespace App.EleUI
                 {template}
             </div>
 
-            <div v-if='{stateExpr}.loading && {stateExpr}.items.length === 0' class='text-center text-gray-400 py-3'>{LoadText}</div>
+            <div v-if='{stateExpr}.loading && {stateExpr}.items.length === 0' class='text-center text-gray-400 py-3'>{loadText}</div>
             <div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400{(!string.IsNullOrWhiteSpace(footerTemplate) ? " py-3 px-3 flex items-center justify-between gap-3" : " py-0")}'{emptyStyle}>
-                <span>{EmptyText}</span>
+                <span>{emptyText}</span>
                 {(string.IsNullOrWhiteSpace(footerTemplate) ? "" : $"<div class='flex items-center gap-2'>{footerTemplate}</div>")}
             </div>
 
             <div v-if='{stateExpr}.items.length > 0 && {stateExpr}.finished' class='text-center text-gray-400 py-3{(string.IsNullOrWhiteSpace(footerTemplate) ? "" : " px-3 flex items-center justify-between gap-3")}'>
-                {(string.IsNullOrWhiteSpace(footerTemplate) ? LastText : $"<span>{LastText}</span><div class='flex items-center gap-2'>{footerTemplate}</div>")}
+                {(string.IsNullOrWhiteSpace(footerTemplate) ? lastText : $"<span>{lastText}</span><div class='flex items-center gap-2'>{footerTemplate}</div>")}
             </div>
         </div>
     </div>
