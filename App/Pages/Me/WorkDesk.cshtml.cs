@@ -5,11 +5,71 @@ using App.Components;
 using App.DAL;
 using App.Entities;
 using App.Utils;
+using App.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Me
 {
+    //=========================================================================
+    // 页面 DTO
+    //=========================================================================
+    /// <summary>工作台链接</summary>
+    public class WorkDeskLink
+    {
+        public string Title { get; set; }
+        public string Url { get; set; }
+        public string Target { get; set; } = "_self";
+    }
+
+    /// <summary>工作台统计卡片</summary>
+    public class WorkDeskStatCard
+    {
+        public WorkDeskStatCard() {}
+        public WorkDeskStatCard(string title, int count, string url)
+        {
+            Title = title;
+            Count = count;
+            Url = url;
+        }
+
+        public string Title { get; set; }
+        public int Count { get; set; }
+        public string Url { get; set; }
+        public bool ShowBadge => Count > 0;
+    }
+
+    /// <summary>工作台任务行</summary>
+    public class WorkDeskTaskRow : IExport
+    {
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public string LevelText { get; set; }
+        public string CreatorText { get; set; }
+        public string CreatorOrg { get; set; }
+        public int Progress { get; set; }
+        public string ProgressText { get; set; }
+        public DateTime? StartDt { get; set; }
+        public DateTime? ExpireDt { get; set; }
+        public string DetailUrl { get; set; }
+
+        public object Export(ExportMode mode = ExportMode.Normal)
+        {
+            return new
+            {
+                Id, Name, LevelText,
+                CreatorText, CreatorOrg,
+                Progress, ProgressText,
+                StartDt, ExpireDt,
+                DetailUrl,
+            };
+        }
+    }
+
+    
+    //=========================================================================
+    // 页面 Model
+    //=========================================================================
     public class WorkDeskModel : AdminModel
     {
         //---------------------------------------------------------------------
@@ -19,14 +79,34 @@ namespace App.Pages.Me
         [BindProperty(SupportsGet = true)] public long? UserId { get; set; }
         [BindProperty(SupportsGet = true)] public string UserName { get; set; }
 
+        // 角标计数（对象 4 卡，隐患 3 卡）
+        public int CountMyObjects { get; set; }
+        public int CountUncheckedObjects { get; set; }
+        public int CountNearExpireObjects { get; set; }
+        public int CountOverdueObjects { get; set; }
+        public int CountMyHazards { get; set; }
+        public int CountPendingHazards { get; set; }
+        public int CountOverdueHazards { get; set; }
+
+        // 简单绑定用列表（SSR 输出）
+        public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
+        public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();
+
+
         /// <summary>根据 UserId 反查的真实姓名（SSR 回显 / 初始值）。</summary>
         public string UserRealName { get; private set; }
 
         // 管理员（有用户查看权限）可切换到其它中心/人员视图，非管理员只能看自己
-        public bool CanChangeScope => Auth.CheckPower(Power.UserView);
+        public bool CanChangeScope => Auth.CheckPower(Power.Admin);
+
+        // 实际责任网格命中范围：URL(管理员) > 用户 OrgId + AuthOrgIds 展开后的全部子孙
+        public List<long> CurrOrgIds => ResolveCurrOrgIds();
+
+        // 责任网格根节点（未展开）：用于 URL 拼接，避免 Query 超长
+        public List<long> CurrRootOrgIds => ResolveCurrRootOrgIds();
 
         // 实际要查询的目标用户：URL(管理员) > 当前登录用户
-        public long EffectiveUserId
+        public long CurrUserId
         {
             get
             {
@@ -37,42 +117,14 @@ namespace App.Pages.Me
             }
         }
 
-        // 实际责任网格命中范围：URL(管理员) > 用户 OrgId + AuthOrgIds 展开后的全部子孙
-        public List<long> EffectiveOrgIds => ResolveEffectiveOrgIds();
-
-        // 责任网格根节点（未展开）：用于 URL 拼接，避免 Query 超长
-        public List<long> EffectiveRootOrgIds => ResolveEffectiveRootOrgIds();
-
-        //---------------------------------------------------------------------
-        // 角标计数（对象 4 卡，隐患 3 卡）
-        //---------------------------------------------------------------------
-        public int CountMyObjects            { get; set; }
-        public int CountUncheckedObjects     { get; set; }
-        public int CountNearExpireObjects    { get; set; }
-        public int CountOverdueObjects       { get; set; }
-        public int CountMyHazards            { get; set; }
-        public int CountPendingHazards       { get; set; }
-        public int CountOverdueHazards       { get; set; }
-
-        //---------------------------------------------------------------------
-        // 简单绑定用列表（SSR 输出）
-        //---------------------------------------------------------------------
-        // 已废弃：快捷入口配置已移到 WorkDesk.cshtml 顶部代码块中（List<WorkDeskLink> quickEntries），
-        // 调整标题/链接/打开方式直接改 .cshtml 即可，无需重新编译 PageModel。
-        [Obsolete("快捷入口配置已移到 WorkDesk.cshtml 顶部，此字段保留为空占位")]
-        public List<WorkDeskLink> QuickEntries { get; } = new();
-        public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
-        public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();
 
         //---------------------------------------------------------------------
         // 页面加载：统计计数 + 卡片初始化
         //---------------------------------------------------------------------
         public void OnGet()
         {
-            // 任务 handler / EleTable AJAX 通过 Query 传参，这里也优先读 Query，
-            // 避免 BindProperty 只在 SSR 首屏生效（切 tab / 切 picker 后 AJAX 请求不带 BindProperty 值）
-            var rawUserId = Request.Query["userId"].FirstOrDefault();
-            if (long.TryParse(rawUserId, out var uidQ) && uidQ > 0) UserId = uidQ;
+            // UserId
+            UserId = Asp.GetQuery<long>("userId");
 
             ResolveUserRealName();
             var today = DateTime.Today;
@@ -113,6 +165,10 @@ namespace App.Pages.Me
                 new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false")),
                 new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}")),
                 new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
+                new WorkDeskStatCard("重点关注对象", CountOverdueObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
+                new WorkDeskStatCard("示例对象", CountOverdueObjects,   AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
+                new WorkDeskStatCard("八大类对象", CountOverdueObjects,   AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
+                new WorkDeskStatCard("三场所对象", CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
             };
 
             var hazards = BuildHazardScopeQuery();
@@ -167,53 +223,11 @@ namespace App.Pages.Me
             return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
         }
 
-        //---------------------------------------------------------------------
-        // 表格 2：基础科任务（当前目标用户所在科室级，含下属）
-        //---------------------------------------------------------------------
-        public IActionResult OnGetSectionTasks(Paging pi)
-        {
-            var sectionIds = GetSectionScopeOrgIds();
-            var taskIds = sectionIds.Count == 0
-                ? new List<long>()
-                : App.DAL.CheckTaskOrg.ValidSet.AsNoTracking()
-                    .Where(to => to.OrgId != null && sectionIds.Contains(to.OrgId.Value) && to.TaskId != null)
-                    .Select(to => to.TaskId.Value)
-                    .Distinct()
-                    .ToList();
-
-            var q = App.DAL.CheckTask.Search(null, null, null)
-                .AsNoTracking()
-                .Include(t => t.Creator).ThenInclude(u => u.Org)
-                .Include(t => t.Orgs).ThenInclude(o => o.Org)
-                .Where(t => taskIds.Contains(t.Id));
-            return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
-        }
-
-        //---------------------------------------------------------------------
-        // 表格 3：分派中心任务（当前目标用户所在单位级，含下属；若枚举没 Center，退回到 Unit）
-        //---------------------------------------------------------------------
-        public IActionResult OnGetCenterTasks(Paging pi)
-        {
-            var centerIds = GetCenterScopeOrgIds();
-            var taskIds = centerIds.Count == 0
-                ? new List<long>()
-                : App.DAL.CheckTaskOrg.ValidSet.AsNoTracking()
-                    .Where(to => to.OrgId != null && centerIds.Contains(to.OrgId.Value) && to.TaskId != null)
-                    .Select(to => to.TaskId.Value)
-                    .Distinct()
-                    .ToList();
-
-            var q = App.DAL.CheckTask.Search(null, null, null)
-                .AsNoTracking()
-                .Include(t => t.Creator).ThenInclude(u => u.Org)
-                .Include(t => t.Orgs).ThenInclude(o => o.Org)
-                .Where(t => taskIds.Contains(t.Id));
-            return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
-        }
 
         //---------------------------------------------------------------------
         // 内部：EF 查询先 ToList（避免 EF 翻译本地函数/字符串拼接失败），再手动 SortPage 成 WorkDeskTaskRow
         //---------------------------------------------------------------------
+        /// <summary>将 EF 查询投影为 WorkDeskTaskRow</summary>
         private static List<object> MaterializeAndProject(IQueryable<CheckTask> query, Paging pi)
         {
             // 1) 排序前统一默认值
@@ -255,75 +269,44 @@ namespace App.Pages.Me
             if (UserId.HasValue && UserId.Value > 0)
             {
                 var u = App.DAL.User.Get(UserId.Value);
-                if (u != null)
-                {
-                    UserRealName = (u.RealName ?? string.Empty).Trim();
-                    if (string.IsNullOrWhiteSpace(UserRealName))
-                        UserRealName = (u.Name ?? string.Empty).Trim();
-                    return;
-                }
-            }
-            if (!string.IsNullOrWhiteSpace(UserName))
-            {
-                var key = UserName.Trim();
-                var u = App.DAL.User.Set.FirstOrDefault(x => x.Name == key || x.RealName == key);
-                if (u != null)
-                {
-                    UserRealName = (u.RealName ?? string.Empty).Trim();
-                    if (string.IsNullOrWhiteSpace(UserRealName))
-                        UserRealName = (u.Name ?? string.Empty).Trim();
-                    if (!UserId.HasValue || UserId.Value <= 0)
-                        UserId = u.Id;
-                    return;
-                }
-            }
-            var selfId = GetUserId();
-            if (selfId.HasValue && selfId.Value > 0)
-            {
-                var u = App.DAL.User.Get(selfId.Value);
-                if (u != null)
-                {
-                    UserRealName = (u.RealName ?? string.Empty).Trim();
-                    if (string.IsNullOrWhiteSpace(UserRealName))
-                        UserRealName = (u.Name ?? string.Empty).Trim();
-                    if (!UserId.HasValue || UserId.Value <= 0)
-                        UserId = u.Id;
-                }
+                UserRealName = u?.RealName;
             }
         }
 
-        private List<long> ResolveEffectiveOrgIds()
+        private List<long> ResolveCurrOrgIds()
         {
-            var ids = ResolveEffectiveRootOrgIds();
+            var ids = ResolveCurrRootOrgIds();
             if (ids.Count == 0) return new List<long>();
             return OrgDescendants(ids);
         }
 
-        private List<long> ResolveEffectiveRootOrgIds()
+        private List<long> ResolveCurrRootOrgIds()
         {
             if (CanChangeScope && OrgId.HasValue && OrgId.Value > 0)
                 return new List<long> { OrgId.Value };
 
-            var user = App.DAL.User.Get(EffectiveUserId);
+            var user = App.DAL.User.Get(CurrUserId);
             if (user == null) return new List<long>();
 
             var ids = new List<long>();
-            if (user.OrgId.HasValue) ids.Add(user.OrgId.Value);
+            if (user.OrgId.HasValue)     ids.Add(user.OrgId.Value);
             if (user.AuthOrgIds != null) ids.AddRange(user.AuthOrgIds);
             return ids.Distinct().Where(x => x > 0).ToList();
         }
 
+        /// <summary>获取当前用户所属的部门（包含子部门）</summary>
         private List<long> GetSectionScopeOrgIds()
         {
-            var user    = App.DAL.User.Get(EffectiveUserId);
+            var user    = App.DAL.User.Get(CurrUserId);
             var org     = user?.OrgId.HasValue == true ? OrgGet(user.OrgId.Value) : null;
             var section = org?.GetAncestor(OrgLevel.Section) ?? org;
             return section == null ? new List<long>() : OrgDescendants(section.Id);
         }
 
+        /// <summary>获取当前用户所属的中心（包含子中心）</summary>
         private List<long> GetCenterScopeOrgIds()
         {
-            var user   = App.DAL.User.Get(EffectiveUserId);
+            var user   = App.DAL.User.Get(CurrUserId);
             var org    = user?.OrgId.HasValue == true ? OrgGet(user.OrgId.Value) : null;
             var center = org?.GetAncestor(OrgLevel.Unit)
                       ?? org?.GetAncestor(OrgLevel.District)
@@ -336,8 +319,8 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         private IQueryable<CheckObject> BuildObjectScopeQuery()
         {
-            var uid    = EffectiveUserId;
-            var orgIds = EffectiveOrgIds;
+            var uid    = CurrUserId;
+            var orgIds = CurrOrgIds;
             return App.DAL.CheckObject.Search(isDel: false)
                 .Where(o => (orgIds.Count > 0 && o.DutyOrgId.HasValue && orgIds.Contains(o.DutyOrgId.Value))
                          || (o.CheckerId == uid));
@@ -345,8 +328,8 @@ namespace App.Pages.Me
 
         private IQueryable<CheckHazard> BuildHazardScopeQuery()
         {
-            var uid    = EffectiveUserId;
-            var orgIds = EffectiveOrgIds;
+            var uid    = CurrUserId;
+            var orgIds = CurrOrgIds;
             return App.DAL.CheckHazard.Search(null, null, null, null, null, null)
                 .Where(h => h.CheckerId == uid
                          || (orgIds.Count > 0
@@ -392,7 +375,7 @@ namespace App.Pages.Me
             if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
             var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
-            var roots = EffectiveRootOrgIds;
+            var roots = CurrRootOrgIds;
             if (roots != null && roots.Count == 1)
                 qs["dutyOrgId"] = roots[0].ToString();
             else if (roots != null && roots.Count > 1)
@@ -408,7 +391,7 @@ namespace App.Pages.Me
             if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
             var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
-            var uid = EffectiveUserId;
+            var uid = CurrUserId;
             if (uid > 0) qs["checkerId"] = uid.ToString();
 
             if (qs.Count == 0) return rawUrl;
@@ -441,52 +424,5 @@ namespace App.Pages.Me
         }
     }
 
-    //-------------------------------------------------------------------------
-    // 页面级 DTO
-    //-------------------------------------------------------------------------
-    public class WorkDeskLink
-    {
-        public string Title  { get; set; }
-        public string Url    { get; set; }
-        public string Target { get; set; } = "_self";
-    }
 
-    public class WorkDeskStatCard
-    {
-        public WorkDeskStatCard() { }
-        public WorkDeskStatCard(string title, int count, string url)
-        {
-            Title = title; Count = count; Url = url;
-        }
-        public string Title { get; set; }
-        public int    Count { get; set; }
-        public string Url   { get; set; }
-        public bool   ShowBadge => Count > 0;
-    }
-
-    public class WorkDeskTaskRow : IExport
-    {
-        public long      Id           { get; set; }
-        public string    Name         { get; set; }
-        public string    LevelText    { get; set; }
-        public string    CreatorText  { get; set; }
-        public string    CreatorOrg   { get; set; }
-        public int       Progress     { get; set; }
-        public string    ProgressText { get; set; }
-        public DateTime? StartDt      { get; set; }
-        public DateTime? ExpireDt     { get; set; }
-        public string    DetailUrl    { get; set; }
-
-        public object Export(ExportMode mode = ExportMode.Normal)
-        {
-            return new
-            {
-                Id, Name, LevelText,
-                CreatorText, CreatorOrg,
-                Progress, ProgressText,
-                StartDt, ExpireDt,
-                DetailUrl,
-            };
-        }
-    }
 }

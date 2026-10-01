@@ -10,17 +10,17 @@
     if (string.IsNullOrWhiteSpace(Model.UserName) && !string.IsNullOrWhiteSpace(Model.UserRealName))
         Model.UserName = Model.UserRealName;
     var activeTab = Request.Query["taskTab"].FirstOrDefault() ?? "unfinished";
-    var dutyOrgSingleVal = (Model.EffectiveOrgIds != null && Model.EffectiveOrgIds.Count == 1)
-        ? Model.EffectiveOrgIds[0].ToString() : "";
-    var dutyOrgIdsStr    = (Model.EffectiveOrgIds != null && Model.EffectiveOrgIds.Count > 0)
-        ? string.Join(",", Model.EffectiveOrgIds) : "";
+    var dutyOrgSingleVal = (Model.CurrOrgIds != null && Model.CurrOrgIds.Count == 1)
+        ? Model.CurrOrgIds[0].ToString() : "";
+    var dutyOrgIdsStr    = (Model.CurrOrgIds != null && Model.CurrOrgIds.Count > 0)
+        ? string.Join(",", Model.CurrOrgIds) : "";
 
-    var quickEntries = new List<App.Pages.Me.WorkDeskLink>
+    var quickEntries = new List<WorkDeskLink>
     {
-        new App.Pages.Me.WorkDeskLink { Title = "一张图",   Url = "/GIS/Index",           Target = "_blank" },
-        new App.Pages.Me.WorkDeskLink { Title = "知识库",   Url = "/KB/Index",            Target = "_self"  },
-        new App.Pages.Me.WorkDeskLink { Title = "值班表",   Url = "/OA/DutySchedules",    Target = "_self"  },
-        new App.Pages.Me.WorkDeskLink { Title = "通讯录",   Url = "/CRM/Contacts",        Target = "_self"  },
+        new WorkDeskLink { Title = "一张图",   Url = "/GIS/Index",           Target = "_blank" },
+        new WorkDeskLink { Title = "知识库",   Url = "/KB/Index",            Target = "_self"  },
+        new WorkDeskLink { Title = "值班表",   Url = "/OA/DutySchedules",    Target = "_self"  },
+        new WorkDeskLink { Title = "通讯录",   Url = "/CRM/Contacts",        Target = "_self"  },
     };
     var tabs = new[]
     {
@@ -37,7 +37,7 @@
 }
 
 @section body {
-<div id="wdApp" class="w-full min-h-screen bg-white text-[15px] text-[#1e293b]">
+<div id="wdApp" class="w-full min-h-screen overflow-y-auto bg-white text-[15px] text-[#1e293b]">
   <div class="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
 
     <!-- 顶部：人员选择 + 组织入口（原生 HTML + 原生 JS） -->
@@ -112,18 +112,18 @@
 
 @section script {
 <script>
-    // 把 SSR 初始化数据（快捷入口 / 对象卡片 / 隐患卡片 / 初始 tab / 人员）安全注入给 JS，
-    // 避免在 Razor 里写任何 el-* / template 标签，Vue 侧只读 window.__WD_INITIAL__ 渲染。
-    window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
-        quickEntries  = quickEntries,
-        objectCards   = Model.ObjectStatCards,
-        hazardCards   = Model.HazardStatCards,
-        userId        = userVal,
-        initialTaskTab = activeTab,
-    }, new System.Text.Json.JsonSerializerOptions {
-        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-        Encoder              = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    }));
+// 把 SSR 初始化数据（快捷入口 / 对象卡片 / 隐患卡片 / 初始 tab / 人员）安全注入给 JS，
+// 避免在 Razor 里写任何 el-* / template 标签，Vue 侧只读 window.__WD_INITIAL__ 渲染。
+window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+    quickEntries  = quickEntries,
+    objectCards   = Model.ObjectStatCards,
+    hazardCards   = Model.HazardStatCards,
+    userId        = userVal,
+    initialTaskTab = activeTab,
+}, new System.Text.Json.JsonSerializerOptions {
+    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+    Encoder              = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+}));
 
 /* 原生全局辅助：人员选择器（在 Vue app 挂载外操作，避免 Vue 重绘销毁 input value）
  * 选完人后整页刷新 URL（因为我的管理对象 / 我的隐患两个统计卡由 SSR 渲染，没法局部刷新）
@@ -253,7 +253,7 @@
  */
 (function () {
     // -------- 统一按钮尺寸：快捷入口 / 对象 / 隐患 共用 180 x 64 --------
-    var BUTTON_STYLE = 'height:64px; width:180px; border-radius:8px; font-weight:500;';
+    var BUTTON_STYLE = 'height:42px; width:180px; border-radius:8px; font-weight:500;';
     var ICON_COLOR  = '#2563eb'; // tailwind blue-600，统一图标蓝
 
     // -------- 图标映射（按 title 匹配 Font Awesome 6 图标） --------
@@ -302,7 +302,7 @@
         + '<div class="flex flex-wrap gap-5">'
         + '    <div v-for="item in quickEntries" :key="item.url" class="inline-block">'
         + '        <el-link :href="item.url" :target="item.target" :underline="false" rel="noopener" style="text-decoration:none;">'
-        + '            <el-button size="large" style="' + BUTTON_STYLE + '">'
+        + '            <el-button size="normal" style="' + BUTTON_STYLE + '">'
         + '                <template v-slot:default>'
         + '                    <span style="display:inline-flex; align-items:center; gap:10px;">'
         + '                        <i :class="item.iconClass" style="color:' + ICON_COLOR + ';"></i>'

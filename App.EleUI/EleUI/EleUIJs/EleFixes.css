@@ -4,13 +4,36 @@
     border-collapse: separate !important; 
 }
 
-/* Reset Body for Full Screen Layout */
+/* Reset Body for Full Screen Layout
+ * 仅当页面显式标记 class="ele-fullscreen-page"（例如 GIS/GeometryManager 这类左右分栏 + iframe 全屏
+ * 的 splitter 页面）时，才把 html/body 设为 overflow:hidden；普通内容页（WorkDesk / Maintains/* 列表页等）
+ * 必须允许垂直滚动，否则 body 的全局 overflow:hidden 会让所有内容页 y 轴无法滚动。 */
 html, body {
     margin: 0;
     padding: 0;
     height: 100%;
     width: 100%;
-    overflow: hidden; /* Prevent body scroll */
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* 明确需要「body 铺满屏幕且不出滚动条」的全屏布局：
+ * 1) 根节点（body section 的第一层 div）加 class="ele-fullscreen-page"
+ * 2) 或 body 自身加 class="ele-fullscreen-page"
+ * 两种方式都会让 html + body 的滚动条被禁止，适用于 GIS/splitter 全屏页面。 */
+html:has(body.ele-fullscreen-page),
+html:has(.ele-fullscreen-page),
+body.ele-fullscreen-page {
+    overflow: hidden !important;
+}
+body.ele-fullscreen-page,
+.ele-fullscreen-page {
+    height: 100vh !important;
+    width: 100vw !important;
+    min-height: 100vh !important;
+    min-width: 100vw !important;
+    max-height: 100vh !important;
+    max-width: 100vw !important;
 }
 
 /* Ensure Header Alignment is standard */

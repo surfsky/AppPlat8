@@ -1,6 +1,14 @@
 @page
+@using Microsoft.AspNetCore.Mvc.RazorPages
+@functions {
+    public class IconSelectorModel : PageModel
+    {
+        public void OnGet() { }
+    }
+}
+@model IconSelectorModel
 @{
-    ViewData["Title"] = "图标选择";
+    Layout = "_Layout";
 }
 
 @section head {
@@ -8,10 +16,42 @@
         .icon-item {
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
         }
         .icon-item:hover {
             background-color: #f3f4f6;
             transform: scale(1.1);
+        }
+        .icon-item.is-selected {
+            background-color: #eff6ff;
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25), 0 4px 10px -2px rgba(37, 99, 235, 0.25);
+            transform: translateY(-1px) scale(1.03);
+        }
+        .icon-item.is-selected::after {
+            content: "✓";
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #2563eb;
+            color: #fff;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.4);
+        }
+        .icon-item.is-selected i {
+            color: #2563eb !important;
+        }
+        .icon-item.is-selected span {
+            color: #1d4ed8 !important;
+            font-weight: 600;
         }
     </style>
 }
@@ -29,89 +69,648 @@
 
 @section script {
     <script>
-        // FontAwesome 图标列表
-        // 参考 https://element-plus.org/en-US/component/icon
+        // FontAwesome 图标列表：https://fontawesome.com/search?m=free （免费版筛选）
+        // 本项目固定引入 Font Awesome 6 Free v6.5.2 （本地 /lib/font-awesome-6.5.2/css/all.min.css）
+        // 每个条目用 cls 直接写完整 class，避免 name + prefix 二次拼接出错。
+        // - Solid：以 "fas fa-" 开头（实心）
+        // - Regular：以 "far fa-" 开头（线框型。注：FA6 Free 下只有部分图标有 Regular 版本，
+        //   不要直接写不存在的 far 条目，否则页面显示空占位框。）
         const icons = [
-            "user","users","user-tag","user-cog","user-shield",
-            "home","tachometer-alt","chart-line","chart-bar","chart-pie",
-            "cog","cogs","wrench","tools","sliders-h",
-            "envelope","envelope-open","comment","comments","bullhorn",
-            "file","file-alt","file-pdf","file-word","file-excel",
-            "folder","folder-open","folder-plus","folder-minus","file",
-            "check","check-circle","check-square","check-double",
-            "times","times-circle","plus","plus-circle","minus",
-            "edit","pen","pencil-alt","trash","trash-alt",
-            "search","search-plus","search-minus","filter",
-            "lock","unlock","key","shield-alt",
-            "calendar","calendar-alt","calendar-check","clock",
-            "map","map-marked-alt","map-marker-alt","map-pin","map-signs",
-            "location-arrow","compass","crosshairs","route","directions",
-            "draw-polygon","layer-group","street-view",
-            "globe","globe-asia","globe-americas","globe-europe","globe-africa",
-            "link","external-link-alt","share","share-alt",
-            "download","upload","cloud","cloud-upload-alt",
-            "sun","sunrise","sunset","moon","cloud-moon","cloud-sun",
-            "cloud","cloud-rain","cloud-showers-heavy","cloud-sun-rain","bolt",
-            "wind","umbrella","water","smog","temperature-high","temperature-low",
-            "satellite","satellite-dish",
-            "list","list-alt","list-ul","list-ol","th","th-large",
-            "bars","ellipsis-h","ellipsis-v",
-            "info-circle","question-circle","exclamation-circle","exclamation-triangle",
-            "sitemap","project-diagram","tasks","clipboard-list",
-            "cubes","cube","box","boxes",
-            "desktop","laptop","mobile-alt","tablet-alt",
-            "print","camera","video","image",
-            "shopping-cart","money-bill","credit-card",
-            "briefcase","building","university","hospital",
-            "bell","bell-slash","book","book-open","graduation-cap",
-            "rocket","heart","star","star-half-alt","thumbs-up",
-            "thumbs-down","handshake","award","trophy","medal",
-            "lightbulb","battery-full","battery-half","battery-quarter","battery-empty",
-            "music","headphones","microphone","gift","birthday-cake",
-            "utensils","wifi","sync","sync-alt","redo","undo",
-            "clipboard","flag","rss",
-            "bug","hands-helping","hand-holding-heart"
+            // ========== 用户 / 账户 ==========
+            { cls: "fas fa-user",              label: "user" },
+            { cls: "far fa-user",              label: "user (线框)" },
+            { cls: "fas fa-users",             label: "users" },
+            { cls: "fas fa-user-tag",         label: "user-tag" },
+            { cls: "fas fa-user-gear",        label: "user-gear (替代user-cog)" },
+            { cls: "fas fa-user-shield",      label: "user-shield" },
+
+            // ========== 首页 / 仪表盘 / 图表 ==========
+            { cls: "fas fa-house",             label: "home / house" },
+            { cls: "far fa-house",             label: "house (线框·替代home)" },
+            { cls: "fas fa-tachometer-alt",    label: "tachometer-alt" },
+            { cls: "fas fa-gauge-high",      label: "gauge-high (替代tachometer-alt)" },
+            { cls: "fas fa-chart-line",        label: "chart-line" },
+            { cls: "fas fa-chart-column",    label: "chart-column (替代chart-bar)" },
+            { cls: "fas fa-chart-bar",         label: "chart-bar" },
+            { cls: "fas fa-chart-pie",         label: "chart-pie" },
+
+            // ========== 设置 / 工具 ==========
+            { cls: "fas fa-gear",              label: "gear (替代cog)" },
+            { cls: "far fa-gear",              label: "gear (线框·替代cog)" },
+            { cls: "fas fa-cog",               label: "cog" },
+            { cls: "fas fa-gears",             label: "gears (替代cogs)" },
+            { cls: "fas fa-cogs",              label: "cogs" },
+            { cls: "fas fa-wrench",            label: "wrench" },
+            { cls: "fas fa-screwdriver-wrench", label: "screwdriver-wrench (替代tools)" },
+            { cls: "fas fa-tools",             label: "tools" },
+            { cls: "fas fa-sliders",          label: "sliders (替代sliders-h)" },
+            { cls: "fas fa-sliders-h",         label: "sliders-h" },
+            { cls: "fas fa-screwdriver",      label: "screwdriver" },
+            { cls: "fas fa-hammer",           label: "hammer" },
+            { cls: "fas fa-toolbox",          label: "toolbox" },
+            { cls: "fas fa-paint-roller",    label: "paint-roller" },
+            { cls: "fas fa-paintbrush",      label: "paintbrush" },
+            { cls: "fas fa-ruler",            label: "ruler" },
+            { cls: "fas fa-ruler-combined",   label: "ruler-combined" },
+            { cls: "fas fa-eraser",           label: "eraser" },
+            { cls: "fas fa-highlighter",      label: "highlighter" },
+            { cls: "fas fa-shapes",           label: "shapes" },
+            { cls: "fas fa-wand-magic-sparkles", label: "wand-magic-sparkles" },
+
+            // ========== 消息 / 通知 ==========
+            { cls: "fas fa-envelope",        label: "envelope" },
+            { cls: "far fa-envelope",        label: "envelope (线框)" },
+            { cls: "fas fa-envelope-open",   label: "envelope-open" },
+            { cls: "far fa-envelope-open",   label: "envelope-open (线框)" },
+            { cls: "fas fa-comment",         label: "comment" },
+            { cls: "far fa-comment",         label: "comment (线框)" },
+            { cls: "fas fa-comments",        label: "comments" },
+            { cls: "far fa-comments",        label: "comments (线框)" },
+            { cls: "fas fa-bullhorn",        label: "bullhorn" },
+            { cls: "fas fa-bell",            label: "bell" },
+            { cls: "far fa-bell",            label: "bell (线框)" },
+            { cls: "fas fa-bell-slash",      label: "bell-slash" },
+
+            // ========== 文件 / 文件夹 ==========
+            { cls: "fas fa-file",            label: "file" },
+            { cls: "far fa-file",            label: "file (线框)" },
+            { cls: "fas fa-file-lines",      label: "file-lines (替代file-alt)" },
+            { cls: "far fa-file-lines",      label: "file-lines (线框·替代file-alt)" },
+            { cls: "fas fa-file-pdf",        label: "file-pdf" },
+            { cls: "far fa-file-pdf",        label: "file-pdf (线框)" },
+            { cls: "fas fa-file-word",       label: "file-word" },
+            { cls: "far fa-file-word",       label: "file-word (线框)" },
+            { cls: "fas fa-file-excel",      label: "file-excel" },
+            { cls: "far fa-file-excel",      label: "file-excel (线框)" },
+            { cls: "fas fa-file-image",      label: "file-image" },
+            { cls: "far fa-file-image",      label: "file-image (线框)" },
+            { cls: "fas fa-file-audio",      label: "file-audio" },
+            { cls: "far fa-file-audio",      label: "file-audio (线框)" },
+            { cls: "fas fa-file-video",      label: "file-video" },
+            { cls: "far fa-file-video",      label: "file-video (线框)" },
+            { cls: "fas fa-file-code",       label: "file-code" },
+            { cls: "far fa-file-code",       label: "file-code (线框)" },
+            { cls: "fas fa-file-zipper",     label: "file-zipper" },
+            { cls: "far fa-file-zipper",     label: "file-zipper (线框)" },
+            { cls: "fas fa-file-csv",        label: "file-csv" },
+            { cls: "far fa-file-csv",        label: "file-csv (线框)" },
+            { cls: "fas fa-file-contract",   label: "file-contract" },
+            { cls: "far fa-file-contract",   label: "file-contract (线框)" },
+            { cls: "fas fa-file-signature",  label: "file-signature" },
+            { cls: "far fa-file-signature",  label: "file-signature (线框)" },
+            { cls: "fas fa-folder",          label: "folder" },
+            { cls: "far fa-folder",          label: "folder (线框)" },
+            { cls: "fas fa-folder-open",     label: "folder-open" },
+            { cls: "far fa-folder-open",     label: "folder-open (线框)" },
+            { cls: "fas fa-folder-plus",     label: "folder-plus" },
+            { cls: "fas fa-folder-minus",    label: "folder-minus" },
+            { cls: "fas fa-folder-tree",     label: "folder-tree" },
+            { cls: "fas fa-folder-closed",  label: "folder-closed" },
+            { cls: "far fa-folder-closed",  label: "folder-closed (线框)" },
+
+            // ========== 勾选 / 取消 / 加减 ==========
+            { cls: "fas fa-check",           label: "check" },
+            { cls: "fas fa-circle-check",    label: "circle-check (替代check-circle)" },
+            { cls: "far fa-circle-check",    label: "circle-check (线框·替代check-circle)" },
+            { cls: "fas fa-check-circle",     label: "check-circle" },
+            { cls: "fas fa-square-check",    label: "square-check (替代check-square)" },
+            { cls: "far fa-square-check",    label: "square-check (线框·替代check-square)" },
+            { cls: "fas fa-check-square",     label: "check-square" },
+            { cls: "fas fa-check-double",    label: "check-double" },
+            { cls: "fas fa-xmark",           label: "xmark (替代times)" },
+            { cls: "fas fa-times",            label: "times" },
+            { cls: "fas fa-circle-xmark",   label: "circle-xmark (替代times-circle)" },
+            { cls: "far fa-circle-xmark",   label: "circle-xmark (线框·替代times-circle)" },
+            { cls: "fas fa-times-circle",     label: "times-circle" },
+            { cls: "fas fa-plus",            label: "plus" },
+            { cls: "fas fa-circle-plus",    label: "circle-plus (替代plus-circle)" },
+            { cls: "far fa-circle-plus",    label: "circle-plus (线框·替代plus-circle)" },
+            { cls: "fas fa-plus-circle",       label: "plus-circle" },
+            { cls: "fas fa-square-plus",    label: "square-plus (替代plus-square)" },
+            { cls: "far fa-square-plus",    label: "square-plus (线框·替代plus-square)" },
+            { cls: "fas fa-plus-square",       label: "plus-square" },
+            { cls: "fas fa-minus",           label: "minus" },
+            { cls: "fas fa-square-minus",   label: "square-minus (替代minus-square)" },
+            { cls: "far fa-square-minus",   label: "square-minus (线框·替代minus-square)" },
+            { cls: "fas fa-minus-square",      label: "minus-square" },
+
+            // ========== 编辑 / 删除 ==========
+            { cls: "fas fa-pen-to-square",    label: "pen-to-square (替代pencil-alt/edit)" },
+            { cls: "far fa-pen-to-square",    label: "pen-to-square (线框·替代pencil-alt)" },
+            { cls: "fas fa-pen",             label: "pen" },
+            { cls: "fas fa-edit",            label: "edit" },
+            { cls: "fas fa-trash-can",       label: "trash-can (替代trash-alt)" },
+            { cls: "far fa-trash-can",       label: "trash-can (线框·替代trash-alt)" },
+            { cls: "fas fa-trash",           label: "trash" },
+            { cls: "fas fa-scissors",        label: "scissors" },
+            { cls: "fas fa-clone",           label: "clone" },
+            { cls: "fas fa-crop",            label: "crop" },
+            { cls: "fas fa-crop-simple",    label: "crop-simple" },
+            { cls: "fas fa-copy",            label: "copy" },
+            { cls: "far fa-copy",            label: "copy (线框)" },
+            { cls: "fas fa-paste",           label: "paste" },
+
+            // ========== 搜索 / 过滤 ==========
+            { cls: "fas fa-magnifying-glass",    label: "magnifying-glass (替代search)" },
+            { cls: "fas fa-magnifying-glass-plus", label: "magnifying-glass-plus (替代search-plus)" },
+            { cls: "fas fa-magnifying-glass-minus", label: "magnifying-glass-minus (替代search-minus)" },
+            { cls: "fas fa-search",          label: "search" },
+            { cls: "fas fa-search-plus",     label: "search-plus" },
+            { cls: "fas fa-search-minus",    label: "search-minus" },
+            { cls: "fas fa-filter",          label: "filter" },
+            { cls: "fas fa-filter-circle-xmark", label: "filter-circle-xmark" },
+
+            // ========== 安全 / 权限 ==========
+            { cls: "fas fa-lock",            label: "lock" },
+            { cls: "far fa-lock",            label: "lock (线框)" },
+            { cls: "fas fa-lock-open",       label: "lock-open" },
+            { cls: "far fa-lock-open",       label: "lock-open (线框)" },
+            { cls: "fas fa-unlock",          label: "unlock" },
+            { cls: "fas fa-key",             label: "key" },
+            { cls: "fas fa-shield-halved",   label: "shield-halved (替代shield-alt)" },
+            { cls: "fas fa-shield",          label: "shield" },
+            { cls: "fas fa-shield-virus",    label: "shield-virus" },
+            { cls: "fas fa-shield-dog",      label: "shield-dog" },
+            { cls: "fas fa-shield-cat",      label: "shield-cat" },
+
+            // ========== 日历 / 时间 ==========
+            { cls: "fas fa-calendar",        label: "calendar" },
+            { cls: "far fa-calendar",        label: "calendar (线框)" },
+            { cls: "fas fa-calendar-days",   label: "calendar-days (替代calendar-alt)" },
+            { cls: "far fa-calendar-days",   label: "calendar-days (线框·替代calendar-alt)" },
+            { cls: "fas fa-calendar-check",  label: "calendar-check" },
+            { cls: "fas fa-calendar-week",   label: "calendar-week" },
+            { cls: "fas fa-calendar-plus",   label: "calendar-plus" },
+            { cls: "fas fa-clock",           label: "clock" },
+            { cls: "far fa-clock",           label: "clock (线框)" },
+            { cls: "fas fa-stopwatch",       label: "stopwatch" },
+            { cls: "fas fa-hourglass-half",  label: "hourglass-half" },
+
+            // ========== 地图 / GIS ==========
+            { cls: "fas fa-map",             label: "map" },
+            { cls: "far fa-map",             label: "map (线框)" },
+            { cls: "fas fa-map-location-dot", label: "map-location-dot" },
+            { cls: "fas fa-map-marked-alt",  label: "map-marked-alt" },
+            { cls: "fas fa-location-dot",    label: "location-dot (替代map-marker-alt)" },
+            { cls: "fas fa-location-crosshairs", label: "location-crosshairs" },
+            { cls: "fas fa-map-marker-alt",  label: "map-marker-alt" },
+            { cls: "fas fa-map-pin",         label: "map-pin" },
+            { cls: "fas fa-map-signs",       label: "map-signs" },
+            { cls: "fas fa-location-arrow",  label: "location-arrow" },
+            { cls: "fas fa-compass",         label: "compass" },
+            { cls: "far fa-compass",         label: "compass (线框)" },
+            { cls: "fas fa-crosshairs",      label: "crosshairs" },
+            { cls: "fas fa-route",           label: "route" },
+            { cls: "fas fa-directions",      label: "directions" },
+            { cls: "fas fa-draw-polygon",    label: "draw-polygon" },
+            { cls: "fas fa-layer-group",     label: "layer-group" },
+            { cls: "fas fa-street-view",     label: "street-view" },
+            { cls: "fas fa-globe",           label: "globe" },
+            { cls: "fas fa-earth-americas",  label: "earth-americas" },
+            { cls: "fas fa-globe-asia",      label: "globe-asia" },
+            { cls: "fas fa-globe-americas",  label: "globe-americas" },
+            { cls: "fas fa-globe-europe",    label: "globe-europe" },
+            { cls: "fas fa-globe-africa",    label: "globe-africa" },
+
+            // ========== 链接 / 分享 / 上传下载 ==========
+            { cls: "fas fa-link",            label: "link" },
+            { cls: "fas fa-link-slash",    label: "link-slash" },
+            { cls: "fas fa-external-link-alt", label: "external-link-alt" },
+            { cls: "fas fa-up-right-from-square", label: "up-right-from-square" },
+            { cls: "fas fa-share",           label: "share" },
+            { cls: "fas fa-share-alt",       label: "share-alt" },
+            { cls: "fas fa-share-nodes",     label: "share-nodes" },
+            { cls: "fas fa-share-square",    label: "share-square" },
+            { cls: "fas fa-share-from-square", label: "share-from-square" },
+            { cls: "fas fa-arrow-up-from-bracket", label: "arrow-up-from-bracket" },
+            { cls: "fas fa-arrow-down-to-bracket", label: "arrow-down-to-bracket" },
+            { cls: "fas fa-arrow-right-to-bracket", label: "arrow-right-to-bracket" },
+            { cls: "fas fa-arrow-right-from-bracket", label: "arrow-right-from-bracket" },
+            { cls: "fas fa-arrow-up-long",    label: "arrow-up-long" },
+            { cls: "fas fa-arrow-down-long", label: "arrow-down-long" },
+            { cls: "fas fa-download",       label: "download" },
+            { cls: "fas fa-upload",        label: "upload" },
+            { cls: "fas fa-cloud",         label: "cloud" },
+            { cls: "far fa-cloud",         label: "cloud (线框)" },
+            { cls: "fas fa-cloud-arrow-up",   label: "cloud-arrow-up (替代cloud-upload-alt)" },
+            { cls: "fas fa-cloud-arrow-down", label: "cloud-arrow-down (替代cloud-download-alt)" },
+            { cls: "fas fa-cloud-upload-alt", label: "cloud-upload-alt" },
+            { cls: "fas fa-cloud-download-alt", label: "cloud-download-alt" },
+
+            // ========== 天气 / 环境 ==========
+            { cls: "fas fa-sun",             label: "sun" },
+            { cls: "far fa-sun",             label: "sun (线框)" },
+            { cls: "fas fa-sunrise",         label: "sunrise" },
+            { cls: "fas fa-sunset",          label: "sunset" },
+            { cls: "fas fa-moon",            label: "moon" },
+            { cls: "far fa-moon",            label: "moon (线框)" },
+            { cls: "fas fa-cloud-moon",      label: "cloud-moon" },
+            { cls: "fas fa-cloud-sun",       label: "cloud-sun" },
+            { cls: "fas fa-cloud-rain",      label: "cloud-rain" },
+            { cls: "fas fa-cloud-showers-heavy", label: "cloud-showers-heavy" },
+            { cls: "fas fa-cloud-sun-rain", label: "cloud-sun-rain" },
+            { cls: "fas fa-bolt",            label: "bolt" },
+            { cls: "fas fa-wind",            label: "wind" },
+            { cls: "fas fa-umbrella",        label: "umbrella" },
+            { cls: "fas fa-umbrella-beach",  label: "umbrella-beach" },
+            { cls: "fas fa-water",           label: "water" },
+            { cls: "fas fa-droplet",          label: "droplet" },
+            { cls: "fas fa-droplet-slash",  label: "droplet-slash" },
+            { cls: "fas fa-smog",            label: "smog" },
+            { cls: "fas fa-smoking",         label: "smoking" },
+            { cls: "fas fa-temperature-high",  label: "temperature-high" },
+            { cls: "fas fa-temperature-low", label: "temperature-low" },
+            { cls: "fas fa-temperature-half", label: "temperature-half" },
+            { cls: "fas fa-satellite",       label: "satellite" },
+            { cls: "fas fa-satellite-dish",  label: "satellite-dish" },
+            { cls: "fas fa-tornado",         label: "tornado" },
+            { cls: "fas fa-hurricane",       label: "hurricane" },
+            { cls: "fas fa-volcano",         label: "volcano" },
+            { cls: "fas fa-fire",            label: "fire" },
+            { cls: "fas fa-fire-extinguisher", label: "fire-extinguisher" },
+            { cls: "fas fa-seedling",        label: "seedling" },
+
+            // ========== 列表 / 视图 / 布局 ==========
+            { cls: "fas fa-list",            label: "list" },
+            { cls: "fas fa-list-check",      label: "list-check" },
+            { cls: "far fa-list-check",      label: "list-check (线框)" },
+            { cls: "fas fa-list-ul",         label: "list-ul" },
+            { cls: "fas fa-list-ol",         label: "list-ol" },
+            { cls: "fas fa-list-sort",      label: "list-sort" },
+            { cls: "fas fa-table",           label: "table" },
+            { cls: "fas fa-table-cells",    label: "table-cells (替代th)" },
+            { cls: "fas fa-table-cells-large", label: "table-cells-large (替代th-large)" },
+            { cls: "fas fa-table-list",     label: "table-list (替代th-list)" },
+            { cls: "fas fa-th",              label: "th" },
+            { cls: "fas fa-th-large",        label: "th-large" },
+            { cls: "fas fa-th-list",         label: "th-list" },
+            { cls: "fas fa-grip",            label: "grip" },
+            { cls: "fas fa-bars",            label: "bars" },
+            { cls: "fas fa-grip-vertical",   label: "grip-vertical" },
+            { cls: "fas fa-sidebar",         label: "sidebar" },
+            { cls: "fas fa-sidebar-toggle",  label: "sidebar-toggle" },
+            { cls: "fas fa-ellipsis-h",      label: "ellipsis-h" },
+            { cls: "fas fa-ellipsis",       label: "ellipsis (替代ellipsis-h)" },
+            { cls: "fas fa-ellipsis-v",     label: "ellipsis-v" },
+            { cls: "fas fa-ellipsis-vertical", label: "ellipsis-vertical (替代ellipsis-v)" },
+            { cls: "fas fa-list-alt",        label: "list-alt" },
+            { cls: "far fa-rectangle-list", label: "rectangle-list (线框·替代list-alt)" },
+
+            // ========== 提示 / 架构 / 信息 ==========
+            { cls: "fas fa-info-circle",    label: "info-circle" },
+            { cls: "fas fa-circle-info",     label: "circle-info" },
+            { cls: "far fa-circle-info",     label: "circle-info (线框·替代info-circle)" },
+            { cls: "fas fa-question-circle", label: "question-circle" },
+            { cls: "fas fa-circle-question", label: "circle-question" },
+            { cls: "far fa-circle-question", label: "circle-question (线框·替代question-circle)" },
+            { cls: "fas fa-exclamation-circle", label: "exclamation-circle" },
+            { cls: "fas fa-circle-exclamation", label: "circle-exclamation" },
+            { cls: "far fa-circle-exclamation", label: "circle-exclamation (线框·替代exclamation-circle)" },
+            { cls: "fas fa-exclamation-triangle", label: "exclamation-triangle" },
+            { cls: "fas fa-triangle-exclamation", label: "triangle-exclamation (替代exclamation-triangle)" },
+            { cls: "fas fa-sitemap",         label: "sitemap" },
+            { cls: "fas fa-diagram-project", label: "diagram-project (替代project-diagram)" },
+            { cls: "fas fa-project-diagram", label: "project-diagram" },
+            { cls: "fas fa-tasks",           label: "tasks" },
+            { cls: "fas fa-clipboard-list",  label: "clipboard-list" },
+            { cls: "fas fa-cubes",          label: "cubes" },
+            { cls: "fas fa-cube",           label: "cube" },
+            { cls: "fas fa-box",            label: "box" },
+            { cls: "far fa-box",            label: "box (线框)" },
+            { cls: "fas fa-boxes",           label: "boxes" },
+            { cls: "fas fa-boxes-stacked", label: "boxes-stacked" },
+            { cls: "fas fa-box-archive",     label: "box-archive" },
+            { cls: "fas fa-box-open",        label: "box-open" },
+
+            // ========== 设备 ==========
+            { cls: "fas fa-desktop",         label: "desktop" },
+            { cls: "fas fa-laptop",          label: "laptop" },
+            { cls: "fas fa-mobile-alt",        label: "mobile-alt" },
+            { cls: "fas fa-mobile-screen",     label: "mobile-screen" },
+            { cls: "fas fa-tablet-alt",       label: "tablet-alt" },
+            { cls: "fas fa-tablet-screen-button", label: "tablet-screen-button" },
+            { cls: "fas fa-print",            label: "print" },
+            { cls: "fas fa-camera",          label: "camera" },
+            { cls: "fas fa-camera-retro",    label: "camera-retro" },
+            { cls: "fas fa-video",           label: "video" },
+            { cls: "far fa-video",           label: "video (线框)" },
+            { cls: "fas fa-video-slash",     label: "video-slash" },
+            { cls: "fas fa-image",           label: "image" },
+            { cls: "far fa-image",           label: "image (线框)" },
+            { cls: "fas fa-images",           label: "images" },
+            { cls: "far fa-images",           label: "images (线框)" },
+            { cls: "fas fa-photo-film",      label: "photo-film" },
+            { cls: "fas fa-headphones",       label: "headphones" },
+            { cls: "fas fa-microphone",      label: "microphone" },
+            { cls: "fas fa-microphone-slash", label: "microphone-slash" },
+            { cls: "fas fa-volume-high",       label: "volume-high" },
+            { cls: "fas fa-volume-low",        label: "volume-low" },
+            { cls: "fas fa-volume-xmark",     label: "volume-xmark" },
+            { cls: "fas fa-tower-cell",     label: "tower-cell" },
+            { cls: "fas fa-tower-broadcast", label: "tower-broadcast" },
+            { cls: "fas fa-keyboard",      label: "keyboard" },
+            { cls: "fas fa-mouse",         label: "mouse" },
+            { cls: "fas fa-radio",          label: "radio" },
+            { cls: "fas fa-tv",             label: "tv" },
+            { cls: "fas fa-display",       label: "display (别名)" },
+            { cls: "fas fa-server",          label: "server" },
+            { cls: "fas fa-database",       label: "database" },
+            { cls: "fas fa-hdd",             label: "hdd" },
+            { cls: "fas fa-ssd",           label: "ssd" },
+            { cls: "fas fa-microchip",       label: "microchip" },
+            { cls: "fas fa-memory",           label: "memory" },
+            { cls: "fas fa-cpu",             label: "cpu" },
+
+            // ========== 购物 / 金融 ==========
+            { cls: "fas fa-cart-shopping",   label: "cart-shopping (替代shopping-cart)" },
+            { cls: "fas fa-shopping-cart",   label: "shopping-cart" },
+            { cls: "fas fa-cart-plus",       label: "cart-plus" },
+            { cls: "fas fa-cart-arrow-down", label: "cart-arrow-down" },
+            { cls: "fas fa-money-bill",        label: "money-bill" },
+            { cls: "fas fa-money-bill-1",    label: "money-bill-1" },
+            { cls: "fas fa-money-bill-1-wave", label: "money-bill-1-wave" },
+            { cls: "fas fa-money-bill-wave", label: "money-bill-wave" },
+            { cls: "far fa-money-bill-alt",    label: "money-bill-alt (线框)" },
+            { cls: "fas fa-wallet",          label: "wallet" },
+            { cls: "fas fa-credit-card",     label: "credit-card" },
+            { cls: "far fa-credit-card",     label: "credit-card (线框)" },
+            { cls: "fas fa-dollar-sign",      label: "dollar-sign" },
+            { cls: "fas fa-coins",             label: "coins" },
+            { cls: "fas fa-sack-dollar",    label: "sack-dollar" },
+            { cls: "fas fa-piggy-bank",     label: "piggy-bank" },
+            { cls: "fas fa-cash-register",    label: "cash-register" },
+            { cls: "fas fa-receipt",         label: "receipt" },
+            { cls: "fas fa-invoice",        label: "invoice" },
+
+            // ========== 建筑 / 行业 ==========
+            { cls: "fas fa-briefcase",       label: "briefcase" },
+            { cls: "fas fa-building",        label: "building" },
+            { cls: "far fa-building",        label: "building (线框)" },
+            { cls: "fas fa-building-ngo",     label: "building-ngo" },
+            { cls: "fas fa-building-un",    label: "building-un (替代university)" },
+            { cls: "fas fa-university",     label: "university" },
+            { cls: "fas fa-hospital",         label: "hospital" },
+            { cls: "fas fa-hospital-user", label: "hospital-user" },
+            { cls: "fas fa-hospital-alt",    label: "hospital-alt" },
+            { cls: "fas fa-industry",       label: "industry" },
+            { cls: "fas fa-store",          label: "store" },
+            { cls: "fas fa-store-alt",      label: "store-alt" },
+            { cls: "fas fa-warehouse",       label: "warehouse" },
+            { cls: "fas fa-house-chimney",  label: "house-chimney" },
+            { cls: "fas fa-house-chimney-user", label: "house-chimney-user" },
+            { cls: "fas fa-house-medical", label: "house-medical" },
+            { cls: "fas fa-house-flag",      label: "house-flag" },
+            { cls: "fas fa-hotel",             label: "hotel" },
+            { cls: "fas fa-school",         label: "school" },
+            { cls: "fas fa-church",        label: "church" },
+            { cls: "fas fa-landmark",        label: "landmark" },
+            { cls: "fas fa-kit-medical",     label: "kit-medical" },
+            { cls: "fas fa-briefcase-medical", label: "briefcase-medical" },
+            { cls: "fas fa-stethoscope",     label: "stethoscope" },
+            { cls: "fas fa-display-medical", label: "display-medical" },
+
+            // ========== 文档 / 学习 ==========
+            { cls: "fas fa-book",             label: "book" },
+            { cls: "fas fa-book-open",       label: "book-open" },
+            { cls: "far fa-book-open",       label: "book-open (线框)" },
+            { cls: "fas fa-bookmark",         label: "bookmark" },
+            { cls: "far fa-bookmark",         label: "bookmark (线框)" },
+            { cls: "fas fa-graduation-cap",  label: "graduation-cap" },
+            { cls: "fas fa-newspaper",     label: "newspaper" },
+            { cls: "far fa-newspaper",     label: "newspaper (线框)" },
+            { cls: "fas fa-sticky-note",      label: "sticky-note" },
+            { cls: "far fa-sticky-note",      label: "sticky-note (线框)" },
+            { cls: "fas fa-paper-plane",    label: "paper-plane" },
+            { cls: "far fa-paper-plane",    label: "paper-plane (线框)" },
+            { cls: "fas fa-lightbulb",       label: "lightbulb" },
+            { cls: "far fa-lightbulb",       label: "lightbulb (线框)" },
+            { cls: "fas fa-feather",      label: "feather" },
+            { cls: "fas fa-feather-pointed", label: "feather-pointed" },
+            { cls: "fas fa-scroll",         label: "scroll" },
+            { cls: "fas fa-scroll-torah", label: "scroll-torah" },
+
+            // ========== 偏好 / 评分 / 奖励 ==========
+            { cls: "fas fa-rocket",          label: "rocket" },
+            { cls: "fas fa-heart",           label: "heart" },
+            { cls: "far fa-heart",           label: "heart (线框)" },
+            { cls: "fas fa-heart-crack",   label: "heart-crack" },
+            { cls: "fas fa-heart-broken",    label: "heart-broken" },
+            { cls: "fas fa-star",             label: "star" },
+            { cls: "far fa-star",             label: "star (线框)" },
+            { cls: "fas fa-star-half",      label: "star-half" },
+            { cls: "far fa-star-half-stroke", label: "star-half-stroke (线框·替代star-half-alt)" },
+            { cls: "fas fa-thumbs-up",      label: "thumbs-up" },
+            { cls: "far fa-thumbs-up",      label: "thumbs-up (线框)" },
+            { cls: "fas fa-thumbs-down",    label: "thumbs-down" },
+            { cls: "far fa-thumbs-down",    label: "thumbs-down (线框)" },
+            { cls: "fas fa-handshake",      label: "handshake" },
+            { cls: "fas fa-award",          label: "award" },
+            { cls: "fas fa-trophy",         label: "trophy" },
+            { cls: "fas fa-medal",          label: "medal" },
+            { cls: "fas fa-crown",          label: "crown" },
+            { cls: "fas fa-gem",            label: "gem" },
+            { cls: "far fa-gem",            label: "gem (线框)" },
+
+            // ========== 电池 / 生活 / 礼物 ==========
+            { cls: "fas fa-battery-full",    label: "battery-full" },
+            { cls: "fas fa-battery-three-quarters", label: "battery-three-quarters" },
+            { cls: "fas fa-battery-half",    label: "battery-half" },
+            { cls: "fas fa-battery-quarter", label: "battery-quarter" },
+            { cls: "fas fa-battery-empty",   label: "battery-empty" },
+            { cls: "fas fa-plug",             label: "plug" },
+            { cls: "fas fa-music",            label: "music" },
+            { cls: "fas fa-music-note",     label: "music-note" },
+            { cls: "fas fa-gift",            label: "gift" },
+            { cls: "fas fa-cake-candles", label: "cake-candles" },
+            { cls: "fas fa-birthday-cake",   label: "birthday-cake" },
+            { cls: "fas fa-champagne-glasses", label: "champagne-glasses" },
+            { cls: "fas fa-mug-hot",       label: "mug-hot" },
+            { cls: "fas fa-mug-saucer",    label: "mug-saucer" },
+            { cls: "fas fa-coffee",        label: "coffee" },
+            { cls: "fas fa-utensils",       label: "utensils" },
+            { cls: "fas fa-kitchen-set",    label: "kitchen-set" },
+            { cls: "fas fa-pizza-slice",    label: "pizza-slice" },
+            { cls: "fas fa-ice-cream",     label: "ice-cream" },
+            { cls: "fas fa-car",             label: "car" },
+            { cls: "fas fa-truck",          label: "truck" },
+            { cls: "fas fa-truck-field",    label: "truck-field" },
+            { cls: "fas fa-truck-medical",  label: "truck-medical (救护车)" },
+            { cls: "fas fa-bus",            label: "bus" },
+            { cls: "fas fa-train",         label: "train" },
+            { cls: "fas fa-plane",          label: "plane" },
+            { cls: "fas fa-ship",          label: "ship" },
+            { cls: "fas fa-bicycle",        label: "bicycle" },
+            { cls: "fas fa-motorcycle",      label: "motorcycle" },
+            { cls: "fas fa-person-walking", label: "person-walking" },
+            { cls: "fas fa-person-running", label: "person-running" },
+            { cls: "fas fa-person-swimming", label: "person-swimming" },
+            { cls: "fas fa-person-hiking", label: "person-hiking" },
+            { cls: "fas fa-users-between-lines", label: "users-between-lines" },
+            { cls: "fas fa-user-group",     label: "user-group" },
+            { cls: "fas fa-people-group", label: "people-group" },
+            { cls: "fas fa-people-roof",   label: "people-roof" },
+            { cls: "fas fa-vest",        label: "vest" },
+            { cls: "fas fa-vest-patches",    label: "vest-patches" },
+            { cls: "fas fa-hard-hat",          label: "hard-hat" },
+
+            // ========== 网络 / 同步 / 剪贴板 ==========
+            { cls: "fas fa-wifi",            label: "wifi" },
+            { cls: "fas fa-wifi-slash",    label: "wifi-slash" },
+            { cls: "fas fa-ethernet",      label: "ethernet" },
+            { cls: "fas fa-network-wired",    label: "network-wired" },
+            { cls: "fas fa-code",             label: "code" },
+            { cls: "fas fa-code-branch",       label: "code-branch" },
+            { cls: "fas fa-code-commit",       label: "code-commit" },
+            { cls: "fas fa-code-compare",      label: "code-compare" },
+            { cls: "fas fa-code-fork",         label: "code-fork" },
+            { cls: "fas fa-code-merge",        label: "code-merge" },
+            { cls: "fas fa-code-pull-request", label: "code-pull-request" },
+            { cls: "fas fa-terminal",          label: "terminal" },
+            { cls: "fas fa-power-off",         label: "power-off" },
+            { cls: "fas fa-right-from-bracket", label: "right-from-bracket" },
+            { cls: "fas fa-right-to-bracket",  label: "right-to-bracket" },
+            { cls: "fas fa-rotate",          label: "rotate (替代sync)" },
+            { cls: "fas fa-arrows-rotate", label: "arrows-rotate (替代sync-alt)" },
+            { cls: "fas fa-rotate-right",    label: "rotate-right (替代redo)" },
+            { cls: "fas fa-rotate-left",     label: "rotate-left (替代undo)" },
+            { cls: "fas fa-sync",          label: "sync" },
+            { cls: "fas fa-sync-alt",       label: "sync-alt" },
+            { cls: "fas fa-redo",           label: "redo" },
+            { cls: "fas fa-undo",           label: "undo" },
+            { cls: "fas fa-clipboard",       label: "clipboard" },
+            { cls: "far fa-clipboard",       label: "clipboard (线框)" },
+            { cls: "fas fa-clipboard-check", label: "clipboard-check" },
+            { cls: "fas fa-flag",            label: "flag" },
+            { cls: "far fa-flag",            label: "flag (线框)" },
+            { cls: "fas fa-rss",             label: "rss" },
+            { cls: "fas fa-bug",              label: "bug" },
+            { cls: "fas fa-virus",          label: "virus" },
+            { cls: "fas fa-virus-covid",   label: "virus-covid" },
+            { cls: "fas fa-hands-helping",  label: "hands-helping" },
+            { cls: "fas fa-hand-holding-heart", label: "hand-holding-heart" },
+            { cls: "fas fa-hand-holding-hand", label: "hand-holding-hand" },
+            { cls: "fas fa-people-carry-box", label: "people-carry-box" },
+
+            // ========== 更多线框友好型 ==========
+            { cls: "fas fa-floppy-disk",    label: "floppy-disk (替代save)" },
+            { cls: "fas fa-save",             label: "save" },
+            { cls: "far fa-save",             label: "save (线框)" },
+            { cls: "fas fa-id-badge",       label: "id-badge" },
+            { cls: "fas fa-id-card",        label: "id-card" },
+            { cls: "far fa-id-card",        label: "id-card (线框)" },
+            { cls: "fas fa-address-book",      label: "address-book" },
+            { cls: "far fa-address-book",      label: "address-book (线框)" },
+            { cls: "fas fa-address-card",    label: "address-card" },
+            { cls: "far fa-address-card",    label: "address-card (线框)" },
+            { cls: "far fa-contact-card",  label: "contact-card (线框)" },
+            { cls: "far fa-window-restore",   label: "window-restore (线框)" },
+            { cls: "far fa-window-maximize",  label: "window-maximize (线框)" },
+            { cls: "far fa-window-minimize",  label: "window-minimize (线框)" },
+            { cls: "fas fa-eye",             label: "eye" },
+            { cls: "far fa-eye",             label: "eye (线框)" },
+            { cls: "fas fa-eye-slash",      label: "eye-slash" },
+            { cls: "far fa-eye-slash",      label: "eye-slash (线框)" },
+            { cls: "fas fa-eye-low-vision",  label: "eye-low-vision" },
+            { cls: "far fa-face-smile",     label: "face-smile (线框·替代smile)" },
+            { cls: "far fa-face-frown",   label: "face-frown (线框·替代frown)" },
+            { cls: "far fa-face-meh",    label: "face-meh (线框·替代meh)" },
+            { cls: "far fa-smile",         label: "smile (线框)" },
+            { cls: "far fa-frown",         label: "frown (线框)" },
+            { cls: "far fa-meh",           label: "meh (线框)" },
+            { cls: "far fa-object-group", label: "object-group (线框)" },
+            { cls: "far fa-object-ungroup", label: "object-ungroup (线框)" }
         ];
 
         const grid = document.getElementById('iconGrid');
         const searchInput = document.getElementById('searchInput');
 
-        /** 渲染图标网格 */
-        function renderIcons(filter = '') {
-            grid.innerHTML = '';
-            icons.forEach(icon => {
-                if (icon.toLowerCase().includes(filter.toLowerCase())) {
-                    const iconCls = 'fas fa-' + icon;
-                    const div = document.createElement('div');
-                    div.className = 'icon-item flex flex-col items-center justify-center p-3 border border-gray-100 rounded hover:shadow-sm';
-                    div.innerHTML = `
-                        <i class="${iconCls} text-2xl text-gray-600 mb-2"></i>
-                        <span class="text-xs text-gray-500 truncate w-full text-center" title="${iconCls}">${icon}</span>
-                    `;
-                    div.onclick = () => selectIcon(iconCls);
-                    grid.appendChild(div);
+        /** 从 URL 中解析当前已选的图标 class。
+         *  传入的参数可能叫 pickerValue / data / imageUrl / geojson，并且值可能被重复 URL 编码、
+         *  或是 "fas fa-file-alt" 这种带空格的形式，所以：
+         *  1) 按优先级取：pickerValue > data > imageUrl > geojson > 第一个非空值；
+         *  2) 每个参数在解码后做 trim；空值跳过。
+         */
+        function readSelectedFromUrl() {
+            try {
+                const params = new URL(window.location.href).searchParams;
+                const candidateKeys = ['pickerValue', 'data', 'imageUrl', 'geojson'];
+                const decoded = [];
+                params.forEach(function (value, key) {
+                    if (candidateKeys.indexOf(key) < 0) return;
+                    var raw = params.get(key);
+                    if (raw == null) return;
+                    var s = String(raw).trim();
+                    if (s) decoded.push({ k: key, v: s });
+                    try {
+                        var s2 = decodeURIComponent(raw);
+                        if (s2 && s2 !== s) decoded.push({ k: key, v: String(s2).trim() });
+                    } catch (_) { /* ignore malformed */ }
+                });
+                for (var i = 0; i < candidateKeys.length; i++) {
+                    var key = candidateKeys[i];
+                    var found = decoded.find(function (x) { return x.k === key && x.v; });
+                    if (found) return found.v;
                 }
-            });
+                return decoded.length ? decoded[0].v : '';
+            } catch (_) {
+                return '';
+            }
         }
 
-        /** 选择图标 */
+        const selectedIconCls = readSelectedFromUrl();
+
+        /** 渲染图标网格：按 cls + label 两个字段做模糊搜索；选中的图标项加 is-selected + 右上角 ✓ */
+        function renderIcons(filter, options) {
+            grid.innerHTML = '';
+            const q = String(filter || '').trim().toLowerCase();
+            const selected = String(options && options.selected ? options.selected : selectedIconCls || '').trim();
+            const selectedNode = (selected && selected.toLowerCase()) || '';
+            var selectedEl = null;
+            icons.forEach(function (icon) {
+                const searchable = ((icon.cls || '') + ' ' + (icon.label || icon.cls || '')).toLowerCase();
+                if (q && searchable.indexOf(q) < 0) return;
+
+                const iconCls = String(icon.cls || '').trim();
+                if (!iconCls) return;
+                const display = icon.label || iconCls;
+                const div = document.createElement('div');
+                const isMatch = selected && (
+                    iconCls === selected ||
+                    iconCls.toLowerCase() === selectedNode
+                );
+                div.className =
+                    'icon-item flex flex-col items-center justify-center p-3 border border-gray-100 rounded hover:shadow-sm' +
+                    (isMatch ? ' is-selected' : '');
+                div.setAttribute('data-icon-cls', iconCls);
+                div.innerHTML =
+                    '<i class="' + iconCls + ' text-2xl text-gray-600 mb-2"></i>' +
+                    '<span class="text-xs text-gray-500 truncate w-full text-center" title="' + iconCls + '">' + display + '</span>';
+                div.onclick = function () { selectIcon(iconCls); };
+                grid.appendChild(div);
+                if (isMatch && !selectedEl) selectedEl = div;
+            });
+            if (selectedEl && (options && options.scrollIntoView) !== false) {
+                try {
+                    selectedEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                } catch (_) { /* old browsers ignore */ }
+            }
+        }
+
+        /** 选择图标：完整 class 作为返回值（直接返回 icon.cls） */
         function selectIcon(iconCls) {
             const data = { id: iconCls, name: iconCls };
             const payload = { type: 'ElePicker', data };
-
-            // 统一关闭协议：优先使用 EleManager.closePage。
-            if (window.EleManager && typeof window.EleManager.closePage === 'function') {
-                window.EleManager.closePage(payload);
-                return;
-            }
-
-            console.error('EleManager.closePage is unavailable.');
+            window.EleManager.closePage(payload);
         }
 
-        // 监听搜索输入变化
-        searchInput.addEventListener('input', (e) => renderIcons(e.target.value));
+        // 监听搜索输入变化：搜索后不自动滚动，避免打断用户焦点
+        searchInput.addEventListener('input', function (e) {
+            renderIcons(e.target.value, { scrollIntoView: false });
+        });
 
-        // Initial render
-        renderIcons();
+        // 初始渲染：自动滚动到 URL 参数对应的已选图标
+        renderIcons('', { scrollIntoView: true });
     </script>
 }
+
+<EleApp EnableScripts="false"></EleApp>

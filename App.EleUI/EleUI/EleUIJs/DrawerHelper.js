@@ -292,7 +292,8 @@ export class DrawerHelper {
                 mountEl,
                 hostWindow,
                 closeMessageHandler: null,
-                customCleanup: null
+                customCleanup: null,
+                escKeyHandler: null
             };
 
             const app = createApp({
@@ -557,6 +558,143 @@ export class DrawerHelper {
                 console.warn('attach drawer close message listener failed:', err);
             }
 
+            /** ESC 键：与右上角关闭按钮 × 走完全相同的关闭链路 handleCloseClick()。
+             *  注意：需要同时在 hostWindow（父窗口）和 drawer iframe 的 contentWindow（如果有）上绑定，
+             *  因为当焦点在 iframe 里面时，key 事件不会冒泡到父窗口。另外多层 drawer 叠加时只让栈顶的那个响应。 */
+            try {
+                var topAppRef = null;
+                try { topAppRef = app._instance; } catch (_) { topAppRef = null; }
+                instance.escKeyHandler = function (event) {
+                    var e = event || window.event;
+                    if (!e) return;
+                    var key = (typeof e.key === 'string') ? e.key : '';
+                    var code = (typeof e.code === 'string') ? e.code : '';
+                    var keyCode = Number(e.keyCode || e.which || 0);
+                    var isEsc = (key === 'Escape') || (code === 'Escape') || (keyCode === 27);
+                    if (!isEsc) return;
+
+                    // 只让当前栈顶 Drawer 响应 ESC，避免多层时一起关
+                    var topInstance = helper._instances[helper._instances.length - 1];
+                    if (!topInstance || topInstance.id !== instance.id) return;
+
+                    // 如果此时有打开的 MessageBox / dialog / picker / select dropdown 等，
+                    // 让 Element Plus 原生先处理（它们是 body 下的高 z-index 节点，用户按 Esc 先关它们）
+                    var hw = hostWindow || window;
+                    if (hw && hw.document) {
+                        var overlaySelector = [
+                            '.el-overlay.is-message-box',
+                            '.el-overlay-message-box',
+                            '.el-message-box__wrapper',
+                            '.v-modal',
+                            '.el-dialog__wrapper',
+                            '.el-drawer.is-rtl',
+                            '.el-select-dropdown.is-multiple',
+                            '.el-select-dropdown',
+                            '.el-picker-panel',
+                            '.el-time-panel',
+                            '.el-date-picker',
+                            '.el-color-dropdown',
+                            '.el-cascader__dropdown',
+                            '.el-dropdown-menu',
+                            '.el-tooltip__popper',
+                            '.el-popover',
+                            '[class*=el-notification]',
+                            '[class*=el-message]'
+                        ].join(',');
+                        try {
+                            var nodes = hw.document.querySelectorAll(overlaySelector);
+                            if (nodes && nodes.length) {
+                                for (var i = 0; i < nodes.length; i++) {
+                                    var n = nodes[i];
+                                    if (!n || n.offsetParent === null) continue;
+                                    var cs = (n.getBoundingClientRect && n.getBoundingClientRect()) || null;
+                                    if (!cs) continue;
+                                    if (cs.width <= 0 || cs.height <= 0) continue;
+                                    // 有当前栈 drawer 以外的 overlay 弹出层打开着，就把这次 ESC 留给它们自己处理
+                                    if (n.closest && n.closest('.ele-manager-drawer') && n.closest('.ele-manager-drawer').getAttribute('data-ele-drawer-host-id') !== instance.id) continue;
+                                    e.stopImmediatePropagation();
+                                    e.preventDefault();
+                                    return;
+                                }
+                            }
+                        } catch (_) { /* ignore */ }
+                    }
+
+                    try {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    } catch (_) { /* ignore */ }
+
+                    // 走和点击关闭按钮完全一致的 handleCloseClick() 入口
+                    // 兼容 Vue 3：app._instance.proxy / app._container.__vue_app__ / 暴露到 data 上的 methods
+                    var closeFn = null;
+                    try {
+                        var ctx = (topAppRef && topAppRef.proxy) || null;
+                        if (!ctx && instance.mountEl && instance.mountEl.__vue_app__) {
+                            ctx = instance.mountEl.__vue_app__._instance && instance.mountEl.__vue_app__._instance.proxy;
+                        }
+                        if (!ctx && instance.mountEl) {
+                            var wp = instance.mountEl.__vueParentComponent || instance.mountEl._vnode || null;
+                            if (wp && wp.component && wp.component.proxy) ctx = wp.component.proxy;
+                        }
+                        if (ctx && typeof ctx.handleCloseClick === 'function') closeFn = function () { return ctx.handleCloseClick(); };
+                    } catch (_) { closeFn = null; }
+
+                    if (typeof closeFn === 'function') {
+                        closeFn();
+                        return;
+                    }
+
+                    // 兜底：若拿不到组件实例的 methods 引用（极少见场景），退化为直接执行与 handleCloseClick 等价逻辑：closeConfirm 提示 → visible=false
+                    // 这里直接内联实现一份同样逻辑，确保 ESC 效果和 × 按钮 100% 等价。
+                    (async function () {
+                        if (state.closeConfirm) {
+                            try {
+                                await (hostWindow || window).ElementPlus.ElMessageBox.confirm(
+                                    state.closeConfirm,
+                                    '提示',
+                                    { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' }
+                                );
+                            } catch (_cancel) {
+                                return;
+                            }
+                        }
+                        state.visible = false;
+                    })();
+                };
+
+                // 父窗口绑一次（焦点在抽屉非 iframe 部分时生效）
+                hostWindow.addEventListener('keydown', instance.escKeyHandler, true);
+
+                // 若有 iframe（url mode），再给 iframe 内容也绑：
+                // 1) 首次挂载时尝试捕获；2) iframe load 后再绑一次（同域可访问）
+                (function bindIframeEsc() {
+                    if (!state.url) return;
+                    function tryBind(iframeEl) {
+                        if (!iframeEl) return;
+                        var iw = null;
+                        try { iw = iframeEl.contentWindow; } catch (_) { iw = null; }
+                        if (!iw) return;
+                        try { iw.addEventListener('keydown', instance.escKeyHandler, true); } catch (_) { /* cross-origin */ }
+                    }
+                    function findAndBind() {
+                        try {
+                            var el = (hostWindow || window).document.querySelector('#' + instance.id + ' iframe[data-ele-drawer-iframe="1"]');
+                            if (!el) return;
+                            tryBind(el);
+                            el.addEventListener('load', function () { tryBind(el); }, false);
+                        } catch (_) { /* ignore */ }
+                    }
+                    try { findAndBind(); } catch (_) { /* ignore */ }
+                    // 延迟再试一次，确保 iframe DOM 已插入
+                    setTimeout(findAndBind, 0);
+                    setTimeout(findAndBind, 250);
+                    setTimeout(findAndBind, 1000);
+                })();
+            } catch (err) {
+                console.warn('attach drawer ESC key handler failed:', err);
+            }
+
             this._instances.push(instance);
 
             state.visible = true;
@@ -580,6 +718,31 @@ export class DrawerHelper {
             }
         } catch (err) {
             console.error('drawer message listener cleanup failed:', err);
+        }
+
+        // 解绑 ESC 键：父窗口 + iframe 内容窗口
+        try {
+            if (instance.escKeyHandler) {
+                if (instance.hostWindow) {
+                    try { instance.hostWindow.removeEventListener('keydown', instance.escKeyHandler, true); } catch (_) { /* ignore */ }
+                }
+                // 解绑 iframe contentWindow 的 keydown（同源时）
+                try {
+                    if (instance.mountEl && instance.hostWindow) {
+                        var iframes = instance.hostWindow.document.querySelectorAll('#' + instance.id + ' iframe[data-ele-drawer-iframe="1"]');
+                        if (iframes && iframes.length) {
+                            for (var i = 0; i < iframes.length; i++) {
+                                try {
+                                    var ci = iframes[i].contentWindow;
+                                    if (ci) ci.removeEventListener('keydown', instance.escKeyHandler, true);
+                                } catch (_) { /* cross-origin */ }
+                            }
+                        }
+                    }
+                } catch (_) { /* ignore */ }
+            }
+        } catch (err) {
+            console.error('drawer ESC key listener cleanup failed:', err);
         }
 
         try {

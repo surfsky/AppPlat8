@@ -43,7 +43,7 @@ namespace App.DAL
         //---------------------------------------------
         // 管理相关(0-10)
         //---------------------------------------------
-        //[UI("管理", "Admin")]               Admin = 1,          // Admin专用权限，根据需求再细分
+        [UI("管理", "Admin")]               Admin = 1,          // Admin专用权限，根据需求再细分
         //[UI("管理", "配置员")]              AdminConfig = 2,
         //[UI("管理", "监管员")]              AdminMonitor = 3,
         //[UI("Admin", "开发")]             AdminDevelop = 4,           
@@ -87,12 +87,12 @@ namespace App.DAL
         [UI("监管", "资源管理")]            MonitorRes = 34,
 
 
-        [UI("反馈", "查看")]                FeedBackView = 40,
-        [UI("反馈", "新增")]                FeedBackNew = 41,
-        [UI("反馈", "修改")]                FeedBackEdit = 42,
-        [UI("反馈", "删除")]                FeedBackDelete = 43,
-        [UI("反馈", "派发")]                FeedBackDispatch = 45,           
-        [UI("反馈", "处理")]                FeedBackHandle = 46,           
+        [UI("反馈", "反馈查看")]                FeedBackView = 40,
+        [UI("反馈", "反馈新增")]                FeedBackNew = 41,
+        [UI("反馈", "反馈修改")]                FeedBackEdit = 42,
+        [UI("反馈", "反馈删除")]                FeedBackDelete = 43,
+        [UI("反馈", "反馈派发")]                FeedBackDispatch = 45,           
+        [UI("反馈", "反馈处理")]                FeedBackHandle = 46,           
 
 
         //---------------------------------------------
