@@ -256,38 +256,74 @@
 
         .sidebar-toggle-zone {
             position: relative;
-            width: 0 !important;
-            flex: 0 0 0 !important;
-            flex-basis: 0 !important;
-            min-width: 0 !important;
-            max-width: 0 !important;
+            width: 0.5rem !important;
+            flex: 0 0 0.5rem !important;
+            flex-basis: 0.5rem !important;
+            min-width: 0.5rem !important;
+            max-width: 0.5rem !important;
             overflow: visible !important;
             height: 100%;
             z-index: 25;
             padding: 0 !important;
             margin: 0 !important;
+            cursor: pointer;
+        }
+
+        .sidebar-toggle-zone::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            width: 1px;
+            height: 100%;
+            background-color: transparent;
+            transition: background-color .15s ease;
+            pointer-events: none;
+        }
+
+        .sidebar-toggle-zone:hover::before,
+        .sidebar-toggle-zone.is-active::before {
+            background-color: #409EFF;
         }
 
         .sidebar-toggle-btn {
             position: absolute;
-            left: 0;
+            left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            width: 18px;
-            height: 28px;
-            border: 0;
-            border-radius: 6px;
-            background: #8ec5f8;
-            color: #1f4f8a;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            width: 16px;
+            height: 40px;
+            border: 1px solid #c6e2ff;
+            border-radius: 4px;
+            background: #ffffff;
+            color: #409EFF;
+            box-shadow: 0 2px 6px rgba(64, 158, 255, 0.14), 0 0 0 1px rgba(64, 158, 255, 0.04) inset;
             opacity: 0;
             pointer-events: none;
-            transition: opacity .18s ease, transform .18s ease, background-color .18s ease;
+            transition: opacity .15s ease, transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
             z-index: 26;
             display: inline-flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 2px;
             cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .sidebar-toggle-btn:hover,
+        .sidebar-toggle-btn:focus-visible {
+            outline: none;
+            background-color: #ecf5ff;
+            border-color: #a0cfff;
+            box-shadow: 0 4px 10px rgba(64, 158, 255, 0.18), 0 0 0 1px rgba(64, 158, 255, 0.08) inset;
+        }
+
+        .sidebar-toggle-btn > i {
+            font-size: 10px;
+            line-height: 1;
+            display: block;
         }
 
         .sidebar-toggle-zone:hover .sidebar-toggle-btn,
@@ -374,14 +410,14 @@
                 </div>
             </div>
 
-            <div class="sidebar-toggle-zone hidden md:block" style="width:0;flex:0 0 0;flex-basis:0;min-width:0;max-width:0;overflow:visible;padding:0;margin:0;">
+            <div class="sidebar-toggle-zone hidden md:block" @@click="toggleDesktopSidebar" :class="{ 'is-active': desktopSidebarCollapsed }">
                 <button
                     class="sidebar-toggle-btn"
                     :class="{ 'is-visible': desktopSidebarCollapsed }"
-                    @@click="toggleDesktopSidebar"
+                    @@click.stop.prevent="toggleDesktopSidebar"
                     :title="desktopSidebarCollapsed ? '显示菜单' : '隐藏菜单'"
                 >
-                    <i :class="desktopSidebarCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
+                    <i :class="desktopSidebarCollapsed ? 'fas fa-angle-right text-[10px]' : 'fas fa-angle-left text-[10px]'"></i>
                 </button>
             </div>
 

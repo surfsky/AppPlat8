@@ -20,6 +20,7 @@
                            TextValue="@Model.DefaultCheckerName">
                 </ElePicker>
                 <EleInput For="Item.Name"              Width="250px" Label="检查对象名称"     Value="@QStr("name")"></EleInput>
+                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QStr("tagIds")"></EleTreePicker>
                 <EleInput For="Item.Address"           Width="250px" Label="详细地址"         Value="@QStr("address")"></EleInput>
                 <EleSelect For="Item.Scope" Width="250px" Label="所属领域" Value="@QStr("scope")"></EleSelect>
                 <EleSelect For="Item.ObjectType" Width="250px" Label="类型" Value="@QStr("objectType")"></EleSelect>
@@ -32,8 +33,7 @@
                 <EleInput For="Item.DutyMan" Width="250px" Label="企业责任人" Value="@QStr("dutyUserName")"></EleInput>
                 <EleDatePicker For="Item.CreateDt" Type="DateRange" Width="250px" Label="创建时间" Type="DateTime" Value="@QStr("createStartDt")"></EleDatePicker>
                 <EleDatePicker For="Item.LastCheckDt" Type="DateRange" Width="250px" Label="巡查时间" Type="DateTime" Value="@QStr("lastCheckStartDt")"></EleDatePicker>
-                <EleSelect For="Item.IndustryRisk" Width="250px" Label="行业风险类型" Value="@QStr("industryRisk")"></EleSelect>
-                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QStr("tagIds")"></EleTreePicker>
+                <EleSelect For="Item.IndustryRisk" Width="250px" Label="行业风险类型" Value="@QStr("industryRisk")" Visible="false"></EleSelect>
                 <EleSelect For="Item.IsDel" Width="250px" Label="已删除" Value="@QStr("isDel", "false")"></EleSelect>
             </Filters>
             <Buttons>
@@ -57,11 +57,11 @@
             <EleOpColumn Width="120" Fixed="right" Shows="2">
                 <Op Command="Edit"                                                     Icon="EditPen"         Text="编辑"      Mode="Text" Visible="@Auth.CheckPower(Power.CheckObjectEdit)"></Op>
                 <Op Popup="/Checks/CheckFlow?objectId={id}&objectName={name}"          Icon="Search"          Text="排查"      Mode="Text" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
-                <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"     Icon="User"            Text="联系人"    Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Checks/CheckHazards?objectId={id}&objectName={name}"       Icon="WarningFilled"   Text="隐患清单"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckHazardView)"></Op>
                 <Op Popup="/Checks/Checks?objectId={id}&objectName={name}"             Icon="DocumentChecked" Text="排查历史"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckView)"></Op>
                 <Op Popup="/Checks/CheckPoints?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="风险点清单" Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Checks/CheckObjectEvents?objectId={id}&objectName={name}"  Icon="DocumentChecked" Text="事件事故"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
+                <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"     Icon="User"            Text="联系人"    Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Shared/Atts?uniId=CheckObject-{id}&name={name}"            Icon="Paperclip"       Text="附件"      Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Command="Delete"                                                   Icon="Delete" Text="删除" Tooltip="删除" Visible="false" Mode="Both"></Op>
             </EleOpColumn>
