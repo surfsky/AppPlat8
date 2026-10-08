@@ -73,11 +73,8 @@ namespace App.DAL
         //------------------------------------------------------
         // 角色相关（用UserRoles表存储）
         //------------------------------------------------------
-        public string RoleNames => (this.Roles ?? new List<Role>())
-            .Where(t => t != null && t.Name.IsNotEmpty())
-            .Select(t => t.Name.Trim())
-            .Distinct()
-            .ToJoinString(",");
+        public string RoleNames => this.Roles==null ? "" : this.Roles.Select(t => t.Name).Distinct().ToJoinString(",");
+
         [NotMapped] private List<long> _roleIds;
         [UI("角色IDs"), NotMapped]
         public virtual List<long> RoleIds

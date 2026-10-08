@@ -31,7 +31,7 @@ namespace App.EleUI
         [HtmlAttributeName("VueSrc")]               public string VueSrc { get; set; }
         [HtmlAttributeName("ThumbWidth")]           public int ThumbWidth { get; set; } = 128;
         [HtmlAttributeName("Fit")]                  public string Fit { get; set; } = "cover";
-        [HtmlAttributeName("Rounded")]              public bool Rounded { get; set; } = true;
+        [HtmlAttributeName("Rounded")]              public new bool Rounded { get; set; } = true;
         [HtmlAttributeName("Round")]                public bool Round { get; set; } = false;
         [HtmlAttributeName("ViewerMode")]           public string ViewerMode { get; set; } = "Top";
         [HtmlAttributeName("PreviewList")]          public string PreviewList { get; set; }

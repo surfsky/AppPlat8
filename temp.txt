@@ -176,3 +176,37 @@
                 .Where(t => taskIds.Contains(t.Id));
             return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
         }
+
+
+        // 角标计数（对象 4 卡，隐患 3 卡）
+        public int CountMyObjects { get; set; }
+        public int CountUncheckedObjects { get; set; }
+        public int CountNearExpireObjects { get; set; }
+        public int CountOverdueObjects { get; set; }
+        public int CountMyHazards { get; set; }
+        public int CountPendingHazards { get; set; }
+        public int CountOverdueHazards { get; set; }
+
+
+                <Op Popup="/Checks/CheckFlow?objectId={id}&objectName={name}"        Icon="Search" Text="开始排查" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
+                <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"   Icon="User" Text="联系人" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
+                <Op Popup="/Checks/CheckHazards?objectId={id}&objectName={name}"     Icon="WarningFilled" Text="隐患清单" Visible="@Auth.CheckPower(Power.CheckHazardView)"></Op>
+
+
+                <EleSelect For="Item.Scope"            Width="250px" Label="所属领域"         Value="@QStr("scope")"></EleSelect>
+                <EleSelect For="Item.ObjectType"       Width="250px" Label="类型"            Value="@QStr("objectType")"></EleSelect>
+                <EleSelect For="Item.IndustryType"     Width="250px" Label="行业"            Value="@QStr("industryType")"></EleSelect>
+                <EleSelect For="Item.RiskLevel"        Width="250px" Label="风险等级"         Value="@QStr("riskLevel")"></EleSelect>
+                <EleInput For="Item.SocialCreditId"    Width="250px" Label="统一社会信用代码"  Value="@QStr("socialCreditCode")"></EleInput>
+                <EleInput For="Item.Code"              Width="250px" Label="对象标识"         Value="@QStr("code")"></EleInput>
+                <EleSelect For="Item.IsChecked"        Width="250px" Label="是否检查"         Value="@QStr("isChecked")"></EleSelect>
+                <EleSelect For="Item.HasHarzard"       Width="250px" Label="是否存在隐患"         Value="@QStr("hasHarzard")"></EleSelect>
+                <EleInput For="Item.DutyMan"           Width="250px" Label="企业责任人"          Value="@QStr("dutyUserName")"></EleInput>
+                <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Width="250px" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0"
+                           Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QStr("checkerId"))"
+                           TextValue="@Model.DefaultCheckerName"></ElePicker>
+                <EleDatePicker For="Item.CreateDt" Type="DateRange" Width="250px" Label="创建时间"        Type="DateTime" Value="@QStr("createStartDt")"></EleDatePicker>
+                <EleDatePicker For="Item.LastCheckDt" Type="DateRange" Width="250px" Label="巡查时间"     Type="DateTime" Value="@QStr("lastCheckStartDt")"></EleDatePicker>
+                <EleSelect For="Item.IndustryRisk"     Width="250px" Label="行业风险类型"     Value="@QStr("industryRisk")"></EleSelect>
+                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QStr("tagIds")"></EleTreePicker>
+                <EleSelect For="Item.IsDel"            Width="250px" Label="已删除"           Value="@QStr("isDel", "false")"></EleSelect>

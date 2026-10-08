@@ -12,6 +12,14 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace App.EleUI
 {
+    /// <summary>操作项显示模式：图标 / 文本 / 两者都显示</summary>
+    public enum EleOpDisplayMode
+    {
+        Both = 0,
+        Icon = 1,
+        Text = 2
+    }
+
     /// <summary>操作列项</summary>
     internal class OpItem
     {
@@ -22,6 +30,7 @@ namespace App.EleUI
         public string Popup { get; set; }
         public string Handler { get; set; }
         public string Text { get; set; }
+        public EleOpDisplayMode Mode { get; set; } = EleOpDisplayMode.Icon;
     }
 
     /// <summary>操作列上下文</summary>
@@ -59,6 +68,9 @@ namespace App.EleUI
         [HtmlAttributeName("Text")]
         public string Text { get; set; }
 
+        [HtmlAttributeName("Mode")]
+        public EleOpDisplayMode Mode { get; set; } = EleOpDisplayMode.Icon;
+
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
             if (IsSelectMode() && ShouldHideInSelectMode())
@@ -81,7 +93,8 @@ namespace App.EleUI
                 Command = Command,
                 Popup = Popup,
                 Handler = Handler,
-                Text = Text
+                Text = Text,
+                Mode = Mode
             });
 
             output.SuppressOutput();
@@ -163,6 +176,7 @@ namespace App.EleUI
             SetupColumnShell(output);
             var tableHeaderAlign = context.Items.ContainsKey("TableHeaderAlign") ? context.Items["TableHeaderAlign"] as string : null;
             ApplyBaseColumnAttributes(output, string.IsNullOrWhiteSpace(Label) ? Texts.Current.Operation : Label, tableHeaderAlign);
+            output.Attributes.SetAttribute("class-name", "ele-op-column");
 
             var maxInline = Math.Max(0, Shows);
             var inlineOps = ops.Take(maxInline).ToList();
@@ -173,7 +187,7 @@ namespace App.EleUI
 
             output.Content.SetHtmlContent($@"
                 <template #default=""scope"">
-                    <div class=""flex items-center justify-center"">
+                    <div class=""flex items-center justify-center gap-x-0 w-full max-w-full px-0.5 overflow-hidden"">
                         {inlineHtml}
                         {moreHtml}
                     </div>
@@ -231,6 +245,15 @@ namespace App.EleUI
             return sb.ToString();
         }
 
+        private static string ResolveDisplayText(OpItem op)
+        {
+            var text = (op?.Text ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(text)) return text;
+            var tooltip = (op?.Tooltip ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(tooltip)) return tooltip;
+            return GuessTooltip(op) ?? string.Empty;
+        }
+
         private static string BuildInlineOpHtml(OpItem op)
         {
             var clickExpr = BuildClickExpr(op);
@@ -239,12 +262,51 @@ namespace App.EleUI
 
             var icon = string.IsNullOrWhiteSpace(op.Icon) ? GuessIcon(op) : op.Icon.Trim();
             var tooltip = string.IsNullOrWhiteSpace(op.Tooltip) ? GuessTooltip(op) : op.Tooltip.Trim();
-            var iconHtml = $"<el-icon class='cursor-pointer text-blue-600 hover:text-blue-700 mr-2' v-on:click=\"{clickExpr}\"><component :is=\"'{icon}'\"></component></el-icon>";
+            var mode = op.Mode;
+
+            bool showIcon = (mode == EleOpDisplayMode.Icon || mode == EleOpDisplayMode.Both);
+            bool showText = (mode == EleOpDisplayMode.Text || mode == EleOpDisplayMode.Both);
+
+            if (!showIcon && !showText) showIcon = true;
+
+            var iconPart = showIcon
+                ? $"<el-icon class='text-base flex-shrink-0'><component :is=\"'{icon}'\"></component></el-icon>"
+                : string.Empty;
+
+            var textPart = showText
+                ? $"<span class='text-[13px] leading-tight tracking-tight whitespace-nowrap'>{WebUtility.HtmlEncode(ResolveDisplayText(op))}</span>"
+                : string.Empty;
+
+            // 紧凑模式：
+            // - 文本/组合按钮：纯背景 hover（无边框，避免 FOUC 先显示图1边框再变图2无框）；
+            // - 相邻按钮间距 4px（mr-1），比之前再少 2px，按钮区总宽度更紧凑；
+            // - 单个操作按钮 max-w-[calc(100%/N-4px)] 由外层 overflow 截断，不再撑破列宽。
+            var gap = showIcon && showText ? "ml-1" : "";
+            string rootClass;
+            if (showIcon && showText)
+            {
+                rootClass = "inline-flex items-center px-1.5 py-0.5 rounded cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition gap-x-0.5";
+            }
+            else if (showIcon)
+            {
+                rootClass = "inline-flex items-center px-0.5 py-0.5 rounded cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition";
+            }
+            else
+            {
+                rootClass = "inline-flex items-center px-1.5 py-0.5 rounded cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition text-[13px] leading-tight whitespace-nowrap";
+            }
+
+            var inner = (showIcon && showText)
+                ? $"{iconPart}{gap}{textPart}"
+                : (showIcon ? iconPart : textPart);
+
+            // 相邻按钮间距统一 4px（mr-1）
+            var wrap = $"<div class='{rootClass} mr-1 flex-shrink-0' v-on:click=\"{clickExpr}\">{inner}</div>";
 
             if (string.IsNullOrWhiteSpace(tooltip))
-                return iconHtml;
+                return wrap;
 
-            return $@"<el-tooltip content='{WebUtility.HtmlEncode(tooltip)}' placement='top'>{iconHtml}</el-tooltip>";
+            return $@"<el-tooltip content='{WebUtility.HtmlEncode(tooltip)}' placement='top'>{wrap}</el-tooltip>";
         }
 
         private static string BuildMoreDropdownHtml(List<OpItem> ops)
@@ -261,13 +323,15 @@ namespace App.EleUI
 
                 var icon = string.IsNullOrWhiteSpace(op.Icon) ? GuessIcon(op) : op.Icon.Trim();
 
-                var text = string.IsNullOrWhiteSpace(op.Text)
-                    ? (string.IsNullOrWhiteSpace(op.Tooltip) ? GuessTooltip(op) : op.Tooltip)
-                    : op.Text;
+                var text = ResolveDisplayText(op);
                 if (string.IsNullOrWhiteSpace(text))
                     text = op.Command ?? op.Handler ?? op.Popup;
 
-                items.Append($"<el-dropdown-item v-on:click=\"{clickExpr}\"><span class='inline-flex items-center'><el-icon class='mr-1'><component :is=\"'{icon}'\"></component></el-icon>{WebUtility.HtmlEncode(text)}</span></el-dropdown-item>");
+                var showIcon = op.Mode != EleOpDisplayMode.Text;
+                var iconPart = showIcon
+                    ? $"<el-icon class='mr-1'><component :is=\"'{icon}'\"></component></el-icon>"
+                    : string.Empty;
+                items.Append($"<el-dropdown-item v-on:click=\"{clickExpr}\"><span class='inline-flex items-center'>{iconPart}{WebUtility.HtmlEncode(text)}</span></el-dropdown-item>");
             }
 
             if (items.Length == 0)
@@ -275,7 +339,7 @@ namespace App.EleUI
 
             return $@"
                 <el-dropdown trigger='click'>
-                    <span class='inline-flex items-center cursor-pointer text-gray-500 hover:text-gray-600' title='更多操作'>
+                    <span class='inline-flex items-center cursor-pointer text-gray-500 hover:text-blue-600' title='更多操作'>
                         <span class='text-lg leading-none select-none'>⋮</span>
                     </span>
                     <template #dropdown>

@@ -106,6 +106,8 @@ namespace App.Components
         public static void LoginSuccess(User user)
         {
             RegisterOnlineUser(user.Id);
+            user.LastLoginDt = DateTime.Now;
+            user.Save();
 
             // Aspnetcore 标准登录代码: Ticket验票--Principal主角--Identity身份--(1:n)--Claim属性
             var roleIds = user.Roles.Select(r => r.Id).Aggregate("", (a, b) => a + "," + b).TrimStart(',');

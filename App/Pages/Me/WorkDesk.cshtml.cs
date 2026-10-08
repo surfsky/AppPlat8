@@ -20,23 +20,26 @@ namespace App.Pages.Me
         public string Title { get; set; }
         public string Url { get; set; }
         public string Target { get; set; } = "_self";
+        public string IconCls { get; set; }
     }
 
     /// <summary>工作台统计卡片</summary>
     public class WorkDeskStatCard
     {
-        public WorkDeskStatCard() {}
-        public WorkDeskStatCard(string title, int count, string url)
-        {
-            Title = title;
-            Count = count;
-            Url = url;
-        }
-
         public string Title { get; set; }
         public int Count { get; set; }
         public string Url { get; set; }
         public bool ShowBadge => Count > 0;
+        public string IconCls { get; set; }
+
+        public WorkDeskStatCard() {}
+        public WorkDeskStatCard(string title, int count, string url, string iconCls)
+        {
+            Title = title;
+            Count = count;
+            Url = url;
+            IconCls = iconCls;
+        }
     }
 
     /// <summary>工作台任务行</summary>
@@ -79,14 +82,6 @@ namespace App.Pages.Me
         [BindProperty(SupportsGet = true)] public long? UserId { get; set; }
         [BindProperty(SupportsGet = true)] public string UserName { get; set; }
 
-        // 角标计数（对象 4 卡，隐患 3 卡）
-        public int CountMyObjects { get; set; }
-        public int CountUncheckedObjects { get; set; }
-        public int CountNearExpireObjects { get; set; }
-        public int CountOverdueObjects { get; set; }
-        public int CountMyHazards { get; set; }
-        public int CountPendingHazards { get; set; }
-        public int CountOverdueHazards { get; set; }
 
         // 简单绑定用列表（SSR 输出）
         public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
@@ -131,7 +126,7 @@ namespace App.Pages.Me
             var near  = today.AddDays(7);
 
             var objects = BuildObjectScopeQuery();
-            CountMyObjects = objects.Count();
+            var CountMyObjects = objects.Count();
 
             // NextCheckDt 是实体 getter-only 计算属性（NotMapped），EF Core 无法翻译为 SQL。
             // 解决办法：先把 LatestCheckDt / RiskLevel / IsChecked 投影到内存，再本地计数。
@@ -144,42 +139,43 @@ namespace App.Pages.Me
                 })
                 .AsNoTracking()
                 .ToList();
-            CountUncheckedObjects = projection
+            var CountUncheckedObjects = projection
                 .Count(o => (o.IsChecked == null || o.IsChecked == false) || o.LastCheckDt == null);
-            CountNearExpireObjects = projection
+            var CountNearExpireObjects = projection
                 .Count(o =>
                 {
                     var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
                     return next.HasValue && next.Value > today && next.Value <= near;
                 });
-            CountOverdueObjects = projection
+            var CountOverdueObjects = projection
                 .Count(o =>
                 {
                     var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
                     return next.HasValue && next.Value <= today;
                 });
 
+            //
             ObjectStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("我的对象",         CountMyObjects,         AppendObjectScope($"/Checks/CheckObjects?isDel=false")),
-                new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false")),
-                new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}")),
-                new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
-                new WorkDeskStatCard("重点关注对象", CountOverdueObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
-                new WorkDeskStatCard("示例对象", CountOverdueObjects,   AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
-                new WorkDeskStatCard("八大类对象", CountOverdueObjects,   AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
-                new WorkDeskStatCard("三场所对象", CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
+                new WorkDeskStatCard("我的对象",         CountMyObjects,         AppendObjectScope($"/Checks/CheckObjects?isDel=false"), "fas fa-warehouse"),
+                new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false"), "fas fa-circle-check"),
+                new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}"), "fas fa-clock"),
+                new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-triangle-exclamation"),
+                new WorkDeskStatCard("重点关注对象",     CountOverdueObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-exclamation-triangle"),
+                new WorkDeskStatCard("示例对象",        CountOverdueObjects,   AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-exclamation-triangle"),
+                new WorkDeskStatCard("八大类对象",      CountOverdueObjects,   AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-exclamation-triangle"),
+                new WorkDeskStatCard("三场所对象",      CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-exclamation-triangle"),
             };
 
             var hazards = BuildHazardScopeQuery();
-            CountMyHazards       = hazards.Count();
-            CountPendingHazards  = hazards.Where(h => h.Status == CheckHazardStatus.Waiting || h.Status == CheckHazardStatus.Processing).Count();
-            CountOverdueHazards  = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
+            var CountMyHazards       = hazards.Count();
+            var CountPendingHazards  = hazards.Where(h => h.Status == CheckHazardStatus.Waiting || h.Status == CheckHazardStatus.Processing).Count();
+            var CountOverdueHazards  = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
             HazardStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("我发现的隐患",   CountMyHazards,      AppendHazardScope($"/Checks/CheckHazards")),
-                new WorkDeskStatCard("待处理隐患",     CountPendingHazards, AppendHazardScope($"/Checks/CheckHazards?status=0,1")),
-                new WorkDeskStatCard("超期隐患",       CountOverdueHazards, AppendHazardScope($"/Checks/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}")),
+                new WorkDeskStatCard("我发现的隐患",   CountMyHazards,      AppendHazardScope($"/Checks/CheckHazards"), "fas fa-eye"),
+                new WorkDeskStatCard("待处理隐患",     CountPendingHazards, AppendHazardScope($"/Checks/CheckHazards?status=0,1"), "fas fa-inbox"),
+                new WorkDeskStatCard("超期隐患",       CountOverdueHazards, AppendHazardScope($"/Checks/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}"), "fas fa-skull-crossbones"),
             };
         }
 

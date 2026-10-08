@@ -5,6 +5,7 @@
 @{
     ViewData["Title"] = "Culture 切换示例";
     var filterItem = Model.Item;
+    var levelOptions = "1,2,3,4,5";
 }
 
 @section head {
@@ -62,7 +63,7 @@
                     <EleDatePicker For="Item.DateTimeValue" Type="DateTime"></EleDatePicker>
                     <EleDatePicker For="Item.StartDate" Type="DateRange"></EleDatePicker>
 
-                    <EleSelect For="Item.Level" Items="1,2,3,4,5"></EleSelect>
+                    <EleSelect For="Item.Level" Items="@levelOptions"></EleSelect>
                     <EleSwitch For="Item.Enabled"></EleSwitch>
 
                     <ElePicker For="Item.UserId" TextFor="Item.UserName" PopupUrl="/EleUISamples/Datas/DeptUsersUsers?multi=0"></ElePicker>
@@ -82,8 +83,8 @@
                     <EleTable Title="" DataHandler="?handler=SampleData" FormPage="/EleUISamples/Datas/UserForm" EnableBatch="true" style="height:420px">
                         <Toolbar>
                             <Filters>
-                                <EleInput For="Model.Item.Name" Label="@Texts.Current.Name_" Width="200px"></EleInput>
-                                <EleSelect For="Model.Item.Level" Label="@Texts.Current.Level" Items="1,2,3,4,5" Clearable="true" Width="160px"></EleSelect>
+                                <EleInput For="Item.Name" Label="@Texts.Current.Name_" Width="200px"></EleInput>
+                                <EleSelect For="Item.Level" Label="@Texts.Current.Level" Items="@levelOptions" Clearable="true" Width="160px"></EleSelect>
                             </Filters>
                             <Buttons>
                                 <EleButton Type="Primary" Command="Add" Icon="Plus">@Texts.Current.New</EleButton>

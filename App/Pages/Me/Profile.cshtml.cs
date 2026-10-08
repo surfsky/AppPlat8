@@ -13,12 +13,12 @@ namespace App.Pages.Me
     {
         public long Id { get; set; }
 
-        public string AccountName { get; set; }
+        public string Name { get; set; }
         public string OrgName { get; set; }
         public string RoleNames { get; set; }
-        public string LastLoginTime { get; set; }
-        public string TakeOfficeTime { get; set; }
-        public string CreateTime { get; set; }
+        public string LastLoginDt { get; set; }
+        public string TakeOfficeDt { get; set; }
+        public string CreateDt { get; set; }
 
         public string Photo { get; set; }
         public string Mobile { get; set; }
@@ -87,12 +87,12 @@ namespace App.Pages.Me
             return new Profile
             {
                 Id = user.Id,
-                AccountName = user.Name,
-                OrgName = user.Org?.Name,
-                RoleNames = user.Roles == null ? "" : string.Join("、", user.Roles.Select(r => r.Name)),
-                LastLoginTime = user.LastLoginDt?.ToString("yyyy-MM-dd HH:mm:ss"),
-                TakeOfficeTime = user.TakeOfficeDt?.ToString("yyyy-MM-dd"),
-                CreateTime = user.CreateDt?.ToString("yyyy-MM-dd HH:mm:ss"),
+                Name = user.Name,
+                OrgName = user.OrgFullName,
+                LastLoginDt = user.LastLoginDt?.ToString("yyyy-MM-dd HH:mm:ss"),
+                TakeOfficeDt = user.TakeOfficeDt?.ToString("yyyy-MM-dd"),
+                CreateDt = user.CreateDt?.ToString("yyyy-MM-dd HH:mm:ss"),
+                RoleNames = user.RoleNames,
 
                 Photo = user.Photo,
                 Mobile = user.Mobile,

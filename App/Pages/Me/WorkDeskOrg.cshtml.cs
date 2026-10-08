@@ -96,10 +96,10 @@ namespace App.Pages.Me
 
             ObjectStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("科室对象",           CountOrgObjects,        AppendObjectScope($"/Checks/CheckObjects?isDel=false")),
-                new WorkDeskStatCard("未巡查对象",         CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false")),
-                new WorkDeskStatCard("临期巡查对象",       CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}")),
-                new WorkDeskStatCard("超期未巡查对象",     CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}")),
+                new WorkDeskStatCard("科室对象",           CountOrgObjects,        AppendObjectScope($"/Checks/CheckObjects?isDel=false"), "fas fa-warehouse"),
+                new WorkDeskStatCard("未巡查对象",         CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false"), "fas fa-circle-check"),
+                new WorkDeskStatCard("临期巡查对象",       CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}"), "fas fa-clock"),
+                new WorkDeskStatCard("超期未巡查对象",     CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-triangle-exclamation"),
             };
 
             var hazards = BuildHazardScopeQuery();
@@ -108,9 +108,9 @@ namespace App.Pages.Me
             CountOverdueHazards = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
             HazardStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("发现的隐患",  CountOrgHazards,     AppendHazardScope($"/Checks/CheckHazards")),
-                new WorkDeskStatCard("待处理隐患",  CountPendingHazards, AppendHazardScope($"/Checks/CheckHazards?status=0,1")),
-                new WorkDeskStatCard("超期隐患",    CountOverdueHazards, AppendHazardScope($"/Checks/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}")),
+                new WorkDeskStatCard("发现的隐患",  CountOrgHazards,     AppendHazardScope($"/Checks/CheckHazards"), "fas fa-eye"),
+                new WorkDeskStatCard("待处理隐患",  CountPendingHazards, AppendHazardScope($"/Checks/CheckHazards?status=0,1"), "fas fa-inbox"),
+                new WorkDeskStatCard("超期隐患",    CountOverdueHazards, AppendHazardScope($"/Checks/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}"), "fas fa-skull-crossbones"),
             };
         }
 

@@ -81,6 +81,32 @@ body.ele-fullscreen-page,
     word-break: break-word;
 }
 
+/* EleOpColumn 操作列：
+ *  - 统一清零 td/th 内边距，让用户设置的 Width 与实际可用宽度 1:1 对应
+ *    （之前全局 td .cell 的 padding-l/r=12px 会把 Width 吃掉 24px，导致按钮区视觉上比标题宽）
+ *  - 强制 overflow:hidden，避免 Element Plus 默认 table-layout:auto 按内容把列撑宽
+ */
+.el-table td.el-table__cell.ele-op-column,
+.el-table th.el-table__cell.ele-op-column {
+    padding: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.el-table td.el-table__cell.ele-op-column > .cell,
+.el-table th.el-table__cell.ele-op-column > .cell {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.el-table td.el-table__cell.ele-op-column > .cell > * {
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
 /* Widen pagination page size select */
 .el-pagination .el-select {
     width: 120px !important;
@@ -184,10 +210,20 @@ body.ele-fullscreen-page,
     max-width: 260px;
 }
 
-/* EleTable filter labels: 与表单标签保持一致（取消粗体，保留旧代码显式说明已覆盖）*/
+/* EleTable filter labels*/
+.ele-table-toolbar .ele-table-filters-desktop .el-form-item__label,
+.ele-table-toolbar .ele-table-filters-desktop .el-form-item__label > span,
+.ele-table-toolbar .ele-table-filters-desktop .el-form-item__label-wrap .el-form-item__label,
+.ele-table-toolbar .ele-table-filters-desktop .ele-form-item-label,
 .ele-table-filters-block .el-form-item__label,
-.ele-table-filters-block .el-form-item__label > span {
+.ele-table-filters-block .el-form-item__label > span,
+.ele-table-filters-expandable .el-form-item__label,
+.ele-table-filters-expandable .el-form-item__label > span,
+.ele-filter-desktop-wrap .el-form-item__label,
+.ele-filter-desktop-wrap .el-form-item__label > span,
+.ele-filter-desktop-wrap .ele-form-item-label {
     font-weight: 400 !important;
+    font-size: 16x !important;    /*label size*/
 }
 
 /* EleTable column header inner cell 继承外层字号（避免 Element Plus 强制 14px） */

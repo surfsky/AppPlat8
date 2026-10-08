@@ -7,24 +7,24 @@
 
 @section body {
     <EleForm LabelWidth="110px">
-        <EleLabel Label="可编辑信息" FillRow="true"></EleLabel>
-        <EleImageUpload For="Item.Photo" Label="照片" FillRow="true"></EleImageUpload>
+        <EleImageUpload For="Item.Photo" Label=" " FillRow="true"></EleImageUpload>
+        <EleInput label="ID" For="Item.Id" Label="ID" ReadOnly="true" FillRow="true"></EleInput>
+        <EleInput label="账户名" For="Item.Name" Label="账户名" ReadOnly="true" FillRow="true"></EleInput>
+        <EleInput For="Item.RealName" Label="真实姓名" FillRow="true" readonly="true"></EleInput>
+        <EleInput For="Item.OrgName" Label="组织" ReadOnly="true" FillRow="true"></EleInput>
+        <EleInput For="Item.LastLoginDt" Label="上次登录时间" ReadOnly="true" FillRow="true"></EleInput>
+        <EleInput For="Item.TakeOfficeDt" Label="入职时间" ReadOnly="true" FillRow="true"></EleInput>
+        <EleInput For="Item.CreateDt" Label="注册时间" ReadOnly="true" FillRow="true"></EleInput>
+        <EleInput For="Item.RoleNames" Label="角色" ReadOnly="true" FillRow="true"></EleInput>
+
+        <EleLabel Label="更多" FillRow="true"></EleLabel>
         <EleInput For="Item.Mobile" Label="手机号" FillRow="true"></EleInput>
-        <EleInput For="Item.RealName" Label="真实姓名" Required="true" FillRow="true"></EleInput>
+        <EleInput For="Item.OfficePhone" Label="办公电话" FillRow="true"></EleInput>
         <EleInput For="Item.Email" Label="邮箱" FillRow="true"></EleInput>
         <EleRadio For="Item.Gender" Label="性别" Items="男, 女" FillRow="true"></EleRadio>
-        <EleInput For="Item.OfficePhone" Label="电话" FillRow="true"></EleInput>
         <EleDatePicker For="Item.Birthday" Label="生日" Type="@EleDatePickerType.Date" FillRow="true"></EleDatePicker>
         <EleInput For="Item.Address" Label="地址" FillRow="true"></EleInput>
         <EleInput For="Item.Remark" Label="备注" Rows="3" FillRow="true"></EleInput>
-
-        <EleLabel Label="更多" FillRow="true"></EleLabel>
-        <EleInput For="Item.AccountName" Label="账户名" ReadOnly="true" FillRow="true"></EleInput>
-        <EleInput For="Item.OrgName" Label="组织" ReadOnly="true" FillRow="true"></EleInput>
-        <EleInput For="Item.RoleNames" Label="角色" ReadOnly="true" FillRow="true"></EleInput>
-        <EleInput For="Item.LastLoginTime" Label="上次登录时间" ReadOnly="true" FillRow="true"></EleInput>
-        <EleInput For="Item.TakeOfficeTime" Label="入职时间" ReadOnly="true" FillRow="true"></EleInput>
-        <EleInput For="Item.CreateTime" Label="注册时间" ReadOnly="true" FillRow="true"></EleInput>
 
         <Bottom>
             <EleButton Type="Primary" Command="Save">保存</EleButton>
