@@ -10,7 +10,7 @@ using App.Utils;
 namespace App.Pages.Maintains
 {
     [Auth(Power.ConfigSite)]
-    public class SiteConfigFormModel : AdminModel
+    public class SiteConfigFormModel : AuthModel
     {
         [BindProperty]
         public SiteConfig Item { get; set; }
@@ -48,6 +48,8 @@ namespace App.Pages.Maintains
             cfg.PrivateKey = req.PrivateKey;
             cfg.PublicKey = req.PublicKey;
             cfg.EnableLoginAI = req.EnableLoginAI;
+            cfg.VisitFreqency = req.VisitFreqency;
+            cfg.BanMinutes = req.BanMinutes;
 
             cfg.Save();
             SiteConfig.ClearCache();

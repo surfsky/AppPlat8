@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Maintains
 {
     [Auth(Power.FeedBackView)]
-    public class FeedbacksModel : AdminModel
+    public class FeedbacksModel : AuthModel
     {
         public Feedback Item { get; set; }
 

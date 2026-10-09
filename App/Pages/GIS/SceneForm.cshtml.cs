@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryEdit)]
-    public class SceneFormModel : AdminModel
+    public class SceneFormModel : AuthModel
     {
         public GisScene Item { get; set; }
         public List<SelectListItem> Styles { get; set; }

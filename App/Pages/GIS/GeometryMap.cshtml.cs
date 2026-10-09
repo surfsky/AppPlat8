@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryView)]
-    public class GeometryMapModel : AdminModel
+    public class GeometryMapModel : AuthModel
     {
         public void OnGet() { }
 

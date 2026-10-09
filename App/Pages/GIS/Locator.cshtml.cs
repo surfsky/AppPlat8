@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 namespace App.Pages.Shared
 {
     [Auth(Power.CheckObjectView)]
-    public class LocatorModel : AdminModel
+    public class LocatorModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string Gps { get; set; }

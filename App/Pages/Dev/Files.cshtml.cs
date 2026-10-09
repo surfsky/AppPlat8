@@ -7,7 +7,7 @@ using App.Utils;
 
 namespace App.Pages.Dev
 {
-    public class FilesModel : AdminModel
+    public class FilesModel : AuthModel
     {
         public List<FileItem> Items { get; set; } = new();
 

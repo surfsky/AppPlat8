@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryView)]
-    public class ScenesModel : AdminModel
+    public class ScenesModel : AuthModel
     {
         public GisScene Item { get; set; }
 

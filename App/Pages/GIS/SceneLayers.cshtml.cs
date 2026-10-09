@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisSceneEdit)]
-    public class SceneLayersModel : AdminModel
+    public class SceneLayersModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public long SceneId { get; set; }

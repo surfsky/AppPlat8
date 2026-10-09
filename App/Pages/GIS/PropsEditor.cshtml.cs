@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Shared
 {
     [Auth(AuthLogin = true)]
-    public class PropsEditorModel : AdminModel
+    public class PropsEditorModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string Md { get; set; }

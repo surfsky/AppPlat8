@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckEdit)]
-    public class CheckFormModel : AdminModel
+    public class CheckFormModel : AuthModel
     {
         public Check Item { get; set; }
         public List<SelectListItem> CheckObjects { get; set; }

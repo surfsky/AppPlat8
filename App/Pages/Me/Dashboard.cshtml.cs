@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace App.Pages
 {
     [Authorize]
-    public class DashboardModel : AdminModel
+    public class DashboardModel : AuthModel
     {
         public string SiteTitle { get; set; }
 

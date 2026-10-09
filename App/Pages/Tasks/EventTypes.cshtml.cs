@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.EventView)]
-    public class EventTypesModel : AdminModel
+    public class EventTypesModel : AuthModel
     {
         public EventType Item { get; set; }
 

@@ -16,7 +16,7 @@ namespace App.Pages.Admins
     using Role = App.DAL.Role;
 
     [Auth(Power.RoleView)]
-    public class RolesModel : AdminModel
+    public class RolesModel : AuthModel
     {
         public List<Role> Items { get; set; }
         public Role Item { get; set; }

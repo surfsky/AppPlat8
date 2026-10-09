@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryView)]
-    public class MapImageModel : AdminModel
+    public class MapImageModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string Region { get; set; }

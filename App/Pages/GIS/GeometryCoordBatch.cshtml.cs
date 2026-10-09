@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryEdit)]
-    public class GeometryCoordBatchModel : AdminModel
+    public class GeometryCoordBatchModel : AuthModel
     {
         public List<long> SelectedIds { get; set; } = new();
         public string DefaultCoordType { get; set; } = GisHelper.CoordTypeWgs84;

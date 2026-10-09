@@ -19,7 +19,7 @@ namespace App.Pages.GIS
     }
 
     [Auth(Power.GisGeometryView)]
-    public class GeometryManagerModel : AdminModel
+    public class GeometryManagerModel : AuthModel
     {
         public List<GeometryNavNode> NavMenus { get; set; } = new();
         public string CurrentMode { get; set; } = "list";

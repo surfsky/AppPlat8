@@ -17,7 +17,7 @@ namespace App.Pages.AI
 {
     [IgnoreAntiforgeryToken]
     [Auth(Power.AIChat)]
-    public class ChatModel : AdminModel
+    public class ChatModel : AuthModel
     {
         public List<AIConfigOption> Configs { get; set; } = new();
         public long? DefaultConfigId { get; set; }

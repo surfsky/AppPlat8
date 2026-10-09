@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryEdit)]
-    public class TyphoonFormModel : AdminModel
+    public class TyphoonFormModel : AuthModel
     {
         public GisTyphoon Item { get; set; }
 

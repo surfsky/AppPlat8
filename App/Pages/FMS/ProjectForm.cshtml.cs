@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.ProjectEdit)]
-    public class ProjectFormModel : AdminModel
+    public class ProjectFormModel : AuthModel
     {
         public Project Item { get; set; }
         public void OnGet()

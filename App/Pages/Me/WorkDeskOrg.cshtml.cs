@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Me
 {
-    public class WorkDeskOrgModel : AdminModel
+    public class WorkDeskOrgModel : AuthModel
     {
         //---------------------------------------------------------------------
         // 筛选条件（来自 URL 查询参数）

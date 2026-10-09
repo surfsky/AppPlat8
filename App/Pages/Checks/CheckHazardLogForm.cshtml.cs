@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckHazardEdit)]
-    public class CheckHazardLogFormModel : AdminModel
+    public class CheckHazardLogFormModel : AuthModel
     {
         public CheckHazardLog Item { get; set; }
 

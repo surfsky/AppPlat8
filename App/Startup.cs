@@ -250,6 +250,9 @@ namespace App
                 app.UseStatusCodePagesWithRedirects("/Error?code={0}");  // 状态码页面中间件，重定向到 /Error 页面并传递状态码
             }
 
+            // 网站防护：尽早拦截黑名单 / 高频 IP，避免恶意流量不进入后续管道
+            app.UseDefence();                                // 网站防护中间件：IP 黑名单、访问频率限制与自动封禁
+
             // 文件和授权（顺序不要动）
             app.UseSession();                               // 会话状态管理
             app.UseImager();                                // 图像处理中间件：缓存、缩放等

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Maintains
 {
     [Auth(Power.FeedBackView)]
-    public class FeedbackFormModel : AdminModel
+    public class FeedbackFormModel : AuthModel
     {
         public Feedback Item { get; set; }
 

@@ -8,7 +8,7 @@ namespace App.Pages.Open
 {
     /// <summary>参考网站管理</summary>
     [Auth(Power.SiteView)]
-    public class SitesModel : AdminModel
+    public class SitesModel : AuthModel
     {
         [BindProperty]
         public Site Item { get; set; }

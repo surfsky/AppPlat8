@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Maintains
 {
-    public class MenuFormModel : AdminModel
+    public class MenuFormModel : AuthModel
     {
         public Menu Item { get; set; }
         public List<TreeItem> MenuTree { get; set; } // Changed type

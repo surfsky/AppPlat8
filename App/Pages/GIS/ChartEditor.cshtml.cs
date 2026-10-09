@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryEdit)]
-    public class ChartEditorModel : AdminModel
+    public class ChartEditorModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string ChartJson { get; set; }

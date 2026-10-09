@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.BudgetView)]
-    public class BudgetsModel : AdminModel
+    public class BudgetsModel : AuthModel
     {
         public Budget Item { get; set; }
         public List<SelectListItem> BudgetTypes { get; set; }

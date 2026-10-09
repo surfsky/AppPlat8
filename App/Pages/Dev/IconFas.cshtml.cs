@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace App.Pages.Dev
 {
-    public class IconFasModel : AdminModel
+    public class IconFasModel : AuthModel
     {
         public void OnGet()
         {

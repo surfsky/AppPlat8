@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckObjectView)]
-    public class CheckPointsModel : AdminModel
+    public class CheckPointsModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public long ObjectId { get; set; }

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Checks.Reports
 {
-    public class CheckObjectStatModel : AdminModel
+    public class CheckObjectStatModel : AuthModel
     {
         public CheckObjectStatRow Item {get; set;}
 

@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Shared
 {
     [Auth(AuthLogin = true)]
-    public class ImportorModel : AdminModel
+    public class ImportorModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string Type { get; set; }

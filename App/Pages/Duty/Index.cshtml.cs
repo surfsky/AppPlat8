@@ -7,7 +7,7 @@ using System;
 namespace App.Pages.Duty
 {
 
-    public class IndexModel : AdminModel
+    public class IndexModel : AuthModel
     {
         public void OnGet()
         {

@@ -15,7 +15,7 @@ namespace App.Pages.OA
 {
     [Auth(Power.AssetView)]
     [IgnoreAntiforgeryToken]
-    public class AssetFormModel : AdminModel
+    public class AssetFormModel : AuthModel
     {
         [BindProperty]
         public Asset Item { get; set; }

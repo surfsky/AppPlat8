@@ -14,7 +14,7 @@ namespace App.Pages.Admin
     [Auth(Power.AnnounceView)]
     //[Auth(Power.AnnounceView)]
     [IgnoreAntiforgeryToken]
-    public class AnnounceFormModel : AdminModel
+    public class AnnounceFormModel : AuthModel
     {
         [BindProperty]
         public Announce Item { get; set; }

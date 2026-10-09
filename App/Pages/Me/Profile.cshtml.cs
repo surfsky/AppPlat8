@@ -32,7 +32,7 @@ namespace App.Pages.Me
     }
 
 
-    public class ProfileModel : AdminModel
+    public class ProfileModel : AuthModel
     {
         [BindProperty]
         public Profile Item { get; set; }

@@ -19,7 +19,7 @@ namespace App.Pages.OA
     using App.Entities;
 
     [Auth(Power.EventEdit)]
-    public class EventFormModel : AdminModel
+    public class EventFormModel : AuthModel
     {
         public Event Item { get; set; }
         public List<SelectListItem> EventTypes { get; set; }

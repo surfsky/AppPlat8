@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryView)]
-    public class TyphoonsModel : AdminModel
+    public class TyphoonsModel : AuthModel
     {
         public GisTyphoon Item { get; set; }
 

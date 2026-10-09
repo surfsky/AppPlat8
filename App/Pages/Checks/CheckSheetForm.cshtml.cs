@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckSheetView)]
-    public class CheckSheetFormModel : AdminModel
+    public class CheckSheetFormModel : AuthModel
     {
         public CheckSheet Item { get; set; }
 

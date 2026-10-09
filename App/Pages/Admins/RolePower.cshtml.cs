@@ -8,7 +8,7 @@ using System.Linq;
 namespace App.Pages.Admins
 {
     [Auth(Power.RoleEdit)]
-    public class RolePowerModel : AdminModel
+    public class RolePowerModel : AuthModel
     {
         public long RoleId { get; set; }
 

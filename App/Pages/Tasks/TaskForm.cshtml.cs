@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.TaskEdit)]
-    public class TaskFormModel : AdminModel
+    public class TaskFormModel : AuthModel
     {
         public AssignTask Item { get; set; }
         public List<App.DAL.Org> OrgTree { get; set; }

@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.ArticleView)]
-    public class ArticleDirsModel : AdminModel
+    public class ArticleDirsModel : AuthModel
     {
         public ArticleMenu Item { get; set; }
 

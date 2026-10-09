@@ -10,7 +10,7 @@ using App.Utils;
 namespace App.Pages.Shared
 {
     [IgnoreAntiforgeryToken]
-    public class UserSelectorModel : AdminModel
+    public class UserSelectorModel : AuthModel
     {
         public void OnGet() { }
 

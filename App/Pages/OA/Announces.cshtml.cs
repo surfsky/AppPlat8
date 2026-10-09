@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Admin
 {
     [Auth(Power.AnnounceView)]
-    public class AnnouncesModel : AdminModel
+    public class AnnouncesModel : AuthModel
     {
         // 辅助属性，用于 Razor 页面 TagHelper 绑定列元数据
         public Announce Item { get; set; }

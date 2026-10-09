@@ -9,7 +9,7 @@ using System.Linq;
 namespace App.Pages.Admins
 {
     [Auth(Power.RoleEdit)]
-    public class RoleFormModel : AdminModel
+    public class RoleFormModel : AuthModel
     {
         public Role Item { get; set; }
 

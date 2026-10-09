@@ -8,7 +8,7 @@ using App.Web;
 
 namespace App.Pages.Me
 {
-    public class PasswordFormModel : AdminModel
+    public class PasswordFormModel : AuthModel
     {
         [BindProperty]
         public PasswordEntity Item { get; set; }

@@ -16,7 +16,7 @@ using App.Utils;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckHazardEdit)]
-    public class CheckHazardFormModel : AdminModel
+    public class CheckHazardFormModel : AuthModel
     {
         public CheckHazard Item { get; set; }
 

@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.ProjectView)]
-    public class ProjectsModel : AdminModel
+    public class ProjectsModel : AuthModel
     {
         public Project Item { get; set; }
 

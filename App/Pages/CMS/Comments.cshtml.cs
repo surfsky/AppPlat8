@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.CommentView)]
-    public class CommentsModel : AdminModel
+    public class CommentsModel : AuthModel
     {
         public Comment Item { get; set; }
 

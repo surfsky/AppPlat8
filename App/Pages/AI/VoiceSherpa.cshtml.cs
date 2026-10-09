@@ -8,7 +8,7 @@ namespace App.Pages.AI
 {
     [IgnoreAntiforgeryToken]
     [Auth(Power.AIChat)]
-    public class VoiceSherpaModel : AdminModel
+    public class VoiceSherpaModel : AuthModel
     {
         public void OnGet()
         {

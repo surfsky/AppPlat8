@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckObjectEdit)]
-    public class CheckObjectEventFormModel : AdminModel
+    public class CheckObjectEventFormModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public long ObjectId { get; set; }

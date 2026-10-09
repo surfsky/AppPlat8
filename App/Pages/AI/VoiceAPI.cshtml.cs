@@ -8,7 +8,7 @@ namespace App.Pages.AI
 {
     [IgnoreAntiforgeryToken]
     [Auth(Power.AIChat)]
-    public class VoiceAPIModel : AdminModel
+    public class VoiceAPIModel : AuthModel
     {
         public void OnGet()
         {

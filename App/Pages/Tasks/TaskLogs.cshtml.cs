@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.TaskView)]
-    public class TaskLogsModel : AdminModel
+    public class TaskLogsModel : AuthModel
     {
         public AssignTaskLog Item { get; set; }
 

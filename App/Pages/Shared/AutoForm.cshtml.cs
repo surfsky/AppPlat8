@@ -9,7 +9,7 @@ namespace App.Pages.Shared
 {
     /// <summary>Excel 智能表单</summary>
     [Auth(Power.CheckObjectEdit)]
-    public class AutoFormModel : AdminModel
+    public class AutoFormModel : AuthModel
     {
         private readonly AutoExcelStore _store = new();
 

@@ -44,55 +44,7 @@
     <None Remove="Models\**" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Remove="Components\Middlewares\ContentModule.cs" />
-    <Compile Remove="Components\Middlewares\DefenceModule.cs" />
-    <Compile Remove="Components\Middlewares\FriendlyUrlModule.cs" />
-    <Compile Remove="Components\Middlewares\OfficeModule.cs" />
-    <Compile Remove="Components\Middlewares\RouteModule.cs" />
-    <Compile Remove="Pages\Admins\DeptEdit.cshtml.cs" />
-    <Compile Remove="Pages\Admins\DeptNew.cshtml.cs" />
-    <Compile Remove="Pages\Admins\MenuEdit.cshtml.cs" />
-    <Compile Remove="Pages\Admins\MenuNew.cshtml.cs" />
-    <Compile Remove="Pages\Admins\Power.cshtml.cs" />
-    <Compile Remove="Pages\Admins\PowerEdit.cshtml.cs" />
-    <Compile Remove="Pages\Admins\PowerForm.cshtml.cs" />
-    <Compile Remove="Pages\Admins\PowerNew.cshtml.cs" />
-    <Compile Remove="Pages\Admins\RoleEdit.cshtml.cs" />
-    <Compile Remove="Pages\Admins\RoleNew.cshtml.cs" />
-    <Compile Remove="Pages\Admins\Title.cshtml.cs" />
-    <Compile Remove="Pages\Admins\TitleEdit.cshtml.cs" />
-    <Compile Remove="Pages\Admins\TitleNew.cshtml.cs" />
-    <Compile Remove="Pages\Admins\TitleUser.cshtml.cs" />
-    <Compile Remove="Pages\Admins\TitleUserNew.cshtml.cs" />
-    <Compile Remove="Pages\Admins\UserEdit.cshtml.cs" />
-    <Compile Remove="Pages\Admins\UserNew.cshtml.cs" />
-    <Compile Remove="Pages\Admins\UserSelectTitle.cshtml.cs" />
-    <Compile Remove="Pages\Admins\UserView.cshtml.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Remove="Pages\Admins\DeptEdit.cshtml" />
-    <Content Remove="Pages\Admins\DeptNew.cshtml" />
-    <Content Remove="Pages\Admins\MenuEdit.cshtml" />
-    <Content Remove="Pages\Admins\MenuNew.cshtml" />
-    <Content Remove="Pages\Admins\Power.cshtml" />
-    <Content Remove="Pages\Admins\PowerEdit.cshtml" />
-    <Content Remove="Pages\Admins\PowerForm.cshtml" />
-    <Content Remove="Pages\Admins\PowerNew.cshtml" />
-    <Content Remove="Pages\Admins\RoleEdit.cshtml" />
-    <Content Remove="Pages\Admins\RoleNew.cshtml" />
-    <Content Remove="Pages\Admins\Title.cshtml" />
-    <Content Remove="Pages\Admins\TitleEdit.cshtml" />
-    <Content Remove="Pages\Admins\TitleNew.cshtml" />
-    <Content Remove="Pages\Admins\TitleUser.cshtml" />
-    <Content Remove="Pages\Admins\TitleUserNew.cshtml" />
-    <Content Remove="Pages\Admins\UserEdit.cshtml" />
-    <Content Remove="Pages\Admins\UserNew.cshtml" />
-    <Content Remove="Pages\Admins\UserSelectTitle.cshtml" />
-    <Content Remove="Pages\Admins\UserView.cshtml" />
-    <Content Remove="wwwroot\js\js资源.txt" />
-    <Content Remove="wwwroot\res\FineUI资源.txt" />
-  </ItemGroup>
-  <ItemGroup>
+    <!-- macOS / Windows 垃圾文件，任何构建角色都不纳入 -->
     <None Remove=".DS_Store" />
     <None Remove="Components\.DS_Store" />
     <None Remove="Pages\.DS_Store" />
@@ -385,8 +337,5 @@
     <ProjectReference Include="..\App.Web\App.Web.csproj" />
     <ProjectReference Include="..\App.BLL\App.BLL\App.BLL.csproj" />
     <ProjectReference Include="..\App.EleUI\EleUI\App.EleUI.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-
   </ItemGroup>
 </Project>

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckObjectEdit)]
-    public class CheckPointFormModel : AdminModel
+    public class CheckPointFormModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public long ObjectId { get; set; }

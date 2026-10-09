@@ -9,7 +9,7 @@ using System;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryEdit)]
-    public class ApiFormModel : AdminModel
+    public class ApiFormModel : AuthModel
     {
         public GisApi Item { get; set; }
 

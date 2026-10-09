@@ -14,7 +14,7 @@ using App.HttpApi;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckObjectView)]
-    public class CheckObjectsModel : AdminModel
+    public class CheckObjectsModel : AuthModel
     {
         public CheckObject Item { get; set; } = new CheckObject();
         public List<long> DutyOrgIds { get; set; } = new List<long>();

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.CRM
 {
     [Auth(Power.RoleEdit)]
-    public class RoleContactMenuModel : AdminModel
+    public class RoleContactMenuModel : AuthModel
     {
         public long RoleId { get; set; }
 

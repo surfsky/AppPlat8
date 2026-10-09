@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.TaskView)]
-    public class TasksModel : AdminModel
+    public class TasksModel : AuthModel
     {
         public App.DAL.OA.AssignTask Item { get; set; }
 

@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.EventEdit)]
-    public class EventTypeFormModel : AdminModel
+    public class EventTypeFormModel : AuthModel
     {
         public EventType Item { get; set; }
 

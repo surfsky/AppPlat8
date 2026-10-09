@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Shared
 {
     [Auth(Power.CheckObjectEdit)]
-    public class AttFormModel : AdminModel
+    public class AttFormModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string UniId { get; set; }

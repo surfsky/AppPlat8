@@ -17,7 +17,7 @@ using NPOI.XSSF.UserModel;
 namespace App.Pages.OA
 {
     [Auth(Power.MeetingImport)]
-    public class MeetingImportModel : AdminModel
+    public class MeetingImportModel : AuthModel
     {
         private static readonly Dictionary<string, MeetingType> TypeMap = new(StringComparer.OrdinalIgnoreCase)
         {

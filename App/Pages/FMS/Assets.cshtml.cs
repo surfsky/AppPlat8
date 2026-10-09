@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.AssetView)]
-    public class AssetsModel : AdminModel
+    public class AssetsModel : AuthModel
     {
         public Asset Item { get; set; }
 

@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.OA
 {
     [Auth(Power.MeetingView)]
-    public class MeetingsModel : AdminModel
+    public class MeetingsModel : AuthModel
     {
         public Meeting Item { get; set; } = new Meeting();
 

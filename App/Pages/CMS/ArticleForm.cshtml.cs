@@ -19,7 +19,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.ArticleEdit)]
-    public class ArticleFormModel : AdminModel
+    public class ArticleFormModel : AuthModel
     {
         public Article Item { get; set; }
         public List<ArticleMenu> Categories { get; set; }

@@ -11,7 +11,7 @@ using BootstrapBlazor.Components;
 namespace App.Pages.Shared
 {
     [Auth(Power.CheckObjectView)]
-    public class AttsMoveToModel : AdminModel
+    public class AttsMoveToModel : AuthModel
     {
         public long[] SelectedIds { get; set; } = Array.Empty<long>();
         public string UniId { get; set; } = "";

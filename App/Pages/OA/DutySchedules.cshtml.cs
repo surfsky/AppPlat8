@@ -13,7 +13,7 @@ using System.Collections.Generic;
 namespace App.Pages.OA
 {
     [Auth(Power.DutyScheduleView)]
-    public class DutySchedulesModel : AdminModel
+    public class DutySchedulesModel : AuthModel
     {
         public DutySchedule Item { get; set; } = new DutySchedule();
 

@@ -1,7 +1,7 @@
 namespace App.Pages.KB
 {
     //[Auth(Power.KbMenuView)]
-    public class IndexModel : AdminModel
+    public class IndexModel : AuthModel
     {
         public void OnGet() { }
     }

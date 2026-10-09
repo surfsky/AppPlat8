@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.StaticFiles;
 namespace App.Pages.Shared.FileViews
 {
     [Auth(AuthLogin = true)]
-    public class FileViewerModel : AdminModel
+    public class FileViewerModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string UniId { get; set; }

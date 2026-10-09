@@ -50,6 +50,12 @@ namespace App.DAL
         [UI("数据", "可上传文件类型")]       public string UpFileTypes           { get; set; } = ".gif, .png, .jpg, .jpeg, .bmp, .mp3, .mp4, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .pdf, .cdr";
         [UI("数据", "可上传文件大小（M）")]   public long?  UpFileSize            { get; set; } = 50;
 
+        //
+        // VisitDensity
+        [UI("防火墙", "每秒访问次数上限")]      public int? VisitFreqency {get; set;} = 20;
+        [UI("防火墙", "非法访问禁止访问分钟数")] public int? BanMinutes {get; set;} = 10;
+
+
         // 安全：AI 调试登录 /LoginAI 的签名密钥（仅在 Development/显式开启时生效，绝对不要提交到公开 Git）
         [UI("安全", "AI 调试公钥（参与签名原文，可公开）")]
         public string PublicKey
@@ -71,6 +77,8 @@ namespace App.DAL
             get => _enableLoginAI ?? true;
             set => _enableLoginAI = value;
         }
+
+        // BanMinutes
 
         /// <summary>检查文件扩展名是否在可上传文件类型中</summary>
         public static bool IsSupportFile(string ext)

@@ -18,7 +18,7 @@ using NuGet.Common;
 namespace App.Pages.OA
 {
     //[Auth(Power.EventView)]
-    public class EventsModel : AdminModel
+    public class EventsModel : AuthModel
     {
         public Event Item { get; set; }
         public List<SelectListItem> EventTypes { get; set; }

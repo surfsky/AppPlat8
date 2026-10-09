@@ -18,7 +18,7 @@ namespace App.Pages.Shared
     [Auth(AuthLogin =true)]
     [RequestSizeLimit(2147483648)]        // 2GB
     [RequestFormLimits(MultipartBodyLengthLimit = 2147483648, ValueCountLimit = 4096)]
-    public class AttsModel : AdminModel
+    public class AttsModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string UniId { get; set; }  // 关联对象ID，格式为：对象类型-对象ID

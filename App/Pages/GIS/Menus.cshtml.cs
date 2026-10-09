@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryView)]
-    public class MenusModel : AdminModel
+    public class MenusModel : AuthModel
     {
         public GisMenu Item { get; set; }
 

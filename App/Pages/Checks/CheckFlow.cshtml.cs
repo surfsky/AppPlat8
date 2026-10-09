@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckNew)]
-    public class CheckFlowModel : AdminModel
+    public class CheckFlowModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public long? ObjectId { get; set; }

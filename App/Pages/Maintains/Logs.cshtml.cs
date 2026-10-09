@@ -15,7 +15,7 @@ using App.Entities;
 
 namespace App.Pages.Maintains
 {
-    public class LogsModel : AdminModel
+    public class LogsModel : AuthModel
     {
         public Log Item {get; set; }
 

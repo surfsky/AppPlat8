@@ -8,7 +8,7 @@ namespace App.Pages.OA
 {
     /// <summary>联系人表单页</summary>
     [Auth(Power.ContactView)]
-    public class ContactFormModel : AdminModel
+    public class ContactFormModel : AuthModel
     {
         public Contact Item { get; set; }
 

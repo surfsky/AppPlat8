@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckObjectEdit)]
-    public class CheckObjectFormModel : AdminModel
+    public class CheckObjectFormModel : AuthModel
     {
         public CheckObject Item { get; set; }
 

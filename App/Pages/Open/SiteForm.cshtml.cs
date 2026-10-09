@@ -9,7 +9,7 @@ namespace App.Pages.Open
     /// <summary>参考网站编辑</summary>
     [Auth(Power.SiteView)]
     [IgnoreAntiforgeryToken]
-    public class SiteFormModel : AdminModel
+    public class SiteFormModel : AuthModel
     {
         [BindProperty]
         public Site Item { get; set; }

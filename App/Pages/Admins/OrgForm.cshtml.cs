@@ -14,7 +14,7 @@ using App.EleUI;
 namespace App.Pages.Admins
 {
     [Auth(Power.OrgView)]
-    public class OrgFormModel : AdminModel
+    public class OrgFormModel : AuthModel
     {
         public App.DAL.Org Item { get; set; }
 

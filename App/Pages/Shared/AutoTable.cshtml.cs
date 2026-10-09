@@ -11,7 +11,7 @@ namespace App.Pages.Shared
 {
     /// <summary>Excel 智能表格</summary>
     [Auth(Power.CheckObjectEdit)]
-    public class AutoTableModel : AdminModel
+    public class AutoTableModel : AuthModel
     {
         private readonly AutoExcelStore _store = new();
 

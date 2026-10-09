@@ -10,7 +10,7 @@ using App.EleUI;
 
 namespace App.Pages.OA
 {
-    public class DutyScheduleFormModel : AdminModel
+    public class DutyScheduleFormModel : AuthModel
     {
         public DutySchedule Item { get; set; } = new DutySchedule();
 

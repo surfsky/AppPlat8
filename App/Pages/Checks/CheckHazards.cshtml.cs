@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckHazardView)]
-    public class CheckHazardsModel : AdminModel
+    public class CheckHazardsModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public long? ObjectId { get; set; }

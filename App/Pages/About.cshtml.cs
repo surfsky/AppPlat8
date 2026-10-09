@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages
 {
-    public class AboutModel : AdminModel
+    public class AboutModel : AuthModel
     {
         [BindProperty] public string SiteTitle { get; set; }
         [BindProperty] public string ProductVersion { get; set; }

@@ -15,7 +15,7 @@ namespace App.Pages.GIS
     }
 
     [Auth(Power.GisGeometryView)]
-    public class ApiManagerModel : AdminModel
+    public class ApiManagerModel : AuthModel
     {
         public List<ApiNavNode> NavMenus { get; set; } = new();
         public string DefaultApisUrl { get; set; } = "/GIS/Apis";

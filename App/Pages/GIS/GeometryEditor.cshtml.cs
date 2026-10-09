@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Shared
 {
     [Auth(Power.GisGeometryView)]
-    public class GeometryEditorModel : AdminModel
+    public class GeometryEditorModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string GeoJson { get; set; }

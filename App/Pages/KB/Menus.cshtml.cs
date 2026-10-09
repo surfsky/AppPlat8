@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.KB
 {
     [Auth(Power.KbMenuView)]
-    public class MenusModel : AdminModel
+    public class MenusModel : AuthModel
     {
         public KbMenu Item { get; set; }
 

@@ -14,7 +14,7 @@ namespace App
     /// 带授权校验的后台页面模型基类（默认需要登录验证）
     /// </summary>
     [Authorize]
-    public class AdminModel : BaseModel
+    public class AuthModel : BaseModel
     {
         //public string DataJson { get; set; } = "{}";
 

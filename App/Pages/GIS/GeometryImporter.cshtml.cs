@@ -20,7 +20,7 @@ using NPOI.XSSF.UserModel;
 namespace App.Pages.GIS
 {
     [Auth(Power.GisGeometryEdit)]
-    public class GeometryImporterModel : AdminModel
+    public class GeometryImporterModel : AuthModel
     {
         public string TypeTitle { get; set; } = "GIS简单点位";
         public List<string> ColumnHeaders { get; set; } = new List<string> { "名称(Name)", "别称(Alias)", "菜单ID(MenuId)", "地址(Addr)", "经纬度(Gps)", "备注(Remark)", "是否可见(IsVisible)" };

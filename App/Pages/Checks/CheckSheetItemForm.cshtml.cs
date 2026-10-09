@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckSheetEdit)]
-    public class CheckSheetItemFormModel : AdminModel
+    public class CheckSheetItemFormModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public long SheetId { get; set; }

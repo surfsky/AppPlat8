@@ -17,7 +17,7 @@ namespace App.Pages.KB
     //[Auth(Power.KbMenuView)]
     [RequestSizeLimit(2147483648)]        // 2GB
     [RequestFormLimits(MultipartBodyLengthLimit = 2147483648, ValueCountLimit = 4096)]
-    public class ManagerModel : AdminModel
+    public class ManagerModel : AuthModel
     {
         public List<KbMenu> MenuTree { get; set; }
 

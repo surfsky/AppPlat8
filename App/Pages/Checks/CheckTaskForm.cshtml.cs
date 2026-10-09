@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckTaskEdit)]
-    public class CheckTaskFormModel : AdminModel
+    public class CheckTaskFormModel : AuthModel
     {
         public CheckTask Item { get; set; }
         public List<App.DAL.Org> OrgTree { get; set; }

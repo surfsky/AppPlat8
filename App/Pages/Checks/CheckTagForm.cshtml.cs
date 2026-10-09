@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Checks
 {
-    public class CheckTagFormModel : AdminModel
+    public class CheckTagFormModel : AuthModel
     {
         public CheckTag Item { get; set; }
 

@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.OA
 {
     [Auth(Power.ArticleView)]
-    public class ArticlesModel : AdminModel
+    public class ArticlesModel : AuthModel
     {
         public Article Item { get; set; }
         public List<ArticleMenu> Categories { get; set; }

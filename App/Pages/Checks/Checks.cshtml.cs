@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.Checks
 {
     [Auth(Power.CheckView)]
-    public class ChecksModel : AdminModel
+    public class ChecksModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public long? ObjectId { get; set; }

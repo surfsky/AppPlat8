@@ -11,7 +11,7 @@ using App.Entities;
 namespace App.Pages.Admins
 {
     [Auth(Power.UserView)]
-    public class UserFormModel : AdminModel
+    public class UserFormModel : AuthModel
     {
         public List<SelectListItem> RoleList { get; set; }  // 角色列表
         public App.DAL.User Item { get; set; }  // 用户实体，这样传递所有数据是很危险的，算了先这样吧
