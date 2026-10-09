@@ -210,3 +210,76 @@
                 <EleSelect For="Item.IndustryRisk"     Width="250px" Label="行业风险类型"     Value="@QStr("industryRisk")"></EleSelect>
                 <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QStr("tagIds")"></EleTreePicker>
                 <EleSelect For="Item.IsDel"            Width="250px" Label="已删除"           Value="@QStr("isDel", "false")"></EleSelect>
+
+
+
+    <!-- 菜单 & 页面入口（README 里的功能页面表） -->
+    <section class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-6 md:p-8 space-y-5">
+        <header class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i class="fas fa-tree"></i>
+                </div>
+                <h2 class="text-lg md:text-xl font-semibold text-slate-800">主要页面入口</h2>
+            </div>
+            <span class="text-xs text-slate-500">实际权限以当前登录账号为准</span>
+        </header>
+
+        <div class="grid md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+            <nav class="space-y-1.5">
+                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">隐患排查 Checks</h3>
+                <a asp-page="/Checks/CheckObjects" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>对象</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckObjects</span></a>
+                <a asp-page="/Checks/Checks" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>排查</span><span class="text-xs text-slate-400 font-mono">/Checks/Checks</span></a>
+                <a asp-page="/Checks/CheckSheets" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>检查表</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckSheets</span></a>
+                <a asp-page="/Checks/CheckHazards" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>隐患</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckHazards</span></a>
+                <a asp-page="/Checks/CheckTasks" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>任务</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckTasks</span></a>
+                <a asp-page="/Checks/CheckReports" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>报表</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckReports</span></a>
+            </nav>
+
+            <nav class="space-y-1.5">
+                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">办公 OA</h3>
+                <a asp-page="/OA/Assets" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>资产</span><span class="text-xs text-slate-400 font-mono">/OA/Assets</span></a>
+                <a asp-page="/OA/Budgets" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>预算</span><span class="text-xs text-slate-400 font-mono">/OA/Budgets</span></a>
+                <a asp-page="/OA/Announces" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>公告</span><span class="text-xs text-slate-400 font-mono">/OA/Announces</span></a>
+                <a asp-page="/OA/Projects" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>项目</span><span class="text-xs text-slate-400 font-mono">/OA/Projects</span></a>
+                <a asp-page="/Tasks/Tasks" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>交办任务</span><span class="text-xs text-slate-400 font-mono">/Tasks/Tasks</span></a>
+                <a asp-page="/Tasks/Events" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>事件</span><span class="text-xs text-slate-400 font-mono">/Tasks/Events</span></a>
+            </nav>
+
+            <nav class="space-y-1.5">
+                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">知识库 CMS</h3>
+                <a asp-page="/CMS/Articles" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>文档</span><span class="text-xs text-slate-400 font-mono">/CMS/Articles</span></a>
+                <a asp-page="/CMS/ArticleDirs" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>文档目录</span><span class="text-xs text-slate-400 font-mono">/CMS/ArticleDirs</span></a>
+                <a asp-page="/KB/Manager" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>知识库</span><span class="text-xs text-slate-400 font-mono">/KB/Manager</span></a>
+                <a asp-page="/CRM/Contacts" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>联系人</span><span class="text-xs text-slate-400 font-mono">/CRM/Contacts</span></a>
+                <a asp-page="/CRM/ContactMenus" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>联系人目录</span><span class="text-xs text-slate-400 font-mono">/CRM/ContactMenus</span></a>
+            </nav>
+
+            <nav class="space-y-1.5">
+                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">驾驶舱 GIS</h3>
+                <a asp-page="/GIS/Index" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>驾驶舱</span><span class="text-xs text-slate-400 font-mono">/GIS/Index</span></a>
+                <a asp-page="/GIS/Menus" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>GIS 菜单</span><span class="text-xs text-slate-400 font-mono">/GIS/Menus</span></a>
+                <a asp-page="/GIS/Geometries" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>点位</span><span class="text-xs text-slate-400 font-mono">/GIS/Geometries</span></a>
+                <a asp-page="/GIS/Panels" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>面板</span><span class="text-xs text-slate-400 font-mono">/GIS/Panels</span></a>
+                <a asp-page="/GIS/Scenes" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>场景</span><span class="text-xs text-slate-400 font-mono">/GIS/Scenes</span></a>
+            </nav>
+
+            <nav class="space-y-1.5">
+                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">账号 Admins</h3>
+                <a asp-page="/Admins/Orgs" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>组织</span><span class="text-xs text-slate-400 font-mono">/Admins/Orgs</span></a>
+                <a asp-page="/Admins/Users" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>用户</span><span class="text-xs text-slate-400 font-mono">/Admins/Users</span></a>
+                <a asp-page="/Admins/Roles" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>角色</span><span class="text-xs text-slate-400 font-mono">/Admins/Roles</span></a>
+                <a asp-page="/Me/Profile" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>个人资料</span><span class="text-xs text-slate-400 font-mono">/Me/Profile</span></a>
+                <a asp-page="/Me/Dashboard" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>工作台 Dashboard</span><span class="text-xs text-slate-400 font-mono">/Me/Dashboard</span></a>
+            </nav>
+
+            <nav class="space-y-1.5">
+                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">运维 Maintains / 开发 Dev</h3>
+                <a asp-page="/Maintains/Menus" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>菜单管理</span><span class="text-xs text-slate-400 font-mono">/Maintains/Menus</span></a>
+                <a asp-page="/Maintains/Logs" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>系统日志</span><span class="text-xs text-slate-400 font-mono">/Maintains/Logs</span></a>
+                <a asp-page="/Maintains/SiteConfigForm" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>站点配置</span><span class="text-xs text-slate-400 font-mono">/Maintains/SiteConfigForm</span></a>
+                <a asp-page="/Dev/Icons" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>图标库</span><span class="text-xs text-slate-400 font-mono">/Dev/Icons</span></a>
+                <a asp-page="/Dev/API" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>HTTP API</span><span class="text-xs text-slate-400 font-mono">/Dev/API</span></a>
+            </nav>
+        </div>
+    </section>

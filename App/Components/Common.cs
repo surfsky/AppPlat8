@@ -18,7 +18,7 @@ namespace App.Components
         /// <summary>获取产品版本</summary>
         public static string GetVersion()
         {
-            Version v = Assembly.GetExecutingAssembly().GetName().Version;
+            Version v = typeof(Common).Assembly.GetName().Version;
             return String.Format("{0}.{1}.{2}", v.Major, v.Minor, v.Build);
         }
 

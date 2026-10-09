@@ -5,11 +5,11 @@
 }
 
 @section body {
-    <div id="app" class="p-5">
+    <div id="app" class="p-5 bg-white">
         <div class="mb-4 flex items-center">
             <el-input v-model="search" placeholder="搜索图标" clearable style="width: 300px;"></el-input>
             <span class="ml-4 text-gray-500 text-sm">点击图标复制代码（ElementPlusIcons）</span>
-            <span class="ml-auto text-gray-400 text-xs">共 {{ filteredIcons.length }} 个图标</span>
+            <span class="ml-auto text-gray-400 text-xs">共 {{ filteredIcons.length }} 个图标。<a href="https://element-plus.org/zh-CN/component/icon" target="_blank" class="text-orange-500">参考</a></span>
         </div>
 
         <div class="flex-1 overflow-auto" style="max-height:calc(100vh - 100px);">

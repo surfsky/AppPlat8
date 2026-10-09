@@ -34,6 +34,10 @@ namespace App.DAL
         [UI("UI", "网站图标")]             public string Icon { get; set; }
         [UI("UI", "登陆页背景图片")]        public string LoginBg { get; set; }
 
+        // 系统状态
+        /// <summary>最近一次系统启动时间（Startup.cs 写入，用于 About 页面计算已运行时长）</summary>
+        [UI("系统", "最近启动时间")]        public DateTime? StartupDt { get; set; }
+
         // 地图
         [UI("地图", "Mapbox Key)")]        public string MapboxKey { get; set; }    // 用于地图底图
         [UI("地图", "天地图 Key")]          public string TiandituKey { get; set; }  // 用于地图底图

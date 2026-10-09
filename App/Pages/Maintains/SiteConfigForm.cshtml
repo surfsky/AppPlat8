@@ -34,6 +34,9 @@
         <EleInput For="Item.PublicKey" Label="公钥" FillRow="true" Placeholder="请输入公钥"></EleInput>
         <EleCheckbox For="Item.EnableLoginAI" Label="是否启用 /LoginAI（默认仅 Development 环境启用，设为 false 可强制关闭）"></EleCheckbox>
 
+        <EleLabel Label="运行" FillRow="true"></EleLabel>
+        <EleInput For="Item.StartupDt" Label="启动时间"  Readonly="true"></EleInput>
+
         <Bottom>
             <EleButton Type="Primary" Command="Save">保存</EleButton>
         </Bottom>

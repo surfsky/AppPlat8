@@ -236,7 +236,7 @@ namespace App
         /// <summary>
         /// Http pipeline configuration
         /// </summary>
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime)
         {
             // 异常处理
             app.UseExceptionCatch(ex => Logger.Error("Exception: {0}\r\n{1}", ex.Message, ex.StackTrace));  // 全局异常捕获中间件
@@ -312,8 +312,45 @@ namespace App
                 endpoints.MapBlazorHub();                   // 启用 Blazor 应用的 SignalR 通信路由（Blazor Server 核心）
                 endpoints.MapControllers();                 // 启用 MVC 控制器的路由支持（见 /Controllers 目录）
             });
+
+            // 应用启动完成后：写 SiteConfig.StartupDt（启动时间）入库，About 页面据此计算已运行时长
+            // 注意：放在 ApplicationStarted 里确保 DB 上下文、配置、迁移都已经初始化完毕，不会触发初始化期的锁/循环。
+            lifetime.ApplicationStarted.Register(() => UpdateStartupDt(app.ApplicationServices));
         }
 
+        /// <summary>启动完成后向 SiteConfigs 写入最近启动时间，并同步缓存到全局 APP_START_TIME</summary>
+        private static void UpdateStartupDt(IServiceProvider services)
+        {
+            try
+            {
+                var now = DateTime.Now;
+                // 先同步缓存，哪怕 DB 失败也保证 About 页能看到"非空"启动时间（不会出现 -）
+                try { AppDomain.CurrentDomain.SetData("APP_START_TIME", now); } catch { /* ignore */ }
+
+                using var scope = services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppPlatContext>();
+                if (db == null) return;
+
+                // SiteConfig.Instance 会自动 seed 单例（EntityBase 的 Instance 懒加载模式），
+                // 这里直接查 / attach 都可以，为避免多线程竞争首启，用 FirstOrDefault 没有就 Add。
+                var site = db.Set<SiteConfig>().OrderBy(x => x.Id).FirstOrDefault();
+                if (site == null)
+                {
+                    site = SiteConfig.Instance;
+                    try { db.Attach(site); } catch { /* 可能已被 Instance 加载到本地追踪器 */ }
+                }
+                site.StartupDt = now;
+                _ = db.SaveChanges();
+                Logger.Info("[Startup] SiteConfig.StartupDt updated: {0}", now.ToString("yyyy-MM-dd HH:mm:ss"));
+            }
+            catch (Exception ex)
+            {
+                // 启动期写库失败：不要 throw 阻止站点启动，仅记录日志兜底，About 页面会用 APP_START_TIME 继续工作
+                Logger.Warn("[Startup] Update SiteConfig.StartupDt failed, fallback to APP_START_TIME. Reason: {0}", ex.Message);
+            }
+        }
+
+        /// <summary>获取文件扩展名对应的 Content-Type</summary>
         private static FileExtensionContentTypeProvider GetFileProvider()
         {
             var provider = new FileExtensionContentTypeProvider();
