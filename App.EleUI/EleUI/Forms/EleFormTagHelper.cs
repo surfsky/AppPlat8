@@ -11,12 +11,12 @@ namespace App.EleUI
     /// <summary>
     /// 表单标签对齐位置，对应 el-form 的 label-position。
     /// </summary>
-    public enum EleFormLabelPosition
+    public enum EleLabelPosition
     {
         Left,
         Right,
         Top,
-    }    
+    }
 
     [HtmlTargetElement("EleForm")]
     public class EleFormTagHelper : TagHelper
@@ -24,7 +24,7 @@ namespace App.EleUI
         [HtmlAttributeNotBound, ViewContext]  public ViewContext ViewContext { get; set; }
         [HtmlAttributeName("Model")]          public string Model { get; set; } = "form";
         [HtmlAttributeName("LabelWidth")]     public string LabelWidth { get; set; } = "120px";
-        [HtmlAttributeName("LabelPosition")]  public EleFormLabelPosition LabelPosition { get; set; } = EleFormLabelPosition.Right;
+        [HtmlAttributeName("LabelPosition")]  public EleLabelPosition LabelPosition { get; set; } = EleLabelPosition.Left;
         [HtmlAttributeName("DataHandler")]    public string DataHandler { get; set; } = "?handler=Data";
         [HtmlAttributeName("SaveHandler")]    public string SaveHandler { get; set; } = "?handler=Save";
         [HtmlAttributeName("BuildMode")]      public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;

@@ -7,7 +7,7 @@
 }
 
 @section body {
-    <EleForm Model="form" LabelWidth="120px">
+    <EleForm Model="form" LabelWidth="120px" LabelPosition="Top" >
         <EleInput For="Item.Name" Label="任务名称" Required="true" FillRow="true"></EleInput>
         <EleDatePicker For="Item.StartDt" Label="开始时间" Type="Date"></EleDatePicker>
         <EleDatePicker For="Item.ExpireDt" Label="截止时间" Type="Date"></EleDatePicker>
@@ -16,7 +16,6 @@
         <EleInput For="Item.FinishCount" Label="已完成数量" ></EleInput>
         <EleNumber For="Item.Progress" Label="进度" Enabled="true" Precision="2" Suffix="%"></EleNumber>
         <EleInput For="Item.IsActive" Label="是否活动中" Enabled="false"></EleInput>
-
         <EleInput For="Item.Remark" Label="备注" Rows="3" FillRow="true"></EleInput>
         <EleInput Label="承接组织" FillRow="true" Enabled="false"></EleInput>
         <EleList Label="检查对象"

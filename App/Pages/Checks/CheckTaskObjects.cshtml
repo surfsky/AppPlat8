@@ -34,7 +34,7 @@
                 所以把 EleForm 的 BuildMode 设置为 None（不生成脚本），所有模型值的初始化/交互都交给外层 app 的 setup 完成。 -->
         <div class="shrink-0 px-3 pt-3 pb-2 border-b border-gray-200 bg-gray-50/60 max-w-full">
             <div class="rounded-lg border border-gray-300 bg-white p-4">
-                <EleForm LabelPosition="Left" BuildMode="None" Model="form" LabelWidth="80px" Class="filter-form-uniform">
+                <EleForm BuildMode="None" Model="form" LabelWidth="80px" Class="filter-form-uniform">
                     <EleInput For="Item.Name" Label="名称" VModel="form.name" Placeholder="名称" Clearable="true" Class="filter-control"></EleInput>
                     <EleTreePicker For="DutyOrgIds"
                                    Label="所属网格"
@@ -69,8 +69,8 @@
                          按项目规范改回原生 el-button，暂不经 EleButton TagHelper，避免生成 click 表达式时的任何
                          compiler-57 歧异；保持 Tailwind 布局，左空右齐，与过滤卡片浑然一体。 -->
                     <div class="w-full col-span-1 md:col-span-2 lg:col-span-4 flex items-center gap-2 mt-1">
-                        <el-button @@click="resetCandidates()" :icon="Refresh">重置</el-button>
-                        <el-button type="primary" @@click="searchCandidates()" :icon="Search">查询</el-button>
+                        <el-button type="primary" @@click="searchCandidates()" icon="Search">查询</el-button>
+                        <el-button @@click="resetCandidates()" icon="Refresh">重置</el-button>
                         <div class="flex-1"></div>
                     </div>
                 </EleForm>
@@ -131,14 +131,18 @@
             </div>
 
             <!-- 中：选择 》 / 《 移除 -->
-            <div class="md:w-[4.5 shrink-0 flex shrink-0 flex md:flex-col flex-row items-center justify-center gap-2 md:my-auto">
-                <el-button size="small" plain @@click="addSelectedCandidates">选择 &gt;</el-button>
-                <el-button size="small" plain @@click="removeSelectedFromRight">&lt; 移除</el-button>
+            <div class="md:w-28 shrink-0 self-stretch flex flex-row md:flex-col items-center justify-center gap-3">
+                <div class="w-full">
+                    <el-button size="small" plain icon="ArrowRight" style="display:block; width:100%; box-sizing:border-box; justify-content:center;" @@click="addSelectedCandidates">选择</el-button>
+                </div>
+                <div class="w-full">
+                    <el-button size="small" plain icon="ArrowLeft"  style="display:block; width:100%; box-sizing:border-box; justify-content:center;" @@click="removeSelectedFromRight">移除</el-button>
+                </div>
             </div>
 
             <!-- 右：当前选择（紫色边框） -->
             <div class="w-full md:flex-1 min-h-0 min-w-0 flex flex-col border-2 rounded-lg bg-white shrink-0 border-gray-200">
-                <div class="px-4 py-2.5 text-sm font-bold text-gray-800 border-b border-gray-200 shrink-0" style="background-color: rgba(139,92,246,0.08);">
+                <div class="px-4 py-2.5 text-sm font-bold text-gray-800 border-b border-gray-200 shrink-0" >
                     当前选择
                     <span class="text-gray-400 text-xs font-normal ml-2">共 {{ selRows.length }} 条</span>
                 </div>
@@ -151,6 +155,7 @@
                         border
                         stripe
                         @@selection-change="onSelSelectionChange"
+                        @@row-click="onSelRowClick"
                         empty-text="选中的对象清单将显示在这里。"
                         row-key="objectId">
                         <el-table-column type="selection" width="42" align="center"></el-table-column>
@@ -171,9 +176,9 @@
                     </el-table>
                 </div>
                 <div class="shrink-0 px-3 py-2 border-t border-gray-200 bg-white flex items-center justify-end gap-2">
-                    <el-button size="small" type="danger" plain @@click="removeSelectedRows">删除</el-button>
-                    <el-button size="small" @@click="moveRowUp">上移</el-button>
-                    <el-button size="small" @@click="moveRowDown">下移</el-button>
+                    <el-button size="small" type="danger" plain @@click="removeSelectedRows" v-if="false">删除</el-button>
+                    <el-button size="small" icon="ArrowUp"   @@click="moveRowUp">上移</el-button>
+                    <el-button size="small" icon="ArrowDown" @@click="moveRowDown">下移</el-button>
                 </div>
             </div>
         </div>
@@ -402,7 +407,10 @@
                             const resp = await get(`${pathname}?handler=SelectedData&taskId=${TASK_ID}&PageIndex=0&PageSize=2000&SortField=SortId&SortDirection=ASC`);
                             if (resp && resp.code === 0) {
                                 const list = Array.isArray(resp.data) ? resp.data : [];
-                                selRows.value = list.sort((a, b) => (a.sortId || 0) - (b.sortId || 0));
+                                // 后端回显后按 objectId 去重（防御数据库脏数据导致的重复显示）
+                                const sorted = list.sort((a, b) => (a.sortId || 0) - (b.sortId || 0));
+                                const dedup = dedupSelRowsByObjectId(sorted, { setValue: false });
+                                selRows.value = dedup.rows;
                             } else selRows.value = [];
                         } catch (e) {
                             selRows.value = [];
@@ -426,7 +434,7 @@
                     function onCandSelectionChange(rs) { selectedCands.value = rs || []; }
                     function onSelSelectionChange(rs)  { selectedSels.value  = rs || []; }
 
-                    // ====== 5) 点击左表行切换勾选 ======
+                    // ====== 5) 点击左表 / 右表行切换勾选 ======
                     function onCandRowClick(row, column, event) {
                         const t = event?.target;
                         if (t && typeof t.className === 'string' && /(^|\s)el-checkbox(\s|_|$)/i.test(t.className)) return;
@@ -434,25 +442,60 @@
                         const selected = (selectedCands.value || []).some(x => x && row && x.id === row.id);
                         try { candTableRef.value.toggleRowSelection(row, !selected); } catch (_) {}
                     }
+                    function onSelRowClick(row, column, event) {
+                        const t = event?.target;
+                        if (t && typeof t.className === 'string' && /(^|\s)el-checkbox(\s|_|$)/i.test(t.className)) return;
+                        if (!selTableRef.value || typeof selTableRef.value.toggleRowSelection !== 'function') return;
+                        // 右表按 objectId 一致性判断当前是否已勾选
+                        const key = row?.objectId;
+                        const selected = key != null && (selectedSels.value || []).some(x => x && x.objectId === key);
+                        try { selTableRef.value.toggleRowSelection(row, !selected); } catch (_) {}
+                    }
 
                     // ====== 6) 双列表增删移 ======
+                    // 工具：按 objectId 对右表 selRows 做全局去重（保留首次出现的行），并返回最终的 id 集合
+                    function dedupSelRowsByObjectId(rows, { setValue = true, report = false } = {}) {
+                        if (!Array.isArray(rows)) rows = [];
+                        const seen = new Set();
+                        const out = [];
+                        const dups = [];
+                        for (let i = 0; i < rows.length; i++) {
+                            const r = rows[i];
+                            if (!r) continue;
+                            const key = (r.objectId != null && r.objectId !== 0) ? r.objectId : (r._idx || i);
+                            if (seen.has(key)) { dups.push(r); continue; }
+                            seen.add(key);
+                            out.push(r);
+                        }
+                        if (setValue) {
+                            if (out.length !== rows.length) selRows.value = out;
+                        }
+                        return { rows: out, objectIds: seen, removed: dups.length };
+                    }
                     function addSelectedCandidates() {
                         const toAdd = (selectedCands.value || []).filter(Boolean);
                         if (!toAdd.length) { ElementPlus.ElMessage.warning('请先在左侧「查询结果」中勾选对象'); return; }
-                        const existingIds = new Set(selRows.value.map(r => r.objectId).filter(Boolean));
+                        // 1) 先对右表现有数据做一次去重兜底（防御脏数据）
+                        const deduped = dedupSelRowsByObjectId(selRows.value, { setValue: true });
+                        const existingIds = deduped.objectIds;
+                        // 2) 对要加入的数据按 objectId 去重
                         const added = [];
+                        const addedKeys = new Set();
                         toAdd.forEach(c => {
-                            if (!c?.id || existingIds.has(c.id)) return;
+                            if (!c?.id) return;
+                            if (existingIds.has(c.id) || addedKeys.has(c.id)) return;
                             added.push({
                                 id: 0, taskId: TASK_ID, objectId: c.id,
                                 sortId: (selRows.value.length + added.length + 1) * 10,
                                 isFinished: false,
                                 objectName: c.name || '', dutyOrgName: c.dutyOrgName || '', checkerName: c.checkerName || '',
+                                tagNames: (c.tagNames && c.tagNames.length) ? c.tagNames.join('、') : '',
                                 statusName: '未完成'
                             });
+                            addedKeys.add(c.id);
                             existingIds.add(c.id);
                         });
-                        if (!added.length) { ElementPlus.ElMessage.info('勾选对象已在右侧「当前选择」中'); return; }
+                        if (!added.length) { ElementPlus.ElMessage.info('勾选对象已在右侧「当前选择」中（或同批次勾选重复）'); return; }
                         selRows.value = [...selRows.value, ...added];
                         normalizeSortId();
                         ElementPlus.ElMessage.success(`已加入 ${added.length} 条到当前选择`);
@@ -529,7 +572,11 @@
                     function onClose() {
                         try {
                             if (typeof Utils !== 'undefined' && typeof Utils.applyClientCommands === 'function') {
-                                Utils.applyClientCommands([{ command: 'CloseDrawer', args: null }]);
+                                // 关闭抽屉 + 显式触发一次父级数据刷新（双保险：即便 Drawer onClosed 广播失败，也能保证父级 EleList 刷新）
+                                Utils.applyClientCommands([
+                                    { command: 'RefreshData', args: { scope: 'Parent' } },
+                                    { command: 'CloseDrawer', args: null }
+                                ]);
                                 return;
                             }
                         } catch (_) {}
@@ -759,7 +806,7 @@
                         selRows, selectedSels,
                         searchCandidates, resetCandidates,
                         onCandPageChange, onCandSelectionChange, onSelSelectionChange,
-                        onCandRowClick,
+                        onCandRowClick, onSelRowClick,
                         addSelectedCandidates, removeSelectedFromRight, removeSelectedRows,
                         moveRowUp, moveRowDown,
                         onSaveSelection, onClose,

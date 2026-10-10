@@ -24,56 +24,23 @@ namespace App.EleUI
     [RestrictChildren("ItemTemplate", "Footer")]
     public class EleList : EleControl
     {
-        [HtmlAttributeName("Label")]
-        public string Label { get; set; }
-
-        [HtmlAttributeName("LabelWidth")]
-        public string LabelWidth { get; set; } = "100px";
-
-        [HtmlAttributeName("ColSpan")]
-        public int? ColSpan { get; set; }
-
-        [HtmlAttributeName("FillRow")]
-        public bool FillRow { get; set; }
-
-        [HtmlAttributeName("ShowHeader")]
-        public bool? ShowHeader { get; set; }
-
-        [HtmlAttributeName("Title")]
-        public string Title { get; set; } = "";
-
-        [HtmlAttributeName("DataHandler")]
-        public string DataHandler { get; set; } = "?handler=Data";
-
-        [HtmlAttributeName("SortField")]
-        public string SortField { get; set; } = "Id";
-
-        [HtmlAttributeName("SortDirection")]
-        public string SortDirection { get; set; } = "DESC";
-
-        [HtmlAttributeName("PageSize")]
-        public int? PageSize { get; set; }
-
-        [HtmlAttributeName("ItemClass")]
-        public string ItemClass { get; set; } = "p-4 border border-gray-100 rounded-lg bg-white shadow-sm";
-
-        [HtmlAttributeName("ScrollClass")]
-        public string ScrollClass { get; set; } = "flex-1 overflow-auto px-2";
-
-        [HtmlAttributeName("ItemsClass")]
-        public string ItemsClass { get; set; } = "space-y-3 pb-3";
-
-        [HtmlAttributeName("EmptyText")]
-        public string EmptyText { get; set; } = null;
-
-        [HtmlAttributeName("LoadText")]
-        public string LoadText { get; set; } = null;
-
-        [HtmlAttributeName("LastText")]
-        public string LastText { get; set; } = null;
-
-        [HtmlAttributeName("MinHeight")]
-        public string MinHeight { get; set; } = "40px";
+        [HtmlAttributeName("Label")]           public string Label { get; set; }
+        [HtmlAttributeName("LabelWidth")]      public string LabelWidth { get; set; } = "100px";
+        [HtmlAttributeName("ColSpan")]         public int? ColSpan { get; set; }
+        [HtmlAttributeName("FillRow")]         public bool FillRow { get; set; }
+        [HtmlAttributeName("ShowHeader")]      public bool? ShowHeader { get; set; }
+        [HtmlAttributeName("Title")]           public string Title { get; set; } = "";
+        [HtmlAttributeName("DataHandler")]     public string DataHandler { get; set; } = "?handler=Data";
+        [HtmlAttributeName("SortField")]       public string SortField { get; set; } = "Id";
+        [HtmlAttributeName("SortDirection")]   public string SortDirection { get; set; } = "DESC";
+        [HtmlAttributeName("PageSize")]        public int? PageSize { get; set; }
+        [HtmlAttributeName("ItemClass")]       public string ItemClass { get; set; } = "p-4 border border-gray-100 rounded-lg bg-white shadow-sm";
+        [HtmlAttributeName("ScrollClass")]     public string ScrollClass { get; set; } = "flex-1 overflow-auto px-2";
+        [HtmlAttributeName("ItemsClass")]      public string ItemsClass { get; set; } = "space-y-3 pb-3";
+        [HtmlAttributeName("EmptyText")]       public string EmptyText { get; set; } = null;
+        [HtmlAttributeName("LoadText")]        public string LoadText { get; set; } = null;
+        [HtmlAttributeName("LastText")]        public string LastText { get; set; } = null;
+        [HtmlAttributeName("MinHeight")]       public string MinHeight { get; set; } = "40px";
 
         public override void Init(TagHelperContext context)
         {

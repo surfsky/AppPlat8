@@ -567,7 +567,10 @@ Done
 
 2026/10/10
     实现检查任务的企业分配逻辑
-    EleForm 支持 LabelPosition=“None”，不现实label，用placeholder方式展示
+    /EleForm 支持 LabelPosition=“None”，不现实label，用placeholder方式展示
+        - 修正EleList的Label放置方式，默认值同其它控件一致（靠左）
+        - EleLabelPosition新增 None 值，若设置该值，则不显示 Label；
+        - EleLabelPosition 新增 Auto 值，若设置该值，则普通屏为Left、手机屏为Top；
     修正工作台页面的数字角标和跳转链接
     报表
         企业分类统计表每个数据都可以点击，可以查看每个数据的详细清单

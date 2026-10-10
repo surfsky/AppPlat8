@@ -491,4 +491,44 @@ export class EleForm {
     }
 }
 
-Object.assign(EleForm.prototype, pickerMethods, uploadMethods, controlStateMethods, treePickerMethods, listPickerMethods);
+/**
+ * EleForm 专用 message 订阅处理：
+ *  1) 收到 __eleRefreshData / __attsMoveToRefresh__ / __eleFormRefreshAll 广播 → 重载主数据 + 刷新全部内嵌 EleList；
+ *     （DrawerCloseAction.RefreshData 与 RefreshData(Parent) 命令都会广播这些标记）
+ *  2) 收到 __elePageClose 广播 → 关闭父级 Drawer（本页就是 Drawer iframe 时）；
+ */
+const eleFormMessageMethods = {
+    messageHandler(e) {
+        if (!e) return;
+        const payload = e && e.data;
+        if (!payload || typeof payload !== 'object') return;
+
+        // 1) 关闭 Drawer：适用于本页运行在 Drawer iframe 内，上游仅发消息的场景
+        if (payload.__elePageClose === true) {
+            try { EleManager.closeDrawer(); } catch (_) { }
+            return;
+        }
+
+        // 2) 刷新数据：任意一个刷新标记命中 → 表单主数据 + 全部内嵌 EleList 一起刷新
+        const needRefresh = payload.__eleRefreshData === true
+            || payload.__attsMoveToRefresh__ === true
+            || payload.__eleFormRefreshAll === true
+            || payload.needsRefresh === true;
+        if (!needRefresh) return;
+
+        (async () => {
+            try {
+                // 优先调外部 form.load（如果 EleForm 被挂了 load 方法）
+                if (typeof this.load === 'function') {
+                    try { await this.load(); } catch (e) { console.warn('[EleForm.messageHandler] form.load 异常', e); }
+                }
+                // 必走：刷新所有内嵌 EleList（检查对象 / 附件 / CRM 联系人...）
+                if (typeof this.refreshAllLists === 'function') {
+                    try { await this.refreshAllLists(true); } catch (e) { console.warn('[EleForm.messageHandler] refreshAllLists 异常', e); }
+                }
+            } catch (_) { }
+        })();
+    }
+};
+
+Object.assign(EleForm.prototype, pickerMethods, uploadMethods, controlStateMethods, treePickerMethods, listPickerMethods, eleFormMessageMethods);
