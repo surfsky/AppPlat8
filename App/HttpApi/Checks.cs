@@ -51,15 +51,20 @@ namespace App.API
         {
             var userId = Auth.GetUserId();
             var user = User.Get(userId);
-            orgId = orgId ?? user?.OrgId;
-            return CheckObject.Search(
+            // 默认按当前用户授权组织收敛
+            orgId = orgId ?? user?.EffectiveAuthOrgId ?? user?.OrgId;
+            var q = CheckObject.Search(
                 name: name,
                 socialCreditCode: socialCreditCode,
                 dutyOrgId: orgId,
                 checkerId: checkerId,
                 objectType: objectType,
                 scale: scale
-            ).SortPageExport(pi).ToResult();
+            );
+            // 非 admin：显式按授权组织子树过滤 CheckObject（Search 默认仅用 dutyOrgId 等值过滤，需再收紧子树语义）
+            if (!Auth.IsAdmin(user))
+                q = q.FilterByOrg(user, nameof(CheckObject.DutyOrgId));
+            return q.SortPageExport(pi).ToResult();
         }
 
         [HttpApi("检查对象详情", AuthLogin = true)]
@@ -123,18 +128,15 @@ namespace App.API
             var allTags = CheckTag.IncludeSet.ToList();
             var allMap = allTags.ToDictionary(t => t.Id, t => t);
             List<CheckTag> visible;
-            if (user.Name == "admin")
+            if (Auth.IsAdmin(user))
             {
                 visible = allTags;
             }
             else
             {
-                var authOrgIds = user.AuthOrgIds ?? new List<long>();
-                long? authOrgId = authOrgIds.FirstOrDefault(t => t > 0);
-                if (authOrgId <= 0) authOrgId = null;
-                var orgId = authOrgId ?? user.OrgId;
+                var orgId = user?.EffectiveAuthOrgId;
                 visible = allTags
-                    .Where(t => t.OrgId == null || t.OrgId == orgId)
+                    .Where(t => t.OrgId == null || (orgId.HasValue && t.OrgId == orgId.Value))
                     .ToList();
             }
 
@@ -343,6 +345,5 @@ namespace App.API
             }
             return CheckPoint.Search(objectId, name, riskLevel).SortPageExport(pi).ToResult();
         }
-
     }
 }

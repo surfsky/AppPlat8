@@ -47,11 +47,13 @@ namespace App.DAL
         [UI("上次登录时间")]     public DateTime? LastLoginDt { get; set; }
         [UI("职务")]            public string  Title { get; set; }
         [UI("所属组织")]        public long? OrgId { get; set; }
+        /// <summary>授权组织（单值）；保存前若为空将自动兜底为 OrgId</summary>
+        [UI("授权组织")]        public long? AuthOrgId { get; set; }
 
         // Relations
         [UI("所属组织")]        public virtual Org Org { get; set; }
         [UI("用户角色")]        public virtual List<Role> Roles { get; set; } = new List<Role>();
-        [UI("授权组织")]        public virtual List<UserOrg> UserOrgs { get; set; } = new List<UserOrg>();
+        [UI("授权组织")]        public virtual Org AuthOrg { get; set; }
 
 
         //------------------------------------------------------
@@ -60,10 +62,35 @@ namespace App.DAL
         public string DisplayName => $"{this.RealName}({this.Mobile})";
         public string OrgName => this.Org?.Name;
         public string OrgFullName => this.Org?.FullName;
-        public string AuthOrgName => GetAuthorizedOrgs().Select(t => t.Name).FirstOrDefault(t => t.IsNotEmpty());
-        public string AuthOrgFullName => GetAuthorizedOrgs().Select(t => t.FullName ?? t.Name).FirstOrDefault(t => t.IsNotEmpty());
+
+        /// <summary>授权组织或所属组织的兜底值（AuthOrgId ?? OrgId）</summary>
+        [NotMapped]
+        public long? EffectiveAuthOrgId => this.AuthOrgId ?? this.OrgId;
+
+        public string AuthOrgName
+        {
+            get
+            {
+                if (this.AuthOrg?.Name.IsNotEmpty() == true) return this.AuthOrg.Name;
+                if (this.Org?.Name.IsNotEmpty() == true) return this.Org.Name;
+                return null;
+            }
+        }
+        public string AuthOrgFullName
+        {
+            get
+            {
+                if (this.AuthOrg?.FullName.IsNotEmpty() == true) return this.AuthOrg.FullName;
+                if (this.AuthOrg?.Name.IsNotEmpty() == true) return this.AuthOrg.Name;
+                if (this.Org?.FullName.IsNotEmpty() == true) return this.Org.FullName;
+                if (this.Org?.Name.IsNotEmpty() == true) return this.Org.Name;
+                return null;
+            }
+        }
         public string MobileMasked => this.Mobile?.Mask(3, 4);
         public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
+
+        /// <summary>授权组织显示文本（单值语义，兼容原有拼接字段便于前端展示）</summary>
         public string AuthOrgNames => GetAuthorizedOrgs()
             .Select(t => t.FullName ?? t.Name)
             .Where(t => t.IsNotEmpty())
@@ -98,37 +125,38 @@ namespace App.DAL
             }
         }
 
-        [NotMapped] private List<long> _authOrgIds;
+        /// <summary>
+        /// 授权组织兼容包装属性。
+        /// 后端模型收敛为单值 User.AuthOrgId；此处保留 List<long> 形态，
+        /// 以便 UI 侧 EleTreePicker (Multiple 模式) 无需改动即可工作，
+        /// setter 仅取集合中首个正数值写入 AuthOrgId，getter 返回单元素包装。
+        /// </summary>
+        [NotMapped] private List<long> _authOrgIdsBacking;
         [UI("授权组织IDs"), NotMapped]
         public virtual List<long> AuthOrgIds
         {
             get
             {
-                if (_authOrgIds != null)
-                    return _authOrgIds;
-                // 仅返回 UserOrgs 中显式保存的授权组织 (不自动合并 OrgId，
-                // 否则每次保存都会把所属部门也写进 UserOrgs 造成重复 & UI 回显脏数据)
-                var ids = (this.UserOrgs ?? new List<UserOrg>())
-                    .Where(t => t != null && t.OrgId.HasValue && t.OrgId.Value > 0)
-                    .Select(t => t.OrgId.Value)
-                    .Distinct()
-                    .ToList();
-                if (ids.Count == 0 && this.Id > 0)
-                {
-                    ids = UserOrg.Set
-                        .Where(t => t.UserId == this.Id && t.OrgId != null && t.OrgId > 0)
-                        .Select(t => t.OrgId.Value)
-                        .Distinct()
-                        .ToList();
-                }
-                return ids;
+                if (_authOrgIdsBacking != null)
+                    return _authOrgIdsBacking;
+                if (this.AuthOrgId.HasValue && this.AuthOrgId.Value > 0)
+                    return new List<long> { this.AuthOrgId.Value };
+                return new List<long>();
             }
             set
             {
-                _authOrgIds = (value ?? new List<long>())
+                var first = (value ?? new List<long>())
+                    .Where(t => t > 0)
+                    .Distinct()
+                    .Cast<long?>()
+                    .FirstOrDefault();
+                // 保留显式集合（避免每次 setter 后 getter 再从 AuthOrgId 回取造成"丢失其他值"的直觉不一致，
+                // 但持久化只会写首个正数值到 AuthOrgId 列）
+                _authOrgIdsBacking = (value ?? new List<long>())
                     .Where(t => t > 0)
                     .Distinct()
                     .ToList();
+                this.AuthOrgId = first;
             }
         }
 
@@ -153,32 +181,28 @@ namespace App.DAL
                 .ToList();
         }
 
-        /// <summary>获取用户直接授权的组织列表（含主组织、UserOrgs）。</summary>
+        /// <summary>获取用户授权组织（单值语义；返回 0~1 个 Org，保持签名兼容）。</summary>
         public List<Org> GetAuthorizedOrgs()
         {
-            var orgs = new List<Org>();
+            var list = new List<Org>();
+            var orgId = this.EffectiveAuthOrgId;
+            if (!orgId.HasValue || orgId.Value <= 0) return list;
 
-            void addOrg(Org org)
+            // 优先走导航属性（若 GetDetail 已 Include）
+            if (this.AuthOrg != null && this.AuthOrg.Id == orgId.Value)
             {
-                if (org == null) return;
-                if (orgs.Any(t => t.Id == org.Id)) return;
-                orgs.Add(org);
+                list.Add(this.AuthOrg);
+                return list;
+            }
+            if (this.Org != null && this.Org.Id == orgId.Value)
+            {
+                list.Add(this.Org);
+                return list;
             }
 
-            addOrg(this.Org);
-            foreach (var item in this.UserOrgs ?? new List<UserOrg>())
-                addOrg(item?.Org);
-
-            if (orgs.Count > 0)
-                return orgs;
-
-            var ids = new List<long>();
-            if (this.OrgId.HasValue && this.OrgId.Value > 0) ids.Add(this.OrgId.Value);
-            if (this.Id > 0)
-                ids.AddRange(UserOrg.Set.Where(t => t.UserId == this.Id && t.OrgId != null).Select(t => t.OrgId.Value).ToList());
-
-            ids = ids.Where(t => t > 0).Distinct().ToList();
-            return ids.Count == 0 ? new List<Org>() : Org.Set.Where(t => ids.Contains(t.Id)).ToList();
+            var org = Org.Set.FirstOrDefault(o => o.Id == orgId.Value);
+            if (org != null) list.Add(org);
+            return list;
         }
 
         /// <summary>按角色ID列表更新导航属性。</summary>
@@ -191,22 +215,32 @@ namespace App.DAL
                 : Role.Set.Where(t => ids.Contains(t.Id)).ToList();
         }
 
-        /// <summary>设置授权组织。</summary>
+        /// <summary>设置授权组织（集合中仅首个正数值写入 AuthOrgId；持久化前仍可能被兜底为 OrgId）。</summary>
         public void SetAuthOrgs(IEnumerable<long> orgIds)
         {
             this.AuthOrgIds = orgIds?.ToList();
             var ids = this.AuthOrgIds;
-            this.UserOrgs = (ids.Count == 0)
-                ? new List<UserOrg>()
-                : Org.Set
-                    .Where(t => ids.Contains(t.Id))
-                    .Select(t => new UserOrg
-                    {
-                        UserId = this.Id > 0 ? this.Id : null,
-                        OrgId = t.Id,
-                        Org = t
-                    })
-                    .ToList();
+            if (ids.Count == 0)
+            {
+                this.AuthOrg = null;
+                return;
+            }
+            // 装载导航属性（便于后续立即访问 AuthOrg.Name 等，避免 N+1）
+            var first = ids[0];
+            this.AuthOrg = Org.Set.FirstOrDefault(o => o.Id == first);
+        }
+
+        //------------------------------------------------------
+        // 保存钩子：AuthOrgId 空值兜底
+        //------------------------------------------------------
+        /// <summary>保存前若 AuthOrgId 为空，则兜底为所属组织 OrgId。</summary>
+        public override void BeforeSave(EntityOp op)
+        {
+            base.BeforeSave(op);
+            if (!this.AuthOrgId.HasValue || this.AuthOrgId.Value <= 0)
+            {
+                this.AuthOrgId = (this.OrgId.HasValue && this.OrgId.Value > 0) ? this.OrgId : (long?)null;
+            }
         }
 
         //------------------------------------------------------
@@ -342,6 +376,7 @@ namespace App.DAL
 
 
 
+
         //------------------------------------------------------
         // 
         //------------------------------------------------------
@@ -374,6 +409,7 @@ namespace App.DAL
                 this.OrgId,
                 this.OrgName,
                 this.OrgFullName,
+                this.AuthOrgId,
                 this.AuthOrgName,
                 this.AuthOrgFullName,
                 this.AuthOrgIds,
@@ -404,20 +440,15 @@ namespace App.DAL
             var user = DataSet
                 .Include(u => u.Org)
                 .Include(u => u.Roles)
-                .Include(u => u.UserOrgs)
-                    .ThenInclude(t => t.Org)
+                .Include(u => u.AuthOrg)
                 .FirstOrDefault(predicate)
                 ;
             if (user == null)
                 return null;
             user.RoleIds = user.Roles.Select(r => r.Id).ToList();
-            // UI 回显只取显式保存的 UserOrgs 授权 (不包含 OrgId 所属部门,
-            // 否则每次保存都会把部门也写进 UserOrgs 造成越积越多)
-            user.AuthOrgIds = (user.UserOrgs ?? new List<UserOrg>())
-                .Where(t => t != null && t.OrgId.HasValue && t.OrgId.Value > 0)
-                .Select(t => t.OrgId.Value)
-                .Distinct()
-                .ToList();
+            // AuthOrgIds 回显由 NotMapped 包装属性直接从 AuthOrgId 构造；
+            // 此处显式重置临时集合，以避免多次调用间串扰。
+            user._authOrgIdsBacking = null;
             return user;
         }
 
@@ -426,6 +457,7 @@ namespace App.DAL
         {
             var q = DataSet
                 .Include(u => u.Org)
+                .Include(u => u.AuthOrg)
                 .Include(u => u.Roles)
                 .AsNoTracking()
                 .AsQueryable();

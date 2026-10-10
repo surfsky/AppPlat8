@@ -23,7 +23,11 @@ namespace App.Pages.OA
 
         public IActionResult OnGetData(Paging pi, string name, long? orgId)
         {
-            var list = AssignTask.Search(name, orgId).SortPageExport(pi);
+            var cu = Auth.GetUser();
+            var q = AssignTask.Search(name, orgId);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
@@ -34,8 +38,17 @@ namespace App.Pages.OA
             if (!CheckPower(Power.TaskDelete))
                 return BuildResult(403, "无权操作");
 
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var authOrgId = cu?.EffectiveAuthOrgId;
             foreach (var id in ids)
+            {
+                var target = AssignTask.Get(id);
+                if (target == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(authOrgId, target.OrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
                 AssignTask.Delete(id);
+            }
             return BuildResult(0, "删除成功");
         }
     }

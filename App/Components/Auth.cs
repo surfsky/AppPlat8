@@ -26,6 +26,8 @@ namespace App.Components
         public const string SESSION_VERIFYCODE = "session_code";                  // 验证码Session名称
         public const string MSG_ONLINE_UPDATE_TIME = "OnlineUpdateTime";
 
+        public static bool IsAdmin(App.DAL.User u)  => u != null && u.Name == "admin";
+
         //--------------------------------------------------
         // 登录注销
         //--------------------------------------------------
@@ -296,5 +298,32 @@ namespace App.Components
                 return cachedVer == curVer;
             });
         }
+
+
+        /// <summary>判断是否为安全的 URL（本站相对路径或本域绝对 URL），避免开放重定向漏洞。</summary>
+        public static bool IsSafeUrl(string url, HttpRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return false;
+            var trimmed = url.Trim();
+            // 相对路径：以单 / 开头（拒绝 // 协议相对或 /\ 跨盘路径）
+            if (trimmed.StartsWith("/", StringComparison.Ordinal)
+                && !trimmed.StartsWith("//", StringComparison.Ordinal)
+                && !trimmed.StartsWith("/\\", StringComparison.Ordinal))
+            {
+                return true;
+            }
+            // 绝对 URL：必须本域
+            if (Uri.TryCreate(trimmed, UriKind.Absolute, out var abs))
+            {
+                if (request == null) return false;
+                var reqHost = (request.Host.Host ?? "").Trim();
+                if (string.Equals(abs.Host, reqHost, StringComparison.OrdinalIgnoreCase)
+                    && (abs.Scheme == Uri.UriSchemeHttp || abs.Scheme == Uri.UriSchemeHttps))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }        
     }
 }

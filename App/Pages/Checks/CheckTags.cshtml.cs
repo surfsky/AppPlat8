@@ -21,7 +21,11 @@ namespace App.Pages.Checks
         public IActionResult OnGetData(string name = "", long? orgId = null)
         {
             // 先按条件过滤（名称模糊包含 + 组织精确匹配），再 ToTree 形成父子结构
-            var list = new CheckTag().Query(name: name, orgId: orgId).ToList();
+            var cu = Auth.GetUser();
+            var q = new CheckTag().Query(name: name, orgId: orgId);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.ToList();
             var items = list.ToTree();
             return BuildResult(0, "success", items);
         }
@@ -31,17 +35,20 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0) 
                 return BuildResult(400, "请选择要删除的记录");
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var scopeId = cu?.EffectiveAuthOrgId;
             foreach (var id in ids)
             {
                 var item = CheckTag.Get(id);
-                if (item != null)
-                {
-                    // 检查是否有子菜单
-                    if (CheckTag.Set.Any(m => m.ParentId == id))
-                        return BuildResult(400, $"菜单[{item.Name}]下还有子菜单，请先删除子菜单");
+                if (item == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(scopeId, item.OrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
+                // 检查是否有子菜单
+                if (CheckTag.Set.Any(m => m.ParentId == id))
+                    return BuildResult(400, $"菜单[{item.Name}]下还有子菜单，请先删除子菜单");
 
-                    item.Delete();
-                }
+                item.Delete();
             }
 
             CheckTag.ClearCache(); // 刷新缓存

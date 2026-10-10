@@ -93,8 +93,6 @@ public class CheckerUserMergeJob : IJob
                     .Select(o => new { o.Id })
                     .ToListAsync();
 
-                var userOrgs = await App.DAL.UserOrg.Set.AsNoTracking()
-                    .Where(uo => uo.UserId == sid).CountAsync();
                 var roleCount = 0;
                 var rolesQuery = App.DAL.User.Set.AsNoTracking()
                     .Where(u => u.Id == sid)
@@ -110,7 +108,6 @@ public class CheckerUserMergeJob : IJob
                     IsDel = s.IsDel,
                     CheckObjectCount = checkObjects.Count,
                     CheckObjectSampleIds = checkObjects.Take(10).Select(o => o.Id).ToList(),
-                    UserOrgCount = userOrgs,
                     UserRoleCount = roleCount,
                 });
             }
@@ -121,7 +118,7 @@ public class CheckerUserMergeJob : IJob
         var outDir = AppDomain.CurrentDomain.BaseDirectory;
         var csvPath = Path.Combine(outDir, $"CheckerMergePlan_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
         var sb = new StringBuilder();
-        sb.AppendLine("BaseName,TargetId,TargetName,TargetLogin,SrcId,SrcName,SrcLogin,Num,IsDel,CheckObjectCount,UserOrgCount,UserRoleCount");
+        sb.AppendLine("BaseName,TargetId,TargetName,TargetLogin,SrcId,SrcName,SrcLogin,Num,IsDel,CheckObjectCount,UserRoleCount");
         Console.WriteLine("==========================================================");
         Console.WriteLine($"= 合并计划（共 {planRows.Count} 组重复账户） mode={mode}");
         Console.WriteLine("==========================================================");
@@ -131,10 +128,10 @@ public class CheckerUserMergeJob : IJob
             foreach (var s in p.Sources)
             {
                 Console.WriteLine($"   · 源 Id={s.SrcId,-6} Name={s.SrcName,-12} Login={s.SrcLoginName,-15} Num={s.Num} IsDel={s.IsDel} " +
-                                  $"CheckObject={s.CheckObjectCount,4} UserOrg={s.UserOrgCount} Roles={s.UserRoleCount}");
+                                  $"CheckObject={s.CheckObjectCount,4} Roles={s.UserRoleCount}");
                 sb.AppendLine($"{Csv(p.BaseName)},{p.TargetId},{Csv(p.TargetName)},{Csv(p.TargetLoginName)}," +
                               $"{s.SrcId},{Csv(s.SrcName)},{Csv(s.SrcLoginName)},{s.Num},{s.IsDel}," +
-                              $"{s.CheckObjectCount},{s.UserOrgCount},{s.UserRoleCount}");
+                              $"{s.CheckObjectCount},{s.UserRoleCount}");
             }
         }
         var totalCheckObjAffected = planRows.Sum(p => p.TotalCheckObjects);
@@ -174,19 +171,6 @@ public class CheckerUserMergeJob : IJob
                         {
                             updatedObjs += n;
                             Console.WriteLine($"  · [{p.BaseName}] CheckObject: {s.SrcName}(Id={s.SrcId}) → {p.TargetName}(Id={p.TargetId}) 更新 {n} 行");
-                        }
-
-                        // 合并 UserOrg：避免目标重复
-                        if (s.UserOrgCount > 0)
-                        {
-                            var uos = await db.Set<UserOrg>().Where(uo => uo.UserId == s.SrcId).ToListAsync();
-                            foreach (var uo in uos)
-                            {
-                                var exist = await db.Set<UserOrg>()
-                                    .AnyAsync(x => x.UserId == p.TargetId && x.OrgId == uo.OrgId);
-                                if (!exist) db.Set<UserOrg>().Add(new UserOrg { UserId = p.TargetId, OrgId = uo.OrgId });
-                            }
-                            db.Set<UserOrg>().RemoveRange(uos);
                         }
 
                         // 合并 角色（User 多对多导航）
@@ -288,6 +272,5 @@ public class MergeSrcRow
     public bool IsDel { get; set; }
     public int CheckObjectCount { get; set; }
     public List<long> CheckObjectSampleIds { get; set; } = new();
-    public int UserOrgCount { get; set; }
     public int UserRoleCount { get; set; }
 }

@@ -15,13 +15,17 @@ namespace App.Pages.Checks
     {
         public CheckTag Item { get; set; }
 
-        public void OnGet(long? id)
-        {
-        }
+        public void OnGet(long? id) {}
 
         public IActionResult OnGetData(long id, long? selectId)
         {
             var item = CheckTag.GetDetail(id) ?? new CheckTag();
+            if (id > 0 && item != null && item.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    return BuildResult(403, "越权访问");
+            }
             if (id == 0)
                 item.ParentId = selectId;
             return BuildResult(0, "success", item.Export());
@@ -38,6 +42,9 @@ namespace App.Pages.Checks
                 item = CheckTag.Get(req.Id);
                 if (req.ParentId == req.Id) 
                     return BuildResult(400, "上级不能是自己");
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                    return BuildResult(403, "越权修改");
             }
 
             item.Name = req.Name;

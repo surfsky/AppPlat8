@@ -28,9 +28,54 @@ namespace App.Pages.KB
 
         public void OnGet(long? menuId)
         {
-            MenuTree = KbMenu.GetTree();
+            MenuTree = BuildAuthorizedMenuTree();
             CurrentMenuId = menuId;
             DefaultAttsUrl = BuildAttsUrl(menuId);
+        }
+
+        /// <summary>
+        /// 构建当前登录用户可见的知识库目录树。
+        /// - admin：全量；
+        /// - 其它：仅显示 "KbMenu.OrgId ∈ 当前用户 EffectiveAuthOrgId 子树" 或 "KbMenu.OrgId 为空（公共目录）" 的节点，并补齐其祖先用于保持树结构。
+        /// </summary>
+        private List<KbMenu> BuildAuthorizedMenuTree()
+        {
+            var cu = Auth.GetUser();
+            var all = KbMenu.Set.OrderBy(m => m.SortId).ThenBy(m => m.Id).ToList();
+            if (Auth.IsAdmin(cu))
+                return all.ToTree();
+
+            // 过滤：OrgId 为空（公共目录）或在授权子树中
+            var authId = cu?.EffectiveAuthOrgId;
+            List<KbMenu> visible;
+            if (!authId.HasValue || authId.Value <= 0)
+            {
+                // 没有任何授权组织：仅能看公共目录（OrgId == null）
+                visible = all.Where(m => m.OrgId == null).ToList();
+            }
+            else
+            {
+                var orgIds = OrgFilter.GetAuthOrgIds(authId.Value);
+                visible = all.Where(m =>
+                    m.OrgId == null ||
+                    (m.OrgId.HasValue && orgIds.Contains(m.OrgId.Value))
+                ).ToList();
+            }
+
+            // 补齐祖先：避免子节点可见而父节点缺失造成树断层
+            var visibleMap = visible.ToDictionary(m => m.Id, m => m);
+            var allMap = all.ToDictionary(m => m.Id, m => m);
+            foreach (var node in visible.ToList())
+            {
+                var cur = node;
+                while (cur != null)
+                {
+                    visibleMap[cur.Id] = cur;
+                    if (cur.ParentId == null) break;
+                    if (!allMap.TryGetValue(cur.ParentId.Value, out cur)) break;
+                }
+            }
+            return visibleMap.Values.ToList().ToTree();
         }
 
         private static string BuildAttsUrl(long? menuId)
@@ -102,7 +147,7 @@ namespace App.Pages.KB
             }
 
             KbMenu.ClearCache();
-            var tree = KbMenu.GetTree();
+            var tree = BuildAuthorizedMenuTree();
             long nextCurrent = 0;
             return OkBuildResult(0, $"删除成功（共{deleteCount}个目录，{fileCount}个文件）", new
             {
@@ -151,7 +196,7 @@ namespace App.Pages.KB
                     idx = siblings.FindIndex(x => x.Id == id);
                     if (idx <= 0)
                     {
-                        var treeEmpty = KbMenu.GetTree();
+                        var treeEmpty = BuildAuthorizedMenuTree();
                         return OkBuildResult(0, "已经是第一个", new
                         {
                             reload = false,
@@ -174,7 +219,7 @@ namespace App.Pages.KB
                 moved = true;
             }
             KbMenu.ClearCache();
-            var tree = KbMenu.GetTree();
+            var tree = BuildAuthorizedMenuTree();
             return OkBuildResult(0, moved ? "上移成功" : "已经是第一个", new
             {
                 reload = false,
@@ -220,7 +265,7 @@ namespace App.Pages.KB
                     idx = siblings.FindIndex(x => x.Id == id);
                     if (idx >= siblings.Count - 1)
                     {
-                        var treeEmpty = KbMenu.GetTree();
+                        var treeEmpty = BuildAuthorizedMenuTree();
                         return OkBuildResult(0, "已经是最后一个", new
                         {
                             reload = false,
@@ -243,7 +288,7 @@ namespace App.Pages.KB
                 moved = true;
             }
             KbMenu.ClearCache();
-            var tree2 = KbMenu.GetTree();
+            var tree2 = BuildAuthorizedMenuTree();
             var isLast = idx >= siblings.Count - 1;
             return OkBuildResult(0, moved ? "下移成功" : "已经是最后一个", new
             {
@@ -423,7 +468,7 @@ namespace App.Pages.KB
             }
 
             KbMenu.ClearCache();
-            var tree = KbMenu.GetTree();
+            var tree = BuildAuthorizedMenuTree();
             var nextMenuId = importedRootMenuId ?? targetParent?.Id ?? 0;
             var totalFiles = pendingFileAtts.Count;
             var hasErrors = errors.Count > 0;

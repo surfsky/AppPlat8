@@ -180,6 +180,9 @@ namespace App.Pages.Checks
                 isDel: isDel,
                 includeTags: true
                 );
+            var cu = Auth.GetUser();
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu, nameof(CheckObject.DutyOrgId));
             var list = q.SortPageExport(pi);
 
             // 本地计算下次巡查时间并过滤（NextCheckDt 是 NotMapped getter，EF 无法翻译为 SQL，必须在内存做）。
@@ -283,6 +286,9 @@ namespace App.Pages.Checks
                 isDel: isDel,
                 includeTags: true
                 );
+            var cuExport = Auth.GetUser();
+            if (!Auth.IsAdmin(cuExport))
+                q = q.FilterByOrg(cuExport, nameof(CheckObject.DutyOrgId));
 
             var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"检查对象列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
@@ -298,11 +304,16 @@ namespace App.Pages.Checks
             if (!CheckPower(Power.CheckObjectDelete))
                 return BuildResult(403, "无权操作");
 
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var scopeId = cu?.EffectiveAuthOrgId;
             foreach (var id in ids)
             {
                 var item = CheckObject.Get(id);
-                if (item != null)
-                    item.Delete();
+                if (item == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(scopeId, item.DutyOrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
+                item.Delete();
             }
             return BuildResult(0, "删除成功");
         }

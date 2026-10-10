@@ -283,3 +283,14 @@
             </nav>
         </div>
     </section>
+
+        //-------------------------------------------
+        // 1. 取值辅助
+        //-------------------------------------------
+        /// <summary>返回用户实际生效的授权组织（AuthOrgId ?? OrgId），若两者都空则返回 null。</summary>
+        public static long? GetEffectiveAuthOrgId(this App.DAL.User user)
+        {
+            if (user == null) return null;
+            return user.EffectiveAuthOrgId;
+        }
+

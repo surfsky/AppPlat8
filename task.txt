@@ -565,7 +565,16 @@ Done
             可设置过滤条件？保存到哪里？
             考察一下Notion软件
 
-
+2026/10/10
+    实现检查任务的企业分配逻辑
+    EleForm 支持 LabelPosition=“None”，不现实label，用placeholder方式展示
+    修正工作台页面的数字角标和跳转链接
+    报表
+        企业分类统计表每个数据都可以点击，可以查看每个数据的详细清单
+        实现测试任务报表
+    驾驶舱
+        驾驶舱把监控开几个
+        迁移到M apLibre
 
 
 2026/10/09
@@ -573,19 +582,12 @@ Done
     /修正合并IconAwesome、IconElement两组图标库
     /安全
         /修复IPFilter中间件和相关维护网页（SiteConfig、IPFitlers、IPFilterForm）
-    权限控制优化
-        重新考虑user.AuthOrgId 单一
-        重新梳理权限体系：创建简单的扩展方法，以约束查询，如 q.ApplyUserOrg(userId)，而不是全局进行限制，心里没底（切换角色后就担心无法使用）
-        修改PageBase，默认要求AuthLogin，除非显式不要求检测
-        权限过于细（看能否合并），或增加几个通用权限；
-    修正工作台页面的数字角标和跳转链接
-    实现项目企业分配功能
-    报表
-        企业分类统计表每个数据都可以点击，可以查看每个数据的详细清单
-        实现测试任务报表
-    驾驶舱
-        驾驶舱把监控开几个
-        迁移到M apLibre
+    /权限控制优化
+        /重新考虑user.AuthOrgId 单一
+        /重新梳理权限体系：创建简单的扩展方法（OrgFilter 类），以约束查询，如 q.ApplyUserOrg(userId)，而不是全局进行限制，心里没底（切换角色后就担心无法使用）
+        /修改PageBase，默认要求AuthLogin，除非显式不要求检测
+        /权限过于细（看能否合并），或增加几个通用权限 Admin；
+    /登录页面支持returnUrl参数
 
 2026/10/08
     /UI

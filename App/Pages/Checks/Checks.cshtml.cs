@@ -37,7 +37,11 @@ namespace App.Pages.Checks
 
         public IActionResult OnGetData(Paging pi, string objectName, string socialCreditCode, long? objectId, CheckObjectType? objectType, DateTime? checkStartDt, DateTime? checkEndDt)
         {
-            var list = Check.Search(objectName, socialCreditCode, objectId, objectType, checkStartDt, checkEndDt).SortPageExport(pi);
+            var cu = Auth.GetUser();
+            var q = Check.Search(objectName, socialCreditCode, objectId, objectType, checkStartDt, checkEndDt);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
@@ -48,8 +52,17 @@ namespace App.Pages.Checks
             if (!CheckPower(Power.CheckDelete))
                 return BuildResult(403, "无权操作");
 
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var scopeId = cu?.EffectiveAuthOrgId;
             foreach (var id in ids)
+            {
+                var target = Check.Get(id);
+                if (target == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
                 Check.Delete(id);
+            }
             return BuildResult(0, "删除成功");
         }
     }

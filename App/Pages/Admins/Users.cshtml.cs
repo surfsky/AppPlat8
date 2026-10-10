@@ -42,16 +42,25 @@ namespace App.Pages.Admins
         /// <summary>获取用户列表</summary>
         public IActionResult OnGetData(Paging pi, string name, string realName, long? orgId, long? roleId, bool? isDel, bool includeSubOrg = true)
         {
+            var cu = Auth.GetUser();
             var exportMode = this.Mode == PageMode.Select ? ExportMode.Simple : ExportMode.Detail;
-            var list = App.DAL.User.Search(name: name, realName: realName, orgId: orgId, roleId: roleId, isDel: isDel, includeSubOrg: includeSubOrg).SortPageExport(pi, exportMode);
+            var q = App.DAL.User.Search(name: name, realName: realName, orgId: orgId, roleId: roleId, isDel: isDel, includeSubOrg: includeSubOrg);
+            // 非全局 admin 时：按当前登录用户的授权组织子树（AuthOrgId）收敛可见员工
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.SortPageExport(pi, exportMode);
             return BuildResult(0, "success", list, pi);
         }
 
         // 导出用户列表到 Excel
         public IActionResult OnPostExport(Paging pi, string name, string realName, long? orgId, long? roleId, bool includeSubOrg = true)
         {
+            var cu = Auth.GetUser();
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
-            var list = App.DAL.User.Search(name: name, realName: realName, orgId: orgId, roleId: roleId, includeSubOrg: includeSubOrg).SortPageExport(exportPi);
+            var q = App.DAL.User.Search(name: name, realName: realName, orgId: orgId, roleId: roleId, includeSubOrg: includeSubOrg);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"用户列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             Logger.Info($"导出用户列表，共 {list.Count} 条记录");
             return new EmptyResult();
@@ -61,13 +70,26 @@ namespace App.Pages.Admins
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
             if (ids == null || ids.Length == 0) return BuildResult(400, "参数错误");
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var orgIds = isAdmin ? null : OrgFilter.GetAuthOrgIds(cu?.EffectiveAuthOrgId);
             foreach (var id in ids)
             {
                 if (id == 1) continue;   // admin 管理员用户不能删除
+                var target = App.DAL.User.Get(id);
+                if (target == null) continue;
+                if (!isAdmin && orgIds != null)
+                {
+                    // 非全局 admin：仅允许删除自己授权范围（子树）内的用户
+                    var orgId = target.EffectiveAuthOrgId;
+                    if (!orgId.HasValue || !orgIds.Contains(orgId.Value))
+                        return BuildResult(403, $"无权删除用户：{target.Name}");
+                }
                 App.DAL.User.Delete(id);
             }
             return BuildResult(0, "删除成功");
         }
+
 
         public IActionResult OnPostImport()
         {

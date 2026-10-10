@@ -14,7 +14,6 @@ namespace App.Pages.Admin
     {
         // 辅助属性，用于 Razor 页面 TagHelper 绑定列元数据
         public Announce Item { get; set; }
-
         public void OnGet() {}
 
 
@@ -23,7 +22,10 @@ namespace App.Pages.Admin
         {
             DateTime? startDt = createDt.GetVal(0);
             DateTime? endDt = createDt.GetVal(1);
+            var cu = Auth.GetUser();
             var q = Announce.Search(title, status, fromDt:startDt, toDt:endDt);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
@@ -36,8 +38,17 @@ namespace App.Pages.Admin
                 return BuildResult(400, "参数错误");
             if (!CheckPower(Power.AnnounceDelete))
                 return BuildResult(403, "无权操作");
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var scopeId = cu?.EffectiveAuthOrgId;
             foreach (var id in ids)
+            {
+                var target = Announce.Get(id);
+                if (target == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
                 Announce.Delete(id);
+            }
             return BuildResult(0, "删除成功");
         }
     }

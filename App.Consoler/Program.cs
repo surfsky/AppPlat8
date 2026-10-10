@@ -199,11 +199,8 @@ static void ConfigureEntity(string conn)
 		.Options;
 	var db = new AppPlatContext(options);
 	EntityConfig.Instance.OnGetDb += () => db;
-	EntityConfig.Instance.OnGetDataAccessScope += () => new DataAccessScope
-	{
-		Enabled = false,
-		AllowAll = true,
-	};
+	// 说明：已移除全局自动数据权限过滤器（OnGetDataAccessScope / DataAccessFilter.Apply）。
+	// 各 Job 中若需要按组织收敛数据，应显式通过 OrgScopeHelper.FilterByOrgScope 过滤。
 	EntityConfig.Instance.OnGetDataAuditScope += () => new DataAuditScope
 	{
 		Enabled = false,

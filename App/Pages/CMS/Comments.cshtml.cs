@@ -23,7 +23,11 @@ namespace App.Pages.OA
 
         public IActionResult OnGetData(Paging pi, long? targetId, CommentType? type, string author)
         {
-            var list = Comment.Search(targetId, type, author).SortPageExport(pi);
+            var cu = Auth.GetUser();
+            var q = Comment.Search(targetId, type, author);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
@@ -34,8 +38,17 @@ namespace App.Pages.OA
             if (!CheckPower(Power.CommentDelete))
                 return BuildResult(403, "无权操作");
 
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var scopeId = cu?.EffectiveAuthOrgId;
             foreach (var id in ids)
+            {
+                var target = Comment.Get(id);
+                if (target == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
                 Comment.Delete(id);
+            }
             return BuildResult(0, "删除成功");
         }
     }

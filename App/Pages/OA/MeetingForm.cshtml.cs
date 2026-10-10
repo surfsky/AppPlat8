@@ -11,12 +11,17 @@ namespace App.Pages.OA
     public class MeetingFormModel : AuthModel
     {
         public Meeting Item { get; set; } = new Meeting();
-
         public void OnGet() { }
 
         public IActionResult OnGetData(long id)
         {
             var item = id > 0 ? Meeting.Get(id) : new Meeting { Day = DateTime.Today, Type = MeetingType.Other };
+            if (id > 0 && item != null)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    return BuildResult(403, "越权访问");
+            }
             return item == null ? BuildResult(404, "会议记录不存在") : BuildResult(0, "success", item.Export());
         }
 
@@ -34,6 +39,9 @@ namespace App.Pages.OA
                 if (!CheckPower(Power.MeetingEdit)) return BuildResult(403, "无权修改");
                 item = Meeting.Get(req.Id);
                 if (item == null) return BuildResult(404, "会议记录不存在");
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    return BuildResult(403, "越权修改");
             }
 
             item.Day = req.Day.Date;

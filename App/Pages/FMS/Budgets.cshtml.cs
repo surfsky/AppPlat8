@@ -28,7 +28,11 @@ namespace App.Pages.OA
 
         public IActionResult OnGetData(Paging pi, int? year, long? orgId, long? typeId, string name, bool includeChildOrgs = false)
         {
-            var list = Budget.Search(name, year, orgId, typeId, null, includeChildOrgs).SortPageExport(pi);
+            var cu = Auth.GetUser();
+            var q = Budget.Search(name, year, orgId, typeId, null, includeChildOrgs);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 
@@ -39,8 +43,17 @@ namespace App.Pages.OA
             if (!CheckPower(Power.BudgetDelete))
                 return BuildResult(403, "无权操作");
 
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var scopeId = cu?.EffectiveAuthOrgId;
             foreach (var id in ids)
+            {
+                var target = Budget.Get(id);
+                if (target == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
                 Budget.Delete(id);
+            }
             return BuildResult(0, "删除成功");
         }
 
@@ -50,6 +63,12 @@ namespace App.Pages.OA
                 return BuildResult(400, "参数错误");
 
             var item = req.Id > 0 ? Budget.Get(req.Id) : new Budget();
+            if (req.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                    return BuildResult(403, "越权修改");
+            }
             item.Name = req.Name;
             item.Year = req.Year;
             item.OrgId = req.OrgId;

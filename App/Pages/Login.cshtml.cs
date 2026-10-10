@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Antiforgery;
+using App.Utils;
 
 namespace App.Pages
 {
@@ -26,6 +27,7 @@ namespace App.Pages
             Auth.SetVerifyCode("");
         }
 
+
         /// <summary>验证滑动验证码</summary>
         public IActionResult OnPostCheckSlider([FromBody] SliderData data)
         {
@@ -38,21 +40,29 @@ namespace App.Pages
             else
             {
                 string verifyCode = Random.Shared.Next(1000, 9999).ToString();
-                Auth.SetVerifyCode(verifyCode);  // Set verifycode in session
+                Auth.SetVerifyCode(verifyCode);
                 return BuildResult(0, "验证通过");
             }
         }
 
-        /// <summary>登录</summary>
+        /// <summary>登录。保持和旧实现一致的两参数签名，避免模型绑定/过滤器干扰。
+        /// 返回 JSON { code, message, data.redirect }，由前端自行 window.location 跳转；
+        /// 若调用方未带 AJAX 标识（X-Requested-With:XMLHttpRequest），也仍返回 JSON。
+        /// </summary>
         public IActionResult OnPost(string userName, string password)
         {
             var code = Auth.GetVerifyCode();
             if (string.IsNullOrEmpty(code))
-                 return BuildResult(-1, "请先完成滑块验证");
+                return BuildResult(-1, "请先完成滑块验证");
 
             int n = Auth.Login(userName, password, code);
             if (n == 0)
-                return BuildResult(0, "登录成功", new { redirect = "/Index" });
+            {
+                string url = ReadReturnUrl();
+                if (url.IsEmpty() || !Auth.IsSafeUrl(url, Request)) 
+                    url = "/Index";
+                return BuildResult(0, "登录成功", new { redirect = url });
+            }
             else
             {
                 string msg = "登录失败";
@@ -66,5 +76,13 @@ namespace App.Pages
                 return BuildResult(n, msg);
             }
         }
+
+        /// <summary>从 Query / Form 按优先级读取 ReturnUrl。</summary>
+        private string ReadReturnUrl()
+        {
+            return Request.Query["returnUrl"];
+        }
+
+
     }
 }

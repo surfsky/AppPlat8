@@ -240,6 +240,7 @@
                     termsDrawerSize.value = isPortraitPhone ? '100%' : '33%';
                 };
 
+                // 初始化时更新抽屉大小
                 onMounted(() => {
                     updateTermsDrawerSize();
                     window.addEventListener('resize', updateTermsDrawerSize);
@@ -250,6 +251,7 @@
                     window.removeEventListener('orientationchange', updateTermsDrawerSize);
                 });
 
+                //
                 const onSliderVerifiedChange = (e) => {
                     isVerified.value = !!(e && e.detail && e.detail.verified);
                 };
@@ -264,59 +266,100 @@
                     termsDrawerVisible.value = true;
                 };
 
+                //
                 const onDisabledLoginClick = () => {
                     ElMessage.warning('请先阅读并同意服务条款');
                 };
 
+                // 登录入口
                 const handleLogin = async () => {
+                    // 检查服务条款是否同意
                     if (!agreed.value) {
                         ElMessage.warning('请先阅读并同意服务条款');
                         return;
                     }
+
+                    // 检查表单是否有效
+                    // 注意：Element Plus 的 formRef.validate() 在 2.x 里默认是 Promise<bool> 形式（若不传 callback）。
+                    // 之前传了 callback，函数返回值是 undefined，await 立即 resolve，造成 callback 内部的 POST
+                    // 还没回来 loading 就被 finally 清掉，也容易造成用户端"成功后没跳转"的竞态感知。
+                    // 这里统一用 await Promise 形式，失败走 try/catch。
                     if (!formRef.value) return;
-                    await formRef.value.validate(async (valid) => {
-                        if (valid) {
-                            if (!isVerified.value) {
-                                ElMessage.warning('请先完成滑块验证');
-                                return;
-                            }
-
-                            loading.value = true;
-                            try {
-                                const formData = new FormData();
-                                formData.append('userName', form.userName);
-                                formData.append('password', form.password);
-                                
-                                // Get AntiForgeryToken
-                                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-                                const response = await fetch('/Login', {
-                                    method: 'POST',
-                                    headers: {
-                                        'RequestVerificationToken': token
-                                    },
-                                    body: formData
+                    var valid = false;
+                    try {
+                        valid = !!(await formRef.value.validate());
+                    } catch (e) {
+                        // Element Plus validate() 在失败时可能 reject / 返回错误数组，这里统一视为不合法
+                        var detailStr = '';
+                        try {
+                            if (Array.isArray(e)) {
+                                var fields = [];
+                                e.forEach(function (x) {
+                                    if (x && typeof x.field === 'string') fields.push(x.field);
                                 });
-                                
-                                const result = await response.json();
-                                console.log('Login response:', result);
-                                if (result.code === 0) {
-                                    ElMessage.success('登录成功');
-                                    window.location.href = result.data.redirect;
-                                } else {
-                                    ElMessage.error(result.msg || '账户名或密码错误');
-                                    isVerified.value = false;
-                                    if (sliderVerifierRef.value && typeof sliderVerifierRef.value.reset === 'function') {
-                                        sliderVerifierRef.value.reset();
-                                    }
-                                }
-                            } catch (error) {
-                                ElMessage.error('网络错误');
-                            } finally {
-                                loading.value = false;
+                                if (fields.length) detailStr = '（字段: ' + fields.join(', ') + '）';
+                            } else if (e && e.message) {
+                                detailStr = '（' + String(e.message).slice(0, 60) + '）';
                             }
+                        } catch (_) { /* ignore */ }
+                        valid = false;
+                        ElMessage.warning('请检查表单填写是否完整' + detailStr);
+                    }
+                    if (!valid) return;
+
+                    // 验证滑块
+                    if (!isVerified.value) {
+                        ElMessage.warning('请先完成滑块验证');
+                        return;
+                    }
+
+                    loading.value = true;
+
+                    // 提交登录表单
+                    try {
+                        var formData = new FormData();
+                        formData.append('userName', form.userName);
+                        formData.append('password', form.password);
+
+                        // AJAX请求 /Login
+                        var reqUrl = '/Login';
+                        var pageToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                        var response = await fetch(reqUrl, {
+                            method: 'POST',
+                            redirect: 'error',
+                            credentials: 'include',
+                            headers: {
+                                'RequestVerificationToken': pageToken,  // 添加CSRF令牌
+                                'X-Requested-With': 'XMLHttpRequest'  // ajax to OnPost Method
+                            },
+                            body: formData
+                        });
+
+                        // 处理响应
+                        var text = await response.text();
+                        var result = JSON.parse(text);
+                        if (!response.ok){
+                            ElMessage.error("服务器错误");
+                            isVerified.value = false;
+                            sliderVerifierRef.value.reset();
+                            return;
                         }
-                    });
+                        else if (result.code != 0){
+                            ElMessage.error('账户名或密码错误');
+                            isVerified.value = false;
+                            sliderVerifierRef.value.reset();
+                        }
+                        else{
+                            ElMessage.success('登录成功' + result.message);
+                            setTimeout(function () { window.location.href = result.data.redirect; }, 300);
+                            return;
+                        }
+                    } catch (error) {
+                        console.warn('[Login.handleLogin]', error && error.stack ? error.stack : error);
+                        ElMessage.error('登录失败：' + ((error && error.message) ? error.message : '请重试'));
+                    } finally {
+                        loading.value = false;
+                    }
                 };
 
                 return {

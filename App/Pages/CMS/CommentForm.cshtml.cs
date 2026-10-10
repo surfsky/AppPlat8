@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.DAL.OA;
+using App.Entities;
 using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,12 @@ namespace App.Pages.OA
         public IActionResult OnGetData(long id)
         {
             var item = Comment.GetDetail(id) ?? new Comment();
+            if (id > 0 && item != null && item.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    return BuildResult(403, "越权访问");
+            }
             return BuildResult(0, "success", item);
         }
 
@@ -32,6 +39,12 @@ namespace App.Pages.OA
                 return BuildResult(400, "参数错误");
 
             var item = req.Id > 0 ? Comment.Get(req.Id) : new Comment();
+            if (req.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                    return BuildResult(403, "越权修改");
+            }
             item.TargetId = req.TargetId;
             item.Type = req.Type;
             item.Author = req.Author;

@@ -25,6 +25,12 @@ namespace App.Pages.Checks
         public IActionResult OnGetData(long id)
         {
             var item = CheckObject.GetDetail(id) ?? new CheckObject();
+            if (id > 0 && item != null && item.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.DutyOrgId))
+                    return BuildResult(403, "越权访问");
+            }
             return BuildResult(0, "success", item.Export(ExportMode.Normal));
         }
 
@@ -38,6 +44,12 @@ namespace App.Pages.Checks
             {
                 item = new CheckObject();
                 item.CreateDt = DateTime.Now;
+            }
+            else
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.DutyOrgId))
+                    return BuildResult(403, "越权修改");
             }
 
             item.Name = req.Name;
@@ -114,7 +126,11 @@ namespace App.Pages.Checks
         public IActionResult OnGetCheckLogsData(Paging pi, long objectId)
         {
             if (objectId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
-            var list = Check.Search(null, null, objectId, null, null, null).SortPageExport(pi);
+            var cu = Auth.GetUser();
+            var q = Check.Search(null, null, objectId, null, null, null);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
 

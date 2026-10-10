@@ -94,7 +94,7 @@ namespace App.Pages.Me
         // 管理员（有用户查看权限）可切换到其它中心/人员视图，非管理员只能看自己
         public bool CanChangeScope => Auth.CheckPower(Power.Admin);
 
-        // 实际责任网格命中范围：URL(管理员) > 用户 OrgId + AuthOrgIds 展开后的全部子孙
+        // 实际责任网格命中范围：URL(管理员) > 用户 EffectiveAuthOrgId 展开后的全部子孙
         public List<long> CurrOrgIds => ResolveCurrOrgIds();
 
         // 责任网格根节点（未展开）：用于 URL 拼接，避免 Query 超长
@@ -284,10 +284,10 @@ namespace App.Pages.Me
             var user = App.DAL.User.Get(CurrUserId);
             if (user == null) return new List<long>();
 
-            var ids = new List<long>();
-            if (user.OrgId.HasValue)     ids.Add(user.OrgId.Value);
-            if (user.AuthOrgIds != null) ids.AddRange(user.AuthOrgIds);
-            return ids.Distinct().Where(x => x > 0).ToList();
+            // 简化：责任组织只取授权组织 EffectiveAuthOrgId（AuthOrgId ?? OrgId），不再把 OrgId 和 AuthOrgIds 拼接
+            var id = user.EffectiveAuthOrgId;
+            if (id.HasValue && id.Value > 0) return new List<long> { id.Value };
+            return new List<long>();
         }
 
         /// <summary>获取当前用户所属的部门（包含子部门）</summary>

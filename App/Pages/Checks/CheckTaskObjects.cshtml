@@ -1,0 +1,828 @@
+@page
+@model App.Pages.Checks.CheckTaskObjectsModel
+@using App.Utils
+@using App.DAL
+@using App.Entities
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "对象选取";
+    var taskId = Model.TaskId;
+    var subTitle = string.IsNullOrWhiteSpace(Model.TaskName) ? "" : $" - {Model.TaskName}";
+    var objectTypeOptions = typeof(CheckObjectType).GetEnumInfos();
+    var scaleOptions = typeof(CheckObjectScale).GetEnumInfos();
+    var riskLevelOptions = typeof(CheckRiskLevel).GetEnumInfos();
+}
+
+@section head {
+    @* ============================================================
+       debug-point btn-syntax-check：
+       必须在 <head> 的 Vue / EleUI 脚本**之前**加载插桩脚本，
+       才能在 Vue template compiler 同步抛出 compiler-57 SyntaxError 时，
+       挂好的 window.onerror（useCapture=true）已在监听。
+       ============================================================ *@
+    <script src="/_dbg/checktaskobjects-whitescreen.js"></script>
+}
+
+@section body {
+    <div id="checkTaskObjectsApp" class="h-full min-h-0 w-full max-w-full overflow-hidden flex flex-col bg-gray-50">
+        <!-- 过滤条件：外层保留我们的布局（圆角+白卡+外边距），内部用 EleForm 作为"小容器"来保证
+             EleInput/EleSelect/EleTreePicker/ElePicker 的 TagHelper 处于 IsEleForm=true 上下文：
+             1) 它们会输出 `v-model="form.xxx"`；
+             2) EleFormTagHelper.CreateScript 会把 EleFormAppBuilder 挂到 id="app"，但这只是 EleForm 自己的 app，
+                不会干扰外层 checkTaskObjectsApp，我们只是利用它的 IsEleForm 上下文来获得正确的 v-model / Value 默认值注入。
+             3) 由于 CheckTaskObjects 的主业务（双列表、保存、分页）仍然跑在 checkTaskObjectsApp 上，
+                所以把 EleForm 的 BuildMode 设置为 None（不生成脚本），所有模型值的初始化/交互都交给外层 app 的 setup 完成。 -->
+        <div class="shrink-0 px-3 pt-3 pb-2 border-b border-gray-200 bg-gray-50/60 max-w-full">
+            <div class="rounded-lg border border-gray-300 bg-white p-4">
+                <EleForm LabelPosition="Left" BuildMode="None" Model="form" LabelWidth="80px" Class="filter-form-uniform">
+                    <EleInput For="Item.Name" Label="名称" VModel="form.name" Placeholder="名称" Clearable="true" Class="filter-control"></EleInput>
+                    <EleTreePicker For="DutyOrgIds"
+                                   Label="所属网格"
+                                   Multiple="true"
+                                   CollapseTags="false"
+                                   CheckStrictly="true"
+                                   Api="/httpapi/orgs/GetAuthOrgTree"
+                                   Class="filter-control"
+                                   Value="@(Model.DutyOrgIds != null && Model.DutyOrgIds.Count > 0 ? string.Join(",", Model.DutyOrgIds) : "")" ></EleTreePicker>
+                    <ElePicker For="Item.CheckerId"
+                                TextFor="Item.CheckerName"
+                                Label="网格员"
+                                PopupUrl="/Shared/UserSelector?multi=0"
+                                Multi="false"
+                                Class="filter-control"></ElePicker>
+                    <EleTreePicker For="TagIds"
+                                   Label="标签"
+                                   Api="/httpapi/checks/GetCheckTagTree"
+                                   Multiple="true"
+                                   CollapseTags="false"
+                                   CheckStrictly="true"
+                                   Class="filter-control"
+                                   Value="@(Model.TagIds != null && Model.TagIds.Count > 0 ? string.Join(",", Model.TagIds) : "")" ></EleTreePicker>
+                    <EleInput For="Item.Address" Label="地址" VModel="form.address" Placeholder="地址" Clearable="true" Class="filter-control"></EleInput>
+                    <EleInput For="Item.SocialCreditId" Label="社会信用代码" VModel="form.socialCreditCode" Placeholder="社会信用代码" Clearable="true" Class="filter-control"></EleInput>
+                    <EleInput For="Item.Code" Label="编码" VModel="form.code" Placeholder="编码" Clearable="true" Class="filter-control"></EleInput>
+                    <EleSelect For="Item.ObjectType" Label="类型" VModel="form.objectType" Placeholder="类型" Clearable="true" Class="filter-control" ></EleSelect>
+                    <EleSelect For="Item.Scale" Label="规模" VModel="form.scale" Placeholder="规模" Clearable="true" Class="filter-control" ></EleSelect>
+                    <EleSelect For="Item.RiskLevel" Label="风险等级" VModel="form.riskLevel" Placeholder="风险等级" Clearable="true" Class="filter-control" ></EleSelect>
+                    <EleInput For="Item.DutyMan" Label="联系人" VModel="form.dutyMan" Placeholder="联系人" Clearable="true" Class="filter-control"></EleInput>
+                    <!-- 过滤区底部（查询 / 重置）：作为普通 div 放在过滤栏末尾（和过滤控件同一层级）。
+                         按项目规范改回原生 el-button，暂不经 EleButton TagHelper，避免生成 click 表达式时的任何
+                         compiler-57 歧异；保持 Tailwind 布局，左空右齐，与过滤卡片浑然一体。 -->
+                    <div class="w-full col-span-1 md:col-span-2 lg:col-span-4 flex items-center gap-2 mt-1">
+                        <el-button @@click="resetCandidates()" :icon="Refresh">重置</el-button>
+                        <el-button type="primary" @@click="searchCandidates()" :icon="Search">查询</el-button>
+                        <div class="flex-1"></div>
+                    </div>
+                </EleForm>
+            </div>
+        </div>
+
+        <!-- 中部双列表：左右并排；窄屏自动堆叠 -->
+        <div class="flex-1 min-h-0 w-full max-w-full px-3 py-2 flex flex-col md:flex-row gap-3" style="min-height: 420px;">
+            <!-- 左：查询结果 -->
+            <div class="w-full md:flex-1 min-h-0 min-w-0 flex flex-col border border-gray-300 rounded-lg bg-white shrink-0">
+                <div class="px-4 py-2.5 text-sm font-bold text-gray-800 border-b border-gray-200 bg-white shrink-0">
+                    查询结果
+                    <span v-if="candTotal > 0" class="text-gray-400 text-xs font-normal ml-2">共 {{ candTotal }} 条</span>
+                </div>
+                <div class="flex-1 min-h-0 min-w-0 overflow-hidden">
+                    <el-table
+                        ref="candTableRef"
+                        :data="candRows"
+                        height="100%"
+                        size="small"
+                        border
+                        stripe
+                        highlight-current-row
+                        @@selection-change="onCandSelectionChange"
+                        @@row-click="onCandRowClick"
+                        empty-text="无匹配对象"
+                        row-key="id">
+                        <el-table-column type="selection" width="42" align="center"></el-table-column>
+                        <el-table-column label="序号" type="index" width="50" align="center"></el-table-column>
+                        <el-table-column label="对象清单" min-width="260">
+                            <template #default="scope">
+                                <div class="flex flex-col leading-tight">
+                                    <span class="text-gray-800 truncate" :title="scope.row.name">{{ scope.row.name }}</span>
+                                    <span class="text-[11px] text-gray-400 truncate" style="margin-top: 2px;">
+                                        编码：{{ scope.row.code || '-' }} · {{ scope.row.scaleName || '-' }} · {{ scope.row.riskLevelName || '-' }}
+                                    </span>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="dutyOrgName" label="责任网格" min-width="200" show-overflow-tooltip></el-table-column>
+                        <el-table-column prop="checkerName" label="网格员" width="160" show-overflow-tooltip></el-table-column>
+                    </el-table>
+                </div>
+                <div class="shrink-0 px-3 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                    <span class="text-xs text-gray-500">
+                        已勾选：<span class="text-blue-600 font-medium">{{ selectedCands.length }}</span> 条
+                    </span>
+                    <el-pagination
+                        background
+                        layout="prev, pager, next"
+                        :page-size="candPageSize"
+                        :current-page="candPageIndex + 1"
+                        :total="candTotal"
+                        small
+                        @@current-change="onCandPageChange">
+                    </el-pagination>
+                </div>
+            </div>
+
+            <!-- 中：选择 》 / 《 移除 -->
+            <div class="md:w-[4.5 shrink-0 flex shrink-0 flex md:flex-col flex-row items-center justify-center gap-2 md:my-auto">
+                <el-button size="small" plain @@click="addSelectedCandidates">选择 &gt;</el-button>
+                <el-button size="small" plain @@click="removeSelectedFromRight">&lt; 移除</el-button>
+            </div>
+
+            <!-- 右：当前选择（紫色边框） -->
+            <div class="w-full md:flex-1 min-h-0 min-w-0 flex flex-col border-2 rounded-lg bg-white shrink-0 border-gray-200">
+                <div class="px-4 py-2.5 text-sm font-bold text-gray-800 border-b border-gray-200 shrink-0" style="background-color: rgba(139,92,246,0.08);">
+                    当前选择
+                    <span class="text-gray-400 text-xs font-normal ml-2">共 {{ selRows.length }} 条</span>
+                </div>
+                <div class="flex-1 min-h-0 min-w-0 overflow-hidden">
+                    <el-table
+                        ref="selTableRef"
+                        :data="selRows"
+                        height="100%"
+                        size="small"
+                        border
+                        stripe
+                        @@selection-change="onSelSelectionChange"
+                        empty-text="选中的对象清单将显示在这里。"
+                        row-key="objectId">
+                        <el-table-column type="selection" width="42" align="center"></el-table-column>
+                        <el-table-column label="序号" type="index" width="50" align="center"></el-table-column>
+                        <el-table-column label="选中的对象清单" min-width="260">
+                            <template #default="scope">
+                                <div class="flex flex-col leading-tight">
+                                    <span class="text-gray-800 truncate" :title="scope.row.objectName">{{ scope.$index + 1 }}. {{ scope.row.objectName }}</span>
+                                    <el-tag size="small" effect="plain" :type="scope.row.isFinished ? 'success' : 'warning'" style="width:fit-content;margin-top:2px;">
+                                        {{ scope.row.statusName || (scope.row.isFinished ? '已完成' : '未完成') }}
+                                    </el-tag>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="dutyOrgName" label="责任网格" min-width="200" show-overflow-tooltip></el-table-column>
+                        <el-table-column prop="checkerName" label="网格员" width="160" show-overflow-tooltip></el-table-column>
+                        <el-table-column prop="tagNames" label="标签" min-width="200" show-overflow-tooltip></el-table-column>
+                    </el-table>
+                </div>
+                <div class="shrink-0 px-3 py-2 border-t border-gray-200 bg-white flex items-center justify-end gap-2">
+                    <el-button size="small" type="danger" plain @@click="removeSelectedRows">删除</el-button>
+                    <el-button size="small" @@click="moveRowUp">上移</el-button>
+                    <el-button size="small" @@click="moveRowDown">下移</el-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部：确定 / 取消 -->
+        <div class="shrink-0 px-4 py-3 border-t border-gray-100 bg-white flex items-center justify-center gap-3">
+            <el-button size="small" @@click="onClose">取消</el-button>
+            <el-button size="small" type="primary" @@click="onSaveSelection">确定</el-button>
+        </div>
+    </div>
+}
+
+@section script {
+
+    <script>
+        (async function () {
+            const { createApp, ref, reactive, onMounted, nextTick, onBeforeUnmount, computed } = Vue;
+
+            // ====== 1) EleForm class 获取：eleui.js 是打包 UMD 产物，最终挂到 window.EleForm
+            //         （源码 /eleui/EleUIJs/EleForm.js 没有发布成静态文件，直接 import 会 404） ======
+            const waitEleFormReady = (timeoutMs = 10000) => new Promise((resolve, reject) => {
+                const t0 = Date.now();
+                const check = () => {
+                    const w = (typeof window !== 'undefined') ? window : null;
+                    const e = w?.EleForm;
+                    if (typeof e === 'function') return resolve(e);
+                    if (Date.now() - t0 > timeoutMs) return reject(new Error('等待 EleForm（eleui.js）加载超时'));
+                    setTimeout(check, 80);
+                };
+                check();
+            });
+            let EleForm = null;
+            try {
+                EleForm = await waitEleFormReady();
+            } catch (e) {
+                console.error('EleForm 加载失败，请刷新重试', e);
+                try { if (ElementPlus?.ElMessage?.error) ElementPlus.ElMessage.error('控件初始化失败，请刷新页面'); } catch (_) {}
+                return;
+            }
+            if (!EleForm || typeof EleForm !== 'function') return;
+
+            const csrfToken = (typeof Utils !== 'undefined' && Utils.getCsrfToken) ? Utils.getCsrfToken() : '';
+            const post = async (url, payload) => {
+                const headers = { 'Content-Type': 'application/json' };
+                if (csrfToken) headers['RequestVerificationToken'] = csrfToken;
+                const res = await axios.post(url, payload, { headers });
+                return res ? res.data : null;
+            };
+            const get = async (url) => {
+                const res = await axios.get(url);
+                return res ? res.data : null;
+            };
+            const currentUrlInfo = () => {
+                const url = new URL(window.location.href);
+                return { pathname: url.pathname, params: url.searchParams };
+            };
+            const buildQs = (o) => {
+                const p = new URLSearchParams();
+                Object.keys(o || {}).forEach(k => {
+                    const v = o[k];
+                    if (v === null || v === undefined || v === '') return;
+                    if (Array.isArray(v)) v.forEach(vi => p.append(k, String(vi)));
+                    else p.set(k, String(v));
+                });
+                return p.toString();
+            };
+
+            const app = createApp({
+                setup() {
+                    const TASK_ID = @taskId;
+                    const Search = (typeof ElementPlusIconsVue !== 'undefined') ? ElementPlusIconsVue.Search : null;
+
+                    const candTableRef = ref(null);
+                    const selTableRef = ref(null);
+
+                    // ====== 2) 构造 EleForm：字段严格对齐 TagHelper 输出的 v-model（form.xxx） ======
+                    const defaultModel = {
+                        name: '', code: '', socialCreditCode: '', socialCreditId: '',
+                        address: '', dutyMan: '',
+                        objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
+                        dutyOrgId: null, dutyOrgIds: [],
+                        checkerId: null, checkerName: '',
+                        tagIds: []
+                    };
+                    const eleForm = new EleForm(defaultModel, { dataHandler: null, saveHandler: null });
+
+                    const form    = eleForm.form;    // 模板里 v-model="form.xxx" 连的就是这个 ref（Vue 自动解包 .value）
+                    const filters = eleForm.form;    // 兼容老的 filters.xxx 上下文
+                    const options = eleForm.options; // getTreePickerView 读树节点显示名的缓存（必须先 fetchOptions 拉满）
+
+                    // 候选（左侧）
+                    const candRows = ref([]);
+                    const candTotal = ref(0);
+                    const candPageIndex = ref(0);
+                    const candPageSize = ref(50);
+                    const selectedCands = ref([]);
+
+                    // 当前选择（右侧）
+                    const selRows = ref([]);
+                    const selectedSels = ref([]);
+
+                    // ====== 3) postMessage：官方 handle + 兜底（网格员 pickerVisible 未开时也能写回） ======
+                    const pickerHandler = (e) => eleForm.handlePickerMessage(e);
+                    const fallbackPickerHandler = (e) => {
+                        const d = e?.data;
+                        if (!d || typeof d !== 'object') return;
+                        if (d.type !== 'ElePicker' && d.type !== 'user-selected') return;
+                        const rows = Array.isArray(d.data) ? d.data :
+                                     Array.isArray(d.data?.rows) ? d.data.rows :
+                                     ((d.id ?? d.data?.id) != null) ? [d.data ?? d] : [];
+                        const r = rows[0]; if (!r) return;
+                        const id = r.id ?? r.Id ?? null;
+                        const name = `${r.realName ?? r.RealName ?? r.displayName ?? r.DisplayName ?? r.name ?? r.Name ?? ''}${r.mobile ? `(${r.mobile})` : ''}`.trim();
+                        if (id != null && id !== '') form.value.checkerId = id;
+                        if (name) form.value.checkerName = name;
+                    };
+
+                    onMounted(async () => {
+                        window.addEventListener('message', pickerHandler);
+                        window.addEventListener('message', fallbackPickerHandler);
+
+                        // ① 拉所有 EleTreePicker 的树：遍历 DOM 中所有带 data-source 的容器，
+                        //   把节点数据填进 eleForm.options.value，否则 getTreePickerView 就算是函数也渲染不出标签。
+                        const treeEls = document.querySelectorAll('[data-source]');
+                        const jobs = [];
+                        treeEls.forEach(el => {
+                            const src = el.getAttribute('data-source');
+                            const key = el.getAttribute('data-key');
+                            const idField = el.getAttribute('data-tree-id-field') || 'id';
+                            const childrenField = el.getAttribute('data-tree-children-field') || 'children';
+                            if (key && src) jobs.push(eleForm.fetchOptions(key, src, idField, childrenField));
+                        });
+                        try { await Promise.all(jobs); } catch (e) { console.warn('[TreePicker] 拉取 options 失败', e); }
+
+                        // ② 清默认值脏数据（把空字符串、0、"null" 等重置成真正的 null）
+                        try { eleForm.sanitizeAllStaticSelectValues?.(); }   catch (_) {}
+                        try { eleForm.sanitizeAllDynamicSelectValues?.(); }  catch (_) {}
+                        try { eleForm.sanitizeAllStaticTreeSelectValues?.(); }   catch (_) {}
+                        try { eleForm.sanitizeAllRemoteTreeSelectValues?.(); }   catch (_) {}
+
+                        // ③ 加载业务
+                        await loadCandidates();
+                        await loadSelected();
+                    });
+                    onBeforeUnmount(() => {
+                        window.removeEventListener('message', pickerHandler);
+                        window.removeEventListener('message', fallbackPickerHandler);
+                    });
+
+                    // ====== 4) 构建查询参数：统一从 form.value 取（ElePicker/EleTreePicker 确定写回这里） ======
+                    function buildFilterQuery() {
+                        const f = form.value || {};
+                        function toNum(v) {
+                            if (v === undefined || v === null || v === '' || v === '0' || v === 0) return null;
+                            const n = Number(v);
+                            return Number.isFinite(n) ? n : null;
+                        }
+                        function toLongList(v) {
+                            const res = [];
+                            if (v == null) return res;
+                            if (Array.isArray(v)) for (const x of v) { const n = toNum(x); if (n != null) res.push(n); }
+                            else if (typeof v === 'string') for (const seg of v.split(/[,;|]/)) { const n = toNum(seg.trim()); if (n != null) res.push(n); }
+                            else { const n = toNum(v); if (n != null) res.push(n); }
+                            return Array.from(new Set(res));
+                        }
+                        const str = (k) => {
+                            const v = f[k]; return (v != null && String(v).trim() !== '') ? String(v).trim() : '';
+                        };
+                        const en = (k) => {
+                            const v = f[k]; if (v == null || v === '') return null;
+                            const s = String(v).trim();
+                            if (s === '' || s.toLowerCase() === 'null' || s === '0') return null;
+                            const n = Number(s); return Number.isFinite(n) ? n : null;
+                        };
+
+                        const data = {
+                            taskId: TASK_ID,
+                            onlyUnselected: 'true',
+                            PageIndex: String(candPageIndex.value),
+                            PageSize: String(candPageSize.value),
+                            SortField: 'Id',
+                            SortDirection: 'DESC'
+                        };
+                        const vName = str('name');                 if (vName) data.name = vName;
+                        const vCode = str('code');                 if (vCode) data.code = vCode;
+                        const vSocial = str('socialCreditCode') || str('socialCreditId'); if (vSocial) data.socialCreditCode = vSocial;
+                        const vAddr = str('address');              if (vAddr) data.address = vAddr;
+                        const vDuty = str('dutyMan');              if (vDuty) data.dutyMan = vDuty;
+                        const vType = en('objectType');            if (vType != null) data.objectType = String(vType);
+                        const vScale = en('scale');                if (vScale != null) data.scale = String(vScale);
+                        const vRisk = en('riskLevel');             if (vRisk != null) data.riskLevel = String(vRisk);
+                        const vInd = en('industryType');           if (vInd != null) data.industryType = String(vInd);
+                        const vScope = en('scope');                if (vScope != null) data.scope = String(vScope);
+
+                        const checkerId = toNum(f.checkerId);      if (checkerId != null) data.checkerId = String(checkerId);
+
+                        let dutyList = toLongList(f.dutyOrgIds);
+                        const singleDuty = toNum(f.dutyOrgId);
+                        if (singleDuty != null && !dutyList.includes(singleDuty)) dutyList.push(singleDuty);
+                        if (dutyList.length) data.dutyOrgIds = dutyList;
+
+                        const tagList = toLongList(f.tagIds);
+                        if (tagList.length) data.tagIds = tagList;
+
+                        return buildQs(data);
+                    }
+
+                    async function loadCandidates() {
+                        try {
+                            const qs = buildFilterQuery();
+                            const { pathname } = currentUrlInfo();
+                            const resp = await get(`${pathname}?handler=SearchResults&${qs}`);
+                            if (resp && resp.code === 0) {
+                                candRows.value = Array.isArray(resp.data) ? resp.data : [];
+                                candTotal.value = (resp?.pager && Number.isFinite(resp.pager.total)) ? Number(resp.pager.total) : candRows.value.length;
+                            } else { candRows.value = []; candTotal.value = 0; }
+                        } catch (e) {
+                            candRows.value = []; candTotal.value = 0;
+                            ElementPlus?.ElMessage?.error?.('加载候选对象失败');
+                        }
+                    }
+
+                    async function loadSelected() {
+                        try {
+                            const { pathname } = currentUrlInfo();
+                            const resp = await get(`${pathname}?handler=SelectedData&taskId=${TASK_ID}&PageIndex=0&PageSize=2000&SortField=SortId&SortDirection=ASC`);
+                            if (resp && resp.code === 0) {
+                                const list = Array.isArray(resp.data) ? resp.data : [];
+                                selRows.value = list.sort((a, b) => (a.sortId || 0) - (b.sortId || 0));
+                            } else selRows.value = [];
+                        } catch (e) {
+                            selRows.value = [];
+                            ElementPlus?.ElMessage?.error?.('加载当前选择失败');
+                        }
+                    }
+
+                    function searchCandidates() { candPageIndex.value = 0; loadCandidates(); }
+                    function resetCandidates() {
+                        Object.assign(form.value, {
+                            name: '', code: '', socialCreditCode: '', socialCreditId: '', address: '', dutyMan: '',
+                            objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
+                            dutyOrgId: null, dutyOrgIds: [],
+                            checkerId: null, checkerName: '',
+                            tagIds: []
+                        });
+                        candPageIndex.value = 0; loadCandidates();
+                    }
+
+                    function onCandPageChange(val)    { candPageIndex.value = Math.max(0, Number(val) - 1); loadCandidates(); }
+                    function onCandSelectionChange(rs) { selectedCands.value = rs || []; }
+                    function onSelSelectionChange(rs)  { selectedSels.value  = rs || []; }
+
+                    // ====== 5) 点击左表行切换勾选 ======
+                    function onCandRowClick(row, column, event) {
+                        const t = event?.target;
+                        if (t && typeof t.className === 'string' && /(^|\s)el-checkbox(\s|_|$)/i.test(t.className)) return;
+                        if (!candTableRef.value || typeof candTableRef.value.toggleRowSelection !== 'function') return;
+                        const selected = (selectedCands.value || []).some(x => x && row && x.id === row.id);
+                        try { candTableRef.value.toggleRowSelection(row, !selected); } catch (_) {}
+                    }
+
+                    // ====== 6) 双列表增删移 ======
+                    function addSelectedCandidates() {
+                        const toAdd = (selectedCands.value || []).filter(Boolean);
+                        if (!toAdd.length) { ElementPlus.ElMessage.warning('请先在左侧「查询结果」中勾选对象'); return; }
+                        const existingIds = new Set(selRows.value.map(r => r.objectId).filter(Boolean));
+                        const added = [];
+                        toAdd.forEach(c => {
+                            if (!c?.id || existingIds.has(c.id)) return;
+                            added.push({
+                                id: 0, taskId: TASK_ID, objectId: c.id,
+                                sortId: (selRows.value.length + added.length + 1) * 10,
+                                isFinished: false,
+                                objectName: c.name || '', dutyOrgName: c.dutyOrgName || '', checkerName: c.checkerName || '',
+                                statusName: '未完成'
+                            });
+                            existingIds.add(c.id);
+                        });
+                        if (!added.length) { ElementPlus.ElMessage.info('勾选对象已在右侧「当前选择」中'); return; }
+                        selRows.value = [...selRows.value, ...added];
+                        normalizeSortId();
+                        ElementPlus.ElMessage.success(`已加入 ${added.length} 条到当前选择`);
+                        try { candTableRef.value.clearSelection?.(); } catch (_) {}
+                    }
+                    function removeSelectedFromRight() {
+                        const toRemove = (selectedSels.value || []).filter(Boolean);
+                        if (!toRemove.length) { ElementPlus.ElMessage.warning('请先在右侧「当前选择」中勾选要移除的行'); return; }
+                        const removeIds = new Set(toRemove.map(r => r.objectId).filter(Boolean));
+                        selRows.value = selRows.value.filter(r => !removeIds.has(r.objectId));
+                        normalizeSortId();
+                        ElementPlus.ElMessage.success(`已移除 ${toRemove.length} 条`);
+                        try { selTableRef.value.clearSelection?.(); } catch (_) {}
+                    }
+                    function removeSelectedRows() { removeSelectedFromRight(); }
+
+                    function sortedSelIdx(desc = false) {
+                        const ids = new Set((selectedSels.value || []).map(r => r.objectId).filter(Boolean));
+                        const arr = []; selRows.value.forEach((r, i) => { if (r && ids.has(r.objectId)) arr.push(i); });
+                        arr.sort((a, b) => desc ? b - a : a - b); return arr;
+                    }
+                    function restoreSelByObjectId() {
+                        const ids = new Set((selectedSels.value || []).map(r => r.objectId).filter(Boolean));
+                        if (!selTableRef.value) return;
+                        nextTick(() => {
+                            try { selTableRef.value.clearSelection?.(); } catch (_) {}
+                            selRows.value.forEach(r => {
+                                if (r && ids.has(r.objectId)) { try { selTableRef.value.toggleRowSelection(r, true); } catch (_) {} }
+                            });
+                        });
+                    }
+                    function moveRowUp() {
+                        const rows = selRows.value, idxs = sortedSelIdx();
+                        if (!idxs.length) { ElementPlus.ElMessage.warning('请先在右侧「当前选择」中勾选要上移的行'); return; }
+                        const nr = rows.slice(); let moved = 0;
+                        for (let i = 0; i < idxs.length; i++) {
+                            const idx = idxs[i];
+                            if (idx <= 0 || (i > 0 && idxs[i - 1] + 1 === idx)) continue;
+                            [nr[idx - 1], nr[idx]] = [nr[idx], nr[idx - 1]]; moved++;
+                        }
+                        if (!moved) { ElementPlus.ElMessage.info('无法继续上移'); return; }
+                        selRows.value = nr; normalizeSortId(); restoreSelByObjectId();
+                    }
+                    function moveRowDown() {
+                        const rows = selRows.value, idxs = sortedSelIdx(true);
+                        if (!idxs.length) { ElementPlus.ElMessage.warning('请先在右侧「当前选择」中勾选要下移的行'); return; }
+                        const nr = rows.slice(); let moved = 0;
+                        for (let i = 0; i < idxs.length; i++) {
+                            const idx = idxs[i];
+                            if (idx >= nr.length - 1) continue;
+                            if (i > 0 && idxs[i - 1] - 1 === idx) continue;
+                            [nr[idx + 1], nr[idx]] = [nr[idx], nr[idx + 1]]; moved++;
+                        }
+                        if (!moved) { ElementPlus.ElMessage.info('无法继续下移'); return; }
+                        selRows.value = nr; normalizeSortId(); restoreSelByObjectId();
+                    }
+                    function normalizeSortId() { selRows.value.forEach((r, i) => { r.sortId = (i + 1) * 10; }); }
+
+                    // ====== 7) 保存 / 关闭 ======
+                    async function onSaveSelection() {
+                        try {
+                            const objectIds = selRows.value.map(r => r.objectId).filter(id => id && id > 0);
+                            const { pathname } = currentUrlInfo();
+                            const resp = await post(`${pathname}?handler=SaveSelection`, { taskId: TASK_ID, objectIds });
+                            if (typeof Utils !== 'undefined' && typeof Utils.applyClientCommands === 'function') {
+                                await Utils.applyClientCommands(resp);
+                            }
+                            if (!resp || resp.code !== 0) ElementPlus.ElMessage.error((resp && resp.message) || '保存失败');
+                        } catch (e) {
+                            console.error(e);
+                            ElementPlus.ElMessage.error('保存失败：' + (e?.message || ''));
+                        }
+                    }
+                    function onClose() {
+                        try {
+                            if (typeof Utils !== 'undefined' && typeof Utils.applyClientCommands === 'function') {
+                                Utils.applyClientCommands([{ command: 'CloseDrawer', args: null }]);
+                                return;
+                            }
+                        } catch (_) {}
+                        if (window.history && window.history.length > 1) window.history.back();
+                    }
+
+                    // ====== 8) EleUI 标准方法：补齐 postHandler / invokeCommand / resetFilters / loadData / collectFilterDefaults
+                    //         让 EleButton 的 Command=Search/Reset、Handler=Search/Reset 写法能正常工作。
+                    //         实现完全对齐打包脚本 eleui.js 里 EleTable/EleForm 的官方分支（L69771 附近的 invokeCommand）。
+                    // ======
+                    // 收集 DOM 上 [data-filter-default] 作为初值快照（EleUI 官方 resetFilters 调用 collectFilterDefaults）
+                    function collectFilterDefaults(hostElOrSelector) {
+                        const host = typeof hostElOrSelector === 'string' && hostElOrSelector
+                            ? document.querySelector(hostElOrSelector)
+                            : (hostElOrSelector || document.querySelector('#checkTaskObjectsApp'));
+                        const snap = {};
+                        if (!host) return snap;
+                        host.querySelectorAll('[data-filter-default]').forEach(el => {
+                            const key = el.getAttribute('data-filter-key') || el.getAttribute('data-key')
+                                || el.getAttribute('data-tree-model') || el.getAttribute('data-ele-field');
+                            const raw = el.getAttribute('data-filter-default');
+                            if (!key || raw == null) return;
+                            let v = raw;
+                            if (raw.startsWith('{') || raw.startsWith('[')) {
+                                try { v = JSON.parse(raw); } catch { v = raw; }
+                            } else if (raw === '') {
+                                v = '';
+                            } else if (!isNaN(Number(raw)) && raw.trim() !== '') {
+                                const n = Number(raw);
+                                v = Number.isFinite(n) ? n : raw;
+                            } else if (raw.toLowerCase() === 'true') { v = true; }
+                              else if (raw.toLowerCase() === 'false') { v = false; }
+                            // 多选 Id 数组：data-filter-default="1,2,3"（EleTreePicker 默认值格式）
+                            if (typeof v === 'string' && /^-?\d+(,-?\d+)+$/.test(v)) {
+                                const arr = v.split(',').map(s => s.trim()).filter(s => s !== '').map(s => Number(s)).filter(n => Number.isFinite(n));
+                                if (arr.length > 0) v = arr;
+                            }
+                            snap[key] = v;
+                        });
+                        return snap;
+                    }
+                    let _snapshotDefaults = null;
+                    // 加载数据（官方 loadData 语义：Search/Data 分支最终都走这个）
+                    async function loadData(opts) {
+                        const silent = !!(opts && opts.silent);
+                        if (opts && opts.pageIndex != null) candPageIndex.value = Number(opts.pageIndex) || 1;
+                        await loadCandidates({ silent });
+                    }
+                    // 官方 invokeCommand 分支：Reset/Search/Data 对应动作
+                    async function invokeCommand(name, evt) {
+                        if (!name) return;
+                        const n = String(name).trim();
+                        const low = n.toLowerCase();
+                        if (n === 'Reset' || low === 'reset') {
+                            return typeof resetFilters === 'function' ? resetFilters() : loadCandidates();
+                        }
+                        if (n === 'Data') return loadData();
+                        if (low === 'search') { candPageIndex.value = 1; return loadCandidates(); }
+                        if (low === 'save' || n === 'SaveSelection') return onSaveSelection();
+                        if (low === 'close' || n === 'Cancel') return onClose();
+                        return;
+                    }
+                    // 官方 resetFilters：初值快照 → 写回 form.value → 重新加载
+                    async function resetFilters() {
+                        if (!_snapshotDefaults || typeof _snapshotDefaults !== 'object') {
+                            try { _snapshotDefaults = collectFilterDefaults('#checkTaskObjectsApp'); }
+                            catch { _snapshotDefaults = {}; }
+                        }
+                        // 1) 先清空：ElePicker/EleTreePicker 的字段都还原为空/空数组
+                        const resetObj = {
+                            name: '', code: '', socialCreditCode: '', address: '', dutyMan: '',
+                            objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
+                            dutyOrgId: null, dutyOrgIds: [],
+                            checkerId: null, checkerName: '',
+                            tagIds: [],
+                            taskId: TASK_ID,
+                            onlyUnselected: true,
+                        };
+                        Object.assign(form.value, resetObj);
+                        // 2) 再还原 data-filter-default（比如 URL 带了初值，TagHelper 会把它写到 DOM data-filter-default 上）
+                        if (_snapshotDefaults && typeof _snapshotDefaults === 'object') {
+                            for (const [k, v] of Object.entries(_snapshotDefaults)) {
+                                if (v != null && v !== '' && (!(Array.isArray(v) && v.length === 0))) {
+                                    form.value[k] = v;
+                                }
+                            }
+                        }
+                        candPageIndex.value = 1;
+                        await loadCandidates();
+                    }
+                    // 把 PayloadKinds（'FilterInfo|PageInfo|SelectedRows|...'）展开成 envelope 字段
+                    function applyPayloadKinds(payloadKinds) {
+                        const hasAny = typeof payloadKinds === 'string' && payloadKinds.trim() !== '';
+                        const kinds = hasAny ? payloadKinds.split('|').map(s => s.trim()).filter(Boolean) : [];
+                        function has(k) { return !hasAny || kinds.indexOf(k) >= 0; }
+                        const envelope = {};
+                        if (has('PageInfo')) {
+                            envelope.pageIndex = Number(candPageIndex.value) || 1;
+                            envelope.pageSize  = Number(candPageSize.value)  || 20;
+                            envelope.sortField = 'Id';
+                            envelope.sortDirection = 'DESC';
+                        }
+                        if (has('FilterInfo')) {
+                            const fv = JSON.parse(JSON.stringify(form.value || {}));
+                            if (!fv.taskId) fv.taskId = TASK_ID;
+                            if (fv.onlyUnselected == null) fv.onlyUnselected = true;
+                            envelope.filters = fv;
+                        } else {
+                            envelope.filters = { taskId: TASK_ID, onlyUnselected: true };
+                        }
+                        if (has('SelectedRows')) {
+                            envelope.selectedRows = Array.isArray(selectedCands.value) ? selectedCands.value : [];
+                            envelope.selectedSels = Array.isArray(selectedSels.value) ? selectedSels.value : [];
+                        }
+                        if (has('CurrentRow')) {
+                            envelope.currentRow = null;
+                        }
+                        envelope.payloadKinds = hasAny ? payloadKinds : 'FilterInfo|PageInfo';
+                        return envelope;
+                    }
+                    // 官方 postHandler：POST `?handler=${name}`，body = { pageInfo + filterInfo + payload }
+                    async function postHandler(name, payloadOrKinds) {
+                        const handler = typeof name === 'string' && name.trim() !== '' ? name.trim() : 'Data';
+                        const qs = handler.startsWith('?') ? handler : '?handler=' + encodeURIComponent(handler);
+                        const { pathname } = currentUrlInfo();
+                        const url = pathname + qs;
+                        let payload;
+                        if (typeof payloadOrKinds === 'string') {
+                            payload = applyPayloadKinds(payloadOrKinds);
+                        } else if (payloadOrKinds && typeof payloadOrKinds === 'object') {
+                            payload = Object.assign(applyPayloadKinds(payloadOrKinds.payloadKinds || 'FilterInfo|PageInfo'),
+                                                    { payload: payloadOrKinds });
+                        } else {
+                            payload = applyPayloadKinds('FilterInfo|PageInfo');
+                        }
+                        let resp = null;
+                        try {
+                            resp = await post(url, payload);
+                        } catch (e) {
+                            console.error('[postHandler] 请求失败：', name, e);
+                            ElementPlus?.ElMessage?.error?.('请求失败：' + (e?.message || ''));
+                            return null;
+                        }
+                        // 标准命令管道：EleUI 的 EleHandler.BuildCommandsResult 返回的是 commands 数组
+                        let commands = null;
+                        if (resp && typeof resp === 'object') {
+                            if (Array.isArray(resp)) commands = resp;
+                            else if (Array.isArray(resp.commands)) commands = resp.commands;
+                            else if (Array.isArray(resp.data)) commands = resp.data;
+                            else if (resp.data && Array.isArray(resp.data.commands)) commands = resp.data.commands;
+                        }
+                        if (commands && commands.length > 0) {
+                            try {
+                                if (typeof Utils !== 'undefined' && typeof Utils.applyClientCommands === 'function') {
+                                    await Utils.applyClientCommands(commands);
+                                }
+                            } catch (e) { console.warn('[postHandler] applyClientCommands 异常', e); }
+                        }
+                        // Search/Reset 特殊分支：无论是否有 commands，都重新加载候选数据
+                        const low = handler.toLowerCase();
+                        if (low === '?handler=search' || low === 'search' || handler === 'Search') {
+                            await loadCandidates();
+                        } else if (low === '?handler=reset' || low === 'reset' || handler === 'Reset') {
+                            // Reset 的清空已在 resetFilters → postHandler('Reset') 前做过，这里只保证 reload
+                            await loadCandidates();
+                        }
+                        return resp;
+                    }
+
+                    // ====== 8) setup return：按 TagHelper 模板要求的顶级名字，一一对应 EleForm 实例上的字段/方法 ======
+                    return {
+                        // A. EleForm TagHelper 输出的 v-model 要的容器名（注意：不要把无关的 component 变量塞这里，避免模板编译误识别）
+                        form,                               // v-model="form.name" 等
+                        filters,                            // 兼容老的 filters.xxx 上下文
+                        options,                            // getTreePickerView 内部读 options.value[fieldKey] 渲染显示名
+                        filter: form.value,                 // 兼容旧代码读 filter.xxx
+                        formRef: eleForm.formRef,
+                        readOnly: eleForm.readOnly,
+
+                        // B. EleUI 标准命令管道（EleButton Command=Search/Reset、Handler=Search/Reset 走这套）
+                        postHandler,
+                        invokeCommand,
+                        resetFilters,
+                        loadData,
+                        collectFilterDefaults,
+
+                        // C. ElePicker 方法（ElePicker TagHelper 模板里直接调用这些顶级名字，少一个就控制台报 xxx is not a function）
+                        openPicker:             (...a) => eleForm.openPicker(...a),
+                        clearPicker:            (...a) => eleForm.clearPicker(...a),
+                        handlePickerMessage:    (...a) => eleForm.handlePickerMessage(...a),
+                        buildPickerUrl:         (...a) => typeof eleForm.buildPickerUrl === 'function'         ? eleForm.buildPickerUrl(...a)         : '',
+                        resolvePickerCloseData: (...a) => typeof eleForm.resolvePickerCloseData === 'function' ? eleForm.resolvePickerCloseData(...a)   : null,
+
+                        // D. EleTreePicker 方法（同上，少一个网格/标签区域就显示空红圈）
+                        openTreePicker:          (...a) => eleForm.openTreePicker(...a),
+                        clearTreePicker:         (...a) => eleForm.clearTreePicker(...a),
+                        getTreePickerView:       (...a) => eleForm.getTreePickerView(...a),
+                        flattenTreeNodes:        (...a) => typeof eleForm.flattenTreeNodes === 'function'        ? eleForm.flattenTreeNodes(...a)        : [],
+                        normalizeTreePickerValue:(...a) => typeof eleForm.normalizeTreePickerValue === 'function'? eleForm.normalizeTreePickerValue(...a): null,
+                        notifyTreePickerChanged: (...a) => { if (typeof eleForm.notifyTreePickerChanged === 'function') eleForm.notifyTreePickerChanged(...a); },
+
+                        // E. 控件联动短辅助：EleFormControl / EleTreePicker / ElePicker 的模板里统一用这两个函数，
+                        //    替代一长串 (typeof resolveControlDisabled === 'function' ? x() : base) 的嵌套三元表达式 ——
+                        //    后者在 Vue 3 模板 strict 编译器里非常容易触发 compiler-57 SyntaxError。
+                        $ctrlDisabled: (target, baseVal) => {
+                            if (typeof resolveControlDisabled === 'function') {
+                                try { return !!resolveControlDisabled(target, baseVal); }
+                                catch (_) { return !!baseVal; }
+                            }
+                            return !!baseVal;
+                        },
+                        $ctrlVisible: (target, defaultVal) => {
+                            const def = defaultVal == null ? true : defaultVal;
+                            if (typeof resolveControlVisible === 'function') {
+                                try { var r = resolveControlVisible(target, def); return r == null ? def : !!r; }
+                                catch (_) { return def; }
+                            }
+                            return !!def;
+                        },
+                        // EleFormControl 里仍然写了两个旧名做 fallback；保留原行为避免旧页面受影响
+                        resolveControlVisible:  (_t, def) => def == null ? true : def,
+                        resolveControlDisabled: (_t, def) => !!def,
+
+                        // F. 业务（表格、分页、双列表操作、保存关闭）
+                        candTableRef, selTableRef,
+                        candRows, candTotal, candPageIndex, candPageSize, selectedCands,
+                        selRows, selectedSels,
+                        searchCandidates, resetCandidates,
+                        onCandPageChange, onCandSelectionChange, onSelSelectionChange,
+                        onCandRowClick,
+                        addSelectedCandidates, removeSelectedFromRight, removeSelectedRows,
+                        moveRowUp, moveRowDown,
+                        onSaveSelection, onClose,
+                    };
+                }
+            });
+
+            app.use(ElementPlus);
+            if (typeof ElementPlusIconsVue !== 'undefined') {
+                for (const [key, comp] of Object.entries(ElementPlusIconsVue)) app.component(key, comp);
+            }
+
+            // ========== debug-point btn-syntax-check ==========
+            // 页面最开头已同步加载 /_dbg/checktaskobjects-whitescreen.js：
+            //  1) 页面一加载就挂 window.onerror / unhandledrejection（Vue compiler-57 throw 前就有）
+            //  2) DOMContentLoaded 自动做 pre-mount 属性扫描
+            // 这里再挂 app.config.errorHandler + post-mount 扫描（app.mount 之前）
+            try {
+                if (typeof window !== 'undefined' && typeof window.__AP8_dbg_install === 'function') {
+                    window.__AP8_dbg_install(app);
+                } else {
+                    console.warn('[AP8.dbg] __AP8_dbg_install 不存在：请确认 /_dbg/checktaskobjects-whitescreen.js 已加载');
+                }
+            } catch (e) { console.warn('[AP8.dbg.install]', e && e.message); }
+
+            app.mount('#checkTaskObjectsApp');
+        })();
+    </script>
+
+    <style>
+        #checkTaskObjectsApp > * { box-sizing: border-box; }
+        #checkTaskObjectsApp { box-sizing: border-box; }
+
+        /* 过滤条件控件统一宽度 + form-item 自身统一宽 */
+        .filter-form-uniform .el-form-item {
+            width: 290px;
+            max-width: 100%;
+            margin-bottom: 10px;
+            margin-right: 10px;
+        }
+        .filter-form-uniform .filter-control,
+        .filter-form-uniform .el-input.filter-control,
+        .filter-form-uniform .el-select.filter-control {
+            width: 100% !important;
+        }
+        /* 查询/重置按钮这一行宽一点，放两个按钮 + 靠右 */
+        .filter-form-uniform .actions-row {
+            width: 220px !important;
+            justify-content: flex-end;
+        }
+
+        /* 让 el-input/el-select 在 inline form 中铺满 */
+        .filter-form-uniform .el-form-item__content {
+            width: 100% !important;
+            max-width: 100%;
+        }
+        .filter-form-uniform .el-input-group,
+        .filter-form-uniform .el-select {
+            width: 100%;
+        }
+
+        #checkTaskObjectsApp .el-form-item:last-child { margin-bottom: 0; }
+        #checkTaskObjectsApp .el-table { font-size: 12px; }
+        #checkTaskObjectsApp .el-table .el-table__row { cursor: pointer; }
+    </style>
+}

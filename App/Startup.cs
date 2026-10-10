@@ -129,77 +129,13 @@ namespace App
                 }
             };
 
-            // 数据权限范围：根据用户角色、组织、责任数据收敛。
-            EntityConfig.Instance.OnGetDataAccessScope += () =>
-            {
-                var db = Common.GetDbConnection();
-                var userId = Auth.GetUserId();
-                if (db == null || !userId.HasValue)
-                    return new DataAccessScope { Enabled = false, AllowAll = true };
+            // 说明：已移除全局自动数据权限过滤器（原 OnGetDataAccessScope + DataAccessFilter.Apply）。
+            // 数据收敛不再按角色（DataAll/DataUnit/DataDuty）透明注入，
+            // 各页面/接口需自行通过 OrgScopeHelper.FilterByOrgScope / GetAuthOrgScopeIds
+            // 显式按当前用户 AuthOrgId 子树过滤（见 EntityBase<T>.DataSet = Set）。
 
-                var user = db.Users.FirstOrDefault(t => t.Id == userId.Value);
-                if (user == null)
-                    return new DataAccessScope { Enabled = false, AllowAll = true };
-
-                var hasAll = false;
-                var hasOrg = false;
-                var hasOwn = false;
-
-                if (string.Equals(user.Name, "admin", StringComparison.OrdinalIgnoreCase))
-                {
-                    hasAll = true;
-                    hasOrg = true;
-                    hasOwn = true;
-                }
-                else
-                {
-                    var roleIds = db.Users
-                        .Where(t => t.Id == user.Id)
-                        .SelectMany(t => t.Roles)
-                        .Select(t => t.Id)
-                        .ToList();
-
-                    var powerIds = db.RolePowers
-                        .Where(t => roleIds.Contains(t.RoleId))
-                        .Select(t => t.PowerId)
-                        .ToList();
-
-                    hasAll = powerIds.Contains(Power.DataAll);
-                    hasOrg = powerIds.Contains(Power.DataUnit);
-                    hasOwn = powerIds.Contains(Power.DataDuty);
-                }
-
-                // 无数据权限标识时默认按责任数据收敛，避免越权。
-                if (!hasAll && !hasOrg && !hasOwn)
-                    hasOwn = true;
-
-                var orgId = user.OrgId;
-                var authOrgIds = user.AuthOrgIds ?? new List<long>();
-                if (authOrgIds.Count == 0)
-                {
-                    // 兼容：直接用当前 db 上下文查 UserOrgs
-                    authOrgIds = db.UserOrgs
-                        .Where(t => t.UserId == user.Id && t.OrgId != null)
-                        .Select(t => t.OrgId.Value)
-                        .Distinct()
-                        .ToList();
-                }
-                long? primaryAuthOrgId = authOrgIds.FirstOrDefault(t => t > 0);
-                if (primaryAuthOrgId <= 0) primaryAuthOrgId = null;
-
-                return new DataAccessScope
-                {
-                    Enabled = true,
-                    AllowAll = hasAll,
-                    AllowOrg = hasOrg,
-                    AllowOwn = hasOwn,
-                    UserId = user.Id,
-                    OrgId = primaryAuthOrgId ?? orgId,
-                    IncludeSubOrgs = true,
-                };
-            };
-
-            // 数据审计权限（看不懂，和OnGetDataAccessScope 的区别？）
+            // 数据审计上下文：记录"操作者/操作组织"用于写库时的审计字段（OrgId 自动回填）。
+            // 组织取法：当前用户 AuthOrgId（授权组织）优先 → 未配置则退回 OrgId（所属部门）。
             EntityConfig.Instance.OnGetDataAuditScope += () =>
             {
                 var db = Common.GetDbConnection();
@@ -211,24 +147,12 @@ namespace App
                 if (user == null)
                     return new DataAuditScope { Enabled = false };
 
-                // 审计 OrgId：优先用 AuthOrgIds.First 或 UserOrgs 首个，空时用所属组织
-                var auditAuthOrgIds = user.AuthOrgIds ?? new List<long>();
-                if (auditAuthOrgIds.Count == 0)
-                {
-                    auditAuthOrgIds = db.UserOrgs
-                        .Where(t => t.UserId == user.Id && t.OrgId != null)
-                        .Select(t => t.OrgId.Value)
-                        .Distinct()
-                        .ToList();
-                }
-                long? auditPrimary = auditAuthOrgIds.FirstOrDefault(t => t > 0);
-                if (auditPrimary <= 0) auditPrimary = null;
-
+                var auditOrgId = user.EffectiveAuthOrgId;
                 return new DataAuditScope
                 {
                     Enabled = true,
                     UserId = user.Id,
-                    OrgId = auditPrimary ?? user.OrgId,
+                    OrgId = auditOrgId,
                 };
             };
         }

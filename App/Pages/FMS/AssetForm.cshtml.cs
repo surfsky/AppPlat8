@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.DAL.OA;
+using App.Entities;
 using App.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace App.Pages.OA
         [BindProperty]
         public Asset Item { get; set; }
         public List<App.DAL.Org> OrgTree { get; set; }
-        
+
         public void OnGet()
         {
             OrgTree = App.DAL.Org.GetTree();
@@ -64,6 +65,13 @@ namespace App.Pages.OA
                 var item = Asset.Get(id);
                 if (item == null)
                     return BuildResult(404, "无效参数");
+
+                if (item != null)
+                {
+                    var cu = Auth.GetUser();
+                    if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                        return BuildResult(403, "越权访问");
+                }
                 
                 return BuildResult(0, "success", item.Export());
             }
@@ -79,6 +87,12 @@ namespace App.Pages.OA
                 return BuildResult(403, "无权操作");
 
             Asset item = req.Id > 0 ? Asset.Get(req.Id) : new Asset();
+            if (req.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                    return BuildResult(403, "越权修改");
+            }
             item.Name = req.Name;
             item.Menu = req.Menu;
             item.OrgId = req.OrgId;

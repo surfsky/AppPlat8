@@ -21,7 +21,11 @@ namespace App.Pages.OA
 
         public IActionResult OnGetData(Paging pi, List<DateTime> day, long? orgId, MeetingType? type, string keyword = "")
         {
-            var list = Meeting.Search(day.GetVal(0), day.GetVal(1), orgId, type, keyword)
+            var cu = Auth.GetUser();
+            var q = Meeting.Search(day.GetVal(0), day.GetVal(1), orgId, type, keyword);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q
                 .OrderByDescending(item => item.Day)
                 .ThenByDescending(item => item.Id)
                 .SortPageExport(pi);
@@ -32,7 +36,11 @@ namespace App.Pages.OA
         {
             if (!CheckPower(Power.MeetingExport)) return BuildResult(403, "无权导出");
             var exportPaging = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
-            var list = Meeting.Search(day.GetVal(0), day.GetVal(1), orgId, type, keyword)
+            var cu = Auth.GetUser();
+            var q = Meeting.Search(day.GetVal(0), day.GetVal(1), orgId, type, keyword);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q
                 .OrderByDescending(item => item.Day)
                 .ThenByDescending(item => item.Id)
                 .SortPageExport(exportPaging);
@@ -56,11 +64,16 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0) return BuildResult(400, "参数错误");
             if (!CheckPower(Power.MeetingDelete)) return BuildResult(403, "无权删除");
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var scopeId = cu?.EffectiveAuthOrgId;
             var count = 0;
             foreach (var id in ids)
             {
                 var item = Meeting.Get(id);
                 if (item == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(scopeId, item.OrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
                 item.Delete();
                 count++;
             }

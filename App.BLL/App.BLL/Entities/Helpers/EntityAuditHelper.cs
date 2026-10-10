@@ -23,7 +23,7 @@ namespace App.Entities
         {
             "Log", "History", "Att", "Online",
             "CheckObjectTag", "CheckSheetTag", "CheckTaskTag",  // 多对多关系表，无意义
-            "UserOrg", "RolePower", "RoleMenu",                // 用户/角色 关联表，变更通常由聚合根保存触发，实体内部不会单独 Save
+            "RolePower", "RoleMenu",                            // 角色关联表，变更通常由聚合根保存触发
         };
 
         /// <summary>是否对该类型做 Logs 表审计（写数据库）</summary>

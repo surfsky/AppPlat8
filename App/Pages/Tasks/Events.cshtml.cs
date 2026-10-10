@@ -22,7 +22,6 @@ namespace App.Pages.OA
     {
         public Event Item { get; set; }
         public List<SelectListItem> EventTypes { get; set; }
-
         public void OnGet()
         {
             EventTypes = EventType.Set
@@ -34,7 +33,11 @@ namespace App.Pages.OA
 
         public IActionResult OnGetData(Paging pi, string title, long? typeId, long? orgId, long? publisherId)
         {
-            var list = Event.Search(title, typeId, orgId, publisherId).SortPageExport(pi);
+            var cu = Auth.GetUser();
+            var q = Event.Search(title, typeId, orgId, publisherId);
+            if (!Auth.IsAdmin(cu))
+                q = q.FilterByOrg(cu);
+            var list = q.SortPageExport(pi);
             //EleManager.ShowToast("定时刷新", NotifyType.Info);
             Console.WriteLine("定时刷新" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
             return BuildResult(0, "success", list, pi);
@@ -47,8 +50,17 @@ namespace App.Pages.OA
             if (!CheckPower(Power.EventDelete))
                 return BuildResult(403, "无权操作");
 
+            var cu = Auth.GetUser();
+            var isAdmin = Auth.IsAdmin(cu);
+            var scopeId = cu?.EffectiveAuthOrgId;
             foreach (var id in ids)
+            {
+                var target = Event.Get(id);
+                if (target == null) continue;
+                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                    return BuildResult(403, $"无权删除记录（Id={id}）");
                 Event.Delete(id);
+            }
             return BuildResult(0, "删除成功");
         }
     }

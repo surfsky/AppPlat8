@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.DAL.OA;
+using App.Entities;
 using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +33,12 @@ namespace App.Pages.OA
             {
                 item.Year = DateTime.Now.Year;
             }
+            else
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    return BuildResult(403, "越权访问");
+            }
             return BuildResult(0, "success", item);
         }
 
@@ -41,6 +48,12 @@ namespace App.Pages.OA
                 return BuildResult(400, "参数错误");
 
             var item = req.Id > 0 ? Budget.Get(req.Id) : new Budget();
+            if (req.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                    return BuildResult(403, "越权修改");
+            }
             item.Name = req.Name;
             item.Fee = req.Fee;
             item.Year = req.Year;

@@ -1,10 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 //using System.Data.Entity;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace App.Entities
 {
@@ -23,9 +19,6 @@ namespace App.Entities
         /// <summary>获取数据库事件</summary>
         public event Func<DbContext> OnGetDb;
 
-        /// <summary>获取当前请求的数据访问作用域事件</summary>
-        public event Func<DataAccessScope> OnGetDataAccessScope;
-
         /// <summary>获取当前请求的数据录入审计上下文事件</summary>
         public event Func<DataAuditScope> OnGetDataAuditScope;
 
@@ -37,9 +30,6 @@ namespace App.Entities
         /// 低层 Entity 只负责广播事件；具体副作用一律由宿主决定，保证类库单一性。
         /// </summary>
         public event Action<EntityOp, object, string> OnEntityAudit;
-
-        /// <summary>当前请求的数据访问作用域</summary>
-        public static DataAccessScope DataAccessScope => Instance.OnGetDataAccessScope?.Invoke();
 
         /// <summary>当前请求的数据录入审计上下文</summary>
         public static DataAuditScope DataAuditScope => Instance.OnGetDataAuditScope?.Invoke();

@@ -38,6 +38,12 @@ namespace App.Pages.OA
         public IActionResult OnGetData(long id)
         {
             var item = Event.GetDetail(id) ?? new Event();
+            if (id > 0 && item != null && item.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    return BuildResult(403, "越权访问");
+            }
             return BuildResult(0, "success", item);
         }
 
@@ -47,6 +53,13 @@ namespace App.Pages.OA
                 return BuildResult(400, "参数错误");
 
             var item = req.Id > 0 ? Event.Get(req.Id) : new Event();
+            // 非 admin 修改已有记录先做范围校验
+            if (req.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                    return BuildResult(403, "越权修改");
+            }
             if (item.Id == 0)
             {
                 item.PublisherId = this.GetUserId();

@@ -59,11 +59,14 @@ namespace App.Entities
         //--------------------------------------
         // 数据集
         //--------------------------------------
-        /// <summary>数据集</summary>
+        /// <summary>数据集（原始 DbSet，不再按全局数据权限自动过滤）</summary>
         public static DbSet<T> Set => Db.Set<T>();
 
-        /// <summary>按当前用户数据权限过滤后的数据集</summary>
-        public static IQueryable<T> DataSet => DataAccessFilter.Apply(Set, EntityConfig.DataAccessScope);
+        /// <summary>
+        /// 数据集（与 Set 行为一致，不再自动应用全局 DataAccessFilter）。
+        /// 若需要按当前用户授权组织收敛，请显式调用 OrgScopeHelper.FilterByOrgScope(DataSet)。
+        /// </summary>
+        public static IQueryable<T> DataSet => Set;
 
         /// <summary>有效数据集（逻辑删除统一按 IsDel != true 过滤）</summary>
         public static IQueryable<T> ValidSet

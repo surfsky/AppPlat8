@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
+using App.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -51,6 +52,9 @@ namespace App.Pages.Admin
                 var a = Announce.Get(id);
                 if (a == null)
                     return BuildResult(404, "无效参数");
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, a.OrgId))
+                    return BuildResult(403, "越权访问");
                 return BuildResult(0, "success", a);
             }
         }
@@ -68,6 +72,13 @@ namespace App.Pages.Admin
             var curUser = App.DAL.User.Set.FirstOrDefault(u => u.Name == userName);
 
             Announce a = req.Id == 0 ? new Announce() : Announce.Get(req.Id);
+            // 非全局 admin：修改已有记录必须先做范围校验
+            if (req.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, a?.OrgId))
+                    return BuildResult(403, "越权修改");
+            }
             a.Title = req.Title.Trim();
             a.Author = req.Author;
             a.AuthorId = curUser?.Id;

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
+using App.Entities;
 using App.HttpApi;
 using App.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +36,12 @@ namespace App.Pages.Checks
                 item.CheckDt = DateTime.Now;
                 item.CheckerId = GetUserId();
             }
+            else if (item.Id > 0)
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    return BuildResult(403, "越权访问");
+            }
             return BuildResult(0, "success", item);
         }
 
@@ -48,6 +55,12 @@ namespace App.Pages.Checks
             {
                 item = new Check();
                 item.CreateDt = DateTime.Now;
+            }
+            else
+            {
+                var cu = Auth.GetUser();
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    return BuildResult(403, "越权修改");
             }
 
             item.CheckDt = req.CheckDt;
