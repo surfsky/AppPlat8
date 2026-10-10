@@ -33,8 +33,8 @@
              3) 由于 CheckTaskObjects 的主业务（双列表、保存、分页）仍然跑在 checkTaskObjectsApp 上，
                 所以把 EleForm 的 BuildMode 设置为 None（不生成脚本），所有模型值的初始化/交互都交给外层 app 的 setup 完成。 -->
         <div class="shrink-0 px-3 pt-3 pb-2 border-b border-gray-200 bg-gray-50/60 max-w-full">
-            <div class="rounded-lg border border-gray-300 bg-white p-4">
-                <EleForm BuildMode="None" Model="form" LabelWidth="80px" Class="filter-form-uniform">
+            <div class="rounded-lg border border-gray-300 bg-white p-4 max-h-[45vh] overflow-y-auto">
+                <EleForm BuildMode="None" Model="form" LabelWidth="80px" Class="filter-form-uniform" LabelPosition="None">
                     <EleInput For="Item.Name" Label="名称" VModel="form.name" Placeholder="名称" Clearable="true" Class="filter-control"></EleInput>
                     <EleTreePicker For="DutyOrgIds"
                                    Label="所属网格"
@@ -77,8 +77,11 @@
             </div>
         </div>
 
-        <!-- 中部双列表：左右并排；窄屏自动堆叠 -->
-        <div class="flex-1 min-h-0 w-full max-w-full px-3 py-2 flex flex-col md:flex-row gap-3" style="min-height: 420px;">
+        <!-- 中部双列表：左右并排；窄屏自动堆叠。
+             flex-1 min-h-0：在父 flex-col 中正确收缩（不会把底部按钮顶出视口）；
+             移除固定 min-height:420px 样式，用 min-h-[280px] 保证极矮时仍有一点可视高度，
+             实际高度由 flex-1 分配、el-table 内部自行垂直滚动 -->
+        <div class="flex-1 min-h-0 min-w-0 w-full max-w-full px-3 py-2 flex flex-col md:flex-row gap-3 min-h-[280px]">
             <!-- 左：查询结果 -->
             <div class="w-full md:flex-1 min-h-0 min-w-0 flex flex-col border border-gray-300 rounded-lg bg-white shrink-0">
                 <div class="px-4 py-2.5 text-sm font-bold text-gray-800 border-b border-gray-200 bg-white shrink-0">
@@ -185,8 +188,8 @@
 
         <!-- 底部：确定 / 取消 -->
         <div class="shrink-0 px-4 py-3 border-t border-gray-100 bg-white flex items-center justify-center gap-3">
-            <el-button size="small" @@click="onClose">取消</el-button>
-            <el-button size="small" type="primary" @@click="onSaveSelection">确定</el-button>
+            <el-button size="normal" icon="Check" type="primary" @@click="onSaveSelection">确定</el-button>
+            <el-button size="normal" icon="Close" type="danger" @@click="onClose">取消</el-button>
         </div>
     </div>
 }

@@ -22,6 +22,12 @@ namespace App.EleUI
         [HtmlAttributeName("Label")]         public string Label { get; set; }
         [HtmlAttributeName("Required")]      public bool Required { get; set; }
         [HtmlAttributeName("LabelWidth")]    public string LabelWidth { get; set; } = "100px";
+        /// <summary>
+        /// 单个控件的 Label 位置；默认 null（跟随全局，由父 EleForm 的 LabelPosition 决定）。
+        /// 可选：Left / Right / Top（覆盖全局 label-position）
+        /// None：该控件不显示 Label，且不渲染外层 el-form-item（节省一行，仅在不需要 label / 校验时使用）。
+        /// </summary>
+        [HtmlAttributeName("LabelPosition")] public EleLabelPosition? LabelPosition { get; set; }
         [HtmlAttributeName("Clearable")]     public bool? Clearable { get; set; } = true;
         [HtmlAttributeName("Placeholder")]   public string Placeholder { get; set; } = "";
         [HtmlAttributeName("ColSpan")]       public int? ColSpan { get; set; }
@@ -342,41 +348,66 @@ namespace App.EleUI
         {
             // TryAutoSetLabel has been called in AddCommonAttributes, but RenderWrapper might be called later?
             // Actually ProcessAsync calls AddCommonAttributes then RenderWrapper. So Label should be set.
-            
-            if (!string.IsNullOrEmpty(Label))
-            {
-                var prop = GetPropName();
-                var encodedLabel = WebUtility.HtmlEncode(Label);
-                var rulesAttr = "";
-                if (Required)
-                {
-                    var msg = $"{Label}" + Texts.Current.CannotEmpty;
-                    rulesAttr = $@":rules=""[{{ required: true, message: '{msg}', trigger: 'blur' }}]""";
-                }
-                
-                var labelWidthAttr = !string.IsNullOrEmpty(LabelWidth) ? $@"label-width=""{LabelWidth}""" : "";
-                
-                // Column logic
-                var classAttr = "";
-                if (FillRow)
-                {
-                     classAttr = @" class=""col-span-full""";
-                }
-                else if (ColSpan.HasValue)
-                {
-                     // Simple mapping for 4-col grid
-                     if (ColSpan >= 24)      classAttr = @" class=""col-span-full""";
-                     else if (ColSpan >= 12) classAttr = @" class=""col-span-1 md:col-span-2 lg:col-span-2""";
-                     else if (ColSpan >= 6)  classAttr = @" class=""col-span-1""";
-                }
 
-                output.PreElement.SetHtmlContent($@"<el-form-item prop=""{prop}"" {rulesAttr} {labelWidthAttr}{classAttr}>
+            // 解析 LabelPosition：控件级 > 父 EleForm 全局（ViewData["EleFormLabelPosition"]）> 默认 Left
+            var pos = LabelPosition;
+            if (!pos.HasValue && ViewContext != null
+                && ViewContext.ViewData["EleFormLabelPosition"] is EleLabelPosition parent)
+                pos = parent;
+            if (!pos.HasValue) pos = EleLabelPosition.Left;
+
+            // 1) LabelPosition = None：不渲染外层 el-form-item，也不显示 Label
+            if (pos.Value == EleLabelPosition.None)
+            {
+                // Required 兜底：不挂在 el-form-item 上时，直接加在控件自身（浏览器原生提示 + 仍可被自定义规则捕获）
+                if (Required && !output.Attributes.ContainsName("required"))
+                    output.Attributes.SetAttribute("required", "required");
+                return Task.CompletedTask;
+            }
+
+            // 2) Label 为空时不包 el-form-item（避免空行）
+            if (string.IsNullOrEmpty(Label))
+                return Task.CompletedTask;
+
+            var prop = GetPropName();
+            var encodedLabel = WebUtility.HtmlEncode(Label);
+            var rulesAttr = "";
+            if (Required)
+            {
+                var msg = $"{Label}" + Texts.Current.CannotEmpty;
+                rulesAttr = $@":rules=""[{{ required: true, message: '{msg}', trigger: 'blur' }}]""";
+            }
+
+            var labelWidthAttr = !string.IsNullOrEmpty(LabelWidth) ? $@"label-width=""{LabelWidth}""" : "";
+
+            // 3) 单个控件级 label-position 覆盖：
+            //    - 如果控件用户显式设置了 LabelPosition != None，就写该控件上；
+            //    - 如果是从父 EleForm 继承来的位置，只在 Left/Right/Top 差异时才写（避免在 Left 时写入 Left Left 重复，Right 或 Top 会正确覆盖全局）
+            var lpAttr = "";
+            if (LabelPosition.HasValue && LabelPosition.Value != EleLabelPosition.None)
+            {
+                lpAttr = $" label-position=\"{LabelPosition.Value.ToString().ToLowerInvariant()}\"";
+            }
+
+            // Column logic
+            var classAttr = "";
+            if (FillRow)
+            {
+                 classAttr = @" class=""col-span-full""";
+            }
+            else if (ColSpan.HasValue)
+            {
+                 // Simple mapping for 4-col grid
+                 if (ColSpan >= 24)      classAttr = @" class=""col-span-full""";
+                 else if (ColSpan >= 12) classAttr = @" class=""col-span-1 md:col-span-2 lg:col-span-2""";
+                 else if (ColSpan >= 6)  classAttr = @" class=""col-span-1""";
+            }
+
+            output.PreElement.SetHtmlContent($@"<el-form-item prop=""{prop}"" {rulesAttr} {labelWidthAttr}{lpAttr}{classAttr}>
     <template #label>
         <span class=""block w-full overflow-hidden text-ellipsis whitespace-nowrap"" title=""{encodedLabel}"">{encodedLabel}</span>
     </template>");
-                output.PostElement.SetHtmlContent("</el-form-item>");
-
-            }
+            output.PostElement.SetHtmlContent("</el-form-item>");
 
             return Task.CompletedTask;
         }

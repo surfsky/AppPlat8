@@ -129,7 +129,7 @@ namespace App.Pages.Checks
             return EleHandler.ShowDrawer(
                 title: "检查对象",
                 url: url,
-                size: "95%",
+                size: "100%",
                 closeAction: DrawerCloseAction.RefreshData
             );
         }
@@ -165,7 +165,7 @@ namespace App.Pages.Checks
             return EleHandler.ShowDrawer(
                 title: "附件",
                 url: url,
-                size: "60%",
+                size: "100%",
                 closeAction: DrawerCloseAction.RefreshData
             );
         }

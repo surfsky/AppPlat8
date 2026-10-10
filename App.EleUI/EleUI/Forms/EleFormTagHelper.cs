@@ -10,12 +10,14 @@ namespace App.EleUI
 {
     /// <summary>
     /// 表单标签对齐位置，对应 el-form 的 label-position。
+    /// None：该控件不显示 Label（不渲染外层 el-form-item），仅对单个控件 LabelPosition 属性生效。
     /// </summary>
     public enum EleLabelPosition
     {
         Left,
         Right,
         Top,
+        None,
     }
 
     [HtmlTargetElement("EleForm")]
@@ -34,6 +36,8 @@ namespace App.EleUI
         {
             context.Items["IsEleForm"] = true;
             context.Items["EleFormModel"] = Model;
+            // 将父 EleForm 的全局 LabelPosition 写入 ViewContext.ViewData，供所有子控件（EleInput/EleDatePicker/EleList/…）自动继承
+            if (ViewContext != null) ViewContext.ViewData["EleFormLabelPosition"] = LabelPosition;
             output.TagName = "div";
             output.Attributes.SetAttribute("id", "app");  // TODO：有潜在冲突问题
             output.Attributes.SetAttribute("class", "bg-white p-0 h-full overflow-auto"); // Ensure scrolling
@@ -131,7 +135,12 @@ namespace App.EleUI
 
         private string GetLabelPositionValue()
         {
-            return LabelPosition.ToString().ToLowerInvariant();
+            // 全局 label-position 只接受 left/right/top；
+            // 如果用户把 EleForm 全局 LabelPosition 设置为 None，仍然用 left（不会全局隐藏 Label）
+            // —— None 是「单个控件级」的属性，在 EleFormControl.RenderWrapper / EleList.ProcessAsync 里处理。
+            var v = LabelPosition;
+            if (v == EleLabelPosition.None) v = EleLabelPosition.Left;
+            return v.ToString().ToLowerInvariant();
         }
 
         /// <summary>创建表单页脚HTML</summary>

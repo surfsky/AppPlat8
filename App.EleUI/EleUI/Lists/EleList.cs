@@ -26,6 +26,12 @@ namespace App.EleUI
     {
         [HtmlAttributeName("Label")]           public string Label { get; set; }
         [HtmlAttributeName("LabelWidth")]      public string LabelWidth { get; set; } = "100px";
+        /// <summary>
+        /// 单个列表控件的 Label 位置；默认 null（跟随父 EleForm 全局）。
+        /// Left/Right/Top：单个列表覆盖父级；
+        /// None：不显示 Label，也不渲染外层 el-form-item（节省一行 Label 高度）。
+        /// </summary>
+        [HtmlAttributeName("LabelPosition")]   public EleLabelPosition? LabelPosition { get; set; }
         [HtmlAttributeName("ColSpan")]         public int? ColSpan { get; set; }
         [HtmlAttributeName("FillRow")]         public bool FillRow { get; set; }
         [HtmlAttributeName("ShowHeader")]      public bool? ShowHeader { get; set; }
@@ -114,14 +120,31 @@ namespace App.EleUI
             var endHtml = "";
             if (inForm)
             {
-                var labelText = string.IsNullOrWhiteSpace(Label) ? title : Label.Trim();
-                if (!string.IsNullOrWhiteSpace(labelText))
-                {
-                    var encodedLabel = WebUtility.HtmlEncode(labelText);
-                    var labelWidthAttr = string.IsNullOrWhiteSpace(LabelWidth) ? "" : $" label-width=\"{LabelWidth}\"";
+                // 解析 LabelPosition：控件级 > 父 EleForm 全局（ViewData["EleFormLabelPosition"]）> 默认 Left
+                var pos = LabelPosition;
+                if (!pos.HasValue && ViewContext != null
+                    && ViewContext.ViewData["EleFormLabelPosition"] is EleLabelPosition parent)
+                    pos = parent;
+                if (!pos.HasValue) pos = EleLabelPosition.Left;
 
-                    startHtml = $"<el-form-item label=\"{encodedLabel}\"{labelWidthAttr}>";
-                    endHtml = "</el-form-item>";
+                // LabelPosition=None → 不显示 Label，也不渲染外层 el-form-item
+                if (pos.Value != EleLabelPosition.None)
+                {
+                    var labelText = string.IsNullOrWhiteSpace(Label) ? title : Label.Trim();
+                    if (!string.IsNullOrWhiteSpace(labelText))
+                    {
+                        var encodedLabel = WebUtility.HtmlEncode(labelText);
+                        var labelWidthAttr = string.IsNullOrWhiteSpace(LabelWidth) ? "" : $" label-width=\"{LabelWidth}\"";
+                        // 单个控件级 label-position 覆盖：仅当用户在 EleList 本身上显式设置了 Left/Right/Top 才写
+                        // （从父级继承来的值会全局生效，不需要在每个 el-form-item 上重复写）
+                        var lpAttr = "";
+                        if (LabelPosition.HasValue && LabelPosition.Value != EleLabelPosition.None)
+                        {
+                            lpAttr = $" label-position=\"{LabelPosition.Value.ToString().ToLowerInvariant()}\"";
+                        }
+                        startHtml = $"<el-form-item label=\"{encodedLabel}\"{labelWidthAttr}{lpAttr}>";
+                        endHtml = "</el-form-item>";
+                    }
                 }
             }
 
