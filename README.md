@@ -45,7 +45,7 @@
     # 若端口被占用，查找并杀掉占用端口 6060 的进程
 
    lsof -nPiTCP:6060 -sTCP:LISTEN 2>/dev/null \
-     | awk 'NR>1 && ($9=="127.0.0.1:6060" || $9=="[::1]:6060" || $9=="::1:6060" || $9=="localhost:6060" || $9=="localhost4:6060" || $9=="localhost6:6060") {print $2}' \
+     | awk 'NR>1 && ($9=="127.0.0.1:6060" || $9=="[::1]:6060" || $9=="::1:6060" || $9=="localhost:6060" ) {print $2}' \
      | sort -u \
      | xargs -r -t kill
 
@@ -82,7 +82,7 @@
 1. 数据库迁移: 运行
 
 ```bash
-   dotnet ef migrations add SiteConfigVisitBan --project App/App.csproj --startup-project App/App.csproj
+   dotnet ef migrations add RemoveCheckClosed --project App/App.csproj --startup-project App/App.csproj
 ```
 
 2. 若端口被占用，查找占用 6060 的进程，然后kill

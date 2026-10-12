@@ -31,6 +31,7 @@ namespace App.DAL
         [UI("联系方式")] public string Phone { get; set; }
         [UI("执证日期")] public DateTime? CertDt { get; set; }
         [UI("过期日期")] public DateTime? CertExpireDt { get; set; }
+        [UI("检查对象Id")] public long? CheckObjectId { get; set; }
 
         public virtual CheckObject CheckObject { get; set; }
         public string ContactTypeName => ContactType.GetTitle();
@@ -49,6 +50,10 @@ namespace App.DAL
                 Phone = (mode == ExportMode.Detail) ? this.Phone : this.Phone?.Mask(),
                 CertDt,
                 CertExpireDt,
+                ContactType,
+                ContactTypeName,
+                CheckObjectId,
+                CheckObjectName,
             };
         }
 

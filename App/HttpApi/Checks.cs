@@ -265,7 +265,6 @@ namespace App.API
             target.CheckSheetId = source.CheckSheetId;
             target.CheckItemId = source.CheckItemId;
             target.Result = source.Result;
-            target.IsClosed = source.IsClosed;
             target.HazardCount = source.HazardCount;
             target.RemainHazardCount = source.RemainHazardCount;
         }

@@ -12,6 +12,46 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
+    //-----------------------------------------------------------------------
+    //
+    //-----------------------------------------------------------------------
+    public class CheckFlowData
+    {
+        public long ObjectId { get; set; }
+        public string ObjectName { get; set; }
+        public string DutyOrgName { get; set; }
+        public string Address { get; set; }
+        public string RiskLevelName { get; set; }
+        public string ScopeName { get; set; }
+        public string TagNames { get; set; }
+
+        public long CheckLogId { get; set; }
+        public DateTime CheckDt { get; set; }
+
+        public List<long> TaskIds { get; set; } = new();
+
+        public string PatrolOrgName { get; set; }
+        public string PatrolOrgLevel { get; set; }
+
+        public List<long> SheetIds { get; set; } = new();
+        public List<CheckFlowItemRow> CheckItems { get; set; } = new();
+    }
+
+    public class CheckFlowItemRow
+    {
+        public long CheckItemId { get; set; }
+        public long SheetId { get; set; }
+        public string SheetName { get; set; }
+        public string Code { get; set; }
+        public string Name { get; set; }
+        public string Result { get; set; }
+        public string Remark { get; set; }
+        public string HazardLevelName { get; set; }
+    }
+
+    //-----------------------------------------------------------------------
+    //
+    //-----------------------------------------------------------------------
     [Auth(Power.CheckNew)]
     public class CheckFlowModel : AuthModel
     {
@@ -42,6 +82,8 @@ namespace App.Pages.Checks
                 .ToList();
         }
 
+        /// <summary>获取检查对象数据。</summary>
+        /// TODO：支持CheckId参数，可以重现检查信息；
         public IActionResult OnGetData(long? objectId)
         {
             var id = objectId ?? ObjectId ?? 0;
@@ -75,24 +117,25 @@ namespace App.Pages.Checks
             Item = new CheckFlowData
             {
                 ObjectId = obj.Id,
-                ObjectName = obj.Name ?? string.Empty,
-                DutyOrgName = obj.DutyOrgName ?? string.Empty,
-                Address = obj.Address ?? string.Empty,
-                RiskLevelName = obj.RiskLevel?.GetTitle() ?? string.Empty,
-                ScopeName = obj.Scope?.GetTitle() ?? string.Empty,
+                ObjectName = obj.Name,
+                DutyOrgName = obj.DutyOrgName,
+                Address = obj.Address,
+                RiskLevelName = obj.RiskLevel?.GetTitle(),
+                ScopeName = obj.Scope?.GetTitle(),
                 TagNames = tagNames,
                 CheckLogId = checkLogId,
                 CheckDt = DateTime.Now,
                 TaskIds = new List<long>(),
-                PatrolOrgName = org?.Name ?? string.Empty,
-                PatrolOrgLevel = org?.Level?.GetTitle() ?? string.Empty,
+                PatrolOrgName = org?.Name,
+                PatrolOrgLevel = org?.Level?.GetTitle(),
                 SheetIds = matchedSheetIds,
-                CheckItems = BuildCheckItemRows(matchedSheetIds)
+                CheckItems = BuildCheckItemRows(matchedSheetIds),
             };
 
             return BuildResult(0, "success", Item);
         }
 
+        /// <summary>根据检查表构造检查项行。</summary>
         public IActionResult OnPostSheetItems([FromBody] ControlChangeRequest req)
         {
             var sheetIds = new List<long>();
@@ -114,23 +157,19 @@ namespace App.Pages.Checks
             return BuildResult(0, "success", new { checkItems = BuildCheckItemRows(sheetIds) });
         }
 
+        /// <summary>保存检查记录。</summary>
         public IActionResult OnPostSave([FromBody] CheckFlowData req)
         {
-            if (req == null)
-                return BuildResult(400, "参数错误");
-            if (req.ObjectId <= 0)
-                return BuildResult(400, "检查对象无效");
-            if (req.CheckLogId <= 0)
-                return BuildResult(400, "检查记录标识无效");
-
             var userId = GetUserId();
-            if (userId == null)
-                return BuildResult(401, "请先登录");
+            if (userId == null)          return BuildResult(401, "请先登录");
+            if (req == null)             return BuildResult(400, "参数错误");
+            if (req.ObjectId <= 0)       return BuildResult(400, "检查对象无效");
+            if (req.CheckLogId <= 0)     return BuildResult(400, "检查记录标识无效");
 
+            // 检查记录
             var user = GetUser();
             var now = DateTime.Now;
             var checkDt = req.CheckDt == default ? now : req.CheckDt;
-
             var check = Check.GetDetail(req.CheckLogId);
             if (check == null)
             {
@@ -140,20 +179,20 @@ namespace App.Pages.Checks
                     CreateDt = now
                 };
             }
-
             check.CheckDt = checkDt;
             check.OrgId = user?.OrgId;
             check.CheckerId = userId;
             check.CheckObjectId = req.ObjectId;
             check.SetTasks(req.TaskIds);
 
+            // 更新检查记录状态
             var hazardCount = CheckHazard.Set.Count(t => t.CheckLogId == req.CheckLogId);
             check.HazardCount = hazardCount;
             check.RemainHazardCount = hazardCount;
             check.Result = hazardCount == 0;
-            check.IsClosed = false;
             check.Save();
 
+            // 更新检查对象状态
             var obj = CheckObject.Get(req.ObjectId);
             if (obj != null)
             {
@@ -166,38 +205,7 @@ namespace App.Pages.Checks
             return BuildResult(0, "保存成功");
         }
 
-        public class CheckFlowData
-        {
-            public long ObjectId { get; set; }
-            public string ObjectName { get; set; }
-            public string DutyOrgName { get; set; }
-            public string Address { get; set; }
-            public string RiskLevelName { get; set; }
-            public string ScopeName { get; set; }
-            public string TagNames { get; set; }
 
-            public long CheckLogId { get; set; }
-            public DateTime CheckDt { get; set; }
-            public List<long> TaskIds { get; set; } = new();
-
-            public string PatrolOrgName { get; set; }
-            public string PatrolOrgLevel { get; set; }
-
-            public List<long> SheetIds { get; set; } = new();
-            public List<CheckFlowItemRow> CheckItems { get; set; } = new();
-        }
-
-        public class CheckFlowItemRow
-        {
-            public long CheckItemId { get; set; }
-            public long SheetId { get; set; }
-            public string SheetName { get; set; }
-            public string Code { get; set; }
-            public string Name { get; set; }
-            public string Result { get; set; }
-            public string Remark { get; set; }
-            public string HazardLevelName { get; set; }
-        }
 
         /// <summary>根据检查表构造检查项行。</summary>
         static List<CheckFlowItemRow> BuildCheckItemRows(List<long> sheetIds)
@@ -237,6 +245,7 @@ namespace App.Pages.Checks
             }).ToList();
         }
 
+        /// <summary>读取长整列表。(TODO: 简化或移动到公共辅助类）</summary>
         private static List<long> ReadLongList(JsonElement el)
         {
             var list = new List<long>();

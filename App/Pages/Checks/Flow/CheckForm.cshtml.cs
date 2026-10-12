@@ -72,7 +72,6 @@ namespace App.Pages.Checks
             item.Result = req.Result;
             item.HazardCount = req.HazardCount;
             item.RemainHazardCount = req.RemainHazardCount;
-            item.IsClosed = req.IsClosed;
             item.SetTasks(req.TaskIds);
 
             item.Save();

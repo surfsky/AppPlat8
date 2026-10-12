@@ -117,7 +117,6 @@ namespace App.Pages.Checks
                         HazardCount = 0,
                         RemainHazardCount = 0,
                         Result = false,
-                        IsClosed = false
                     };
                     check.Save();
                 }

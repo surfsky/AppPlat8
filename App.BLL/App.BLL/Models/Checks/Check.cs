@@ -23,7 +23,6 @@ namespace App.DAL
         [UI("检查表")]   public long? CheckSheetId { get; set; }
         [UI("检查项Id")] public long? CheckItemId { get; set; }
         [UI("检查结果")] public bool? Result { get; set; } = true;
-        [UI("是否关闭")] public bool? IsClosed { get; set; } = false;  // 关闭后不允许修改
         [UI("检查时间")] public DateTime? CheckDt { get; set; }
         [UI("隐患数")]    public int? HazardCount { get; set; } = 0;
         [UI("剩余隐患数")] public int? RemainHazardCount { get; set; } = 0;
@@ -70,7 +69,6 @@ namespace App.DAL
                 CheckSheetId,
                 CheckItemId,
                 Result,
-                IsClosed,
                 HazardCount,
                 RemainHazardCount,
                 CreateDt,

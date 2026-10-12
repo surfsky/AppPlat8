@@ -203,7 +203,7 @@ namespace App.Pages.Checks
             }
 
             var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
-            var url = $"/Checks/CheckLogs?objectId={objectId}&objectName={objectName}&md={this.Mode}";
+            var url = $"/Checks/Flow/Checks?objectId={objectId}&objectName={objectName}&md={this.Mode}";
             return EleHandler.ShowDrawer(
                 title: "检查历史",
                 url: url,
@@ -221,7 +221,7 @@ namespace App.Pages.Checks
             }
 
             var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
-            var url = $"/Checks/CheckHazards?objectId={objectId}&objectName={objectName}&md={this.Mode}";
+            var url = $"/Checks/Flow/CheckHazards?objectId={objectId}&objectName={objectName}&md={this.Mode}";
             return EleHandler.ShowDrawer(
                 title: "隐患清单",
                 url: url,

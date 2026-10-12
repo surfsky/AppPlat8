@@ -42,7 +42,8 @@ namespace App.Pages.Checks
                 certExpireDt = item.CertExpireDt,
                 objectId = objectId,
                 objectName = objectName,
-                objectDisplay = display
+                objectDisplay = display,
+                contactType = item.ContactType
             };
         }
 
@@ -68,14 +69,10 @@ namespace App.Pages.Checks
 
         public IActionResult OnPostSave([FromBody] CheckObjectContact req, long objectId)
         {
-            if (req == null)
-                return BuildResult(400, "参数错误");
-            if (objectId <= 0)
-                return BuildResult(400, "参数错误：缺少检查对象ID");
-
             var checkObject = CheckObject.Get(objectId);
-            if (checkObject == null)
-                return BuildResult(404, "检查对象不存在");
+            if (req == null)            return BuildResult(400, "参数错误");
+            if (objectId <= 0)          return BuildResult(400, "参数错误：缺少检查对象ID");
+            if (checkObject == null)    return BuildResult(404, "检查对象不存在");
 
             CheckObjectContact item;
             if (req.Id > 0)
@@ -93,6 +90,7 @@ namespace App.Pages.Checks
                 };
             }
 
+            item.ContactType = req.ContactType;
             item.Name = req.Name;
             item.Phone = req.Phone;
             item.IdCard = req.IdCard;

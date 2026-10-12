@@ -225,7 +225,7 @@ namespace App.EleUI
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
                             <el-tag v-if=""scope.row.{propName}"" type=""success"">是</el-tag>
-                            <el-tag v-else type=""info"">否</el-tag>
+                            <el-tag v-else type=""warning"">否</el-tag>
                         </template>
                     ");
                 }

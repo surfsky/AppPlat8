@@ -16,7 +16,7 @@
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
-                <EleButton Type="Primary" PopupUrl="/Checks/CheckFlow?objectId=@Model.ObjectId&objectName=@objectNameEncoded" Icon="DocumentChecked" Visible="@(Model.ObjectId.GetValueOrDefault() > 0 && Auth.CheckPower(Power.CheckNew))">开始排查</EleButton>
+                <EleButton Type="Primary" PopupUrl="/Checks/Flow/CheckFlow?objectId=@Model.ObjectId&objectName=@objectNameEncoded" Icon="DocumentChecked" Visible="@(Model.ObjectId.GetValueOrDefault() > 0 && Auth.CheckPower(Power.CheckNew))">开始排查</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">删除</EleButton>
             </Buttons>
@@ -33,11 +33,6 @@
             <EleColumn For="Item.Result" Label="结果" Width="80"></EleColumn>
             <EleColumn For="Item.HazardCount" Label="隐患数" Width="80"></EleColumn>
             <EleColumn For="Item.RemainHazardCount" Label="未处理隐患数" Width="80"></EleColumn>
-            <EleColumn For="Item.IsClosed" Label="闭环" Width="80">
-                <template #default="{ row }">
-                    <el-tag :type="row.isClosed ? 'success' : 'warning'">{{ row.isClosed ? '是' : '否' }}</el-tag>
-                </template>
-            </EleColumn>
         </Columns>
     </EleTable>
 }

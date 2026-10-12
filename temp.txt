@@ -295,3 +295,23 @@
         }
 
                             <el-radio-button value="na" class="result-na">不涉及</el-radio-button>
+
+
+
+                <template #default="{ row }">
+                    <el-tag :type="row.isClosed ? 'success' : 'warning'">{{ row.isClosed ? '是' : '否' }}</el-tag>
+                </template>
+
+        <EleInput For="Item.IsClosed" Label="检查结果" Enabled="false"></EleInput>
+        public bool IsClosed { get; set; }
+                IsClosed = false //
+
+        <EleSwitch For="Item.IsClosed" Label="是否闭环"></EleSwitch>
+            item.IsClosed = req.IsClosed;
+                        IsClosed = false
+            <EleColumn For="Item.IsClosed" Label="闭环" Width="80" Display="Tag"></EleColumn>
+            check.IsClosed = false;
+            target.IsClosed = source.IsClosed;
+
+        [UI("是否关闭")] public bool? IsClosed { get; set; } = false;  // 关闭后不允许修改
+                IsClosed,
