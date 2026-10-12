@@ -16,9 +16,9 @@
                  FillRow="true"
                  DataHandler="?handler=ItemsData&sheetId=@sheetId"
                  PageSize="5"
-                 Height="600px"
+                 Height="1000px"
                  MinHeight="160px"
-                 EmptyText="暂无数据"
+                 EmptyText=""
                  LastText=" "
                  SortField="SortId"
                  SortDirection="ASC"
@@ -42,6 +42,13 @@
                     <span class="truncate flex-1 font-medium text-gray-800" :title="item.name">{{ item.name }}</span>
                 </div>
             </ItemTemplate>
+            <Header>
+                <div class="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="inline-flex items-center justify-center min-w-[24px] px-1.5 shrink-0 text-center">序号</span>
+                    <span class="inline-flex px-2 shrink-0">等级</span>
+                    <span class="flex-1">检查项名称</span>
+                </div>
+            </Header>
             <Footer>
                 <EleButton Type="Primary" Look="Text" Handler="ShowItems" EnabledFor="Item.Id">管理</EleButton>
             </Footer>

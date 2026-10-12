@@ -128,6 +128,12 @@
                         <a href="javascript:void(0)" class="text-xs text-blue-600" v-on:click.prevent="openLinkInDrawer(item.previewUrl, '附件预览', null)">预览</a>
                     </div>
                 </ItemTemplate>
+                <Header>
+                    <div class="flex items-center justify-between gap-3 px-3 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                        <span class="flex-1">名称</span>
+                        <span class="shrink-0 text-center">操作</span>
+                    </div>
+                </Header>
                 <Footer>
                     <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">管理附件</EleButton>
                 </Footer>

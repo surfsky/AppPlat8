@@ -9,11 +9,12 @@ using System.Net;
 namespace App.EleUI
 {
     /// <summary>
-    /// 列表上下文（包含条目模板、底部模板）
+    /// 列表上下文（包含条目模板、表头模板、底部模板）
     /// </summary>
     public class ListContext
     {
         public StringBuilder ItemTemplateHtml { get; set; } = new StringBuilder();
+        public StringBuilder HeaderTemplateHtml { get; set; } = new StringBuilder();
         public StringBuilder FooterTemplateHtml { get; set; } = new StringBuilder();
     }
 
@@ -21,7 +22,7 @@ namespace App.EleUI
     /// 列表控件，支持下拉滚动分页加载。
     /// </summary>
     [HtmlTargetElement("EleList")]
-    [RestrictChildren("ItemTemplate", "Footer")]
+    [RestrictChildren("ItemTemplate", "Header", "Footer")]
     public class EleList : EleControl
     {
         [HtmlAttributeName("Label")]           public string Label { get; set; }
@@ -43,9 +44,9 @@ namespace App.EleUI
         [HtmlAttributeName("ItemClass")]       public string ItemClass { get; set; } = "p-4 border border-gray-100 rounded-lg bg-white shadow-sm";
         [HtmlAttributeName("ScrollClass")]     public string ScrollClass { get; set; } = "flex-1 overflow-auto px-2";
         [HtmlAttributeName("ItemsClass")]      public string ItemsClass { get; set; } = "space-y-3 pb-3";
-        [HtmlAttributeName("EmptyText")]       public string EmptyText { get; set; } = null;
-        [HtmlAttributeName("LoadText")]        public string LoadText { get; set; } = null;
-        [HtmlAttributeName("LastText")]        public string LastText { get; set; } = null;
+        [HtmlAttributeName("EmptyText")]       public string EmptyText { get; set; } = "";
+        [HtmlAttributeName("LoadText")]        public string LoadText { get; set; } = "";
+        [HtmlAttributeName("LastText")]        public string LastText { get; set; } = "";
         [HtmlAttributeName("MinHeight")]       public string MinHeight { get; set; } = "40px";
 
         public override void Init(TagHelperContext context)
@@ -102,6 +103,7 @@ namespace App.EleUI
                 template = "<div class='text-gray-500'>{{ item && item.id ? item.id : idx + 1 }}</div>";
             }
             var footerTemplate = listContext.FooterTemplateHtml.ToString();
+            var headerTemplate = listContext.HeaderTemplateHtml.ToString();
 
             var pageSize = ResolvePageSize();
             var itemClass = string.IsNullOrWhiteSpace(ItemClass) ? "p-4 border border-gray-100 rounded-lg bg-white shadow-sm" : ItemClass.Trim();
@@ -148,14 +150,19 @@ namespace App.EleUI
                 }
             }
 
-            var emptyText = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(EmptyText) ? Texts.Current.EmptyData : EmptyText);
-            var loadText = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(LoadText) ? Texts.Current.LoadingText : LoadText);
-            var lastText = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(LastText) ? Texts.Current.NoMoreData : LastText);
+            var emptyText = WebUtility.HtmlEncode(EmptyText);
+            var loadText  = WebUtility.HtmlEncode(LoadText);
+            var lastText  = WebUtility.HtmlEncode(LastText);
             var totalPrefix = Texts.Current.TotalPrefix;
             var totalSuffix = Texts.Current.TotalSuffix;
             var headerHtml = showHeader
                 ? $"<div class='px-2 pb-2 text-sm text-gray-500 flex items-center justify-between'><span>{title}</span><span>{totalPrefix} {{{{ {stateExpr}.total }}}} {totalSuffix}</span></div>"
                 : string.Empty;
+
+            // 固顶表头：渲染在滚动容器内部顶部，使用 sticky 与内容处于同一滚动上下文，保证列宽对齐
+            var stickyHeaderHtml = string.IsNullOrWhiteSpace(headerTemplate)
+                ? string.Empty
+                : $"<div class='sticky top-0 z-10'>{headerTemplate}</div>";
 
             output.Content.AppendHtml($@"
 {startHtml}
@@ -163,6 +170,7 @@ namespace App.EleUI
     {headerHtml}
 
     <div class='{scrollClass}' data-ele-list-scroll='{listKey}'{scrollStyle} v-on:scroll.passive='onEleListScroll(&quot;{listKey}&quot;, $event)'>
+        {stickyHeaderHtml}
         <div class='{itemsClass}'>
             <div v-for='(item, idx) in {stateExpr}.items' :key='item?.id ?? (`item_${{idx}}`)' class='{itemClass}'>
                 {template}

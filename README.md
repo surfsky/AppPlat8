@@ -163,11 +163,11 @@ OA
     目录      Articles/ArticleDirs  
 交办
     项目      OA/Projects   
-    交办      OA/Tasks    
+    交办      OA/Tasks  
     事件      OA/Events   
 驾驶舱
     驾驶舱    GIS/Index   
-    菜单      GIS/Menu    
+    菜单      GIS/Menu  
     点位      GIS/Geometry  
     面板      GIS/Panels  
 账户
@@ -180,11 +180,11 @@ OA
     配置      Maintains/Config  
     日志      Maintains/Logs  
 开发
-    图标     Dev/Icons    
-    API     Dev/API       
+    图标     Dev/Icons  
+    API     Dev/API   
     控件库   EleUI/Index  
 修改密码     Admins/ChangePassword  
-安全退出     Logout       
+安全退出     Logout   
 登陆        Login
 ```
 

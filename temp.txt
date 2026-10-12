@@ -294,3 +294,4 @@
             return user.EffectiveAuthOrgId;
         }
 
+                            <el-radio-button value="na" class="result-na">不涉及</el-radio-button>

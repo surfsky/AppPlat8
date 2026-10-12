@@ -22,7 +22,7 @@
                 FillRow="true"
                 DataHandler="?handler=CheckObjectsData&taskId=@taskId"
                 PageSize="10"
-                Height="420px"
+                Height="1000px"
                 MinHeight="240px"
                 EmptyText="暂无检查对象"
                 LastText=" "
@@ -31,15 +31,16 @@
                 ScrollClass="flex-1 overflow-auto px-0"
                 ItemsClass="space-y-0"
                 ItemClass="py-1.5 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
-            <ItemTemplate>
-                <!-- 表头（仅首条渲染一次） -->
-                <div v-if="idx === 0" class="grid grid-cols-[40px_1.8fr_1.4fr_1.2fr_90px] gap-2 px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50 rounded-t">
+            <Header>
+                <div class="grid grid-cols-[40px_1.8fr_1.4fr_1.2fr_90px] gap-2 px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="text-center">序号</span>
                     <span>企业名称</span>
                     <span>组织</span>
                     <span>网格员</span>
                     <span class="text-center">状态</span>
                 </div>
+            </Header>
+            <ItemTemplate>
                 <!-- 数据行 -->
                 <div class="grid grid-cols-[40px_1.8fr_1.4fr_1.2fr_90px] gap-2 px-3 py-2 text-sm items-center">
                     <span class="inline-flex items-center justify-center h-[20px] rounded bg-gray-100 text-gray-600 text-xs shrink-0 text-center">{{ idx + 1 }}</span>
@@ -70,13 +71,15 @@
                 ScrollClass="flex-1 overflow-auto px-0"
                 ItemsClass="space-y-0"
                 ItemClass="py-1.5 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
-            <ItemTemplate>
-                <div v-if="idx === 0" class="grid grid-cols-[40px_1.2fr_80px_1.2fr] gap-2 px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50 rounded-t">
+            <Header>
+                <div class="grid grid-cols-[40px_1.2fr_80px_1.2fr] gap-2 px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="text-center">序号</span>
                     <span>名称</span>
                     <span class="text-center">大小</span>
                     <span>备注</span>
                 </div>
+            </Header>
+            <ItemTemplate>
                 <div class="grid grid-cols-[40px_1.2fr_80px_1.2fr] gap-2 px-3 py-2 text-sm items-center">
                     <span class="inline-flex items-center justify-center h-[20px] rounded bg-gray-100 text-gray-600 text-xs shrink-0 text-center">{{ idx + 1 }}</span>
                     <a v-if="item.url" :href="item.url" target="_blank" rel="noopener"

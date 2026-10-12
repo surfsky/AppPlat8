@@ -59,7 +59,7 @@
         <EleLabel Label="更多" FillRow="true"></EleLabel>
         <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreePicker>
         
-        <EleList Label="联系人" FillRow="true" DataHandler="?handler=ContactsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" LastText=" " SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="联系人" FillRow="true" DataHandler="?handler=ContactsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" LastText=" " SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
                     <span class="text-xs text-gray-400 shrink-0 w-16 truncate">{{ item.contactTypeName }}</span>
@@ -67,37 +67,56 @@
                     <span class="text-xs text-blue-500 shrink-0">{{ item.phone }}</span>
                 </div>
             </ItemTemplate>
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="shrink-0 w-16 text-center">类型</span>
+                    <span class="flex-1">姓名</span>
+                    <span class="shrink-0 text-center">电话</span>
+                </div>
+            </Header>
             <Footer>
                 <EleButton Type="Primary" Look="Text" Handler="ShowContacts" EnabledFor="Item.Id">管理</EleButton>
             </Footer>
         </EleList>
 
-        <EleList Label="附件" FillRow="true" DataHandler="?handler=FilesData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="附件" FillRow="true" DataHandler="?handler=FilesData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
                     <span class="text-sm font-medium truncate flex-1">{{ item.fileName }}</span>
                     <span class="text-xs text-gray-400 shrink-0">{{ item.fileSizeText }}</span>
                 </div>
             </ItemTemplate>
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="flex-1">名称</span>
+                    <span class="shrink-0 text-center">大小</span>
+                </div>
+            </Header>
             <Footer>
                 <EleButton Type="Primary" Look="Text" Handler="ShowFiles" EnabledFor="Item.Id">管理</EleButton>
             </Footer>
         </EleList>
 
 
-        <EleList Label="事件" FillRow="true" DataHandler="?handler=EventsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="事件" FillRow="true" DataHandler="?handler=EventsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
                     <span class="text-sm font-medium truncate flex-1">{{ item.title }}</span>
                     <span class="text-xs text-gray-400 shrink-0">{{ item.triggleDt }}</span>
                 </div>
             </ItemTemplate>
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="flex-1">标题</span>
+                    <span class="shrink-0 text-center">触发时间</span>
+                </div>
+            </Header>
             <Footer>
                 <EleButton Type="Primary" Look="Text"  Handler="ShowObjectEvents" EnabledFor="Item.Id">管理</EleButton>
             </Footer>
         </EleList>
 
-        <EleList Label="检查历史" FillRow="true" DataHandler="?handler=CheckLogsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" SortField="CheckDt" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="检查历史" FillRow="true" DataHandler="?handler=CheckLogsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="CheckDt" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
                     <span class="text-xs text-gray-400 shrink-0 w-24 truncate">{{ item.checkDt }}</span>
@@ -105,12 +124,19 @@
                     <span class="text-xs text-orange-500 shrink-0" v-if="item.hazardCount > 0">隐患 {{ item.hazardCount }}</span>
                 </div>
             </ItemTemplate>
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="shrink-0 w-24 text-center">检查时间</span>
+                    <span class="flex-1">检查人</span>
+                    <span class="shrink-0 text-center">隐患</span>
+                </div>
+            </Header>
             <Footer>
                 <EleButton Type="Primary" Look="Text" Handler="ShowCheckLogs" EnabledFor="Item.Id">管理</EleButton>
             </Footer>
         </EleList>
 
-        <EleList Label="隐患清单" FillRow="true" DataHandler="?handler=HazardsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="暂无数据" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="隐患清单" FillRow="true" DataHandler="?handler=HazardsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
                     <span class="text-xs text-gray-500 shrink-0 w-14 truncate">{{ item.statusName }}</span>
@@ -118,6 +144,13 @@
                     <span class="text-xs text-gray-400 shrink-0">{{ item.expireDt }}</span>
                 </div>
             </ItemTemplate>
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="shrink-0 w-14 text-center">状态</span>
+                    <span class="flex-1">描述</span>
+                    <span class="shrink-0 text-center">期限</span>
+                </div>
+            </Header>
             <Footer>
                 <EleButton Type="Primary" Look="Text" Handler="ShowHazards" >管理</EleButton>
             </Footer>

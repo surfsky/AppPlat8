@@ -56,9 +56,9 @@
             <EleNumColumn Fixed="left"></EleNumColumn>
             <EleOpColumn Width="120" Fixed="right" Shows="2">
                 <Op Command="Edit"                                                     Icon="EditPen"         Text="编辑"      Mode="Text" Visible="@Auth.CheckPower(Power.CheckObjectEdit)"></Op>
-                <Op Popup="/Checks/CheckFlow?objectId={id}&objectName={name}"          Icon="Search"          Text="排查"      Mode="Text" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
-                <Op Popup="/Checks/CheckHazards?objectId={id}&objectName={name}"       Icon="WarningFilled"   Text="隐患清单"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckHazardView)"></Op>
-                <Op Popup="/Checks/Checks?objectId={id}&objectName={name}"             Icon="DocumentChecked" Text="排查历史"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckView)"></Op>
+                <Op Popup="/Checks/Flow/CheckFlow?objectId={id}&objectName={name}"          Icon="Search"          Text="排查"      Mode="Text" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
+                <Op Popup="/Checks/Flow/CheckHazards?objectId={id}&objectName={name}"       Icon="WarningFilled"   Text="隐患清单"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckHazardView)"></Op>
+                <Op Popup="/Checks/Flow/Checks?objectId={id}&objectName={name}"             Icon="DocumentChecked" Text="排查历史"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckView)"></Op>
                 <Op Popup="/Checks/CheckPoints?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="风险点清单" Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Checks/CheckObjectEvents?objectId={id}&objectName={name}"  Icon="DocumentChecked" Text="事件事故"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"     Icon="User"            Text="联系人"    Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>

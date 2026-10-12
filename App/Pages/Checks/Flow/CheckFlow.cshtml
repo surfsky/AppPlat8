@@ -55,11 +55,11 @@
                 style="width: 100%;"
                 row-key="checkItemId"
                 :row-class-name="getCheckItemRowClass">
+                <el-table-column prop="code" label="编号" width="80" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="sheetName" label="检查表" width="180" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="code" label="编号" width="120" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="name" label="检查项" min-width="300" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="hazardLevelName" label="隐患级别" width="120" show-overflow-tooltip></el-table-column>
-                <el-table-column label="结果" width="220" fixed="right">
+                <el-table-column label="结果" width="160" fixed="right">
                     <template #default="{ row }">
                         <el-radio-group
                             v-model="row.result"
@@ -68,7 +68,6 @@
                             v-on:change="onCheckFlowItemResultChanged(form, row, $event, save)">
                             <el-radio-button value="pass" class="result-pass">合格</el-radio-button>
                             <el-radio-button value="fail" class="result-fail">不合格</el-radio-button>
-                            <el-radio-button value="na" class="result-na">不涉及</el-radio-button>
                         </el-radio-group>
                     </template>
                 </el-table-column>
