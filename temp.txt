@@ -1,317 +1,168 @@
-                <EleButton Type="Info" Icon="Search" Handler="Test" Payload="SelectInfo" Visible="false">测试</EleButton>
-        //----------------------------------------------------------------
-        // 移动到
-        //----------------------------------------------------------------
-        /// <summary>测试按钮：验证 ElePayloadEnvelope（SelectInfo 先调通 → 再扩展其它）</summary>
-        public IActionResult OnPostTest([FromBody] ElePayload env)
-        {
-            if (env == null)
-                return OkResult(400, "未收到 ElePayloadEnvelope，请确认按钮设置了 Payload 参数");
+@page
+@model App.Pages.Checks.CheckObjectFormModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "检查对象信息";
+}
 
-            // 结构化优先，扁平兜底
-            var selectIds   = env.SafeSelectedIds;
-            var firstSelId  = env.SafeFirstSelectedId ?? 0L;
-            var filterKeys  = env.SafeFilterKeys;
-            var uniqId      = string.IsNullOrWhiteSpace(env.SafeUniId) ? Request.Query["uniId"].ToString() : env.SafeUniId;
-            var page        = env.SafePage;
-            var pageInfo    = $"{page.PageIndex}/{page.PageSize}/{page.SortField}/{page.SortDirection}";
-            var ctxPath     = env.Context?.Path;
-            var ctxUrl      = env.Context?.Url;
-
-            // 诊断：当前 payload 到底哪些字段有值（便于判断 Payload=SelectInfo 是否只传了 Select）
-            var diagnostics = new
-            {
-                Structured_Select_Has  = env.Select  != null,
-                Structured_Filter_Has  = env.Filter  != null,
-                Structured_Page_Has    = env.Page    != null,
-                Structured_Context_Has = env.Context != null,
-                Flat_SelectedIds_Has   = env.SelectedIds_Flat?.Count > 0,
-                Flat_Filters_Has       = env.Filters_Flat?.Count > 0,
-                Flat_PageIndex_Has     = env.PageIndex_Flat.HasValue,
-                Flat_UniId_Has         = !string.IsNullOrWhiteSpace(env.UniId_Flat),
-                ExtensionData_Keys     = env.ExtensionData?.Count > 0 ? string.Join(",", env.ExtensionData.Keys) : ""
-            };
-
-            var payload = new
-            {
-                UniId         = uniqId,
-                SelectedIds   = selectIds,
-                SelectedCount = selectIds.Count,
-                FirstSelId    = firstSelId,
-                FilterKeys    = filterKeys,
-                PageInfo      = pageInfo,
-                ContextPath   = ctxPath,
-                ContextUrl    = ctxUrl,
-                Diagnostics   = diagnostics
-            };
-            // 服务端日志同步输出（用户要"打印出完整的 data 数据"）
-            try
-            {
-                var json = System.Text.Json.JsonSerializer.Serialize(payload,
-                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                System.Console.WriteLine("[ElePayload.Test] {0} SelectedIds={1} PayloadJSON={2}{3}",
-                    uniqId, string.Join(",", selectIds ?? new()), Environment.NewLine, json);
-                Logger.Info("[ElePayload.Test] UniId={0} SelectedIds={1} JSON={2}", uniqId, string.Join(",", selectIds ?? new()), json);
-            }
-            catch { /* 日志失败不影响接口成功返回 */ }
-            return OkResult(0, "ElePayload 链路正常（完整 data 已在弹窗中展示，详见 Test 返回对话框）", payload);
-        }
-
-                <EleButton Type="Danger"  Handler="ReopenHazard"   Visible="@(Model.Item.Status == CheckHazardStatus.Archived)">重新打开</EleButton>
-
-                <EleButton Type="Warning" Handler="MarkRectifying" Visible="@(Model.Item.Status == CheckHazardStatus.Waiting)">开始整改</EleButton>
-
-
-                                <div
-                                    class="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold text-white shrink-0"
-                                    :class="item.status==0 ? 'bg-orange-400' :
-                                            item.status==1 ? 'bg-emerald-400' :
-                                            item.status==2 ? 'bg-blue-400' :
-                                            item.status==3 ? 'bg-sky-400' :
-                                                             'bg-gray-400'">
-                                    {{ ((item.reviewerName || '系统').toString().trim().charAt(0) || '系').toUpperCase() }}
-                                </div>
-
-
-            var query = App.DAL.User.Set.Where(u => u.IsDel != true);
-            if (!string.IsNullOrEmpty(keyword))
-            {
-                query = query.Where(u => u.Name.Contains(keyword) || u.RealName.Contains(keyword));
-            }
-
-            var users = query.OrderBy(u => u.RealName ?? u.Name).Take(100).Select(u => new 
-            { 
-                id = u.Id, 
-                name = u.RealName ?? u.Name, 
-                username = u.Name, 
-                mobile = u.Mobile.Mask(),
-                realName = u.RealName,
-                displayName = $"{u.RealName ?? u.Name}({u.Mobile.Mask()})",
-                dept = u.Org != null ? u.Org.Name : "" 
-            }).ToList();
-
-
-        [Obsolete("快捷入口配置已移到 WorkDesk.cshtml 顶部，此字段保留为空占位")]
-        public List<WorkDeskLink> QuickEntries { get; } = new();
-            var rawUserId = Request.Query["userId"].FirstOrDefault();
-            if (long.TryParse(rawUserId, out var uidQ) && uidQ > 0) UserId = uidQ;
-
-            if (!string.IsNullOrWhiteSpace(UserName))
-            {
-                var key = UserName.Trim();
-                var u = App.DAL.User.Set.FirstOrDefault(x => x.Name == key || x.RealName == key);
-                if (u != null)
-                {
-                    UserRealName = (u.RealName ?? string.Empty).Trim();
-                    if (string.IsNullOrWhiteSpace(UserRealName))
-                        UserRealName = (u.Name ?? string.Empty).Trim();
-                    if (!UserId.HasValue || UserId.Value <= 0)
-                        UserId = u.Id;
-                    return;
-                }
-            }
-            var selfId = GetUserId();
-            if (selfId.HasValue && selfId.Value > 0)
-            {
-                var u = App.DAL.User.Get(selfId.Value);
-                if (u != null)
-                {
-                    UserRealName = (u.RealName ?? string.Empty).Trim();
-                    if (string.IsNullOrWhiteSpace(UserRealName))
-                        UserRealName = (u.Name ?? string.Empty).Trim();
-                    if (!UserId.HasValue || UserId.Value <= 0)
-                        UserId = u.Id;
-                }
-            }
-
-                if (u != null)
-                {
-                    UserRealName = (u.RealName ?? string.Empty).Trim();
-                    if (string.IsNullOrWhiteSpace(UserRealName))
-                        UserRealName = (u.Name ?? string.Empty).Trim();
-                    return;
-                }
-
-
-        //---------------------------------------------------------------------
-        // 表格 2：基础科任务（当前目标用户所在科室级，含下属）
-        //---------------------------------------------------------------------
-        public IActionResult OnGetSectionTasks(Paging pi)
-        {
-            var sectionIds = GetSectionScopeOrgIds();
-            var taskIds = sectionIds.Count == 0
-                ? new List<long>()
-                : App.DAL.CheckTaskOrg.ValidSet.AsNoTracking()
-                    .Where(to => to.OrgId != null && sectionIds.Contains(to.OrgId.Value) && to.TaskId != null)
-                    .Select(to => to.TaskId.Value)
-                    .Distinct()
-                    .ToList();
-
-            var q = App.DAL.CheckTask.Search(null, null, null)
-                .AsNoTracking()
-                .Include(t => t.Creator).ThenInclude(u => u.Org)
-                .Include(t => t.Orgs).ThenInclude(o => o.Org)
-                .Where(t => taskIds.Contains(t.Id));
-            return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
-        }
-
-        //---------------------------------------------------------------------
-        // 表格 3：分派中心任务（当前目标用户所在单位级，含下属；若枚举没 Center，退回到 Unit）
-        //---------------------------------------------------------------------
-        public IActionResult OnGetCenterTasks(Paging pi)
-        {
-            var centerIds = GetCenterScopeOrgIds();
-            var taskIds = centerIds.Count == 0
-                ? new List<long>()
-                : App.DAL.CheckTaskOrg.ValidSet.AsNoTracking()
-                    .Where(to => to.OrgId != null && centerIds.Contains(to.OrgId.Value) && to.TaskId != null)
-                    .Select(to => to.TaskId.Value)
-                    .Distinct()
-                    .ToList();
-
-            var q = App.DAL.CheckTask.Search(null, null, null)
-                .AsNoTracking()
-                .Include(t => t.Creator).ThenInclude(u => u.Org)
-                .Include(t => t.Orgs).ThenInclude(o => o.Org)
-                .Where(t => taskIds.Contains(t.Id));
-            return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
-        }
-
-
-        // 角标计数（对象 4 卡，隐患 3 卡）
-        public int CountMyObjects { get; set; }
-        public int CountUncheckedObjects { get; set; }
-        public int CountNearExpireObjects { get; set; }
-        public int CountOverdueObjects { get; set; }
-        public int CountMyHazards { get; set; }
-        public int CountPendingHazards { get; set; }
-        public int CountOverdueHazards { get; set; }
-
-
-                <Op Popup="/Checks/CheckFlow?objectId={id}&objectName={name}"        Icon="Search" Text="开始排查" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
-                <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"   Icon="User" Text="联系人" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
-                <Op Popup="/Checks/CheckHazards?objectId={id}&objectName={name}"     Icon="WarningFilled" Text="隐患清单" Visible="@Auth.CheckPower(Power.CheckHazardView)"></Op>
-
-
-                <EleSelect For="Item.Scope"            Width="250px" Label="所属领域"         Value="@QStr("scope")"></EleSelect>
-                <EleSelect For="Item.ObjectType"       Width="250px" Label="类型"            Value="@QStr("objectType")"></EleSelect>
-                <EleSelect For="Item.IndustryType"     Width="250px" Label="行业"            Value="@QStr("industryType")"></EleSelect>
-                <EleSelect For="Item.RiskLevel"        Width="250px" Label="风险等级"         Value="@QStr("riskLevel")"></EleSelect>
-                <EleInput For="Item.SocialCreditId"    Width="250px" Label="统一社会信用代码"  Value="@QStr("socialCreditCode")"></EleInput>
-                <EleInput For="Item.Code"              Width="250px" Label="对象标识"         Value="@QStr("code")"></EleInput>
-                <EleSelect For="Item.IsChecked"        Width="250px" Label="是否检查"         Value="@QStr("isChecked")"></EleSelect>
-                <EleSelect For="Item.HasHarzard"       Width="250px" Label="是否存在隐患"         Value="@QStr("hasHarzard")"></EleSelect>
-                <EleInput For="Item.DutyMan"           Width="250px" Label="企业责任人"          Value="@QStr("dutyUserName")"></EleInput>
-                <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Width="250px" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0"
-                           Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QStr("checkerId"))"
-                           TextValue="@Model.DefaultCheckerName"></ElePicker>
-                <EleDatePicker For="Item.CreateDt" Type="DateRange" Width="250px" Label="创建时间"        Type="DateTime" Value="@QStr("createStartDt")"></EleDatePicker>
-                <EleDatePicker For="Item.LastCheckDt" Type="DateRange" Width="250px" Label="巡查时间"     Type="DateTime" Value="@QStr("lastCheckStartDt")"></EleDatePicker>
-                <EleSelect For="Item.IndustryRisk"     Width="250px" Label="行业风险类型"     Value="@QStr("industryRisk")"></EleSelect>
-                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QStr("tagIds")"></EleTreePicker>
-                <EleSelect For="Item.IsDel"            Width="250px" Label="已删除"           Value="@QStr("isDel", "false")"></EleSelect>
-
-
-
-    <!-- 菜单 & 页面入口（README 里的功能页面表） -->
-    <section class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-6 md:p-8 space-y-5">
-        <header class="flex items-center justify-between gap-3 flex-wrap">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <i class="fas fa-tree"></i>
-                </div>
-                <h2 class="text-lg md:text-xl font-semibold text-slate-800">主要页面入口</h2>
-            </div>
-            <span class="text-xs text-slate-500">实际权限以当前登录账号为准</span>
-        </header>
-
-        <div class="grid md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-            <nav class="space-y-1.5">
-                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">隐患排查 Checks</h3>
-                <a asp-page="/Checks/CheckObjects" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>对象</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckObjects</span></a>
-                <a asp-page="/Checks/Checks" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>排查</span><span class="text-xs text-slate-400 font-mono">/Checks/Checks</span></a>
-                <a asp-page="/Checks/CheckSheets" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>检查表</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckSheets</span></a>
-                <a asp-page="/Checks/CheckHazards" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>隐患</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckHazards</span></a>
-                <a asp-page="/Checks/CheckTasks" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>任务</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckTasks</span></a>
-                <a asp-page="/Checks/CheckReports" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>报表</span><span class="text-xs text-slate-400 font-mono">/Checks/CheckReports</span></a>
-            </nav>
-
-            <nav class="space-y-1.5">
-                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">办公 OA</h3>
-                <a asp-page="/OA/Assets" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>资产</span><span class="text-xs text-slate-400 font-mono">/OA/Assets</span></a>
-                <a asp-page="/OA/Budgets" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>预算</span><span class="text-xs text-slate-400 font-mono">/OA/Budgets</span></a>
-                <a asp-page="/OA/Announces" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>公告</span><span class="text-xs text-slate-400 font-mono">/OA/Announces</span></a>
-                <a asp-page="/OA/Projects" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>项目</span><span class="text-xs text-slate-400 font-mono">/OA/Projects</span></a>
-                <a asp-page="/Tasks/Tasks" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>交办任务</span><span class="text-xs text-slate-400 font-mono">/Tasks/Tasks</span></a>
-                <a asp-page="/Tasks/Events" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>事件</span><span class="text-xs text-slate-400 font-mono">/Tasks/Events</span></a>
-            </nav>
-
-            <nav class="space-y-1.5">
-                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">知识库 CMS</h3>
-                <a asp-page="/CMS/Articles" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>文档</span><span class="text-xs text-slate-400 font-mono">/CMS/Articles</span></a>
-                <a asp-page="/CMS/ArticleDirs" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>文档目录</span><span class="text-xs text-slate-400 font-mono">/CMS/ArticleDirs</span></a>
-                <a asp-page="/KB/Manager" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>知识库</span><span class="text-xs text-slate-400 font-mono">/KB/Manager</span></a>
-                <a asp-page="/CRM/Contacts" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>联系人</span><span class="text-xs text-slate-400 font-mono">/CRM/Contacts</span></a>
-                <a asp-page="/CRM/ContactMenus" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>联系人目录</span><span class="text-xs text-slate-400 font-mono">/CRM/ContactMenus</span></a>
-            </nav>
-
-            <nav class="space-y-1.5">
-                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">驾驶舱 GIS</h3>
-                <a asp-page="/GIS/Index" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>驾驶舱</span><span class="text-xs text-slate-400 font-mono">/GIS/Index</span></a>
-                <a asp-page="/GIS/Menus" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>GIS 菜单</span><span class="text-xs text-slate-400 font-mono">/GIS/Menus</span></a>
-                <a asp-page="/GIS/Geometries" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>点位</span><span class="text-xs text-slate-400 font-mono">/GIS/Geometries</span></a>
-                <a asp-page="/GIS/Panels" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>面板</span><span class="text-xs text-slate-400 font-mono">/GIS/Panels</span></a>
-                <a asp-page="/GIS/Scenes" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>场景</span><span class="text-xs text-slate-400 font-mono">/GIS/Scenes</span></a>
-            </nav>
-
-            <nav class="space-y-1.5">
-                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">账号 Admins</h3>
-                <a asp-page="/Admins/Orgs" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>组织</span><span class="text-xs text-slate-400 font-mono">/Admins/Orgs</span></a>
-                <a asp-page="/Admins/Users" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>用户</span><span class="text-xs text-slate-400 font-mono">/Admins/Users</span></a>
-                <a asp-page="/Admins/Roles" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>角色</span><span class="text-xs text-slate-400 font-mono">/Admins/Roles</span></a>
-                <a asp-page="/Me/Profile" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>个人资料</span><span class="text-xs text-slate-400 font-mono">/Me/Profile</span></a>
-                <a asp-page="/Me/Dashboard" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>工作台 Dashboard</span><span class="text-xs text-slate-400 font-mono">/Me/Dashboard</span></a>
-            </nav>
-
-            <nav class="space-y-1.5">
-                <h3 class="text-xs font-semibold text-slate-500 tracking-wider uppercase">运维 Maintains / 开发 Dev</h3>
-                <a asp-page="/Maintains/Menus" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>菜单管理</span><span class="text-xs text-slate-400 font-mono">/Maintains/Menus</span></a>
-                <a asp-page="/Maintains/Logs" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>系统日志</span><span class="text-xs text-slate-400 font-mono">/Maintains/Logs</span></a>
-                <a asp-page="/Maintains/SiteConfigForm" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>站点配置</span><span class="text-xs text-slate-400 font-mono">/Maintains/SiteConfigForm</span></a>
-                <a asp-page="/Dev/Icons" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>图标库</span><span class="text-xs text-slate-400 font-mono">/Dev/Icons</span></a>
-                <a asp-page="/Dev/API" class="block px-3 py-2 rounded-lg hover:bg-slate-50 transition flex justify-between items-center"><span>HTTP API</span><span class="text-xs text-slate-400 font-mono">/Dev/API</span></a>
-            </nav>
+@section body {
+    <EleForm>
+        <EleHidden For="Item.Id"></EleHidden>
+        <EleLabel Label="基础信息" FillRow="true" Color="#0A79C4" ></EleLabel>
+        <EleImageUpload For="Item.OutlookImage" Label="外观图片" FillRow="true"></EleImageUpload>
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.SocialCreditId" Label="社会信用代码"></EleInput>
+        <EleInput For="Item.Code" Label="编码"></EleInput>
+        <EleInput For="Item.AreaCode" Label="地块号"></EleInput>
+        <EleInput For="Item.Address" Label="地址"></EleInput>
+        <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location"></ElePicker>
+        <EleDatePicker For="Item.ArchieveDt" Label="建档日期"></EleDatePicker>
+        <EleDatePicker For="Item.LastCheckDt" Label="最后巡查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+        <EleSwitch For="Item.HasHarzard" Label="是否存在隐患"></EleSwitch>
+        <EleSwitch For="Item.IsDel" Label="是否失效"></EleSwitch>
+        <div v-show="form.isDel === true">
+            <EleSelect For="Item.FailReason" Label="失效原因" FillRow="true" ></EleSelect>
         </div>
-    </section>
 
-        //-------------------------------------------
-        // 1. 取值辅助
-        //-------------------------------------------
-        /// <summary>返回用户实际生效的授权组织（AuthOrgId ?? OrgId），若两者都空则返回 null。</summary>
-        public static long? GetEffectiveAuthOrgId(this App.DAL.User user)
-        {
-            if (user == null) return null;
-            return user.EffectiveAuthOrgId;
-        }
+        <EleLabel Label="营业信息" FillRow="true" Color="#0A79C4" Bold="true"></EleLabel>
+        <EleImageUpload For="Item.LicenseImage" Label="工商执照" FillRow="true"></EleImageUpload>
+        <EleSelect For="Item.ObjectType" Label="对象类型" Placeholder="请选择"></EleSelect>
+        <EleListPicker For="Item.Scope" Label="领域"></EleListPicker>
+        <EleSelect For="Item.IndustryType" Label="行业类型"></EleSelect>
+        <EleSelect For="Item.Scale" Label="规模"></EleSelect>
+        <EleInput For="Item.ProductContent" Label="生产内容" Rows="1" FillRow="true"></EleInput>
+        <EleInput For="Item.EleMeeterNum" Label="电表号"></EleInput>
+        <EleNumber For="Item.EmployeeCount" Label="员工数"></EleNumber>
 
-                            <el-radio-button value="na" class="result-na">不涉及</el-radio-button>
+        <EleLabel Label="责任信息" Color="#0A79C4" FillRow="true"></EleLabel>
+        <EleTreePicker For="Item.DutyOrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreePicker>
+        <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Label="技术检查员" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
+        <EleInput For="Item.DutyMan" Label="企业负责人"></EleInput>
+        <EleInput For="Item.SafeMan" Label="安全管理员"></EleInput>
+        <EleInput For="Item.SafeSteward" Label="安全管家"></EleInput>
+        <EleInput For="Item.SafeAgency" Label="三方机构"></EleInput>
 
 
+        <EleLabel Label="风险信息" FillRow="true"></EleLabel>
+        <EleSelect For="Item.RiskLevel" Label="风险等级" ></EleSelect>
+        <EleSelect For="Item.IndustryRisk" Label="行业风险"></EleSelect>
 
-                <template #default="{ row }">
-                    <el-tag :type="row.isClosed ? 'success' : 'warning'">{{ row.isClosed ? '是' : '否' }}</el-tag>
-                </template>
 
-        <EleInput For="Item.IsClosed" Label="检查结果" Enabled="false"></EleInput>
-        public bool IsClosed { get; set; }
-                IsClosed = false //
+        <EleLabel Label="建筑信息" FillRow="true"></EleLabel>
+        <EleSelect For="Item.BuildingType" Label="建筑类型" ></EleSelect>
+        <EleNumber For="Item.LandArea" Label="占地面积" Append="㎡" ControlPosition="right" ></EleNumber>
+        <EleNumber For="Item.BuildingArea" Label="建筑面积" Append="㎡" ControlPosition="right" ></EleNumber>
+        <EleSelect For="Item.FactoryUsageType" Label="厂房使用权"></EleSelect>
+        <EleSelect For="Item.BuildingStructure" Label="房屋结构"></EleSelect>
 
-        <EleSwitch For="Item.IsClosed" Label="是否闭环"></EleSwitch>
-            item.IsClosed = req.IsClosed;
-                        IsClosed = false
-            <EleColumn For="Item.IsClosed" Label="闭环" Width="80" Display="Tag"></EleColumn>
-            check.IsClosed = false;
-            target.IsClosed = source.IsClosed;
 
-        [UI("是否关闭")] public bool? IsClosed { get; set; } = false;  // 关闭后不允许修改
-                IsClosed,
+        <EleLabel Label="更多" FillRow="true"></EleLabel>
+        <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreePicker>
+        
+        <EleList Label="联系人" FillRow="true" DataHandler="?handler=ContactsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" LastText=" " SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="shrink-0 w-16 text-center">类型</span>
+                    <span class="flex-1">姓名</span>
+                    <span class="shrink-0 text-center">电话</span>
+                </div>
+            </Header>
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-xs text-gray-400 shrink-0 w-16 truncate">{{ item.contactTypeName }}</span>
+                    <span class="text-sm text-gray-500 truncate flex-1">{{ item.name }}</span>
+                    <span class="text-xs text-gray-500 shrink-0">{{ item.phone }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowContacts" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
+
+        <EleList Label="文档" FillRow="true" DataHandler="?handler=FilesData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="flex-1">名称</span>
+                    <span class="shrink-0 text-center">大小</span>
+                </div>
+            </Header>
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-sm text-gray-500 truncate flex-1">{{ item.fileName }}</span>
+                    <span class="text-xs text-gray-400 shrink-0">{{ item.fileSizeText }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowFiles" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
+
+
+        <EleList Label="事件" FillRow="true" DataHandler="?handler=EventsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="flex-1">标题</span>
+                    <span class="shrink-0 text-center">时间</span>
+                </div>
+            </Header>
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-sm text-gray-500 truncate flex-1">{{ item.title }}</span>
+                    <span class="text-xs text-gray-400 shrink-0">{{ item.triggleDt }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowObjectEvents" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
+
+        <EleList Label="检查历史" FillRow="true" DataHandler="?handler=CheckLogsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="CheckDt" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="shrink-0 w-24 text-center">检查时间</span>
+                    <span class="flex-1">检查人</span>
+                    <span class="shrink-0 text-center">隐患</span>
+                </div>
+            </Header>
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-xs text-gray-400 shrink-0 w-24 truncate">{{ item.checkDt }}</span>
+                    <span class="text-sm text-gray-500 truncate flex-1">{{ item.checkerName }}</span>
+                    <span class="text-xs text-gray-500 shrink-0" v-if="item.hazardCount > 0">隐患 {{ item.hazardCount }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit"  Handler="ShowCheckLogs" EnabledFor="Item.Id">管理</EleButton>
+            </Footer>
+        </EleList>
+
+        <EleList Label="隐患清单" FillRow="true" DataHandler="?handler=HazardsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="shrink-0 w-14 text-center">状态</span>
+                    <span class="flex-1">描述</span>
+                    <span class="shrink-0 text-center">期限</span>
+                </div>
+            </Header>
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-xs text-gray-500 shrink-0 w-14 truncate">{{ item.statusName }}</span>
+                    <span class="text-sm text-gray-500 truncate flex-1">{{ item.description }}</span>
+                    <span class="text-xs text-gray-400 shrink-0">{{ item.expireDt }}</span>
+                </div>
+            </ItemTemplate>
+            <Footer>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowHazards">管理</EleButton>
+            </Footer>
+        </EleList>
+    
+        <Bottom>
+            <EleButton Type="Primary" Icon="Select" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Type="Success" Icon="Search" PopupUrl="/Checks/CheckFlow?objectId=@Model.Item.Id&objectName=@UrlEncode(Model.Item.Name ?? string.Empty)" EnabledFor="Item.Id" Visible="@Auth.CheckPower(Power.CheckNew)">开始排查</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}
+
+
+                    <span class="text-xs text-gray-400 shrink-0 w-24 truncate">{{ item.checkDtText }}</span>

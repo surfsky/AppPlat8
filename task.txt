@@ -552,10 +552,12 @@ Done
             考察一下Notion软件
 
 2026/10/11
-    /优化EleList，支持Header固顶、Footer固底。全项目都加上header。
-    /对象联系人类型
+    /优化对象表单CheckObjectForm
+        /优化EleList，支持Header固顶、Footer固底。全项目都加上header。
+        /对象联系人类型
+        简化 ObjectContactFormModel，估计是老代码未简化
+        看是否剥离PropertyGrid/EleDict组件，可用于显示对象的备注数据
 
-    看是否剥离PropertyGrid/EleDict组件
     实现检查任务：
         /删除列 Check.IsClosed 看是否需要删除，闭环主要是指隐患而不是检查本身；
         对象页面提供检查任务过滤框

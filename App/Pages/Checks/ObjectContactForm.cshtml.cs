@@ -25,6 +25,27 @@ namespace App.Pages.Checks
             }
         }
 
+
+        public IActionResult OnGetData(long id, long objectId)
+        {
+            if (objectId <= 0)
+                return BuildResult(400, "参数错误：缺少检查对象ID");
+
+            var objectName = CheckObject.Get(objectId)?.Name ?? string.Empty;
+
+            if (id > 0)
+            {
+                var exists = CheckObjectContact.IncludeSet.Any(o => o.Id == id && o.CheckObject.Id == objectId);
+                if (!exists)
+                    return BuildResult(404, "联系人不存在");
+
+                var item = CheckObjectContact.GetDetail(id);
+                return BuildResult(0, "success", BuildFormData(item, objectId, objectName));
+            }
+
+            return BuildResult(0, "success", BuildFormData(new CheckObjectContact(), objectId, objectName));
+        }
+
         //
         private object BuildFormData(CheckObjectContact item, long objectId, string objectName)
         {
@@ -46,27 +67,8 @@ namespace App.Pages.Checks
                 contactType = item.ContactType
             };
         }
-
-        public IActionResult OnGetData(long id, long objectId)
-        {
-            if (objectId <= 0)
-                return BuildResult(400, "参数错误：缺少检查对象ID");
-
-            var objectName = CheckObject.Get(objectId)?.Name ?? string.Empty;
-
-            if (id > 0)
-            {
-                var exists = CheckObjectContact.IncludeSet.Any(o => o.Id == id && o.CheckObject.Id == objectId);
-                if (!exists)
-                    return BuildResult(404, "联系人不存在");
-
-                var item = CheckObjectContact.Get(id);
-                return BuildResult(0, "success", BuildFormData(item, objectId, objectName));
-            }
-
-            return BuildResult(0, "success", BuildFormData(new CheckObjectContact(), objectId, objectName));
-        }
-
+        
+        
         public IActionResult OnPostSave([FromBody] CheckObjectContact req, long objectId)
         {
             var checkObject = CheckObject.Get(objectId);
@@ -80,7 +82,7 @@ namespace App.Pages.Checks
                 var exists = CheckObjectContact.IncludeSet.Any(o => o.Id == req.Id && o.CheckObject.Id == objectId);
                 if (!exists)
                     return BuildResult(403, "无权操作");
-                item = CheckObjectContact.Get(req.Id);
+                item = CheckObjectContact.GetDetail(req.Id);
             }
             else
             {

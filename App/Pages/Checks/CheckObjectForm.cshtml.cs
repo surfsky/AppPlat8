@@ -142,6 +142,14 @@ namespace App.Pages.Checks
             return BuildResult(0, "success", list, pi);
         }
 
+        /// <summary>获取检查点列表数据</summary>
+        public IActionResult OnGetCheckPointsData(Paging pi, long objectId)
+        {
+            if (objectId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+            var list = CheckPoint.Search(objectId: objectId).SortPageExport(pi);
+            return BuildResult(0, "success", list, pi);
+        }
+
         // ────────────── 抽屉弹窗 ──────────────
 
         /// <summary>显示联系人</summary>
@@ -224,6 +232,24 @@ namespace App.Pages.Checks
             var url = $"/Checks/Flow/CheckHazards?objectId={objectId}&objectName={objectName}&md={this.Mode}";
             return EleHandler.ShowDrawer(
                 title: "隐患清单",
+                url: url,
+                size: "50%"
+                );
+        }
+
+        /// <summary>显示检查点</summary>
+        public IActionResult OnPostShowCheckPoints([FromBody] CheckObject req)
+        {
+            var objectId = req?.Id ?? 0;
+            if (objectId <= 0)
+            {
+                return EleHandler.ShowNotify("请先保存检查对象，再维护检查点", NotifyType.Warning, "提示");
+            }
+
+            var objectName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Checks/CheckPoints?objectId={objectId}&objectName={objectName}&md={this.Mode}";
+            return EleHandler.ShowDrawer(
+                title: "检查点",
                 url: url,
                 size: "50%"
                 );

@@ -66,6 +66,7 @@ namespace App.Entities
             return new
             {
                 this.Id,
+                this.Key,
                 this.FileName,
                 this.Url,
                 ImageUrl      = this.Type == AttType.Image ? this.Url : null,

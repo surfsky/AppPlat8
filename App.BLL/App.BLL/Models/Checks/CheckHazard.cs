@@ -78,6 +78,7 @@ namespace App.DAL
                 CreateDt,
                 ExpireDt,
                 RectifyDt,
+                ExpireDtText = ExpireDt?.ToString("yyyy-MM-dd"),
                 IsIn141,
 
                 StatusName,
@@ -87,11 +88,12 @@ namespace App.DAL
                 CheckItemName,
                 HazardLevel,
                 HazardLevelName = HazardLevel.GetTitle(),
+                CheckDtText = Check?.CheckDt?.ToString("yyyy-MM-dd HH:mm"),
             };
         }
         public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt, long? dutyOrgId = null, DateTime? expireTo = null, List<long> dutyOrgIds = null)
         {
-            IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.Object).Include(t => t.Checker).Include(t => t.CheckItem);
+            IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.Object).Include(t => t.Checker).Include(t => t.CheckItem).Include(t => t.Check);
             if (objectId.IsNotEmpty())          q = q.Where(o => o.ObjectId == objectId.Value);
             else if (objectName.IsNotEmpty())   q = q.Where(o => o.Object.Name.Contains(objectName.Trim()));
             if (checkerId.IsNotEmpty())         q = q.Where(o => o.CheckerId == checkerId.Value);
@@ -146,6 +148,7 @@ namespace App.DAL
                 HazardId,
                 ReviewerId,
                 ReviewDt,
+                ReviewDtText = ReviewDt?.ToString("yyyy-MM-dd HH:mm"),
                 Content,
                 Status,
                 Image,

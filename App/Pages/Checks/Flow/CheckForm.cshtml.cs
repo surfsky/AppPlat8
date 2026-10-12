@@ -21,10 +21,24 @@ namespace App.Pages.Checks
         public List<SelectListItem> CheckObjects { get; set; }
         public List<SelectListItem> Tasks { get; set; }
 
-        public void OnGet()
+        public void OnGet(long id = 0)
         {
-            CheckObjects = CheckObject.Set.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
-            Tasks = CheckTask.Set.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
+            Item = Check.Get(id) ?? new Check();
+            if (Mode == PageMode.View && id > 0)
+            {
+                // View 模式只加载当前记录关联的对象和任务，避免全表扫描导致卡死
+                var check = Check.GetDetail(id);
+                CheckObjects = check?.CheckObject != null
+                    ? new List<SelectListItem> { new SelectListItem(check.CheckObject.Name, check.CheckObject.Id.ToString()) }
+                    : new List<SelectListItem>();
+                Tasks = check?.Tasks?.Select(t => new SelectListItem(t.Name, t.Id.ToString())).ToList()
+                        ?? new List<SelectListItem>();
+            }
+            else
+            {
+                CheckObjects = CheckObject.Set.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
+                Tasks = CheckTask.Set.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
+            }
         }
 
         public IActionResult OnGetData(long id)
@@ -76,6 +90,17 @@ namespace App.Pages.Checks
 
             item.Save();
             return BuildResult(0, "保存成功");
+        }
+
+        /// <summary>获取隐患清单列表数据</summary>
+        public IActionResult OnGetHazardsData(Paging pi, long checkId)
+        {
+            if (checkId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
+            var list = CheckHazard.IncludeSet
+                .Include(h => h.Check)
+                .Where(h => h.CheckLogId == checkId)
+                .SortPageExport(pi);
+            return BuildResult(0, "success", list, pi);
         }
     }
 }

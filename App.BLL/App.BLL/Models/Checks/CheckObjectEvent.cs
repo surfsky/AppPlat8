@@ -33,6 +33,7 @@ namespace App.DAL.OA
             return new
             {
                 Id,
+                CheckObjectId,
                 Type,
                 TypeName = Type?.GetTitle(),
                 Title,
@@ -42,6 +43,7 @@ namespace App.DAL.OA
                 //CreatorName = Creator?.Name,
                 this.CreateDt,
                 this.TriggleDt,
+                TriggleDtText = TriggleDt?.ToString("yyyy-MM-dd"),
             };
         }
 

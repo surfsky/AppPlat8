@@ -32,6 +32,7 @@ namespace App.DAL
                 Picture,
                 Gps,
                 RiskLevel,
+                RiskLevelName = RiskLevel?.GetTitle(),
                 CheckObjectId,
                 CheckObjectName,
                 SafetyAdminName,

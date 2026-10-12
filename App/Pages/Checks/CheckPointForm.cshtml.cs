@@ -44,24 +44,26 @@ namespace App.Pages.Checks
             };
         }
 
-        public IActionResult OnGetData(long id, long objectId)
+        public IActionResult OnGetData(long id, long objectId = 0)
         {
+            // 编辑/查看时 objectId 可能未传入，从检查点记录本身获取
+            if (id > 0)
+            {
+                var item = CheckPoint.Get(id);
+                if (item == null)
+                    return BuildResult(404, "风险点不存在");
+
+                var objId = objectId > 0 ? objectId : (item.CheckObjectId ?? 0);
+                var objectName = CheckObject.Get(objId)?.Name ?? string.Empty;
+                return BuildResult(0, "success", BuildFormData(item, objId, objectName));
+            }
+
+            // 新增时必须有 objectId
             if (objectId <= 0)
                 return BuildResult(400, "参数错误：缺少检查对象ID");
 
-            var objectName = CheckObject.Get(objectId)?.Name ?? string.Empty;
-
-            if (id > 0)
-            {
-                var exists = CheckPoint.IncludeSet.Any(o => o.Id == id && o.CheckObjectId == objectId);
-                if (!exists)
-                    return BuildResult(404, "风险点不存在");
-
-                var item = CheckPoint.Get(id);
-                return BuildResult(0, "success", BuildFormData(item, objectId, objectName));
-            }
-
-            return BuildResult(0, "success", BuildFormData(new CheckPoint(), objectId, objectName));
+            var name = CheckObject.Get(objectId)?.Name ?? string.Empty;
+            return BuildResult(0, "success", BuildFormData(new CheckPoint(), objectId, name));
         }
 
         public IActionResult OnPostSave([FromBody] CheckPoint req, long objectId)

@@ -14,6 +14,26 @@
         <EleSwitch For="Item.Result" Label="检查结果"></EleSwitch>
         <EleNumber For="Item.HazardCount" Label="隐患数量"></EleNumber>
         <EleNumber For="Item.RemainHazardCount" Label="未处理隐患"></EleNumber>
+        <!--  隐患清单 -->
+        <EleList Label="隐患清单" FillRow="true" DataHandler="?handler=HazardsData&checkId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <Header>
+                <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="shrink-0 w-14 text-center">状态</span>
+                    <span class="flex-1">描述</span>
+                    <span class="shrink-0 text-center">期限</span>
+                </div>
+            </Header>
+            <ItemTemplate>
+                <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="text-xs text-gray-500 shrink-0 w-14 truncate">{{ item.statusName }}</span>
+                    <a href="javascript:void(0)" class="text-sm text-gray-800 hover:text-blue-600 truncate flex-1"
+                       :title="item.description"
+                       v-on:click="openLinkInDrawer(`/Checks/Flow/CheckHazardForm?id=${item.id}&md=View`, item.description)">{{ item.description }}</a>
+                    <span class="text-xs text-gray-400 shrink-0">{{ item.expireDtText }}</span>
+                </div>
+            </ItemTemplate>
+        </EleList>
+        
     
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

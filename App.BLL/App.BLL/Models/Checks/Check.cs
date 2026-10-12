@@ -73,6 +73,7 @@ namespace App.DAL
                 RemainHazardCount,
                 CreateDt,
                 CreatorId,
+                CheckDtText = CheckDt?.ToString("yyyy-MM-dd HH:mm"),
 
                 OrgName,
                 CheckerName,
