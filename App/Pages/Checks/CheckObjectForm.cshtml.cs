@@ -72,6 +72,7 @@ namespace App.Pages.Checks
             item.LandArea = req.LandArea;
             item.BuildingArea = req.BuildingArea;
             item.SafeAgency = req.SafeAgency;
+            item.Remark = req.Remark;
 
             item.RiskLevel = req.RiskLevel;
             item.Scope = req.Scope;
@@ -92,8 +93,10 @@ namespace App.Pages.Checks
             return BuildResult(0, "保存成功");
         }
 
+        
+        //----------------------------------------------------------------
         // ────────────── 列表数据查询 ──────────────
-
+        //----------------------------------------------------------------
         /// <summary>获取联系人列表数据</summary>
         public IActionResult OnGetContactsData(Paging pi, long objectId)
         {
@@ -150,8 +153,10 @@ namespace App.Pages.Checks
             return BuildResult(0, "success", list, pi);
         }
 
+        
+        //----------------------------------------------------------------
         // ────────────── 抽屉弹窗 ──────────────
-
+        //----------------------------------------------------------------
         /// <summary>显示联系人</summary>
         public IActionResult OnPostShowContacts([FromBody] CheckObject req)
         {

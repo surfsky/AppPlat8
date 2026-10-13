@@ -26,13 +26,14 @@
 
         <EleLabel Label="营业信息" FillRow="true" Color="#0A79C4" Bold="true"></EleLabel>
         <EleImageUpload For="Item.LicenseImage" Label="工商执照" FillRow="true"></EleImageUpload>
-        <EleSelect For="Item.ObjectType" Label="对象类型" Placeholder="请选择"></EleSelect>
+        <EleSelect For="Item.ObjectType" Label="类型" Placeholder="请选择"></EleSelect>
         <EleListPicker For="Item.Scope" Label="领域"></EleListPicker>
         <EleSelect For="Item.IndustryType" Label="行业类型"></EleSelect>
         <EleSelect For="Item.Scale" Label="规模"></EleSelect>
         <EleInput For="Item.ProductContent" Label="生产内容" Rows="1" FillRow="true"></EleInput>
         <EleInput For="Item.EleMeeterNum" Label="电表号"></EleInput>
         <EleNumber For="Item.EmployeeCount" Label="员工数"></EleNumber>
+        <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true" TagType="Warning"></EleTreePicker>
 
         <EleLabel Label="责任信息" Color="#0A79C4" FillRow="true"></EleLabel>
         <EleTreePicker For="Item.DutyOrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreePicker>
@@ -43,12 +44,12 @@
         <EleInput For="Item.SafeAgency" Label="三方机构"></EleInput>
 
 
-        <EleLabel Label="风险信息" FillRow="true"></EleLabel>
+        <EleLabel Label="风险信息" Color="#0A79C4" FillRow="true"></EleLabel>
         <EleSelect For="Item.RiskLevel" Label="风险等级" ></EleSelect>
         <EleSelect For="Item.IndustryRisk" Label="行业风险"></EleSelect>
 
 
-        <EleLabel Label="建筑信息" FillRow="true"></EleLabel>
+        <EleLabel Label="建筑信息" Color="#0A79C4" FillRow="true"></EleLabel>
         <EleSelect For="Item.BuildingType" Label="建筑类型" ></EleSelect>
         <EleNumber For="Item.LandArea" Label="占地面积" Append="㎡" ControlPosition="right" ></EleNumber>
         <EleNumber For="Item.BuildingArea" Label="建筑面积" Append="㎡" ControlPosition="right" ></EleNumber>
@@ -56,9 +57,9 @@
         <EleSelect For="Item.BuildingStructure" Label="房屋结构"></EleSelect>
 
 
-        <EleLabel Label="更多" FillRow="true"></EleLabel>
-        <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true"></EleTreePicker>
-        
+        <EleLabel Label="更多" Color="#0A79C4" FillRow="true"></EleLabel>
+
+        <!-- 联系人  -->
         <EleList Label="联系人" FillRow="true" DataHandler="?handler=ContactsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" LastText=" " SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
@@ -81,6 +82,7 @@
             </Footer>
         </EleList>
 
+        <!-- 文档  -->
         <EleList Label="文档" FillRow="true" DataHandler="?handler=FilesData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
@@ -129,6 +131,8 @@
             </Footer>
         </EleList>
         
+
+        <!-- 检查历史  -->
         <EleList Label="检查历史" FillRow="true" DataHandler="?handler=CheckLogsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="CheckDt" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
@@ -151,6 +155,7 @@
             </Footer>
         </EleList>
 
+        <!-- 隐患清单  -->
         <EleList Label="隐患清单" FillRow="true" DataHandler="?handler=HazardsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
@@ -175,7 +180,7 @@
             </Footer>
         </EleList>
 
-
+        <!-- 事件  -->
         <EleList Label="事件" FillRow="true" DataHandler="?handler=EventsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
@@ -185,7 +190,7 @@
             </Header>
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
-                    <span class="text-xs text-gray-400 shrink-0">{{ item.triggleDtText }}</span>
+                    <span class="text-xs text-gray-400 shrink-0">{{ item.happenDtText }}</span>
                     <a href="javascript:void(0)" class="text-sm text-gray-800 hover:text-blue-600 truncate flex-1"
                        :title="item.title"
                        v-on:click="openLinkInDrawer(`/Checks/CheckObjectEventForm?id=${item.id}&objectId=${item.checkObjectId}&md=View`, item.title)">{{ item.title }}</a>
@@ -196,6 +201,8 @@
             </Footer>
         </EleList>
 
+        <!-- 扩展信息  -->
+        <EleProperty For="Item.Remark" Label="扩展信息" FillRow="true" Height="1000px"></EleProperty>
 
     
         <Bottom>

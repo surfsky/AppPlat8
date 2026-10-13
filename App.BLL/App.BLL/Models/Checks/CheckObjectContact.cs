@@ -23,6 +23,7 @@ namespace App.DAL
     [UI("检查", "对象拥有的人员清单")]
     public class CheckObjectContact : EntityBase<CheckObjectContact>
     {
+        [UI("检查对象Id")] public long? CheckObjectId { get; set; }
         [UI("联系人类型")] public ContactType? ContactType { get; set; }
         [UI("姓名")] public string Name { get; set; }
         [UI("照片")] public string Photo { get; set; }
@@ -31,8 +32,8 @@ namespace App.DAL
         [UI("联系方式")] public string Phone { get; set; }
         [UI("执证日期")] public DateTime? CertDt { get; set; }
         [UI("过期日期")] public DateTime? CertExpireDt { get; set; }
-        [UI("检查对象Id")] public long? CheckObjectId { get; set; }
 
+        //
         public virtual CheckObject CheckObject { get; set; }
         public string ContactTypeName => ContactType.GetTitle();
         public string CheckObjectName => CheckObject?.Name ?? string.Empty;
@@ -60,7 +61,7 @@ namespace App.DAL
         public static IQueryable<CheckObjectContact> Search(string name="", string phone="", string socialCreditCode="", long? objectId=null, long? orgId=null, long? checkerId=null, CheckObjectType? objectType=null, CheckObjectScale? scale=null)
         {
             IQueryable<CheckObjectContact>     q = CheckObjectContact.IncludeSet;
-            if (objectId.IsNotEmpty())         q = q.Where(o => o.CheckObject.Id == objectId.Value);
+            if (objectId.IsNotEmpty())         q = q.Where(o => o.CheckObjectId == objectId.Value);
             if (orgId.IsNotEmpty())            q = q.Where(o => o.CheckObject.DutyOrgId == orgId.Value);
             if (checkerId.IsNotEmpty())        q = q.Where(o => o.CheckObject.CheckerId == checkerId.Value);
             if (name.IsNotEmpty())             q = q.Where(o => o.Name.Contains(name.Trim()));

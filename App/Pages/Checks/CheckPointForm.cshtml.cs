@@ -11,12 +11,8 @@ namespace App.Pages.Checks
     [Auth(Power.CheckObjectEdit)]
     public class CheckPointFormModel : AuthModel
     {
-        [BindProperty(SupportsGet = true)]
         public long ObjectId { get; set; }
-
-        [BindProperty(SupportsGet = true)]
         public string ObjectName { get; set; }
-
         public CheckPoint Item { get; set; }
 
         public void OnGet(long objectId, string objectName)
@@ -30,7 +26,6 @@ namespace App.Pages.Checks
         private object BuildFormData(CheckPoint item, long objectId, string objectName)
         {
             var display = string.IsNullOrWhiteSpace(objectName) ? $"ID:{objectId}" : $"{objectName} (ID:{objectId})";
-
             return new
             {
                 id = item.Id,
@@ -52,54 +47,33 @@ namespace App.Pages.Checks
                 var item = CheckPoint.Get(id);
                 if (item == null)
                     return BuildResult(404, "风险点不存在");
-
                 var objId = objectId > 0 ? objectId : (item.CheckObjectId ?? 0);
                 var objectName = CheckObject.Get(objId)?.Name ?? string.Empty;
                 return BuildResult(0, "success", BuildFormData(item, objId, objectName));
             }
-
-            // 新增时必须有 objectId
-            if (objectId <= 0)
-                return BuildResult(400, "参数错误：缺少检查对象ID");
-
-            var name = CheckObject.Get(objectId)?.Name ?? string.Empty;
-            return BuildResult(0, "success", BuildFormData(new CheckPoint(), objectId, name));
+            else
+            {
+                // 新增时必须有 objectId
+                if (objectId <= 0)
+                    return BuildResult(400, "参数错误：缺少检查对象ID");
+                var name = CheckObject.Get(objectId)?.Name ?? string.Empty;
+                return BuildResult(0, "success", BuildFormData(new CheckPoint(), objectId, name));
+            }
         }
 
         public IActionResult OnPostSave([FromBody] CheckPoint req, long objectId)
         {
-            if (req == null)
-                return BuildResult(400, "参数错误");
-            if (objectId <= 0)
-                return BuildResult(400, "参数错误：缺少检查对象ID");
-
             var checkObject = CheckObject.Get(objectId);
-            if (checkObject == null)
-                return BuildResult(404, "检查对象不存在");
+            if (req == null)            return BuildResult(400, "参数错误");
+            if (objectId <= 0)          return BuildResult(400, "参数错误：缺少检查对象ID");
+            if (checkObject == null)    return BuildResult(404, "检查对象不存在");
 
-            CheckPoint item;
-            if (req.Id > 0)
-            {
-                var exists = CheckPoint.IncludeSet.Any(o => o.Id == req.Id && o.CheckObjectId == objectId);
-                if (!exists)
-                    return BuildResult(403, "无权操作该风险点");
-
-                item = CheckPoint.Get(req.Id);
-            }
-            else
-            {
-                item = new CheckPoint
-                {
-                    CheckObjectId = objectId
-                };
-            }
-
+            CheckPoint item = req.Id > 0 ? CheckPoint.GetDetail(req.Id) : new CheckPoint { CheckObjectId = objectId };
             item.Name = req.Name;
             item.RiskLevel = req.RiskLevel;
             item.Gps = req.Gps;
             item.Picture = Uploader.SaveFile(nameof(CheckPoint), req.Picture);
             item.Save();
-
             return BuildResult(0, "保存成功");
         }
     }

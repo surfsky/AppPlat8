@@ -21,9 +21,9 @@ namespace App.Components
     /// </summary>
     public static class RazorHelpers
     {
-        /// <summary>QStr 的短别名</summary>
-        public static string Q(string key, string defaultValue = null) => QStr(key, defaultValue);
-
+        //----------------------------------------------------------------------------
+        // 查询参数读取
+        //----------------------------------------------------------------------------
         /// <summary>读取当前 URL 的查询参数（querystring）。无对应参数时返回 <paramref name="defaultValue"/>。</summary>
         public static string QStr(string key, string defaultValue = null)
         {
@@ -38,7 +38,16 @@ namespace App.Components
         /// <summary>获取查询参数的整数值。无对应参数时返回 <paramref name="defaultValue"/>。</summary>
         public static int QInt(string key, int defaultValue = 0) => int.TryParse(QStr(key), out var v) ? v : defaultValue;
 
+        /// <summary>获取查询参数的长整数值。无对应参数时返回 <paramref name="defaultValue"/>。</summary>
+        public static long QLong(string key, long defaultValue = 0) => long.TryParse(QStr(key), out var v) ? v : defaultValue;
 
+        /// <summary>QStr 的短别名</summary>
+        public static string Q(string key, string defaultValue = null) => QStr(key, defaultValue);
+
+
+        //----------------------------------------------------------------------------
+        // 权限检查
+        //----------------------------------------------------------------------------
         /// <summary>检查当前用户是否有指定权限</summary>
         public static bool AuthPower(Power power) => Auth.CheckPower(power);
     }

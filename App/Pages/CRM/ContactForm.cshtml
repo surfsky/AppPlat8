@@ -10,7 +10,7 @@
         <EleInput For="Item.Phone" Label="电话"></EleInput>
         <EleInput For="Item.Title" Label="职务"></EleInput>
         <EleTreePicker For="Item.MenuId" Label="目录" Api="/httpapi/oa/GetContactMenuTree" Clearable="true" CheckStrictly="true"></EleTreePicker>
-        <EleProperty For="Item.DataJson" Label="属性" Rows="4" FillRow="true"></EleProperty>
+        <EleProperty For="Item.DataJson" Label="属性" FillRow="true"></EleProperty>
 
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

@@ -58,6 +58,7 @@ namespace App.DAL
         [UI("基础", "生产内容")] public string ProductContent { get; set; }
         [UI("基础", "外观图片")] public string OutlookImage { get; set; }
         [UI("基础", "工商执照")] public string LicenseImage { get; set; }
+        [UI("基础", "扩展信息")] public string Remark { get; set; }
 
         // 人员相关
         [UI("人员", "企业负责人")] public string DutyMan { get; set; }   // 格式如：张三/15300000000。Man 是 Manager 的简写
@@ -150,6 +151,7 @@ namespace App.DAL
                 Gps,
                 AreaCode,
                 IsChecked,
+                Remark,
 
                 ArchieveDt,
                 LastCheckDt,
@@ -213,7 +215,7 @@ namespace App.DAL
                 Url = null,
                 File = null,
                 GeoJson = null,
-                Remark = FailReason?.GetTitle(),
+                Remark = this.Remark,
                 DataJson = JsonSerializer.Serialize(new
                 {
                     SocialCreditId,

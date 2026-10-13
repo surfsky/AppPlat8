@@ -24,26 +24,29 @@ namespace App.DAL.OA
         [UI("标题")]        public string Title { get; set; }
         [UI("内容")]        public string Content { get; set; }
         [UI("主图")]        public string MainImage { get; set; }
-        [UI("发生时间")]     public DateTime? TriggleDt { get; set; }
+        [UI("发生时间")]     public DateTime? HappenDt { get; set; }
 
         public virtual CheckObject CheckObject { get; set; }
+        public string CheckObjectName => CheckObject?.Name;
+        public string CheckObjectDisplay => $"{CheckObjectName} (ID:{CheckObjectId})";
 
         public override object Export(ExportMode type = ExportMode.Normal)
         {
             return new
             {
                 Id,
-                CheckObjectId,
                 Type,
                 TypeName = Type?.GetTitle(),
                 Title,
                 Content,
                 MainImage,
                 CreatorId,
-                //CreatorName = Creator?.Name,
-                this.CreateDt,
-                this.TriggleDt,
-                TriggleDtText = TriggleDt?.ToString("yyyy-MM-dd"),
+                CreateDt,
+                HappenDt,
+                HappenDtText = HappenDt?.ToString("yyyy-MM-dd"),
+                CheckObjectId,
+                CheckObjectName,
+                CheckObjectDisplay,
             };
         }
 

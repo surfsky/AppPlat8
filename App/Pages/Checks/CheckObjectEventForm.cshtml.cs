@@ -14,45 +14,21 @@ namespace App.Pages.Checks
     [Auth(Power.CheckObjectEdit)]
     public class CheckObjectEventFormModel : AuthModel
     {
-        [BindProperty(SupportsGet = true)]
         public long ObjectId { get; set; }
-
-        [BindProperty(SupportsGet = true)]
         public string ObjectName { get; set; }
-
-        [BindProperty(SupportsGet = true)]
         public string ObjectDisplay { get; set; }
-
         public CheckObjectEvent Item { get; set; }
-        public List<SelectListItem> TypeItems { get; set; }
 
         public void OnGet(long objectId, string objectName)
         {
             ObjectId = objectId;
             ObjectName = objectName;
-            if (string.IsNullOrWhiteSpace(ObjectName) && ObjectId > 0)
+            if (ObjectName.IsNotEmpty() && ObjectId > 0)
                 ObjectName = CheckObject.Get(ObjectId)?.Name ?? string.Empty;
 
-            ObjectDisplay = string.IsNullOrWhiteSpace(ObjectName) ? $"ID:{ObjectId}" : $"{ObjectName} (ID:{ObjectId})";
-            TypeItems = BuildTypeItems();
+            ObjectDisplay = ObjectName.IsEmpty() ? $"ID:{ObjectId}" : $"{ObjectName} (ID:{ObjectId})";
         }
 
-        private object BuildFormData(CheckObjectEvent item, long objectId, string objectName)
-        {
-            var display = string.IsNullOrWhiteSpace(objectName) ? $"ID:{objectId}" : $"{objectName} (ID:{objectId})";
-            return new
-            {
-                id = item.Id,
-                type = item.Type,
-                title = item.Title,
-                content = item.Content,
-                mainImage = item.MainImage,
-                triggleDt = item.TriggleDt,
-                objectId = objectId,
-                objectName = objectName,
-                objectDisplay = display
-            };
-        }
 
         public IActionResult OnGetData(long id, long objectId = 0)
         {
@@ -64,61 +40,52 @@ namespace App.Pages.Checks
                     return BuildResult(404, "对象事件不存在");
 
                 var objId = objectId > 0 ? objectId : item.CheckObjectId;
-                var objectName = CheckObject.Get(objId)?.Name ?? string.Empty;
+                var objectName = CheckObject.Get(objId)?.Name;
                 return BuildResult(0, "success", BuildFormData(item, objId, objectName));
             }
+            else            
+            {
+                // 新增时必须有 objectId
+                if (objectId <= 0)
+                    return BuildResult(400, "参数错误：缺少检查对象ID");
+                var name = CheckObject.Get(objectId)?.Name;
+                return BuildResult(0, "success", BuildFormData(new CheckObjectEvent(), objectId, name));                
+            }
+        }
 
-            // 新增时必须有 objectId
-            if (objectId <= 0)
-                return BuildResult(400, "参数错误：缺少检查对象ID");
-
-            var name = CheckObject.Get(objectId)?.Name ?? string.Empty;
-            return BuildResult(0, "success", BuildFormData(new CheckObjectEvent(), objectId, name));
+        /// <summary>构建表单数据</summary>
+        private object BuildFormData(CheckObjectEvent item, long objectId, string objectName)
+        {
+            var display = ObjectName.IsNotEmpty() ? $"ID:{objectId}" : $"{objectName} (ID:{objectId})";
+            return new
+            {
+                item.Id,
+                item.Type,
+                item.Title,
+                item.Content,
+                item.MainImage,
+                item.HappenDt,
+                objectId = objectId,
+                objectName = objectName,
+                objectDisplay = display
+            };
         }
 
         public IActionResult OnPostSave([FromBody] CheckObjectEvent req, long objectId)
         {
-            if (req == null)
-                return BuildResult(400, "参数错误");
-            if (objectId <= 0)
-                return BuildResult(400, "参数错误：缺少检查对象ID");
-
             var checkObject = CheckObject.Get(objectId);
-            if (checkObject == null)
-                return BuildResult(404, "检查对象不存在");
+            if (req == null)           return BuildResult(400, "参数错误");
+            if (objectId <= 0)         return BuildResult(400, "参数错误：缺少检查对象ID");
+            if (checkObject == null)   return BuildResult(404, "检查对象不存在");
 
-            CheckObjectEvent item;
-            if (req.Id > 0)
-            {
-                var exists = CheckObjectEvent.IncludeSet.Any(o => o.Id == req.Id && o.CheckObjectId == objectId);
-                if (!exists)
-                    return BuildResult(403, "无权操作该对象事件");
-
-                item = CheckObjectEvent.Get(req.Id);
-            }
-            else
-            {
-                item = new CheckObjectEvent
-                {
-                    CheckObjectId = objectId
-                };
-            }
-
-            item.Type = req.Type;
+            CheckObjectEvent item = (req.Id > 0) ? CheckObjectEvent.GetDetail(req.Id) : new CheckObjectEvent { CheckObjectId = objectId};
             item.Title = req.Title;
             item.Content = req.Content;
-            item.TriggleDt = req.TriggleDt;
+            item.HappenDt = req.HappenDt;
             item.MainImage = Uploader.SaveFile(nameof(CheckObjectEvent), req.MainImage);
             item.Save();
 
             return BuildResult(0, "保存成功");
-        }
-
-        private static List<SelectListItem> BuildTypeItems()
-        {
-            return Enum.GetValues<CheckObjectEventType>()
-                .Select(t => new SelectListItem(t.GetTitle(), ((int)t).ToString()))
-                .ToList();
         }
     }
 }

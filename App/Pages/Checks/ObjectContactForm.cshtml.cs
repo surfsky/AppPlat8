@@ -10,35 +10,29 @@ namespace App.Pages.Checks
     [Auth(Power.CheckObjectEdit)]
     public class ObjectContactFormModel : AuthModel
     {
-        [BindProperty(SupportsGet = true)]  public long ObjectId { get; set; }
-        [BindProperty(SupportsGet = true)]  public string ObjectName { get; set; }
+        public long ObjectId { get; set; }
+        public string ObjectName { get; set; }
         public CheckObjectContact Item { get; set; }
 
-        //
+        // 初始
         public void OnGet(long objectId, string objectName)
         {
             ObjectId = objectId;
             ObjectName = objectName;
-            if (string.IsNullOrWhiteSpace(ObjectName) && ObjectId > 0)
-            {
-                ObjectName = CheckObject.Get(ObjectId)?.Name ?? string.Empty;
-            }
+            if (ObjectName.IsEmpty() && ObjectId > 0)
+                ObjectName = CheckObject.Get(ObjectId)?.Name;
         }
 
 
+        // 获取联系人详情
         public IActionResult OnGetData(long id, long objectId)
         {
             if (objectId <= 0)
                 return BuildResult(400, "参数错误：缺少检查对象ID");
 
-            var objectName = CheckObject.Get(objectId)?.Name ?? string.Empty;
-
+            var objectName = CheckObject.Get(objectId)?.Name;
             if (id > 0)
             {
-                var exists = CheckObjectContact.IncludeSet.Any(o => o.Id == id && o.CheckObject.Id == objectId);
-                if (!exists)
-                    return BuildResult(404, "联系人不存在");
-
                 var item = CheckObjectContact.GetDetail(id);
                 return BuildResult(0, "success", BuildFormData(item, objectId, objectName));
             }
@@ -68,7 +62,7 @@ namespace App.Pages.Checks
             };
         }
         
-        
+        /// <summary>保存联系人</summary>
         public IActionResult OnPostSave([FromBody] CheckObjectContact req, long objectId)
         {
             var checkObject = CheckObject.Get(objectId);
@@ -76,22 +70,7 @@ namespace App.Pages.Checks
             if (objectId <= 0)          return BuildResult(400, "参数错误：缺少检查对象ID");
             if (checkObject == null)    return BuildResult(404, "检查对象不存在");
 
-            CheckObjectContact item;
-            if (req.Id > 0)
-            {
-                var exists = CheckObjectContact.IncludeSet.Any(o => o.Id == req.Id && o.CheckObject.Id == objectId);
-                if (!exists)
-                    return BuildResult(403, "无权操作");
-                item = CheckObjectContact.GetDetail(req.Id);
-            }
-            else
-            {
-                item = new CheckObjectContact
-                {
-                    CheckObject = checkObject
-                };
-            }
-
+            CheckObjectContact item = req.Id > 0 ? CheckObjectContact.GetDetail(req.Id) : new CheckObjectContact {CheckObject = checkObject};
             item.ContactType = req.ContactType;
             item.Name = req.Name;
             item.Phone = req.Phone;

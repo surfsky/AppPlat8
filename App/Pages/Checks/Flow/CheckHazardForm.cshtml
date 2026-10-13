@@ -24,6 +24,7 @@
         <EleLabel Label="处理过程" FillRow="true"></EleLabel>
         <EleList FillRow="true"
                  MinHeight="600px"
+                 Height="1000px"
                  DataHandler="?handler=LogsData&hazardId=@Model.Item.Id"
                  PageSize="20" Height="260px" EmptyText="暂无处理记录"
                  SortField="CreateDt" SortDirection="ASC"
@@ -32,7 +33,7 @@
                  ItemClass="bg-white"
                  ShowHeader="false">
             <ItemTemplate>
-                <div class="relative flex gap-3 py-3 pr-1">
+                <div class="relative flex gap-3 py-1 pr-1">
                     <!-- 左侧时间轴：flex 默认 stretch，左列高度自动 = 右列卡片真实高度 -->
                     <div class="relative flex-shrink-0 w-[76px] pt-0.5">
                         <span

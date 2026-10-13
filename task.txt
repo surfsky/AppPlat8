@@ -551,26 +551,33 @@ Done
             可设置过滤条件？保存到哪里？
             考察一下Notion软件
 
-2026/10/11
-    /优化对象表单CheckObjectForm
-        /优化EleList，支持Header固顶、Footer固底。全项目都加上header。
-        /对象联系人类型
-        简化 ObjectContactFormModel，估计是老代码未简化
-        看是否剥离PropertyGrid/EleDict组件，可用于显示对象的备注数据
 
+2026/10/12
     实现检查任务：
-        /删除列 Check.IsClosed 看是否需要删除，闭环主要是指隐患而不是检查本身；
         对象页面提供检查任务过滤框
         企业分配权限控制逻辑，跑通任务分配和检查流程
         优化：CheckFlow 如果对象没有匹配的标签、检查表，则自动显示高频检查表
-    修正工作台页面的数字角标和跳转链接
-    url参数处理，如果加上符号则表示该字段不可修改，如 userId=123!，表示该控件的选择值为123，且不可修改
+        修正工作台页面的数字角标和跳转链接
+    权限控制
+        实现部门科室管理员逻辑：建一个权限（部门管理员）
+        url参数处理，如果加上符号则表示该字段不可修改，如 userId=123!，表示该控件的选择值为123，且不可修改
     报表
         企业分类统计表每个数据都可以点击，可以查看每个数据的详细清单
         实现测试任务报表
     驾驶舱
         驾驶舱把监控开几个
         迁移到M apLibre
+
+2026/10/11
+    /删除列 Check.IsClosed 看是否需要删除，闭环主要是指隐患而不是检查本身；
+    /优化对象表单CheckObjectForm
+        /优化EleList，支持Header固顶、Footer固底。全项目都加上header。
+        /对象联系人类型
+        /TreePicker tagType
+        /CheckObjectContact
+        /CheckObjectEvent.HappenDt
+        /简化 ObjectContactFormModel，估计是老代码未简化
+        /用EleManager 显示对象的备注数据
 
 
 

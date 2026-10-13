@@ -166,3 +166,15 @@
 
 
                     <span class="text-xs text-gray-400 shrink-0 w-24 truncate">{{ item.checkDtText }}</span>
+
+        <ElePicker For="ObjectId" TextFor="ObjectName" Label="所属对象" Enabled="false" FillRow="true" PopupUrl="CheckObjects?md=Select"></ElePicker>
+
+
+        public List<SelectListItem> TypeItems { get; set; }
+            TypeItems = BuildTypeItems();
+        private static List<SelectListItem> BuildTypeItems()
+        {
+            return Enum.GetValues<CheckObjectEventType>()
+                .Select(t => new SelectListItem(t.GetTitle(), ((int)t).ToString()))
+                .ToList();
+        }

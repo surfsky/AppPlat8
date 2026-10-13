@@ -21,6 +21,7 @@ namespace App.EleUI
         [HtmlAttributeName("CheckStrictly")] public bool CheckStrictly { get; set; } = true;
         [HtmlAttributeName("Multiple")]      public bool Multiple { get; set; } = false;
         [HtmlAttributeName("CollapseTags")]  public bool? CollapseTags { get; set; } = false;
+        [HtmlAttributeName("TagType")]       public EleTagType TagType { get; set; } = EleTagType.Info;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -120,6 +121,7 @@ namespace App.EleUI
             output.Attributes.SetAttribute("data-ele-control-id", target);
             output.Attributes.SetAttribute("data-ele-field", propName);
 
+            var tagTypeName = TagType.ToString().ToLower();
             var content = $@"
 <div class=""el-input el-input--suffix"" :class=""{{ 'cursor-pointer': !({disabledExpr}), 'is-disabled': ({disabledExpr}) }}"" style=""width: 100%;"" @click=""!({disabledExpr}) && {openExpr}"">
     <div class=""el-input__wrapper"" style=""width: 100%;"">
@@ -129,13 +131,13 @@ namespace App.EleUI
                     <el-tag
                         v-for=""(txt, idx) in {viewExpr}.displayLabels""
                         :key=""idx""
-                        type=""info""
+                        type=""{tagTypeName}""
                         disable-transitions
                         class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap""
                     >
                         {{{{ txt }}}}
                     </el-tag>
-                    <el-tag v-if=""{viewExpr}.hiddenCount > 0"" type=""info"" disable-transitions>
+                    <el-tag v-if=""{viewExpr}.hiddenCount > 0"" type=""{tagTypeName}"" disable-transitions>
                         +{{{{ {viewExpr}.hiddenCount }}}}
                     </el-tag>
                 </template>

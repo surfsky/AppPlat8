@@ -9,7 +9,7 @@ namespace App.EleUI
     [HtmlTargetElement("EleProperty")]
     public class EleProperty : EleFormControl
     {
-        [HtmlAttributeName("Rows")] public int Rows { get; set; } = 4;
+        [HtmlAttributeName("MinHeight")] public string MinHeight { get; set; } = null;
         [HtmlAttributeName("Editable")] public bool Editable { get; set; } = true;
         [HtmlAttributeName("AddText")] public string AddText { get; set; } = null;
         [HtmlAttributeName("FieldText")] public string FieldText { get; set; } = null;
@@ -63,8 +63,15 @@ namespace App.EleUI
             if (!string.IsNullOrWhiteSpace(target))
                 output.Attributes.SetAttribute("data-ele-control-id", target);
 
-            var minRows = Rows > 0 ? Rows : 4;
-            var minHeight = minRows * 38 + 46;
+            // 计算滚动区域高度：用 Height/MinHeight 控制，参照 EleList
+            // 默认 min-height 120px（约3行）；若设置了 Height 但未设 MinHeight，取 40px 使 max-height 生效
+            var minHeight = !string.IsNullOrWhiteSpace(MinHeight)
+                ? MinHeight.Trim()
+                : (string.IsNullOrWhiteSpace(Height) ? "120px" : "40px");
+            var maxHeight = string.IsNullOrWhiteSpace(Height) ? null : Height.Trim();
+            var scrollStyle = maxHeight == null
+                ? $"overflow:auto; min-height:{minHeight};"
+                : $"overflow:auto; min-height:{minHeight}; max-height:{maxHeight};";
 
             var content = $@"
 <div class=""ele-property-wrapper"" style=""width:100%;"">
@@ -74,9 +81,9 @@ namespace App.EleUI
         </el-button>
     </div>
     <div class=""border border-slate-200 rounded-md overflow-hidden"">
-        <div style=""overflow:auto; min-height:{minHeight}px;"">
+        <div style=""{scrollStyle}"">
             <table class=""w-full border-collapse"">
-                <thead>
+                <thead class=""sticky top-0 z-10"">
                     <tr class=""bg-slate-50 text-slate-600 text-xs"">
                         <th class=""border border-slate-200 px-2 py-2 text-left font-medium"" style=""width:38%;"">{fieldText}</th>
                         <th class=""border border-slate-200 px-2 py-2 text-left font-medium"">{valueText}</th>
