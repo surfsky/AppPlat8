@@ -47,7 +47,7 @@
                 <div class="flex items-center gap-4 w-full py-1">
                     <span class="min-w-[240px] text-slate-700">{{ data.name }}</span>
                     <el-checkbox v-model="data.canSee" v-on:click.stop v-on:change="onSeeChange(data)">可见</el-checkbox>
-                    <el-checkbox v-model="data.canEdit" :disabled="!data.canSee" v-on:click.stop>可编辑</el-checkbox>
+                    <el-checkbox v-model="data.canEdit" :disabled="!data.canSee" v-on:click.stop v-on:change="onEditChange(data)">可编辑</el-checkbox>
                 </div>
             </template>
         </el-tree>
@@ -116,10 +116,28 @@ const app = createApp({
             }
         };
 
+        // 刷新"全部可见/可编辑"开关状态
+        const refreshAllFlags = () => {
+            allVisible.value = menus.value.length > 0 && menus.value.every(root => isFullyVisible(root));
+            allEditable.value = menus.value.length > 0 && menus.value.every(root => isFullyEditable(root));
+        };
+
+        // 父级可见性级联到所有子节点
         const onSeeChange = (node) => {
-            if (!node.canSee && node.canEdit) {
-                node.canEdit = false;
-            }
+            walk(node.children || [], n => {
+                n.canSee = !!node.canSee;
+                if (!node.canSee) n.canEdit = false;
+            });
+            refreshAllFlags();
+        };
+
+        // 父级可编辑级联到所有子节点
+        const onEditChange = (node) => {
+            walk(node.children || [], n => {
+                n.canEdit = !!node.canEdit;
+                if (node.canEdit) n.canSee = true;
+            });
+            refreshAllFlags();
         };
 
         const handleAllVisibleToggle = (checked) => {
@@ -196,6 +214,7 @@ const app = createApp({
             treeRef,
             treeProps,
             onSeeChange,
+            onEditChange,
             handleAllVisibleToggle,
             handleAllEditableToggle,
             save,

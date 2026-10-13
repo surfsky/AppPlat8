@@ -44,11 +44,11 @@ namespace App.DAL
         // 管理相关(0-10)
         //---------------------------------------------
         [UI("管理", "Admin")]               Admin = 1,          // Admin专用权限，根据需求再细分
-        //[UI("管理", "配置员")]              AdminConfig = 2,
-        //[UI("管理", "监管员")]              AdminMonitor = 3,
-        //[UI("Admin", "开发")]             AdminDevelop = 4,           
-        //[UI("Admin", "配置")]             AdminConfig = 5,            
-        //[UI("管理", "测试")]                Test = 6,            
+        [UI("管理", "配置管理")]               AdminConfig = 2,
+        [UI("管理", "监管管理")]               AdminMonitor = 3,
+        [UI("管理", "开发管理")]                AdminDevelop = 4,           
+        [UI("管理", "测试管理")]                Test = 6,            
+        [UI("管理", "部门科室管理")]        AdminOrg = 7,      // 管理各部门科室数据
 
 
         //---------------------------------------------
@@ -63,10 +63,10 @@ namespace App.DAL
         //---------------------------------------------
         // 配置
         //---------------------------------------------
-        [UI("配置", "站点配置")]            ConfigSite = 21,
-        [UI("配置", "菜单管理")]            ConfigMenu = 22,
-        [UI("配置", "序列号维护")]          ConfigSequence = 23,
-        [UI("配置", "IP黑名单维护")]        ConfigBlackIP = 24,
+        [UI("参考", "站点配置")]            ConfigSite = 21,
+        [UI("参考", "菜单管理")]            ConfigMenu = 22,
+        [UI("参考", "序列号维护")]          ConfigSequence = 23,
+        [UI("参考", "IP黑名单维护")]        ConfigBlackIP = 24,
 
         //---------------------------------------------
         // Misc

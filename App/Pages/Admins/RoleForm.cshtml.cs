@@ -15,51 +15,38 @@ namespace App.Pages.Admins
 
         public void OnGet(long id)
         {
-            if (id > 0)
-            {
-                Item = Role.Get(id);
-            }
-            else
-            {
-                Item = new Role();
-            }
         }
 
         public IActionResult OnGetData(long id)
         {
             var item = id > 0 ? Role.Get(id) : new Role();
-            return new JsonResult(new { code = 0, msg = "success", data = item });
+            return BuildResult(0, "success", item);
         }
 
         public IActionResult OnPostSave([FromBody] Role req)
         {
-            if (req == null)
-                return BuildResult(400, "参数错误");
-
-            if (string.IsNullOrWhiteSpace(req.Name))
-                return BuildResult(400, "角色名称不能为空");
+            if (req == null)           return BuildResult(400, "参数错误");
+            if (req.Name.IsEmpty())    return BuildResult(400, "角色名称不能为空");
 
             if (req.Id == 0)
             {
                 if (Role.Set.Any(r => r.Name == req.Name))
                     return BuildResult(400, "角色名已存在");
-
                 var item = new Role
                 {
                     Name = req.Name.Trim(),
                     Remark = req.Remark,
+                    SortId = req.SortId,
                 };
                 item.Save();
             }
             else
             {
-                var existing = Role.Get(req.Id);
-                if (existing == null)
-                    return BuildResult(404, "角色不存在");
-
-                existing.Name = req.Name.Trim();
-                existing.Remark = req.Remark;
-                existing.Save();
+                var role = Role.Get(req.Id);
+                role.Name = req.Name.Trim();
+                role.Remark = req.Remark;
+                role.SortId = req.SortId;
+                role.Save();
             }
             return BuildResult(0, "保存成功");
         }

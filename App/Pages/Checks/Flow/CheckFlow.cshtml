@@ -25,8 +25,8 @@
         <EleDatePicker For="Item.CheckDt" Label="检查时间" Type="@EleDatePickerType.DateTime" Enabled="false"></EleDatePicker>
 
         <EleLabel Label="检查表" FillRow="true"></EleLabel>
-        <EleListPicker For="Item.TaskIds" Label="检查任务" Items="Model.TaskOptions" Multiple="true" Filterable="true" FillRow="true" Clearable="true"></EleListPicker>
-        <EleListPicker For="Item.SheetIds" Label="检查表" Items="Model.SheetOptions" Multiple="true" Filterable="true" FillRow="true" OnChange="SheetItems"></EleListPicker>
+        <EleListPicker For="Item.TaskIds" Label="检查任务" Items="Model.TaskOptions" Multiple="true" Filterable="true" FillRow="true" Clearable="true" TagType="Warning"></EleListPicker>
+        <EleListPicker For="Item.SheetIds" Label="检查表" Items="Model.SheetOptions" Multiple="true" Filterable="true" FillRow="true" OnChange="SheetItems" TagType="Warning"></EleListPicker>
 
         <EleLabel Label="检查项" FillRow="true"></EleLabel>
         <div class="col-span-full">
@@ -58,7 +58,14 @@
                 <el-table-column prop="code" label="编号" width="80" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="sheetName" label="检查表" width="180" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="name" label="检查项" min-width="300" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="hazardLevelName" label="隐患级别" width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="hazardLevelName" label="隐患级别" width="120" show-overflow-tooltip>
+                    <template #default="{ row }">
+                        <el-tag v-if="row.hazardLevelName" :type="getHazardLevelTagType(row.hazardLevelName)" size="small" disable-transitions>
+                            {{ row.hazardLevelName }}
+                        </el-tag>
+                        <span v-else class="text-gray-300">-</span>
+                    </template>
+                </el-table-column>
                 <el-table-column label="结果" width="160" fixed="right">
                     <template #default="{ row }">
                         <el-radio-group
@@ -123,6 +130,15 @@
                     }
                 },
                 methods: {
+                    getHazardLevelTagType(name) {
+                        const n = (name || '').toString().trim();
+                        if (!n) return 'info';
+                        if (n.includes('重大')) return 'danger';
+                        if (n.includes('较大')) return 'warning';
+                        if (n.includes('一般')) return 'warning';
+                        if (n.includes('无')) return 'success';
+                        return 'info';
+                    },
                     getCheckItemRowClass({ row }) {
                         return row && row.result === 'fail' ? 'check-flow-row-fail' : '';
                     },

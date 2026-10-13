@@ -177,19 +177,19 @@ namespace App.EleUI
             </div>
 
             <div v-if='{stateExpr}.loading && {stateExpr}.items.length === 0' class='text-center text-gray-400 py-3'>{loadText}</div>
-            <div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400{(!string.IsNullOrWhiteSpace(footerTemplate) ? " py-3 px-3 flex items-center justify-between gap-3" : " py-0")}'{emptyStyle}>
+            <div v-else-if='{stateExpr}.items.length === 0' class='text-center text-gray-400{(!string.IsNullOrWhiteSpace(footerTemplate) ? " py-3 pl-3 pr-0 flex items-center justify-between gap-3" : " py-0")}'{emptyStyle}>
                 <span>{emptyText}</span>
                 {(string.IsNullOrWhiteSpace(footerTemplate) ? "" : $"<div class='flex items-center gap-2'>{footerTemplate}</div>")}
             </div>
 
-            <div v-if='{stateExpr}.items.length > 0 && {stateExpr}.finished' class='text-center text-gray-400 py-3{(string.IsNullOrWhiteSpace(footerTemplate) ? "" : " px-3 flex items-center justify-between gap-3")}'>
+            <div v-if='{stateExpr}.items.length > 0 && {stateExpr}.finished' class='text-center text-gray-400 py-3{(string.IsNullOrWhiteSpace(footerTemplate) ? "" : " pl-3 pr-0 flex items-center justify-between gap-3")}'>
                 {(string.IsNullOrWhiteSpace(footerTemplate) ? lastText : $"<span>{lastText}</span><div class='flex items-center gap-2'>{footerTemplate}</div>")}
             </div>
         </div>
     </div>
 
     {(string.IsNullOrWhiteSpace(footerTemplate) ? "" : $@"
-    <div v-if='{stateExpr}.items.length > 0 && !{stateExpr}.finished' class='pt-2 px-3 flex items-center justify-end gap-2 shrink-0 border-t border-gray-50'>
+    <div v-if='{stateExpr}.items.length > 0 && !{stateExpr}.finished' class='pt-2 pl-3 pr-0 flex items-center justify-end gap-2 shrink-0 border-t border-gray-50'>
         <div class='flex items-center gap-2'>
             {footerTemplate}
         </div>

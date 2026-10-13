@@ -3,316 +3,374 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "关于本系统";
-    var site = Model.SiteTitle;
-    var version = Model.ProductVersion;
 }
 
 @section body {
-<div class="w-full max-w-6xl mx-auto px-4 py-6 md:px-6 lg:px-10 space-y-6 text-slate-700">
+<!-- 顶部导航 -->
+<header class="sticky top-0 z-50 backdrop-blur-lg bg-white/80 border-b border-slate-200/70">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3b71F8] to-[#628FF8] flex items-center justify-center text-white font-bold text-lg shadow-md">
+                A
+            </div>
+            <span class="font-bold text-slate-800 text-lg tracking-tight">AppPlat8</span>
+        </div>
+        <nav class="hidden md:flex items-center gap-7 text-sm text-slate-600">
+            <a href="#features" class="hover:text-[#3b71F8] transition">功能特性</a>
+            <a href="#screenshots" class="hover:text-[#3b71F8] transition">产品截图</a>
+            <a href="#modules" class="hover:text-[#3b71F8] transition">业务模块</a>
+            <a href="#tech" class="hover:text-[#3b71F8] transition">技术栈</a>
+        </nav>
+        <div class="flex items-center gap-2">
+            <a href="@Model.ProjectUrl" target="_blank" rel="noopener"
+               class="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition text-sm font-medium">
+                <i class="fab fa-github text-lg"></i>
+                <span>GitHub</span>
+            </a>
+            <a asp-page="/Login"
+               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#3b71F8] to-[#628FF8] text-white text-sm font-medium shadow-sm hover:shadow-md hover:opacity-90 transition">
+                <i class="fas fa-right-to-bracket"></i>
+                <span>登录</span>
+            </a>
+        </div>
+    </div>
+</header>
 
-    <!-- 系统介绍模块：顶部版本 + 项目简介合并 -->
-    <section class="rounded-2xl bg-gradient-to-r from-[#3b71F8] to-[#628FF8] text-white shadow-lg overflow-hidden">
-        <div class="relative px-6 py-6 md:px-10 md:py-8">
-            <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-            <div class="absolute -left-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-
-            <div class="relative space-y-6">
-                <div class="space-y-3">
-                    <h1 class="text-2xl md:text-3xl font-bold leading-tight">AppPlat8 低代码 Web 应用开发平台</h1>
-                    <p class="text-sm md:text-base text-white/90 leading-7 max-w-5xl">
-                        AppPlat8 是一个开箱即用的中低代码开发平台，提供统一的业务底座：从账号体系、权限分配、菜单管理、系统日志，到 OA 办公、隐患排查、GIS 驾驶舱、知识库、AI 对话等可直接落地的业务模块；
-                        前端统一基于 Element Plus + Vue 3 + Tailwind CSS 打造响应式界面，后端采用 Razor Pages + EF + HttpApi 分层架构，代码精简、便于二次开发与重构。
-                    </p>
-                    <div class="flex flex-wrap gap-2 pt-1">
-                        <span class="px-3 py-1 text-xs rounded-full bg-white/15">.NET 8</span>
-                        <span class="px-3 py-1 text-xs rounded-full bg-white/15">Element Plus</span>
-                        <span class="px-3 py-1 text-xs rounded-full bg-white/15">Vue 3</span>
-                        <span class="px-3 py-1 text-xs rounded-full bg-white/15">Tailwind CSS</span>
-                        <span class="px-3 py-1 text-xs rounded-full bg-white/15">Entity Framework</span>
-                        <span class="px-3 py-1 text-xs rounded-full bg-white/15">Razor Pages</span>
-                    </div>
+<!-- Hero 区域 -->
+<section class="relative overflow-hidden bg-gradient-to-br from-[#3b71F8] via-[#4f7ff8] to-[#628FF8] text-white">
+    <div class="absolute inset-0 opacity-20">
+        <div class="absolute -top-20 -right-20 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-20 -left-20 w-96 h-96 bg-cyan-300 rounded-full blur-3xl"></div>
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-24">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-7">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-xs font-medium border border-white/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>v @Model.ProductVersion · 开箱即用的中低代码平台</span>
                 </div>
-
-                <div class="grid md:grid-cols-3 gap-3 text-xs md:text-sm text-white/90 pt-1">
-                    <div class="flex items-start gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15">
-                        <i class="fas fa-user-shield mt-0.5"></i>
-                        <span>内置完整权限体系：组织、用户、角色、权限、菜单。</span>
-                    </div>
-                    <div class="flex items-start gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15">
-                        <i class="fas fa-screwdriver-wrench mt-0.5"></i>
-                        <span>低代码控件库（表格/表单/选择器/抽屉/GIS）快速搭业务。</span>
-                    </div>
-                    <div class="flex items-start gap-2 p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15">
-                        <i class="fas fa-mobile-screen-button mt-0.5"></i>
-                        <span>响应式布局，PC / Pad / 手机三端一套代码通吃。</span>
-                    </div>
+                <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
+                    AppPlat8<br>
+                    <span class="bg-gradient-to-r from-cyan-200 to-white bg-clip-text text-transparent">低代码 Web 应用开发平台</span>
+                </h1>
+                <p class="text-base md:text-lg text-white/90 leading-8 max-w-xl">
+                    从账号体系、权限分配、菜单管理、系统日志，到 OA 办公、隐患排查、GIS 驾驶舱、知识库、AI 对话等可直接落地的业务模块；前端基于 Element Plus + Vue 3 + Tailwind CSS，后端采用 Razor Pages + EF + HttpApi 分层架构，代码精简、便于二次开发与重构。
+                </p>
+                <div class="flex flex-wrap gap-3">
+                    <a asp-page="/Login" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-[#3b71F8] font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] transition">
+                        <i class="fas fa-rocket"></i>
+                        <span>立即体验</span>
+                    </a>
+                    <a href="@Model.ProjectUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/15 backdrop-blur-sm text-white font-semibold border border-white/25 hover:bg-white/25 transition">
+                        <i class="fab fa-github text-lg"></i>
+                        <span>查看源码</span>
+                    </a>
+                </div>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <span class="px-3 py-1 text-xs rounded-full bg-white/15 border border-white/20">.NET 8</span>
+                    <span class="px-3 py-1 text-xs rounded-full bg-white/15 border border-white/20">Element Plus</span>
+                    <span class="px-3 py-1 text-xs rounded-full bg-white/15 border border-white/20">Vue 3</span>
+                    <span class="px-3 py-1 text-xs rounded-full bg-white/15 border border-white/20">Tailwind CSS</span>
+                    <span class="px-3 py-1 text-xs rounded-full bg-white/15 border border-white/20">Entity Framework</span>
+                    <span class="px-3 py-1 text-xs rounded-full bg-white/15 border border-white/20">Razor Pages</span>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="absolute -inset-4 bg-white/10 rounded-3xl blur-2xl"></div>
+                <div class="relative rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20">
+                    <img src="/images/about/web.png" alt="AppPlat8 Web 界面" class="w-full h-auto object-cover" />
+                </div>
+                <div class="absolute -bottom-6 -left-6 w-40 md:w-52 rounded-xl overflow-hidden shadow-xl ring-4 ring-white">
+                    <img src="/images/about/mobile.png" alt="移动端适配" class="w-full h-auto object-cover" />
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- 系统状态模块：原红框（9 条元信息）独立成一个卡片，3 列整齐 -->
-    <section class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-6 md:p-8 space-y-4">
-        <header class="flex items-center justify-between gap-3 flex-wrap">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                    <i class="fas fa-gauge-high"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg md:text-xl font-semibold text-slate-800">系统状态</h2>
-                </div>
+<!-- 三大核心优势 -->
+<section class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-20">
+    <div class="grid md:grid-cols-3 gap-6">
+        <div class="group rounded-2xl bg-white border border-slate-200/70 p-7 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
+            <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                <i class="fas fa-user-shield"></i>
             </div>
-            <div class="flex items-start flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <a asp-page="/About" class="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 transition text-xs md:text-sm border border-white/15" type="button">
-                    <i class="fas fa-arrows-rotate text-[11px]"></i>
-                    <span>刷新</span>
+            <h3 class="font-bold text-slate-800 text-lg mb-2">完整权限体系</h3>
+            <p class="text-sm text-slate-600 leading-6">内置组织、用户、角色、权限、菜单五级授权模型，支持菜单级 + 按钮级细粒度权限控制。</p>
+        </div>
+        <div class="group rounded-2xl bg-white border border-slate-200/70 p-7 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
+            <div class="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                <i class="fas fa-screwdriver-wrench"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-lg mb-2">低代码控件库</h3>
+            <p class="text-sm text-slate-600 leading-6">表格、表单、选择器、抽屉、GIS 等封装控件，一套代码快速搭建业务页面。</p>
+        </div>
+        <div class="group rounded-2xl bg-white border border-slate-200/70 p-7 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition">
+                <i class="fas fa-mobile-screen-button"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-lg mb-2">响应式布局</h3>
+            <p class="text-sm text-slate-600 leading-6">PC / Pad / 手机三端一套代码通吃，基于 Tailwind CSS 实现自适应界面。</p>
+        </div>
+    </div>
+</section>
+
+<!-- 功能特性 -->
+<section id="features" class="bg-slate-50/60 py-16 md:py-20">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-3">功能特性</h2>
+            <p class="text-slate-500">覆盖从基础设施到业务模块的完整能力</p>
+        </div>
+        <div id="modules" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+            <article class="rounded-2xl bg-white border border-slate-200/70 p-6 hover:shadow-lg transition flex flex-col gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-lg"><i class="fas fa-users-gear"></i></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800">用户与权限</h3>
+                        <p class="text-xs text-slate-400">Organization / User / Role / Power</p>
+                    </div>
+                </div>
+                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
+                    <li>· 多级组织树、用户、角色、权限、用户组统一管理</li>
+                    <li>· 菜单级 + 按钮级细粒度授权，支持按角色分配</li>
+                    <li>· 默认密码策略、手机号/邮箱/角色等个人资料</li>
+                </ul>
+            </article>
+
+            <article class="rounded-2xl bg-white border border-slate-200/70 p-6 hover:shadow-lg transition flex flex-col gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-lg"><i class="fas fa-server"></i></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800">运维底座</h3>
+                        <p class="text-xs text-slate-400">Log / Menu / Online / Config</p>
+                    </div>
+                </div>
+                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
+                    <li>· 操作/登录/异常/访问日志可追溯</li>
+                    <li>· 后台配置导航层级、图标、跳转链接</li>
+                    <li>· 在线用户、站点配置、开关参数一键维护</li>
+                </ul>
+            </article>
+
+            <article class="rounded-2xl bg-white border border-slate-200/70 p-6 hover:shadow-lg transition flex flex-col gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-lg"><i class="fas fa-briefcase"></i></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800">OA 办公</h3>
+                        <p class="text-xs text-slate-400">Announce / Asset / Budget / Task</p>
+                    </div>
+                </div>
+                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
+                    <li>· 公告、资产、预算、项目、交办任务、会议、值班表</li>
+                    <li>· 任务进度、附件、责任人、时间线留痕</li>
+                    <li>· 任务事件化记录，从交办到关闭全流程</li>
+                </ul>
+            </article>
+
+            <article class="rounded-2xl bg-white border border-slate-200/70 p-6 hover:shadow-lg transition flex flex-col gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg"><i class="fas fa-map-location-dot"></i></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800">GIS 驾驶舱</h3>
+                        <p class="text-xs text-slate-400">Map / Layer / Geometry / Scene</p>
+                    </div>
+                </div>
+                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
+                    <li>· 支持 Mapbox / 天地图 / 高德多底图切换</li>
+                    <li>· 图层、场景、面板、点位、轨迹多要素统一管理</li>
+                    <li>· 台风、企业、区域等专题场景一键叠加可视化</li>
+                </ul>
+            </article>
+
+            <article class="rounded-2xl bg-white border border-slate-200/70 p-6 hover:shadow-lg transition flex flex-col gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg"><i class="fas fa-triangle-exclamation"></i></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800">隐患排查治理</h3>
+                        <p class="text-xs text-slate-400">CheckObject / Hazard / Task / Sheet</p>
+                    </div>
+                </div>
+                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
+                    <li>· 检查对象、检查表、任务、记录、隐患闭环</li>
+                    <li>· 网格、标签、行业/风险等级多维筛选</li>
+                    <li>· 按对象/网格/人员输出排查统计报表，支持导出</li>
+                </ul>
+            </article>
+
+            <article class="rounded-2xl bg-white border border-slate-200/70 p-6 hover:shadow-lg transition flex flex-col gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg"><i class="fas fa-layer-group"></i></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800">知识库 &amp; CRM &amp; AI</h3>
+                        <p class="text-xs text-slate-400">Article / Contact / Chat / Voice</p>
+                    </div>
+                </div>
+                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
+                    <li>· 文档/目录/评论的知识库，支持附件与预览</li>
+                    <li>· 联系人目录、联系人档案、CRM 菜单体系</li>
+                    <li>· AI 对话 + 语音转写 + 文生图多模态能力</li>
+                </ul>
+            </article>
+
+        </div>
+    </div>
+</section>
+
+<!-- 产品截图 -->
+<section id="screenshots" class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-20">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-3">产品截图</h2>
+        <p class="text-slate-500">多端体验 · 丰富业务场景</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+        <div class="group rounded-2xl overflow-hidden bg-white border border-slate-200/70 shadow-sm hover:shadow-xl transition">
+            <div class="aspect-video overflow-hidden bg-slate-100">
+                <img src="/images/about/gis.png" alt="GIS 驾驶舱" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-slate-800 mb-1">GIS 数据驾驶舱</h3>
+                <p class="text-sm text-slate-500">多图层叠加、专题场景、实时可视化</p>
+            </div>
+        </div>
+        <div class="group rounded-2xl overflow-hidden bg-white border border-slate-200/70 shadow-sm hover:shadow-xl transition">
+            <div class="aspect-video overflow-hidden bg-slate-100">
+                <img src="/images/about/gisglobal.png" alt="全球视图" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-slate-800 mb-1">全球态势感知</h3>
+                <p class="text-sm text-slate-500">全球尺度数据可视化与态势展示</p>
+            </div>
+        </div>
+        <div class="group rounded-2xl overflow-hidden bg-white border border-slate-200/70 shadow-sm hover:shadow-xl transition">
+            <div class="aspect-video overflow-hidden bg-slate-100">
+                <img src="/images/about/ai-chat.png" alt="AI 对话" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-slate-800 mb-1">AI 智能对话</h3>
+                <p class="text-sm text-slate-500">大模型对话、语音转写、文生图能力</p>
+            </div>
+        </div>
+        <div class="group rounded-2xl overflow-hidden bg-white border border-slate-200/70 shadow-sm hover:shadow-xl transition">
+            <div class="aspect-video overflow-hidden bg-slate-100">
+                <img src="/images/about/cityweather.png" alt="城市气象" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-slate-800 mb-1">城市气象专题</h3>
+                <p class="text-sm text-slate-500">气象图层、台风路径、城市天气预报</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 技术栈 -->
+<section id="tech" class="bg-slate-50/60 py-16 md:py-20">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-slate-800 mb-3">内置开源方案</h2>
+            <p class="text-slate-500">基于主流开源技术栈构建，稳定可靠</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5">
+            <div class="rounded-2xl bg-white border border-slate-200/70 p-6 space-y-4 shadow-sm">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fas fa-box-open"></i></div>
+                    <h3 class="text-lg font-bold text-slate-800">技术方案</h3>
+                </div>
+                <ul class="space-y-3 text-sm text-slate-600 leading-7">
+                    <li class="flex gap-3">
+                        <span class="shrink-0 w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-semibold">UI</span>
+                        <span>基于 <b class="text-slate-800">Element Plus</b>、<b class="text-slate-800">Vue 3</b>、<b class="text-slate-800">Tailwind CSS</b> 构建的UI组件库，代码精简易复用。</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="shrink-0 w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-semibold">DB</span>
+                        <span>基于 <b class="text-slate-800">Entity Framework</b> 的数据实体 OR Mapping，EF 迁移一键建表/改表。</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="shrink-0 w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-semibold">API</span>
+                        <span><b class="text-slate-800">HttpApi 服务</b>：内置权限、异常、日志、文档、测试页面，开箱即用。</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="shrink-0 w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-semibold">WF</span>
+                        <span><b class="text-slate-800">工作流引擎</b>：基于 App.LiteFlow 的低代码工作流管理。</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="rounded-2xl bg-white border border-slate-200/70 p-6 space-y-4 shadow-sm">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center"><i class="fas fa-gears"></i></div>
+                    <h3 class="text-lg font-bold text-slate-800">项目信息</h3>
+                </div>
+                <dl class="text-sm text-slate-600 divide-y divide-slate-100">
+                    <div class="flex items-center justify-between py-2.5">
+                        <dt class="text-slate-500">作者</dt>
+                        <dd class="font-medium text-slate-800">
+                            <a href="https://github.com/surfsky" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:text-[#3b71F8] transition">
+                                <i class="fab fa-github"></i>@@surfsky
+                            </a>
+                        </dd>
+                    </div>
+                    <div class="flex items-center justify-between py-2.5">
+                        <dt class="text-slate-500">项目地址</dt>
+                        <dd class="font-medium">
+                            <a href="@Model.ProjectUrl" target="_blank" rel="noopener" class="text-[#3b71F8] hover:underline break-all">@Model.ProjectUrl</a>
+                        </dd>
+                    </div>
+                    <div class="flex items-center justify-between py-2.5">
+                        <dt class="text-slate-500">开源协议</dt>
+                        <dd class="font-medium text-slate-800">@Model.License</dd>
+                    </div>
+                    <div class="flex items-center justify-between py-2.5">
+                        <dt class="text-slate-500">.NET 版本</dt>
+                        <dd class="font-medium text-slate-800">.NET @Model.NetVersion</dd>
+                    </div>
+                    <div class="flex items-center justify-between py-2.5">
+                        <dt class="text-slate-500">构建时间</dt>
+                        <dd class="font-medium text-slate-800">@Model.BuildTime</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA 区域 -->
+<section class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-16 md:py-20">
+    <div class="rounded-3xl bg-gradient-to-br from-[#3b71F8] to-[#628FF8] text-white p-8 md:p-12 text-center shadow-xl relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-48 h-48 bg-cyan-300/20 rounded-full blur-2xl"></div>
+        <div class="relative">
+            <h2 class="text-2xl md:text-3xl font-bold mb-3">开始使用 AppPlat8</h2>
+            <p class="text-white/85 mb-6 max-w-xl mx-auto">立即体验开箱即用的低代码开发平台，快速构建您的业务系统。</p>
+            <div class="flex flex-wrap gap-3 justify-center">
+                <a asp-page="/Login" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-[#3b71F8] font-semibold shadow-lg hover:shadow-xl hover:scale-[1.02] transition">
+                    <i class="fas fa-right-to-bracket"></i>
+                    <span>登录系统</span>
+                </a>
+                <a href="@Model.ProjectUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/15 backdrop-blur-sm text-white font-semibold border border-white/25 hover:bg-white/25 transition">
+                    <i class="fab fa-github text-lg"></i>
+                    <span>GitHub 仓库</span>
                 </a>
             </div>
-        </header>
-
-        <dl class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-xs md:text-sm">
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-tag text-[11px] text-slate-400"></i>当前版本</dt>
-                <dd class="mt-1 font-semibold text-slate-800">@Model.ProductVersion</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-microchip text-[11px] text-slate-400"></i>运行时</dt>
-                <dd class="mt-1 font-semibold text-slate-800">@Model.RuntimeVersion</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-server text-[11px] text-slate-400"></i>操作系统</dt>
-                <dd class="mt-1 font-semibold text-slate-800 truncate" title="@Model.OperatingSystem">@Model.OperatingSystem</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-layer-group text-[11px] text-slate-400"></i>进程架构</dt>
-                <dd class="mt-1 font-semibold text-slate-800">@Model.ProcessArchitecture</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-calendar-check text-[11px] text-slate-400"></i>构建时间</dt>
-                <dd class="mt-1 font-semibold text-slate-800">@Model.BuildTime</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-play text-[11px] text-emerald-500"></i>启动时间</dt>
-                <dd class="mt-1 font-semibold text-slate-800">@Model.AppStartedAt</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-stopwatch text-[11px] text-blue-500"></i>已运行</dt>
-                <dd class="mt-1 font-semibold text-slate-800" title="精确毫秒：@Model.StartupDurationMs">@Model.UptimeText</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-microchip text-[11px] text-orange-500"></i>CPU 使用率</dt>
-                <dd class="mt-1 font-semibold text-slate-800">@Model.CpuUsageText</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-memory text-[11px] text-indigo-500"></i>内存使用 / 总量</dt>
-                <dd class="mt-1 font-semibold text-slate-800">@Model.MemoryUsedText</dd>
-            </div>
-            <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                <dt class="text-slate-500 flex items-center gap-1.5"><i class="fas fa-hard-drive text-[11px] text-rose-500"></i>磁盘使用 / 总量</dt>
-                <dd class="mt-1 font-semibold text-slate-800">@Model.DiskUsedText</dd>
-            </div>
-        </dl>
-    </section>
-
-    <!-- 核心业务模块（当前版本功能） -->
-    <section class="space-y-4">
-        <header class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <i class="fas fa-cubes"></i>
-                </div>
-                <h2 class="text-lg md:text-xl font-semibold text-slate-800">核心功能</h2>
-            </div>
-        </header>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-
-            <article class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-5 hover:shadow-md transition flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center"><i class="fas fa-users-gear"></i></div>
-                    <div>
-                        <h3 class="font-semibold text-slate-800">用户与权限</h3>
-                        <p class="text-xs text-slate-500">Organization / User / Role / Power</p>
-                    </div>
-                </div>
-                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
-                    <li>· 多级组织树、用户、角色、权限、用户组统一管理。</li>
-                    <li>· 菜单级 + 按钮级细粒度授权，支持按角色分配。</li>
-                    <li>· 默认密码策略、手机号/邮箱/角色/负责人等个人资料。</li>
-                </ul>
-            </article>
-
-            <article class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-5 hover:shadow-md transition flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center"><i class="fas fa-server"></i></div>
-                    <div>
-                        <h3 class="font-semibold text-slate-800">运维底座</h3>
-                        <p class="text-xs text-slate-500">Log / Menu / Online / Config</p>
-                    </div>
-                </div>
-                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
-                    <li>· 系统日志：操作/登录/异常/访问日志可追溯。</li>
-                    <li>· 菜单管理：后台配置导航层级、图标、跳转链接。</li>
-                    <li>· 在线用户、站点配置、开关参数一键维护。</li>
-                </ul>
-            </article>
-
-            <article class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-5 hover:shadow-md transition flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center"><i class="fas fa-briefcase"></i></div>
-                    <div>
-                        <h3 class="font-semibold text-slate-800">OA 办公</h3>
-                        <p class="text-xs text-slate-500">Announce / Asset / Budget / Project / Task</p>
-                    </div>
-                </div>
-                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
-                    <li>· 公告、资产、预算、项目、交办任务、会议、值班表。</li>
-                    <li>· 任务进度、附件、责任人、时间线留痕。</li>
-                    <li>· 任务事件化记录，支持从交办到关闭全流程。</li>
-                </ul>
-            </article>
-
-            <article class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-5 hover:shadow-md transition flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center"><i class="fas fa-map-location-dot"></i></div>
-                    <div>
-                        <h3 class="font-semibold text-slate-800">GIS 驾驶舱</h3>
-                        <p class="text-xs text-slate-500">Map / Layer / Geometry / Panel / Scene</p>
-                    </div>
-                </div>
-                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
-                    <li>· 支持 Mapbox / 天地图 / 高德 多底图切换。</li>
-                    <li>· 图层、场景、面板、点位、接口、轨迹多要素统一管理。</li>
-                    <li>· 台风、企业、区域等专题场景一键叠加可视化。</li>
-                </ul>
-            </article>
-
-            <article class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-5 hover:shadow-md transition flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center"><i class="fas fa-triangle-exclamation"></i></div>
-                    <div>
-                        <h3 class="font-semibold text-slate-800">隐患排查治理</h3>
-                        <p class="text-xs text-slate-500">CheckObject / Hazard / Task / Sheet / Report</p>
-                    </div>
-                </div>
-                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
-                    <li>· 检查对象、检查表、检查任务、检查记录、隐患闭环。</li>
-                    <li>· 网格、标签、行业/风险等级多维筛选与批量操作。</li>
-                    <li>· 按对象/网格/人员输出排查统计报表，支持导出。</li>
-                </ul>
-            </article>
-
-            <article class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-5 hover:shadow-md transition flex flex-col gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center"><i class="fas fa-layer-group"></i></div>
-                    <div>
-                        <h3 class="font-semibold text-slate-800">知识库 &amp; CRM &amp; AI</h3>
-                        <p class="text-xs text-slate-500">Article / Contact / Chat / Voice</p>
-                    </div>
-                </div>
-                <ul class="text-sm text-slate-600 space-y-1.5 leading-6">
-                    <li>· 文档/目录/评论的知识库，支持附件与预览。</li>
-                    <li>· 联系人目录、联系人档案、CRM 菜单体系。</li>
-                    <li>· AI 对话 + 语音转写 + 文生图多模态能力。</li>
-                </ul>
-            </article>
-
         </div>
-    </section>
-
-    <!-- 内置开源方案（来自 README） -->
-    <section class="grid md:grid-cols-2 gap-4 md:gap-5">
-        <article class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-6 space-y-4">
-            <header class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                    <i class="fas fa-box-open"></i>
-                </div>
-                <h2 class="text-lg font-semibold text-slate-800">内置开源方案</h2>
-            </header>
-            <ul class="space-y-3 text-sm text-slate-600 leading-7">
-                <li class="flex gap-3">
-                    <span class="shrink-0 w-6 h-6 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs">UI</span>
-                    <span>基于 <b class="text-slate-800">Element Plus</b>、<b class="text-slate-800">Vue 3</b>、<b class="text-slate-800">Tailwind CSS</b> 构建的 UI 组件库，代码精简、易复用。</span>
-                </li>
-                <li class="flex gap-3">
-                    <span class="shrink-0 w-6 h-6 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs">DB</span>
-                    <span>基于 <b class="text-slate-800">Entity Framework</b> 的数据实体 OR Mapping 方案，EF 迁移一键建表/改表。</span>
-                </li>
-                <li class="flex gap-3">
-                    <span class="shrink-0 w-6 h-6 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs">API</span>
-                    <span><b class="text-slate-800">HttpApi 服务</b>：内置权限、异常、日志、文档、测试页面，开箱即可对外暴露业务接口。</span>
-                </li>
-                <li class="flex gap-3">
-                    <span class="shrink-0 w-6 h-6 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs">WF</span>
-                    <span><b class="text-slate-800">工作流引擎</b>：基于 App.LiteFlow 的低代码工作流管理系统。</span>
-                </li>
-            </ul>
-        </article>
-
-        <article class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-6 space-y-4">
-            <header class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
-                    <i class="fas fa-gears"></i>
-                </div>
-                <h2 class="text-lg font-semibold text-slate-800">作者与协议</h2>
-            </header>
-            <dl class="text-sm text-slate-600 divide-y divide-slate-100">
-                <div class="flex items-center justify-between py-2.5">
-                    <dt class="text-slate-500">作者</dt>
-                    <dd class="font-medium text-slate-800">
-                        <a href="https://github.com/surfsky" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:text-blue-600 transition">
-                            <i class="fab fa-github"></i>@@surfsky
-                        </a>
-                    </dd>
-                </div>
-                <div class="flex items-center justify-between py-2.5">
-                    <dt class="text-slate-500">项目地址</dt>
-                    <dd class="font-medium">
-                        <a href="@Model.ProjectUrl" target="_blank" rel="noopener" class="text-blue-600 hover:text-blue-700 break-all">@Model.ProjectUrl</a>
-                    </dd>
-                </div>
-                <div class="flex items-center justify-between py-2.5">
-                    <dt class="text-slate-500">开源协议</dt>
-                    <dd class="font-medium text-slate-800">@Model.License</dd>
-                </div>
-                <div class="flex items-center justify-between py-2.5">
-                    <dt class="text-slate-500">.NET 版本</dt>
-                    <dd class="font-medium text-slate-800">.NET @Model.NetVersion</dd>
-                </div>
-                <div class="flex items-center justify-between py-2.5">
-                    <dt class="text-slate-500">页面生成时间</dt>
-                    <dd class="font-medium text-slate-800">@DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")</dd>
-                </div>
-            </dl>
-        </article>
-    </section>
-
-
-    <!-- 版本 -->
-    <section class="rounded-2xl bg-white shadow-sm border border-slate-200/70 p-6 md:p-8 space-y-4">
-        <header class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <i class="fas fa-book-open"></i>
-            </div>
-            <h2 class="text-lg md:text-xl font-semibold text-slate-800">版本和历史</h2>
-        </header>
-        <p class="text-sm md:text-[15px] leading-7 text-slate-600">
-            2026-04-01 初始版本
-        </p>
-        <p class="text-sm md:text-[15px] leading-7 text-slate-600">
-            2026-05-01 核心页面框架（角色、用户、组织、权限、EleUI框架）
-        </p>
-        <p class="text-sm md:text-[15px] leading-7 text-slate-600">
-            2026-06-01 驾驶舱
-        </p>
-        <p class="text-sm md:text-[15px] leading-7 text-slate-600">
-            2026-07-01 隐患排查模块
-        </p>
-        <p class="text-sm md:text-[15px] leading-7 text-slate-600">
-            2026-08-01 知识库模块
-        </p>
-        <p class="text-sm md:text-[15px] leading-7 text-slate-600">
-            2026-09-01 报表模块
-        </p>
-    </section>
     </div>
+</section>
+
+<!-- 页脚 -->
+<footer class="border-t border-slate-200/70 bg-white">
+    <div class="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3b71F8] to-[#628FF8] flex items-center justify-center text-white font-bold">A</div>
+            <span class="text-sm text-slate-500">© @DateTime.Now.Year AppPlat8 ·  v @Model.ProductVersion</span>
+        </div>
+        <div class="flex items-center gap-4 text-sm text-slate-500">
+            <a asp-page="/System" class="hover:text-[#3b71F8] transition inline-flex items-center gap-1.5">
+                <i class="fas fa-gauge-high"></i>
+            </a>
+            <div class="">
+                @SiteConfig.Instance.BeiAnNo
+            </div>
+        </div>
+    </div>
+</footer>
 }

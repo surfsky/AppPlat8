@@ -154,5 +154,42 @@ namespace App.DAL
             if (checkEndDt.IsNotEmpty())        q = q.Where(o => o.CheckDt <= checkEndDt.Value);
             return q;
         }
+
+        /// <summary>
+        /// 检查记录保存后，将关联对象在所有包含它的任务中标记为已完成，并重算任务进度。
+        /// </summary>
+        public override void AfterChange(EntityOp op)
+        {
+            base.AfterChange(op);
+            // 无检查对象则无需处理
+            if (!CheckObjectId.HasValue) return;
+
+            // 仅查找包含该对象的任务关联记录，避免全表扫描
+            // 标记对象为已完成（仅在未完成时更新，减少写库）
+            var taskObjects = CheckTaskObject.Search(null, null, CheckObjectId.Value).ToList();
+            if (taskObjects.Count == 0) return;
+            foreach (var to in taskObjects)
+            {
+                if (!to.IsFinished)
+                {
+                    to.IsFinished = true;
+                    to.Save();
+                }
+            }
+
+            // 刷新受影响任务的进度统计
+            var taskIds = taskObjects
+                .Where(t => t.TaskId.HasValue)
+                .Select(t => t.TaskId.Value)
+                .Distinct()
+                .ToList();
+            foreach (var taskId in taskIds)
+            {
+                var task = CheckTask.Get(taskId);
+                if (task == null) continue;
+                task.UpdateProgress();
+                task.Save();
+            }
+        }
     }
 }

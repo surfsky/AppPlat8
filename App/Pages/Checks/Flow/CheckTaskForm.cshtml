@@ -44,11 +44,14 @@
                 <!-- 数据行 -->
                 <div class="grid grid-cols-[40px_1.8fr_1.4fr_1.2fr_90px] gap-2 px-3 py-2 text-sm items-center">
                     <span class="inline-flex items-center justify-center h-[20px] rounded bg-gray-100 text-gray-600 text-xs shrink-0 text-center">{{ idx + 1 }}</span>
-                    <span class="truncate text-gray-800 font-medium" :title="item.objectName">{{ item.objectName }}</span>
+                    <a href="javascript:void(0)" class="truncate text-[#007bff] font-medium hover:underline "
+                       :title="item.objectName"
+                       v-on:click="openLinkInDrawer(`/Checks/CheckObjectForm?id=${item.objectId}&md=View`, item.objectName)">{{ item.objectName }}</a>
                     <span class="truncate text-gray-700" :title="item.dutyOrgName">{{ item.dutyOrgName }}</span>
                     <span class="truncate text-gray-700" :title="item.checkerName">{{ item.checkerName }}</span>
-                    <span class="inline-flex items-center justify-center h-[22px] px-2 rounded-full text-xs whitespace-nowrap shrink-0 text-center mx-auto"
-                          :class="item.isFinished ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'">
+                    <span class="inline-flex items-center justify-center h-[22px] px-2 rounded-full text-xs whitespace-nowrap shrink-0 text-center mx-auto cursor-pointer hover:opacity-80"
+                          :class="item.isFinished ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'"
+                          v-on:click="openLinkInDrawer(`/Checks/flow/Checks?objectId=${item.objectId}&objectName=${encodeURIComponent(item.objectName)}`, item.objectName + ' - 检查记录')">
                         {{ item.statusName }}
                     </span>
                 </div>
@@ -83,7 +86,7 @@
                 <div class="grid grid-cols-[40px_1.2fr_80px_1.2fr] gap-2 px-3 py-2 text-sm items-center">
                     <span class="inline-flex items-center justify-center h-[20px] rounded bg-gray-100 text-gray-600 text-xs shrink-0 text-center">{{ idx + 1 }}</span>
                     <a v-if="item.url" :href="item.url" target="_blank" rel="noopener"
-                       class="truncate text-blue-600 hover:text-blue-700 underline-offset-2 hover:underline font-medium"
+                       class="truncate text-[#007bff] underline-offset-2 hover:underline font-medium"
                        :title="item.fileName ?? item.name">
                         {{ item.fileName ?? item.name }}
                     </a>

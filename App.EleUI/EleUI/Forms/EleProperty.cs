@@ -3,6 +3,13 @@ using System.Threading.Tasks;
 
 namespace App.EleUI
 {
+    /// <summary>按钮位置</summary>
+    public enum ElePropertyButtonPosition
+    {
+        Top,
+        Bottom,
+    }
+
     /// <summary>
     /// 属性编辑控件：将 JSON 对象编辑为 key/value 表格。
     /// </summary>
@@ -10,6 +17,7 @@ namespace App.EleUI
     public class EleProperty : EleFormControl
     {
         [HtmlAttributeName("MinHeight")] public string MinHeight { get; set; } = null;
+        [HtmlAttributeName("ButtonPosition")] public ElePropertyButtonPosition ButtonPosition { get; set; } = ElePropertyButtonPosition.Top;
         [HtmlAttributeName("Editable")] public bool Editable { get; set; } = true;
         [HtmlAttributeName("AddText")] public string AddText { get; set; } = null;
         [HtmlAttributeName("FieldText")] public string FieldText { get; set; } = null;
@@ -73,13 +81,18 @@ namespace App.EleUI
                 ? $"overflow:auto; min-height:{minHeight};"
                 : $"overflow:auto; min-height:{minHeight}; max-height:{maxHeight};";
 
-            var content = $@"
-<div class=""ele-property-wrapper"" style=""width:100%;"">
-    <div class=""mb-2 flex justify-end"" v-if=""!({finalDisabledExpr})"">
+            // 新增按钮的 HTML：根据 ButtonPosition 决定放在表格上方或下方
+            var addButton = $@"
+    <div class=""{(ButtonPosition == ElePropertyButtonPosition.Top ? "mb-2" : "mt-2")} flex justify-end"" v-if=""!({finalDisabledExpr})"">
         <el-button size=""small"" type=""primary"" plain title=""{addText}"" @click=""addPropertyRow('{propName}')"">
             <el-icon><Plus></Plus></el-icon>
         </el-button>
-    </div>
+    </div>";
+            var topButton = ButtonPosition == ElePropertyButtonPosition.Top ? addButton : "";
+            var bottomButton = ButtonPosition == ElePropertyButtonPosition.Bottom ? addButton : "";
+
+            var content = $@"
+<div class=""ele-property-wrapper"" style=""width:100%;"">{topButton}
     <div class=""border border-slate-200 rounded-md overflow-hidden"">
         <div style=""{scrollStyle}"">
             <table class=""w-full border-collapse"">
@@ -110,7 +123,7 @@ namespace App.EleUI
                 </tbody>
             </table>
         </div>
-    </div>
+    </div>{bottomButton}
     <input type=""hidden"" v-model=""{formModel}.{propName}"" />
 </div>";
 

@@ -14,7 +14,7 @@ namespace App.Pages.Admins
 
         public void OnGet(long? roleId)
         {
-            Roles = Role.Set.OrderBy(t => t.Id).ToList();
+            Roles = Role.Set.OrderBy(t => t.SortId).ToList();
             RoleId = roleId ?? Roles.FirstOrDefault()?.Id;
         }
 

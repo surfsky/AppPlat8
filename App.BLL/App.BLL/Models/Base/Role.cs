@@ -9,10 +9,11 @@ using App.Utils;
 
 namespace App.DAL
 {
-    public class Role : EntityBase<Role>
+    public class Role : EntityBase<Role>, ISort
     {
         [UI("名称")]    public string Name { get; set; }
         [UI("备注")]    public string Remark { get; set; }
+        [UI("排序")]    public int SortId { get; set; } = 0;
 
 
         public virtual List<User> Users { get; set; } = new List<User>();

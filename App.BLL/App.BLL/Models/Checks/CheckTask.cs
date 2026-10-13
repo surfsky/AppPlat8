@@ -90,5 +90,14 @@ namespace App.DAL
         {
             return CheckTaskSheet.Search(this.Id, null).Select(o => o.Sheet).ToList();
         }
+
+        /// <summary>根据检查对象完成情况刷新任务的总数、完成数与进度百分比</summary>
+        public void UpdateProgress()
+        {
+            var objs = CheckTaskObject.Search(this.Id).ToList();
+            TotalCount = objs.Count;
+            FinishCount = objs.Count(o => o.IsFinished);
+            Progress = TotalCount > 0 ? (float)FinishCount / TotalCount * 100 : 0;
+        }
     }
 }

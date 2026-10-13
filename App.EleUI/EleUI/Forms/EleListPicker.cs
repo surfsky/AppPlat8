@@ -26,6 +26,7 @@ namespace App.EleUI
         [HtmlAttributeName("CollapseTags")] public bool? CollapseTags { get; set; } = false;
         [HtmlAttributeName("DrawerTitle")] public string DrawerTitle { get; set; }
         [HtmlAttributeName("DrawerSize")] public string DrawerSize { get; set; }
+        [HtmlAttributeName("TagType")] public EleTagType TagType { get; set; } = EleTagType.Info;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -115,6 +116,7 @@ namespace App.EleUI
             output.TagMode = TagMode.StartTagAndEndTag;
             output.Attributes.SetAttribute("v-show", visibleExpr);
 
+            var tagTypeName = TagType.ToString().ToLower();
             var content = $@"
 <div class=""el-select w-full"" :class=""{{ 'is-disabled': ({disabledExpr}) }}"" @click=""!({disabledExpr}) && {openExpr}"">
     <div class=""el-select__wrapper cursor-pointer"" :class=""{{ 'is-disabled': ({disabledExpr}) }}"">
@@ -125,13 +127,13 @@ namespace App.EleUI
                         <el-tag
                             v-for=""(txt, idx) in {viewExpr}.displayLabels""
                             :key=""idx""
-                            type=""info""
+                            type=""{tagTypeName}""
                             disable-transitions
                             class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap""
                         >
                             {{{{ txt }}}}
                         </el-tag>
-                        <el-tag v-if=""{viewExpr}.hiddenCount > 0"" type=""info"" disable-transitions>
+                        <el-tag v-if=""{viewExpr}.hiddenCount > 0"" type=""{tagTypeName}"" disable-transitions>
                             +{{{{ {viewExpr}.hiddenCount }}}}
                         </el-tag>
                     </div>
