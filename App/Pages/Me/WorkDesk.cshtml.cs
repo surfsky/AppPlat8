@@ -74,7 +74,7 @@ namespace App.Pages.Me
     //=========================================================================
     // 页面 Model
     //=========================================================================
-    public class WorkDeskModel : AuthModel
+    public class WorkDeskModel : BaseModel  //AuthModel
     {
         //---------------------------------------------------------------------
         // 筛选条件（来自 URL 查询参数；页面顶部人员 picker 绑定到这些）
@@ -126,7 +126,6 @@ namespace App.Pages.Me
 
             ResolveUserRealName();
             var today = DateTime.Today;
-            var near  = today.AddDays(7);
 
             var objects = BuildObjectScopeQuery();
             var CountMyObjects = objects.Count();
@@ -148,13 +147,15 @@ namespace App.Pages.Me
                 .Count(o =>
                 {
                     var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
-                    return next.HasValue && next.Value > today && next.Value <= near;
+                    // 与 CheckObjects 的 nextCheck 解析对齐：按日期比较，临期范围 [today+1, today+7]
+                    return next.HasValue && next.Value.Date >= today.AddDays(1) && next.Value.Date <= today.AddDays(7);
                 });
             var CountOverdueObjects = projection
                 .Count(o =>
                 {
                     var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
-                    return next.HasValue && next.Value <= today;
+                    // 与 CheckObjects 的 nextCheck 解析对齐：按日期比较，超期范围 (-inf, today]
+                    return next.HasValue && next.Value.Date <= today;
                 });
 
             //

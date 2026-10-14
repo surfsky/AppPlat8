@@ -113,19 +113,15 @@ namespace App.Pages.Checks
                     DefaultCheckerName = u.RealName.IsNotEmpty() ? u.RealName : u.Name;
             }
 
-            // 解析 tagName → tagIds（含子孙标签），供标签树控件回显
+            // 解析 tagName → 仅绑定父标签 ID 到 UI（子标签由 Search 内部展开查询）
             var rawTagName = Request.Query["tagName"].FirstOrDefault();
             if (!string.IsNullOrWhiteSpace(rawTagName))
             {
                 var tag = CheckTag.Set.FirstOrDefault(t => t.Name == rawTagName);
                 if (tag != null)
                 {
-                    var tagIds = CheckTag.GetChildIds(tag.Id);
-                    if (tagIds.Count > 0)
-                    {
-                        ScopeTagIds = string.Join(",", tagIds);
-                        Item.TagIds = tagIds;
-                    }
+                    ScopeTagIds = tag.Id.ToString();
+                    Item.TagIds = new List<long> { tag.Id };
                 }
             }
         }
@@ -156,14 +152,14 @@ namespace App.Pages.Checks
             )
         {
             tagIds = ParseTagIds(tagIds, Request.Query["tagIds"]);
-            // 兼容 tagName：按标签名称解析为 tagIds（含子孙标签），便于 WorkDesk 卡片跳转
+            // 兼容 tagName：按标签名称解析为父标签 ID（子标签由 CheckObject.Search 的 GetTagIdGroups 展开）
             if (tagIds == null || tagIds.Count == 0)
             {
                 var rawTagName = tagName.IsEmpty() ? Request.Query["tagName"].FirstOrDefault() : tagName;
                 if (rawTagName.IsNotEmpty())
                 {
                     var tag = CheckTag.Set.FirstOrDefault(t => t.Name == rawTagName);
-                    if (tag != null) tagIds = CheckTag.GetChildIds(tag.Id);
+                    if (tag != null) tagIds = new List<long> { tag.Id };
                 }
             }
             dutyOrgIds = ParseOrgIds(dutyOrgIds, Request.Query["dutyOrgIds"]);
@@ -178,7 +174,8 @@ namespace App.Pages.Checks
             var rawNext = Request.Query["nextCheck"].FirstOrDefault();
             if (!string.IsNullOrWhiteSpace(rawNext))
             {
-                var parts = rawNext.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                // 不能用 RemoveEmptyEntries，否则 ",2026-10-14" 会丢失空的 from，导致 to 被当成 from
+                var parts = rawNext.Split(',');
                 // 约定：URL 传两个日期时，[from, to] 都是闭区间（含端点当日），按卡片范围 WorkDesk 定义：
                 //   临期 nextCheck={today+1},{today+7}  =>  from=today+1.Date to=today+7.Date.EndOfDay
                 //   超期 nextCheck=,{today}              =>  from=null      to=today.Date.EndOfDay（闭区间，NextCheck<=today）
