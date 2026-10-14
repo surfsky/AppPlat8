@@ -4,29 +4,29 @@
 
 ### 后端（.NET 8.0 / ASP.NET Core，C#）
 
-| 类别 | 选型 |
-|---|---|
-| 运行时 | .NET 8.0（`global.json` / 各 csproj `net8.0`） |
-| Web 框架 | ASP.NET Core MVC + Razor Pages + Blazor Server + BootstrapBlazor + SignalR |
-| ORM | Entity Framework Core 8.0（App/App.csproj:107-114） |
-| 数据库 | SQLite（默认）、MySQL（Pomelo）、SQL Server；PostgreSQL 规划中 |
-| API 框架 | 自研 HttpApi（App.API/HttpApi，替代 WebAPI 的数据服务框架，内置权限/异常/日志/限流/文档/测试） |
-| 定时任务 | Quartz 3.13（App.Consoler） |
-| 日志 | Serilog + 自研 Logger（App/Logs） |
-| Excel | NPOI 2.7.2 |
-| 图像 | SkiaSharp、System.Drawing（图片缓存/缩放/验证码） |
-| AI/ML | Microsoft.ML.Vision + SciSharp TensorFlow Redist |
-| 缓存 | MemoryCache + StackExchangeRedis（App.Utils/App.Utils.csproj:74） |
-| 其它 | aliyun SMS SDK（短信）、Jint（JS引擎）、Z.EntityFramework.Plus（批量）、PinYinConverterCore、CodeDom |
+| 类别     | 选型                                                                                                 |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| 运行时   | .NET 8.0（`global.json` / 各 csproj `net8.0`）                                                   |
+| Web 框架 | ASP.NET Core MVC + Razor Pages + Blazor Server + BootstrapBlazor + SignalR                           |
+| ORM      | Entity Framework Core 8.0（App/App.csproj:107-114）                                                  |
+| 数据库   | SQLite（默认）、MySQL（Pomelo）、SQL Server；PostgreSQL 规划中                                       |
+| API 框架 | 自研 HttpApi（App.API/HttpApi，替代 WebAPI 的数据服务框架，内置权限/异常/日志/限流/文档/测试）       |
+| 定时任务 | Quartz 3.13（App.Consoler）                                                                          |
+| 日志     | Serilog + 自研 Logger（App/Logs）                                                                    |
+| Excel    | NPOI 2.7.2                                                                                           |
+| 图像     | SkiaSharp、System.Drawing（图片缓存/缩放/验证码）                                                    |
+| AI/ML    | Microsoft.ML.Vision + SciSharp TensorFlow Redist                                                     |
+| 缓存     | MemoryCache + StackExchangeRedis（App.Utils/App.Utils.csproj:74）                                    |
+| 其它     | aliyun SMS SDK（短信）、Jint（JS引擎）、Z.EntityFramework.Plus（批量）、PinYinConverterCore、CodeDom |
 
 ### 前端（App.EleUI / App/wwwroot）
 
-| 类别 | 选型 |
-|---|---|
-| 框架 | Vue 3 + Element Plus + Tailwind CSS 4（App/Pages/Shared/_Layout.cshtml:7-16，CDN 引入） |
+| 类别       | 选型                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------------------- |
+| 框架       | Vue 3 + Element Plus + Tailwind CSS 4（App/Pages/Shared/_Layout.cshtml:7-16，CDN 引入）            |
 | 自研控件库 | App.EleUI：Razor TagHelper 服务端渲染 + esbuild 打包的 JS 运行时（Form/Table/List/Tree/Drawer 等） |
-| 地图 GIS | Mapbox GL JS v2.9.1（三维地形、GeoJSON、台风/气象图层、全景/3D 模型） |
-| 其它 | editor.md（CodeMirror）、jQuery、Bootstrap、open-iconic |
+| 地图 GIS   | Mapbox GL JS v2.9.1（三维地形、GeoJSON、台风/气象图层、全景/3D 模型）                              |
+| 其它       | editor.md（CodeMirror）、jQuery、Bootstrap、open-iconic                                            |
 
 ### 测试与部署
 
@@ -74,8 +74,6 @@
 - App.EleUI 为独立 Razor 类库（RCL），被 App 引用
 - App.Consoler（Quartz 后台任务）为独立进程，通过业务层访问数据库
 
-
-
 ## 地图方案
 
 地图框架
@@ -85,20 +83,40 @@
 
 地图源
 
-   - 天地图（不偏移，同 WGS84）
-   - MapBox （外网）
-   - OpenStreetMap （外网）
-   
+- 天地图（不偏移，同 WGS84）
+- MapBox （外网）
+- OpenStreetMap （外网）
+
 地址检索
 
-   - 高德地图
-
-
+- 高德地图
 
 ## 访问外部接口（含潜在）
 
 高德地图： 地址查找接口
-短信接口： 
+短信接口：
    移动开放平台短信接口（尚未上线）
    阿里云短信接口（尚未上线）
 三方Gis图层数据接口
+
+
+
+## AI开发环境
+
+vscode copilot：
+    - C# 补全和重构：内置支持（用microsoft xxx 插件）
+    - C# 代码调试：内置支持；
+    - 20260601更改付费逻辑后，10美元一天就用完了，提高一档要39美元
+
+trae：
+    - C# 补全和重构：编程提示需安装ReSharper 插件（个人可免费），重构经常不能完全生效；或其他插件如OmniSharp。
+    - C# 代码调试：调试需要安装 C# with NetCoreDbg，
+    - lite $3，pro $10, pro+$30, Ultra $200；
+
+Cursor：
+    - pro $20每月（500次请求）
+
+OpenAI Codex:
+
+CodeGraphy 代码图谱以减少token消耗
+    - npm install -g @colbymchenry/codegraph

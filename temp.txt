@@ -178,3 +178,54 @@
                 .Select(t => new SelectListItem(t.GetTitle(), ((int)t).ToString()))
                 .ToList();
         }
+
+        public virtual List<CheckTaskSheet> CheckSheets { get; set; }   // 使用的检查表（未使用）
+        public List<CheckSheet> GetCheckSheets()
+        {
+            return CheckTaskSheet.Search(this.Id, null).Select(o => o.Sheet).ToList();
+        }
+        public DbSet<CheckTaskSheet> CheckTaskSheets {get;set;}
+              --1:n--CheckTaskSheet（检查单） 未使用
+                CheckSheetIds = CheckSheets?.Select(o => o.SheetId).ToList()
+
+
+        /// <summary>获取当前用户所属的中心（包含子中心）</summary>
+        private List<long> GetCenterScopeOrgIds()
+        {
+            var user   = App.DAL.User.Get(CurrUserId);
+            var org    = user?.OrgId.HasValue == true ? OrgGet(user.OrgId.Value) : null;
+            var center = org?.GetAncestor(OrgLevel.Unit)
+                      ?? org?.GetAncestor(OrgLevel.District)
+                      ?? org;
+            return center == null ? new List<long>() : OrgDescendants(center.Id);
+        }
+
+        /// <summary>获取当前用户所属的部门（包含子部门）</summary>
+        private List<long> GetDeptIds()
+        {
+            var user    = App.DAL.User.Get(CurrUserId);
+            var org     = user?.OrgId.HasValue == true ? OrgGet(user.OrgId.Value) : null;
+            var dept = org?.GetAncestor(OrgLevel.Dept) ?? org;
+            return dept == null ? new List<long>() : OrgDescendants(dept.Id);
+        }
+
+        public List<Org> GetOrgs()
+        {
+            return CheckTaskOrg.Search(this.Id, null).Select(o => o.Org).ToList();
+        }
+
+        public List<CheckObject> GetCheckObjects()
+        {
+            return CheckTaskObject.Search(this.Id).Select(o => o.Object).ToList();
+        }
+
+        /// <summary>兼容方法：获取授权组织根节点列表（单元素列表）。</summary>
+        public static List<long> GetAuthorizedOrgRootIds(User user)
+        {
+            var id = GetAuthOrgRootId(user);
+            if (!id.HasValue)
+                return Auth.IsAdmin(user)
+                    ? App.DAL.Org.All.Where(t => t.ParentId == null).Select(t => t.Id).Distinct().ToList()
+                    : new List<long>();
+            return new List<long> { id.Value };
+        }

@@ -26,28 +26,42 @@ namespace App.API
             return App.DAL.Org.GetTree().ToResult();
         }
 
-        [HttpApi("获取授权组织树", AuthLogin=true)]
+        [HttpApi("获取授权组织树", AuthLogin=true, CacheByUser = true, CacheSeconds = 60)]  // 0.273， 0.052， 0.029
+        //[HttpApi("获取授权组织树", AuthLogin=true)]  // 0.29， 0.068， 0.06， 0.037， 0.063
         public static APIResult GetAuthOrgTree()
         {
             var user = Auth.GetUser();
-            if (user == null)
-                return new APIResult(-2, "用户未登录");
-            return BuildAuthorizedOrgTree(user).ToResult();
+            return BuildAuthOrgTree(user).ToResult();
         }
 
-        /// <summary>构建当前用户可见的组织树（包含当前授权组织子树 + 其所有祖先，以便树展示完整路径）。</summary>
-        public static List<App.DAL.Org> BuildAuthorizedOrgTree(User user)
+        /// <summary>获取当前用户的授权组织根节点（单值）。admin 返回 null（表示全量根）。</summary>
+        public static long? GetAuthOrgRootId(User user)
         {
-            var all = App.DAL.Org.All.OrderBy(t => t.SortId).ThenBy(t => t.Id).ToList();
+            if (user == null || Auth.IsAdmin(user))
+                return null;
+            return user.EffectiveAuthOrgId;
+        }
+
+
+        /// <summary>构建当前用户可见的组织树（包含当前授权组织子树 + 其所有祖先，以便树展示完整路径）。</summary>
+        public static List<App.DAL.Org> BuildAuthOrgTree(User user)
+        {
             if (user == null)
                 return new List<App.DAL.Org>();
+
+            // 所有组织数据（从缓存中获取，且清空geodata）
+            var all = App.DAL.Org.All.OrderBy(t => t.SortId).ThenBy(t => t.Id).ToList().Each(t => t.GeoData = null);
+
+            // admin
             if (Auth.IsAdmin(user))
                 return all.ToTree();
 
-            var authRootId = GetAuthorizedOrgRootId(user);
+            // root
+            var authRootId = GetAuthOrgRootId(user);
             if (!authRootId.HasValue)
                 return new List<App.DAL.Org>();
 
+            // child ids
             var visibleIds = all.GetDescendants(authRootId).Select(t => t.Id).ToHashSet();
             var keepIds = new HashSet<long>(visibleIds);
             var map = all.ToDictionary(t => t.Id, t => t);
@@ -60,31 +74,14 @@ namespace App.API
                     current = parent;
                 }
             }
+
+            // filter
             return all.Where(t => keepIds.Contains(t.Id)).ToList().ToTree();
         }
 
-        /// <summary>获取当前用户的授权组织根节点（单值）。admin 返回 null（表示全量根）。</summary>
-        public static long? GetAuthorizedOrgRootId(User user)
-        {
-            if (user == null || Auth.IsAdmin(user))
-                return null;
-            var id = user.EffectiveAuthOrgId;
-            return id.HasValue && id.Value > 0 ? id.Value : null;
-        }
-
-        /// <summary>兼容方法：获取授权组织根节点列表（单元素列表）。</summary>
-        public static List<long> GetAuthorizedOrgRootIds(User user)
-        {
-            var id = GetAuthorizedOrgRootId(user);
-            if (!id.HasValue)
-                return Auth.IsAdmin(user)
-                    ? App.DAL.Org.All.Where(t => t.ParentId == null).Select(t => t.Id).Distinct().ToList()
-                    : new List<long>();
-            return new List<long> { id.Value };
-        }
 
         /// <summary>获取当前用户在指定组织筛选下可见的组织ID集合。</summary>
-        public static HashSet<long> GetAuthorizedVisibleOrgIds(User user, long? orgId = null)
+        public static HashSet<long> GetAuthVisibleOrgIds(User user, long? orgId = null)
         {
             var all = App.DAL.Org.All.OrderBy(t => t.SortId).ThenBy(t => t.Id).ToList();
             if (user == null)
@@ -96,7 +93,7 @@ namespace App.API
                     : all.Select(t => t.Id).ToHashSet();
             }
 
-            var authRootId = GetAuthorizedOrgRootId(user);
+            var authRootId = GetAuthOrgRootId(user);
             var visibleIds = authRootId.HasValue
                 ? all.GetDescendants(authRootId).Select(t => t.Id).ToHashSet()
                 : new HashSet<long>();

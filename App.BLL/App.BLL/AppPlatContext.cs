@@ -81,8 +81,6 @@ namespace App.DAL
         public DbSet<CheckHazardLog> CheckHazardLogs { get; set; }
         public DbSet<CheckTask> CheckTasks { get; set; }
         public DbSet<CheckTaskObject> CheckTaskObjects {get;set;}
-        public DbSet<CheckTaskOrg> CheckTaskOrgs {get;set;}
-        public DbSet<CheckTaskSheet> CheckTaskSheets {get;set;}
         public DbSet<CheckPoint> CheckPoints { get; set; }
 
 

@@ -109,6 +109,9 @@ namespace App.HttpApi
         /// <summary>备注</summary>
         public string Remark { get; set; }
 
+        /// <summary>是否根据用户缓存</summary>
+        public bool CacheByUser { get; set; } = false;
+
         /// <summary>缓存的秒数。默认为0，即没有任何缓存。</summary>
         public int CacheSeconds { get; set; } = 0;
 

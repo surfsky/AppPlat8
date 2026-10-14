@@ -8,7 +8,7 @@ using App.Utils;
 using Microsoft.EntityFrameworkCore;
 
 /**
-检查记录表CheckLog --(1:n)-- CheckHazard 隐患表 --(1:n)--CheckHazardReview 隐患复查记录表
+检查记录表Check ---(1:n)--- CheckHazard 隐患表 ---(1:n)---CheckHazardLog 隐患处理记录表
 */
 namespace App.DAL
 {

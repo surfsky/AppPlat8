@@ -215,7 +215,7 @@ namespace App.Pages.Me
             var q = App.DAL.CheckTask.Search(null, null, null)
                 .AsNoTracking()
                 .Include(t => t.Creator).ThenInclude(u => u.Org)
-                .Include(t => t.Orgs).ThenInclude(o => o.Org);
+                .Include(t => t.Org);
             return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
         }
 
@@ -241,8 +241,8 @@ namespace App.Pages.Me
                 {
                     Id           = t.Id,
                     Name         = t.Name,
-                    LevelText    = t.Orgs != null && t.Orgs.Count > 0
-                                 ? string.Join("/", t.Orgs.Select(o => o.Org?.FullName ?? o.Org?.Name ?? "").Take(3))
+                    LevelText    = t.Org != null
+                                 ? (t.Org.FullName ?? t.Org.Name ?? "")
                                  : "",
                     CreatorText  = t.CreatorName,
                     CreatorOrg   = t.Creator?.Org?.Name ?? "",
@@ -250,7 +250,7 @@ namespace App.Pages.Me
                     ProgressText = ComputeProgressText(t),
                     StartDt      = t.StartDt,
                     ExpireDt     = t.ExpireDt,
-                    DetailUrl    = $"/Checks/CheckTaskObjects?taskId={t.Id}",
+                    DetailUrl    = $"/Checks/Flow/CheckTaskForm?id={t.Id}&userId={Auth.GetUser().Id}",
                 })
                 .ToList();
         }
@@ -290,25 +290,6 @@ namespace App.Pages.Me
             return new List<long>();
         }
 
-        /// <summary>获取当前用户所属的部门（包含子部门）</summary>
-        private List<long> GetSectionScopeOrgIds()
-        {
-            var user    = App.DAL.User.Get(CurrUserId);
-            var org     = user?.OrgId.HasValue == true ? OrgGet(user.OrgId.Value) : null;
-            var section = org?.GetAncestor(OrgLevel.Section) ?? org;
-            return section == null ? new List<long>() : OrgDescendants(section.Id);
-        }
-
-        /// <summary>获取当前用户所属的中心（包含子中心）</summary>
-        private List<long> GetCenterScopeOrgIds()
-        {
-            var user   = App.DAL.User.Get(CurrUserId);
-            var org    = user?.OrgId.HasValue == true ? OrgGet(user.OrgId.Value) : null;
-            var center = org?.GetAncestor(OrgLevel.Unit)
-                      ?? org?.GetAncestor(OrgLevel.District)
-                      ?? org;
-            return center == null ? new List<long>() : OrgDescendants(center.Id);
-        }
 
         //---------------------------------------------------------------------
         // 内部：对象 / 隐患 范围
@@ -343,8 +324,8 @@ namespace App.Pages.Me
             {
                 Id           = t.Id,
                 Name         = t.Name,
-                LevelText    = t.Orgs != null && t.Orgs.Count > 0
-                             ? string.Join("/", t.Orgs.Select(o => o.Org?.FullName ?? o.Org?.Name ?? "").Take(3))
+                LevelText    = t.Org != null
+                             ? (t.Org.FullName ?? t.Org.Name ?? "")
                              : "",
                 CreatorText  = t.CreatorName,
                 CreatorOrg   = t.Creator?.Org?.Name ?? "",

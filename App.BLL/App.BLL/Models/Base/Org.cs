@@ -20,7 +20,7 @@ namespace App.DAL
         [UI("社区")]  Community = 5,
         [UI("网格")]  Net = 6,
         [UI("单位", Color = "Red")]  Unit = 7,
-        [UI("科室")]  Section = 8,
+        [UI("科室")]  Dept = 8,
     }
 
     /// <summary>组织</summary>
@@ -31,6 +31,17 @@ namespace App.DAL
         [UI("定位")] public string Gps { get; set; }
         [UI("图形数据")] public string GeoData { get; set; }
 
+        
+        // 上级网格名称（先别加，加上后导出超级慢）
+        /* 
+        [UI("归属城市")]   public string CityName      => this.GetAncestor(OrgLevel.City)?.Name;
+        [UI("归属区县")]   public string DistrictName  => this.GetAncestor(OrgLevel.District)?.Name;
+        [UI("归属乡镇")]   public string TownName      => this.GetAncestor(OrgLevel.Town)?.Name;
+        [UI("归属社区")]   public string CommunityName => this.GetAncestor(OrgLevel.Community)?.Name;
+        [UI("归属单位")]   public string UnitName      => this.GetAncestor(OrgLevel.Unit)?.Name;
+        [UI("归属科室")]   public string DeptName      => this.GetAncestor(OrgLevel.Dept)?.Name;
+        */
+        
         public override object Export(ExportMode mode = ExportMode.Normal)
         {
             return new
@@ -43,9 +54,9 @@ namespace App.DAL
                 Remark,
                 SortId,
                 TreeLevel,
-                Children,
                 Gps,
-                GeoData = mode == ExportMode.Detail ? GeoData : null,
+                GeoData = (mode == ExportMode.Detail) ? GeoData : null,
+                Children = Children?.Select(t => t.Export(mode)).ToList(),  // 递归导出子组织（以减少子节点的字段输出）
             };
         }
         

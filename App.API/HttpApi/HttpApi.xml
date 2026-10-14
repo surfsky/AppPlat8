@@ -75,6 +75,9 @@
         <member name="P:App.HttpApi.HttpApiAttribute.Remark">
             <summary>备注</summary>
         </member>
+        <member name="P:App.HttpApi.HttpApiAttribute.CacheByUser">
+            <summary>是否根据用户缓存</summary>
+        </member>
         <member name="P:App.HttpApi.HttpApiAttribute.CacheSeconds">
             <summary>缓存的秒数。默认为0，即没有任何缓存。</summary>
         </member>

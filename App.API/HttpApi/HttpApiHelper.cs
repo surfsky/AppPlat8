@@ -92,6 +92,8 @@ namespace App.HttpApi
                 {
                     var p = SerializeHelper.ToJson(parameters).ClearSpace().TrimStart('[').TrimEnd(']');//.Replace("\"", "");
                     var cacheKey = string.Format("{0}-{1}-{2}", handler, method.Name, p);  // 可考虑用 MD5 做缓存健名
+                    if (attr.CacheByUser)
+                        cacheKey += "-" + Asp.Current.User.Identity.Name;
                     var expireDt = DateTime.Now.AddSeconds(attr.CacheSeconds);
                     // 强制刷新缓存
                     if (args.ContainsKey("_refresh"))

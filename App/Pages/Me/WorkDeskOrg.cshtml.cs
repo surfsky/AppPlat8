@@ -134,21 +134,13 @@ namespace App.Pages.Me
                 .Distinct()
                 .ToList();
 
-            var taskOrgIds = orgIds.Count == 0
-                ? new List<long>()
-                : App.DAL.CheckTaskOrg.ValidSet.AsNoTracking()
-                    .Where(to => to.OrgId != null && orgIds.Contains(to.OrgId.Value) && to.TaskId != null)
-                    .Select(to => to.TaskId.Value)
-                    .Distinct()
-                    .ToList();
-
             IQueryable<CheckTask> BaseQry()
-                => App.DAL.CheckTask.Search(null, null, null)
+                => App.DAL.CheckTask.Search(null, null, null, null, null, EffectiveOrgId > 0 ? EffectiveOrgId : (long?)null)
                     .AsNoTracking()
                     .Include(t => t.Creator).ThenInclude(u => u.Org)
-                    .Include(t => t.Orgs).ThenInclude(o => o.Org)
+                    .Include(t => t.Org)
                     .Where(t => (validUsers.Count > 0 && t.CreatorId.HasValue && validUsers.Contains(t.CreatorId.Value))
-                             || (taskOrgIds.Count > 0 && taskOrgIds.Contains(t.Id)));
+                             || (orgIds.Count > 0 && t.OrgId.HasValue && orgIds.Contains(t.OrgId.Value)));
 
             var q = BaseQry();
             var tab = (taskTab ?? string.Empty).ToLower();
@@ -162,9 +154,9 @@ namespace App.Pages.Me
                 }
                 break;
                 case "handled":
-                    q = taskOrgIds.Count == 0
+                    q = orgIds.Count == 0
                         ? q.Where(t => false)
-                        : q.Where(t => taskOrgIds.Contains(t.Id));
+                        : q.Where(t => t.OrgId.HasValue && orgIds.Contains(t.OrgId.Value));
                     break;
                 case "all":
                     break;
@@ -232,8 +224,8 @@ namespace App.Pages.Me
                 {
                     Id           = t.Id,
                     Name         = t.Name,
-                    LevelText    = t.Orgs != null && t.Orgs.Count > 0
-                                 ? string.Join("/", t.Orgs.Select(o => o.Org?.FullName ?? o.Org?.Name ?? "").Take(3))
+                    LevelText    = t.Org != null
+                                 ? (t.Org.FullName ?? t.Org.Name ?? "")
                                  : "",
                     CreatorText  = t.CreatorName,
                     CreatorOrg   = t.Creator?.Org?.Name ?? "",

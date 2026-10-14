@@ -17,7 +17,7 @@
         <EleNumber For="Item.Progress" Label="进度" Enabled="true" Precision="2" Suffix="%"></EleNumber>
         <EleInput For="Item.IsActive" Label="是否活动中" Enabled="false"></EleInput>
         <EleInput For="Item.Remark" Label="备注" Rows="3" FillRow="true"></EleInput>
-        <EleInput Label="承接组织" FillRow="true" Enabled="false"></EleInput>
+        <EleTreePicker For="Item.OrgId" Label="承接组织" FillRow="true" Api="/httpapi/orgs/GetAuthOrgTree"></EleTreePicker>
         <EleList Label="检查对象"
                 FillRow="true"
                 DataHandler="?handler=CheckObjectsData&taskId=@taskId"

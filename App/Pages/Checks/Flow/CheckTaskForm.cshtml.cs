@@ -46,11 +46,11 @@ namespace App.Pages.Checks
             item.StartDt = req.StartDt;
             item.ExpireDt = req.ExpireDt;
             item.Remark = req.Remark;
+            item.OrgId = req.OrgId;
             item.TotalCount = req.TotalCount;
             item.FinishCount = req.FinishCount;
             item.Progress = req.Progress;
             //item.SetCheckObjectIds(req.CheckObjectIds);
-            //item.SetOrgIds(req.OrgIds);
             //item.SetCheckSheetIds(req.CheckSheetIds);
             item.Save();
             return BuildResult(0, "保存成功");
@@ -125,7 +125,7 @@ namespace App.Pages.Checks
 
             var task = CheckTask.Get(taskId);
             var name = Uri.EscapeDataString(task?.Name ?? "检查任务对象选取");
-            var url = $"/Checks/CheckTaskObjects?taskId={taskId}&taskName={name}&md={this.Mode}";
+            var url = $"/Checks/Flow/CheckTaskObjects?taskId={taskId}&taskName={name}&md={this.Mode}";
             return EleHandler.ShowDrawer(
                 title: "检查对象",
                 url: url,

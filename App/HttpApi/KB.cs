@@ -23,8 +23,8 @@ namespace App.API
             if (user == null)
                 return new APIResult(-2, "用户未登录");
 
-            var orgTree = Orgs.BuildAuthorizedOrgTree(user);
-            var visibleOrgIds = Orgs.GetAuthorizedVisibleOrgIds(user, orgId);
+            var orgTree = Orgs.BuildAuthOrgTree(user);
+            var visibleOrgIds = Orgs.GetAuthVisibleOrgIds(user, orgId);
             if (orgId > 0 && visibleOrgIds.Count == 0)
                 return new APIResult(-1, "所选组织不在授权范围内");
 
