@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Open
 {
     /// <summary>参考网站管理</summary>
-    [Auth(Power.SiteView)]
+    [Auth(Power.RefSiteView)]
     public class SitesModel : AuthModel
     {
         [BindProperty]
@@ -28,7 +28,7 @@ namespace App.Pages.Open
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.SiteDelete))
+            if (!CheckPower(Power.RefSiteDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

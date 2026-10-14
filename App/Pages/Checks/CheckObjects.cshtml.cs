@@ -24,6 +24,9 @@ namespace App.Pages.Checks
         /// <summary>dutyOrgId（单值）从 URL 注入的原始值，用于 ElePicker/Select 控件单独匹配</summary>
         public long? DutyOrgId { get; set; }
 
+        /// <summary>URL 注入的 tagName 解析后的 tagIds（含子孙），用于标签树控件回显。</summary>
+        public string ScopeTagIds { get; set; }
+
         /// <summary>解析 tagIds 参数：兼容表单提交（List<long>）+ EleTreePicker 的「?tagIds=127,136,138」逗号字符串，统一去重去空。</summary>
         static List<long> ParseTagIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
         {
@@ -109,6 +112,22 @@ namespace App.Pages.Checks
                 if (u != null)
                     DefaultCheckerName = u.RealName.IsNotEmpty() ? u.RealName : u.Name;
             }
+
+            // 解析 tagName → tagIds（含子孙标签），供标签树控件回显
+            var rawTagName = Request.Query["tagName"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(rawTagName))
+            {
+                var tag = CheckTag.Set.FirstOrDefault(t => t.Name == rawTagName);
+                if (tag != null)
+                {
+                    var tagIds = CheckTag.GetChildIds(tag.Id);
+                    if (tagIds.Count > 0)
+                    {
+                        ScopeTagIds = string.Join(",", tagIds);
+                        Item.TagIds = tagIds;
+                    }
+                }
+            }
         }
 
         public IActionResult OnGetData(
@@ -132,10 +151,21 @@ namespace App.Pages.Checks
             List<DateTime> createDt=null,
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
+            string tagName=null,
             bool? isDel=null
             )
         {
             tagIds = ParseTagIds(tagIds, Request.Query["tagIds"]);
+            // 兼容 tagName：按标签名称解析为 tagIds（含子孙标签），便于 WorkDesk 卡片跳转
+            if (tagIds == null || tagIds.Count == 0)
+            {
+                var rawTagName = tagName.IsEmpty() ? Request.Query["tagName"].FirstOrDefault() : tagName;
+                if (rawTagName.IsNotEmpty())
+                {
+                    var tag = CheckTag.Set.FirstOrDefault(t => t.Name == rawTagName);
+                    if (tag != null) tagIds = CheckTag.GetChildIds(tag.Id);
+                }
+            }
             dutyOrgIds = ParseOrgIds(dutyOrgIds, Request.Query["dutyOrgIds"]);
             DateTime? createStartDt = createDt.GetVal(0);
             DateTime? createEndDt = createDt.GetVal(1);
@@ -156,6 +186,15 @@ namespace App.Pages.Checks
                 if (parts.Length >= 2 && DateTime.TryParse(parts[1], out var d1)) nextCheckTo = d1.Date.AddDays(1).AddTicks(-1);
             }
 
+            // WorkDesk "我的对象" scope：checkerId 与 dutyOrg 同时存在时用 OR 语义
+            // （与 WorkDesk.BuildObjectScopeQuery 对齐：DutyOrgId ∈ orgIds OR CheckerId == uid）
+            var hasCheckerScope = effCheckerId.HasValue && effCheckerId.Value > 0;
+            var hasOrgScope = (dutyOrgId.HasValue && dutyOrgId.Value > 0) || (dutyOrgIds != null && dutyOrgIds.Count > 0);
+            var useOrScope = hasCheckerScope && hasOrgScope;
+            long? searchCheckerId = useOrScope ? null : effCheckerId;
+            long? searchDutyOrgId = useOrScope ? null : dutyOrgId;
+            List<long> searchDutyOrgIds = useOrScope ? null : dutyOrgIds;
+
             var q = CheckObject.Search(
                 name: name, 
                 code: code,
@@ -164,10 +203,10 @@ namespace App.Pages.Checks
                 socialCreditCode: socialCreditCode, 
                 address: address,
                 dutyMan: dutyUserName,
-                dutyOrgId: dutyOrgId,
-                dutyOrgIds: dutyOrgIds,
+                dutyOrgId: searchDutyOrgId,
+                dutyOrgIds: searchDutyOrgIds,
                 tagIds: tagIds,
-                checkerId: effCheckerId, 
+                checkerId: searchCheckerId, 
                 objectType: objectType, 
                 scope: scope,
                 scale: scale,
@@ -180,6 +219,23 @@ namespace App.Pages.Checks
                 isDel: isDel,
                 includeTags: true
                 );
+
+            // 应用 OR scope：checkerId OR dutyOrg（含子孙组织）
+            if (useOrScope)
+            {
+                var orgRootIds = new List<long>();
+                if (dutyOrgId.HasValue && dutyOrgId.Value > 0) orgRootIds.Add(dutyOrgId.Value);
+                if (dutyOrgIds != null) orgRootIds.AddRange(dutyOrgIds);
+                var scopeOrgIds = App.DAL.Org.All
+                    .GetDescendants(orgRootIds.Distinct().ToList())
+                    .Select(o => o.Id)
+                    .Distinct()
+                    .ToList();
+                var uid = effCheckerId.Value;
+                q = q.Where(o => o.CheckerId == uid
+                              || (o.DutyOrgId.HasValue && scopeOrgIds.Contains(o.DutyOrgId.Value)));
+            }
+
             var cu = Auth.GetUser();
             if (!Auth.IsAdmin(cu))
                 q = q.FilterByOrg(cu, nameof(CheckObject.DutyOrgId));

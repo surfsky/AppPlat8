@@ -101,7 +101,7 @@ namespace App.DAL
             if (status.IsNotEmpty())            q = q.Where(o => o.Status == status.Value);
             var dutyNetIds = GetOrgIds(dutyOrgIds, dutyOrgId);
             if (dutyNetIds.Count > 0)            q = q.Where(o => o.Object != null && o.Object.DutyOrgId.HasValue && dutyNetIds.Contains(o.Object.DutyOrgId.Value));
-            if (expireTo.IsNotEmpty())          q = q.Where(o => o.ExpireDt.HasValue && o.ExpireDt.Value <= expireTo.Value.Date.AddDays(1).AddTicks(-1));
+            if (expireTo.IsNotEmpty())          q = q.Where(o => o.ExpireDt.HasValue && o.ExpireDt.Value <= expireTo.Value.Date);
             if (createStartDt.IsNotEmpty())     q = q.Where(o => o.CreateDt >= createStartDt.Value.Date);
             return q;
         }

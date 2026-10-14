@@ -4,6 +4,9 @@
     Layout = "_Layout";
     ViewData["Title"] = "检查任务信息";
     var taskId = Request.Query["id"].ToString();
+    var checkerId = Request.Query["checkerId"].ToString();
+    var checkObjectsHandler = "?handler=CheckObjectsData&taskId=" + taskId;
+    if (!string.IsNullOrEmpty(checkerId)) checkObjectsHandler += "&checkerId=" + checkerId;
 }
 
 @section body {
@@ -20,7 +23,7 @@
         <EleTreePicker For="Item.OrgId" Label="承接组织" FillRow="true" Api="/httpapi/orgs/GetAuthOrgTree"></EleTreePicker>
         <EleList Label="检查对象"
                 FillRow="true"
-                DataHandler="?handler=CheckObjectsData&taskId=@taskId"
+                DataHandler="@checkObjectsHandler"
                 PageSize="10"
                 Height="1000px"
                 MinHeight="240px"

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Maintains
 {
-    [Auth(Power.Admin)]
+    [Auth(Power.MonitorIPFilter)]
     public class IPFiltersModel : AuthModel
     {
         public IPFilter Item { get; set; }
@@ -24,8 +24,6 @@ namespace App.Pages.Maintains
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.Admin))
-                return BuildResult(403, "无权操作");
 
             var items = IPFilter.Set.Where(t => ids.Contains(t.Id)).ToList();
             foreach (var item in items)

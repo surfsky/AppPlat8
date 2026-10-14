@@ -4,15 +4,20 @@
     ViewData["Title"] = "隐患管理";
     var objectNameEncoded = System.Net.WebUtility.UrlEncode(Model.ObjectName ?? string.Empty);
     var titleSuffix = string.IsNullOrWhiteSpace(Model.ObjectName) ? string.Empty : $" - {Model.ObjectName}";
+    // DataHandler 携带无对应过滤控件的 scope 参数（excludeArchived）；其余参数（checkerId/status/expireTo）由过滤控件的 data-filter-default 机制注入
+    var dataHandler = $"?handler=Data&objectId={Model.ObjectId}&objectName={objectNameEncoded}";
+    if (Model.ScopeExcludeArchived) dataHandler += "&excludeArchived=true";
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="隐患" FormPage="CheckHazardForm" EnableBatch="true" DataHandler="?handler=Data&objectId=@Model.ObjectId&objectName=@objectNameEncoded" >
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="隐患" FormPage="CheckHazardForm" EnableBatch="true" DataHandler="@dataHandler" >
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Description" Width="250px" Label="描述" ></EleInput>
                 <EleInput For="Item.Check.CheckObject.Name" Prop="objectName" Width="250px" Label="对象" Value="@Q("objectName")" ></EleInput>
-                <EleSelect For="Item.Status" Width="250px" Label="状态" Clearable="true" ></EleSelect>
+                <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Prop="checkerId" Api="/httpapi/users/GetPicker" Width="200px" Label="检查人" Value="@(Model.ScopeCheckerId.HasValue ? Model.ScopeCheckerId.Value.ToString() : "")" TextValue="@Model.ScopeCheckerName"></ElePicker>
+                <EleSelect For="Item.Status" Width="200px" Label="状态" Clearable="true" Value="@Model.ScopeStatus"></EleSelect>
+                <EleDatePicker For="Item.ExpireDt" Prop="expireTo" Width="200px" Label="整改期限至" Value="@(Model.ScopeExpireTo.HasValue ? Model.ScopeExpireTo.Value.ToString("yyyy-MM-dd") : "")"></EleDatePicker>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>

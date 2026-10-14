@@ -62,8 +62,9 @@ namespace App.Pages.Checks
         /// <summary>
         /// 检查任务下的检查对象列表（供 EleList 数据源）。
         /// 列：序号、企业名称、组织、网格员、状态（已完成 / 未完成）
+        /// 若传入 checkerId，则只显示该网格员负责的对象。
         /// </summary>
-        public IActionResult OnGetCheckObjectsData(long taskId, Paging pi)
+        public IActionResult OnGetCheckObjectsData(long taskId, long? checkerId=null, Paging pi=null)
         {
             pi ??= new Paging { PageIndex = 1, PageSize = 10 };
             if (string.IsNullOrEmpty(pi.SortField)) pi.SortField = "SortId";
@@ -73,12 +74,10 @@ namespace App.Pages.Checks
             var authOrgId = cu?.EffectiveAuthOrgId;
             var isAdmin = Auth.IsAdmin(cu);
 
-            IQueryable<CheckTaskObject> q = CheckTaskObject.Set
-                .Include(t => t.Object)
-                    .ThenInclude(o => o.DutyOrg)
-                .Include(t => t.Object)
-                    .ThenInclude(o => o.Checker)
-                .Where(t => t.TaskId == taskId);
+            // 用 Search 简化基础过滤（taskId + checkerId），并补充嵌套 Include 供投影使用
+            IQueryable<CheckTaskObject> q = CheckTaskObject.Search(taskId: taskId, checkerId: checkerId)
+                .Include(t => t.Object).ThenInclude(o => o.DutyOrg)
+                .Include(t => t.Object).ThenInclude(o => o.Checker);
 
             if (!isAdmin && authOrgId.HasValue && authOrgId.Value > 0)
             {

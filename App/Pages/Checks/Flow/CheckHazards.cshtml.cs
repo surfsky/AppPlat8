@@ -22,6 +22,19 @@ namespace App.Pages.Checks
         [BindProperty(SupportsGet = true)]
         public string ObjectName { get; set; }
 
+        /// <summary>URL 注入的检查人 Id（来自 WorkDesk 跳转），用于 scope 过滤与过滤控件回显。</summary>
+        public long? ScopeCheckerId { get; set; }
+        public string ScopeCheckerName { get; set; }
+
+        /// <summary>URL 注入的状态过滤值（如 "0,1"），用于状态下拉框回显。</summary>
+        public string ScopeStatus { get; set; }
+
+        /// <summary>URL 注入的整改期限上限（如 2026-10-14），用于期限控件回显。</summary>
+        public DateTime? ScopeExpireTo { get; set; }
+
+        /// <summary>URL 注入的"排除已归档"标记。</summary>
+        public bool ScopeExcludeArchived { get; set; }
+
         public CheckHazard Item { get; set; }
 
         public void OnGet(long? objectId, string objectName)
@@ -33,6 +46,20 @@ namespace App.Pages.Checks
             {
                 ObjectName = CheckObject.Get(ObjectId.Value)?.Name ?? string.Empty;
             }
+
+            // 读取 URL 注入的 scope 参数，供过滤控件回显
+            var rawCheckerId = Request.Query["checkerId"].FirstOrDefault();
+            if (long.TryParse(rawCheckerId, out var cid) && cid > 0)
+            {
+                ScopeCheckerId = cid;
+                var u = App.DAL.User.Get(cid);
+                ScopeCheckerName = u != null ? (u.RealName.IsNotEmpty() ? u.RealName : u.Name) : string.Empty;
+            }
+            ScopeStatus = Request.Query["status"].FirstOrDefault();
+            var rawExpireTo = Request.Query["expireTo"].FirstOrDefault();
+            if (DateTime.TryParse(rawExpireTo, out var et)) ScopeExpireTo = et.Date;
+            var rawExclude = Request.Query["excludeArchived"].FirstOrDefault();
+            ScopeExcludeArchived = bool.TryParse(rawExclude, out var ea) && ea;
         }
 
         public IActionResult OnGetData(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, string status, DateTime? createStartDt, long? dutyOrgId = null, List<long> dutyOrgIds = null, DateTime? expireTo = null)
@@ -59,22 +86,18 @@ namespace App.Pages.Checks
             IQueryable<CheckHazard> baseQ;
             if (dutyOrgIds.Count == 0 && !dutyOrgId.HasValue && checkerId.HasValue)
             {
+                // 与 WorkDesk.BuildHazardScopeQuery 对齐：scope = CheckerId == uid OR Object.DutyOrgId ∈ EffectiveAuthOrgId 的子孙
                 var uid = checkerId.Value;
                 var u = App.DAL.User.ValidSet.AsNoTracking().FirstOrDefault(x => x.Id == uid);
                 List<long> scopeOrgIds = null;
-                if (u != null)
+                var rootOrgId = u?.EffectiveAuthOrgId;
+                if (rootOrgId.HasValue && rootOrgId.Value > 0)
                 {
-                    var raw = u.AuthOrgIds ?? new List<long>();
-                    if (u.OrgId.HasValue && !raw.Contains(u.OrgId.Value))
-                        raw.Add(u.OrgId.Value);
-                    if (raw.Count > 0)
-                    {
-                        scopeOrgIds = App.DAL.Org.All
-                            .GetDescendants(raw.Distinct().ToList())
-                            .Select(t => t.Id)
-                            .Distinct()
-                            .ToList();
-                    }
+                    scopeOrgIds = App.DAL.Org.All
+                        .GetDescendants(rootOrgId.Value)
+                        .Select(t => t.Id)
+                        .Distinct()
+                        .ToList();
                 }
                 baseQ = App.DAL.CheckHazard.IncludeSet
                     .Include(t => t.Object).Include(t => t.Checker).Include(t => t.CheckItem)
@@ -102,8 +125,9 @@ namespace App.Pages.Checks
                 q = q.Where(h => h.Status.HasValue && multiStatus.Contains(h.Status.Value));
             else if (singleStatus.HasValue)
                 q = q.Where(h => h.Status.HasValue && h.Status.Value == singleStatus.Value);
+            // 与 WorkDesk 超期统计对齐：ExpireDt <= 当日零点（DateTime.Today），而非当日结束
             if (expireTo.HasValue)
-                q = q.Where(h => h.ExpireDt.HasValue && h.ExpireDt.Value <= expireTo.Value.Date.AddDays(1).AddTicks(-1));
+                q = q.Where(h => h.ExpireDt.HasValue && h.ExpireDt.Value <= expireTo.Value.Date);
             if (createStartDt.HasValue)
                 q = q.Where(h => h.CreateDt >= createStartDt.Value.Date);
 

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Open
 {
     /// <summary>参考网站编辑</summary>
-    [Auth(Power.SiteView)]
+    [Auth(Power.RefSiteView)]
     [IgnoreAntiforgeryToken]
     public class SiteFormModel : AuthModel
     {
@@ -34,7 +34,7 @@ namespace App.Pages.Open
                 if (req == null || req.Type.IsEmpty() || req.Name.IsEmpty() || req.Url.IsEmpty())
                     return BuildResult(400, "分组、名称、网址不能为空");
 
-                var needPower = req.Id == 0 ? Power.SiteNew : Power.SiteEdit;
+                var needPower = req.Id == 0 ? Power.RefSiteNew : Power.RefSiteEdit;
                 if (!CheckPower(needPower))
                     return BuildResult(403, "无权操作");
 

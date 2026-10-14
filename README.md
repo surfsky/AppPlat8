@@ -77,15 +77,15 @@
     # 若使用三方网页，需安装三方调试插件：C# (with netcoredbg)，并点击页面右上角的调试图标，进行调试；
 ```
 
-## 其它
+## 数据库迁移更新
 
-1. 数据库迁移: 运行
+1. 使用 EF 机制进行数据库迁移: 运行
 
 ```bash
-   dotnet ef migrations add CheckTaskObjectOrg --project App/App.csproj --startup-project App/App.csproj
+   dotnet ef migrations add CheckTaskObjectCheckerId --project App/App.csproj --startup-project App/App.csproj
 ```
 
-2. 若端口被占用，查找占用 6060 的进程，然后kill
+2. 若端口被占用，查找占用 6060 端口的进程，然后kill
 
 ## 部署
 
@@ -113,15 +113,7 @@ Docker 部署方式
 
 - /App/Files/
 
-- 测试
 
-- 若有需要，请自动化测试，不限于以下方法
-- 对于类库方法，创建对应的测试用例并进行单元测试；
-- 对于网页：
-  - curl页面，保存临时文件运行调试；
-  - 创建或修改自动测试脚本（在目录 /AppPlat/WebTest/ 下）进行测试并截图验证
-  - 自动化网页测试工具不限于：Puppeteer、Playwright、Microsoft playright-mcp、Chrome DevTools MCP、Selenium
-  - 对于有授权的网页(AllowAttribute, AuthAttribute)，若绕不开登录页面，可先关闭页面授权进行测试，测试成功后再开启页面授权。
 
 ## 菜单及访问权限
 

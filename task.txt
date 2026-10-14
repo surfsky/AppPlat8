@@ -555,9 +555,10 @@ Done
     实现检查任务：
         /删除CheckTaskSheet
         /给HttpApi 增加 CacheByUse=true 选项，可以根据当前用户来缓存
-        提高接口 http://localhost:5000/httpapi/orgs/GetAuthOrgTree 性能，只导出必要的列
-        
-        重新思考该怎么设计（如何统计到各组织），还是删除CheckTaskOrg 会更简单一些
+        /提高接口 http://localhost:5000/httpapi/orgs/GetAuthOrgTree 性能，只导出必要的列
+        /重新思考该怎么设计（如何统计到各组织），还是删除CheckTaskOrg 会更简单一些（删除CheckTaskOrg）
+        获取某个任务某人的任务清单
+        获取某个组织的任务清单
         修正工作台页面的数字角标和跳转链接
         对象页面提供检查任务过滤框
         跑通任务分配和检查流程

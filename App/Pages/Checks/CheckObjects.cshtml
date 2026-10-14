@@ -20,7 +20,7 @@
                            TextValue="@Model.DefaultCheckerName">
                 </ElePicker>
                 <EleInput For="Item.Name"              Width="250px" Label="检查对象名称"     Value="@QStr("name")"></EleInput>
-                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@QStr("tagIds")"></EleTreePicker>
+                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@(string.IsNullOrEmpty(Model.ScopeTagIds) ? QStr("tagIds") : Model.ScopeTagIds)"></EleTreePicker>
                 <EleInput For="Item.Address"           Width="250px" Label="详细地址"         Value="@QStr("address")"></EleInput>
                 <EleSelect For="Item.Scope" Width="250px" Label="所属领域" Value="@QStr("scope")"></EleSelect>
                 <EleSelect For="Item.ObjectType" Width="250px" Label="类型" Value="@QStr("objectType")"></EleSelect>

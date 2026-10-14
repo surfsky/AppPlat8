@@ -12,8 +12,8 @@
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
-                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.Admin)">新增</EleButton>
-                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.Admin)">删除</EleButton>
+                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.MonitorIPFilter)">新增</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.MonitorIPFilter)">删除</EleButton>
             </Buttons>
         </Toolbar>
 

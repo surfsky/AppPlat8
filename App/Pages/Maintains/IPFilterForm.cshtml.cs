@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Maintains
 {
-    [Auth(Power.Admin)]
+    [Auth(Power.MonitorIPFilter)]
     public class IPFilterFormModel : AuthModel
     {
         public IPFilter Item { get; set; }
@@ -24,8 +24,6 @@ namespace App.Pages.Maintains
                 return BuildResult(400, "参数错误");
             if (string.IsNullOrWhiteSpace(req.IP))
                 return BuildResult(400, "IP不能为空");
-            if (!CheckPower(Power.Admin))
-                return BuildResult(403, "无权操作");
 
             IPFilter item;
             if (req.Id > 0)

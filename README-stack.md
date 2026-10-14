@@ -98,25 +98,3 @@
    移动开放平台短信接口（尚未上线）
    阿里云短信接口（尚未上线）
 三方Gis图层数据接口
-
-
-
-## AI开发环境
-
-vscode copilot：
-    - C# 补全和重构：内置支持（用microsoft xxx 插件）
-    - C# 代码调试：内置支持；
-    - 20260601更改付费逻辑后，10美元一天就用完了，提高一档要39美元
-
-trae：
-    - C# 补全和重构：编程提示需安装ReSharper 插件（个人可免费），重构经常不能完全生效；或其他插件如OmniSharp。
-    - C# 代码调试：调试需要安装 C# with NetCoreDbg，
-    - lite $3，pro $10, pro+$30, Ultra $200；
-
-Cursor：
-    - pro $20每月（500次请求）
-
-OpenAI Codex:
-
-CodeGraphy 代码图谱以减少token消耗
-    - npm install -g @colbymchenry/codegraph

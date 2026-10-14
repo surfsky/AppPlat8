@@ -55,6 +55,7 @@ namespace App.Pages.Me
         public DateTime? StartDt { get; set; }
         public DateTime? ExpireDt { get; set; }
         public string DetailUrl { get; set; }
+        public long? CheckerId { get; set; }
 
         public object Export(ExportMode mode = ExportMode.Normal)
         {
@@ -64,7 +65,7 @@ namespace App.Pages.Me
                 CreatorText, CreatorOrg,
                 Progress, ProgressText,
                 StartDt, ExpireDt,
-                DetailUrl,
+                DetailUrl, CheckerId,
             };
         }
     }
@@ -92,7 +93,7 @@ namespace App.Pages.Me
         public string UserRealName { get; private set; }
 
         // 管理员（有用户查看权限）可切换到其它中心/人员视图，非管理员只能看自己
-        public bool CanChangeScope => Auth.CheckPower(Power.Admin);
+        public bool CanChangeScope => Auth.CheckPower(Power.AdminLeader);
 
         // 实际责任网格命中范围：URL(管理员) > 用户 EffectiveAuthOrgId 展开后的全部子孙
         public List<long> CurrOrgIds => ResolveCurrOrgIds();
@@ -118,8 +119,10 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         public void OnGet()
         {
-            // UserId
+            // UserId：URL(管理员) > 当前登录用户（默认显示当前用户
             UserId = Asp.GetQuery<long>("userId");
+            if (!UserId.HasValue || UserId.Value <= 0)
+                UserId = GetUserId();
 
             ResolveUserRealName();
             var today = DateTime.Today;
@@ -161,10 +164,10 @@ namespace App.Pages.Me
                 new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false"), "fas fa-circle-check"),
                 new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}"), "fas fa-clock"),
                 new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-triangle-exclamation"),
-                new WorkDeskStatCard("重点关注对象",     CountOverdueObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-exclamation-triangle"),
-                new WorkDeskStatCard("示例对象",        CountOverdueObjects,   AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-exclamation-triangle"),
-                new WorkDeskStatCard("八大类对象",      CountOverdueObjects,   AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-exclamation-triangle"),
-                new WorkDeskStatCard("三场所对象",      CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-exclamation-triangle"),
+                new WorkDeskStatCard("重点监管企业",     CountObjectsByTag("重点监管"), AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("重点监管")}"), "fas fa-exclamation-triangle"),
+                new WorkDeskStatCard("示范企业",        CountObjectsByTag("示范企业"),  AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("示范企业")}"), "fas fa-star"),
+                new WorkDeskStatCard("八类高危企业",      CountObjectsByTag("八类高危企业"),    AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("八类高危企业")}"), "fas fa-industry"),
+                new WorkDeskStatCard("三场所三企业",      CountObjectsByTag("三场所三企业"),    AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("三场所三企业")}"), "fas fa-store"),
             };
 
             var hazards = BuildHazardScopeQuery();
@@ -173,9 +176,9 @@ namespace App.Pages.Me
             var CountOverdueHazards  = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
             HazardStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("我发现的隐患",   CountMyHazards,      AppendHazardScope($"/Checks/CheckHazards"), "fas fa-eye"),
-                new WorkDeskStatCard("待处理隐患",     CountPendingHazards, AppendHazardScope($"/Checks/CheckHazards?status=0,1"), "fas fa-inbox"),
-                new WorkDeskStatCard("超期隐患",       CountOverdueHazards, AppendHazardScope($"/Checks/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}"), "fas fa-skull-crossbones"),
+                new WorkDeskStatCard("我发现的隐患",   CountMyHazards,      AppendHazardScope($"/Checks/Flow/CheckHazards"), "fas fa-eye"),
+                new WorkDeskStatCard("待处理隐患",     CountPendingHazards, AppendHazardScope($"/Checks/Flow/CheckHazards?status=0,1"), "fas fa-inbox"),
+                new WorkDeskStatCard("超期隐患",       CountOverdueHazards, AppendHazardScope($"/Checks/Flow/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}"), "fas fa-skull-crossbones"),
             };
         }
 
@@ -202,21 +205,38 @@ namespace App.Pages.Me
         }
 
         //---------------------------------------------------------------------
-        // 表格 1：我的任务（我创建 OR 分派到我命中的责任网格）+ taskTab 筛选
-        //   taskTab=unfinished(默认)：排除已完成，其余全部（进行中+超期）
+        // 我的任务：只显示当前选择人员相关的任务
+        //   taskTab=unfinished(默认)：未完成（进度 < 100%）
         //   taskTab=all：全部
-        //   taskTab=created：我发起（CreatorId == uid）
-        //   taskTab=handled：我经手（CreatorId == uid 或 分配到我的 org）
+        // 相关判定：创建人 OR 任务承接组织命中 OR 检查对象的网格员/组织命中
         //---------------------------------------------------------------------
         public IActionResult OnGetMyTasks(Paging pi, string taskTab)
         {
-            // 先保证能把任务数据展示出来：忽略任何 tab / scope，取全部任务，按 Id 倒序。
-            // 后续迭代再逐步加上 created/handled/unfinished 的 tab 过滤。
-            var q = App.DAL.CheckTask.Search(null, null, null)
+            var uid = CurrUserId;
+            var orgIds = CurrOrgIds;
+
+            IQueryable<CheckTask> q = App.DAL.CheckTask.Search(null, null, null)
                 .AsNoTracking()
                 .Include(t => t.Creator).ThenInclude(u => u.Org)
-                .Include(t => t.Org);
-            return BuildResult(0, "success", MaterializeAndProject(q, pi), pi);
+                .Include(t => t.Org)
+                .Include(t => t.CheckObjects);
+
+            // 只看与当前人员相关的任务：创建人 / 任务承接组织 / 检查对象网格员 / 检查对象组织
+            q = q.Where(t =>
+                (uid > 0 && t.CreatorId == uid)
+                || (orgIds.Count > 0 && t.OrgId.HasValue && orgIds.Contains(t.OrgId.Value))
+                || t.CheckObjects.Any(co =>
+                    (uid > 0 && (co.CheckerId == uid || co.Object.CheckerId == uid))
+                    || (orgIds.Count > 0 && co.OrgId.HasValue && orgIds.Contains(co.OrgId.Value))
+                    || (orgIds.Count > 0 && co.Object.DutyOrgId.HasValue && orgIds.Contains(co.Object.DutyOrgId.Value))
+                ));
+
+            // tab 过滤
+            taskTab = taskTab ?? "unfinished";
+            if (taskTab == "unfinished")
+                q = q.Where(t => t.Progress == null || t.Progress < 100 || t.FinishCount < t.TotalCount);
+
+            return BuildResult(0, "success", MaterializeAndProject(q, pi, uid > 0 ? uid : (long?)null), pi);
         }
 
 
@@ -224,7 +244,7 @@ namespace App.Pages.Me
         // 内部：EF 查询先 ToList（避免 EF 翻译本地函数/字符串拼接失败），再手动 SortPage 成 WorkDeskTaskRow
         //---------------------------------------------------------------------
         /// <summary>将 EF 查询投影为 WorkDeskTaskRow</summary>
-        private static List<object> MaterializeAndProject(IQueryable<CheckTask> query, Paging pi)
+        private static List<object> MaterializeAndProject(IQueryable<CheckTask> query, Paging pi, long? checkerId)
         {
             // 1) 排序前统一默认值
             if (pi == null) pi = new Paging();
@@ -250,7 +270,8 @@ namespace App.Pages.Me
                     ProgressText = ComputeProgressText(t),
                     StartDt      = t.StartDt,
                     ExpireDt     = t.ExpireDt,
-                    DetailUrl    = $"/Checks/Flow/CheckTaskForm?id={t.Id}&userId={Auth.GetUser().Id}",
+                    DetailUrl    = $"/Checks/Flow/CheckTaskForm?id={t.Id}",
+                    CheckerId    = checkerId,
                 })
                 .ToList();
         }
@@ -303,6 +324,19 @@ namespace App.Pages.Me
                          || (o.CheckerId == uid));
         }
 
+        /// <summary>按标签名称统计当前 scope 下的对象数量（标签含子孙标签）。</summary>
+        private int CountObjectsByTag(string tagName)
+        {
+            if (string.IsNullOrWhiteSpace(tagName)) return 0;
+            var tag = App.DAL.CheckTag.Set.FirstOrDefault(t => t.Name == tagName);
+            if (tag == null) return 0;
+            var tagIds = App.DAL.CheckTag.GetChildIds(tag.Id);
+            if (tagIds.Count == 0) return 0;
+            return BuildObjectScopeQuery()
+                .Where(o => App.DAL.CheckObjectTag.IncludeSet.Any(ct => ct.CheckObjectId == o.Id && tagIds.Contains(ct.TagId)))
+                .Count();
+        }
+
         private IQueryable<CheckHazard> BuildHazardScopeQuery()
         {
             var uid    = CurrUserId;
@@ -316,27 +350,8 @@ namespace App.Pages.Me
         }
 
         //---------------------------------------------------------------------
-        // 内部：CheckTask → 前台表格行（SortPageExport 支持 Func 投影，避免 EF 翻译本地函数）
+        // 内部：进度文本计算
         //---------------------------------------------------------------------
-        private static object BuildTaskRow(CheckTask t)
-        {
-            return new WorkDeskTaskRow
-            {
-                Id           = t.Id,
-                Name         = t.Name,
-                LevelText    = t.Org != null
-                             ? (t.Org.FullName ?? t.Org.Name ?? "")
-                             : "",
-                CreatorText  = t.CreatorName,
-                CreatorOrg   = t.Creator?.Org?.Name ?? "",
-                Progress     = (int)(t.Progress ?? 0),
-                ProgressText = ComputeProgressText(t),
-                StartDt      = t.StartDt,
-                ExpireDt     = t.ExpireDt,
-                DetailUrl    = $"/Checks/CheckTaskObjects?taskId={t.Id}",
-            };
-        }
-
         private static string ComputeProgressText(CheckTask t)
         {
             if (t.ExpireDt.HasValue && t.ExpireDt.Value <= DateTime.Now) return "超期";
@@ -347,10 +362,14 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         // 卡片 URL 拼接：把当前 scope（checkerId/dutyOrgId）追加到目标列表页 URL 查询参数上
         //---------------------------------------------------------------------
+        /// <summary>卡片 URL 拼接：把当前 scope（checkerId + dutyOrgId）追加到目标列表页 URL 查询参数上</summary>
         private string AppendObjectScope(string rawUrl)
         {
             if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
             var qs = System.Web.HttpUtility.ParseQueryString(string.Empty);
+
+            var uid = CurrUserId;
+            if (uid > 0) qs["checkerId"] = uid.ToString();
 
             var roots = CurrRootOrgIds;
             if (roots != null && roots.Count == 1)
