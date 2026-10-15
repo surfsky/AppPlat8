@@ -24,11 +24,11 @@
 
 - 排查
     - 对象      ~/Checks/CheckObjects
-    - 排查      ~/Checks/CheckLogs
-    - 检查表    ~/Checks/CheckSheets
+    - 排查      ~/Checks/flow/CheckLogs
+    - 检查表    ~/Checks/config/CheckSheets
     - 隐患      ~/Checks/CheckHarzards
-    - 任务      ~/Checks/CheckTasks
-    - 报表      ~/Checks/CheckReports
+    - 任务      ~/Checks/flow/CheckTasks
+    - 报表      ~/Checks/report/CheckReports
 - OA
     - 资产      ~/OA/Assets
     - 文档      ~/OA/Articles

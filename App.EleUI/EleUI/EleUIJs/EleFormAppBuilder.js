@@ -177,8 +177,14 @@ export class EleFormAppBuilder extends EleAppBuilder {
                     const data = payload || (form.form ? form.form.value : {});
                     return builder.postHandler(name, data, form.form ? form.form.value : null);
                 };
+                const inheritedPostStreamHandler = async (name, payload, stateArg = null, streamApi = null) => {
+                    const data = payload || (form.form ? form.form.value : {});
+                    return builder.postStreamHandler(name, data, stateArg || (form.form ? form.form.value : null), streamApi);
+                };
                 form.postHandler = inheritedPostHandler;
+                form.postStreamHandler = inheritedPostStreamHandler;
                 bindings.postHandler = inheritedPostHandler;
+                bindings.postStreamHandler = inheritedPostStreamHandler;
                 bindings.invokeCommand = async (name, payload) => form.invokeCommand(name, payload);
 
                 return {

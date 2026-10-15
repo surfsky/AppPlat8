@@ -280,6 +280,7 @@ class EleManager {
     static showLoading(...args) { return EleManager._core.showLoading(...args); }
     static closeLoading(...args) { return EleManager._core.closeLoading(...args); }
     static runButtonTask(...args) { return EleManager._core.runButtonTask(...args); }
+    static runButtonStreamTask(...args) { return EleManager._core.runButtonStreamTask(...args); }
     static setDrawer(...args) { return EleManager._core.setDrawer(...args); }
     static setDrawerDefaults(...args) { return EleManager._core.setDrawerDefaults(...args); }
     static openDrawer(...args) { return EleManager._core.openDrawer(...args); }

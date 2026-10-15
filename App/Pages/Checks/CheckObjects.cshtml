@@ -61,7 +61,7 @@
                         <BatchField Control="Select"  Field="RiskLevel" Label="风险等级"   Options="无风险,低风险,中风险,高风险" />
                     </BatchFields>
                 </EleButton>
-                <EleButton Type="Success" Icon="Edit" Visible="@Auth.CheckPower(Power.AdminMaintain)" Handler="FixData" AutoLoading="true" ConfirmText="该操作较为费时，确认操作吗？">修正数据</EleButton>
+                <EleButton Type="Success" Icon="Edit" Visible="@Auth.CheckPower(Power.AdminMaintain)" Handler="FixData" Stream="true" StreamTitle="修正数据" ConfirmText="该操作较为费时，确认操作吗？">修正数据</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

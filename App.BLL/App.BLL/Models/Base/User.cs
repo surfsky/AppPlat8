@@ -59,6 +59,7 @@ namespace App.DAL
         //------------------------------------------------------
         // 计算属性
         //------------------------------------------------------
+        public string NameMask => this.Name.Mask();
         public string DisplayName => $"{this.RealName}({this.Mobile})";
         public string OrgName => this.Org?.Name;
         public string OrgFullName => this.Org?.FullName;
@@ -404,7 +405,7 @@ namespace App.DAL
             {
                 this.Id,
                 this.Name,
-                NameMask = this.Name?.Mask(),
+                this.NameMask,
                 this.RealName,
                 this.DisplayName,
                 this.OrgId,

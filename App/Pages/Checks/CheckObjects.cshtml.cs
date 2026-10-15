@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
 using App.Entities;
@@ -16,6 +19,11 @@ namespace App.Pages.Checks
     [Auth(Power.CheckObjectView)]
     public class CheckObjectsModel : AuthModel
     {
+        static readonly JsonSerializerOptions _sseJsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         public CheckObject Item { get; set; } = new CheckObject();         // 检查对象实体（用于页面数据绑定）
         public List<long> DutyOrgIds { get; set; } = new List<long>();     // 多值，用于 ElePicker/Select 控件回显
         public long? DefaultCheckerId { get; set; }      // 默认检查人ID
@@ -431,14 +439,83 @@ namespace App.Pages.Checks
         //-------------------------------------------------------------------------
         // Fix data
         //-------------------------------------------------------------------------
-        public IActionResult OnPostFixData()
+        public async Task<IActionResult> OnPostFixData()
         {
             if (!CheckPower(Power.AdminMaintain))
                 return BuildResult(403, "无权操作");
 
-            var cnt = CheckObject.FixAll();
-            // 显示toast、刷新数据
-            return EleHandler.ShowToast($"共更新 {cnt} 条记录");
+            Response.ContentType = "text/event-stream; charset=utf-8";
+            Response.Headers["Cache-Control"] = "no-cache";
+            Response.Headers["X-Accel-Buffering"] = "no";
+
+            try
+            {
+                await WriteSseEventAsync(new { percent = 0, message = "开始修正数据..." });
+
+                var cnt = await CheckObject.FixAllAsync(async (done, total) =>
+                {
+                    var percent = total <= 0 ? 100 : Math.Clamp(done * 100 / total, 0, 100);
+                    await WriteSseEventAsync(new
+                    {
+                        percent,
+                        message = total <= 0 ? "没有可处理的数据" : $"已处理 {done}/{total}"
+                    });
+                });
+
+                await WriteSseEventAsync(new
+                {
+                    code = 0,
+                    message = $"共更新 {cnt} 条记录",
+                    done = true,
+                    percent = 100,
+                    data = new
+                    {
+                        updatedCount = cnt,
+                        commands = new object[]
+                        {
+                            new
+                            {
+                                command = "toast",
+                                args = new
+                                {
+                                    type = "success",
+                                    message = $"共更新 {cnt} 条记录",
+                                    title = "提示"
+                                }
+                            },
+                            new
+                            {
+                                command = "reload",
+                                args = new
+                                {
+                                    delay = 350
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                await WriteSseEventAsync(new
+                {
+                    code = 500,
+                    message = ex.Message,
+                    done = true,
+                    percent = 100
+                });
+            }
+
+            return new EmptyResult();
+        }
+
+        /// <summary>写入一条 SSE JSON 消息并立即刷新到客户端。</summary>
+        async Task WriteSseEventAsync(object payload)
+        {
+            var json = JsonSerializer.Serialize(payload, _sseJsonOptions);
+            var buffer = Encoding.UTF8.GetBytes($"data: {json}\n\n");
+            await Response.Body.WriteAsync(buffer, 0, buffer.Length);
+            await Response.Body.FlushAsync();
         }
     }
 }

@@ -59,8 +59,19 @@ export class EleListAppBuilder extends EleAppBuilder {
                     }
                 }
 
+                const inheritedPostHandler = async (name, payload) => {
+                    const data = payload || builder.getPostPayload(bindings);
+                    return builder.postHandler(name, data, null);
+                };
+                const inheritedPostStreamHandler = async (name, payload, stateArg = null, streamApi = null) => {
+                    const data = payload || builder.getPostPayload(bindings);
+                    return builder.postStreamHandler(name, data, stateArg, streamApi);
+                };
+
                 return {
                     ...bindings,
+                    postHandler: inheritedPostHandler,
+                    postStreamHandler: inheritedPostStreamHandler,
                     listScrollEl,
                     Utils: (typeof window !== 'undefined' && window.Utils) ? window.Utils : (typeof globalThis !== 'undefined' && globalThis.Utils) ? globalThis.Utils : null,
                     openTopImageViewer: (url, list, idx) => {

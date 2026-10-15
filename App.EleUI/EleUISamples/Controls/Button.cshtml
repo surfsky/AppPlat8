@@ -49,9 +49,10 @@
         <div class="pt-4 border-t border-slate-200">
             <div class="mb-2 text-sm text-slate-500">自动 loading（AutoLoading）：点击后按钮进入 loading 并禁止重复点击，服务端返回后自动恢复</div>
             <div class="flex gap-2 items-center">
+                <EleButton Type="Default" Handler="LongTask">对照：无自动 loading</EleButton>
                 <EleButton Type="Primary" Handler="LongTask" AutoLoading="true">模拟耗时操作（自动 loading）</EleButton>
                 <EleButton Type="Success" Handler="LongTask" AutoLoading="true" ConfirmText="该操作较为费时，确认操作吗？">带确认框的耗时操作</EleButton>
-                <EleButton Type="Default" Handler="LongTask">对照：无自动 loading</EleButton>
+                <EleButton Type="Success" Handler="FixData" Stream="true" StreamTitle="修正数据" ConfirmText="该操作较为费时，确认操作吗？">带确认框和进度的长时间操作</EleButton>
             </div>
         </div>
     </div>

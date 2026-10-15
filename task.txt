@@ -575,9 +575,10 @@ Done
         /EleButton: 实现AutoLoadin参数，点击后出现loading效果
         /WorkDesk 重构，显示任务对象清单，而不是任务进度；
         /实现部门科室工作台：/pages/me/WorkDeskOrg
+        /实现EleButton 的Stream SSE 进度传输方案，并应用在“CheckObject.FixData”上；
 
-        实现EleButton 的Stream SSE 进度传输方案
-
+        修复新隐患图片未能保存并显示的问题:            item.AddAtt(Uploader.SaveFiles(nameof(CheckHazard), req.ImageUrls));
+        保存后是否不用关闭，立查立改
         恢复默认 eletable 的边框颜色（淡一点）；对于统计报表模块，独立设置深一点（便于导出）
         实现页面/pages/Maintains/Consoler，可运行调度器项目 app.consoler 并查看其控制台输出；
 

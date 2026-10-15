@@ -73,6 +73,16 @@ namespace App.EleUI
         /// </summary>
         [HtmlAttributeName("AutoLoading")]     public bool AutoLoading { get; set; } = false;
 
+        /// <summary>
+        /// 流式按钮（方案 C：SSE 进度）。仅对 Handler 场景生效。
+        /// 开启后将以 fetch + ReadableStream 读取服务端 text/event-stream，
+        /// 并在弹层中展示进度条，同时保持按钮锁定直到任务结束。
+        /// </summary>
+        [HtmlAttributeName("Stream")]          public bool Stream { get; set; } = false;
+
+        /// <summary>流式进度弹层标题；为空时优先取按钮文本，再回退到“处理中”。</summary>
+        [HtmlAttributeName("StreamTitle")]     public string StreamTitle { get; set; }
+
 
         /// <summary>点击事件（原生 onclick）。作用域是当前 DOM 元素，不能直接访问 Vue 实例的 data、methods、props 等</summary>
         [HtmlAttributeName("Click")]           public string Click { get; set; }   // 点击事件（原生 onclick）。作用域是当前 DOM 元素，不能直接访问 Vue 实例的 data、methods、props 等
@@ -159,6 +169,11 @@ namespace App.EleUI
             // 将 Payload 规范化为 "FilterInfo|PageInfo|..." 形式并写入 data-payload-kinds dataset
             string payloadKindsExpr = null;
             string payloadKindsJsStr = null;
+            var streamTitle = string.IsNullOrWhiteSpace(StreamTitle)
+                ? Regex.Replace(rawChildHtml ?? "", "<[^>]+>", "").Trim()
+                : StreamTitle.Trim();
+            if (string.IsNullOrWhiteSpace(streamTitle))
+                streamTitle = "处理中";
             if (!string.IsNullOrWhiteSpace(Payload))
             {
                 payloadKindsExpr = NormalizePayloadKinds(Payload.Trim());
@@ -199,7 +214,18 @@ namespace App.EleUI
             if (Command == Command.EditBatch)
                 primaryExpr = "invokeCommand('EditBatch', $event)";
             else if (!string.IsNullOrEmpty(Handler))
-                primaryExpr = BuildCall("postHandler", Handler);
+            {
+                if (Stream)
+                {
+                    var streamPayloadArg = payloadArg ?? "null";
+                    var streamTitleExpr = EscapeJs(streamTitle);
+                    primaryExpr = $"$eleManager.runButtonStreamTask($event, function(streamApi){{ return postStreamHandler('{EscapeJs(Handler)}', {streamPayloadArg}, null, streamApi); }}, {{ title: '{streamTitleExpr}' }})";
+                }
+                else
+                {
+                    primaryExpr = BuildCall("postHandler", Handler);
+                }
+            }
             else if (Command != Command.None)
             {
                 // Reset 单独处理：直接调用 resetFilters（客户端还原筛选默认值 + 自动重新加载数据）
@@ -253,7 +279,7 @@ namespace App.EleUI
 
                 // 自动 loading：点击后锁定按钮并显示 loading，服务端返回后自动恢复（方案 A，后端无需改动）。
                 // 置于 ConfirmText 处理之前，确保有确认框时是"用户确认后才进入 loading 态"。
-                if (AutoLoading && !string.IsNullOrEmpty(primaryExpr))
+                if (AutoLoading && !Stream && !string.IsNullOrEmpty(primaryExpr))
                     primaryExpr = $"$eleManager.runButtonTask($event, function(){{ return {primaryExpr}; }})";
 
                 if (!string.IsNullOrWhiteSpace(ConfirmText))

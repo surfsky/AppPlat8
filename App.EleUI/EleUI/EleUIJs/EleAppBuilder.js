@@ -108,16 +108,126 @@ export class EleAppBuilder {
     //--------------------------------------------------------------
     //  POST请求处理程序
     //--------------------------------------------------------------
+    buildHandlerUrl(name) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('handler', name);
+        return `${url.pathname}${url.search}`;
+    }
+
+    buildPostHeaders(includeJson = true) {
+        const headers = {
+            'RequestVerificationToken': Utils.getCsrfToken()
+        };
+        if (includeJson) {
+            headers['Content-Type'] = 'application/json';
+        }
+        return headers;
+    }
+
+    parseResponseText(text) {
+        if (!text) return null;
+        try {
+            return JSON.parse(text);
+        } catch (_) {
+            return text;
+        }
+    }
+
+    parseSseEventBlock(block) {
+        if (!block) return null;
+        const lines = String(block).replace(/\r/g, '').split('\n');
+        const dataLines = [];
+        let eventName = '';
+
+        for (const line of lines) {
+            if (!line) continue;
+            if (line.startsWith('event:')) {
+                eventName = line.substring(6).trim();
+                continue;
+            }
+            if (line.startsWith('data:')) {
+                dataLines.push(line.substring(5).trimStart());
+            }
+        }
+
+        if (dataLines.length === 0) return null;
+        const rawData = dataLines.join('\n').trim();
+        if (!rawData) return null;
+
+        let payload;
+        try {
+            payload = JSON.parse(rawData);
+        } catch (_) {
+            payload = { message: rawData };
+        }
+
+        if (eventName && payload && typeof payload === 'object' && !Array.isArray(payload) && payload.event == null) {
+            payload.event = eventName;
+        }
+        return payload;
+    }
+
+    dispatchSsePayload(payload, streamApi = null) {
+        if (!streamApi || !payload) return;
+        if (typeof streamApi.onMessage === 'function') {
+            streamApi.onMessage(payload);
+        }
+        if (typeof streamApi.onProgress === 'function') {
+            streamApi.onProgress(payload);
+        }
+    }
+
+    async readSseResponse(response, streamApi = null) {
+        const reader = response?.body?.getReader?.();
+        if (!reader) return null;
+
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let lastPayload = null;
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            buffer = buffer.replace(/\r\n/g, '\n');
+
+            let splitIndex = buffer.indexOf('\n\n');
+            while (splitIndex >= 0) {
+                const block = buffer.slice(0, splitIndex);
+                buffer = buffer.slice(splitIndex + 2);
+
+                const payload = this.parseSseEventBlock(block);
+                if (payload != null) {
+                    lastPayload = payload;
+                    this.dispatchSsePayload(payload, streamApi);
+                }
+
+                splitIndex = buffer.indexOf('\n\n');
+            }
+        }
+
+        const tail = decoder.decode();
+        if (tail) {
+            buffer += tail;
+        }
+
+        const finalPayload = this.parseSseEventBlock(buffer);
+        if (finalPayload != null) {
+            lastPayload = finalPayload;
+            this.dispatchSsePayload(finalPayload, streamApi);
+        }
+
+        return lastPayload;
+    }
+
     // 发送POST请求到服务器端
     async postHandler(name, payload, state = null) {
         if (!name) return null;
         try {
-            const url = new URL(window.location.href);
-            url.searchParams.set('handler', name);
-            const postUrl = `${url.pathname}${url.search}`;
-
+            const postUrl = this.buildHandlerUrl(name);
             const res = await axios.post(postUrl, payload, {
-                headers: { 'RequestVerificationToken': Utils.getCsrfToken() }
+                headers: this.buildPostHeaders(false)
             });
             const body = res ? res.data : null;
             return this.processPostResponse(body, state);
@@ -126,6 +236,55 @@ export class EleAppBuilder {
                 ? Utils.extractMessage(e?.response?.data, '请求失败')
                 : (e?.message || '请求失败');
             EleManager.showError(failMsg);
+            throw e;
+        }
+    }
+
+    async postStreamHandler(name, payload, state = null, streamApi = null) {
+        if (!name) return null;
+
+        const callbacks = (streamApi && typeof streamApi === 'object') ? streamApi : {};
+        try {
+            if (typeof callbacks.onOpen === 'function') {
+                callbacks.onOpen({ percent: 0, message: '正在连接服务器...' });
+            }
+
+            const postUrl = this.buildHandlerUrl(name);
+            const bodyPayload = (typeof payload === 'undefined' || payload === null) ? {} : payload;
+            const response = await fetch(postUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    ...this.buildPostHeaders(true),
+                    Accept: 'text/event-stream, application/json'
+                },
+                body: JSON.stringify(bodyPayload)
+            });
+
+            const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+            if (contentType.includes('text/event-stream')) {
+                const finalBody = await this.readSseResponse(response, callbacks);
+                if (finalBody && typeof finalBody === 'object') {
+                    return this.processPostResponse(finalBody, state);
+                }
+
+                if (!response.ok) {
+                    const failMsg = response.statusText || '流式请求失败';
+                    EleManager.showError(failMsg);
+                    throw new Error(failMsg);
+                }
+                return finalBody;
+            }
+
+            const rawText = await response.text();
+            const body = this.parseResponseText(rawText);
+            if (!response.ok && (!body || typeof body !== 'object')) {
+                const failMsg = response.statusText || '请求失败';
+                EleManager.showError(failMsg);
+                throw new Error(failMsg);
+            }
+            return this.processPostResponse(body, state);
+        } catch (e) {
             throw e;
         }
     }
@@ -267,7 +426,7 @@ export class EleAppBuilder {
     }
 
     mount(selector, config = {}) {
-        const { createApp, reactive, toRefs, ref, onMounted, onUnmounted, nextTick } = this.Vue;
+        const { reactive, toRefs, ref, onMounted, onUnmounted, nextTick } = this.Vue;
         const builder = this;
 
         // SSR 默认值快照：见 EleTableAppBuilder.mount 中的同一根因说明，在 app.mount() 之前
@@ -329,6 +488,11 @@ export class EleAppBuilder {
                     return builder.postHandler(name, data, state);
                 };
 
+                const postStreamHandler = async (name, payload, stateArg = null, streamApi = null) => {
+                    const data = payload || builder.getPostPayload(state);
+                    return builder.postStreamHandler(name, data, stateArg || state, streamApi);
+                };
+
                 // 处理内置命令
                 const invokeCommand = async (name, payload) => {
                     if (!name) return;
@@ -358,6 +522,7 @@ export class EleAppBuilder {
                     ...toRefs(state),
                     filters,
                     postHandler,
+                    postStreamHandler,
                     invokeCommand,
                     // 把 picker 相关 ref 和方法交给模板，让 ElePicker 能调用 openPicker/clearPicker
                     pickerVisible: pickerCtx.pickerVisible,

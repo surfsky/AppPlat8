@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using System.Threading.Tasks;
 using App.DAL.GIS;
 using App.Entities;
 using App.Utils;
@@ -378,39 +379,64 @@ namespace App.DAL
         /// <returns>修复的检查对象数量</returns>
         public static int FixAll()
         {
-            // 根据最后更新时间，以及对象的风险等级 RiskLevel（对应到检查周期CheckCycle），更新IsChecked字段
             var cnt = 0;
             var now = DateTime.Now;
             var list = CheckObject.IncludeSet.ToList();
-            var needSave = false;
             foreach (var item in list)
             {
-                // 计算检查周期（月数）
-                var months = GetCheckCycleMonths(item.RiskLevel);
-
-                // 批量修改 NextCheckDt
-                if (item.RiskLevel.HasValue && item.LastCheckDt.HasValue && item.NextCheckDt == null)
-                {
-                    item.NextCheckDt = item.LastCheckDt.Value.AddMonths(months);
-                    needSave = true;
-                }
-
-                // 更新检查状态, 如果计算得到的新值与原值不同，则更新并计数
-                var b = (item.NextCheckDt == null) ? false : (item.NextCheckDt.Value > now);
-                if (item.IsChecked != b)
-                {
-                    item.IsChecked = b;
-                    needSave = true;
-                }
-
-                // 保存修改
-                if (needSave)
-                {
+                if (ApplyFix(item, now))
                     cnt++;
-                    item.Save();
-                }
             }
             return cnt;
+        }
+
+        /// <summary>异步修复所有检查对象，并在每条记录处理后回调进度。</summary>
+        public static async Task<int> FixAllAsync(Func<int, int, Task> progress = null)
+        {
+            var cnt = 0;
+            var now = DateTime.Now;
+            var list = CheckObject.IncludeSet.ToList();
+            var total = list.Count;
+
+            for (var i = 0; i < total; i++)
+            {
+                if (ApplyFix(list[i], now))
+                    cnt++;
+
+                if (progress != null)
+                    await progress(i + 1, total);
+            }
+
+            if (total == 0 && progress != null)
+                await progress(0, 0);
+
+            return cnt;
+        }
+
+        /// <summary>按当前规则修复单个检查对象。</summary>
+        static bool ApplyFix(CheckObject item, DateTime now)
+        {
+            var needSave = false;
+            var months = GetCheckCycleMonths(item.RiskLevel);
+
+            if (item.RiskLevel.HasValue && item.LastCheckDt.HasValue && item.NextCheckDt == null)
+            {
+                item.NextCheckDt = item.LastCheckDt.Value.AddMonths(months);
+                needSave = true;
+            }
+
+            var isChecked = item.NextCheckDt != null && item.NextCheckDt.Value > now;
+            if (item.IsChecked != isChecked)
+            {
+                item.IsChecked = isChecked;
+                needSave = true;
+            }
+
+            if (!needSave)
+                return false;
+
+            item.Save();
+            return true;
         }
 
         // 根据风险等级获取检查周期（月数）

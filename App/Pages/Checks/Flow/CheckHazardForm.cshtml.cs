@@ -18,6 +18,23 @@ namespace App.Pages.Checks
     [Auth(Power.CheckHazardEdit)]
     public class CheckHazardFormModel : AuthModel
     {
+        /// <summary>隐患保存请求，显式承接图片 URL/Base64 列表。</summary>
+        public class SaveRequest
+        {
+            public long Id { get; set; }
+            public long? CheckObjectId { get; set; }
+            public long? CheckLogId { get; set; }
+            public long? CheckSheetId { get; set; }
+            public long? CheckItemId { get; set; }
+            public string CheckItemText { get; set; }
+            public string Description { get; set; }
+            public CheckHazardStatus? Status { get; set; }
+            public DateTime? ExpireDt { get; set; }
+            public DateTime? RectifyDt { get; set; }
+            public bool? IsIn141 { get; set; }
+            public List<string> ImageUrls { get; set; } = new List<string>();
+        }
+
         public CheckHazard Item { get; set; }
 
         public void OnGet(long id = 0)
@@ -67,13 +84,13 @@ namespace App.Pages.Checks
                 item.ExpireDt,
                 item.RectifyDt,
                 item.IsIn141,
-                ImageUrls = item.ImageUrls
+                item.ImageUrls
             };
 
             return BuildResult(0, "success", data);
         }
 
-        public IActionResult OnPostSave([FromBody] CheckHazard req)
+        public IActionResult OnPostSave([FromBody] SaveRequest req)
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
@@ -96,9 +113,9 @@ namespace App.Pages.Checks
             item.RectifyDt = req.RectifyDt;
             item.IsIn141 = req.IsIn141;
             item.Save();
+            SyncHazardImages(item, req.ImageUrls);
 
-            item.AddAtt(Uploader.SaveFiles(nameof(CheckHazard), req.ImageUrls));
-
+            // 检查记录
             if (item.CheckLogId.HasValue)
             {
                 var check = Check.Get(item.CheckLogId.Value);
@@ -123,6 +140,21 @@ namespace App.Pages.Checks
             }
 
             return BuildResult(0, "保存成功");
+        }
+
+        /// <summary>按当前表单图片列表同步隐患图片附件，避免丢失或重复。</summary>
+        static void SyncHazardImages(CheckHazard item, List<string> imageUrls)
+        {
+            var attIds = Att.Search(item.UniId, AttType.Image).Select(t => t.Id).ToList();
+            if (attIds.Count > 0)
+                Att.DeleteBatch(attIds);
+
+            var savedUrls = Uploader.SaveFiles(nameof(CheckHazard), imageUrls)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct()
+                .ToList();
+            foreach (var url in savedUrls)
+                Att.Add(AttType.Image, item.UniId, url);
         }
 
         //-------------------------------------------------------
@@ -153,7 +185,7 @@ namespace App.Pages.Checks
             if (hazardId <= 0)
                 return EleHandler.ShowNotify("请先保存隐患，再录入处理记录", NotifyType.Warning, "提示");
 
-            var url = $"/Checks/CheckHazardLogForm?hazardId={hazardId}&status={status}&content={action}";
+            var url = $"/Checks/Flow/CheckHazardLogForm?hazardId={hazardId}&status={status}&content={action}";
             return EleHandler.ShowDrawer(title: $"{action}", url: url, closeAction: DrawerCloseAction.RefreshPage);
         }
 

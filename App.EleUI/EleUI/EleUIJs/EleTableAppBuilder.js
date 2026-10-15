@@ -434,6 +434,24 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     }
                     return resp;
                 };
+                const inheritedPostStreamHandler = async (name, payload, stateArg = null, streamApi = null) => {
+                    let structuredEnv = null;
+                    let flatBase = collectFlatPayload();
+
+                    if (typeof payload === 'string' && /FilterInfo|PageInfo|SelectInfo|ContextInfo/i.test(payload)) {
+                        structuredEnv = collectPayloadEnvelope(payload);
+                    }
+
+                    let finalData;
+                    if (typeof payload === 'string') {
+                        finalData = structuredEnv ? { ...structuredEnv, ...flatBase } : flatBase;
+                    } else if (payload && typeof payload === 'object') {
+                        finalData = { ...payload, ...flatBase };
+                    } else {
+                        finalData = flatBase;
+                    }
+                    return builder.postStreamHandler(name, finalData, stateArg, streamApi);
+                };
 
                 // Build a shared method context so page-level custom methods can
                 // access postHandler/openForm/openView/permission flags consistently.
@@ -443,6 +461,7 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     openView,
                     Utils: window.Utils,
                     postHandler: inheritedPostHandler,
+                    postStreamHandler: inheritedPostStreamHandler,
                     hasEditPower,
                     hasViewPower,
                     hasDeletePower

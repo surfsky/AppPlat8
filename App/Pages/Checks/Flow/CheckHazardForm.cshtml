@@ -7,7 +7,8 @@
 
 @section body {
     <EleForm Model="form" LabelWidth="120px">
-        <EleLabel Label="检查项信息" FillRow="true"></EleLabel>
+        <EleLabel Label="检查项信息" FillRow="true" For="Item.Id"></EleLabel>
+        <EleInput For="Item.Id" Label="隐患ID" Enabled="false" FillRow="true"></EleInput>
         <ElePicker For="Item.CheckObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckObjects?md=select"></ElePicker>
         <ElePicker For="Item.CheckSheetId" TextFor="Item.CheckSheetName" Label="检查单" Visible="false"  Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheets?md=select"></ElePicker>
         <ElePicker For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheetItems?md=select"></ElePicker>
@@ -84,14 +85,14 @@
             </Footer>
         </EleList>    
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
+            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)" Icon="Select">保存</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
             @if (Model.Mode == PageMode.Edit)
             {
-                <EleButton Type="Primary" Handler="Log"        Visible="@(Model.Item.Status == CheckHazardStatus.Waiting)">复查</EleButton>
-                <EleButton Type="Success" Handler="Finish"     Visible="@(Model.Item.Status == CheckHazardStatus.Processing)" prompt="确认归档吗？">整改完成</EleButton>
-                <EleButton Type="Success" Handler="Monitor"    Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)">督查</EleButton>
-                <EleButton Type="Info"    Handler="Archive"    Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)"  prompt="确认归档吗？">归档</EleButton>
+                <EleButton Type="Success" Handler="Log"        Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Waiting)" >复查</EleButton>
+                <EleButton Type="Success" Handler="Finish"     Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Processing)" prompt="确认归档吗？">整改完成</EleButton>
+                <EleButton Type="Success" Handler="Monitor"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)">督查</EleButton>
+                <EleButton Type="Info"    Handler="Archive"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)"  prompt="确认归档吗？">归档</EleButton>
             }
         </Bottom>
     </EleForm>
