@@ -551,8 +551,43 @@ Done
             可设置过滤条件？保存到哪里？
             考察一下Notion软件
 
+2026/10/16
+    恢复默认 eletable 的边框颜色（淡一点）；对于统计报表模块，独立设置深一点（便于导出）
+    实现页面/pages/Maintains/Consoler，可运行调度器项目 app.consoler 并查看其控制台输出；
+    跑通任务分配和检查流程
+        保存后是否不用关闭，立查立改
+        部门管理员才能修改任务企业清单
+        拿“应急管理局”测试一下逻辑
+    URL（用于对象查找页面）
+        url参数处理，如果加上符号则表示该字段不可修改，如 userId=123!，表示该控件的选择值为123，且不可修改
+    报表
+        企业分类统计表每个数据都可以点击，可以查看每个数据的详细清单
+        实现测试任务报表
+    驾驶舱
+        驾驶舱把监控开几个
+        迁移到M apLibre
+
+
+2026/10/15
+    /统一实体内中的 CheckObjectId， ObjectId， 都用 CheckObjectId
+    /全网页统一按钮颜色：查询蓝色、新增、删除红色、其它黄色
+    /隐患排查时自动查找并列出匹配的任务（Checks/Flow/CheckFlow）；
+    /EleButton: 实现按钮的Confirm能力
+    /EleButton: 实现AutoLoadin参数，点击后出现loading效果
+    /WorkDesk 重构，显示任务对象清单，而不是任务进度；
+    /实现部门科室工作台：/pages/me/WorkDeskOrg
+    /实现EleButton 的Stream SSE 进度传输方案，并应用在“CheckObject.FixData”上；
+    /修复新隐患图片未能保存并显示的问题:            item.AddAtt(Uploader.SaveFiles(nameof(CheckHazard), req.ImageUrls));
+    /实现方法
+        /获取某个对象对应的任务清单
+        /获取某人的任务清单
+        /获取某个组织的任务清单
+    /对象页面提供检查任务过滤框（算了，从工作台进入就行了）
+    /优化：CheckFlow 如果对象没有匹配的标签、检查表，则自动显示高频检查表
+    /建立测试对象应急测试xxx
+
 2026/10/13
-    实现检查任务：
+    /实现检查任务：
         /删除CheckTaskSheet
         /给HttpApi 增加 CacheByUse=true 选项，可以根据当前用户来缓存
         /提高接口 http://localhost:5000/httpapi/orgs/GetAuthOrgTree 性能，只导出必要的列
@@ -568,39 +603,7 @@ Done
         /CheckObjects: 给批量更新按钮增加 Handler=“EditBatch” 的属性，以对应到后端的 OnPostBatchSave 方法，显式声明处理方法，不会那么诡异；
         /Importor 优化：下载的模版中不显示“创建人”、“责任人”列；
         /CheckObjectForm ：新增时网格员默认写当前用户
-        /统一实体内中的 CheckObjectId， ObjectId， 都用 CheckObjectId
-        /全网页统一按钮颜色：查询蓝色、新增、删除红色、其它黄色
-        /隐患排查时自动查找并列出匹配的任务（Checks/Flow/CheckFlow）；
-        /EleButton: 实现按钮的Confirm能力
-        /EleButton: 实现AutoLoadin参数，点击后出现loading效果
-        /WorkDesk 重构，显示任务对象清单，而不是任务进度；
-        /实现部门科室工作台：/pages/me/WorkDeskOrg
-        /实现EleButton 的Stream SSE 进度传输方案，并应用在“CheckObject.FixData”上；
 
-        修复新隐患图片未能保存并显示的问题:            item.AddAtt(Uploader.SaveFiles(nameof(CheckHazard), req.ImageUrls));
-        保存后是否不用关闭，立查立改
-        恢复默认 eletable 的边框颜色（淡一点）；对于统计报表模块，独立设置深一点（便于导出）
-        实现页面/pages/Maintains/Consoler，可运行调度器项目 app.consoler 并查看其控制台输出；
-
-        /实现方法
-            /获取某个对象对应的任务清单
-            /获取某人的任务清单
-            /获取某个组织的任务清单
-
-        对象页面提供检查任务过滤框
-        跑通任务分配和检查流程
-            部门管理员才能修改任务企业清单
-            /建立测试对象应急测试xxx
-            拿“应急管理局”测试一下逻辑
-        优化：CheckFlow 如果对象没有匹配的标签、检查表，则自动显示高频检查表
-    URL
-        url参数处理，如果加上符号则表示该字段不可修改，如 userId=123!，表示该控件的选择值为123，且不可修改
-    报表
-        企业分类统计表每个数据都可以点击，可以查看每个数据的详细清单
-        实现测试任务报表
-    驾驶舱
-        驾驶舱把监控开几个
-        迁移到M apLibre
 
 2026/10/13
     /检查任务
