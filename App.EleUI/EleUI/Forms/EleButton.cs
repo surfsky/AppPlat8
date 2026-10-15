@@ -66,6 +66,13 @@ namespace App.EleUI
         [HtmlAttributeName("TextFor")]         public ModelExpression TextFor { get; set; }
         [HtmlAttributeName("Loading")]         public string Loading { get; set; } // v-bind:loading
 
+        /// <summary>
+        /// 自动 loading（方案 A：后端同步阻塞）。为 true 时，点击按钮后立即在按钮上显示 loading 遮罩并禁止重复点击，
+        /// 待服务端返回后自动恢复。无需后端改动，适合耗时较短（数十秒内）的同步操作。
+        /// 若同时配置了 ConfirmText，则先弹确认框，用户确认后才进入 loading 态。
+        /// </summary>
+        [HtmlAttributeName("AutoLoading")]     public bool AutoLoading { get; set; } = false;
+
 
         /// <summary>点击事件（原生 onclick）。作用域是当前 DOM 元素，不能直接访问 Vue 实例的 data、methods、props 等</summary>
         [HtmlAttributeName("Click")]           public string Click { get; set; }   // 点击事件（原生 onclick）。作用域是当前 DOM 元素，不能直接访问 Vue 实例的 data、methods、props 等
@@ -237,41 +244,48 @@ namespace App.EleUI
             else
                 primaryExpr = null;
 
-            if (!string.IsNullOrEmpty(primaryExpr))
+            // 有具体动作、或仅需弹出确认框（无动作的"纯确认"按钮）时，都要生成 v-on:click
+            if (!string.IsNullOrEmpty(primaryExpr) || !string.IsNullOrWhiteSpace(ConfirmText))
             {
                 // EditBatch 需要把事件对象透传给 invokeCommand 以便找到当前按钮的 dataset
                 if (Command == Command.EditBatch && primaryExpr.StartsWith("invokeCommand("))
                     primaryExpr = "invokeCommand('EditBatch', $event)";
+
+                // 自动 loading：点击后锁定按钮并显示 loading，服务端返回后自动恢复（方案 A，后端无需改动）。
+                // 置于 ConfirmText 处理之前，确保有确认框时是"用户确认后才进入 loading 态"。
+                if (AutoLoading && !string.IsNullOrEmpty(primaryExpr))
+                    primaryExpr = $"$eleManager.runButtonTask($event, function(){{ return {primaryExpr}; }})";
+
                 if (!string.IsNullOrWhiteSpace(ConfirmText))
                 {
                     var confirmText = ConfirmText.Replace("'", "\\'");
                     var confirmTitle = (ConfirmTitle ?? Texts.Current.Prompt).Replace("'", "\\'");
-                    // 【最稳健的 Confirm 链】：
-                    //   1) act 定义在 IIFE 最外层（不在 try 里），避免任何作用域问题导致 act 未定义
-                    //   2) 优先级：window.EleManager.coreElMessageboxConfirm → ElementPlus.ElMessageBox.confirm
-                    //   3) 任何一方抛异常 / 用户取消 → 最终兜底：window.confirm（阻塞式、不依赖任何第三方库，100% 能执行）
-                    //   4) 最顶层 catch：就算前两者都 ReferenceError/undefined，也强制走兜底+act，保证"点按钮绝不会无反应"
+                    // 无动作的纯确认按钮：act 为空操作（try{ } 合法）
+                    var actBody = primaryExpr ?? "";
+                    // 【确认框链】：
+                    //   1) 优先用 EleManager.confirm（项目已封装，带 appendToBody:true，确保对话框挂载到 body 可见）
+                    //   2) 回退 window.ElementPlus.ElMessageBox.confirm（appendToBody:true）
+                    //   3) 最终兜底 window.confirm（阻塞式，不依赖任何库，100% 能弹）
+                    //   4) IIFE 形参 $event：让 AutoLoading 生成的 runButtonTask($event, ...) 能拿到事件对象
                     var wrapped =
-                        "(async function(){" +
-                        "  var act = function(){ try{ " + primaryExpr + @" }catch(err){ console.error('[EleButton Confirm action]', err); } };" +
+                        "(async function($event){" +
+                        "  var act = function(){ try{ " + actBody + @" }catch(err){ console.error('[EleButton Confirm action]', err); } };" +
                         "  try{" +
-                        "    var ran=false;" +
                         "    var EM = window.EleManager || window.$eleManager;" +
-                        "    if (EM && typeof EM.coreElMessageboxConfirm === 'function') {" +
-                        $"      try {{ await EM.coreElMessageboxConfirm('{confirmText}','{confirmTitle}'); ran=true; act(); return; }}" +
-                        "        catch(eh){ /* user cancel / internal error, fall through */ }" +
+                        "    if (EM && typeof EM.confirm === 'function') {" +
+                        $"      try {{ await EM.confirm('{confirmText}','{confirmTitle}'); act(); return; }}" +
+                        "        catch(eh){ /* user cancel */ return; }" +
                         "    }" +
                         "    if (window.ElementPlus && window.ElementPlus.ElMessageBox && typeof window.ElementPlus.ElMessageBox.confirm === 'function') {" +
-                        $"      try {{ await window.ElementPlus.ElMessageBox.confirm('{confirmText}','{confirmTitle}',{{ confirmButtonClass:'el-button--primary', type:'warning' }}); ran=true; act(); return; }}" +
-                        "        catch(eh){ /* cancel */ }" +
+                        $"      try {{ await window.ElementPlus.ElMessageBox.confirm('{confirmText}','{confirmTitle}',{{ confirmButtonText:'确定', cancelButtonText:'取消', type:'warning', appendToBody:true }}); act(); return; }}" +
+                        "        catch(eh){ /* cancel */ return; }" +
                         "    }" +
-                        $"    if (window.confirm('{confirmTitle}：{confirmText}')) {{ ran=true; act(); return; }}" +
+                        $"    if (window.confirm('{confirmTitle}：{confirmText}')) {{ act(); return; }}" +
                         "  } catch(topErr){" +
                         "    console.error('[EleButton Confirm top-level]', topErr);" +
-                        // 最顶层兜底：上面任何路径都没成功时，最后一次用 window.confirm 阻塞式保证 act()
-                        $"    try {{ if (window.confirm('{confirmTitle}：{confirmText}（异常兜底）')) act(); }} catch(lastErr){{ try{{ act(); }}catch(_){{}} }}" +
+                        $"    try {{ if (window.confirm('{confirmTitle}：{confirmText}')) act(); }} catch(lastErr){{ try{{ act(); }}catch(_){{}} }}" +
                         "  }" +
-                        "})();";
+                        "})($event);";
                     output.Attributes.SetAttribute("v-on:click", wrapped);
                 }
                 else

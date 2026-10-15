@@ -61,7 +61,7 @@
                         <BatchField Control="Select"  Field="RiskLevel" Label="风险等级"   Options="无风险,低风险,中风险,高风险" />
                     </BatchFields>
                 </EleButton>
-                <EleButton Type="Success" Icon="Edit" Visible="@Auth.CheckPower(Power.AdminMaintain)" Handler="FixData">修正数据</EleButton>
+                <EleButton Type="Success" Icon="Edit" Visible="@Auth.CheckPower(Power.AdminMaintain)" Handler="FixData" AutoLoading="true" ConfirmText="该操作较为费时，确认操作吗？">修正数据</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
@@ -84,6 +84,7 @@
             <EleColumn For="Item.TagNames" Label="标签列表" MinWidth="220"></EleColumn>
             <EleColumn For="Item.LastCheckDt" Label="巡查时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleColumn For="Item.NextCheckDt" Label="下次巡查时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.IsChecked" Label="是否检查" Width="100"></EleColumn>
 
             <EleColumn For="Item.DutyOrgName" Label="责任网格" Width="200"></EleColumn>
             <EleColumn For="Item.DutyMan" Label="企业负责人" Width="120"></EleColumn>

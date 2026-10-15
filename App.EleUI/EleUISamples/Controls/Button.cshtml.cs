@@ -26,5 +26,12 @@ namespace App.Pages.EleUISamples
             var next = !(data?.ShowItem ?? false);
             return BuildResult(0, "切换成功", new { showItem = next });
         }
+
+        /// <summary>模拟耗时操作：用于演示 EleButton 的 AutoLoading 自动 loading 效果</summary>
+        public async Task<IActionResult> OnPostLongTask()
+        {
+            await Task.Delay(3000);
+            return BuildResult(0, "耗时操作已完成", new { finishedAt = DateTime.Now.ToString("HH:mm:ss") });
+        }
     }
 }

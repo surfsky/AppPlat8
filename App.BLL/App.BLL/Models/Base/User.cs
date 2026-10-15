@@ -404,6 +404,7 @@ namespace App.DAL
             {
                 this.Id,
                 this.Name,
+                NameMask = this.Name?.Mask(),
                 this.RealName,
                 this.DisplayName,
                 this.OrgId,

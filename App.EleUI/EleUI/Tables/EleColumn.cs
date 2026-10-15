@@ -36,52 +36,19 @@ namespace App.EleUI
     [HtmlTargetElement("EleColumn", ParentTag = "EleColumnGroup")] 
     public class EleColumn : EleColumnBase
     {
-        /// <summary>绑定的模型表达式，用于自动解析属性名</summary>
-        [HtmlAttributeName("For")]
-        public ModelExpression For { get; set; }
+        [HtmlAttributeName("For")]             public ModelExpression For { get; set; }    // 绑定的模型表达式，用于自动解析属性名
+        [HtmlAttributeName("Prop")]            public string Prop { get; set; }            // 绑定的属性名
+        [HtmlAttributeName("Display")]         public ColumnDisplay Display { get; set; } = ColumnDisplay.Auto; // 列展示格式，默认自动识别属性类型
+        [HtmlAttributeName("FormatString")]    public string FormatString { get; set; }     // 自定义格式化字符串，仅当Display为Custom时生效
+        [HtmlAttributeName("Wrap")]            public bool Wrap { get; set; } = false;       // 若为true，若文本过长则自动换行
+        [HtmlAttributeName("Link")]            public bool Link { get; set; }                 // 若为true，则展示为超链接，点击后跳转到详情页
+        [HtmlAttributeName("LinkTarget")]      public EleLinkTarget LinkTarget { get; set; } = EleLinkTarget.Drawer;   // 超链接目标，默认Drawer
 
-        /// <summary>绑定的属性名</summary>
-        [HtmlAttributeName("Prop")]
-        public string Prop { get; set; }
-
-        /// <summary>列展示格式，默认自动识别属性类型</summary>
-        [HtmlAttributeName("Display")]
-        public ColumnDisplay Display { get; set; } = ColumnDisplay.Auto;
-
-        /// <summary>自定义格式化字符串，仅当Display为Custom时生效</summary>
-        [HtmlAttributeName("FormatString")]
-        public string FormatString { get; set; }
-
-        /// <summary>若为true，若文本过长则自动换行</summary>
-        [HtmlAttributeName("Wrap")]
-        public bool Wrap { get; set; } = false;
-
-        /// <summary>若为true，则展示为超链接，点击后跳转到详情页</summary>
-        [HtmlAttributeName("Link")]
-        public bool Link { get; set; }
-
-        /// <summary>超链接目标，默认Drawer</summary>
-        [HtmlAttributeName("LinkTarget")]
-        public EleLinkTarget LinkTarget { get; set; } = EleLinkTarget.Drawer;
-
-        //
         // Popup
-        //
-        /// <summary>弹窗页面URL，支持{xxx}占位符（如{id}、{fileName}），点击列文本后使用EleManager.Drawer打开</summary>
-        [HtmlAttributeName("PopupUrl")]
-        public string PopupUrl { get; set; }
-
-        /// <summary>弹窗标题，留空时使用列Label</summary>
-        [HtmlAttributeName("PopupTitle")]
-        public string PopupTitle { get; set; }
-
-        /// <summary>弹窗尺寸（百分比或像素），默认为空（即宽屏50%，窄屏全屏）</summary>
-        [HtmlAttributeName("PopupSize")]
-        public string PopupSize { get; set; } = "";
-
-        /// <summary>弹窗方向，默认rtl（从右向左滑出）</summary>
-        [HtmlAttributeName("PopupDirection")]
-        public string PopupDirection { get; set; } = "rtl";
+        [HtmlAttributeName("PopupUrl")]        public string PopupUrl { get; set; }                // 弹窗页面URL，支持{xxx}占位符（如{id}、{fileName}），点击列文本后使用EleManager.Drawer打开
+        [HtmlAttributeName("PopupTitle")]      public string PopupTitle { get; set; }              // 弹窗标题，留空时使用列Label
+        [HtmlAttributeName("PopupSize")]       public string PopupSize { get; set; } = "";         // 弹窗尺寸（百分比或像素），默认为空（即宽屏50%，窄屏全屏）
+        [HtmlAttributeName("PopupDirection")]  public string PopupDirection { get; set; } = "rtl"; // 弹窗方向，默认rtl（从右向左滑出）
 
 
         public EleColumn()
@@ -222,10 +189,12 @@ namespace App.EleUI
                 }
                 else if (Display == ColumnDisplay.Tag)
                 {
+                    // bool 列：true→是(success)，false→否(warning)，null/undefined→不显示标签
                     output.Content.SetHtmlContent($@"
                         <template #default=""scope"">
-                            <el-tag v-if=""scope.row.{propName}"" type=""success"">是</el-tag>
-                            <el-tag v-else type=""warning"">否</el-tag>
+                            <el-tag v-if=""scope.row.{propName} != null"" :type=""scope.row.{propName} ? 'success' : 'warning'"" size=""small"">
+                                {{{{ scope.row.{propName} ? '是' : '否' }}}}
+                            </el-tag>
                         </template>
                     ");
                 }

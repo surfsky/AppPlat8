@@ -3,6 +3,7 @@ import { DrawerHelper } from "./DrawerHelper.js";
 import { themeMethods } from "./manager/themeMethods.js";
 import { messageMethods } from "./manager/messageMethods.js";
 import { loadingMethods } from "./manager/loadingMethods.js";
+import { buttonMethods } from "./manager/buttonMethods.js";
 import { imageViewerMethods } from "./manager/imageViewerMethods.js";
 import { navigationMethods } from "./manager/navigationMethods.js";
 import { serverMethods } from "./manager/serverMethods.js";
@@ -240,6 +241,7 @@ Object.assign(
     themeMethods,
     messageMethods,
     loadingMethods,
+    buttonMethods,
     imageViewerMethods,
     navigationMethods,
     serverMethods
@@ -277,6 +279,7 @@ class EleManager {
     static notifyInfo(...args) { return EleManager._core.notifyInfo(...args); }
     static showLoading(...args) { return EleManager._core.showLoading(...args); }
     static closeLoading(...args) { return EleManager._core.closeLoading(...args); }
+    static runButtonTask(...args) { return EleManager._core.runButtonTask(...args); }
     static setDrawer(...args) { return EleManager._core.setDrawer(...args); }
     static setDrawerDefaults(...args) { return EleManager._core.setDrawerDefaults(...args); }
     static openDrawer(...args) { return EleManager._core.openDrawer(...args); }

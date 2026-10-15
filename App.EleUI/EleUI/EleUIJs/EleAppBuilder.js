@@ -247,6 +247,16 @@ export class EleAppBuilder {
             app.config.globalProperties.$eleManager = globalThis.EleManager;
         }
 
+        // Vue 3 模板的渲染代理不允许直接访问 window/ElementPlus 等浏览器全局对象，
+        // 此处显式注册为全局属性，使 EleButton 的 ConfirmText 等模板表达式中
+        // 可以使用 window.EleManager / window.ElementPlus / window.confirm。
+        if (typeof window !== 'undefined') {
+            app.config.globalProperties.window = window;
+            if (window.ElementPlus) {
+                app.config.globalProperties.ElementPlus = window.ElementPlus;
+            }
+        }
+
         if (config.registerIcons !== false && window.ElementPlusIconsVue) {
             for (const [key, component] of Object.entries(window.ElementPlusIconsVue)) {
                 app.component(key, component);
