@@ -14,7 +14,7 @@ namespace App.DAL
         [UI("检查隐患")] public long? HazardId { get; set; }
         [UI("排序")] public int SortId { get; set; }
         [UI("是否已完成")] public bool IsFinished { get; set;} = false;
-        [UI("OrgID")] public long? OrgId { get; set; }  // 冗余设计（数据来自ObjectId)，便于查询
+        [UI("OrgID")] public long? OrgId { get; set; }  // 冗余设计（数据来自CheckObjectId)，便于查询
 
 
         // Relations
@@ -31,8 +31,8 @@ namespace App.DAL
                 TaskName = Task?.Name,
                 HazardId,
                 HazardDescription = Hazard?.Description,
-                ObjectId = Hazard?.ObjectId,
-                ObjectName = Hazard?.Object?.Name,
+                ObjectId = Hazard?.CheckObjectId,
+                ObjectName = Hazard?.CheckObject?.Name,
                 SortId,
                 IsFinished,
                 OrgId,
@@ -46,7 +46,7 @@ namespace App.DAL
             var q = IncludeSet.AsQueryable();
             if (taskId.IsNotEmpty())       q = q.Where(o => o.TaskId == taskId.Value);
             if (isFinished.IsNotEmpty())   q = q.Where(o => o.IsFinished == isFinished.Value);
-            if (objectId.IsNotEmpty())     q = q.Where(o => o.Hazard.ObjectId == objectId.Value);
+            if (objectId.IsNotEmpty())     q = q.Where(o => o.Hazard.CheckObjectId == objectId.Value);
             if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value);
             return q;
         }

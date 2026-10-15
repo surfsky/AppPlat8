@@ -76,17 +76,17 @@ namespace App.Pages.Checks
 
             // 用 Search 简化基础过滤（taskId + checkerId），并补充嵌套 Include 供投影使用
             IQueryable<CheckTaskObject> q = CheckTaskObject.Search(taskId: taskId, checkerId: checkerId)
-                .Include(t => t.Object).ThenInclude(o => o.DutyOrg)
-                .Include(t => t.Object).ThenInclude(o => o.Checker);
+                .Include(t => t.CheckObject).ThenInclude(o => o.DutyOrg)
+                .Include(t => t.CheckObject).ThenInclude(o => o.Checker);
 
             if (!isAdmin && authOrgId.HasValue && authOrgId.Value > 0)
             {
                 var scopeIds = OrgFilter.GetAuthOrgIds(authOrgId.Value);
-                q = q.Where(t => t.Object.DutyOrgId == null || scopeIds.Contains(t.Object.DutyOrgId.Value));
+                q = q.Where(t => t.CheckObject.DutyOrgId == null || scopeIds.Contains(t.CheckObject.DutyOrgId.Value));
             }
             else if (!isAdmin)
             {
-                q = q.Where(t => t.Object.DutyOrgId == null);
+                q = q.Where(t => t.CheckObject.DutyOrgId == null);
             }
 
             pi.SetTotal(q.Count());
@@ -96,18 +96,18 @@ namespace App.Pages.Checks
             {
                 t.Id,
                 t.TaskId,
-                t.ObjectId,
+                t.CheckObjectId,
                 t.IsFinished,
                 SortId = t.SortId,
-                ObjectName = t.Object != null ? t.Object.Name : "",
-                DutyOrgName = t.Object != null
-                    ? (t.Object.DutyOrgName
-                       ?? t.Object.DutyOrg?.FullName
-                       ?? t.Object.DutyOrg?.Name
+                ObjectName = t.CheckObject != null ? t.CheckObject.Name : "",
+                DutyOrgName = t.CheckObject != null
+                    ? (t.CheckObject.DutyOrgName
+                       ?? t.CheckObject.DutyOrg?.FullName
+                       ?? t.CheckObject.DutyOrg?.Name
                        ?? "")
                     : "",
-                CheckerName = t.Object != null
-                    ? (t.Object.CheckerName ?? BuildCheckerName(t.Object.Checker))
+                CheckerName = t.CheckObject != null
+                    ? (t.CheckObject.CheckerName ?? BuildCheckerName(t.CheckObject.Checker))
                     : "",
                 StatusName = t.IsFinished ? "已完成" : "未完成",
             }).ToList();

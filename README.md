@@ -36,36 +36,34 @@
 2. 在 `appsettings.json` 中配置数据库连接。
 3. 运行应用程序:
    ```bash
-    # 编译并运行主项目
-    cd AppPlat
-    dotnet build
-    dotnet run --project App
-    dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
-    dotnet app.dll --urls=http://localhost:6060;http://abc.org
-    # 若端口被占用，查找并杀掉占用端口 6060 的进程
 
+   // 编译及运行# 编译并运行主项目
+   cd AppPlat
+   dotnet build
+   dotnet run --project App
+   dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
+   dotnet app.dll --urls=http://localhost:6060;http://abc.org # 若端口被占用，查找并杀掉占用端口 6060 的进程
+
+   // 关闭端口
+   lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
+   lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
    lsof -nPiTCP:6060 -sTCP:LISTEN 2>/dev/null \
      | awk 'NR>1 && ($9=="127.0.0.1:6060" || $9=="[::1]:6060" || $9=="::1:6060" || $9=="localhost:6060" ) {print $2}' \
      | sort -u \
      | xargs -r -t kill
 
+    
+   // 编译及运行 EleUI 示例项目 # 编译EleUI示例项目
+   dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
+   dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
+   lsof -nP -iTCP:6070 -sTCP:LISTEN && lsof -ti tcp:6070 | xargs -n 1 kill -9  
 
-    lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
-
-    # 编译EleUI示例项目
-    dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
-    dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
-    # 调试： vscode 左侧的调试图标页面打开，选择 Debug EleUISamples 进行调试。或者顶部的命令行中输入：Debug EleUISamples；
-    # 若端口被占用，查找并杀掉占用端口 6070 的进程
-    lsof -nP -iTCP:6070 -sTCP:LISTEN && lsof -ti tcp:6070 | xargs -n 1 kill -9  
-
-    # 运行Consoler项目
-    # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
-    dotnet run --project App.Consoler
+   // 编译及运行控制台项目 # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
+   dotnet run --project App.Consoler
    ```
-4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。
+4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。			
 
-## 单元测试和系统调试
+## 单元测试和系统调试		
 
 ```bash
     # 测试项目
@@ -82,7 +80,7 @@
 1. 使用 EF 机制进行数据库迁移: 运行
 
 ```bash
-   dotnet ef migrations add CheckTaskObjectCheckerId --project App/App.csproj --startup-project App/App.csproj
+   dotnet ef migrations add CheckObjectNextCheckDt --project App/App.csproj --startup-project App/App.csproj
 ```
 
 2. 若端口被占用，查找占用 6060 端口的进程，然后kill
@@ -112,8 +110,6 @@ Docker 部署方式
 用户上传的文件备份：
 
 - /App/Files/
-
-
 
 ## 菜单及访问权限
 

@@ -144,6 +144,9 @@ namespace App.EleUI
             {
                 var json = JsonSerializer.Serialize(batchMeta, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
                 output.Attributes.SetAttribute("data-batch-fields", json);
+                // EditBatch 场景：若显式指定了 Handler，则以 data-handler 透传给前端，作为 POST 的 handler 名（默认 EditBatch）
+                if (Command == Command.EditBatch && !string.IsNullOrWhiteSpace(Handler))
+                    output.Attributes.SetAttribute("data-handler", Handler.Trim());
             }
 
             // 将 Payload 规范化为 "FilterInfo|PageInfo|..." 形式并写入 data-payload-kinds dataset
@@ -185,7 +188,10 @@ namespace App.EleUI
             // 6) VClick -> v-on:click
             //    如设置 ConfirmText，则先弹出确认框，确认后再执行上述动作。
             string primaryExpr;
-            if (!string.IsNullOrEmpty(Handler))
+            // EditBatch 走抽屉表单流程，即使指定了 Handler 也仅作为后端处理方法名（data-handler 透传），点击仍走 invokeCommand
+            if (Command == Command.EditBatch)
+                primaryExpr = "invokeCommand('EditBatch', $event)";
+            else if (!string.IsNullOrEmpty(Handler))
                 primaryExpr = BuildCall("postHandler", Handler);
             else if (Command != Command.None)
             {

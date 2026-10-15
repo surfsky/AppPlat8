@@ -354,14 +354,17 @@ export const commandMethods = {
             return;
         }
         const title = btnEl?.innerText?.trim()?.replace(/\s+/g, ' ') || '批量修改';
+        // 若按钮指定了 data-handler，则用它作为后端处理方法名；否则默认 EditBatch
+        const handler = (btnEl && btnEl.getAttribute ? btnEl.getAttribute('data-handler') : '') || 'EditBatch';
         this._mountEditBatchDrawer({
             title,
             fields,
-            ids: this.selectedIds.value.slice()
+            ids: this.selectedIds.value.slice(),
+            handler
         });
     },
 
-    _mountEditBatchDrawer({ title, fields, ids }) {
+    _mountEditBatchDrawer({ title, fields, ids, handler }) {
         // 创建 Drawer 容器：优先使用 EleManager 统一全局 Drawer（避免父容器 z-index 影响）
         const safeNum = Array.isArray(ids) ? ids.length : 0;
         const instance = this;
@@ -456,7 +459,8 @@ export const commandMethods = {
                     }
                     submitting.value = true;
                     try {
-                        const res = await axios.post('?handler=BatchSave', {
+                        const method = handler || 'EditBatch';  // 优先用按钮 data-handler 指定的方法名，兜底 EditBatch
+                        const res = await axios.post('?handler=' + method, {
                             ids: ids,
                             fields: updates
                         }, { headers: { 'RequestVerificationToken': Utils.getCsrfToken() } });

@@ -16,6 +16,7 @@ namespace App.Pages.Checks
     public class CheckObjectFormModel : AuthModel
     {
         public CheckObject Item { get; set; }
+        public string CheckerName { get; set; }
 
         public void OnGet(long id = 0)
         {
@@ -24,10 +25,16 @@ namespace App.Pages.Checks
 
         public IActionResult OnGetData(long id)
         {
-            var item = CheckObject.GetDetail(id) ?? new CheckObject();
-            if (id > 0 && item != null && item.Id > 0)
+            var cu = Auth.GetUser();
+            var item = (id>0) ? CheckObject.GetDetail(id) : new CheckObject();
+            if (id == 0)
             {
-                var cu = Auth.GetUser();
+                item.DutyOrgId = cu.EffectiveAuthOrgId;
+                item.CheckerId = cu.Id;
+                CheckerName = cu.Name;  // Picker 的 Name 该如何设置初始值
+            }
+            else
+            {
                 if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.DutyOrgId))
                     return BuildResult(403, "越权访问");
             }

@@ -53,7 +53,7 @@
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckObjectDelete)">删除</EleButton>
                 <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">导入</EleButton>
                 <EleButton Type="Warning" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.CheckObjectExport)">导出</EleButton>
-                <EleButton Type="Warning" Icon="Edit" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">批量修改
+                <EleButton Type="Warning" Command="EditBatch" Icon="Edit" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">批量修改
                     <BatchFields>
                         <BatchField Control="Picker"  Field="CheckerId" TextFor="CheckerName" Label="网格员" PopupUrl="/Admins/Users?multi=false&md=Select" />
                         <BatchField Control="Input"   Field="DutyMan"   Label="企业负责人" Placeholder="留空则不更新" />
@@ -71,7 +71,7 @@
                 <Op Popup="/Checks/Flow/CheckFlow?objectId={id}&objectName={name}"     Icon="Search"          Text="排查"      Mode="Text" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
                 <Op Popup="/Checks/Flow/CheckHazards?objectId={id}&objectName={name}"  Icon="WarningFilled"   Text="隐患清单"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckHazardView)"></Op>
                 <Op Popup="/Checks/Flow/Checks?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="排查历史"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckView)"></Op>
-                <Op Popup="/Checks/CheckPoints?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="风险点" Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
+                <Op Popup="/Checks/CheckPoints?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="检查点" Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Checks/CheckObjectEvents?objectId={id}&objectName={name}"  Icon="DocumentChecked" Text="事件台账"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"     Icon="User"            Text="联系人"    Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
                 <Op Popup="/Shared/Atts?uniId=CheckObject-{id}&name={name}"            Icon="Paperclip"       Text="文档资料"      Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>

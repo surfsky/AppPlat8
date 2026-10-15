@@ -9,7 +9,6 @@
         : Model.UserRealName);
     if (string.IsNullOrWhiteSpace(Model.UserName) && !string.IsNullOrWhiteSpace(Model.UserRealName))
         Model.UserName = Model.UserRealName;
-    var activeTab = Request.Query["taskTab"].FirstOrDefault() ?? "unfinished";
     var dutyOrgSingleVal = (Model.CurrOrgIds != null && Model.CurrOrgIds.Count == 1)
         ? Model.CurrOrgIds[0].ToString() : "";
     var dutyOrgIdsStr    = (Model.CurrOrgIds != null && Model.CurrOrgIds.Count > 0)
@@ -86,7 +85,7 @@
       </a>
     </section>
 
-    <!-- 快捷入口 + 我的管理对象 + 我的隐患 + 我的任务 四部分不再用 Razor 输出 el-button/el-badge，
+    <!-- 快捷入口 + 我的管理对象 + 我的隐患 + 我的专项检查任务 四部分不再用 Razor 输出 el-button/el-badge，
          改为由挂在 #wdApp 上的单个 Vue 实例通过 JS 模板字符串渲染，避免：
          1) <template #slot> 被 Razor 吃了；2) <el-button> 因未被 Vue 挂载而失效；3) 原生徽章 span 替换为 Element Plus 的 el-badge。
          SSR 只输出空壳 #wdTopSection 放原生 HTML（人员选择器 + 组织入口说明文字）+ #wdApp 空壳。 -->
@@ -94,11 +93,10 @@
     <section id="wdObjects"    class="mb-10"></section>
     <section id="wdHazards"    class="mb-10"></section>
 
-    <!-- 我的任务：SSR 只输出空壳 #myTasksVueApp；真实模板放在 JS 里的 template 字符串里，
-         彻底绕开 Razor 把 <template> 解析成 Razor 语法块 / 吞掉 {{ }} / 转义 && 等所有坑 -->
+    <!-- 我的任务对象：显示当前用户在各检查任务中的对象及完成状态 -->
     <section class="mb-10 w-full max-w-full">
-      <h2 class="mb-4 text-[18px] font-semibold text-slate-800">我的任务</h2>
-      <div id="myTasksVueApp" class="w-full"></div>
+      <h2 class="mb-4 text-[18px] font-semibold text-slate-800">我的专项检查任务</h2>
+      <div id="myTaskObjectsVueApp" class="w-full"></div>
     </section>
 
   </div>
@@ -114,7 +112,6 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
     objectCards   = Model.ObjectStatCards,
     hazardCards   = Model.HazardStatCards,
     userId        = userVal,
-    initialTaskTab = activeTab,
 }, new System.Text.Json.JsonSerializerOptions {
     PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
     Encoder              = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -122,7 +119,7 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
 
 /* 原生全局辅助：人员选择器（在 Vue app 挂载外操作，避免 Vue 重绘销毁 input value）
  * 选完人后整页刷新 URL（因为我的管理对象 / 我的隐患两个统计卡由 SSR 渲染，没法局部刷新）
- * —— 但 我的任务切换 tab 走局部 loadTasks，不触发整页刷新。
+ * —— 但 我的专项检查任务 切换 tab 走局部 load，不触发整页刷新。
  */
 (function () {
     function makeDisplayName(r) {
@@ -252,11 +249,11 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
 </script>
 
 <script>
-    /* 全页 3 个 + 1 个 局部 Vue App：
+    /* 全页 4 个局部 Vue App：
      *   App1 → 挂 #wdQuick     : 快捷入口（el-button 点击跳转）
      *   App2 → 挂 #wdObjects   : 我的管理对象（el-badge 包 el-button，徽章显示 count）
      *   App3 → 挂 #wdHazards   : 我的隐患（el-badge 包 el-button，徽章显示 count）
-     *   App4 → 挂 #myTasksVueApp : 我的任务（el-tabs + el-table + el-pagination，已验证通过）
+     *   App4 → 挂 #myTaskObjectsVueApp : 我的专项检查任务（el-tabs + el-table + el-pagination）
      * 四个 Vue 实例都挂载在互不影响的空壳 section 上，避免 SSR 输出的人员选择器原生 HTML 被 Vue 清空。
      * - 所有事件 / 插槽全部用 v-on:xxx / v-slot:xxx 长写法，避开 Razor 对单个 AT 符号的误解析。
      */
@@ -388,47 +385,43 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
             if (el) app.mount(el);
         }
 
-        //---------------------------------------------------------------------
-        // -------- 3-任务（已验证模板/逻辑正确，保留原状） --------
-        //---------------------------------------------------------------------
-        var STATUS_OVERDUE = '超期';
-        var STATUS_FINISHED = '已完成';
-        var TABS = [
+        // 显示我的任务对象（CheckTaskObject)
+        var TASK_OBJ_TABS = [
             { key: 'unfinished', label: '未完成' },
             { key: 'all', label: '全部' },
         ];
-        var TASKS_TEMPLATE =
-            '<el-tabs v-model="taskTab" v-on:tab-change="onTaskTabChange" tab-position="top" class="w-full">'
+        var TASK_OBJS_TEMPLATE =
+            '<el-tabs v-model="objTab" v-on:tab-change="onObjTabChange" tab-position="top" class="w-full">'
             + '    <el-tab-pane v-for="t in tabs" :key="t.key" :label="t.label" :name="t.key"></el-tab-pane>'
             + '</el-tabs>'
             + ''
             + '<div class="mt-3 rounded w-full overflow-hidden border border-slate-200 bg-white">'
-            + '    <el-table :data="tasks" v-loading="loading" border stripe style="width:100%; min-height:200px; max-height:520px;">'
+            + '    <el-table :data="objs" v-loading="loading" border stripe style="width:100%; min-height:200px; max-height:520px;">'
             + '        <el-table-column type="index" label="序号" width="70" align="center" />'
-            + '        <el-table-column prop="name"       label="名称"     min-width="240" show-overflow-tooltip />'
-            + '        <el-table-column prop="levelText"  label="级别"     min-width="220" show-overflow-tooltip />'
-            + '        <el-table-column prop="creatorOrg" label="发起组织" min-width="180" show-overflow-tooltip />'
-            + '        <el-table-column label="进度" min-width="160">'
+            + '        <el-table-column label="所属任务" min-width="200" show-overflow-tooltip>'
             + '            <template v-slot:default="{ row }">'
-            + '                <el-progress :percentage="Number((row && row.progress != null) ? row.progress : 0)" :stroke-width="10"></el-progress>'
+            + '                <el-link type="primary" v-if="row && row.detailUrl" v-on:click="openTaskDetail(row)">{{ row.taskName }}</el-link>'
+            + '                <span v-else>{{ row && row.taskName }}</span>'
             + '            </template>'
             + '        </el-table-column>'
-            + '        <el-table-column label="进度" min-width="140">'
+            + '        <el-table-column prop="objectName"    label="检查对象"   min-width="200" show-overflow-tooltip />'
+            + '        <el-table-column prop="dutyOrgName"   label="责任网格"   min-width="160" show-overflow-tooltip />'
+            + '        <el-table-column prop="checkerName"   label="检查人"     min-width="120" show-overflow-tooltip />'
+            + '        <el-table-column label="状态" width="100" align="center">'
             + '            <template v-slot:default="{ row }">'
-            + '                <span v-if="row && row.progressText===STATUS_OVERDUE"  class="text-[#d4380d] font-semibold">超期</span>'
-            + '                <span v-else-if="row && row.progressText===STATUS_FINISHED" class="text-[#389e0d] font-semibold">已完成</span>'
-            + '                <span v-else class="text-[#1677ff] font-medium">进行中</span>'
+            + '                <el-tag v-if="row && row.isFinished" type="success" size="small">已完成</el-tag>'
+            + '                <el-tag v-else type="warning" size="small">未完成</el-tag>'
             + '            </template>'
             + '        </el-table-column>'
-            + '        <el-table-column label="开始日期" width="130">'
-            + '            <template v-slot:default="{ row }"><span>{{ fmtDate(row && row.startDt) }}</span></template>'
+            + '        <el-table-column label="任务开始" width="120">'
+            + '            <template v-slot:default="{ row }"><span>{{ fmtDate(row && row.taskStartDt) }}</span></template>'
             + '        </el-table-column>'
-            + '        <el-table-column label="结束日期" width="130">'
-            + '            <template v-slot:default="{ row }"><span>{{ fmtDate(row && row.expireDt) }}</span></template>'
+            + '        <el-table-column label="任务结束" width="120">'
+            + '            <template v-slot:default="{ row }"><span>{{ fmtDate(row && row.taskExpireDt) }}</span></template>'
             + '        </el-table-column>'
-            + '        <el-table-column label="详情" width="90" align="center" fixed="right">'
+            + '        <el-table-column label="操作" width="110" align="center" fixed="right">'
             + '            <template v-slot:default="{ row }">'
-            + '                <el-link type="primary" v-if="row && row.detailUrl" v-on:click="openTaskDetail(row)">清单</el-link>'
+            + '                <el-button v-if="row && row.checkObjectId" type="primary" link size="small" v-on:click="openCheckFlow(row)">开始排查</el-button>'
             + '            </template>'
             + '        </el-table-column>'
             + '        <template v-slot:empty>'
@@ -449,23 +442,23 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
             + '    </div>'
             + '</div>';
 
-        function mountTasks() {
+        function mountTaskObjects() {
             if (typeof Vue === 'undefined' || typeof ElementPlus === 'undefined' || typeof axios === 'undefined') {
-                setTimeout(mountTasks, 120); return;
+                setTimeout(mountTaskObjects, 120); return;
             }
             var { createApp, reactive, toRefs, onMounted } = Vue;
             var app = createApp({
-                template: TASKS_TEMPLATE,
+                template: TASK_OBJS_TEMPLATE,
                 setup() {
                     var qs0 = new URLSearchParams(location.search || '');
-                    var initialTab = qs0.get('taskTab') || init.initialTaskTab || 'unfinished';
-                    var initialUserId = qs0.get('userId') || init.userId || '';
+                    var initialTab = qs0.get('taskObjTab') || 'unfinished';
+                    var initialUserId = qs0.get('userId') || (window.__WD_INITIAL__ && window.__WD_INITIAL__.userId) || '';
 
                     var state = reactive({
                         loading: false,
-                        taskTab: initialTab,
-                        tabs: TABS.slice(),
-                        tasks: [],
+                        objTab: initialTab,
+                        tabs: TASK_OBJ_TABS.slice(),
+                        objs: [],
                         pager: null,
                         pageIndex: 1,
                         pageSize: 10,
@@ -481,66 +474,60 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
                         } catch (e) { return String(s); }
                     }
 
-                    function onTaskTabChange(key) {
+                    function onObjTabChange(key) {
                         if (!key) return;
-                        state.taskTab = key;
+                        state.objTab = key;
                         state.pageIndex = 1;
                         try {
                             var q = new URLSearchParams(location.search || '');
-                            q.set('taskTab', key);
+                            q.set('taskObjTab', key);
                             if (history && typeof history.replaceState === 'function') {
                                 history.replaceState(null, '', location.pathname + (q.toString() ? ('?' + q.toString()) : ''));
                             }
                         } catch (e) { }
-                        loadTasks();
+                        loadObjs();
                     }
 
-                    function onPageChange(idx) { state.pageIndex = idx || 1; loadTasks(); }
-                    function onSizeChange(sz) { state.pageSize = sz || 10; state.pageIndex = 1; loadTasks(); }
+                    function onPageChange(idx) { state.pageIndex = idx || 1; loadObjs(); }
+                    function onSizeChange(sz) { state.pageSize = sz || 10; state.pageIndex = 1; loadObjs(); }
 
-                    function loadTasks() {
+                    function loadObjs() {
                         state.loading = true;
                         var params = {
-                            handler: 'MyTasks',
+                            handler: 'MyTaskObjects',
                             pageIndex: state.pageIndex || 1,
                             pageSize: state.pageSize || 10,
-                            sortField: 'Id',
-                            sortDirection: 'DESC',
-                            taskTab: state.taskTab || 'unfinished',
+                            sortField: 'TaskId',
+                            sortDirection: 'ASC',
+                            taskObjTab: state.objTab || 'unfinished',
                         };
                         if (state.userId) params.userId = state.userId;
                         return axios.get(location.pathname, { params: params })
                             .then(function (res) {
                                 var payload = (res && res.data) ? res.data : null;
-                                if (!payload) { state.tasks = []; state.pager = null; return; }
+                                if (!payload) { state.objs = []; state.pager = null; return; }
                                 if (String(payload.code) !== '0' && payload.code !== 0) {
-                                    console.warn('[WorkDesk.MyTasks] 后端 code 非 0：', payload);
-                                    state.tasks = []; state.pager = null; return;
+                                    console.warn('[WorkDesk.MyTaskObjects] 后端 code 非 0：', payload);
+                                    state.objs = []; state.pager = null; return;
                                 }
                                 var arr = payload.data;
                                 if (!Array.isArray(arr)) arr = payload.rows;
                                 if (!Array.isArray(arr)) arr = [];
                                 state.pager = payload.pager || null;
-                                state.tasks = arr;
+                                state.objs = arr;
                             })
                             .catch(function (e) {
-                                console.error('[WorkDesk.MyTasks] 请求失败：', e);
-                                state.tasks = [];
+                                console.error('[WorkDesk.MyTaskObjects] 请求失败：', e);
+                                state.objs = [];
                                 state.pager = null;
                             })
                             .finally(function () { state.loading = false; });
                     }
 
-                    onMounted(loadTasks);
-
-                    // 点击"清单"按钮：在抽屉中打开 CheckTaskForm；若行数据带 checkerId，则一并传入用于过滤该网格员负责的对象
                     function openTaskDetail(row) {
                         if (!row || !row.detailUrl) return;
                         var url = row.detailUrl;
-                        if (row.checkerId != null && String(row.checkerId) !== '') {
-                            url += (url.indexOf('?') >= 0 ? '&' : '?') + 'checkerId=' + encodeURIComponent(row.checkerId);
-                        }
-                        var title = (row.name || '检查任务') + ' - 清单';
+                        var title = (row.taskName || '检查任务') + ' - 清单';
                         if (window.EleManager && typeof window.EleManager.openDrawer === 'function') {
                             window.EleManager.openDrawer({
                                 title: title,
@@ -555,23 +542,47 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
                         }
                     }
 
-                    return Object.assign(toRefs(state), {
-                        STATUS_OVERDUE: STATUS_OVERDUE,
-                        STATUS_FINISHED: STATUS_FINISHED,
+                    // 点击"开始排查"：在抽屉中打开 CheckFlow，传入 objectId 和 taskId
+                    function openCheckFlow(row) {
+                        if (!row || !row.checkObjectId) return;
+                        var qs = new URLSearchParams();
+                        qs.set('objectId', String(row.checkObjectId));
+                        if (row.objectName) qs.set('objectName', row.objectName);
+                        if (row.taskId) qs.set('taskId', String(row.taskId));
+                        var url = '/Checks/Flow/CheckFlow?' + qs.toString();
+                        var title = '隐患排查 - ' + (row.objectName || '');
+                        if (window.EleManager && typeof window.EleManager.openDrawer === 'function') {
+                            window.EleManager.openDrawer({
+                                title: title,
+                                url: url,
+                                direction: 'rtl',
+                                resizable: true,
+                                destroyOnClose: true,
+                                closeOnClickModal: false,
+                            });
+                        } else {
+                            window.open(url, '_blank');
+                        }
+                    }
+
+                    onMounted(loadObjs);
+
+                    return {
+                        ...toRefs(state),
                         fmtDate,
-                        onTaskTabChange,
+                        onObjTabChange,
                         onPageChange,
                         onSizeChange,
-                        loadTasks,
                         openTaskDetail,
-                    });
+                        openCheckFlow,
+                    };
                 }
             });
             bootstrap(app);
-            var el = document.getElementById('myTasksVueApp');
-            console.log('[WorkDesk.wdTasks] el=', !!el, 'tpl=', TASKS_TEMPLATE.length, 'path=', location.pathname);
+            var el = document.getElementById('myTaskObjectsVueApp');
             if (el) app.mount(el);
         }
+
 
         //---------------------------------------------------------------------
         // -------- 入口：等 Vue / ElementPlus / axios 就绪后，四个区域一起挂载 --------
@@ -583,7 +594,7 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
             try { mountQuick(); } catch (e) { console.error('[WorkDesk.QuickMount]', e); }
             try { mountCards('wdObjects', objectCards, OBJECTS_TEMPLATE, 'wdObjects'); } catch (e) { console.error('[WorkDesk.ObjectsMount]', e); }
             try { mountCards('wdHazards', hazardCards, HAZARDS_TEMPLATE, 'wdHazards'); } catch (e) { console.error('[WorkDesk.HazardsMount]', e); }
-            try { mountTasks(); } catch (e) { console.error('[WorkDesk.TasksMount]', e); }
+            try { mountTaskObjects(); } catch (e) { console.error('[WorkDesk.TaskObjectsMount]', e); }
         }
         function start() {
             if (document.readyState === 'complete' || document.readyState === 'interactive') {

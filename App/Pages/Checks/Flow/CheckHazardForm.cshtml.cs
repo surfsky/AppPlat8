@@ -36,7 +36,7 @@ namespace App.Pages.Checks
             var item = id > 0 ? (CheckHazard.GetDetail(id) ?? new CheckHazard()) : new CheckHazard();
             if (id <= 0)
             {
-                item.ObjectId = objectId;
+                item.CheckObjectId = objectId;
                 item.CheckLogId = checkLogId;
                 item.CheckSheetId = checkSheetId;
                 item.CheckItemId = checkItemId;
@@ -44,8 +44,8 @@ namespace App.Pages.Checks
             }
 
             var objectName = item.ObjectName;
-            if (string.IsNullOrWhiteSpace(objectName) && item.ObjectId.HasValue)
-                objectName = CheckObject.Get(item.ObjectId)?.Name ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(objectName) && item.CheckObjectId.HasValue)
+                objectName = CheckObject.Get(item.CheckObjectId)?.Name ?? string.Empty;
 
             var sheetName = item.CheckSheetName;
             if (string.IsNullOrWhiteSpace(sheetName) && item.CheckSheetId.HasValue)
@@ -54,7 +54,7 @@ namespace App.Pages.Checks
             var data = new
             {
                 item.Id,
-                item.ObjectId,
+                item.CheckObjectId,
                 ObjectName = objectName,
                 item.CheckLogId,
                 item.CheckSheetId,
@@ -82,7 +82,7 @@ namespace App.Pages.Checks
             if (item == null)
             {
                 item = new CheckHazard();
-                item.ObjectId = req.ObjectId;
+                item.CheckObjectId = req.CheckObjectId;
                 item.CheckItemId = req.CheckItemId;
                 item.CheckSheetId = req.CheckSheetId;
                 item.CheckLogId = req.CheckLogId;
@@ -111,7 +111,7 @@ namespace App.Pages.Checks
                         Id = item.CheckLogId.Value,
                         CreateDt = DateTime.Now,
                         CheckDt = DateTime.Now,
-                        CheckObjectId = item.ObjectId,
+                        CheckObjectId = item.CheckObjectId,
                         CheckerId = userId,
                         OrgId = user?.OrgId,
                         HazardCount = 0,

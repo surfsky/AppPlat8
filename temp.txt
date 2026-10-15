@@ -229,3 +229,18 @@
                     : new List<long>();
             return new List<long> { id.Value };
         }
+
+        public IActionResult OnPostImport()
+        {
+            if (!CheckPower(Power.CheckPointEdit))
+                return BuildResult(403, "无权操作");
+
+            var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckPoint") + "&objectId=" + ObjectId;
+            return EleHandler.ShowDrawer(
+                title: "导入检查点",
+                url: url,
+                //size: "980px",
+                direction: "rtl",
+                closeAction: DrawerCloseAction.RefreshData);
+        }
+

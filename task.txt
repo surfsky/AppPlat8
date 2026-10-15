@@ -560,20 +560,29 @@ Done
         /修正工作台页面的数字角标和跳转链接
         /将通讯录挪到“应急指挥”下面去；
         /更新值班表，用导入方式
-        Importor 优化：不用显示“创建人”、“责任人”列；
         /Importor 优化：按钮加图标；
         /CheckObjects 页面的网格员默认显示自己
         /CheckObjects 页面的组织控件根据权限判断是否可编辑；
-        把 NextCheckDt 改为物理字段，检查时自动填写下次检查日期，实现 IFix 接口，便于调度器调度
-        实现页面/pages/Maintains/Consoloer，可运行调度器项目 app.consoler 并查看其控制台输出；
+        /把 NextCheckDt 改为物理字段，检查时自动填写下次检查日期，实现 IFix 接口，便于调度器调度
+        /CheckObjects: 增加批量修复数据按钮，仅AdminMaintain 权限可见；
+        /CheckObjects: 给批量更新按钮增加 Handler=“EditBatch” 的属性，以对应到后端的 OnPostBatchSave 方法，显式声明处理方法，不会那么诡异；
+        /Importor 优化：下载的模版中不显示“创建人”、“责任人”列；
+        /CheckObjectForm ：新增时网格员默认写当前用户
+        /统一实体内中的 CheckObjectId， ObjectId， 都用 CheckObjectId
+        /全网页统一按钮颜色：查询蓝色、新增、删除红色、其它黄色
         隐患排查时自动查找并列出匹配的任务（Checks/Flow/CheckFlow）；
         恢复默认eletable 的边框颜色（淡一点）；对于统计报表模块，独立设置深一点（便于导出）
-        全网页统一按钮颜色：查询蓝色、新增、删除红色、其它黄色
-        获取某个任务某人的任务清单
-        获取某个组织的任务清单
+        实现页面/pages/Maintains/Consoloer，可运行调度器项目 app.consoler 并查看其控制台输出；
+
+        实现方法
+            获取某个对象对应的任务清单
+            获取某人的任务清单
+            获取某个组织的任务清单
+
         对象页面提供检查任务过滤框
         跑通任务分配和检查流程
             部门管理员才能修改任务企业清单
+            /建立测试对象应急测试xxx
             拿“应急管理局”测试一下逻辑
         优化：CheckFlow 如果对象没有匹配的标签、检查表，则自动显示高频检查表
     URL

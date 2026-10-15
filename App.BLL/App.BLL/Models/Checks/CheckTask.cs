@@ -66,7 +66,7 @@ namespace App.DAL
                 IsActive,
                 OrgId,
                 OrgName,
-                CheckObjectIds = CheckObjects?.Select(o => o.ObjectId).ToList(),
+                CheckObjectIds = CheckObjects?.Select(o => o.CheckObjectId).ToList(),
             };
         }
 

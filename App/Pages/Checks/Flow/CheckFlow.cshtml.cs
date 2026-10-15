@@ -61,15 +61,19 @@ namespace App.Pages.Checks
         [BindProperty(SupportsGet = true)]
         public string ObjectName { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public long? TaskId { get; set; }
+
         public CheckFlowData Item { get; set; }
 
         public List<SelectListItem> TaskOptions { get; set; } = new();
         public List<SelectListItem> SheetOptions { get; set; } = new();
 
-        public void OnGet(long? objectId, string objectName)
+        public void OnGet(long? objectId, string objectName, long? taskId)
         {
             ObjectId = objectId;
             ObjectName = objectName;
+            TaskId = taskId;
 
             TaskOptions = CheckTask.Set
                 .OrderBy(t => t.Id)
@@ -84,7 +88,7 @@ namespace App.Pages.Checks
 
         /// <summary>获取检查对象数据。</summary>
         /// TODO：支持CheckId参数，可以重现检查信息；
-        public IActionResult OnGetData(long? objectId)
+        public IActionResult OnGetData(long? objectId, long? taskId)
         {
             var id = objectId ?? ObjectId ?? 0;
             if (id <= 0)
@@ -114,6 +118,17 @@ namespace App.Pages.Checks
                     .Distinct()
                     .ToList();
 
+            // 自动查找包含该检查对象的任务，默认勾选
+            // 若 URL 显式传入 taskId，则只勾选该任务（用于从工作台"开始排查"精准进入）
+            var wantTaskId = taskId ?? TaskId;
+            var matchedTaskIds = wantTaskId.HasValue && wantTaskId.Value > 0
+                ? new List<long> { wantTaskId.Value }
+                : CheckTaskObject.Set
+                    .Where(t => t.CheckObjectId == id && t.TaskId.HasValue)
+                    .Select(t => t.TaskId.Value)
+                    .Distinct()
+                    .ToList();
+
             Item = new CheckFlowData
             {
                 ObjectId = obj.Id,
@@ -125,7 +140,7 @@ namespace App.Pages.Checks
                 TagNames = tagNames,
                 CheckLogId = checkLogId,
                 CheckDt = DateTime.Now,
-                TaskIds = new List<long>(),
+                TaskIds = matchedTaskIds,
                 PatrolOrgName = org?.Name,
                 PatrolOrgLevel = org?.Level?.GetTitle(),
                 SheetIds = matchedSheetIds,

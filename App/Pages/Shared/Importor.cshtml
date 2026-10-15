@@ -110,7 +110,12 @@
                         const formData = new FormData();
                         formData.append('file', file.value);
 
-                        const res = await axios.post(`?handler=Import&type=${encodeURIComponent(typeName)}`, formData, {
+                        // 保留当前页面 URL 中的业务参数（如 checkObjectId），一并传递给导入接口
+                        const preservedParams = new URLSearchParams(window.location.search);
+                        ['handler', 'columnMode', 'ignoreId', 'templateId', 'id', 'md'].forEach(k => preservedParams.delete(k));
+                        const importUrl = `?handler=Import&${preservedParams.toString()}`;
+
+                        const res = await axios.post(importUrl, formData, {
                             headers: {
                                 'RequestVerificationToken': (window.Utils && Utils.getCsrfToken) ? Utils.getCsrfToken() : ''
                             }

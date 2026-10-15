@@ -30,7 +30,7 @@ namespace App.DAL
     [UI("检查", "隐患")]
     public class CheckHazard : EntityBase<CheckHazard>
     {
-        [UI("检查对象")] public long? ObjectId { get; set; }    // 冗余存储，方便查询
+        [UI("检查对象")] public long? CheckObjectId { get; set; }    // 冗余存储，方便查询
         [UI("检查人员")] public long? CheckerId { get; set; }   // 冗余存储，方便查询
         [UI("检查记录")] public long? CheckLogId { get; set; }
         [UI("检查表Id")] public long? CheckSheetId { get; set; }
@@ -46,7 +46,7 @@ namespace App.DAL
         [UI("常见隐患")] public bool? IsCommonHazard { get; set; }
 
         //
-        public virtual CheckObject Object { get; set; }
+        public virtual CheckObject CheckObject { get; set; }
         public virtual User Checker { get; set; }
         public virtual Check Check { get; set; }
         public virtual CheckSheet CheckSheet { get; set; }
@@ -55,7 +55,7 @@ namespace App.DAL
 
         //
         public string StatusName => Status.GetTitle();
-        public string ObjectName => Object?.Name;
+        public string ObjectName => CheckObject?.Name;
         public string CheckerName => Checker?.Name;
         public string CheckSheetName => CheckSheet?.Name;
         public string CheckItemName => CheckItem?.Name;
@@ -67,7 +67,7 @@ namespace App.DAL
             return new
             {
                 Id,
-                ObjectId,
+                CheckObjectId,
                 CheckerId,
                 CheckLogId,
                 CheckItemId,
@@ -93,14 +93,14 @@ namespace App.DAL
         }
         public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt, long? dutyOrgId = null, DateTime? expireTo = null, List<long> dutyOrgIds = null)
         {
-            IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.Object).Include(t => t.Checker).Include(t => t.CheckItem).Include(t => t.Check);
-            if (objectId.IsNotEmpty())          q = q.Where(o => o.ObjectId == objectId.Value);
-            else if (objectName.IsNotEmpty())   q = q.Where(o => o.Object.Name.Contains(objectName.Trim()));
+            IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.CheckObject).Include(t => t.Checker).Include(t => t.CheckItem).Include(t => t.Check);
+            if (objectId.IsNotEmpty())          q = q.Where(o => o.CheckObjectId == objectId.Value);
+            else if (objectName.IsNotEmpty())   q = q.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));
             if (checkerId.IsNotEmpty())         q = q.Where(o => o.CheckerId == checkerId.Value);
             else if (checkerName.IsNotEmpty())  q = q.Where(o => o.Checker.Name.Contains(checkerName.Trim()));
             if (status.IsNotEmpty())            q = q.Where(o => o.Status == status.Value);
             var dutyNetIds = GetOrgIds(dutyOrgIds, dutyOrgId);
-            if (dutyNetIds.Count > 0)            q = q.Where(o => o.Object != null && o.Object.DutyOrgId.HasValue && dutyNetIds.Contains(o.Object.DutyOrgId.Value));
+            if (dutyNetIds.Count > 0)            q = q.Where(o => o.CheckObject != null && o.CheckObject.DutyOrgId.HasValue && dutyNetIds.Contains(o.CheckObject.DutyOrgId.Value));
             if (expireTo.IsNotEmpty())          q = q.Where(o => o.ExpireDt.HasValue && o.ExpireDt.Value <= expireTo.Value.Date);
             if (createStartDt.IsNotEmpty())     q = q.Where(o => o.CreateDt >= createStartDt.Value.Date);
             return q;

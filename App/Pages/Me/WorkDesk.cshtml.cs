@@ -42,7 +42,7 @@ namespace App.Pages.Me
         }
     }
 
-    /// <summary>工作台任务行</summary>
+    /// <summary>工作台任务行（被 WorkDesk / WorkDeskOrg 共用）</summary>
     public class WorkDeskTaskRow : IExport
     {
         public long Id { get; set; }
@@ -66,6 +66,33 @@ namespace App.Pages.Me
                 Progress, ProgressText,
                 StartDt, ExpireDt,
                 DetailUrl, CheckerId,
+            };
+        }
+    }
+
+    /// <summary>工作台任务对象行（CheckTaskObject）</summary>
+    public class WorkDeskTaskObjectRow : IExport
+    {
+        public long Id { get; set; }
+        public long? TaskId { get; set; }
+        public string TaskName { get; set; }
+        public long? CheckObjectId { get; set; }
+        public string ObjectName { get; set; }
+        public string DutyOrgName { get; set; }
+        public string CheckerName { get; set; }
+        public bool IsFinished { get; set; }
+        public string StatusName => IsFinished ? "已完成" : "未完成";
+        public DateTime? TaskStartDt { get; set; }
+        public DateTime? TaskExpireDt { get; set; }
+        public string DetailUrl { get; set; }
+
+        public object Export(ExportMode mode = ExportMode.Normal)
+        {
+            return new
+            {
+                Id, TaskId, TaskName, CheckObjectId, ObjectName,
+                DutyOrgName, CheckerName, IsFinished, StatusName,
+                TaskStartDt, TaskExpireDt, DetailUrl,
             };
         }
     }
@@ -197,76 +224,60 @@ namespace App.Pages.Me
         }
 
         //---------------------------------------------------------------------
-        // 我的任务：只显示当前选择人员相关的任务
-        //   taskTab=unfinished(默认)：未完成（进度 < 100%）
-        //   taskTab=all：全部
-        // 相关判定：创建人 OR 任务承接组织命中 OR 检查对象的网格员/组织命中
+        // 我的任务对象：显示当前用户相关的 CheckTaskObject 记录
+        //   taskObjTab=unfinished(默认)：未完成
+        //   taskObjTab=all：全部
         //---------------------------------------------------------------------
-        public IActionResult OnGetMyTasks(Paging pi, string taskTab)
+        public IActionResult OnGetMyTaskObjects(Paging pi, string taskObjTab)
         {
             var uid = CurrUserId;
             var orgIds = CurrOrgIds;
 
-            IQueryable<CheckTask> q = App.DAL.CheckTask.Search(null, null, null)
+            IQueryable<CheckTaskObject> q = CheckTaskObject.Set
                 .AsNoTracking()
-                .Include(t => t.Creator).ThenInclude(u => u.Org)
-                .Include(t => t.Org)
-                .Include(t => t.CheckObjects);
+                .Include(t => t.Task)
+                .Include(t => t.CheckObject).ThenInclude(o => o.DutyOrg)
+                .Include(t => t.CheckObject).ThenInclude(o => o.Checker)
+                .Include(t => t.Checker);
 
-            // 只看与当前人员相关的任务：创建人 / 任务承接组织 / 检查对象网格员 / 检查对象组织
+            // 只看与当前人员相关的任务对象：本人是检查人 / 任务对象的责任组织命中 / 对象的网格员
             q = q.Where(t =>
-                (uid > 0 && t.CreatorId == uid)
+                (uid > 0 && t.CheckerId == uid)
+                || (uid > 0 && t.CheckObject.CheckerId == uid)
                 || (orgIds.Count > 0 && t.OrgId.HasValue && orgIds.Contains(t.OrgId.Value))
-                || t.CheckObjects.Any(co =>
-                    (uid > 0 && (co.CheckerId == uid || co.Object.CheckerId == uid))
-                    || (orgIds.Count > 0 && co.OrgId.HasValue && orgIds.Contains(co.OrgId.Value))
-                    || (orgIds.Count > 0 && co.Object.DutyOrgId.HasValue && orgIds.Contains(co.Object.DutyOrgId.Value))
-                ));
+                || (orgIds.Count > 0 && t.CheckObject.DutyOrgId.HasValue && orgIds.Contains(t.CheckObject.DutyOrgId.Value)));
 
             // tab 过滤
-            taskTab = taskTab ?? "unfinished";
-            if (taskTab == "unfinished")
-                q = q.Where(t => t.Progress == null || t.Progress < 100 || t.FinishCount < t.TotalCount);
+            taskObjTab = taskObjTab ?? "unfinished";
+            if (taskObjTab == "unfinished")
+                q = q.Where(t => !t.IsFinished);
 
-            return BuildResult(0, "success", MaterializeAndProject(q, pi, uid > 0 ? uid : (long?)null), pi);
-        }
-
-
-        //---------------------------------------------------------------------
-        // 内部：EF 查询先 ToList（避免 EF 翻译本地函数/字符串拼接失败），再手动 SortPage 成 WorkDeskTaskRow
-        //---------------------------------------------------------------------
-        /// <summary>将 EF 查询投影为 WorkDeskTaskRow</summary>
-        private static List<object> MaterializeAndProject(IQueryable<CheckTask> query, Paging pi, long? checkerId)
-        {
-            // 1) 排序前统一默认值
+            // 默认按任务 Id + 排序号排序
             if (pi == null) pi = new Paging();
-            if (pi.SortField.IsEmpty()) { pi.SortField = "Id"; pi.SortDirection = "DESC"; }
+            if (pi.SortField.IsEmpty()) { pi.SortField = "TaskId"; pi.SortDirection = "ASC"; }
 
-            // 2) Total + 排序 + 分页
-            var total = query.Count();
+            var total = q.Count();
             pi.SetTotal(total);
-            var page = query.SortAndPage(pi).ToList();
+            var list = q.SortAndPage(pi).ToList();
 
-            // 3) 内存投影为 WorkDeskTaskRow → object 输出（前台列是扁平的 Prop）
-            return page
-                .Select(t => (object)new WorkDeskTaskRow
-                {
-                    Id           = t.Id,
-                    Name         = t.Name,
-                    LevelText    = t.Org != null
-                                 ? (t.Org.FullName ?? t.Org.Name ?? "")
-                                 : "",
-                    CreatorText  = t.CreatorName,
-                    CreatorOrg   = t.Creator?.Org?.Name ?? "",
-                    Progress     = (int)(t.Progress ?? 0),
-                    ProgressText = ComputeProgressText(t),
-                    StartDt      = t.StartDt,
-                    ExpireDt     = t.ExpireDt,
-                    DetailUrl    = $"/Checks/Flow/CheckTaskForm?id={t.Id}",
-                    CheckerId    = checkerId,
-                })
-                .ToList();
+            var rows = list.Select(t => (object)new WorkDeskTaskObjectRow
+            {
+                Id = t.Id,
+                TaskId = t.TaskId,
+                TaskName = t.Task?.Name ?? "",
+                CheckObjectId = t.CheckObjectId,
+                ObjectName = t.CheckObject?.Name ?? "",
+                DutyOrgName = t.CheckObject?.DutyOrgName ?? t.CheckObject?.DutyOrg?.Name ?? "",
+                CheckerName = t.Checker?.Name ?? t.CheckObject?.CheckerName ?? "",
+                IsFinished = t.IsFinished,
+                TaskStartDt = t.Task?.StartDt,
+                TaskExpireDt = t.Task?.ExpireDt,
+                DetailUrl = t.TaskId.HasValue ? $"/Checks/Flow/CheckTaskForm?id={t.TaskId.Value}" : "",
+            }).ToList();
+
+            return BuildResult(0, "success", rows, pi);
         }
+
 
         //---------------------------------------------------------------------
         // 内部：Scope 解析
@@ -336,19 +347,9 @@ namespace App.Pages.Me
             return App.DAL.CheckHazard.Search(null, null, null, null, null, null)
                 .Where(h => h.CheckerId == uid
                          || (orgIds.Count > 0
-                             && h.Object != null
-                             && h.Object.DutyOrgId.HasValue
-                             && orgIds.Contains(h.Object.DutyOrgId.Value)));
-        }
-
-        //---------------------------------------------------------------------
-        // 内部：进度文本计算
-        //---------------------------------------------------------------------
-        private static string ComputeProgressText(CheckTask t)
-        {
-            if (t.ExpireDt.HasValue && t.ExpireDt.Value <= DateTime.Now) return "超期";
-            if (t.TotalCount > 0 && t.FinishCount >= t.TotalCount)      return "已完成";
-            return "进行中";
+                             && h.CheckObject != null
+                             && h.CheckObject.DutyOrgId.HasValue
+                             && orgIds.Contains(h.CheckObject.DutyOrgId.Value)));
         }
 
         //---------------------------------------------------------------------

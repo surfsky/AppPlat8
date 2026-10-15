@@ -101,8 +101,8 @@ namespace App.Pages.Checks
             if (onlyUnselected && taskId > 0)
             {
                 var selectedIds = CheckTaskObject.Set
-                    .Where(cto => cto.TaskId == taskId && cto.ObjectId != null)
-                    .Select(cto => cto.ObjectId.Value)
+                    .Where(cto => cto.TaskId == taskId && cto.CheckObjectId != null)
+                    .Select(cto => cto.CheckObjectId.Value)
                     .Distinct()
                     .ToList();
                 if (selectedIds.Count > 0)
@@ -146,20 +146,20 @@ namespace App.Pages.Checks
             var isAdmin = Auth.IsAdmin(cu);
 
             IQueryable<CheckTaskObject> q = CheckTaskObject.Set
-                .Include(t => t.Object)
+                .Include(t => t.CheckObject)
                     .ThenInclude(o => o.DutyOrg)
-                .Include(t => t.Object)
+                .Include(t => t.CheckObject)
                     .ThenInclude(o => o.Checker)
                 .Where(t => t.TaskId == taskId);
 
             if (!isAdmin && authOrgId.HasValue && authOrgId.Value > 0)
             {
                 var scopeIds = OrgFilter.GetAuthOrgIds(authOrgId.Value);
-                q = q.Where(t => t.Object.DutyOrgId == null || scopeIds.Contains(t.Object.DutyOrgId.Value));
+                q = q.Where(t => t.CheckObject.DutyOrgId == null || scopeIds.Contains(t.CheckObject.DutyOrgId.Value));
             }
             else if (!isAdmin)
             {
-                q = q.Where(t => t.Object.DutyOrgId == null);
+                q = q.Where(t => t.CheckObject.DutyOrgId == null);
             }
 
             pi.SetTotal(q.Count());
@@ -169,15 +169,15 @@ namespace App.Pages.Checks
             {
                 Id = t.Id,
                 TaskId = t.TaskId ?? 0,
-                ObjectId = t.ObjectId ?? 0,
+                ObjectId = t.CheckObjectId ?? 0,
                 SortId = t.SortId,
                 IsFinished = t.IsFinished,
-                ObjectName = t.Object?.Name ?? "",
-                DutyOrgName = t.Object != null
-                    ? (t.Object.DutyOrgName ?? t.Object.DutyOrg?.FullName ?? t.Object.DutyOrg?.Name ?? "")
+                ObjectName = t.CheckObject?.Name ?? "",
+                DutyOrgName = t.CheckObject != null
+                    ? (t.CheckObject.DutyOrgName ?? t.CheckObject.DutyOrg?.FullName ?? t.CheckObject.DutyOrg?.Name ?? "")
                     : "",
-                CheckerName = t.Object != null
-                    ? (t.Object.CheckerName ?? BuildCheckerName(t.Object.Checker))
+                CheckerName = t.CheckObject != null
+                    ? (t.CheckObject.CheckerName ?? BuildCheckerName(t.CheckObject.Checker))
                     : "",
                 StatusName = t.IsFinished ? "已完成" : "未完成",
             }).ToList();
@@ -237,7 +237,7 @@ namespace App.Pages.Checks
             var oldList = CheckTaskObject.Set.Where(o => o.TaskId == req.TaskId).ToList();
             // 先保留已经 IsFinished=true 的行（避免重置检查结果），用 ObjectId 匹配
             var finishedIds = new HashSet<long>(
-                oldList.Where(o => o.IsFinished && o.ObjectId.HasValue).Select(o => o.ObjectId.Value)
+                oldList.Where(o => o.IsFinished && o.CheckObjectId.HasValue).Select(o => o.CheckObjectId.Value)
             );
 
             foreach (var old in oldList)
@@ -251,7 +251,7 @@ namespace App.Pages.Checks
                 var cto = new CheckTaskObject
                 {
                     TaskId = req.TaskId,
-                    ObjectId = ids[i],
+                    CheckObjectId = ids[i],
                     SortId = (i + 1) * 10,
                     IsFinished = finishedIds.Contains(ids[i]),
                     CreateDt = now,

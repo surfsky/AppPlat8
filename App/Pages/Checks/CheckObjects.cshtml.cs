@@ -392,25 +392,6 @@ namespace App.Pages.Checks
             return BuildResult(0, "删除成功");
         }
 
-
-        //-------------------------------------------------------------------------
-        // 批量修改
-        //-------------------------------------------------------------------------
-        public record BatchUpdateRequest(long[] Ids, Dictionary<string, object> Fields);
-
-        /// <summary>批量修改检查对象字段（空字段不覆盖）</summary>
-        public IActionResult OnPostBatchSave([FromBody] BatchUpdateRequest req)
-        {
-            var ids = req?.Ids ?? Array.Empty<long>();
-            var fields = req?.Fields ?? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            var r = BatchUpdater.Update<CheckObject>(
-                ids: ids,
-                fields: fields,
-                requirePower: Power.CheckObjectEdit,
-                logTitle: "检查对象批量修改");
-            return BuildResult(r.Code, r.Message, r.Data);
-        }
-
         //-------------------------------------------------------------------------
         // 导入
         //-------------------------------------------------------------------------
@@ -428,6 +409,25 @@ namespace App.Pages.Checks
                 closeAction: DrawerCloseAction.RefreshData);
         }
 
+        
+
+        //-------------------------------------------------------------------------
+        // 批量修改（请求体 EditBatchRequest 由 EleUI 统一提供）
+        //-------------------------------------------------------------------------
+
+        /// <summary>批量修改检查对象字段（空字段不覆盖）</summary>
+        public IActionResult OnPostEditBatch([FromBody] EditBatchRequest req)
+        {
+            var ids = req?.Ids ?? Array.Empty<long>();
+            var fields = req?.Fields ?? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            var r = BatchUpdater.Update<CheckObject>(
+                ids: ids,
+                fields: fields,
+                requirePower: Power.CheckObjectEdit,
+                logTitle: "检查对象批量修改");
+            return BuildResult(r.Code, r.Message, r.Data);
+        }
+
         //-------------------------------------------------------------------------
         // Fix data
         //-------------------------------------------------------------------------
@@ -437,7 +437,8 @@ namespace App.Pages.Checks
                 return BuildResult(403, "无权操作");
 
             var cnt = CheckObject.FixAll();
-            return BuildResult(0, $"更新 {cnt} 条记录");
+            // 显示toast、刷新数据
+            return EleHandler.ShowToast($"共更新 {cnt} 条记录");
         }
     }
 }

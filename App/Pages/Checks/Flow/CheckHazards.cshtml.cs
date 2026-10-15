@@ -100,16 +100,16 @@ namespace App.Pages.Checks
                         .ToList();
                 }
                 baseQ = App.DAL.CheckHazard.IncludeSet
-                    .Include(t => t.Object).Include(t => t.Checker).Include(t => t.CheckItem)
+                    .Include(t => t.CheckObject).Include(t => t.Checker).Include(t => t.CheckItem)
                     .AsNoTracking()
                     .Where(h => (h.CheckerId.HasValue && h.CheckerId.Value == uid)
                              || (scopeOrgIds != null && scopeOrgIds.Count > 0
-                                 && h.Object != null && h.Object.DutyOrgId.HasValue
-                                 && scopeOrgIds.Contains(h.Object.DutyOrgId.Value)));
+                                 && h.CheckObject != null && h.CheckObject.DutyOrgId.HasValue
+                                 && scopeOrgIds.Contains(h.CheckObject.DutyOrgId.Value)));
                 if (!string.IsNullOrWhiteSpace(objectName))
-                    baseQ = baseQ.Where(o => o.Object.Name.Contains(objectName.Trim()));
+                    baseQ = baseQ.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));
                 if (objectId.HasValue && objectId.Value > 0)
-                    baseQ = baseQ.Where(o => o.ObjectId == objectId.Value);
+                    baseQ = baseQ.Where(o => o.CheckObjectId == objectId.Value);
                 if (!string.IsNullOrWhiteSpace(checkerName))
                     baseQ = baseQ.Where(o => o.Checker.Name.Contains(checkerName.Trim()));
             }
@@ -174,7 +174,7 @@ namespace App.Pages.Checks
             item.ExpireDt = req.ExpireDt;
             item.RectifyDt = req.RectifyDt;
             item.IsIn141 = req.IsIn141;
-            item.ObjectId = req.ObjectId;
+            item.CheckObjectId = req.CheckObjectId;
             item.CheckerId = req.CheckerId;
             item.CheckLogId = req.CheckLogId;
             item.CheckSheetId = req.CheckSheetId;

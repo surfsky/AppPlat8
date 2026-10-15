@@ -58,10 +58,13 @@ namespace App.Pages.Shared
 
             try
             {
-                using var stream = new MemoryStream();  /// 模板文件流
                 var mode = ParseColumnMode(columnMode);
-                var parser = CreateParser(entityType, ignoreId);
-                var saveMethod = parser.GetType().GetMethod("Save", new[] { typeof(Stream), typeof(ExcelColumnMode) });  // 获取 Save() 方法
+                var columns = GetImportableProperties(entityType, ignoreId);
+
+                // 生成模板文件流（列严格限定为 columns，确保与页面展示的列头一致）
+                using var stream = new MemoryStream();
+                var parser = CreateParser(entityType, columns);
+                var saveMethod = parser.GetType().GetMethod("Save", new[] { typeof(Stream), typeof(ExcelColumnMode) });  // 获取 ExcelParser.Save() 方法
                 if (saveMethod != null)
                     saveMethod.Invoke(parser, new object[] { stream, mode });
                 else
@@ -98,19 +101,24 @@ namespace App.Pages.Shared
 
             try
             {
+                // 解析文件
                 logs.Add($"开始解析文件: {file.FileName}");
-                var parser = CreateParser(entityType);
+                var importableProps = GetImportableProperties(entityType, IgnoreId);
+                var parser = CreateParser(entityType, importableProps);
                 using var stream = file.OpenReadStream();
                 var fetchMethod = parser.GetType().GetMethod("Fetch", new[] { typeof(Stream), typeof(string) });
                 var raw = fetchMethod?.Invoke(parser, new object[] { stream, file.FileName }) as IEnumerable;
                 var rows = raw?.Cast<object>().ToList() ?? new List<object>();
-
                 logs.Add($"解析完成，共{rows.Count}条记录");
 
+                // 找到Entity的存储方法
                 var saveMethod = entityType.GetMethod("Save", new[] { typeof(EntityOp?), typeof(bool) });
                 if (saveMethod == null)
                     return BuildFailResult("实体未找到可用的Save方法", logs, success, fail);
 
+                // 循环保存数据
+                // 从 URL 参数中提取可映射到实体属性的值（如 checkObjectId），应用到每条导入记录
+                var urlFieldValues = ExtractUrlFieldValues(entityType);
                 var userId = GetUserId();
                 for (var i = 0; i < rows.Count; i++)
                 {
@@ -120,6 +128,7 @@ namespace App.Pages.Shared
                     try
                     {
                         PrepareForInsert(entityType, item, userId);
+                        ApplyUrlFieldValues(entityType, item, urlFieldValues);
                         saveMethod.Invoke(item, new object[] { null, false });
                         success++;
                         logs.Add($"第{rowNo}行导入成功");
@@ -205,17 +214,19 @@ namespace App.Pages.Shared
             });
         }
 
-        /// <summary>创建Excel解析器</summary>
+        /// <summary>
+        /// 创建Excel解析器，并将其列严格限定为 props 指定的属性集合，
+        /// 确保下载的模板列头与 BuildColumnHeaders 展示的列完全一致。
+        /// </summary>
         /// <param name="entityType">实体类型</param>
-        /// <param name="ignoreId">是否忽略ID</param>
+        /// <param name="props">允许导出/导入的属性列表</param>
         /// <returns>Excel解析器</returns>
-        private static object CreateParser(Type entityType, bool ignoreId = false)
+        private static object CreateParser(Type entityType, List<PropertyInfo> props)
         {
             var parserType = typeof(ExcelParser<>).MakeGenericType(entityType);
-            if (!ignoreId)
-                return Activator.CreateInstance(parserType);
-
-            Func<PropertyInfo, bool> filter = p => !IsIdLikeProperty(p?.Name);
+            // 白名单过滤：仅允许 props 中出现的属性进入 ExcelParser 的列定义
+            var allowed = new HashSet<string>(props.Select(p => p.Name), StringComparer.Ordinal);
+            Func<PropertyInfo, bool> filter = p => allowed.Contains(p.Name);
             return Activator.CreateInstance(parserType, new object[] { filter });
         }
 
@@ -282,30 +293,51 @@ namespace App.Pages.Shared
         private static List<string> BuildColumnHeaders(Type entityType, bool ignoreId)
         {
             var headers = new List<string>();
-            var props = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanRead && p.CanWrite)
-                .Where(p => p.GetIndexParameters().Length == 0)
-                .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null)
-                .Where(p => (Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType).IsBasicType())
-                .Where(p => !ignoreId || !IsIdLikeProperty(p.Name))
-                .ToList();
+            var props = GetImportableProperties(entityType, ignoreId);
 
             foreach (var p in props)
             {
-                // 过滤掉 CreatorId, OwnerId 等ID属性
-                if (IsIdLikeProperty(p.Name))
-                    continue;
-
-                // 过滤掉只读属性
                 var ui = p.GetCustomAttribute<UIAttribute>();
-                if (ui != null && ui.ReadOnly)
-                    continue;
-
                 var title = string.IsNullOrWhiteSpace(ui?.Title) ? p.Name : ui.Title;
                 headers.Add(string.Equals(title, p.Name, StringComparison.Ordinal) ? p.Name : $"{title}({p.Name})");
             }
 
             return headers;
+        }
+
+        /// <summary>
+        /// 获取可导入的属性列表（模板列头与 ExcelParser 共用同一套过滤规则，确保两者一致）。
+        /// 始终排除：NotMapped、非基础类型、只读、索引器、创建人(CreatorId/CreatorName)、责任人(OwnerId/OwnerName)。
+        /// 当 ignoreId=true 时，额外排除所有 *Id 属性。
+        /// </summary>
+        private static List<PropertyInfo> GetImportableProperties(Type entityType, bool ignoreId)
+        {
+            return entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead && p.CanWrite)
+                .Where(p => p.GetIndexParameters().Length == 0)
+                .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null)
+                .Where(p => (Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType).IsBasicType())
+                .Where(p => !IsAutoManagedProperty(p.Name))      // 始终排除创建人/责任人等系统自动维护字段
+                .Where(p => !ignoreId || !IsIdLikeProperty(p.Name))
+                .Where(p =>
+                {
+                    var ui = p.GetCustomAttribute<UIAttribute>();
+                    return ui == null || !ui.ReadOnly;
+                })
+                .ToList();
+        }
+
+        /// <summary>判断属性是否为系统自动维护字段（创建人、责任人等），导入模板不展示</summary>
+        private static bool IsAutoManagedProperty(string propertyName)
+        {
+            if (string.IsNullOrWhiteSpace(propertyName))
+                return false;
+
+            // 创建人/责任人相关字段由后端 PrepareForInsert 自动赋值，导入时无需用户填写
+            return propertyName.Equals("CreatorId", StringComparison.OrdinalIgnoreCase)
+                || propertyName.Equals("CreatorName", StringComparison.OrdinalIgnoreCase)
+                || propertyName.Equals("OwnerId", StringComparison.OrdinalIgnoreCase)
+                || propertyName.Equals("OwnerName", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>判断属性是否为ID相关属性</summary>
@@ -315,6 +347,77 @@ namespace App.Pages.Shared
                 return false;
 
             return propertyName.EndsWith("Id", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 从当前请求的 URL 查询参数中提取能映射到实体属性的键值对。
+        /// 仅保留参数名（忽略大小写）能匹配实体可写属性的项，用于在导入时自动填充外键等字段。
+        /// </summary>
+        private Dictionary<string, string> ExtractUrlFieldValues(Type entityType)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var writableProps = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanWrite)
+                .Select(p => p.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var key in Request.Query.Keys)
+            {
+                if (string.IsNullOrWhiteSpace(key)) continue;
+                // 跳过 Importor 自身的控制参数
+                if (key.Equals("type", StringComparison.OrdinalIgnoreCase)
+                    || key.Equals("templateId", StringComparison.OrdinalIgnoreCase)
+                    || key.Equals("columnMode", StringComparison.OrdinalIgnoreCase)
+                    || key.Equals("ignoreId", StringComparison.OrdinalIgnoreCase)
+                    || key.Equals("handler", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var val = Request.Query[key].FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(val)) continue;
+                // 仅当参数名能匹配到实体属性时才收集（如 checkObjectId → CheckObjectId）
+                if (writableProps.Contains(key))
+                    result[key] = val;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 将 URL 参数值应用到实体实例上（按属性名忽略大小写匹配并做类型转换）。
+        /// 当 Excel 中对应字段为空时，URL 参数作为默认值填入；若 Excel 已有值则不覆盖。
+        /// </summary>
+        private static void ApplyUrlFieldValues(Type entityType, object item, Dictionary<string, string> urlFieldValues)
+        {
+            if (urlFieldValues == null || urlFieldValues.Count == 0) return;
+
+            foreach (var kv in urlFieldValues)
+            {
+                var prop = entityType.GetProperty(kv.Key, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                if (prop == null || !prop.CanWrite) continue;
+
+                // 若 Excel 已填值（非 null/空），则不覆盖
+                var existing = prop.GetValue(item);
+                if (existing != null && !string.IsNullOrWhiteSpace(existing.ToString())) continue;
+
+                var converted = ConvertValue(kv.Value, prop.PropertyType);
+                if (converted != null)
+                    prop.SetValue(item, converted);
+            }
+        }
+
+        /// <summary>将字符串值转换为目标类型（支持 Nullable 包装）</summary>
+        private static object ConvertValue(string value, Type targetType)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            var underlying = Nullable.GetUnderlyingType(targetType) ?? targetType;
+            try
+            {
+                if (underlying == typeof(string)) return value;
+                return Convert.ChangeType(value, underlying, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         /// <summary>准备插入数据（设置ID为0，设置CreatorId, OwnerId 等ID属性为当前用户ID）</summary>
