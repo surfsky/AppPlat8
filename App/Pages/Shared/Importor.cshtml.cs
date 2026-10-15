@@ -16,17 +16,10 @@ namespace App.Pages.Shared
     [Auth(AuthLogin = true)]
     public class ImportorModel : AuthModel
     {
-        [BindProperty(SupportsGet = true)]
-        public string Type { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public long? TemplateId { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public string ColumnMode { get; set; } = nameof(ExcelColumnMode.Title);
-
-        [BindProperty(SupportsGet = true)]
-        public bool IgnoreId { get; set; }
+        [BindProperty(SupportsGet = true)]      public string Type { get; set; }
+        [BindProperty(SupportsGet = true)]      public long? TemplateId { get; set; }
+        [BindProperty(SupportsGet = true)]      public string ColumnMode { get; set; } = nameof(ExcelColumnMode.Title);
+        [BindProperty(SupportsGet = true)]      public bool IgnoreId { get; set; }
 
         public string TypeTitle { get; set; } = string.Empty;
         public List<string> ColumnHeaders { get; set; } = new List<string>();
@@ -42,8 +35,15 @@ namespace App.Pages.Shared
             }
         }
 
+        /// <summary>获取导入模板</summary>
+        /// <param name="type">实体类型</param>
+        /// <param name="columnMode">列模式</param>
+        /// <param name="templateId">模板附件ID</param>
+        /// <param name="ignoreId">是否忽略ID</param>
+        /// <returns>模板文件</returns>
         public IActionResult OnGetTemplate(string type, string columnMode, long? templateId, bool ignoreId = false)
         {
+            // 从附件ID获取模板文件
             if (templateId != null && templateId > 0)
             {
                 var fileResult = BuildTemplateByAttId(templateId.Value);
@@ -52,21 +52,23 @@ namespace App.Pages.Shared
                 return BuildResult(404, "模板附件不存在或文件已被删除");
             }
 
+            // 尝试解析实体类型
             if (!TryResolveType(type, out var entityType, out var error))
                 return BuildResult(400, error);
 
             try
             {
+                using var stream = new MemoryStream();  /// 模板文件流
                 var mode = ParseColumnMode(columnMode);
-                using var stream = new MemoryStream();
                 var parser = CreateParser(entityType, ignoreId);
-                var saveMethod = parser.GetType().GetMethod("Save", new[] { typeof(Stream), typeof(ExcelColumnMode) });
+                var saveMethod = parser.GetType().GetMethod("Save", new[] { typeof(Stream), typeof(ExcelColumnMode) });  // 获取 Save() 方法
                 if (saveMethod != null)
                     saveMethod.Invoke(parser, new object[] { stream, mode });
                 else
                     parser.GetType().GetMethod("Save", new[] { typeof(Stream) })?.Invoke(parser, new object[] { stream });
                 stream.Position = 0;
 
+                // 生成文件文件名
                 var typeTitle = entityType.GetTitle();
                 if (string.IsNullOrWhiteSpace(typeTitle))
                     typeTitle = entityType.Name;
@@ -79,6 +81,8 @@ namespace App.Pages.Shared
             }
         }
 
+        /// <summary>导入数据</summary>
+        /// <param name="type">实体类型</param>
         public IActionResult OnPostImport(string type)
         {
             var logs = new List<string>();
@@ -154,6 +158,9 @@ namespace App.Pages.Shared
             }
         }
 
+        /// <summary>根据附件ID获取导入模板</summary>
+        /// <param name="templateId">模板附件ID</param>
+        /// <returns>模板文件</returns>
         private IActionResult BuildTemplateByAttId(long templateId)
         {
             var item = Att.Get(templateId);
@@ -176,6 +183,12 @@ namespace App.Pages.Shared
             return PhysicalFile(path, mimeType, downloadName);
         }
 
+        /// <summary>构建导入失败结果</summary>
+        /// <param name="message">失败消息</param>
+        /// <param name="logs">导入日志</param>
+        /// <param name="success">成功条数</param>
+        /// <param name="fail">失败条数</param>
+        /// <returns>导入失败结果</returns>
         private IActionResult BuildFailResult(string message, List<string> logs, int success = 0, int fail = 0)
         {
             var msg = string.IsNullOrWhiteSpace(message) ? "导入失败" : message;
@@ -192,6 +205,10 @@ namespace App.Pages.Shared
             });
         }
 
+        /// <summary>创建Excel解析器</summary>
+        /// <param name="entityType">实体类型</param>
+        /// <param name="ignoreId">是否忽略ID</param>
+        /// <returns>Excel解析器</returns>
         private static object CreateParser(Type entityType, bool ignoreId = false)
         {
             var parserType = typeof(ExcelParser<>).MakeGenericType(entityType);
@@ -202,6 +219,9 @@ namespace App.Pages.Shared
             return Activator.CreateInstance(parserType, new object[] { filter });
         }
 
+        /// <summary>解析列模式</summary>
+        /// <param name="value">列模式值</param>
+        /// <returns>列模式</returns>
         private static ExcelColumnMode ParseColumnMode(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -220,6 +240,7 @@ namespace App.Pages.Shared
             return ExcelColumnMode.Title;
         }
 
+        /// <summary>尝试解析实体类型</summary>
         private static bool TryResolveType(string typeName, out Type entityType, out string error)
         {
             error = null;
@@ -254,6 +275,10 @@ namespace App.Pages.Shared
             return true;
         }
 
+        /// <summary>构建列标题</summary>
+        /// <param name="entityType">实体类型</param>
+        /// <param name="ignoreId">是否忽略ID</param>
+        /// <returns>列标题列表</returns>
         private static List<string> BuildColumnHeaders(Type entityType, bool ignoreId)
         {
             var headers = new List<string>();
@@ -262,11 +287,16 @@ namespace App.Pages.Shared
                 .Where(p => p.GetIndexParameters().Length == 0)
                 .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null)
                 .Where(p => (Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType).IsBasicType())
-            .Where(p => !ignoreId || !IsIdLikeProperty(p.Name))
+                .Where(p => !ignoreId || !IsIdLikeProperty(p.Name))
                 .ToList();
 
             foreach (var p in props)
             {
+                // 过滤掉 CreatorId, OwnerId 等ID属性
+                if (IsIdLikeProperty(p.Name))
+                    continue;
+
+                // 过滤掉只读属性
                 var ui = p.GetCustomAttribute<UIAttribute>();
                 if (ui != null && ui.ReadOnly)
                     continue;
@@ -278,6 +308,7 @@ namespace App.Pages.Shared
             return headers;
         }
 
+        /// <summary>判断属性是否为ID相关属性</summary>
         private static bool IsIdLikeProperty(string propertyName)
         {
             if (string.IsNullOrWhiteSpace(propertyName))
@@ -286,6 +317,7 @@ namespace App.Pages.Shared
             return propertyName.EndsWith("Id", StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>准备插入数据（设置ID为0，设置CreatorId, OwnerId 等ID属性为当前用户ID）</summary>
         private static void PrepareForInsert(Type entityType, object item, long? userId)
         {
             // 导入场景默认按新增处理，避免误更新历史数据。
@@ -295,16 +327,15 @@ namespace App.Pages.Shared
 
             if (userId != null)
             {
+                // 设置 CreatorId, OwnerId 等ID属性为当前用户ID
                 var creatorIdProp = entityType.GetProperty("CreatorId", BindingFlags.Public | BindingFlags.Instance);
                 var ownerIdProp = entityType.GetProperty("OwnerId", BindingFlags.Public | BindingFlags.Instance);
-
                 if (creatorIdProp != null && creatorIdProp.CanWrite && creatorIdProp.PropertyType == typeof(long?))
                 {
                     var cur = creatorIdProp.GetValue(item) as long?;
                     if (cur == null)
                         creatorIdProp.SetValue(item, userId);
                 }
-
                 if (ownerIdProp != null && ownerIdProp.CanWrite && ownerIdProp.PropertyType == typeof(long?))
                 {
                     var cur = ownerIdProp.GetValue(item) as long?;
@@ -314,6 +345,7 @@ namespace App.Pages.Shared
             }
         }
 
+        /// <summary>获取异常的最底层消息</summary>
         private static string GetInnermostMessage(Exception ex)
         {
             var e = ex;

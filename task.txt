@@ -557,9 +557,20 @@ Done
         /给HttpApi 增加 CacheByUse=true 选项，可以根据当前用户来缓存
         /提高接口 http://localhost:5000/httpapi/orgs/GetAuthOrgTree 性能，只导出必要的列
         /重新思考该怎么设计（如何统计到各组织），还是删除CheckTaskOrg 会更简单一些（删除CheckTaskOrg）
+        /修正工作台页面的数字角标和跳转链接
+        /将通讯录挪到“应急指挥”下面去；
+        /更新值班表，用导入方式
+        Importor 优化：不用显示“创建人”、“责任人”列；
+        /Importor 优化：按钮加图标；
+        /CheckObjects 页面的网格员默认显示自己
+        /CheckObjects 页面的组织控件根据权限判断是否可编辑；
+        把 NextCheckDt 改为物理字段，检查时自动填写下次检查日期，实现 IFix 接口，便于调度器调度
+        实现页面/pages/Maintains/Consoloer，可运行调度器项目 app.consoler 并查看其控制台输出；
+        隐患排查时自动查找并列出匹配的任务（Checks/Flow/CheckFlow）；
+        恢复默认eletable 的边框颜色（淡一点）；对于统计报表模块，独立设置深一点（便于导出）
+        全网页统一按钮颜色：查询蓝色、新增、删除红色、其它黄色
         获取某个任务某人的任务清单
         获取某个组织的任务清单
-        修正工作台页面的数字角标和跳转链接
         对象页面提供检查任务过滤框
         跑通任务分配和检查流程
             部门管理员才能修改任务企业清单

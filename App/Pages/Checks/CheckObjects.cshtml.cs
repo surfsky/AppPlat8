@@ -16,55 +16,17 @@ namespace App.Pages.Checks
     [Auth(Power.CheckObjectView)]
     public class CheckObjectsModel : AuthModel
     {
-        public CheckObject Item { get; set; } = new CheckObject();
-        public List<long> DutyOrgIds { get; set; } = new List<long>();
-        public long? DefaultCheckerId { get; set; }
-        public string DefaultCheckerName { get; set; }
+        public CheckObject Item { get; set; } = new CheckObject();         // 检查对象实体（用于页面数据绑定）
+        public List<long> DutyOrgIds { get; set; } = new List<long>();     // 多值，用于 ElePicker/Select 控件回显
+        public long? DefaultCheckerId { get; set; }      // 默认检查人ID
+        public string DefaultCheckerName { get; set; }  // 默认检查人名称
+        public long? DutyOrgId { get; set; }  // 单值，用于 ElePicker/Select 控件单独匹配
+        public string ScopeTagIds { get; set; }  // 多值，用于标签树控件回显
 
-        /// <summary>dutyOrgId（单值）从 URL 注入的原始值，用于 ElePicker/Select 控件单独匹配</summary>
-        public long? DutyOrgId { get; set; }
-
-        /// <summary>URL 注入的 tagName 解析后的 tagIds（含子孙），用于标签树控件回显。</summary>
-        public string ScopeTagIds { get; set; }
-
-        /// <summary>解析 tagIds 参数：兼容表单提交（List<long>）+ EleTreePicker 的「?tagIds=127,136,138」逗号字符串，统一去重去空。</summary>
-        static List<long> ParseTagIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
-        {
-            var list = new List<long>();
-            if (fromBinder != null) list.AddRange(fromBinder);
-            if (raw.Count > 0)
-            {
-                foreach (var s in raw)
-                {
-                    if (string.IsNullOrWhiteSpace(s)) continue;
-                    foreach (var seg in s.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries))
-                    {
-                        if (long.TryParse(seg.Trim(), out var id) && id > 0) list.Add(id);
-                    }
-                }
-            }
-            return list.Distinct().ToList();
-        }
-
-        /// <summary>解析 dutyOrgIds：与 tagIds 同样式（?dutyOrgIds=1,2,3），用于 WorkDesk 多值 scope 透传。</summary>
-        static List<long> ParseOrgIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
-        {
-            var list = new List<long>();
-            if (fromBinder != null) list.AddRange(fromBinder);
-            if (raw.Count > 0)
-            {
-                foreach (var s in raw)
-                {
-                    if (string.IsNullOrWhiteSpace(s)) continue;
-                    foreach (var seg in s.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries))
-                    {
-                        if (long.TryParse(seg.Trim(), out var id) && id > 0) list.Add(id);
-                    }
-                }
-            }
-            return list.Distinct().ToList();
-        }
-
+        
+        //-------------------------------------------------------------------------
+        // 输入参数控制
+        //-------------------------------------------------------------------------
         public void OnGet()
         {
             // 兼容：dutyOrgId（单值，来自报表跳转）→ 优先写入 DutyOrgId 和 DutyOrgIds
@@ -112,6 +74,17 @@ namespace App.Pages.Checks
                 if (u != null)
                     DefaultCheckerName = u.RealName.IsNotEmpty() ? u.RealName : u.Name;
             }
+            else
+            {
+                // 无 URL 参数时，默认显示当前用户
+                var cu = GetUser();
+                if (cu != null && cu.Id > 0)
+                {
+                    DefaultCheckerId = cu.Id;
+                    Item.CheckerId = cu.Id;
+                    DefaultCheckerName = cu.RealName.IsNotEmpty() ? cu.RealName : cu.Name;
+                }
+            }
 
             // 解析 tagName → 仅绑定父标签 ID 到 UI（子标签由 Search 内部展开查询）
             var rawTagName = Request.Query["tagName"].FirstOrDefault();
@@ -126,6 +99,48 @@ namespace App.Pages.Checks
             }
         }
 
+        /// <summary>解析 tagIds 参数：兼容表单提交（List<long>）+ EleTreePicker 的「?tagIds=127,136,138」逗号字符串，统一去重去空。</summary>
+        static List<long> ParseTagIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
+        {
+            var list = new List<long>();
+            if (fromBinder != null) list.AddRange(fromBinder);
+            if (raw.Count > 0)
+            {
+                foreach (var s in raw)
+                {
+                    if (string.IsNullOrWhiteSpace(s)) continue;
+                    foreach (var seg in s.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (long.TryParse(seg.Trim(), out var id) && id > 0) list.Add(id);
+                    }
+                }
+            }
+            return list.Distinct().ToList();
+        }
+
+        /// <summary>解析 dutyOrgIds：与 tagIds 同样式（?dutyOrgIds=1,2,3），用于 WorkDesk 多值 scope 透传。</summary>
+        static List<long> ParseOrgIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
+        {
+            var list = new List<long>();
+            if (fromBinder != null) list.AddRange(fromBinder);
+            if (raw.Count > 0)
+            {
+                foreach (var s in raw)
+                {
+                    if (string.IsNullOrWhiteSpace(s)) continue;
+                    foreach (var seg in s.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (long.TryParse(seg.Trim(), out var id) && id > 0) list.Add(id);
+                    }
+                }
+            }
+            return list.Distinct().ToList();
+        }        
+
+        //-------------------------------------------------------------------------
+        // 查询
+        //-------------------------------------------------------------------------
+        /// <summary>查询风险点清单</summary>
         public IActionResult OnGetData(
             Paging pi, 
             string name="", 
@@ -286,6 +301,9 @@ namespace App.Pages.Checks
             return BuildResult(0, "success", list, pi);
         }
 
+        //-------------------------------------------------------------------------
+        // 导出
+        //-------------------------------------------------------------------------
         public IActionResult OnPostExport(Paging pi, 
             string name="", 
             string code="",
@@ -350,6 +368,9 @@ namespace App.Pages.Checks
         }
 
 
+        //-------------------------------------------------------------------------
+        // 删除
+        //-------------------------------------------------------------------------
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
             if (ids == null || ids.Length == 0)
@@ -371,6 +392,10 @@ namespace App.Pages.Checks
             return BuildResult(0, "删除成功");
         }
 
+
+        //-------------------------------------------------------------------------
+        // 批量修改
+        //-------------------------------------------------------------------------
         public record BatchUpdateRequest(long[] Ids, Dictionary<string, object> Fields);
 
         /// <summary>批量修改检查对象字段（空字段不覆盖）</summary>
@@ -386,6 +411,9 @@ namespace App.Pages.Checks
             return BuildResult(r.Code, r.Message, r.Data);
         }
 
+        //-------------------------------------------------------------------------
+        // 导入
+        //-------------------------------------------------------------------------
         public IActionResult OnPostImport()
         {
             if (!CheckPower(Power.CheckObjectEdit))
@@ -398,6 +426,18 @@ namespace App.Pages.Checks
                 //size: "980px",
                 direction: "rtl",
                 closeAction: DrawerCloseAction.RefreshData);
+        }
+
+        //-------------------------------------------------------------------------
+        // Fix data
+        //-------------------------------------------------------------------------
+        public IActionResult OnPostFixData()
+        {
+            if (!CheckPower(Power.AdminMaintain))
+                return BuildResult(403, "无权操作");
+
+            var cnt = CheckObject.FixAll();
+            return BuildResult(0, $"更新 {cnt} 条记录");
         }
     }
 }

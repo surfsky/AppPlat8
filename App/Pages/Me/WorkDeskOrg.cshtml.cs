@@ -68,7 +68,6 @@ namespace App.Pages.Me
 
             ResolveOrgDisplay();
             var today = DateTime.Today;
-            var near  = today.AddDays(7);
 
             var objects = BuildObjectScopeQuery();
             CountOrgObjects = objects.Count();
@@ -86,12 +85,16 @@ namespace App.Pages.Me
             CountNearExpireObjects = projection
                 .Count(o => {
                     var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
-                    return next.HasValue && next.Value > today && next.Value <= near;
+                    // 与 WorkDesk / CheckObjects nextCheck 过滤对齐：按日期比较，含 today+1 到 today+7 全天
+                    return next.HasValue
+                        && next.Value.Date >= today.AddDays(1)
+                        && next.Value.Date <= today.AddDays(7);
                 });
             CountOverdueObjects = projection
                 .Count(o => {
                     var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
-                    return next.HasValue && next.Value <= today;
+                    // 与 CheckObjects nextCheck=,{today} 对齐：NextCheckDt.Date <= today（含当日到期）
+                    return next.HasValue && next.Value.Date <= today;
                 });
 
             ObjectStatCards = new List<WorkDeskStatCard>

@@ -82,24 +82,14 @@ namespace App.Pages.Me
         [BindProperty(SupportsGet = true)] public long? OrgId { get; set; }
         [BindProperty(SupportsGet = true)] public long? UserId { get; set; }
         [BindProperty(SupportsGet = true)] public string UserName { get; set; }
+        public string UserRealName { get; private set; }  // 用户真实姓名
+        public bool CanChangeScope => Auth.CheckPower(Power.AdminLeader);  // 是否可切换用户名
+        public List<long> CurrOrgIds => ResolveCurrOrgIds();   //   实际责任网格命中范围：URL(管理员) > 用户 EffectiveAuthOrgId 展开后的全部子孙
+        public List<long> CurrRootOrgIds => ResolveCurrRootOrgIds();  // 责任网格根节点（未展开）：用于 URL 拼接，避免 Query 超长
 
-
-        // 简单绑定用列表（SSR 输出）
+        
         public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
         public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();
-
-
-        /// <summary>根据 UserId 反查的真实姓名（SSR 回显 / 初始值）。</summary>
-        public string UserRealName { get; private set; }
-
-        // 管理员（有用户查看权限）可切换到其它中心/人员视图，非管理员只能看自己
-        public bool CanChangeScope => Auth.CheckPower(Power.AdminLeader);
-
-        // 实际责任网格命中范围：URL(管理员) > 用户 EffectiveAuthOrgId 展开后的全部子孙
-        public List<long> CurrOrgIds => ResolveCurrOrgIds();
-
-        // 责任网格根节点（未展开）：用于 URL 拼接，避免 Query 超长
-        public List<long> CurrRootOrgIds => ResolveCurrRootOrgIds();
 
         // 实际要查询的目标用户：URL(管理员) > 当前登录用户
         public long CurrUserId
@@ -130,6 +120,7 @@ namespace App.Pages.Me
             var objects = BuildObjectScopeQuery();
             var CountMyObjects = objects.Count();
 
+            // ？？？
             // NextCheckDt 是实体 getter-only 计算属性（NotMapped），EF Core 无法翻译为 SQL。
             // 解决办法：先把 LatestCheckDt / RiskLevel / IsChecked 投影到内存，再本地计数。
             var projection = objects
@@ -141,8 +132,7 @@ namespace App.Pages.Me
                 })
                 .AsNoTracking()
                 .ToList();
-            var CountUncheckedObjects = projection
-                .Count(o => (o.IsChecked == null || o.IsChecked == false) || o.LastCheckDt == null);
+            var CountUncheckedObjects = projection.Count(o => (o.IsChecked == null || o.IsChecked == false) || o.LastCheckDt == null);
             var CountNearExpireObjects = projection
                 .Count(o =>
                 {
@@ -158,7 +148,7 @@ namespace App.Pages.Me
                     return next.HasValue && next.Value.Date <= today;
                 });
 
-            //
+            // 初始化对象统计卡片
             ObjectStatCards = new List<WorkDeskStatCard>
             {
                 new WorkDeskStatCard("我的对象",         CountMyObjects,         AppendObjectScope($"/Checks/CheckObjects?isDel=false"), "fas fa-warehouse"),
@@ -171,6 +161,7 @@ namespace App.Pages.Me
                 new WorkDeskStatCard("三场所三企业",      CountObjectsByTag("三场所三企业"),    AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("三场所三企业")}"), "fas fa-store"),
             };
 
+            // 初始化隐患统计卡片
             var hazards = BuildHazardScopeQuery();
             var CountMyHazards       = hazards.Count();
             var CountPendingHazards  = hazards.Where(h => h.Status == CheckHazardStatus.Waiting || h.Status == CheckHazardStatus.Processing).Count();

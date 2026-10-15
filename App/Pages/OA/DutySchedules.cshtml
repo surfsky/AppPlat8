@@ -13,9 +13,10 @@
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
-                <EleButton Type="Primary" Command="Add"    Icon="Plus"   Visible="@Auth.CheckPower(Power.DutyScheduleNew)">新增值班</EleButton>
-                <EleButton Type="Primary" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.DutyScheduleExport)">导出</EleButton>
+                <EleButton Type="Primary" Command="Add"    Icon="Plus"   Visible="@Auth.CheckPower(Power.DutyScheduleNew)">新增</EleButton>
                 <EleButton Type="Danger"  Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.DutyScheduleDelete)">删除</EleButton>
+                <EleButton Type="Warning" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.DutyScheduleExport)">导出</EleButton>
+                <EleButton Type="Warning" Icon="Upload" PopupUrl="/Shared/Importor?type=App.DAL.OA.DutySchedule" PopupTitle="导入值班表" Visible="@Auth.CheckPower(Power.DutyScheduleNew)">导入</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

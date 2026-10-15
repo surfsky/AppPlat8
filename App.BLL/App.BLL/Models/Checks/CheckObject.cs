@@ -35,8 +35,8 @@ namespace App.DAL
         [UI("基础", "是否巡查")]     public bool? IsChecked { get; set; } 
         [UI("基础", "建档日期")]     public DateTime? ArchieveDt { get; set; }
         [UI("基础", "最新巡查时间")] public DateTime? LastCheckDt { get; set; }
-        [UI("基础", "规模")]       public CheckObjectScale? Scale { get; set; }
-        public DateTime? NextCheckDt => LastCheckDt?.AddMonths(GetCheckCycleMonths(this.RiskLevel));
+        [UI("基础", "规模")]        public CheckObjectScale? Scale { get; set; }
+        [UI("基础", "下次巡查时间")] public DateTime? NextCheckDt {get; set;}
 
 
         // 风险相关
@@ -382,24 +382,32 @@ namespace App.DAL
             var cnt = 0;
             var now = DateTime.Now;
             var list = CheckObject.IncludeSet.ToList();
+            var needSave = false;
             foreach (var item in list)
             {
-                var isChecked = false; // 计算得到的新值
-                if (item.RiskLevel.HasValue && item.LastCheckDt.HasValue)
+                // 计算检查周期（月数）
+                var months = GetCheckCycleMonths(item.RiskLevel);
+
+                // 批量修改 NextCheckDt
+                if (item.RiskLevel.HasValue && item.LastCheckDt.HasValue && item.NextCheckDt == null)
                 {
-                    var checkCycleMonths = GetCheckCycleMonths(item.RiskLevel);
-                    isChecked = item.LastCheckDt.Value.AddMonths(checkCycleMonths) > now; // 已到检查周期需要检查了（检查状态为false）
-                }
-                else
-                {
-                    isChecked = false; // 无风险等级或无巡查时间的对象，设置为false（尚未检查）
+                    item.NextCheckDt = item.LastCheckDt.Value.AddMonths(months);
+                    needSave = true;
                 }
 
-                // 如果计算得到的新值与原值不同，则更新并计数
-                if (item.IsChecked != isChecked)
+                // 更新检查状态, 如果计算得到的新值与原值不同，则更新并计数
+                var b = (item.NextCheckDt == null) ? false : (item.NextCheckDt.Value > now);
+                if (item.IsChecked != b)
                 {
-                    item.IsChecked = isChecked;
+                    item.IsChecked = b;
+                    needSave = true;
+                }
+
+                // 保存修改
+                if (needSave)
+                {
                     cnt++;
+                    item.Save();
                 }
             }
             return cnt;

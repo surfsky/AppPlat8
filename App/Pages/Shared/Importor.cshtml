@@ -16,9 +16,9 @@
         </div>
 
         <div class="flex flex-wrap gap-2 mb-3">
-            <el-button type="primary" @@click="downloadTemplate" :loading="downloading">下载模板</el-button>
-            <el-button @@click="chooseFile">选择Excel文件</el-button>
-            <el-button type="success" @@click="startImport" :loading="importing" :disabled="!file">开始导入</el-button>
+            <el-button @@click="downloadTemplate" :loading="downloading" icon="Download">下载模板</el-button>
+            <el-button type="primary" @@click="chooseFile" icon="DocumentAdd">选择Excel文件</el-button>
+            <el-button type="success" @@click="startImport" :loading="importing" :disabled="!file" icon="Upload">开始导入</el-button>
             <input id="excelFileInput" type="file" accept=".xls,.xlsx" style="display:none" @@change="onFileChange" />
         </div>
 
@@ -40,7 +40,7 @@
     <script>
         const { createApp, ref } = Vue;
 
-        createApp({
+        const app = createApp({
             setup() {
                 const typeName = '@typeName';
                 const columnMode = '@columnMode';
@@ -161,7 +161,11 @@
                 };
             }
         })
-        .use(ElementPlus, { locale: ElementPlusLocaleZhCn })
-        .mount('#app');
+        .use(ElementPlus, { locale: ElementPlusLocaleZhCn });
+        // 注册 Element Plus 图标组件，使 el-button icon="Download" 等字符串名能生效
+        for (const [key, component] of Object.entries(window.ElementPlusIconsVue || {})) {
+            app.component(key, component);
+        }
+        app.mount('#app');
     </script>
 }
