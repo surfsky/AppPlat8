@@ -115,6 +115,9 @@ namespace App.Pages.Checks
             return BuildResult(0, "success", list, pi);
         }
 
+        //------------------------------------------------
+        // 检查对象管理
+        //------------------------------------------------
         /// <summary>打开“检查对象筛选管理”抽屉（支持选择/删除/上下移顺序等）。</summary>
         public IActionResult OnPostShowCheckObjects([FromBody] CheckTask req)
         {

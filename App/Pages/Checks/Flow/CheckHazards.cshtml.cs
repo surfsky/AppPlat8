@@ -16,27 +16,18 @@ namespace App.Pages.Checks
     [Auth(Power.CheckHazardView)]
     public class CheckHazardsModel : AuthModel
     {
-        [BindProperty(SupportsGet = true)]
-        public long? ObjectId { get; set; }
+        [BindProperty(SupportsGet = true)]    public long? ObjectId { get; set; }
+        [BindProperty(SupportsGet = true)]    public string ObjectName { get; set; }
 
-        [BindProperty(SupportsGet = true)]
-        public string ObjectName { get; set; }
-
-        /// <summary>URL 注入的检查人 Id（来自 WorkDesk 跳转），用于 scope 过滤与过滤控件回显。</summary>
-        public long? ScopeCheckerId { get; set; }
-        public string ScopeCheckerName { get; set; }
-
-        /// <summary>URL 注入的状态过滤值（如 "0,1"），用于状态下拉框回显。</summary>
-        public string ScopeStatus { get; set; }
-
-        /// <summary>URL 注入的整改期限上限（如 2026-10-14），用于期限控件回显。</summary>
-        public DateTime? ScopeExpireTo { get; set; }
-
-        /// <summary>URL 注入的"排除已归档"标记。</summary>
-        public bool ScopeExcludeArchived { get; set; }
+        public long? ScopeCheckerId { get; set; }   // 检查人 Id
+        public string ScopeCheckerName { get; set; } // 检查人姓名
+        public string ScopeStatus { get; set; } // 状态过滤值（支持多选，逗号分隔）
+        public DateTime? ScopeExpireTo { get; set; }  // 整改期限上限
+        public bool ScopeExcludeArchived { get; set; }   // 是否排除已归档
 
         public CheckHazard Item { get; set; }
 
+        
         public void OnGet(long? objectId, string objectName)
         {
             ObjectId = objectId;
@@ -55,24 +46,38 @@ namespace App.Pages.Checks
                 var u = App.DAL.User.Get(cid);
                 ScopeCheckerName = u != null ? (u.RealName.IsNotEmpty() ? u.RealName : u.Name) : string.Empty;
             }
-            ScopeStatus = Request.Query["status"].FirstOrDefault();
+            else
+            {
+                var currentUser = GetUser();
+                if (currentUser != null)
+                {
+                    ScopeCheckerId = currentUser.Id;
+                    ScopeCheckerName = currentUser.RealName.IsNotEmpty() ? currentUser.RealName : currentUser.Name;
+                }
+            }
+
+            var rawStatus = Request.Query["status"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(rawStatus)) ScopeStatus = rawStatus;
             var rawExpireTo = Request.Query["expireTo"].FirstOrDefault();
             if (DateTime.TryParse(rawExpireTo, out var et)) ScopeExpireTo = et.Date;
             var rawExclude = Request.Query["excludeArchived"].FirstOrDefault();
             ScopeExcludeArchived = bool.TryParse(rawExclude, out var ea) && ea;
         }
 
-        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, string status, DateTime? createStartDt, long? dutyOrgId = null, List<long> dutyOrgIds = null, DateTime? expireTo = null)
+        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, List<string> status, DateTime? createStartDt, long? dutyOrgId = null, List<long> dutyOrgIds = null, DateTime? expireTo = null)
         {
             dutyOrgIds = ParseOrgIds(dutyOrgIds, Request.Query["dutyOrgIds"]);
             var rawExcludeArchived = Request.Query["excludeArchived"].FirstOrDefault();
             bool excludeArchived = bool.TryParse(rawExcludeArchived, out var ea) && ea;
 
+            // 状态过滤值：兼容 ?status=0,1（单个逗号串）与多选控件提交的重复参数 status=0&status=1
+            var statusText = string.Join(",", status ?? new List<string>());
+
             CheckHazardStatus? singleStatus = null;
             List<CheckHazardStatus> multiStatus = null;
-            if (!string.IsNullOrWhiteSpace(status))
+            if (!string.IsNullOrWhiteSpace(statusText))
             {
-                var parts = status.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                var parts = statusText.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 var sl = new List<CheckHazardStatus>();
                 foreach (var s in parts)
                 {

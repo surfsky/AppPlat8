@@ -22,7 +22,7 @@
 
 图片、多张图片
     <EleImageUpload For="Item.Photo" Label="照片" FillRow="true"></EleImageUpload>
-    <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true" FillRow="true"></EleImageUpload>
+    <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Limit="3" FillRow="true"></EleImageUpload>
 
 用户选择、对象选择
     <ElePicker For="Item.UserId" TextFor="Item.UserName" Label="检查人" Enabled="false" FillRow="true" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>

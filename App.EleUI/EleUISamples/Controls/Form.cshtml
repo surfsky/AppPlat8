@@ -40,8 +40,8 @@
 
         <!-- 文件上传 -->
         <EleLabel Label="文件上传" Size="16px" FillRow="true"></EleLabel>
-        <EleImageUpload For="Item.Photo" ItemWidth="160" LimitWidth="1024"></EleImageUpload>
-        <EleImageUpload For="Item.Photos" Multi="true" MultiLimit="5" ItemWidth="160" LimitWidth="1024"></EleImageUpload>
+        <EleImageUpload For="Item.Photo" ItemWidth="160" CropWidth="1024"></EleImageUpload>
+        <EleImageUpload For="Item.Photos" Limit="5" ItemWidth="160" CropWidth="1024"></EleImageUpload>
         <EleIconPicker For="Item.Icon" ItemWidth="64" Popup="/EleUISamples/Shared/IconSelector"></EleIconPicker>
 
         <!-- 弹出选择器 -->

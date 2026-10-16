@@ -13,18 +13,20 @@ namespace App.Pages.Checks
     {
         public CheckHazardLog Item { get; set; }
 
-        public void OnGet(long hazardId, long id = 0)
+        public void OnGet(long hazardId, long id = 0, CheckHazardStatus? status = null, string content = null)
         {
             Item = id > 0
                 ? (CheckHazardLog.Get(id) ?? new CheckHazardLog())
                 : new CheckHazardLog { HazardId = hazardId, ReviewDt = DateTime.Now };
+            FillFromUrl(Item, status, content);
         }
 
-        public IActionResult OnGetData(long hazardId, long id = 0)
+        public IActionResult OnGetData(long hazardId, long id = 0, CheckHazardStatus? status = null, string content = null)
         {
             var item = id > 0
                 ? (CheckHazardLog.Get(id) ?? new CheckHazardLog())
                 : new CheckHazardLog { HazardId = hazardId, ReviewDt = DateTime.Now };
+            FillFromUrl(item, status, content);
 
             var data = new
             {
@@ -36,6 +38,14 @@ namespace App.Pages.Checks
                 item.Image,
             };
             return BuildResult(0, "success", data);
+        }
+
+        /// <summary>用 URL 参数预填状态与处理内容（复查/督查入口会带 status + content 跳转过来）。</summary>
+        static void FillFromUrl(CheckHazardLog item, CheckHazardStatus? status, string content)
+        {
+            if (item == null) return;
+            if (status.HasValue) item.Status = status;
+            if (!string.IsNullOrWhiteSpace(content)) item.Content = content;
         }
 
         public IActionResult OnPostSave([FromBody] CheckHazardLog req)

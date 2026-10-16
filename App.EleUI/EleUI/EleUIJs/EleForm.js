@@ -369,11 +369,12 @@ export class EleForm {
                     for (const p of payloads) {
                         if (!p || typeof p !== 'object') continue;
                         if (typeof p.command === 'string') {
-                            try { EleManager.executeServerCommand(p); } catch (_) { }
+                            try { await EleManager.executeServerCommand(p); } catch (_) { }
                         }
                         if (Array.isArray(p.commands)) {
+                            // 串行等待每条命令（sleep 等异步命令需要按顺序生效）
                             for (const item of p.commands) {
-                                try { EleManager.executeServerCommand(item); } catch (_) { }
+                                try { await EleManager.executeServerCommand(item); } catch (_) { }
                             }
                         }
                     }
@@ -463,11 +464,12 @@ export class EleForm {
                     for (const p of payloads) {
                         if (!p || typeof p !== 'object') continue;
                         if (typeof p.command === 'string') {
-                            try { EleManager.executeServerCommand(p); } catch (_) { }
+                            try { await EleManager.executeServerCommand(p); } catch (_) { }
                         }
                         if (Array.isArray(p.commands)) {
+                            // 串行等待每条命令（sleep 等异步命令需要按顺序生效）
                             for (const item of p.commands) {
-                                try { EleManager.executeServerCommand(item); } catch (_) { }
+                                try { await EleManager.executeServerCommand(item); } catch (_) { }
                             }
                         }
                     }

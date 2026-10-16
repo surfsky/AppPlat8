@@ -82,7 +82,7 @@ namespace App.Utils
         //--------------------------------------------------
         // 自由转化
         //--------------------------------------------------
-        /// <summary>数据类型转换（支持简单类型、可空类型、字典、json）</summary>
+        /// <summary>数据类型转换（支持字符串、枚举、日期等简单类型、可空类型、字典、json）</summary>
         public static T To<T>(this object o)
         {
             return (T)To(o, typeof(T));

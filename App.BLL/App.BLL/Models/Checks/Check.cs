@@ -128,14 +128,54 @@ namespace App.DAL
             Tasks.Clear();
             foreach (var task in tasks)
                 Tasks.Add(task);
-            
-            // TODO: 排查保存时，若选择的任务中没有包含该对象，会把该对象加入任务对象表中（CheckTaskObject），若有必要更新相关统计
 
-            
+            // 排查保存时，若所选任务未包含该对象，则把该对象补入任务对象表（CheckTaskObject）
+            AddMissingTaskObjects(taskIds);
+
             //
             SyncTaskFields(this);
             if (save)
                 this.Save();
+        }
+
+        /// <summary>把当前检查对象补入尚未包含它的所选任务（CheckTaskObject），并刷新对应任务的进度统计。</summary>
+        void AddMissingTaskObjects(List<long> taskIds)
+        {
+            if (!CheckObjectId.HasValue || CheckObjectId.Value <= 0) return;
+            if (taskIds == null || taskIds.Count == 0) return;
+
+            var objectId = CheckObjectId.Value;
+            var existTaskIds = CheckTaskObject.Set
+                .Where(t => t.TaskId.HasValue && taskIds.Contains(t.TaskId.Value) && t.CheckObjectId == objectId)
+                .Select(t => t.TaskId.Value)
+                .Distinct()
+                .ToList();
+            var missingTaskIds = taskIds.Where(t => !existTaskIds.Contains(t)).ToList();
+            if (missingTaskIds.Count == 0) return;
+
+            var now = DateTime.Now;
+            foreach (var taskId in missingTaskIds)
+            {
+                var maxSortId = CheckTaskObject.Set.Where(t => t.TaskId == taskId).Select(t => (int?)t.SortId).Max() ?? 0;
+                new CheckTaskObject
+                {
+                    TaskId = taskId,
+                    CheckObjectId = objectId,
+                    SortId = maxSortId + 10,
+                    IsFinished = true,          // 已保存排查记录，视为该对象排查完成
+                    CreateDt = now,
+                    CreatorId = CreatorId,
+                }.Save();
+            }
+
+            // 刷新受影响任务的进度统计
+            foreach (var taskId in missingTaskIds)
+            {
+                var task = CheckTask.Get(taskId);
+                if (task == null) continue;
+                task.UpdateProgress();
+                task.Save();
+            }
         }
 
         /// <summary>同步任务回填字段。</summary>

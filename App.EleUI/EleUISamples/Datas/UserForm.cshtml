@@ -18,8 +18,8 @@
         <EleRadio For="Item.Gender" Label="性别" Items="男, 女, 未知"></EleRadio>
         <EleSelect For="Item.City" Label="城市" Items="Model.CityList"></EleSelect>
         <EleSelect For="Item.Types" Label="类型" Items="Model.TypeList" Multiple="true"></EleSelect>
-        <EleImageUpload For="Item.Photo" Label="头像" ItemWidth="140" LimitWidth="1024"></EleImageUpload>
-        <EleImageUpload For="Item.Photos" Label="相册" Multi="true" MultiLimit="5" ItemWidth="140" LimitWidth="1024"></EleImageUpload>
+        <EleImageUpload For="Item.Photo" Label="头像" ItemWidth="140" CropWidth="1024"></EleImageUpload>
+        <EleImageUpload For="Item.Photos" Label="相册" Limit="5" ItemWidth="140" CropWidth="1024"></EleImageUpload>
         <EleInput For="Item.Description" Label="备注" Type="TextArea" Rows="3" FillRow="true"></EleInput>
         <EleList Label="附件列表" FillRow="true" DataHandler="?handler=AttData&id=@userId" PageSize="5" SortField="Id" SortDirection="DESC" Height="300px" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-2" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <ItemTemplate>

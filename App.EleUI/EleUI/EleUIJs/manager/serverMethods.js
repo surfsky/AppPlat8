@@ -140,11 +140,12 @@ export const serverMethods = {
             const cmdPayload = res.data;
             if (cmdPayload && typeof cmdPayload === "object") {
                 if (Array.isArray(cmdPayload.commands) && cmdPayload.commands.length > 0) {
+                    // 串行等待每条命令执行完（sleep 等异步命令需要按顺序生效）
                     for (const c of cmdPayload.commands) {
-                        if (c && typeof c === "object" && c.command) this.executeServerCommand(c);
+                        if (c && typeof c === "object" && c.command) await this.executeServerCommand(c);
                     }
                 } else if (cmdPayload.command) {
-                    this.executeServerCommand(cmdPayload);
+                    await this.executeServerCommand(cmdPayload);
                 }
             }
         }
@@ -163,7 +164,7 @@ export const serverMethods = {
         });
     },
 
-    executeServerCommand(payload) {
+    async executeServerCommand(payload) {
         try {
             if (!payload || typeof payload !== "object") {
                 this.notifyWarning("无效的服务端命令");
@@ -171,7 +172,7 @@ export const serverMethods = {
             }
 
             const commandName = Utils.safeText(payload.command, 50).toLowerCase();
-            const args = payload.args && typeof payload.args === "object" ? payload.args : {};
+            const args = payload.args;      // 原样传递：sleep 等命令的 args 可能是数字
             if (!commandName) {
                 this.notifyWarning("服务端命令为空");
                 return false;
@@ -183,7 +184,8 @@ export const serverMethods = {
                 return false;
             }
 
-            handler(args);
+            // 命令可能是异步的（如 sleep），必须等待完成后再执行下一条
+            await handler(args);
             return true;
         } catch (err) {
             console.error("executeServerCommand failed:", err);

@@ -59,8 +59,12 @@ export class EleAppBuilder {
             if (!key) return;
 
             const raw = (el.getAttribute('data-filter-default') || '').trim();
+            const isMultiple = el.hasAttribute('multiple');
             if (raw === 'true' || raw === 'false') {
                 defaults[key] = raw === 'true';
+            } else if (isMultiple && raw.indexOf(',') >= 0) {
+                // 多选控件：逗号分隔的默认值（如 ?status=0,1）需还原为数组才能回显勾选
+                defaults[key] = raw.split(',').map(s => s.trim()).filter(s => s !== '');
             } else if (raw !== '' && !Number.isNaN(Number(raw))) {
                 defaults[key] = Number(raw);
             } else if (raw !== '') {
@@ -295,7 +299,7 @@ export class EleAppBuilder {
      * @param {*} state 客户端状态对象
      * @returns 处理后的响应体
      */
-    processPostResponse(body, state = null) {
+    async processPostResponse(body, state = null) {
         // 处理非对象响应
         if (!body || typeof body !== 'object') {
             return body;
@@ -312,8 +316,8 @@ export class EleAppBuilder {
             const commandExists = this.hasCommandPayload(body) || this.hasCommandPayload(body.data);
             if (!commandExists)
                 EleManager.showSuccess(Utils.extractMessage(body, '操作成功'));
-            this.executeServerCommands(body);       // ？
-            this.executeServerCommands(body.data);  // ？
+            await this.executeServerCommands(body);       // ？
+            await this.executeServerCommands(body.data);  // ？
 
             // 将响应数据合并到状态中（如果有）
             if (state && body.data && typeof body.data === 'object' && !this.isCommandPayload(body.data)) {
@@ -323,7 +327,7 @@ export class EleAppBuilder {
         }
 
         // 处理非标准响应格式
-        this.executeServerCommands(body);
+        await this.executeServerCommands(body);
         if (!this.hasCommandPayload(body)) 
             EleManager.showSuccess('操作成功');
         if (state) 
@@ -331,24 +335,24 @@ export class EleAppBuilder {
         return body;
     }    
 
-    // 执行服务器命令
-    executeServerCommands(container) {
+    // 执行服务器命令（串行等待，保证 sleep 等异步命令按顺序生效）
+    async executeServerCommands(container) {
         if (!container || typeof container !== 'object') {
             return;
         }
 
         if (this.isCommandPayload(container)) {
-            EleManager.executeServerCommand(container);
+            await EleManager.executeServerCommand(container);
         }
         if (Array.isArray(container.commands)) {
             for (const item of container.commands) {
                 if (this.isCommandPayload(item)) {
-                    EleManager.executeServerCommand(item);
+                    await EleManager.executeServerCommand(item);
                 }
             }
         }
         if (this.isCommandPayload(container.command)) {
-            EleManager.executeServerCommand(container.command);
+            await EleManager.executeServerCommand(container.command);
         }
     }
 

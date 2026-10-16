@@ -376,11 +376,29 @@ export class Utils {
     }
 
     /**
+     * 解析 Sleep 命令的毫秒数（兼容数字与 { ms / milliseconds / delay } 对象，上限 60 秒防误配卡死）
+     */
+    static resolveSleepMs(args) {
+        let ms = NaN;
+        if (typeof args === 'number') ms = args;
+        else if (args && typeof args === 'object') {
+            ms = Number(args.ms ?? args.milliseconds ?? args.delay ?? args.value);
+        }
+        if (!Number.isFinite(ms)) ms = 1000;
+        return Math.min(Math.max(Math.round(ms), 0), 60000);
+    }
+
+    /** 异步等待指定毫秒 */
+    static sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, Utils.resolveSleepMs(ms)));
+    }
+
+    /**
      * 通用单条命令执行（返回 Promise）
      * command: { command: string(ClientCommandType camelCase), args: object, requestId, utc }
      * cmdStr 兼容后端 System.Text.Json CamelCase：
      *   toast / notify / showLoading / closeLoading / openDrawer / closeDrawer
-     *   / setControl / refreshData / refreshPage / messageBox / inputBox
+     *   / setControl / refreshData / refreshPage / messageBox / inputBox / sleep
      */
     static async applyClientCommand(cmd) {
         if (!cmd) return;
@@ -535,6 +553,10 @@ export class Utils {
                 try { if (w && typeof w.location !== 'undefined' && typeof w.location.reload === 'function') w.location.reload(force); } catch (_) { }
                 break;
             }
+            // 暂停指定毫秒，让前一条命令（如 toast）先呈现，再执行后续命令
+            case 'sleep':
+                await Utils.sleep(Utils.resolveSleepMs(args));
+                break;
             default:
                 try { console.warn('[applyClientCommand] unknown command:', cmdStr, cmd); } catch (_) { }
                 break;

@@ -34,7 +34,8 @@ namespace App.EleUI
         CloseDrawer,
         SetControl,
         RefreshData,
-        RefreshPage
+        RefreshPage,
+        Sleep   // 暂停指定毫秒后，再执行后续命令
     }
 
     /// <summary>客户端命令</summary>
@@ -85,6 +86,9 @@ namespace App.EleUI
 
     /// <summary>刷新页面命令参数</summary>
     public record RefreshPageArgs(RefreshScope Scope = RefreshScope.Parent, bool ForceReload = true);
+
+    /// <summary>睡眠参数（毫秒），用于让前面的提示先显示出来，再执行后续命令</summary>
+    public record SleepArgs(int Milliseconds = 1000);
 
 
 

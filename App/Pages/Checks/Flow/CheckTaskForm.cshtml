@@ -60,7 +60,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Look="Text" Handler="ShowCheckObjects" EnabledFor="Item.Id" Visible="@Auth.CheckPower(Power.AdminOrg)">管理</EleButton>
+                <EleButton Type="Primary" Icon="Edit" Handler="ShowCheckObjects" EnabledFor="Item.Id" Visible="@Auth.CheckPower(Power.AdminOrg)">管理</EleButton>
             </Footer>
         </EleList>
 
@@ -99,13 +99,13 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Look="Text" Handler="ShowAtts" EnabledFor="Item.Id" Visible="@Auth.CheckPower(Power.AdminOrg)">管理</EleButton>
+                <EleButton Type="Primary" Icon="Edit" Handler="ShowAtts" EnabledFor="Item.Id" Visible="@Auth.CheckPower(Power.AdminOrg)">管理</EleButton>
             </Footer>
         </EleList>
     
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
+            <EleButton Type="Primary" Icon="Check" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Icon="Close" Command="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
 }

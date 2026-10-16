@@ -16,7 +16,7 @@
                 <EleInput For="Item.Description" Width="250px" Label="描述" ></EleInput>
                 <EleInput For="Item.Check.CheckObject.Name" Prop="objectName" Width="250px" Label="对象" Value="@Q("objectName")" ></EleInput>
                 <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Prop="checkerId" Api="/httpapi/users/GetPicker" Width="200px" Label="检查人" Value="@(Model.ScopeCheckerId.HasValue ? Model.ScopeCheckerId.Value.ToString() : "")" TextValue="@Model.ScopeCheckerName"></ElePicker>
-                <EleSelect For="Item.Status" Width="200px" Label="状态" Clearable="true" Value="@Model.ScopeStatus"></EleSelect>
+                <EleSelect For="Item.Status" Width="200px" Label="状态" Clearable="true" Value="@Model.ScopeStatus" Multiple="true"></EleSelect>
                 <EleDatePicker For="Item.ExpireDt" Prop="expireTo" Width="200px" Label="整改期限至" Value="@(Model.ScopeExpireTo.HasValue ? Model.ScopeExpireTo.Value.ToString("yyyy-MM-dd") : "")"></EleDatePicker>
             </Filters>
             <Buttons>

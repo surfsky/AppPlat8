@@ -24,6 +24,14 @@ namespace App.DAL
         [UI("已归档")] Archived = 9,
     }
 
+    // 隐患整改方式（1：直接整改，2：复查）
+    [UI("检查", "隐患整改方式")]
+    public enum CheckHazardRectifyType
+    {
+        [UI("立查立改")] Direct = 1,
+        [UI("限期整改")] Limit = 2,
+    }
+
     //-------------------------------------------------------
     /// 隐患表(CheckHazard----(1:n)----CheckHazardLog)
     //-------------------------------------------------------
@@ -40,6 +48,7 @@ namespace App.DAL
         [UI("整改状态")] public CheckHazardStatus? Status { get; set; } = CheckHazardStatus.Waiting;
         [UI("整改期限")] public DateTime? ExpireDt { get; set; }
         [UI("整改日期")] public DateTime? RectifyDt { get; set; }
+        [UI("整改方式")] public CheckHazardRectifyType? RectifyType { get; set; } = CheckHazardRectifyType.Limit;
 
         //
         [UI("录入141")] public bool? IsIn141 { get; set; }
@@ -60,6 +69,10 @@ namespace App.DAL
         public string CheckSheetName => CheckSheet?.Name;
         public string CheckItemName => CheckItem?.Name;
         public CheckHazardLevel? HazardLevel  => CheckItem?.HazardLevel;
+        public string HazardLevelName => HazardLevel.GetTitle();
+        public string RectifyTypeName => RectifyType.GetTitle();
+
+
 
         //
         public override object Export(ExportMode mode)
@@ -81,6 +94,8 @@ namespace App.DAL
                 RectifyDt,
                 ExpireDtText = ExpireDt?.ToString("yyyy-MM-dd"),
                 IsIn141,
+                RectifyType,
+                RectifyTypeName,
 
                 StatusName,
                 ObjectName,

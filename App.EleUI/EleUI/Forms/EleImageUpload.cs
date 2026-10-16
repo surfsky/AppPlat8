@@ -10,10 +10,13 @@ namespace App.EleUI
         [HtmlAttributeName("Action")]          public string Action { get; set; }
         [HtmlAttributeName("ShowViewer")]      public bool ShowViewer { get; set; } = true;
         [HtmlAttributeName("MaxWidth")]        public int MaxWidth { get; set; } = 1024;
-        [HtmlAttributeName("Multi")]           public bool Multi { get; set; } = false;
-        [HtmlAttributeName("MultiLimit")]      public int MultiLimit { get; set; } = 0; // 0 means unlimited
-        [HtmlAttributeName("ItemWidth")]       public int ItemWidth { get; set; } = 200;
-        [HtmlAttributeName("LimitWidth")]      public int LimitWidth { get; set; } = 1024;
+        [HtmlAttributeName("Limit")]           public int Limit { get; set; } = 1;        // 1=单图；>1=限数量多图；<=0=不限数量多图
+        [HtmlAttributeName("ItemWidth")]       public int ItemWidth { get; set; } = 200;   // 图片展示宽度
+        [HtmlAttributeName("CropWidth")]       public int CropWidth { get; set; } = 1024;  // 图片裁剪宽度
+
+ 
+        /// <summary>是否多图模式：Limit=1 为单图，其余为多图</summary>
+        bool IsMulti => Limit != 1;
 
         public EleImageUpload() {}
 
@@ -39,10 +42,10 @@ namespace App.EleUI
 
             var uniqueId = Guid.NewGuid().ToString("N").Substring(0, 8);
             var fileInputId = $"fileInput_{propName}_{uniqueId}";
-            var multipleAttr = Multi ? "multiple" : "";
-            var multiLimitStr = MultiLimit > 0 ? MultiLimit.ToString() : "0";
+            var multipleAttr = IsMulti ? "multiple" : "";
+            var multiLimitStr = Limit > 0 ? Limit.ToString() : "0";
             var itemWidth = ItemWidth > 0 ? ItemWidth : 200;
-            var limitWidth = LimitWidth > 0 ? LimitWidth : (MaxWidth > 0 ? MaxWidth : 1024);
+            var limitWidth = CropWidth > 0 ? CropWidth : (MaxWidth > 0 ? MaxWidth : 1024);
             var itemImageStyle = $"width:{itemWidth}px; height:{itemWidth}px;";
             var itemBoxStyle = $"width:{itemWidth}px; height:{itemWidth}px;";
             var delImageText = Texts.Current.DeleteImage;
@@ -77,7 +80,7 @@ namespace App.EleUI
             
             string content;
             
-            if (Multi)
+            if (IsMulti)
             {
                 // Multi-file upload mode - displays as grid of images
                 content = $@"

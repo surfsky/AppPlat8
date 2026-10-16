@@ -37,6 +37,9 @@ namespace App.Pages.Checks
 
         public CheckHazard Item { get; set; }
 
+        //---------------------------------------------------------------------
+        // 初始化
+        //---------------------------------------------------------------------
         public void OnGet(long id = 0)
         {
             Item = CheckHazard.GetDetail(id) ?? new CheckHazard();
@@ -92,6 +95,9 @@ namespace App.Pages.Checks
             return BuildResult(0, "success", data);
         }
 
+        //---------------------------------------------------------------------
+        // 保存隐患
+        //---------------------------------------------------------------------
         public IActionResult OnPostSave([FromBody] SaveRequest req)
         {
             if (req == null)
@@ -173,7 +179,7 @@ namespace App.Pages.Checks
 
 
         //-------------------------------------------------------
-        // 处理按钮（自动写处理日志 + 更新状态 + 刷新父级）
+        // 处理流程按钮（自动写处理日志 + 更新状态 + 刷新父级）
         //-------------------------------------------------------
         public IActionResult OnPostLog([FromBody] CheckHazard req)      => ProcessForm(req, CheckHazardStatus.Processing, "复查");
         public IActionResult OnPostFinish([FromBody] CheckHazard req)   => Process(req, CheckHazardStatus.Finished, "整改完成");
@@ -187,7 +193,7 @@ namespace App.Pages.Checks
             if (hazardId <= 0)
                 return EleHandler.ShowNotify("请先保存隐患，再录入处理记录", NotifyType.Warning, "提示");
 
-            var url = $"/Checks/Flow/CheckHazardLogForm?hazardId={hazardId}&status={status}&content={action}";
+            var url = $"/Checks/Flow/CheckHazardLogForm?hazardId={hazardId}&status={(int)status}&content={action}";
             return EleHandler.ShowDrawer(title: $"{action}", url: url, closeAction: DrawerCloseAction.RefreshPage);
         }
 
@@ -222,7 +228,9 @@ namespace App.Pages.Checks
 
             return EleHandler.BuildCommandsResult(
                 new ClientCommand(ClientCommandType.Toast, new NotifyArgs(NotifyType.Success, action + "成功", "提示")),
-                new ClientCommand(ClientCommandType.RefreshData, new RefreshDataArgs(RefreshScope.Parent))
+                //new ClientCommand(ClientCommandType.RefreshData, new RefreshDataArgs(RefreshScope.Parent)),
+                new ClientCommand(ClientCommandType.Sleep, 1000),
+                new ClientCommand(ClientCommandType.RefreshPage, new RefreshPageArgs(RefreshScope.Self))
             );
         }
 

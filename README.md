@@ -59,66 +59,59 @@
    ```
 4. 打开浏览器，访问 `http://localhost:6001` 或 `http://abc.org`。
 
-## 单元测试和系统调试
+## 测试
+
+### 调试项目
+
+- 若使用原生VSCode 环境，可以直接点左侧的调试标签图标（Bug图标），进行调试；
+- 若使用三方网页，需安装三方调试插件：C# (with netcoredbg)，并点击页面右上角的调试图标，进行调试；
+
+### 单元测试
 
 ```bash
     # 测试项目
     dotnet test App.Utils/App.UtilsTests/App.UtilsTests.csproj
     # 或点击左侧调试图标面板（烧瓶图标）进行调试，会细化到每一个方法的测试结果（含运行时间）
-
-    # 调试项目
-    # 若使用原生VSCode 环境，可以直接点左侧的调试标签图标（Bug图标），进行调试；
-    # 若使用三方网页，需安装三方调试插件：C# (with netcoredbg)，并点击页面右上角的调试图标，进行调试；
 ```
 
-## 数据库迁移更新
+### 网页自动化测试
 
-1. 使用 EF 机制进行数据库迁移: 运行
-
-```bash
-   dotnet ef migrations add CheckObjectNextCheckDt --project App/App.csproj --startup-project App/App.csproj
-```
-
-2. 若端口被占用，查找占用 6060 端口的进程，然后kill
+- 测试用例：在 WebTest 目录下的测试用例文件
+- 测试环境：Selenium WebDriver
 
 ## 部署
 
-文件部署方式
+### 文件部署方式
 
 - 将/App目录下的所有文件复制到部署目录下。
 - 配置数据库连接字符串：在部署目录下的 `appsettings.json` 文件中配置数据库连接字符串。
 - dotnet app.dll --urls=http://localhost:6060;http://abc.org
 
-Docker 部署方式
+### Docker 部署方式
 
 - 应用程序目录：
 - 数据库文件映射：
 - 临时文件映射：
 
+## 数据库迁移
+
+1. 使用 EF 机制进行数据库迁移: 运行
+
+```bash
+   dotnet ef migrations add CheckHazardRectifyType --project App/App.csproj --startup-project App/App.csproj
+```
+
 ## 数据备份
 
-数据库备份：
+### 数据库备份：
 
 - sqlite 数据库备份：直接拷贝一份到别地方就行
 - postgresql 数据库备份：用 pg_dump 命令备份，用 pgagent 配置定时任务备份
 - mysql 数据库备份：用 mysqldump 命令备份，用 mysqlbackup 配置定时任务备份
 
-用户上传的文件备份：
+### 用户上传的文件备份：
 
 - /App/Files/
-
-
-## 进度
-
-详见 [进度](./README-progress.md)
-
-## 技术栈
-
-详见 [技术栈](./README-stack.md)
-
-## 主系统
-
-详见 [主系统](./App/README.md)
 
 ## 项目目录说明
 
@@ -133,3 +126,14 @@ Docker 部署方式
 - WebTest: Web 自动化测试相关代码。
 - Temp：临时目录，用于存储临时文件，如测试日志、临时数据等。
 
+## 进度
+
+详见 [进度](./README-progress.md)
+
+## 技术栈
+
+详见 [技术栈](./README-stack.md)
+
+## 主系统
+
+详见 [主系统](./App/README.md)
