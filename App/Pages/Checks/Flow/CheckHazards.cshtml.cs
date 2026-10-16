@@ -18,6 +18,7 @@ namespace App.Pages.Checks
     {
         [BindProperty(SupportsGet = true)]    public long? ObjectId { get; set; }
         [BindProperty(SupportsGet = true)]    public string ObjectName { get; set; }
+        [BindProperty(SupportsGet = true)]    public long? CheckId { get; set; }
 
         public long? ScopeCheckerId { get; set; }   // 检查人 Id
         public string ScopeCheckerName { get; set; } // 检查人姓名
@@ -28,15 +29,19 @@ namespace App.Pages.Checks
         public CheckHazard Item { get; set; }
 
         
-        public void OnGet(long? objectId, string objectName)
+        public void OnGet(long? objectId, string objectName, long? checkId)
         {
             ObjectId = objectId;
             ObjectName = objectName;
+            CheckId = checkId;
 
             if (ObjectId.GetValueOrDefault() > 0 && string.IsNullOrWhiteSpace(ObjectName))
             {
                 ObjectName = CheckObject.Get(ObjectId.Value)?.Name ?? string.Empty;
             }
+
+            if (CheckId.GetValueOrDefault() > 0)
+                return;
 
             // 读取 URL 注入的 scope 参数，供过滤控件回显
             var rawCheckerId = Request.Query["checkerId"].FirstOrDefault();
@@ -64,7 +69,7 @@ namespace App.Pages.Checks
             ScopeExcludeArchived = bool.TryParse(rawExclude, out var ea) && ea;
         }
 
-        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, List<string> status, DateTime? createStartDt, long? dutyOrgId = null, List<long> dutyOrgIds = null, DateTime? expireTo = null)
+        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? createStartDt, long? dutyOrgId = null, List<long> dutyOrgIds = null, DateTime? expireTo = null)
         {
             dutyOrgIds = ParseOrgIds(dutyOrgIds, Request.Query["dutyOrgIds"]);
             var rawExcludeArchived = Request.Query["excludeArchived"].FirstOrDefault();
@@ -124,6 +129,8 @@ namespace App.Pages.Checks
             }
 
             var q = baseQ;
+            if (checkId.HasValue && checkId.Value > 0)
+                q = q.Where(h => h.CheckLogId == checkId.Value);
             if (excludeArchived)
                 q = q.Where(h => !h.Status.HasValue || h.Status.Value != CheckHazardStatus.Archived);
             else if (multiStatus != null && multiStatus.Count > 0)

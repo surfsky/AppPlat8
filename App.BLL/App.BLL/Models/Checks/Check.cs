@@ -22,7 +22,7 @@ namespace App.DAL
         [UI("检查对象")] public long? CheckObjectId { get; set; }
         [UI("检查表")]   public long? CheckSheetId { get; set; }
         [UI("检查项Id")] public long? CheckItemId { get; set; }
-        [UI("检查结果")] public bool? Result { get; set; } = true;
+        [UI("是否有隐患")] public bool? Result { get; set; } = true;
         [UI("检查时间")] public DateTime? CheckDt { get; set; }
         [UI("隐患数")]    public int? HazardCount { get; set; } = 0;
         [UI("剩余隐患数")] public int? RemainHazardCount { get; set; } = 0;
@@ -42,6 +42,7 @@ namespace App.DAL
         public virtual List<CheckHazard> Hazards { get; set; }
         public string OrgName => Org?.Name ?? string.Empty;
         public string CheckerName => Checker?.Name ?? string.Empty;
+        public string CheckerRealName => Checker?.RealName ?? string.Empty;
         public string CheckObjectName => CheckObject?.Name ?? string.Empty;
         public string CheckSheetName => CheckSheet?.Name ?? string.Empty;
         public string CheckItemName => CheckItem?.Name ?? string.Empty;
@@ -77,6 +78,7 @@ namespace App.DAL
 
                 OrgName,
                 CheckerName,
+                CheckerRealName,
                 CheckObjectName,
                 CheckSheetName,
                 CheckItemName,

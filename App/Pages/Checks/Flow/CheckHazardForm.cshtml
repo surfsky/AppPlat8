@@ -13,12 +13,14 @@
         <ElePicker For="Item.CheckSheetId" TextFor="Item.CheckSheetName" Label="检查单" Visible="false"  Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="../Config/CheckSheets?md=select"></ElePicker>
         <ElePicker For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="../Config/CheckSheetItems?md=select"></ElePicker>
         <EleInput For="Item.CheckItemText" Label="检查项内容" Enabled="false" FillRow="true"></EleInput>
-        <EleSelect For="Item.RectifyType" Label="整改方式" Enabled="@(Model.Mode == PageMode.New)"></EleSelect>
 
         <EleLabel Label="隐患内容" FillRow="true"></EleLabel>
         <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Limit="3" FillRow="true" Enabled="@(Model.Mode == PageMode.New)"></EleImageUpload>
         <EleInput For="Item.Description" Label="隐患描述" Rows="3" FillRow="true" Enabled="@(Model.Mode == PageMode.New)"></EleInput>
-        <EleDatePicker For="Item.ExpireDt" Label="整改期限" Enabled="@(Model.Mode == PageMode.New)"></EleDatePicker>
+        <EleSelect For="Item.RectifyType" Label="整改方式" Enabled="@(Model.Mode == PageMode.New)"></EleSelect>
+        <div v-show="form.rectifyType !== 1 && form.rectifyType !== '1'">
+            <EleDatePicker For="Item.ExpireDt" Label="整改期限" Enabled="@(Model.Mode == PageMode.New)"></EleDatePicker>
+        </div>
         <EleDatePicker For="Item.RectifyDt" Label="整改日期" Enabled="false"></EleDatePicker>
         <EleSelect For="Item.Status" Label="状态" Enabled="false"></EleSelect>
         <EleSwitch For="Item.IsIn141" Label="是否录入141"></EleSwitch>
@@ -86,7 +88,7 @@
             </Footer>
         </EleList>    
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)" Icon="Select">保存</EleButton>
+            <EleButton Type="Primary" Handler="SaveRectify" Visible="@(Model.Mode != PageMode.View)" Icon="Select">保存</EleButton>
             <EleButton Command="Close" Icon="Close">关闭</EleButton>
             @if (Model.Mode == PageMode.Edit)
             {

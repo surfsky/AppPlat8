@@ -403,7 +403,19 @@ namespace App.EleUI
                  else if (ColSpan >= 6)  classAttr = @" class=""col-span-1""";
             }
 
-            output.PreElement.SetHtmlContent($@"<el-form-item prop=""{prop}"" {rulesAttr} {labelWidthAttr}{lpAttr}{classAttr}>
+            var wrapperVisibleAttr = string.Empty;
+            var fieldAttr = output.Attributes["data-ele-field"]?.Value?.ToString();
+            var controlIdAttr = output.Attributes["data-ele-control-id"]?.Value?.ToString();
+            var wrapperTarget = !string.IsNullOrWhiteSpace(fieldAttr)
+                ? fieldAttr
+                : (!string.IsNullOrWhiteSpace(controlIdAttr) ? controlIdAttr : null);
+            if (!string.IsNullOrWhiteSpace(wrapperTarget))
+            {
+                var safeTarget = EscapeJs(wrapperTarget);
+                wrapperVisibleAttr = $@" v-show=""(typeof resolveControlVisible === 'function' ? resolveControlVisible('{safeTarget}', true) : true)""";
+            }
+
+            output.PreElement.SetHtmlContent($@"<el-form-item prop=""{prop}"" {rulesAttr} {labelWidthAttr}{lpAttr}{classAttr}{wrapperVisibleAttr}>
     <template #label>
         <span class=""block w-full overflow-hidden text-ellipsis whitespace-nowrap"" title=""{encodedLabel}"">{encodedLabel}</span>
     </template>");

@@ -47,29 +47,14 @@ namespace App.EleUI
         [ViewContext]
         public ViewContext ViewContext { get; set; }
 
-        [HtmlAttributeName("Icon")]
-        public EleIcons Icon { get; set; } = EleIcons.None;
-
-        [HtmlAttributeName("Tooltip")]
-        public string Tooltip { get; set; }
-
-        [HtmlAttributeName("Visible")]
-        public bool Visible { get; set; } = true;
-
-        [HtmlAttributeName("Command")]
-        public string Command { get; set; }
-
-        [HtmlAttributeName("Popup")]
-        public string Popup { get; set; }
-
-        [HtmlAttributeName("Handler")]
-        public string Handler { get; set; }
-
-        [HtmlAttributeName("Text")]
-        public string Text { get; set; }
-
-        [HtmlAttributeName("Mode")]
-        public EleOpDisplayMode Mode { get; set; } = EleOpDisplayMode.Icon;
+        [HtmlAttributeName("Icon")]        public EleIcons Icon { get; set; } = EleIcons.None;
+        [HtmlAttributeName("Tooltip")]     public string Tooltip { get; set; }
+        [HtmlAttributeName("Visible")]     public bool Visible { get; set; } = true;
+        [HtmlAttributeName("Command")]     public string Command { get; set; }
+        [HtmlAttributeName("Popup")]       public string Popup { get; set; }
+        [HtmlAttributeName("Handler")]     public string Handler { get; set; }
+        [HtmlAttributeName("Text")]        public string Text { get; set; }
+        [HtmlAttributeName("Mode")]        public EleOpDisplayMode Mode { get; set; } = EleOpDisplayMode.Icon;
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

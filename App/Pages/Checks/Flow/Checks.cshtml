@@ -24,14 +24,16 @@
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="60" Fixed="right">
-                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckDelete)"></Op>
+                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckDelete) && Auth.CheckPower(Power.AdminOrg)"></Op>
             </EleOpColumn>
+            <EleColumn For="Item.CheckDt" Label="检查时间" Width="120" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleColumn For="Item.CheckObjectName" Label="检查对象" MinWidth="150"></EleColumn>
+            <EleColumn For="Item.CheckerRealName" Label="检查人" Width="100"></EleColumn>
             <EleColumn For="Item.TaskNames" Label="关联任务" MinWidth="180"></EleColumn>
-            <EleColumn For="Item.Checker.Name" Label="检查人" Width="100"></EleColumn>
-            <EleColumn For="Item.CheckDt" Label="检查时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
-            <EleColumn For="Item.Result" Label="结果" Width="80"></EleColumn>
-            <EleColumn For="Item.HazardCount" Label="隐患数" Width="80"></EleColumn>
+            <EleColumn For="Item.Result" Label="是否有隐患" Width="80"></EleColumn>
+            <EleColumn For="Item.HazardCount" Label="隐患数" Width="80"
+                       PopupUrl="/Checks/Flow/CheckHazards?objectId={checkObjectId}&objectName={checkObjectName}&checkId={id}"
+                       PopupTitle="隐患清单"></EleColumn>
             <EleColumn For="Item.RemainHazardCount" Label="未处理隐患数" Width="80"></EleColumn>
         </Columns>
     </EleTable>

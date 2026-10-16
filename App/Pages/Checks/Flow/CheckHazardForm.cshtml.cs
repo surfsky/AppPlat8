@@ -29,6 +29,7 @@ namespace App.Pages.Checks
             public string CheckItemText { get; set; }
             public string Description { get; set; }
             public CheckHazardStatus? Status { get; set; }
+            public CheckHazardRectifyType? RectifyType { get; set; }
             public DateTime? ExpireDt { get; set; }
             public DateTime? RectifyDt { get; set; }
             public bool? IsIn141 { get; set; }
@@ -86,6 +87,7 @@ namespace App.Pages.Checks
                 item.Description,
                 item.Status,
                 item.StatusName,
+                item.RectifyType,
                 item.ExpireDt,
                 item.RectifyDt,
                 item.IsIn141,
@@ -96,12 +98,65 @@ namespace App.Pages.Checks
         }
 
         //---------------------------------------------------------------------
+        // 整改方式联动
+        //---------------------------------------------------------------------
+        /// <summary>整改方式变更：立查立改时隐藏“整改期限”（值保留），其余情况显示</summary>
+        public IActionResult OnPostRectifyTypeChanged([FromBody] ControlChangeRequest req)
+        {
+            var type = Enum.TryParse<CheckHazardRectifyType>(req?.Value?.ToString(), true, out var parsed) ? parsed : (CheckHazardRectifyType?)null;
+            return EleHandler
+                .SetControl<CheckHazard>(t => t.ExpireDt, Visible: type != CheckHazardRectifyType.Direct)
+                .ToActionResult();
+        }
+
+        //---------------------------------------------------------------------
         // 保存隐患
         //---------------------------------------------------------------------
         public IActionResult OnPostSave([FromBody] SaveRequest req)
         {
+            var item = SaveHazard(req, out var error);
+            return item == null ? BuildResult(400, error) : BuildResult(0, "保存成功");
+        }
+
+        /// <summary>保存隐患并按整改方式分流：限期整改关闭窗口；立查立改关闭当前窗口后弹出整改窗口</summary>
+        public IActionResult OnPostSaveRectify([FromBody] SaveRequest req)
+        {
+            var item = SaveHazard(req, out var error);
+            if (item == null)
+                return BuildResult(400, error);
+
+            var toast = new ClientCommand(ClientCommandType.Toast, new NotifyArgs(NotifyType.Success, "保存成功", "提示"));
+            var isDirect = req?.RectifyType == CheckHazardRectifyType.Direct || item.RectifyType == CheckHazardRectifyType.Direct;
+
+            // 立查立改：先关闭当前隐患窗口，再弹出整改窗口，避免叠加抽屉链路不稳定。
+            if (isDirect)
+            {
+                var content = CheckHazardRectifyType.Direct.GetTitle();
+                var url = $"/Checks/Flow/CheckHazardLogForm?hazardId={item.Id}&status={(int)CheckHazardStatus.Finished}&content={Uri.EscapeDataString(content)}";
+                return EleHandler.BuildCommandsResult(
+                    toast,
+                    new ClientCommand(ClientCommandType.CloseDrawer, new { }),
+                    new ClientCommand(ClientCommandType.Sleep, 150),
+                    new ClientCommand(ClientCommandType.OpenDrawer, new DrawerArgs(Title: content, Url: url, CloseAction: DrawerCloseAction.RefreshPage))
+                );
+            }
+
+            // 限期整改：正常关闭窗口
+            return EleHandler.BuildCommandsResult(
+                toast,
+                new ClientCommand(ClientCommandType.CloseDrawer, new { })
+            );
+        }
+
+        /// <summary>隐患保存公共逻辑；返回 null 表示失败（原因见 error）</summary>
+        private CheckHazard SaveHazard(SaveRequest req, out string error)
+        {
+            error = null;
             if (req == null)
-                return BuildResult(400, "参数错误");
+            {
+                error = "参数错误";
+                return null;
+            }
 
             var item = CheckHazard.Get(req.Id);
             if (item == null)
@@ -117,6 +172,7 @@ namespace App.Pages.Checks
 
             item.Description = req.Description;
             item.Status = req.Status;
+            item.RectifyType = req.RectifyType;
             item.ExpireDt = req.ExpireDt;
             item.RectifyDt = req.RectifyDt;
             item.IsIn141 = req.IsIn141;
@@ -147,7 +203,7 @@ namespace App.Pages.Checks
                 }
             }
 
-            return BuildResult(0, "保存成功");
+            return item;
         }
 
         /// <summary>按当前表单图片列表同步隐患图片附件，避免丢失或重复。</summary>
