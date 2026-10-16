@@ -16,7 +16,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES": "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation"
       },
-      "applicationUrl": "http://localhost:6060"
+      "applicationUrl": "http://localhost:6001"
     }
   },
   "iisSettings": {

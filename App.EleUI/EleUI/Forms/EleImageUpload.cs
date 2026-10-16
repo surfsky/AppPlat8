@@ -46,6 +46,34 @@ namespace App.EleUI
             var itemImageStyle = $"width:{itemWidth}px; height:{itemWidth}px;";
             var itemBoxStyle = $"width:{itemWidth}px; height:{itemWidth}px;";
             var delImageText = Texts.Current.DeleteImage;
+            var target = ResolveControlTarget(context);
+            var targetSafe = string.IsNullOrWhiteSpace(target) ? string.Empty : target.Replace("'", "\\'");
+            var vVisibleExpr = string.IsNullOrWhiteSpace(target)
+                ? "true"
+                : $"(typeof resolveControlVisible === 'function' ? resolveControlVisible('{targetSafe}', true) : true)";
+
+            string defaultDisabled;
+            var enabledForPath = GetBindPath(EnabledFor);
+            if (!string.IsNullOrWhiteSpace(enabledForPath))
+            {
+                var clientPath = ToClientFormPath(enabledForPath);
+                defaultDisabled = $"!({clientPath})";
+            }
+            else if (context.AllAttributes.ContainsName("Enabled"))
+            {
+                defaultDisabled = (!Enabled).ToString().ToLower();
+            }
+            else
+            {
+                defaultDisabled = context.Items.ContainsKey("IsEleForm") ? "readOnly" : "false";
+            }
+
+            var vDisabledExpr = string.IsNullOrWhiteSpace(target)
+                ? defaultDisabled
+                : $"(typeof resolveControlDisabled === 'function' ? resolveControlDisabled('{targetSafe}', {defaultDisabled}) : {defaultDisabled})";
+            var dataControlAttr = string.IsNullOrWhiteSpace(target)
+                ? string.Empty
+                : $" data-ele-control-id=\"{target}\"";
             
             string content;
             
@@ -53,25 +81,26 @@ namespace App.EleUI
             {
                 // Multi-file upload mode - displays as grid of images
                 content = $@"
-            <div class=""ele-image-upload-client-multi"">
+            <div class=""ele-image-upload-client-multi"" v-show=""{vVisibleExpr}""{dataControlAttr}>
                 <input
                     type=""file""
                     id=""{fileInputId}""
                     style=""display: none""
                     accept=""image/*""
                     {multipleAttr}
+                    :disabled=""{vDisabledExpr}""
                     @change=""(e) => handleMultiImageUpload(e, '{propName}', {limitWidth}, {multiLimitStr})""
                 />
                 <div class=""flex flex-wrap gap-4"">
                     <div v-for=""(img, idx) in getImageList({vModel})"" :key=""idx"" class=""relative inline-block group"">
                         <img :src=""img"" style=""{itemImageStyle}"" class=""block object-contain cursor-pointer rounded border border-gray-200"" @click.stop=""openImageViewerTop(img, getImageList({vModel}), idx)"" />
-                        <div class=""absolute -top-2 -right-2 z-10"" @click.stop=""{vModel}.splice(idx, 1)"">
+                        <div v-if=""!({vDisabledExpr})"" class=""absolute -top-2 -right-2 z-10"" @click.stop=""{vModel}.splice(idx, 1)"">
                             <div class=""ele-corner-close-btn"" title=""{delImageText}"">
                                 <el-icon class=""ele-corner-close-elicon""><Close /></el-icon>
                             </div>
                         </div>
                     </div>
-                    <el-icon v-if=""{multiLimitStr} === 0 || getImageList({vModel}).length < {multiLimitStr}"" style=""{itemBoxStyle}"" class=""text-3xl text-gray-400 border border-dashed border-gray-300 rounded cursor-pointer flex justify-center items-center hover:border-blue-400 hover:text-blue-400 transition-colors"" @click=""triggerFileInput('{fileInputId}')"">
+                    <el-icon v-if=""!({vDisabledExpr}) && ({multiLimitStr} === 0 || getImageList({vModel}).length < {multiLimitStr})"" style=""{itemBoxStyle}"" class=""text-3xl text-gray-400 border border-dashed border-gray-300 rounded cursor-pointer flex justify-center items-center hover:border-blue-400 hover:text-blue-400 transition-colors"" @click=""triggerFileInput('{fileInputId}')"">
                         <Plus/>
                     </el-icon>
                 </div>
@@ -82,23 +111,24 @@ namespace App.EleUI
                 // Single file upload mode (original)
                 var deleteClick = $"{vModel} = ''";
                 content = $@"
-            <div class=""ele-image-upload-client"">
+            <div class=""ele-image-upload-client"" v-show=""{vVisibleExpr}""{dataControlAttr}>
                 <input
                     type=""file""
                     id=""{fileInputId}""
                     style=""display: none""
                     accept=""image/*""
+                    :disabled=""{vDisabledExpr}""
                     @change=""(e) => handleClientImageUpload(e, '{propName}', {limitWidth})""
                 />
                 <div v-if=""{vModel}"" class=""relative inline-block group overflow-visible"">
                     <img :src=""{vModel}"" style=""{itemImageStyle}"" class=""block object-contain cursor-pointer rounded border border-gray-200"" @click.stop=""openImageViewerTop({vModel})"" />
-                    <div class=""absolute -top-2 -right-2 z-10"" @click.stop=""{deleteClick}"">
+                    <div v-if=""!({vDisabledExpr})"" class=""absolute -top-2 -right-2 z-10"" @click.stop=""{deleteClick}"">
                         <div class=""ele-corner-close-btn"" title=""{delImageText}"">
                             <el-icon class=""ele-corner-close-elicon""><Close /></el-icon>
                         </div>
                     </div>
                 </div>
-                <el-icon v-else style=""{itemBoxStyle}"" class=""text-3xl text-gray-400 border border-dashed border-gray-300 rounded cursor-pointer flex justify-center items-center hover:border-blue-400 hover:text-blue-400 transition-colors"" @click=""triggerFileInput('{fileInputId}')"">
+                <el-icon v-else-if=""!({vDisabledExpr})"" style=""{itemBoxStyle}"" class=""text-3xl text-gray-400 border border-dashed border-gray-300 rounded cursor-pointer flex justify-center items-center hover:border-blue-400 hover:text-blue-400 transition-colors"" @click=""triggerFileInput('{fileInputId}')"">
                     <Plus/>
                 </el-icon>
             </div>";

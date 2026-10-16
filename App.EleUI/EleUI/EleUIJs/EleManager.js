@@ -100,6 +100,10 @@ class EleManagerCore {
                 });
             },
             closedrawer: () => this.closeDrawer(),
+            refreshdata: (args) => Utils.applyClientCommand({ command: 'refreshdata', args: args || {} }),
+            'refresh-data': (args) => Utils.applyClientCommand({ command: 'refreshdata', args: args || {} }),
+            refreshpage: (args) => Utils.applyClientCommand({ command: 'refreshpage', args: args || {} }),
+            'refresh-page': (args) => Utils.applyClientCommand({ command: 'refreshpage', args: args || {} }),
             setcontrol: (args) => this.setControl(args || {}),
             reload: (args) => {
                 const delay = Number.isFinite(Number(args?.delay)) ? Math.max(0, Number(args.delay)) : 0;

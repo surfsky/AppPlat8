@@ -60,7 +60,7 @@
         <EleLabel Label="更多" Color="#0A79C4" FillRow="true"></EleLabel>
 
         <!-- 联系人  -->
-        <EleList Label="联系人" FillRow="true" DataHandler="?handler=ContactsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" LastText=" " SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="联系人" FillRow="true" DataHandler="?handler=ContactsData&objectId=@Model.Item.Id" PageSize="5" MinHeight="160px" EmptyText="" LastText=" " SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="shrink-0 w-16 text-center">类型</span>
@@ -83,7 +83,7 @@
         </EleList>
 
         <!-- 隐患清单  -->
-        <EleList Label="隐患清单" FillRow="true" DataHandler="?handler=HazardsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="隐患清单" FillRow="true" DataHandler="?handler=HazardsData&objectId=@Model.Item.Id" PageSize="5" MinHeight="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="shrink-0 w-24 text-center">检查日期</span>
@@ -109,7 +109,7 @@
 
 
         <!-- 检查历史  -->
-        <EleList Label="检查历史" FillRow="true" DataHandler="?handler=CheckLogsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="CheckDt" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="检查历史" FillRow="true" DataHandler="?handler=CheckLogsData&objectId=@Model.Item.Id" PageSize="5" MinHeight="160px" EmptyText="" SortField="CheckDt" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="shrink-0 w-24 text-center">检查时间</span>
@@ -134,7 +134,7 @@
 
 
         <!--检查点 CheckPoints/CheckPointForm -->
-        <EleList Label="检查点" FillRow="true" DataHandler="?handler=CheckPointsData&objectId=@Model.Item.Id" PageSize="5" Height="200px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="检查点" FillRow="true" DataHandler="?handler=CheckPointsData&objectId=@Model.Item.Id" PageSize="5" MinHeight="200px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="shrink-0 w-16 text-center">等级</span>
@@ -162,7 +162,7 @@
 
 
         <!-- 事件  -->
-        <EleList Label="事件台账" FillRow="true" DataHandler="?handler=EventsData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="事件台账" FillRow="true" DataHandler="?handler=EventsData&objectId=@Model.Item.Id" PageSize="5" MinHeight="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="shrink-0 w-24 text-center">时间</span>
@@ -184,7 +184,7 @@
 
         
         <!-- 文档  -->
-        <EleList Label="文档资料" FillRow="true" DataHandler="?handler=FilesData&objectId=@Model.Item.Id" PageSize="5" Height="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+        <EleList Label="文档资料" FillRow="true" DataHandler="?handler=FilesData&objectId=@Model.Item.Id" PageSize="5" MinHeight="160px" EmptyText="" SortField="Id" SortDirection="DESC" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-0.5" ItemClass="py-1 px-2 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
                 <div class="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="flex-1">名称</span>

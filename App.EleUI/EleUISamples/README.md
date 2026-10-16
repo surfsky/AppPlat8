@@ -2,6 +2,16 @@
 
 本目录是 EleUI 在 Razor Pages 下的示例集合，覆盖布局、控件、弹窗、数据页面、管理器能力等常见场景。
 
+## 快速运行
+
+``` bash
+dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
+dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
+
+# 访问 http://localhost:6002
+# 端口号在 Program.cs 中配置
+```
+
 ## 访问入口
 
 - 总入口页: /EleUISamples

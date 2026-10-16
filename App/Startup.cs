@@ -129,17 +129,17 @@ namespace App
                 }
             };
 
-            // 说明：已移除全局自动数据权限过滤器（原 OnGetDataAccessScope + DataAccessFilter.Apply）。
-            // 数据收敛不再按角色（DataAll/DataUnit/DataDuty）透明注入，
-            // 各页面/接口需自行通过 OrgScopeHelper.FilterByOrgScope / GetAuthOrgScopeIds
-            // 显式按当前用户 AuthOrgId 子树过滤（见 EntityBase<T>.DataSet = Set）。
 
             // 数据审计上下文：记录"操作者/操作组织"用于写库时的审计字段（OrgId 自动回填）。
             // 组织取法：当前用户 AuthOrgId（授权组织）优先 → 未配置则退回 OrgId（所属部门）。
             EntityConfig.Instance.OnGetDataAuditScope += () =>
             {
+                var http = Asp.Current;
+                if (http?.RequestServices == null)
+                    return new DataAuditScope { Enabled = false };
+
                 var db = Common.GetDbConnection();
-                var userId = Auth.GetUserId();
+                var userId = Auth.GetUserId(http);
                 if (db == null || !userId.HasValue)
                     return new DataAuditScope { Enabled = false };
 
@@ -245,35 +245,32 @@ namespace App
             lifetime.ApplicationStarted.Register(() => UpdateStartupDt(app.ApplicationServices));
         }
 
-        /// <summary>启动完成后向 SiteConfigs 写入最近启动时间，并同步缓存到全局 APP_START_TIME</summary>
+        /// <summary>启动完成后向 SiteConfigs 写入最近启动时间</summary>
         private static void UpdateStartupDt(IServiceProvider services)
         {
             try
             {
                 var now = DateTime.Now;
-                // 先同步缓存，哪怕 DB 失败也保证 About 页能看到"非空"启动时间（不会出现 -）
-                try { AppDomain.CurrentDomain.SetData("APP_START_TIME", now); } catch { /* ignore */ }
+                Logger.Info("[Startup] SiteConfig.StartupDt updated: {0}", now);
 
+                // 将启动时间写入 SiteConfig
+                // 直接这么写会报错，估计是环境不一样
+                //SiteConfig.Instance.StartupDt = now;
+                //SiteConfig.Instance.Save();
                 using var scope = services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppPlatContext>();
-                if (db == null) return;
-
-                // SiteConfig.Instance 会自动 seed 单例（EntityBase 的 Instance 懒加载模式），
-                // 这里直接查 / attach 都可以，为避免多线程竞争首启，用 FirstOrDefault 没有就 Add。
-                var site = db.Set<SiteConfig>().OrderBy(x => x.Id).FirstOrDefault();
-                if (site == null)
+                var cfg = db.Set<SiteConfig>().OrderBy(x => x.Id).FirstOrDefault();
+                if (cfg == null)
                 {
-                    site = SiteConfig.Instance;
-                    try { db.Attach(site); } catch { /* 可能已被 Instance 加载到本地追踪器 */ }
+                    cfg = new SiteConfig();
+                    db.Set<SiteConfig>().Add(cfg);
                 }
-                site.StartupDt = now;
-                _ = db.SaveChanges();
-                Logger.Info("[Startup] SiteConfig.StartupDt updated: {0}", now.ToString("yyyy-MM-dd HH:mm:ss"));
+                cfg.StartupDt = now;
+                db.SaveChanges();
             }
             catch (Exception ex)
             {
-                // 启动期写库失败：不要 throw 阻止站点启动，仅记录日志兜底，About 页面会用 APP_START_TIME 继续工作
-                Logger.Warn("[Startup] Update SiteConfig.StartupDt failed, fallback to APP_START_TIME. Reason: {0}", ex.Message);
+                Logger.Warn("[Startup] Update SiteConfig.StartupDt failed. Reason: {0}", ex.Message);
             }
         }
 

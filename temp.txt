@@ -244,3 +244,5 @@
                 closeAction: DrawerCloseAction.RefreshData);
         }
 
+
+                AppDomain.CurrentDomain.SetData("APP_START_TIME", now);

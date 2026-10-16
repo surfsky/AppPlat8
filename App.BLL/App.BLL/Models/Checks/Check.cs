@@ -116,6 +116,28 @@ namespace App.DAL
                 .AsSplitQuery();
         }
 
+
+        /// <summary>设置关联任务列表。</summary>
+        public void SetTasks(List<long> taskIds, bool save = false)
+        {
+            //
+            taskIds = (taskIds ?? new List<long>()).Where(t => t > 0).Distinct().ToList();
+            var tasks = taskIds.Count == 0
+                ? new List<CheckTask>()
+                : CheckTask.Set.Where(t => taskIds.Contains(t.Id)).ToList();
+            Tasks.Clear();
+            foreach (var task in tasks)
+                Tasks.Add(task);
+            
+            // TODO: 排查保存时，若选择的任务中没有包含该对象，会把该对象加入任务对象表中（CheckTaskObject），若有必要更新相关统计
+
+            
+            //
+            SyncTaskFields(this);
+            if (save)
+                this.Save();
+        }
+
         /// <summary>同步任务回填字段。</summary>
         static void SyncTaskFields(Check item)
         {
@@ -125,21 +147,6 @@ namespace App.DAL
                 .Select(t => t.Name.Trim())
                 .Distinct()
                 .ToJoinString(",") ?? string.Empty;
-        }
-
-        /// <summary>设置关联任务列表。</summary>
-        public void SetTasks(List<long> taskIds, bool save = false)
-        {
-            taskIds = (taskIds ?? new List<long>()).Where(t => t > 0).Distinct().ToList();
-            var tasks = taskIds.Count == 0
-                ? new List<CheckTask>()
-                : CheckTask.Set.Where(t => taskIds.Contains(t.Id)).ToList();
-            Tasks.Clear();
-            foreach (var task in tasks)
-                Tasks.Add(task);
-            SyncTaskFields(this);
-            if (save)
-                this.Save();
         }
 
         /// <summary>搜索检查记录。</summary>

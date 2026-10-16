@@ -5,53 +5,40 @@
 ## 目录
 
 - Pages: 网站页面；
+  - Admins : 基础的管理页面，如组织、用户、权限等；
+  - AI: AI 对话配置等
+  - Checks：隐患排查相关业务页面
+  - CMS：内容管理相关页面（文档页面、评论）
+  - CRM：客户关系管理相关页面
+  - Dev：开发测试相关业务页面（API接口、文件查看、图标查看）
+    - Blasors：Blazor 组件页面
+    - Chats：聊天页面
+  - Duty：值班相关业务页面
+  - FMS：财务管理相关页面（项目、资产、预算、供应商等）
+  - GIS：GIS 驾驶舱相关页面（点位、图层、统计面板、驾驶舱等）
+  - KB：知识库相关页面（文章、文档、视频等）
+  - Maintains：运维相关业务页面（配置、日志、菜单等）
+  - Me：个人中心页面（个人信息、密码修改、个人工作台、科室工作台等）
+  - OA：办公相关业务页面（公告、值班、会议等）
+  - Shared：共享页面（如布局、附件、图标选择、数据导入、属性编辑器、用户选择、文件查看器、视频播放）
+  - About：关于页面
+  - Error：错误页面
+  - Index：后台首页
+  - Login：登录页面
+  - LoginAI：供AI Agent 登录的页面
+- Caches：图片缩略图缓存目录，需定期删除；
 - Components: 服务端组件；
-- Apis: API 服务；
 - Controller: 控制器，简单路由服务；
 - wwwroot: 静态资源（CSS、JS、图片）；
 - Properties: 项目属性，如应用程序配置文件、启动配置文件；
 - WebTest: 自动化网页测试脚本（ nodejs + playwright ）；
-
-- sqlite.db: 数据库文件，默认存储在项目根目录下。需定期备份
+- HttpApi: API 服务；
+- Db: 数据库文件
 - Files: 项目文档存储目录，需定期备份
-- Caches：缓存目录，用于存储临时文件，可定期删除；
 - Logs：日志目录，用于存储应用程序运行时的日志文件，可定期删除；
 
 
-## 菜单
+## 项目相关文件
 
-以最新版本的菜单为准。
-
-- 排查
-    - 对象      ~/Checks/CheckObjects
-    - 排查      ~/Checks/flow/CheckLogs
-    - 检查表    ~/Checks/config/CheckSheets
-    - 隐患      ~/Checks/CheckHarzards
-    - 任务      ~/Checks/flow/CheckTasks
-    - 报表      ~/Checks/report/CheckReports
-- OA
-    - 资产      ~/OA/Assets
-    - 文档      ~/OA/Articles
-    - 预算      ~/OA/Budgets
-    - 项目      ~/OA/Projects
-    - 公告      ~/OA/Annouces
-    - 交办      ~/OA/Tasks
-    - 事件      ~/OA/Events
-    - 公司      ~/OA/Company
-- 驾驶舱
-    - 驾驶舱    ~/GIS/GisIndex
-    - 区域      ~/GIS/Regions
-- 账户
-    - 组织      ~/Admins/Orgs
-    - 用户      ~/Admins/Users
-    - 权限      ~/Admins/Roles
-- 运维
-    - 菜单      ~/Maintains/Menus
-    - 在线      ~/Maintains/Onlines
-    - 配置      ~/Maintains/Config
-    - 日志      ~/Maintains/Logs
-- 开发
-    - 图标     ~/Dev/Icons
-    - API      ~Dev/API
--修改密码     ~/Admins/ChangePassword
--安全退出     ~/Logout
+- app.csproj: 项目主配置文件，包含项目依赖、构建配置、版本等
+- appsettings.json: 应用程序配置文件，包含数据库连接字符串、日志配置、环境变量等

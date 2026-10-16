@@ -9,17 +9,17 @@
     <EleForm Model="form" LabelWidth="120px">
         <EleLabel Label="检查项信息" FillRow="true" For="Item.Id"></EleLabel>
         <EleInput For="Item.Id" Label="隐患ID" Enabled="false" FillRow="true"></EleInput>
-        <ElePicker For="Item.CheckObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckObjects?md=select"></ElePicker>
-        <ElePicker For="Item.CheckSheetId" TextFor="Item.CheckSheetName" Label="检查单" Visible="false"  Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheets?md=select"></ElePicker>
-        <ElePicker For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="CheckSheetItems?md=select"></ElePicker>
+        <ElePicker For="Item.CheckObjectId" TextFor="Item.ObjectName" Label="检查对象" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="../CheckObjects?md=select"></ElePicker>
+        <ElePicker For="Item.CheckSheetId" TextFor="Item.CheckSheetName" Label="检查单" Visible="false"  Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="../Config/CheckSheets?md=select"></ElePicker>
+        <ElePicker For="Item.CheckItemId" TextFor="Item.CheckItemText" Label="检查项" Enabled="@(Model.Mode == PageMode.New)" FillRow="true" PopupUrl="../Config/CheckSheetItems?md=select"></ElePicker>
         <EleInput For="Item.CheckItemText" Label="检查项内容" Enabled="false" FillRow="true"></EleInput>
 
         <EleLabel Label="隐患内容" FillRow="true"></EleLabel>
-        <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true" FillRow="true" Enabled="false"></EleImageUpload>
-        <EleSelect For="Item.Status" Label="状态" Enabled="false"></EleSelect>
-        <EleInput For="Item.Description" Label="隐患描述" Rows="3" FillRow="true" Enabled="false"></EleInput>
-        <EleDatePicker For="Item.ExpireDt" Label="整改期限" Enabled="false"></EleDatePicker>
+        <EleImageUpload For="Item.ImageUrls" Label="隐患图片" Multi="true" FillRow="true" Enabled="@(Model.Mode == PageMode.New)"></EleImageUpload>
+        <EleInput For="Item.Description" Label="隐患描述" Rows="3" FillRow="true" Enabled="@(Model.Mode == PageMode.New)"></EleInput>
+        <EleDatePicker For="Item.ExpireDt" Label="整改期限" Enabled="@(Model.Mode == PageMode.New)"></EleDatePicker>
         <EleDatePicker For="Item.RectifyDt" Label="整改日期" Enabled="false"></EleDatePicker>
+        <EleSelect For="Item.Status" Label="状态" Enabled="false"></EleSelect>
         <EleSwitch For="Item.IsIn141" Label="是否录入141"></EleSwitch>
 
         <EleLabel Label="处理过程" FillRow="true"></EleLabel>
@@ -90,9 +90,9 @@
             @if (Model.Mode == PageMode.Edit)
             {
                 <EleButton Type="Success" Handler="Log"        Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Waiting)" >复查</EleButton>
-                <EleButton Type="Success" Handler="Finish"     Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Processing)" prompt="确认归档吗？">整改完成</EleButton>
+                <EleButton Type="Success" Handler="Finish"     Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Processing)"  ConfirmText="确定整改完成吗？">整改完成</EleButton>
                 <EleButton Type="Success" Handler="Monitor"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)">督查</EleButton>
-                <EleButton Type="Info"    Handler="Archive"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)"  prompt="确认归档吗？">归档</EleButton>
+                <EleButton Type="Warning" Handler="Archive"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)"  ConfirmText="确认归档吗？归档后流程将无法操作，数据将无法修改。">归档</EleButton>
             }
         </Bottom>
     </EleForm>

@@ -10,10 +10,10 @@
 
 内置以下开源方案
 
-- UI 组件：基于 Element Plus 、VUE3、tailwindcss 构建的 UI 组件库。代码精简。
-- Entities：基于EntityFramework 的数据实体 OR Mapping 方案。代码精简。
-- HttpApi服务：提供 API 服务，用于前端调用，内置权限、异常、日志、文档、测试页面等功能；
-- 工作流引擎： 基于 App.LiteFlow 的工作流引擎的低代码工作流管理系统。
+- EleUI 组件库：基于 Element Plus 、VUE3、tailwindcss 构建的 UI razor page 组件库。代码精简易用。详见 [EleUI 项目](./App.EleUI/README.md)。
+- App.Entities ORM 框架：基于 EntityFramework 的数据实体 OR Mapping 方案。代码精简。详见 [App.Entities 项目](./App.Entities/README.md)。
+- HttpApi ：提供 API 服务，用于前端调用，内置权限、异常、日志、文档、测试页面等功能；详见 [HttpApi 项目](./App.API/README.md)。
+- LiteFlow 工作流引擎： 基于 App.LiteFlow 的工作流引擎的低代码工作流管理系统。详见 [App.LiteFlow 项目](./App.LiteFlow/README.md)。
 
 作者
 
@@ -37,22 +37,18 @@
 3. 运行应用程序:
    ```bash
 
-   // 编译及运行# 编译并运行主项目
+   // 编译及运行# 编译并运行主项目（默认端口6001）
    cd AppPlat
    dotnet build
    dotnet run --project App
    dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
    dotnet app.dll --urls=http://localhost:6060;http://abc.org # 若端口被占用，查找并杀掉占用端口 6060 的进程
 
-   // 关闭端口
+   // 关闭进程
+   lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9
    lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
    lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
-   lsof -nPiTCP:6060 -sTCP:LISTEN 2>/dev/null \
-     | awk 'NR>1 && ($9=="127.0.0.1:6060" || $9=="[::1]:6060" || $9=="::1:6060" || $9=="localhost:6060" ) {print $2}' \
-     | sort -u \
-     | xargs -r -t kill
 
-    
    // 编译及运行 EleUI 示例项目 # 编译EleUI示例项目
    dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
    dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
@@ -61,9 +57,9 @@
    // 编译及运行控制台项目 # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
    dotnet run --project App.Consoler
    ```
-4. 打开浏览器，访问 `http://localhost:6060` 或 `http://abc.org`。			
+4. 打开浏览器，访问 `http://localhost:6001` 或 `http://abc.org`。
 
-## 单元测试和系统调试		
+## 单元测试和系统调试
 
 ```bash
     # 测试项目
@@ -111,59 +107,29 @@ Docker 部署方式
 
 - /App/Files/
 
-## 菜单及访问权限
-
-以实际运行时的菜单为准
-
-```
-｜目录｜名称    ｜网页                     ｜ 
-｜---｜--------｜------------------------｜
-排查
-    对象      Checks/CheckObjects   
-    排查      Checks/CheckLogs  
-    检查表    Checks/CheckSheets  
-    隐患      Checks/CheckHarzards  
-    任务      Checks/CheckTasks   
-    报表      Checks/CheckReports   
-OA
-    资产      OA/Assets   
-    预算      OA/Budgets  
-    公告      OA/Annouces   
-    公司      OA/Company  
-知识库
-    文档      Articles/Articles   
-    目录      Articles/ArticleDirs  
-交办
-    项目      OA/Projects   
-    交办      OA/Tasks  
-    事件      OA/Events   
-驾驶舱
-    驾驶舱    GIS/Index   
-    菜单      GIS/Menu  
-    点位      GIS/Geometry  
-    面板      GIS/Panels  
-账户
-    组织      Admins/Orgs   
-    用户      Admins/Users  
-    权限      Admins/Roles  
-运维
-    菜单      Maintains/Menus   
-    在线      Maintains/Onlines   
-    配置      Maintains/Config  
-    日志      Maintains/Logs  
-开发
-    图标     Dev/Icons  
-    API     Dev/API   
-    控件库   EleUI/Index  
-修改密码     Admins/ChangePassword  
-安全退出     Logout   
-登陆        Login
-```
 
 ## 进度
 
-详见 ./README-progress.md
+详见 [进度](./README-progress.md)
 
 ## 技术栈
 
-详见 ./README-stack.md
+详见 [技术栈](./README-stack.md)
+
+## 主系统
+
+详见 [主系统](./App/README.md)
+
+## 项目目录说明
+
+- App：主系统项目，包含业务逻辑、数据库访问、用户认证等功能。
+- App.API: 提供 API 服务，用于前端调用，内置权限、异常、日志、文档、测试页面等功能。
+- App.BLL: 业务逻辑层，包含业务逻辑实现，与数据库交互。
+- App.Consoler: 控制台调度任务，用于后台任务调度，如数据清洗、备份、流程执行、消息推送等；
+- App.EleUI: EleUI 组件库项目，包含 UI 组件的示例项目。
+- App.Utils: 工具库项目，包含通用的工具类，如日期处理、字符串处理、加密等。
+- App.Web: Web工具库项目，包含控制器、服务、缓存、权限等。
+- Doc：文档目录，包含项目文档、用户手册、开发文档等。
+- WebTest: Web 自动化测试相关代码。
+- Temp：临时目录，用于存储临时文件，如测试日志、临时数据等。
+

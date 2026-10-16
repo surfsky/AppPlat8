@@ -48,4 +48,4 @@ app.UseRouting();
 app.MapGet("/", () => Results.Redirect("/EleUISamples"));
 app.MapGet("/EleUISamples", () => Results.Redirect("/EleUISamples/Index"));
 app.MapRazorPages();
-app.Run("http://localhost:6070");
+app.Run("http://localhost:6002");

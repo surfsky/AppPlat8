@@ -58,6 +58,8 @@ namespace App.Pages.Checks
                 item.CheckSheetId = checkSheetId;
                 item.CheckItemId = checkItemId;
                 item.CheckItemText = checkItemText;
+                item.ExpireDt = DateTime.Now.AddMonths(1);
+                item.Status = CheckHazardStatus.Waiting;
             }
 
             var objectName = item.ObjectName;
