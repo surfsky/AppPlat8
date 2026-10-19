@@ -35,28 +35,32 @@
 1. 确保已安装 .NET 8 SDK。
 2. 在 `appsettings.json` 中配置数据库连接。
 3. 运行应用程序:
-   ```bash
+```bash
 
-   // 编译及运行# 编译并运行主项目（默认端口6001）
-   cd AppPlat
-   dotnet build
-   dotnet run --project App
-   dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
-   dotnet app.dll --urls=http://localhost:6060;http://abc.org # 若端口被占用，查找并杀掉占用端口 6060 的进程
+// 编译及运行# 编译并运行主项目（默认端口6001）
+cd AppPlat
+dotnet build
+dotnet run --project App
+dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
+dotnet app.dll --urls=http://localhost:6060;http://abc.org # 若端口被占用，查找并杀掉占用端口 6060 的进程
 
-   // 关闭进程
-   lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9
-   lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
-   lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
+// 关闭进程
+lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9
+lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
+lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
 
-   // 编译及运行 EleUI 示例项目 # 编译EleUI示例项目
-   dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
-   dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
-   lsof -nP -iTCP:6070 -sTCP:LISTEN && lsof -ti tcp:6070 | xargs -n 1 kill -9  
+# 运行控制台项目（日常调度）
+dotnet run --project app.consoler
 
-   // 编译及运行控制台项目 # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
-   dotnet run --project App.Consoler
-   ```
+// 编译及运行 EleUI 示例项目 # 编译EleUI示例项目
+dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
+dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
+lsof -nP -iTCP:6070 -sTCP:LISTEN && lsof -ti tcp:6070 | xargs -n 1 kill -9  
+
+// 编译及运行控制台项目 # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
+dotnet run --project App.Consoler
+```
+
 4. 打开浏览器，访问 `http://localhost:6001` 或 `http://abc.org`。
 
 ## 测试
@@ -106,6 +110,8 @@
 ### 数据库备份：
 
 - sqlite 数据库备份：直接拷贝一份到别地方就行
+- 
+- 
 - postgresql 数据库备份：用 pg_dump 命令备份，用 pgagent 配置定时任务备份
 - mysql 数据库备份：用 mysqldump 命令备份，用 mysqlbackup 配置定时任务备份
 

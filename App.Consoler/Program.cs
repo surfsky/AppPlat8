@@ -13,6 +13,7 @@ using System.Threading;
 
 //---------------------------------------------------------------
 // 启动参数检测
+// public static void Main(string[] args)
 //---------------------------------------------------------------
 // 解析检查对象点位接口基础URL
 var apiBaseUrl = args
@@ -44,11 +45,15 @@ if (!CanConnect(conn))
 	return;
 }
 ConfigureEntity(conn);
+Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 调度器启动中");
+Console.WriteLine($"API Base Url: {apiBaseUrl}");
+Console.WriteLine($"数据库连接: {conn}");
+
+
 
 //---------------------------------------------------------------
-// 任务参数检测（主入口）
+// 指定启动某个任务
 //---------------------------------------------------------------
-// 检测直接启动任务参数
 if (args.Any(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase)))
 {
 	var runArg = args.FirstOrDefault(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase));
@@ -82,21 +87,13 @@ if (args.Any(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase)))
 	JobExtras.Current = extras;
 
 	// 直接运行指定任务（Quartz context 接口用 FakeJobExecutionContext 仅满足 Execute 签名）
-	var fireCtx = new FakeJobExecutionContext(extras);
-	await job.Execute(fireCtx);
+	var ctx = new FakeJobExecutionContext(extras);
+	await job.Execute(ctx);
 	JobExtras.Current = null;
 	Console.WriteLine($"任务 {run} 执行完成");
 	return;
 }
 
-// 启动调度任务
-await RunSchedulerAsync();
-
-
-
-//---------------------------------------------------------------
-// 以下是调度任务的实现
-//---------------------------------------------------------------
 /// <summary>获取指定任务实例</summary>
 IJob? GetJob(string? jobName)
 {
@@ -113,28 +110,31 @@ IJob? GetJob(string? jobName)
 	};
 }
 
+
+
+//---------------------------------------------------------------
+// 启动调度任务
+//---------------------------------------------------------------
+await RunSchedulerAsync();
+
+
 /// <summary>启动Quartz调度任务</summary>
-/// <param name="conn"></param>
-/// <param name="cron"></param>
-/// <param name="apiBaseUrl"></param>
-/// <param name="checkObjectLimit"></param>
-/// <param name="checkObjectIntervalMs"></param>
-/// <param name="amapKey"></param>
-/// <returns></returns>
 static async Task RunSchedulerAsync()
 {
 	var factory = new StdSchedulerFactory();
 	var scheduler = await factory.GetScheduler();
 
-	// 定义调度任务和触发器（cron 格式：分 时 日 月 周）
-	await scheduler.ScheduleJob(JobBuilder.Create<StatJob>().Build(),                 TriggerBuilder.Create().WithCronSchedule("0 0 * * * ?").Build());  // 每天0点执行报表统计
-	await scheduler.ScheduleJob(JobBuilder.Create<ApiCheckJob>().Build(),             TriggerBuilder.Create().WithCronSchedule("0 0 * * * ?").Build());  // 每天0点执行接口检测与菜单统计
-	await scheduler.ScheduleJob(JobBuilder.Create<CheckObjectStatusFixJob>().Build(), TriggerBuilder.Create().WithCronSchedule("0 0 * * * ?").Build());  // 每天0点执行检查对象检查状态修复
-	await scheduler.ScheduleJob(JobBuilder.Create<CheckObjectGpsFixJob>().Build(),    TriggerBuilder.Create().WithCronSchedule("0 0 * * * ?").Build());  // 每天0点执行检查对象GPS修复
-	await scheduler.ScheduleJob(JobBuilder.Create<GisMenuStatJob>().Build(),          TriggerBuilder.Create().WithCronSchedule("0 0 * * * ?").Build());  // 每天0点执行菜单统计修复
+	// 定义调度任务和触发器（cron 格式：秒 分 时 日 月 周）
+    await ScheduleJobAsync<HeartBeat>(scheduler, "*/10 * * * * ?", "心跳任务");     // 每10秒执行一次心跳任务，从第 0 秒开始，每 10 秒触发
+	await ScheduleJobAsync<StatJob>(scheduler, "0 0 * * * ?", "报表统计");                  // 每天0点执行报表统计
+	await ScheduleJobAsync<ApiCheckJob>(scheduler, "0 0 * * * ?", "接口检测与菜单统计");      // 每天0点执行接口检测与菜单统计
+	await ScheduleJobAsync<CheckObjectStatusFixJob>(scheduler, "0 0 * * * ?", "检查对象状态修复"); // 每天0点执行检查对象检查状态修复
+	await ScheduleJobAsync<CheckObjectGpsFixJob>(scheduler, "0 0 * * * ?", "检查对象GPS修复");     // 每天0点执行检查对象GPS修复
+	await ScheduleJobAsync<GisMenuStatJob>(scheduler, "0 0 * * * ?", "菜单统计修复");         // 每天0点执行菜单统计修复
 
 	// 启动调度器
 	await scheduler.Start();
+	Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 调度器已启动，当前等待任务触发");
 
 	// 等待退出信号
 	Console.WriteLine("按 Ctrl+C 退出。");
@@ -148,10 +148,23 @@ static async Task RunSchedulerAsync()
 	await scheduler.Shutdown(waitForJobsToComplete: true);
 }
 
+/// <summary>注册任务并打印下一次触发时间。</summary>
+static async Task ScheduleJobAsync<TJob>(IScheduler scheduler, string cron, string title) where TJob : IJob
+{
+	var job = JobBuilder.Create<TJob>().Build();
+	var trigger = TriggerBuilder.Create().WithCronSchedule(cron).Build();
+	await scheduler.ScheduleJob(job, trigger);
+	var next = trigger.GetNextFireTimeUtc()?.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
+	Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 已注册任务: {typeof(TJob).Name} / {title} / Cron={cron} / Next={next}");
+}
+
+
+
 
 //---------------------------------------------------------------
 // 以下是一些辅助方法
 //---------------------------------------------------------------
+/// <summary>添加路径到候选列表</summary>
 static void AddPath(List<string> paths, string path)
 {
 	if (string.IsNullOrWhiteSpace(path))
@@ -212,42 +225,4 @@ public static class JobExtras
 {
 	public static readonly AsyncLocal<Dictionary<string, string>?> _current = new();
 	public static Dictionary<string, string>? Current { get => _current.Value; set => _current.Value = value; }
-}
-
-/// <summary>
-/// 简化版 IJobExecutionContext：所有 Quartz 接口字段以最小可用方式实现，
-/// 真正的命令行参数通过 JobExtras.Current 获取，MergedJobDataMap 仅作 fallback 兜底
-/// </summary>
-public class FakeJobExecutionContext : Quartz.IJobExecutionContext
-{
-	readonly Dictionary<string, string> _extras;
-	readonly Quartz.JobDataMap _jdm;
-	public FakeJobExecutionContext(Dictionary<string, string> extras)
-	{
-		_extras = extras ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-		_jdm = new Quartz.JobDataMap();
-		foreach (var kv in _extras) _jdm[kv.Key] = kv.Value;
-	}
-	public Quartz.IScheduler Scheduler => null!;
-	public Quartz.ITrigger Trigger => null!;
-	public Quartz.ICalendar Calendar => null!;
-	public bool Recovering => false;
-	public Quartz.TriggerKey RecoveringTriggerKey => null!;
-	public int RefireCount => 0;
-	public Quartz.JobDataMap MergedJobDataMap => _jdm;
-	public Quartz.IJobDetail JobDetail => null!;
-	public Quartz.IJob JobInstance => null!;
-	public DateTimeOffset FireTimeUtc => DateTimeOffset.UtcNow;
-	public DateTimeOffset? ScheduledFireTimeUtc => null;
-	public DateTimeOffset? PreviousFireTimeUtc => null;
-	public DateTimeOffset? NextFireTimeUtc => null;
-	public TimeSpan JobRunTime => TimeSpan.Zero;
-	public object? Result { get; set; }
-	public System.Threading.CancellationToken CancellationToken => System.Threading.CancellationToken.None;
-	public void Put(object key, object objectValue) => _jdm[key.ToString() ?? ""] = objectValue;
-	public object? Get(object key) => _extras.TryGetValue(key?.ToString() ?? "", out var v) ? v : _jdm[key?.ToString() ?? ""];
-	public bool ContainsKey(object key) => _extras.ContainsKey(key?.ToString() ?? "") || _jdm.ContainsKey(key?.ToString() ?? "");
-	public System.Collections.IDictionary ContextMap => _extras;
-	public string FireInstanceId => Guid.NewGuid().ToString();
-	public long? FireInstanceIdLong { get; set; }
 }

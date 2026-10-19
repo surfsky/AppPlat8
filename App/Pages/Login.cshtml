@@ -338,13 +338,16 @@
                         // 处理响应
                         var text = await response.text();
                         var result = JSON.parse(text);
+                        /*
                         if (!response.ok){
                             ElMessage.error("服务器错误");
                             isVerified.value = false;
                             sliderVerifierRef.value.reset();
                             return;
                         }
-                        else if (result.code != 0){
+                        else 
+                        */
+                        if (result.code != 0){
                             ElMessage.error('账户名或密码错误');
                             isVerified.value = false;
                             sliderVerifierRef.value.reset();

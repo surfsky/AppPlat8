@@ -15,3 +15,8 @@
 - 用户可临时执行某个任务，如
     App.Consoler --run=CheckObjectStatusFixJob
 
+
+- 运行该项目：
+```
+dotnet run
+```

@@ -1,0 +1,338 @@
+@page
+@model App.Pages.Maintains.ConsolerModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "控制台调度器";
+    var projectPathJson = System.Text.Json.JsonSerializer.Serialize(Model.ProjectPath ?? string.Empty);
+    var workingDirectoryJson = System.Text.Json.JsonSerializer.Serialize(Model.WorkingDirectory ?? string.Empty);
+}
+
+@section body {
+    <div id="consolerApp" class="mx-auto w-full max-w-7xl px-4 py-6 md:px-6 lg:px-8 text-slate-700">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center gap-3">
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
+                    <i class="fas fa-terminal text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">控制台调度器</h1>
+                    <p class="mt-0.5 text-xs text-slate-500">运行 `App.Consoler` 项目，并实时查看控制台输出</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <el-button type="primary" :loading="busy.starting" :disabled="!state.hasProject || state.isRunning" @@click="startRunner">
+                    <i class="fas fa-play mr-1"></i>
+                    <span>启动</span>
+                </el-button>
+                <el-button type="danger" :loading="busy.stopping" :disabled="!state.isRunning" @@click="stopRunner">
+                    <i class="fas fa-stop mr-1"></i>
+                    <span>停止</span>
+                </el-button>
+                <el-button :loading="busy.clearing" @@click="clearOutput">
+                    <i class="fas fa-trash-can mr-1"></i>
+                    <span>清空输出</span>
+                </el-button>
+                <el-button :loading="busy.refreshing" @@click="refreshNow">
+                    <i class="fas fa-rotate mr-1"></i>
+                    <span>刷新</span>
+                </el-button>
+                <el-button @@click="copyOutput" :disabled="!state.output">
+                    <i class="fas fa-copy mr-1"></i>
+                    <span>复制输出</span>
+                </el-button>
+            </div>
+        </div>
+
+        <div class="mt-5 space-y-3">
+            <el-alert v-if="!state.hasProject"
+                      title="未找到 App.Consoler 项目文件，当前页面无法启动调度器。"
+                      type="error"
+                      :closable="false"
+                      show-icon></el-alert>
+            <el-alert v-else-if="!state.hasDatabase"
+                      title="未找到默认数据库文件 App/Db/sqlite.db，调度器可能无法连接数据库。"
+                      type="warning"
+                      :closable="false"
+                      show-icon></el-alert>
+        </div>
+
+        <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="text-xs text-slate-500">运行状态</div>
+                <div class="mt-2 flex items-center gap-2">
+                    <el-tag :type="state.isRunning ? 'success' : 'info'" size="large">
+                        {{ state.isRunning ? '运行中' : '已停止' }}
+                    </el-tag>
+                    <span class="text-sm text-slate-500" v-if="state.processId">PID {{ state.processId }}</span>
+                </div>
+                <div class="mt-2 text-xs text-slate-500">退出码：{{ state.lastExitCode ?? '-' }}</div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="text-xs text-slate-500">启动时间</div>
+                <div class="mt-2 text-sm font-semibold text-slate-800">{{ formatDate(state.startedAt) }}</div>
+                <div class="mt-2 text-xs text-slate-500">最后输出：{{ formatDate(state.lastOutputAt) }}</div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="text-xs text-slate-500">输出行数</div>
+                <div class="mt-2 text-sm font-semibold text-slate-800">{{ state.lineCount || 0 }}</div>
+                <div class="mt-2 text-xs text-slate-500">退出时间：{{ formatDate(state.exitedAt) }}</div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="text-xs text-slate-500">自动刷新</div>
+                <div class="mt-2 flex items-center gap-3">
+                    <el-switch v-model="autoRefresh"></el-switch>
+                    <span class="text-sm text-slate-700">{{ autoRefresh ? '已开启' : '已关闭' }}</span>
+                </div>
+                <div class="mt-2 flex items-center gap-3">
+                    <el-switch v-model="autoScroll"></el-switch>
+                    <span class="text-sm text-slate-700">{{ autoScroll ? '自动滚动' : '手动查看' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-200 px-5 py-4">
+                <div class="grid gap-3 md:grid-cols-2">
+                    <div>
+                        <div class="text-xs text-slate-500">项目路径</div>
+                        <div class="mt-1 break-all text-sm text-slate-800">{{ state.projectPath }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">工作目录</div>
+                        <div class="mt-1 break-all text-sm text-slate-800">{{ state.workingDirectory }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">数据库</div>
+                        <div class="mt-1 break-all text-sm text-slate-800">{{ state.dbPath }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-500">API Base Url</div>
+                        <div class="mt-1 break-all text-sm text-slate-800">{{ state.apiBaseUrl }}</div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="text-xs text-slate-500">启动命令</div>
+                    <div class="mt-1 break-all rounded-xl bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700">{{ state.commandLine || '-' }}</div>
+                </div>
+                <div class="mt-4" v-if="state.lastError">
+                    <div class="text-xs text-rose-500">最后错误</div>
+                    <div class="mt-1 break-all rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-600">{{ state.lastError }}</div>
+                </div>
+            </div>
+
+            <div class="px-5 py-4">
+                <div class="mb-3 flex items-center justify-between gap-3">
+                    <div class="text-sm font-semibold text-slate-800">控制台输出</div>
+                    <div class="text-xs text-slate-500">最多保留约 200KB 输出</div>
+                </div>
+                <div ref="outputRef"
+                     class="min-h-[420px] max-h-[68vh] overflow-auto rounded-2xl border border-slate-800 bg-slate-950 p-4 font-mono text-[12px] leading-6 text-slate-100 shadow-inner whitespace-pre-wrap break-words">{{ state.output || '暂无输出，点击“启动”后这里会实时显示 App.Consoler 控制台内容。' }}</div>
+            </div>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        const { createApp, ref, reactive, watch, onMounted, onBeforeUnmount, nextTick } = Vue;
+
+        const app = createApp({
+            setup() {
+                const outputRef = ref(null);
+                const autoRefresh = ref(true);
+                const autoScroll = ref(true);
+                const timerId = ref(null);
+                const state = reactive({
+                    isRunning: false,
+                    processId: null,
+                    startedAt: null,
+                    lastOutputAt: null,
+                    exitedAt: null,
+                    lastExitCode: null,
+                    lastError: '',
+                    commandLine: '',
+                    apiBaseUrl: '',
+                    projectPath: @Html.Raw(projectPathJson),
+                    workingDirectory: @Html.Raw(workingDirectoryJson),
+                    dbPath: '',
+                    output: '',
+                    lineCount: 0,
+                    hasProject: false,
+                    hasDatabase: false
+                });
+                const busy = reactive({
+                    starting: false,
+                    stopping: false,
+                    clearing: false,
+                    refreshing: false
+                });
+
+                /**读取防伪令牌 */
+                const getCsrfToken = () => {
+                    const tokenNode = document.querySelector('input[name="__RequestVerificationToken"]');
+                    return tokenNode ? tokenNode.value : '';
+                };
+
+                /**格式化时间文本 */
+                const formatDate = (value) => {
+                    if (!value) return '-';
+                    try {
+                        return dayjs(value).format('YYYY-MM-DD HH:mm:ss');
+                    } catch {
+                        return value;
+                    }
+                };
+
+                /**把状态结果映射到页面 */
+                const applyStatus = async (data) => {
+                    const src = data || {};
+                    state.isRunning = !!src.isRunning;
+                    state.processId = src.processId ?? null;
+                    state.startedAt = src.startedAt || null;
+                    state.lastOutputAt = src.lastOutputAt || null;
+                    state.exitedAt = src.exitedAt || null;
+                    state.lastExitCode = src.lastExitCode ?? null;
+                    state.lastError = src.lastError || '';
+                    state.commandLine = src.commandLine || '';
+                    state.apiBaseUrl = src.apiBaseUrl || '';
+                    state.projectPath = src.projectPath || state.projectPath;
+                    state.workingDirectory = src.workingDirectory || state.workingDirectory;
+                    state.dbPath = src.dbPath || '';
+                    state.output = src.output || '';
+                    state.lineCount = src.lineCount || 0;
+                    state.hasProject = !!src.hasProject;
+                    state.hasDatabase = !!src.hasDatabase;
+                    await nextTick();
+                    scrollToBottom();
+                };
+
+                /**滚动到底部，便于持续查看最新输出 */
+                const scrollToBottom = () => {
+                    if (!autoScroll.value) return;
+                    const el = outputRef.value;
+                    if (!el) return;
+                    el.scrollTop = el.scrollHeight;
+                };
+
+                /**读取最新状态 */
+                const loadStatus = async (silent = false) => {
+                    if (!silent) busy.refreshing = true;
+                    try {
+                        const res = await axios.get('?handler=Status');
+                        const body = res.data || {};
+                        if (body.code !== 0) {
+                            throw new Error(body.msg || '读取状态失败');
+                        }
+                        await applyStatus(body.data || {});
+                    } catch (err) {
+                        const msg = err?.response?.data?.msg || err?.message || '读取状态失败';
+                        if (!silent) EleManager.showError?.(msg);
+                    } finally {
+                        if (!silent) busy.refreshing = false;
+                    }
+                };
+
+                /**提交一个操作型请求 */
+                const postAction = async (handlerName, busyKey) => {
+                    busy[busyKey] = true;
+                    try {
+                        const res = await axios.post(`?handler=${handlerName}`, {}, {
+                            headers: {
+                                'RequestVerificationToken': getCsrfToken()
+                            }
+                        });
+                        const body = res.data || {};
+                        if (body.code !== 0) {
+                            throw new Error(body.msg || '操作失败');
+                        }
+                        await applyStatus(body.data || {});
+                        EleManager.showSuccess?.(body.msg || '操作成功');
+                    } catch (err) {
+                        const msg = err?.response?.data?.msg || err?.message || '操作失败';
+                        EleManager.showError?.(msg);
+                    } finally {
+                        busy[busyKey] = false;
+                    }
+                };
+
+                /**启动调度器 */
+                const startRunner = async () => {
+                    await postAction('Start', 'starting');
+                };
+
+                /**停止调度器 */
+                const stopRunner = async () => {
+                    await postAction('Stop', 'stopping');
+                };
+
+                /**清空输出 */
+                const clearOutput = async () => {
+                    await postAction('ClearOutput', 'clearing');
+                };
+
+                /**手动刷新 */
+                const refreshNow = async () => {
+                    await loadStatus(false);
+                };
+
+                /**复制当前输出到剪贴板 */
+                const copyOutput = async () => {
+                    const text = state.output || '';
+                    if (!text) return;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        EleManager.showSuccess?.('输出已复制');
+                    } catch (err) {
+                        const msg = err?.message || '复制失败';
+                        EleManager.showError?.(msg);
+                    }
+                };
+
+                /**重建轮询器 */
+                const rebuildTimer = () => {
+                    if (timerId.value) {
+                        window.clearInterval(timerId.value);
+                        timerId.value = null;
+                    }
+                    if (!autoRefresh.value) return;
+                    timerId.value = window.setInterval(() => loadStatus(true), 1500);
+                };
+
+                watch(autoRefresh, () => rebuildTimer());
+
+                onMounted(async () => {
+                    await loadStatus(true);
+                    rebuildTimer();
+                });
+
+                onBeforeUnmount(() => {
+                    if (timerId.value) {
+                        window.clearInterval(timerId.value);
+                        timerId.value = null;
+                    }
+                });
+
+                return {
+                    state,
+                    busy,
+                    autoRefresh,
+                    autoScroll,
+                    outputRef,
+                    formatDate,
+                    startRunner,
+                    stopRunner,
+                    clearOutput,
+                    refreshNow,
+                    copyOutput
+                };
+            }
+        });
+
+        app.use(ElementPlus);
+        app.mount('#consolerApp');
+    </script>
+}
