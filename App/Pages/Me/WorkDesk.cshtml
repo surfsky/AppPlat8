@@ -158,7 +158,12 @@
                 <span v-else>{{ row && row.taskName }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="objectName"    label="检查对象"   min-width="200" show-overflow-tooltip></el-table-column>
+            <el-table-column label="检查对象" min-width="200" show-overflow-tooltip>
+              <template v-slot:default="{ row }">
+                <el-link type="primary" v-if="row && row.checkObjectId" v-on:click="openObjectDetail(row)">{{ row.objectName }}</el-link>
+                <span v-else>{{ row && row.objectName }}</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="dutyOrgName"   label="责任网格"   min-width="160" show-overflow-tooltip></el-table-column>
             <el-table-column prop="checkerName"   label="检查人"     min-width="120" show-overflow-tooltip></el-table-column>
             <el-table-column label="状态" width="100" align="center">
@@ -526,6 +531,21 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
                     }
                 }
 
+                // 打开检查对象详情 CheckObjectForm（只读）
+                function openObjectDetail(row) {
+                    if (!row || !row.checkObjectId) return;
+                    var url = '/Checks/CheckObjectForm?id=' + encodeURIComponent(String(row.checkObjectId)) + '&md=View';
+                    var title = row.objectName || '检查对象';
+                    if (window.EleManager && typeof window.EleManager.openDrawer === 'function') {
+                        window.EleManager.openDrawer({
+                            title: title, url: url, direction: 'rtl', resizable: true,
+                            destroyOnClose: true, closeOnClickModal: false,
+                        });
+                    } else {
+                        window.open(url, '_blank');
+                    }
+                }
+
                 onMounted(loadObjs);
 
                 return {
@@ -535,6 +555,7 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
                     onPageChange,
                     onSizeChange,
                     openTaskDetail,
+                    openObjectDetail,
                     openCheckFlow,
                 };
             }

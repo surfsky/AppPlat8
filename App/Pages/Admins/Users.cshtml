@@ -9,11 +9,11 @@
     <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="用户" FormPage="UserForm" EnableBatch="false" >
         <Toolbar>
             <Filters>
+                <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" Width="280px"></EleTreePicker>
                 <EleInput For="Item.Name" Label="账号" Width="260px"></EleInput>
                 <EleInput For="Item.RealName" Label="姓名" Width="260px"></EleInput>
                 <EleSelect For="RoleId" Label="角色" Items="Model.RoleList" Clearable="true" Width="220px"></EleSelect>
                 <EleSelect For="Item.IsDel" Label="是否失效" Items="new []{false,true}" Value="false"></EleSelect>
-                <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" Clearable="true" Width="280px"></EleTreePicker>
                 <EleSwitch For="IncludeSubOrg" Checked="true" Label="含子组织"></EleSwitch>
             </Filters>
             <Buttons>
@@ -24,6 +24,7 @@
                 <EleButton Type="Success" Command="Export" Icon="Download" Visible="false">导出</EleButton>
                 <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.UserNew)">导入</EleButton>
                 <EleButton Type="Success" Command="Select" Icon="Check" Visible="Model.Mode==PageMode.Select">选择</EleButton>
+                <EleButton Type="Success" Handler="FixAll" Icon="Edit" Visible="@Auth.CheckPower(Power.AdminMaintain)" Confirm="确认修复所有用户的错误数据吗？">修复所有用户</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

@@ -26,7 +26,7 @@ namespace App.DAL
     */
 
     //public class User : IKeyId
-    public class User : EntityBase<User>, IDeleteLogic
+    public class User : EntityBase<User>, IDeleteLogic, IFixAll
     {
         [UI("是否失效")]   public bool? IsDel { get; set; } = false;
         [UI("失效时间")]    public DateTime? DeleteDt { get; set; }
@@ -60,43 +60,19 @@ namespace App.DAL
         // 计算属性
         //------------------------------------------------------
         public string NameMask => this.Name.Mask();
-        public string DisplayName => $"{this.RealName}({this.Mobile})";
+        public string DisplayName => $"{this.RealName}({this.NameMask})";
         public string OrgName => this.Org?.Name;
         public string OrgFullName => this.Org?.FullName;
+        public string AuthOrgName => this.AuthOrg?.Name;
+        public string AuthOrgFullName => this.AuthOrg?.FullName;
 
         /// <summary>授权组织或所属组织的兜底值（AuthOrgId ?? OrgId）</summary>
         [NotMapped]
         public long? EffectiveAuthOrgId => this.AuthOrgId ?? this.OrgId;
 
-        public string AuthOrgName
-        {
-            get
-            {
-                if (this.AuthOrg?.Name.IsNotEmpty() == true) return this.AuthOrg.Name;
-                if (this.Org?.Name.IsNotEmpty() == true) return this.Org.Name;
-                return null;
-            }
-        }
-        public string AuthOrgFullName
-        {
-            get
-            {
-                if (this.AuthOrg?.FullName.IsNotEmpty() == true) return this.AuthOrg.FullName;
-                if (this.AuthOrg?.Name.IsNotEmpty() == true) return this.AuthOrg.Name;
-                if (this.Org?.FullName.IsNotEmpty() == true) return this.Org.FullName;
-                if (this.Org?.Name.IsNotEmpty() == true) return this.Org.Name;
-                return null;
-            }
-        }
         public string MobileMasked => this.Mobile?.Mask(3, 4);
         public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
 
-        /// <summary>授权组织显示文本（单值语义，兼容原有拼接字段便于前端展示）</summary>
-        public string AuthOrgNames => GetAuthorizedOrgs()
-            .Select(t => t.FullName ?? t.Name)
-            .Where(t => t.IsNotEmpty())
-            .Distinct()
-            .ToJoinString("，");
 
         //------------------------------------------------------
         // 角色相关（用UserRoles表存储）
@@ -126,40 +102,6 @@ namespace App.DAL
             }
         }
 
-        /// <summary>
-        /// 授权组织兼容包装属性。
-        /// 后端模型收敛为单值 User.AuthOrgId；此处保留 List<long> 形态，
-        /// 以便 UI 侧 EleTreePicker (Multiple 模式) 无需改动即可工作，
-        /// setter 仅取集合中首个正数值写入 AuthOrgId，getter 返回单元素包装。
-        /// </summary>
-        [NotMapped] private List<long> _authOrgIdsBacking;
-        [UI("授权组织IDs"), NotMapped]
-        public virtual List<long> AuthOrgIds
-        {
-            get
-            {
-                if (_authOrgIdsBacking != null)
-                    return _authOrgIdsBacking;
-                if (this.AuthOrgId.HasValue && this.AuthOrgId.Value > 0)
-                    return new List<long> { this.AuthOrgId.Value };
-                return new List<long>();
-            }
-            set
-            {
-                var first = (value ?? new List<long>())
-                    .Where(t => t > 0)
-                    .Distinct()
-                    .Cast<long?>()
-                    .FirstOrDefault();
-                // 保留显式集合（避免每次 setter 后 getter 再从 AuthOrgId 回取造成"丢失其他值"的直觉不一致，
-                // 但持久化只会写首个正数值到 AuthOrgId 列）
-                _authOrgIdsBacking = (value ?? new List<long>())
-                    .Where(t => t > 0)
-                    .Distinct()
-                    .ToList();
-                this.AuthOrgId = first;
-            }
-        }
 
 
         /// <summary>获取用户的所有角色IDs。</summary>
@@ -216,20 +158,6 @@ namespace App.DAL
                 : Role.Set.Where(t => ids.Contains(t.Id)).ToList();
         }
 
-        /// <summary>设置授权组织（集合中仅首个正数值写入 AuthOrgId；持久化前仍可能被兜底为 OrgId）。</summary>
-        public void SetAuthOrgs(IEnumerable<long> orgIds)
-        {
-            this.AuthOrgIds = orgIds?.ToList();
-            var ids = this.AuthOrgIds;
-            if (ids.Count == 0)
-            {
-                this.AuthOrg = null;
-                return;
-            }
-            // 装载导航属性（便于后续立即访问 AuthOrg.Name 等，避免 N+1）
-            var first = ids[0];
-            this.AuthOrg = Org.Set.FirstOrDefault(o => o.Id == first);
-        }
 
         //------------------------------------------------------
         // 保存钩子：AuthOrgId 空值兜底
@@ -414,8 +342,6 @@ namespace App.DAL
                 this.AuthOrgId,
                 this.AuthOrgName,
                 this.AuthOrgFullName,
-                this.AuthOrgIds,
-                this.AuthOrgNames,
                 this.Email,
                 this.Gender,
                 this.Birthday,
@@ -448,9 +374,6 @@ namespace App.DAL
             if (user == null)
                 return null;
             user.RoleIds = user.Roles.Select(r => r.Id).ToList();
-            // AuthOrgIds 回显由 NotMapped 包装属性直接从 AuthOrgId 构造；
-            // 此处显式重置临时集合，以避免多次调用间串扰。
-            user._authOrgIdsBacking = null;
             return user;
         }
 
@@ -487,7 +410,11 @@ namespace App.DAL
             return q;
         }
 
+        /// <summary>修复所有用户的 AuthOrgId 属性</summary>
+        public static int FixAll()
+        {
+            // 批量更新用户的 AuthOrgId 属性，如果为空，就用OrgId填充
+            return User.Set.Where(o => o.AuthOrgId == null).ExecuteUpdate(s => s.SetProperty(o => o.AuthOrgId, o=>o.OrgId));
+        }
     }
-
-
 }

@@ -23,9 +23,8 @@
                    - ?orgId=730 走 Model.Item.DutyOrgId（OnGet 中已经按 orgId 查到 Org 实体并绑定到 Item）；
                    - 其它参数（?name=xxx&address=yyy 等）直接用 QStr("key") 读取（_ViewImports 全局 @using static 导入），
                      无需 Model. 前缀，简单清晰。*@
-                <EleTreePicker For="DutyOrgIds" Width="300px" Label="所属网格" Multiple="true" CollapseTags="false" Enabled="@Auth.CheckPower(Power.AdminLeader)"
-                               Api="/httpapi/orgs/GetAuthOrgTree"
-                               Value="@QStr("dutyOrgIds", Model.DutyOrgIds != null && Model.DutyOrgIds.Count > 0 ? string.Join(",", Model.DutyOrgIds) : "")" ></EleTreePicker>
+                <EleTreePicker For="DutyOrgId" Width="300px" Label="所属网格" Multiple="true" CollapseTags="false" Enabled="@Auth.CheckPower(Power.AdminLeader)"
+                               Api="/httpapi/orgs/GetAuthOrgTree" Value="@Model.DutyOrgId"></EleTreePicker>
                 <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Width="250px" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0"
                            Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QStr("checkerId"))"
                            TextValue="@Model.DefaultCheckerName">
@@ -61,7 +60,7 @@
                         <BatchField Control="Select"  Field="RiskLevel" Label="风险等级"   Options="无风险,低风险,中风险,高风险" />
                     </BatchFields>
                 </EleButton>
-                <EleButton Type="Success" Icon="Edit" Visible="@Auth.CheckPower(Power.AdminMaintain)" Handler="FixData" Stream="true" StreamTitle="修正数据" ConfirmText="该操作较为费时，确认操作吗？">修正数据</EleButton>
+                <EleButton Type="Success" Icon="Edit" Visible="@Auth.CheckPower(Power.AdminMaintain)" Handler="FixData" ConfirmText="该操作较为费时，确认操作吗？">修正数据</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

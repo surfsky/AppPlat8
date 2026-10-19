@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
-using System.Threading.Tasks;
 using App.DAL.GIS;
 using App.Entities;
 using App.Utils;
@@ -269,13 +268,15 @@ namespace App.DAL
             DateTime? updateEndDt = null,
             DateTime? lastCheckStartDt = null,
             DateTime? lastCheckEndDt = null,
+            DateTime? nextCheckFrom = null,
+            DateTime? nextCheckTo = null,
             bool? hasHarzard = null,
             bool? isChecked = null,
             bool? isDel = null,
             bool? isProductInNight = null,
             bool? isThreePlacesThreeEnterprises = null,
-            bool includeTags = false,
-            bool includeContacts = false
+            bool includeTags = false,     // 是否包含标签导航属性
+            bool includeContacts = false  // 是否包含联系人导航属性
         )
         {
             IQueryable<CheckObject> q = CheckObject.Set
@@ -314,6 +315,8 @@ namespace App.DAL
             if (updateEndDt.IsNotEmpty())             q = q.Where(o => o.UpdateDt <= updateEndDt.Value);
             if (lastCheckStartDt.IsNotEmpty())        q = q.Where(o => o.LastCheckDt >= lastCheckStartDt.Value);
             if (lastCheckEndDt.IsNotEmpty())          q = q.Where(o => o.LastCheckDt <= lastCheckEndDt.Value);
+            if (nextCheckFrom.IsNotEmpty())           q = q.Where(o => o.NextCheckDt >= nextCheckFrom.Value);
+            if (nextCheckTo.IsNotEmpty())             q = q.Where(o => o.NextCheckDt <= nextCheckTo.Value);
             if (hasHarzard.IsNotEmpty())              q = q.Where(o => o.HasHarzard == hasHarzard.Value);
             if (isChecked.IsNotEmpty())               q = q.Where(o => o.IsChecked == isChecked.Value);
             if (isDel.IsNotEmpty())                   q = q.Where(o => o.IsDel == isDel.Value);
@@ -375,70 +378,6 @@ namespace App.DAL
             return flat.Distinct().ToList();
         }
 
-        /// <summary>修复所有检查对象的IsChecked字段</summary>
-        /// <returns>修复的检查对象数量</returns>
-        public static int FixAll()
-        {
-            var cnt = 0;
-            var now = DateTime.Now;
-            var list = CheckObject.IncludeSet.ToList();
-            foreach (var item in list)
-            {
-                if (ApplyFix(item, now))
-                    cnt++;
-            }
-            return cnt;
-        }
-
-        /// <summary>异步修复所有检查对象，并在每条记录处理后回调进度。</summary>
-        public static async Task<int> FixAllAsync(Func<int, int, Task> progress = null)
-        {
-            var cnt = 0;
-            var now = DateTime.Now;
-            var list = CheckObject.IncludeSet.ToList();
-            var total = list.Count;
-
-            for (var i = 0; i < total; i++)
-            {
-                if (ApplyFix(list[i], now))
-                    cnt++;
-
-                if (progress != null)
-                    await progress(i + 1, total);
-            }
-
-            if (total == 0 && progress != null)
-                await progress(0, 0);
-
-            return cnt;
-        }
-
-        /// <summary>按当前规则修复单个检查对象。</summary>
-        static bool ApplyFix(CheckObject item, DateTime now)
-        {
-            var needSave = false;
-            var months = GetCheckCycleMonths(item.RiskLevel);
-
-            if (item.RiskLevel.HasValue && item.LastCheckDt.HasValue && item.NextCheckDt == null)
-            {
-                item.NextCheckDt = item.LastCheckDt.Value.AddMonths(months);
-                needSave = true;
-            }
-
-            var isChecked = item.NextCheckDt != null && item.NextCheckDt.Value > now;
-            if (item.IsChecked != isChecked)
-            {
-                item.IsChecked = isChecked;
-                needSave = true;
-            }
-
-            if (!needSave)
-                return false;
-
-            item.Save();
-            return true;
-        }
-
         // 根据风险等级获取检查周期（月数）
         static int GetCheckCycleMonths(CheckRiskLevel? riskLevel)
         {
@@ -450,7 +389,38 @@ namespace App.DAL
                 CheckRiskLevel.High => 3,
                 _ => 12
             };
+        }        
+
+        /// <summary>批量修复所有检查对象（两条 UPDATE 语句：补 NextCheckDt、重算 IsChecked）。</summary>
+        /// <returns>受影响的行数</returns>
+        public static int FixAll()
+        {
+            var now = DateTime.Now;
+
+            // 1) 补全“下次巡查时间”：NextCheckDt = LastCheckDt + 检查周期（月数映射同 GetCheckCycleMonths），仅处理缺失的记录
+            CheckObject.Set
+                .Where(o => o.RiskLevel != null && o.LastCheckDt != null && o.NextCheckDt == null)
+                .ExecuteUpdate(s => s
+                    .SetProperty(o => o.NextCheckDt, o => o.LastCheckDt.Value.AddMonths(
+                        o.RiskLevel == CheckRiskLevel.High ? 3 :
+                        o.RiskLevel == CheckRiskLevel.Medium ? 6 :
+                        o.RiskLevel == CheckRiskLevel.Low ? 9 : 12))
+                    .SetProperty(o => o.UpdateDt, now));
+
+            // 2) 重算“是否巡查”状态：IsChecked = 下次巡查时间是否尚未过期
+            CheckObject.Set
+                .Where(o => o.IsChecked == null || o.IsChecked != (o.NextCheckDt != null && o.NextCheckDt > now))
+                .ExecuteUpdate(s => s
+                    .SetProperty(o => o.IsChecked, o => o.NextCheckDt != null && o.NextCheckDt > now)
+                    .SetProperty(o => o.UpdateDt, now));
+
+            CheckObject.ClearCache();
+
+            // 两条 UPDATE 都会被 UpdateDt 记为本次时间；据此统计实际修改的记录数（避免两条语句重复计数）
+            return CheckObject.Set.Count(o => o.UpdateDt == now);
         }
+
+
     }
 
 }

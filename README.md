@@ -35,6 +35,7 @@
 1. 确保已安装 .NET 8 SDK。
 2. 在 `appsettings.json` 中配置数据库连接。
 3. 运行应用程序:
+
 ```bash
 
 // 编译及运行# 编译并运行主项目（默认端口6001）
@@ -102,7 +103,7 @@ dotnet run --project App.Consoler
 1. 使用 EF 机制进行数据库迁移: 运行
 
 ```bash
-   dotnet ef migrations add CheckHazardRectifyType --project App/App.csproj --startup-project App/App.csproj
+   dotnet ef migrations add CheckObject --project App/App.csproj --startup-project App/App.csproj
 ```
 
 ## 数据备份

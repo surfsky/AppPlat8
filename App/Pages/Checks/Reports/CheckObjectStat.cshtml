@@ -6,6 +6,7 @@
     Model.EndDt   = DateTime.Today;
 }
 
+
 @section body {
 <div class="w-full bg-white border border-gray-200 shadow-sm" style="min-height:calc(100vh - 10px);">
 <EleTable
@@ -16,8 +17,10 @@
     SortField=""
     ShowPage="false"
     HeaderAlign="center"
-    HeadWrap="true"
-    Height="calc(100vh - 10px)">
+    HeaderWrap="true"
+    Height="calc(100vh - 10px)"
+    BorderColor="#c0c0c0"
+    >
   <Toolbar>
     <Filters>
       <EleDatePicker For="StartDt" Label="开始时间" Width="200px"

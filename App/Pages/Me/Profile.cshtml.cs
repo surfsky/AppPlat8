@@ -15,6 +15,7 @@ namespace App.Pages.Me
 
         public string Name { get; set; }
         public string OrgName { get; set; }
+        public string AuthOrgName { get; set; }
         public string RoleNames { get; set; }
         public string LastLoginDt { get; set; }
         public string TakeOfficeDt { get; set; }
@@ -89,6 +90,7 @@ namespace App.Pages.Me
                 Id = user.Id,
                 Name = user.Name,
                 OrgName = user.OrgFullName,
+                AuthOrgName = user.AuthOrgFullName,
                 LastLoginDt = user.LastLoginDt?.ToString("yyyy-MM-dd HH:mm:ss"),
                 TakeOfficeDt = user.TakeOfficeDt?.ToString("yyyy-MM-dd"),
                 CreateDt = user.CreateDt?.ToString("yyyy-MM-dd HH:mm:ss"),

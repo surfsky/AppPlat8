@@ -246,3 +246,295 @@
 
 
                 AppDomain.CurrentDomain.SetData("APP_START_TIME", now);
+
+
+        public async Task<IActionResult> OnPostFixData()
+        {
+            if (!CheckPower(Power.AdminMaintain))
+                return BuildResult(403, "无权操作");
+
+            Response.ContentType = "text/event-stream; charset=utf-8";
+            Response.Headers["Cache-Control"] = "no-cache";
+            Response.Headers["X-Accel-Buffering"] = "no";
+
+            try
+            {
+                await WriteSseEventAsync(new { percent = 0, message = "开始修正数据..." });
+
+                // 批量 UPDATE，毫秒级完成，无需流式进度
+                var cnt = CheckObject.FixAll();
+
+                await WriteSseEventAsync(new
+                {
+                    code = 0,
+                    message = $"共更新 {cnt} 条记录",
+                    done = true,
+                    percent = 100,
+                    data = new
+                    {
+                        updatedCount = cnt,
+                        commands = new object[]
+                        {
+                            new
+                            {
+                                command = "toast",
+                                args = new
+                                {
+                                    type = "success",
+                                    message = $"共更新 {cnt} 条记录",
+                                    title = "提示"
+                                }
+                            },
+                            new
+                            {
+                                command = "reload",
+                                args = new
+                                {
+                                    delay = 350
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                await WriteSseEventAsync(new
+                {
+                    code = 500,
+                    message = ex.Message,
+                    done = true,
+                    percent = 100
+                });
+            }
+
+            return new EmptyResult();
+        }
+
+        /// <summary>写入一条 SSE JSON 消息并立即刷新到客户端。</summary>
+        async Task WriteSseEventAsync(object payload)
+        {
+            var json = JsonSerializer.Serialize(payload, _sseJsonOptions);
+            var buffer = Encoding.UTF8.GetBytes($"data: {json}\n\n");
+            await Response.Body.WriteAsync(buffer, 0, buffer.Length);
+            await Response.Body.FlushAsync();
+        }
+
+                style=""--tbl-ha: {haVar}; width: 100%; flex: 1; min-height: 0; --el-border-color: #909399; --el-table-border-color: #909399; --el-table-header-border-color: #909399; --el-table-row-border-color: #909399; --el-border-color-light: #a8abb2;{headerWrapStyle}""
+
+        public string AuthOrgName
+        {
+            get
+            {
+                if (this.AuthOrg?.Name.IsNotEmpty() == true) return this.AuthOrg.Name;
+                if (this.Org?.Name.IsNotEmpty() == true) return this.Org.Name;
+                return null;
+            }
+        }
+        public string AuthOrgFullName
+        {
+            get
+            {
+                if (this.AuthOrg?.FullName.IsNotEmpty() == true) return this.AuthOrg.FullName;
+                if (this.AuthOrg?.Name.IsNotEmpty() == true) return this.AuthOrg.Name;
+                if (this.Org?.FullName.IsNotEmpty() == true) return this.Org.FullName;
+                if (this.Org?.Name.IsNotEmpty() == true) return this.Org.Name;
+                return null;
+            }
+        }
+
+
+        /// <summary>
+        /// 授权组织兼容包装属性。
+        /// 后端模型收敛为单值 User.AuthOrgId；此处保留 List<long> 形态，
+        /// 以便 UI 侧 EleTreePicker (Multiple 模式) 无需改动即可工作，
+        /// setter 仅取集合中首个正数值写入 AuthOrgId，getter 返回单元素包装。
+        /// </summary>
+        [NotMapped] private List<long> _authOrgIdsBacking;
+        [UI("授权组织IDs"), NotMapped]
+        public virtual List<long> AuthOrgIds
+        {
+            get
+            {
+                if (_authOrgIdsBacking != null)
+                    return _authOrgIdsBacking;
+                if (this.AuthOrgId.HasValue && this.AuthOrgId.Value > 0)
+                    return new List<long> { this.AuthOrgId.Value };
+                return new List<long>();
+            }
+            set
+            {
+                var first = (value ?? new List<long>())
+                    .Where(t => t > 0)
+                    .Distinct()
+                    .Cast<long?>()
+                    .FirstOrDefault();
+                // 保留显式集合（避免每次 setter 后 getter 再从 AuthOrgId 回取造成"丢失其他值"的直觉不一致，
+                // 但持久化只会写首个正数值到 AuthOrgId 列）
+                _authOrgIdsBacking = (value ?? new List<long>())
+                    .Where(t => t > 0)
+                    .Distinct()
+                    .ToList();
+                this.AuthOrgId = first;
+            }
+        }
+
+        /// <summary>授权组织显示文本（单值语义，兼容原有拼接字段便于前端展示）</summary>
+        public string AuthOrgNames => GetAuthorizedOrgs()
+            .Select(t => t.FullName ?? t.Name)
+            .Where(t => t.IsNotEmpty())
+            .Distinct()
+            .ToJoinString("，");
+                this.AuthOrgIds,
+                this.AuthOrgNames,
+
+            // AuthOrgIds 回显由 NotMapped 包装属性直接从 AuthOrgId 构造；
+            // 此处显式重置临时集合，以避免多次调用间串扰。
+            user._authOrgIdsBacking = null;
+            // 授权组织：单值优先 → 兼容集合取首个 → 空则 BeforeSave 会兜底为 OrgId
+            if (req.AuthOrgId.HasValue && req.AuthOrgId.Value > 0)
+            {
+            }
+            else
+            {
+                var authOrgIds = (req.AuthOrgIds ?? new List<long>()).Where(t => t > 0).Distinct().ToList();
+                user.SetAuthOrgs(authOrgIds);
+            }
+        /// <summary>设置授权组织（集合中仅首个正数值写入 AuthOrgId；持久化前仍可能被兜底为 OrgId）。</summary>
+        public void SetAuthOrgs(IEnumerable<long> orgIds)
+        {
+            this.AuthOrgIds = orgIds?.ToList();
+            var ids = this.AuthOrgIds;
+            if (ids.Count == 0)
+            {
+                this.AuthOrg = null;
+                return;
+            }
+            // 装载导航属性（便于后续立即访问 AuthOrg.Name 等，避免 N+1）
+            var first = ids[0];
+            this.AuthOrg = Org.Set.FirstOrDefault(o => o.Id == first);
+        }
+
+        static readonly JsonSerializerOptions _sseJsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        public List<long> DutyOrgIds { get; set; } = new List<long>();     // 多值，用于 ElePicker/Select 控件回显
+                if (DutyOrgIds.Count == 0)
+                    DutyOrgIds = new List<long> { singleOrgId };
+
+            var qs = Request.Query["dutyOrgIds"].ToString();
+            if (!string.IsNullOrWhiteSpace(qs))
+            {
+                foreach (var s in qs.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (long.TryParse(s.Trim(), out var id)) 
+                        DutyOrgIds.Add(id);
+                }
+                if (DutyOrgIds.Count > 0) goto parseChecker;
+            }
+                ;
+                var authOrgIds = user.AuthOrgIds;
+                if (authOrgIds != null && authOrgIds.Count > 0)
+                    DutyOrgIds = authOrgIds.Distinct().ToList();
+                else if (user.OrgId > 0)
+                    DutyOrgIds = new List<long> { user.OrgId.Value };
+
+        /// <summary>解析 dutyOrgIds：与 tagIds 同样式（?dutyOrgIds=1,2,3），用于 WorkDesk 多值 scope 透传。</summary>
+        static List<long> ParseOrgIds(List<long> fromBinder, Microsoft.Extensions.Primitives.StringValues raw)
+        {
+            var list = new List<long>();
+            if (fromBinder != null) list.AddRange(fromBinder);
+            if (raw.Count > 0)
+            {
+                foreach (var s in raw)
+                {
+                    if (string.IsNullOrWhiteSpace(s)) continue;
+                    foreach (var seg in s.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (long.TryParse(seg.Trim(), out var id) && id > 0) list.Add(id);
+                    }
+                }
+            }
+            return list.Distinct().ToList();
+        }        
+                dutyOrgIds: searchDutyOrgIds,
+            List<long> dutyOrgIds=null,
+            dutyOrgIds = ParseOrgIds(dutyOrgIds, Request.Query["dutyOrgIds"]);
+            List<long> searchDutyOrgIds = useOrScope ? null : dutyOrgIds;
+                if (dutyOrgIds != null) orgRootIds.AddRange(dutyOrgIds);
+
+            var hasOrgScope = (dutyOrgId.HasValue && dutyOrgId.Value > 0) || (dutyOrgIds != null && dutyOrgIds.Count > 0);
+            var useOrScope = hasCheckerScope && hasOrgScope;
+            long? searchCheckerId = useOrScope ? null : effCheckerId;
+            long? searchDutyOrgId = useOrScope ? null : dutyOrgId;
+            var hasCheckerScope = effCheckerId.HasValue && effCheckerId.Value > 0;
+            // 应用 OR scope：checkerId OR dutyOrg（含子孙组织）
+            if (useOrScope)
+            {
+                var orgRootIds = new List<long>();
+                if (dutyOrgId.HasValue && dutyOrgId.Value > 0) orgRootIds.Add(dutyOrgId.Value);
+                var scopeOrgIds = App.DAL.Org.All
+                    .GetDescendants(orgRootIds.Distinct().ToList())
+                    .Select(o => o.Id)
+                    .Distinct()
+                    .ToList();
+                var uid = effCheckerId.Value;
+                q = q.Where(o => o.CheckerId == uid
+                              || (o.DutyOrgId.HasValue && scopeOrgIds.Contains(o.DutyOrgId.Value)));
+            }
+            // 本地计算下次巡查时间并过滤（NextCheckDt 是 NotMapped getter，EF 无法翻译为 SQL，必须在内存做）。
+            // 注意：SortPageExport 只返回当前页 pi.PageSize 条；但 nextCheck 过滤必须基于 scope 全量数据，
+            // 所以这里重新在 scope 全量基础上计算 NextCheckDt，过滤后再手动分页。
+            if (nextCheckFrom.HasValue || nextCheckTo.HasValue)
+            {
+                static DateTime? Compute(DateTime? lastCheckDt, CheckRiskLevel? riskLv)
+                {
+                    if (!lastCheckDt.HasValue) return null;
+                    var months = riskLv switch
+                    {
+                        CheckRiskLevel.None   => 12,
+                        CheckRiskLevel.Low    => 9,
+                        CheckRiskLevel.Medium => 6,
+                        CheckRiskLevel.High   => 3,
+                        _                    => 12
+                    };
+                    return lastCheckDt.Value.AddMonths(months);
+                }
+
+                var fullProjection = q
+                    .Select(o => new { o.Id, o.LastCheckDt, o.RiskLevel })
+                    .AsEnumerable()
+                    .DistinctBy(r => r.Id)
+                    .Where(r =>
+                    {
+                        var nxt = Compute(r.LastCheckDt, r.RiskLevel);
+                        if (nextCheckFrom.HasValue && (!nxt.HasValue || nxt.Value < nextCheckFrom.Value)) return false;
+                        if (nextCheckTo.HasValue   && (!nxt.HasValue || nxt.Value > nextCheckTo.Value))   return false;
+                        return true;
+                    })
+                    .Select(r => r.Id)
+                    .Distinct()
+                    .ToList();
+                pi.SetTotal(fullProjection.Count);
+                var pageIds = fullProjection
+                    .Skip(pi.PageIndex * pi.PageSize)
+                    .Take(pi.PageSize)
+                    .ToList();
+                var pageRows = q
+                    .Where(o => pageIds.Contains(o.Id))
+                    .SortPageExport(pi);
+                pi.SetTotal(fullProjection.Count);
+                return BuildResult(0, "success", pageRows, pi);
+            }
+                            if (!reqAuthOrgId.HasValue || reqAuthOrgId.Value <= 0)
+                {
+                    reqAuthOrgId = (req.AuthOrgIds ?? new List<long>())
+                        .Where(t => t > 0)
+                        .Cast<long?>()
+                        .FirstOrDefault();
+                }
+                reqAuthOrgId = reqAuthOrgId ?? req.OrgId;
+        [HtmlAttributeName("HeadWrap")]          public bool HeadWrap { get; set; }
+            if (HeadWrap) HeaderWrap = true;

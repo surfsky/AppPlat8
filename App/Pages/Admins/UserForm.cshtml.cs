@@ -51,16 +51,9 @@ namespace App.Pages.Admins
 
         public IActionResult OnPostSave([FromBody] UserEntity req)
         {
-            if (req == null)
-                return BuildResult(400, "参数错误");
-
-            if (string.IsNullOrWhiteSpace(req.Name))
-                return BuildResult(400, "账号不能为空");
-
+            // AuthOrgId 限制（防越权）
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-
-            // ------------ 越权校验：非全局管理员时，员工的 OrgId / AuthOrgId 必须落在管理员的 AuthOrgId 子树内 ------------
             if (!isAdmin)
             {
                 // req.OrgId 不能超出管理员可见范围
@@ -69,14 +62,6 @@ namespace App.Pages.Admins
 
                 // req.AuthOrgId：单值优先；否则从兼容集合 AuthOrgIds 取首个正数值；最后兜底 OrgId
                 long? reqAuthOrgId = req.AuthOrgId;
-                if (!reqAuthOrgId.HasValue || reqAuthOrgId.Value <= 0)
-                {
-                    reqAuthOrgId = (req.AuthOrgIds ?? new List<long>())
-                        .Where(t => t > 0)
-                        .Cast<long?>()
-                        .FirstOrDefault();
-                }
-                reqAuthOrgId = reqAuthOrgId ?? req.OrgId;
                 if (!OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, reqAuthOrgId))
                     return BuildResult(403, $"无权将用户授权组织设置为该范围（AuthOrgId={reqAuthOrgId}）");
 
@@ -89,6 +74,7 @@ namespace App.Pages.Admins
                 }
             }
 
+            // user 实体
             UserEntity user;
             if (req.Id == 0)
             {
@@ -105,6 +91,8 @@ namespace App.Pages.Admins
                     return BuildResult(404, "用户不存在");
                 req.Name = user.Name;
             }
+
+            // 更新用户信息
             user.Name = req.Name;
             user.RealName = req.RealName;
             user.OrgId = req.OrgId;
@@ -115,18 +103,8 @@ namespace App.Pages.Admins
             user.IsDel = req.IsDel;
             user.Remark = req.Remark;
             user.Photo = Uploader.SaveFile(nameof(UserEntity), req.Photo);
+            user.AuthOrgId = req.AuthOrgId;
             user.SetRoles(req.RoleIds);
-
-            // 授权组织：单值优先 → 兼容集合取首个 → 空则 BeforeSave 会兜底为 OrgId
-            if (req.AuthOrgId.HasValue && req.AuthOrgId.Value > 0)
-            {
-                user.AuthOrgId = req.AuthOrgId.Value;
-            }
-            else
-            {
-                var authOrgIds = (req.AuthOrgIds ?? new List<long>()).Where(t => t > 0).Distinct().ToList();
-                user.SetAuthOrgs(authOrgIds);
-            }
             user.Save();
             return BuildResult(0, "保存成功");
         }
