@@ -43,14 +43,18 @@ namespace App.API
         }
 
 
-        /// <summary>构建当前用户可见的组织树（包含当前授权组织子树 + 其所有祖先，以便树展示完整路径）。</summary>
+        /// <summary>构建当前用户可见的组织树（授权组织子树可选，补出的祖先仅展示不可选）。</summary>
         public static List<App.DAL.Org> BuildAuthOrgTree(User user)
         {
             if (user == null)
                 return new List<App.DAL.Org>();
 
-            // 所有组织数据（从缓存中获取，且清空geodata）
-            var all = App.DAL.Org.All.OrderBy(t => t.SortId).ThenBy(t => t.Id).ToList().Each(t => t.GeoData = null);
+            // 所有组织数据（基于缓存克隆，避免给共享缓存对象打上 Enabled=false 之类的临时展示标记）
+            var all = App.DAL.Org.All
+                .OrderBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .Select(t => t.Clone().SetValue(x => x.GeoData, null))
+                .ToList();
 
             // admin
             if (Auth.IsAdmin(user))
@@ -61,7 +65,7 @@ namespace App.API
             if (!authRootId.HasValue)
                 return new List<App.DAL.Org>();
 
-            // child ids
+            // 子树节点：当前授权范围内的组织都可选
             var visibleIds = all.GetDescendants(authRootId).Select(t => t.Id).ToHashSet();
             var keepIds = new HashSet<long>(visibleIds);
             var map = all.ToDictionary(t => t.Id, t => t);
@@ -69,6 +73,7 @@ namespace App.API
             {
                 while (current?.ParentId != null && map.TryGetValue(current.ParentId.Value, out var parent))
                 {
+                    parent.Enabled = false; // 祖先节点仅用于展示路径，不允许选中
                     if (!keepIds.Add(parent.Id))
                         break;
                     current = parent;
@@ -107,4 +112,3 @@ namespace App.API
         }
     }
 }
-

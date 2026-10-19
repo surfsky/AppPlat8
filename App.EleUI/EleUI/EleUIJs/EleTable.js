@@ -49,6 +49,20 @@ export class EleTable {
         return value === null || value === undefined ? '' : String(value);
     }
 
+    normalizeTreePickerNodes(list, childrenField = 'children') {
+        const nodes = Array.isArray(list) ? list : [];
+        return nodes.map(node => {
+            if (!node || typeof node !== 'object') return node;
+            const clone = { ...node };
+            clone.disabled = clone.disabled === true || clone.enabled === false;
+            const children = clone[childrenField];
+            if (Array.isArray(children) && children.length > 0) {
+                clone[childrenField] = this.normalizeTreePickerNodes(children, childrenField);
+            }
+            return clone;
+        });
+    }
+
     flattenTreeNodes(list, idField = 'id', nameField = 'name', childrenField = 'children', rows = []) {
         const nodes = Array.isArray(list) ? list : [];
         for (let i = 0; i < nodes.length; i += 1) {
@@ -118,6 +132,7 @@ export class EleTable {
 
         const loadedData = Array.isArray(this.options?.value?.[modelKey]) ? this.options.value[modelKey] : null;
         const treeData = loadedData || fallbackData;
+        const normalizedTreeData = this.normalizeTreePickerNodes(treeData, childrenField);
         const currentValue = this.normalizeTreePickerValue(this.filters.value[modelKey], multiple);
         const selectedValues = Array.isArray(currentValue)
             ? [...currentValue]
@@ -129,14 +144,14 @@ export class EleTable {
         // 用节点的原始 id 字段值（保持类型一致）作为 state.current / state.values。
         const coerceToNodeId = (rawValue) => {
             if (rawValue === null || rawValue === undefined || rawValue === '') return rawValue;
-            const node = this.findTreeNodeById(treeData, rawValue, idField, childrenField);
+            const node = this.findTreeNodeById(normalizedTreeData, rawValue, idField, childrenField);
             if (node) return node[idField];
             // 兼容 string/number 互换
             if (typeof rawValue === 'number') {
-                const alt = this.findTreeNodeById(treeData, String(rawValue), idField, childrenField);
+                const alt = this.findTreeNodeById(normalizedTreeData, String(rawValue), idField, childrenField);
                 if (alt) return alt[idField];
             } else if (typeof rawValue === 'string' && /^-?\d+(\.\d+)?$/.test(rawValue)) {
-                const alt = this.findTreeNodeById(treeData, Number(rawValue), idField, childrenField);
+                const alt = this.findTreeNodeById(normalizedTreeData, Number(rawValue), idField, childrenField);
                 if (alt) return alt[idField];
             }
             return rawValue;
@@ -159,7 +174,7 @@ export class EleTable {
 
                 const state = reactive({
                     keyword: '',
-                    nodes: Array.isArray(treeData) ? treeData : [],
+                    nodes: Array.isArray(normalizedTreeData) ? normalizedTreeData : [],
                     values: [...initialValues],
                     current: !multiple && initialValues.length > 0 ? initialValues[0] : '',
                     collapseTags
@@ -186,6 +201,13 @@ export class EleTable {
                         },
                         onNodeClick(data) {
                             if (multiple) return;
+                            if (data && data.disabled === true) {
+                                const tree = this.$refs.treeRef;
+                                if (tree && typeof tree.setCurrentKey === 'function') {
+                                    tree.setCurrentKey(state.current === '' ? null : state.current);
+                                }
+                                return;
+                            }
                             if (!data || data[idField] === undefined || data[idField] === null) {
                                 state.current = '';
                                 return;
@@ -254,7 +276,7 @@ export class EleTable {
             ref="treeRef"
             node-key="${idField}"
             :data="state.nodes"
-            :props="{ label: '${nameField}', children: '${childrenField}' }"
+            :props="{ label: '${nameField}', children: '${childrenField}', disabled: 'disabled' }"
             :default-expand-all="true"
             :expand-on-click-node="${multiple ? 'false' : 'true'}"
             :highlight-current="${multiple ? 'false' : 'true'}"

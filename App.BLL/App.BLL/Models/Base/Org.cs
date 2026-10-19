@@ -56,7 +56,8 @@ namespace App.DAL
                 TreeLevel,
                 Gps,
                 GeoData = (mode == ExportMode.Detail) ? GeoData : null,
-                Children = Children?.Select(t => t.Export(mode)).ToList(),  // 递归导出子组织（以减少子节点的字段输出）
+                Enabled,
+                Children = Children?.Select(t => t.Export(mode)).ToList(),  // 递归导出子组织（以减少子节点的字段输出）,
             };
         }
         
@@ -67,6 +68,7 @@ namespace App.DAL
                 .SetValue(t => t.Level, this.Level)
                 .SetValue(t => t.Gps, this.Gps)
                 .SetValue(t => t.GeoData, this.GeoData)
+                .SetValue(t => t.Enabled, this.Enabled)
                 ;
         }
 

@@ -4,6 +4,21 @@ export function initTreePickerState(form, vueApi) {
 }
 
 export const treePickerMethods = {
+    /**Normalize tree picker nodes and map enabled=false to Element Plus disabled */
+    normalizeTreePickerNodes(list, childrenField = 'children') {
+        const nodes = Array.isArray(list) ? list : [];
+        return nodes.map(node => {
+            if (!node || typeof node !== 'object') return node;
+            const clone = { ...node };
+            clone.disabled = clone.disabled === true || clone.enabled === false;
+            const children = clone[childrenField];
+            if (Array.isArray(children) && children.length > 0) {
+                clone[childrenField] = this.normalizeTreePickerNodes(children, childrenField);
+            }
+            return clone;
+        });
+    },
+
     /**Normalize tree picker model value */
     normalizeTreePickerValue(value, multiple = false) {
         if (multiple) {
@@ -121,6 +136,7 @@ export const treePickerMethods = {
         const treeData = typeof this.getControlTreeData === 'function'
             ? this.getControlTreeData(target, fallback)
             : fallback;
+        const normalizedTreeData = this.normalizeTreePickerNodes(treeData, childrenField);
         const selectedValues = Array.isArray(currentValue)
             ? [...currentValue]
             : (currentValue ? [currentValue] : []);
@@ -141,7 +157,7 @@ export const treePickerMethods = {
 
                 const state = reactive({
                     keyword: '',
-                    nodes: Array.isArray(treeData) ? treeData : [],
+                    nodes: Array.isArray(normalizedTreeData) ? normalizedTreeData : [],
                     values: [...selectedValues],
                     current: !multiple && selectedValues.length > 0 ? selectedValues[0] : '',
                     collapseTags
@@ -171,6 +187,13 @@ export const treePickerMethods = {
                         /**Handle single select click */
                         onNodeClick(data) {
                             if (multiple) return;
+                            if (data && data.disabled === true) {
+                                const tree = this.$refs.treeRef;
+                                if (tree && typeof tree.setCurrentKey === 'function') {
+                                    tree.setCurrentKey(state.current === '' ? null : state.current);
+                                }
+                                return;
+                            }
                             const val = data && data[idField] !== undefined && data[idField] !== null
                                 ? String(data[idField])
                                 : '';
@@ -239,7 +262,7 @@ export const treePickerMethods = {
             ref="treeRef"
             node-key="${idField}"
             :data="state.nodes"
-            :props="{ label: '${nameField}', children: '${childrenField}' }"
+            :props="{ label: '${nameField}', children: '${childrenField}', disabled: 'disabled' }"
             :default-expand-all="true"
             :expand-on-click-node="${multiple ? 'false' : 'true'}"
             :highlight-current="${multiple ? 'false' : 'true'}"

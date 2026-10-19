@@ -24,6 +24,7 @@ namespace App.Entities
         public virtual List<T> Children { get; set; }
 
         [NotMapped]      public int TreeLevel { get; set; }
+        [NotMapped]      public bool Enabled { get; set; } = true;
 
 
         //-------------------------------------------------------
@@ -68,6 +69,7 @@ namespace App.Entities
                 SortId = SortId,
                 FullName = FullName,
                 TreeLevel = TreeLevel,
+                Enabled = Enabled,
                 Children = this.Children?.Select(c => (T)c.Clone()).ToList()
             };
         }
