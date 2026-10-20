@@ -7,11 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using App.Entities;
+using UserEntity = App.DAL.User;
 
 namespace App.Pages.Admins
 {
-    using UserEntity = App.DAL.User;
-
     [Auth(Power.UserView)]
     public class UserFormModel : AuthModel
     {

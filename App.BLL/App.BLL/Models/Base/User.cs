@@ -320,7 +320,7 @@ namespace App.DAL
         }
 
         /// <summary>搜索用户列表</summary>
-        public static IQueryable<User> Search(string keyword="", string name="", string realName="", long? orgId = null, long? roleId = null, bool? isDel = null, bool includeSubOrg = true)
+        public static IQueryable<User> Search(string keyword="", string name="", string realName="", string mobile="", long? orgId = null, long? roleId = null, bool? isDel = null, bool includeSubOrg = true)
         {
             var q = DataSet
                 .Include(u => u.Org)
@@ -331,6 +331,7 @@ namespace App.DAL
             if (keyword.IsNotEmpty()) q = q.Where(t => t.Name.Contains(keyword) || t.RealName.Contains(keyword));
             if (name.IsNotEmpty())     q = q.Where(t => t.Name.Contains(name));
             if (realName.IsNotEmpty()) q = q.Where(t => t.RealName.Contains(realName));
+            if (mobile.IsNotEmpty())    q = q.Where(t => t.Mobile.Contains(mobile));
             if (orgId != null)
             {
                 if (includeSubOrg)

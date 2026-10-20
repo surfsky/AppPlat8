@@ -21,7 +21,7 @@ namespace App.Pages.Admins
     [Auth(Power.UserView)]
     public class UsersModel : AuthModel
     {
-        public App.DAL.User Item { get; set; }
+        public App.DAL.User Item { get; set; } = new App.DAL.User();
         public long? RoleId { get; set; }
         public List<SelectListItem> RoleList { get; set; }
         public bool CanResetPassword { get; set; }
@@ -29,6 +29,11 @@ namespace App.Pages.Admins
 
         public void OnGet()
         {
+            // init authOrgId filter
+            var cu = Auth.GetUser();
+            Item = new App.DAL.User();
+            Item.AuthOrgId = Asp.GetQueryLong("authOrgId") ?? cu.AuthOrgId;
+
             RoleList = Role.Set
                 .OrderBy(r => r.Name)
                 .ThenBy(r => r.Id)
@@ -40,11 +45,11 @@ namespace App.Pages.Admins
         }
 
         /// <summary>获取用户列表</summary>
-        public IActionResult OnGetData(Paging pi, string name, string realName, long? orgId, long? roleId, bool? isDel, bool includeSubOrg = true)
+        public IActionResult OnGetData(Paging pi, string name, string realName, string mobile, long? orgId, long? roleId, bool? isDel, bool includeSubOrg = true)
         {
             var cu = Auth.GetUser();
             var exportMode = this.Mode == PageMode.Select ? ExportMode.Simple : ExportMode.Detail;
-            var q = App.DAL.User.Search(name: name, realName: realName, orgId: orgId, roleId: roleId, isDel: isDel, includeSubOrg: includeSubOrg);
+            var q = App.DAL.User.Search(name: name, realName: realName, mobile: mobile, orgId: orgId, roleId: roleId, isDel: isDel, includeSubOrg: includeSubOrg);
             // 非全局 admin 时：按当前登录用户的授权组织子树（AuthOrgId）收敛可见员工
             if (!Auth.IsAdmin(cu))
                 q = q.FilterByOrg(cu);
@@ -53,11 +58,11 @@ namespace App.Pages.Admins
         }
 
         // 导出用户列表到 Excel
-        public IActionResult OnPostExport(Paging pi, string name, string realName, long? orgId, long? roleId, bool includeSubOrg = true)
+        public IActionResult OnPostExport(Paging pi, string name, string realName, string mobile, long? orgId, long? roleId, bool includeSubOrg = true)
         {
-            var cu = Auth.GetUser();
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
-            var q = App.DAL.User.Search(name: name, realName: realName, orgId: orgId, roleId: roleId, includeSubOrg: includeSubOrg);
+            var cu = Auth.GetUser();
+            var q = App.DAL.User.Search(name: name, realName: realName, mobile: mobile, orgId: orgId, roleId: roleId, includeSubOrg: includeSubOrg);
             if (!Auth.IsAdmin(cu))
                 q = q.FilterByOrg(cu);
             var list = q.SortPageExport(exportPi);

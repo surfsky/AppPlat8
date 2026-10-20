@@ -292,14 +292,14 @@ export const listPickerMethods = {
                 :key="String(item.value)"
                 type="button"
                 class="relative w-full text-left px-4 py-3 transition flex items-center gap-3 hover:bg-slate-50"
+                :style="isSelected(item.value) ? { backgroundColor: '#ECF6FF' } : null"
                 @click="toggleItem(item)"
                 >
-                <div class="w-8 shrink-0 text-sm font-semibold text-center"
-                    :class="isSelected(item.value) ? 'text-blue-700' : 'text-slate-800'">
+                <div class="w-8 shrink-0 text-sm font-semibold text-center text-slate-800">
                     {{ idx + 1 }}
                 </div>
                 <div class="min-w-0 flex-1 flex items-center gap-2">
-                    <div class="text-sm truncate font-medium" :class="isSelected(item.value) ? 'text-blue-700' : 'text-slate-800'">{{ item.label }}</div>
+                    <div class="text-sm truncate font-medium text-slate-800">{{ item.label }}</div>
                 </div>
                 <el-icon color="#007bff" v-if="isSelected(item.value)">
                     <Check />
