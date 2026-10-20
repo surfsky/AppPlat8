@@ -257,12 +257,12 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.CheckObjectDelete))
+            if (!HasPower(Power.CheckObjectDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.EffectiveAuthOrgId;
+            var scopeId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var item = CheckObject.Get(id);
@@ -279,7 +279,7 @@ namespace App.Pages.Checks
         //-------------------------------------------------------------------------
         public IActionResult OnPostImport()
         {
-            if (!CheckPower(Power.CheckObjectEdit))
+            if (!HasPower(Power.CheckObjectEdit))
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckObject");
@@ -313,7 +313,7 @@ namespace App.Pages.Checks
         //-------------------------------------------------------------------------
         public IActionResult OnPostFixData()
         {
-            if (!CheckPower(Power.AdminMaintain))
+            if (!HasPower(Power.AdminMaintain))
                 return BuildResult(403, "无权操作");
             
             var cnt = CheckObject.FixAll();

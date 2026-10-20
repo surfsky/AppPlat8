@@ -48,7 +48,7 @@ namespace App.Pages.Checks
                 return BuildResult(400, "参数错误");
             if (objectId <= 0)
                 return BuildResult(400, "参数错误：缺少检查对象ID");
-            if (!CheckPower(Power.CheckObjectEdit))
+            if (!HasPower(Power.CheckObjectEdit))
                 return BuildResult(403, "无权操作");
 
             var items = CheckObjectEvent.IncludeSet

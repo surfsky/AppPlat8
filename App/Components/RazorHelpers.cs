@@ -49,6 +49,6 @@ namespace App.Components
         // 权限检查
         //----------------------------------------------------------------------------
         /// <summary>检查当前用户是否有指定权限</summary>
-        public static bool AuthPower(Power power) => Auth.CheckPower(power);
+        public static bool AuthPower(Power power) => Auth.HasPower(power);
     }
 }

@@ -32,7 +32,7 @@ namespace App.Pages.OA
 
         public IActionResult OnPostImport()
         {
-            if (!CheckPower(Power.MeetingImport)) return BuildResult(403, "无权导入");
+            if (!HasPower(Power.MeetingImport)) return BuildResult(403, "无权导入");
             var file = Request.Form.Files.FirstOrDefault();
             if (file == null || file.Length == 0) return BuildResult(400, "请选择 Excel 文件");
             if (!string.Equals(Path.GetExtension(file.FileName), ".xlsx", StringComparison.OrdinalIgnoreCase))

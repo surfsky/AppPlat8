@@ -39,7 +39,7 @@ namespace App.API
         {
             if (user == null || Auth.IsAdmin(user))
                 return null;
-            return user.EffectiveAuthOrgId;
+            return user.AuthOrgId;
         }
 
 

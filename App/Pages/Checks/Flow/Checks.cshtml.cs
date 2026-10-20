@@ -49,12 +49,12 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.CheckDelete))
+            if (!HasPower(Power.CheckDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.EffectiveAuthOrgId;
+            var scopeId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var target = Check.Get(id);

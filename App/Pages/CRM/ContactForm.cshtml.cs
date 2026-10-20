@@ -35,7 +35,7 @@ namespace App.Pages.OA
                 return BuildResult(400, "姓名不能为空");
 
             var needPower = req.Id > 0 ? Power.ContactEdit : Power.ContactNew;
-            if (!CheckPower(needPower))
+            if (!HasPower(needPower))
                 return BuildResult(403, "无权操作");
 
             Contact item;

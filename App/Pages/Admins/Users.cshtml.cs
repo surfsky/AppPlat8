@@ -35,7 +35,7 @@ namespace App.Pages.Admins
                 .Select(r => new SelectListItem(r.Name, r.Id.ToString()))
                 .ToList();
             // 获取当前登录用户是否可以重置密码权限
-            CanResetPassword = this.CheckPower(Power.UserResetPassword);
+            CanResetPassword = this.HasPower(Power.UserResetPassword);
             //CanResetPassword = string.Equals(GetUserName(), "admin", StringComparison.OrdinalIgnoreCase);
         }
 
@@ -72,7 +72,7 @@ namespace App.Pages.Admins
             if (ids == null || ids.Length == 0) return BuildResult(400, "参数错误");
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var orgIds = isAdmin ? null : OrgFilter.GetAuthOrgIds(cu?.EffectiveAuthOrgId);
+            var orgIds = isAdmin ? null : OrgFilter.GetAuthOrgIds(cu?.AuthOrgId);
             foreach (var id in ids)
             {
                 if (id == 1) continue;   // admin 管理员用户不能删除
@@ -81,7 +81,7 @@ namespace App.Pages.Admins
                 if (!isAdmin && orgIds != null)
                 {
                     // 非全局 admin：仅允许删除自己授权范围（子树）内的用户
-                    var orgId = target.EffectiveAuthOrgId;
+                    var orgId = target.AuthOrgId;
                     if (!orgId.HasValue || !orgIds.Contains(orgId.Value))
                         return BuildResult(403, $"无权删除用户：{target.Name}");
                 }
@@ -93,7 +93,7 @@ namespace App.Pages.Admins
 
         public IActionResult OnPostImport()
         {
-            if (!CheckPower(Power.UserNew))
+            if (!HasPower(Power.UserNew))
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.User");

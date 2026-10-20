@@ -142,7 +142,7 @@ namespace App.Pages.Checks
             if (string.IsNullOrEmpty(pi.SortField)) { pi.SortField = "SortId"; pi.SortDirection = "ASC"; }
 
             var cu = Auth.GetUser();
-            var authOrgId = cu?.EffectiveAuthOrgId;
+            var authOrgId = cu?.AuthOrgId;
             var isAdmin = Auth.IsAdmin(cu);
 
             IQueryable<CheckTaskObject> q = CheckTaskObject.Set
@@ -211,7 +211,7 @@ namespace App.Pages.Checks
 
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var authOrgId = cu?.EffectiveAuthOrgId;
+            var authOrgId = cu?.AuthOrgId;
             var scopeIds = isAdmin ? null : OrgFilter.GetAuthOrgIds(authOrgId);
 
             var ids = (req.ObjectIds ?? new List<long>())

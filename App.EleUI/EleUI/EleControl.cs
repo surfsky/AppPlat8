@@ -26,24 +26,15 @@ namespace App.EleUI
         [HtmlAttributeName("Rounded")]              public string Rounded { get; set; }
         [HtmlAttributeName("Shadow")]               public string Shadow { get; set; }
         [HtmlAttributeName("Enabled")]              public bool Enabled { get; set; } = true; // Static enabled state (true/false)
-        [HtmlAttributeName("EnabledFor")]           public ModelExpression EnabledFor { get; set; } // Strongly typed sugar for enabled binding
         [HtmlAttributeName("Visible")]              public bool Visible { get; set; } = true;
+        [HtmlAttributeName("EnabledFor")]           public ModelExpression EnabledFor { get; set; } // Strongly typed sugar for enabled binding
 
 
         //
-        //
-        //
-        /// <summary>控件标识。用于服务端精确控制。</summary>
-        [HtmlAttributeName("ControlId")]            public string ControlId { get; set; }
-
-        /// <summary>字段表达式。默认会由子类推导，例如 For="Item.Name" -> name</summary>
-        [HtmlAttributeName("FieldExpress")]         public string FieldExpress { get; set; }
-
-        /// <summary>服务端 OnChange 处理器名称。设置后将触发 postHandler。</summary>
-        [HtmlAttributeName("OnChange")]             public string OnChange { get; set; }
-
-        /// <summary>渲染为Vue v-model</summary>
-        [HtmlAttributeName("VModel")]               public string VModel { get; set; }
+        [HtmlAttributeName("ControlId")]            public string ControlId { get; set; }     // 控件标识。用于服务端精确控制。
+        [HtmlAttributeName("FieldExpress")]         public string FieldExpress { get; set; }  // 字段表达式。默认会由子类推导，例如 For="Item.Name" -> name
+        [HtmlAttributeName("VModel")]               public string VModel { get; set; }       // 渲染为Vue v-model
+        [HtmlAttributeName("OnChange")] public string OnChange { get; set; } // 服务端 OnChange 处理器名称。设置后将触发 postHandler。
 
 
         //----------------------------------------------------------------

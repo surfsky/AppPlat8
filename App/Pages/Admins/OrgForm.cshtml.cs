@@ -42,13 +42,13 @@ namespace App.Pages.Admins
             App.DAL.Org item;
             if (req.Id == 0)
             {
-                if (!CheckPower(Power.OrgNew)) 
+                if (!HasPower(Power.OrgNew)) 
                     return BuildResult(403, "无权新增");
                 item = new App.DAL.Org();
             }
             else
             {
-                if (!CheckPower(Power.OrgEdit)) 
+                if (!HasPower(Power.OrgEdit)) 
                     return BuildResult(403, "无权编辑");
                 item = App.DAL.Org.Get(req.Id);
                 if (req.ParentId == req.Id)

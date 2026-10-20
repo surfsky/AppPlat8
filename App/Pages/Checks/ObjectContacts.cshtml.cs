@@ -34,7 +34,7 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)        return BuildResult(400, "参数错误");
             if (objectId <= 0)                         return BuildResult(400, "参数错误：缺少检查对象ID");
-            if (!CheckPower(Power.CheckObjectDelete))  return BuildResult(403, "无权操作");
+            if (!HasPower(Power.CheckObjectDelete))  return BuildResult(403, "无权操作");
 
             //var items = CheckObjectContact.IncludeSet.Where(o => ids.Contains(o.Id) && o.CheckObject.Id == objectId).ToList();
             //foreach (var item in items)

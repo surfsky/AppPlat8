@@ -21,7 +21,7 @@
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="140" Fixed="right">
-                <Op Command="Edit" Icon="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.GisGeometryEdit)"></Op>
+                <Op Command="Edit" Icon="Edit" Tooltip="编辑" Visible="@Auth.HasPower(Power.GisGeometryEdit)"></Op>
                 <Op Popup="/GIS/TyphoonLogs?code={code}&amp;name={chineseName}" Icon="List" Text="轨迹"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Code" Label="编号" Width="110" Sortable="true"></EleColumn>

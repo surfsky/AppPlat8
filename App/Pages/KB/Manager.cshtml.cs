@@ -46,7 +46,7 @@ namespace App.Pages.KB
                 return all.ToTree();
 
             // 过滤：OrgId 为空（公共目录）或在授权子树中
-            var authId = cu?.EffectiveAuthOrgId;
+            var authId = cu?.AuthOrgId;
             List<KbMenu> visible;
             if (!authId.HasValue || authId.Value <= 0)
             {
@@ -100,7 +100,7 @@ namespace App.Pages.KB
         /// <summary>删除目录（递归删除所有子目录和关联附件）</summary>
         public IActionResult OnPostDeleteMenu([FromBody] JsonElement payload)
         {
-            if (!CheckPower(Power.KbMenuDelete))
+            if (!HasPower(Power.KbMenuDelete))
                 return OkBuildResult(403, "无权操作");
 
             long id = ExtractId(payload, 0);
@@ -169,7 +169,7 @@ namespace App.Pages.KB
         /// <summary>移动目录上</summary>
         public IActionResult OnPostMenuMoveUp([FromBody] JsonElement payload)
         {
-            if (!CheckPower(Power.KbMenuEdit))
+            if (!HasPower(Power.KbMenuEdit))
                 return OkBuildResult(403, "无权操作");
 
             long id = ExtractId(payload, 0);
@@ -238,7 +238,7 @@ namespace App.Pages.KB
         /// <summary>移动目录下</summary>
         public IActionResult OnPostMenuMoveDown([FromBody] JsonElement payload)
         {
-            if (!CheckPower(Power.KbMenuEdit))
+            if (!HasPower(Power.KbMenuEdit))
                 return OkBuildResult(403, "无权操作");
 
             long id = ExtractId(payload, 0);
@@ -311,7 +311,7 @@ namespace App.Pages.KB
         /// <summary>按本地目录结构批量导入知识库目录和附件。</summary>
         public IActionResult OnPostUploadDirectory(long? menuId)
         {
-            if (!CheckPower(Power.KbMenuEdit) && !CheckPower(Power.KbMenuNew))
+            if (!HasPower(Power.KbMenuEdit) && !HasPower(Power.KbMenuNew))
                 return OkBuildResult(403, "无权操作");
 
             var files = Request?.Form?.Files;

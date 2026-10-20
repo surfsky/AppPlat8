@@ -26,7 +26,6 @@ namespace App.Components
         public const string SESSION_VERIFYCODE = "session_code";                  // 验证码Session名称
         public const string MSG_ONLINE_UPDATE_TIME = "OnlineUpdateTime";
 
-        public static bool IsAdmin(App.DAL.User u)  => u != null && u.Name == "admin";
 
         //--------------------------------------------------
         // 登录注销
@@ -206,25 +205,22 @@ namespace App.Components
         //--------------------------------------------------
         // 权限校验
         //--------------------------------------------------
-        public static bool CheckRole(string roleName, HttpContext context=null)
+        public static bool IsAdmin(App.DAL.User u) => u != null && u.Name == "admin";
+
+        public static bool HasRole(string roleName, HttpContext context=null)
         {
             context = context ?? Asp.Current;
             return context.User.IsInRole(roleName);
         }
 
         /// <summary>检查当前用户是否拥有某个权限</summary>
-        public static bool CheckPower(HttpContext context, Power power)
+        public static bool HasPower(Power power,HttpContext context = null)
         {
-            // 当前登陆用户的权限列表
+            context = context ?? Asp.Current;
             List<Power> powers = GetUserPowers(context);
             if (powers.Contains(power))
                 return true;
             return false;
-        }
-
-        public static bool CheckPower(Power power)
-        {
-            return CheckPower(Asp.Current, power);
         }
 
         /// <summary>检查权限失败（页面回发）

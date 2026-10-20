@@ -52,14 +52,14 @@ namespace App.Pages.OA
         {
             if (id == 0)
             {
-                if (!CheckPower(Power.AssetNew) && !CheckPower(Power.AssetEdit) && !CheckPower(Power.AssetView))
+                if (!HasPower(Power.AssetNew) && !HasPower(Power.AssetEdit) && !HasPower(Power.AssetView))
                     return BuildResult(403, "无权查看");
                 
                 return BuildResult(0, "success", new Asset());
             }
             else
             {
-                if (!CheckPower(Power.AssetView) && !CheckPower(Power.AssetEdit))
+                if (!HasPower(Power.AssetView) && !HasPower(Power.AssetEdit))
                     return BuildResult(403, "无权查看");
                 
                 var item = Asset.Get(id);
@@ -69,7 +69,7 @@ namespace App.Pages.OA
                 if (item != null)
                 {
                     var cu = Auth.GetUser();
-                    if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                    if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId))
                         return BuildResult(403, "越权访问");
                 }
                 
@@ -83,14 +83,14 @@ namespace App.Pages.OA
             if (req == null || string.IsNullOrWhiteSpace(req.Name))
                 return BuildResult(400, "名称不能为空");
             var needPower = (req.Id == 0) ? Power.AssetNew : Power.AssetEdit;
-            if (!CheckPower(needPower))
+            if (!HasPower(needPower))
                 return BuildResult(403, "无权操作");
 
             Asset item = req.Id > 0 ? Asset.Get(req.Id) : new Asset();
             if (req.Id > 0)
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item?.OrgId))
                     return BuildResult(403, "越权修改");
             }
             item.Name = req.Name;

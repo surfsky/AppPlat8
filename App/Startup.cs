@@ -147,7 +147,7 @@ namespace App
                 if (user == null)
                     return new DataAuditScope { Enabled = false };
 
-                var auditOrgId = user.EffectiveAuthOrgId;
+                var auditOrgId = user.AuthOrgId;
                 return new DataAuditScope
                 {
                     Enabled = true,

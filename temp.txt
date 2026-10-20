@@ -538,3 +538,74 @@
                 reqAuthOrgId = reqAuthOrgId ?? req.OrgId;
         [HtmlAttributeName("HeadWrap")]          public bool HeadWrap { get; set; }
             if (HeadWrap) HeaderWrap = true;
+
+
+            var ha = string.IsNullOrWhiteSpace(TitleAlign) ? null : TitleAlign.Trim();
+            if (!string.IsNullOrWhiteSpace(ha)) HeaderAlign = ha;
+
+            if (id > 0)
+            {
+                Item = UserEntity.GetDetail(t => t.Id == id);
+                IsNameEditable = false;
+                if (!CanAccessTarget(Item))
+                    Item = null;   // 越权：直接不回显，让前端报错
+            }
+            else
+            {
+                Item = new UserEntity();
+                IsNameEditable = true;
+            }
+
+
+        /// <summary>授权组织或所属组织的兜底值（AuthOrgId ?? OrgId）</summary>
+        [NotMapped]
+        public long? AuthOrgId => this.AuthOrgId ?? this.OrgId;
+
+        /// <summary>获取用户授权组织（单值语义；返回 0~1 个 Org，保持签名兼容）。</summary>
+        public List<Org> GetAuthorizedOrgs()
+        {
+            var list = new List<Org>();
+            var orgId = this.AuthOrgId;
+            if (!orgId.HasValue || orgId.Value <= 0) return list;
+
+            // 优先走导航属性（若 GetDetail 已 Include）
+            if (this.AuthOrg != null && this.AuthOrg.Id == orgId.Value)
+            {
+                list.Add(this.AuthOrg);
+                return list;
+            }
+            if (this.Org != null && this.Org.Id == orgId.Value)
+            {
+                list.Add(this.Org);
+                return list;
+            }
+
+            var org = Org.Set.FirstOrDefault(o => o.Id == orgId.Value);
+            if (org != null) list.Add(org);
+            return list;
+        }
+            var authOrgs = this.GetAuthorizedOrgs()
+                .Select(t => new
+                {
+                    t.Id,
+                    t.ParentId,
+                    t.Name,
+                    t.FullName,
+                    Level = (int?)t.Level,
+                    t.Remark,
+                    t.SortId,
+                    t.TreeLevel,
+                    Gps = type == ExportMode.Detail ? t.Gps : null,
+                    GeoData = type == ExportMode.Detail ? t.GeoData : null,
+                })
+                .ToList();
+
+                AuthOrgs = authOrgs,
+
+        public static bool CheckPower(Power power)
+        {
+            return CheckPower(power, Asp.Current);
+        }
+
+        /// <summary>获取当前登录用户拥有的全部权限列表</summary>
+        protected List<Power> GetPowers() => Auth.GetUserPowers(HttpContext);

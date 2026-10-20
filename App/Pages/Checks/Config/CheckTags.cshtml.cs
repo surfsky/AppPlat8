@@ -37,7 +37,7 @@ namespace App.Pages.Checks
                 return BuildResult(400, "请选择要删除的记录");
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.EffectiveAuthOrgId;
+            var scopeId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var item = CheckTag.Get(id);

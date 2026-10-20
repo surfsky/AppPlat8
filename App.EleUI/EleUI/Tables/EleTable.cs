@@ -46,25 +46,20 @@ namespace App.EleUI
         [HtmlAttributeName("SortField")]         public string SortField { get; set; } = "";
         [HtmlAttributeName("SortDirection")]     public string SortDirection { get; set; } = "ASC";
 
-        /// <summary>全局表头对齐（left/center/right，可被单个列的 HeaderAlign/LabelAlign 覆盖。别名：TitleAlign。默认 center。</summary>
-        [HtmlAttributeName("HeaderAlign")]       public string HeaderAlign { get; set; } = "center";
-        [HtmlAttributeName("TitleAlign")]        public string TitleAlign { get; set; }
-
-        /// <summary>表头长文字是否自动换行。true 时表头 cell 的 white-space 改为 normal + line-height:1.4。别名：HeadWrap。</summary>
-        [HtmlAttributeName("HeaderWrap")]        public bool HeaderWrap { get; set; }
+        [HtmlAttributeName("HeaderAlign")]           public string HeaderAlign { get; set; } = "center";  // 局表头对齐（left/center/right，可被单个列的 HeaderAlign/LabelAlign 覆盖
+        [HtmlAttributeName("TitleAlign")]            public string TitleAlign { get; set; }    //
+        [HtmlAttributeName("HeaderWrap")]            public bool HeaderWrap { get; set; }   // 表头长文字是否自动换行
 
         /// <summary>全局表头垂直对齐（top/middle/bottom，可被单个列的 HeaderVAlign/LabelVAlign 覆盖。别名：TitleVAlign。默认 middle。</summary>
         [HtmlAttributeName("HeaderVerticalAlign")]   public string HeaderVerticalAlign { get; set; } = "middle";
         [HtmlAttributeName("HeaderVAlign")]          public string HeaderVAlign { get; set; }
         [HtmlAttributeName("TitleVAlign")]           public string TitleVAlign { get; set; }
         [HtmlAttributeName("HighlightCurrentRow")]   public bool HighlightCurrentRow { get; set; } = true;
-        [HtmlAttributeName("BorderColor")]         public string BorderColor { get; set; } = "#e5e5e5";
+        [HtmlAttributeName("LineColor")]            public string LineColor { get; set; } = "#e5e5e5";
 
         public override void Init(TagHelperContext context)
         {
             base.Init(context);
-            var ha = string.IsNullOrWhiteSpace(TitleAlign) ? null : TitleAlign.Trim();
-            if (!string.IsNullOrWhiteSpace(ha)) HeaderAlign = ha;
             var hva = string.IsNullOrWhiteSpace(TitleVAlign) ? (string.IsNullOrWhiteSpace(HeaderVAlign) ? null : HeaderVAlign.Trim()) : TitleVAlign.Trim();
             if (!string.IsNullOrWhiteSpace(hva)) HeaderVerticalAlign = hva;
             context.Items[typeof(TableContext)] = new TableContext();
@@ -215,7 +210,7 @@ namespace App.EleUI
                 {selectionEvent}
                 v-on:sort-change=""onSortChange""
                 height=""100%""
-                style=""--tbl-ha: {haVar}; width: 100%; flex: 1; min-height: 0; --el-border-color: {BorderColor}; --el-table-border-color: {BorderColor}; --el-table-header-border-color: {BorderColor}; --el-table-row-border-color: {BorderColor}; --el-border-color-light: #a8abb2;{headerWrapStyle}""
+                style=""--tbl-ha: {haVar}; width: 100%; flex: 1; min-height: 0; --el-border-color: {LineColor}; --el-table-border-color: {LineColor}; --el-table-header-border-color: {LineColor}; --el-table-row-border-color: {LineColor}; --el-border-color-light: #a8abb2;{headerWrapStyle}""
                 {rowKeyAttr}
                 {highlightAttr}
                 {defaultSortAttr}

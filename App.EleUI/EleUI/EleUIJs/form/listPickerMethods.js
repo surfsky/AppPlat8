@@ -143,7 +143,7 @@ export const listPickerMethods = {
         const collapseTags = !!config.collapseTags;
         const title = config.title || config.label || '选择';
         const size = config.size || '';
-        const placeholder = config.placeholder || '请输入关键字过滤';
+        const placeholder = config.placeholder || '关键字';
         const fallbackOptions = Array.isArray(config.fallbackOptions) && config.fallbackOptions.length > 0
             ? config.fallbackOptions
             : this.getListPickerFallbackOptions(modelKey, target);

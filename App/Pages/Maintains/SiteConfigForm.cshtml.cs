@@ -24,7 +24,7 @@ namespace App.Pages.Maintains
 
         public IActionResult OnPostSave([FromBody] SiteConfig req)
         {
-            if (!CheckPower(Power.ConfigSite))
+            if (!HasPower(Power.ConfigSite))
                 return BuildResult(403, "无权操作");
 
             var cfg = SiteConfig.Set.FirstOrDefault();

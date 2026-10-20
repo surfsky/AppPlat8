@@ -107,21 +107,16 @@ namespace App
         //-------------------------------------------------
         // 用户权限和校验
         //-------------------------------------------------
-        /// <summary>检查当前用户是否拥有某个权限</summary>
-        protected bool CheckPower(Power power) => Auth.CheckPower(HttpContext, power);
-
-        /// <summary>获取当前登录用户拥有的全部权限列表</summary>
-        protected List<Power> GetPowers() => Auth.GetUserPowers(HttpContext);
-
-        /// <summary>当前登录用户名</summary>
-        protected string GetUserName() => Auth.GetUserName(HttpContext);
-
-        /// <summary>当前登录用户标识符</summary>
-        protected long? GetUserId() => Auth.GetUserId(HttpContext);
-
+        /// <summary>获取当前登录用户对象</summary>
         protected App.DAL.User GetUser() => Auth.GetUser();
 
+        /// <summary>当前登录用户名（从验票中获取）</summary>
+        protected string GetUserName() => Auth.GetUserName(HttpContext);
 
+        /// <summary>当前登录用户标识符（从验票中获取）</summary>
+        protected long? GetUserId() => Auth.GetUserId(HttpContext);
 
+        /// <summary>检查当前用户是否拥有某个权限</summary>
+        protected bool HasPower(Power power) => Auth.HasPower(power, HttpContext);
     }
 }

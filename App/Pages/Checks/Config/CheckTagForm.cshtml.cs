@@ -23,7 +23,7 @@ namespace App.Pages.Checks
             if (id > 0 && item != null && item.Id > 0)
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId))
                     return BuildResult(403, "越权访问");
             }
             if (id == 0)
@@ -43,7 +43,7 @@ namespace App.Pages.Checks
                 if (req.ParentId == req.Id) 
                     return BuildResult(400, "上级不能是自己");
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item?.OrgId))
                     return BuildResult(403, "越权修改");
             }
 

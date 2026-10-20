@@ -24,7 +24,7 @@ namespace App.Pages.AI
 
         public IActionResult OnPostSave([FromBody] AIConfig req)
         {
-            if (!CheckPower(Power.AIConfig))
+            if (!HasPower(Power.AIConfig))
                 return BuildResult(403, "无权操作");
             if (req == null)
                 return BuildResult(400, "参数错误");

@@ -41,7 +41,7 @@ namespace App.Pages.Checks
                 return BuildResult(400, "参数错误");
             if (sheetId <= 0)
                 return BuildResult(400, "参数错误：缺少检查表ID");
-            if (!CheckPower(Power.CheckSheetEdit))
+            if (!HasPower(Power.CheckSheetEdit))
                 return BuildResult(403, "无权操作");
 
             var items = CheckSheetItem.Set

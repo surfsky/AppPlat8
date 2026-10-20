@@ -61,7 +61,7 @@ namespace App.Pages.Shared
                 return OkBuildResult(400, "缺少源目录Key");
             if (req.TargetMenuId <= 0)
                 return OkBuildResult(400, "请选择目标目录");
-            if (!CheckPower(Power.CheckObjectEdit))
+            if (!HasPower(Power.CheckObjectEdit))
                 return OkBuildResult(403, "无权移动附件");
 
             if (!req.UniId.StartsWith("KbMenu-", StringComparison.OrdinalIgnoreCase))

@@ -84,7 +84,7 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.CheckSheetDelete))
+            if (!HasPower(Power.CheckSheetDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

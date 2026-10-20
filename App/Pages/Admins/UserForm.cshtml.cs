@@ -21,18 +21,16 @@ namespace App.Pages.Admins
 
         public void OnGet(long id)
         {
-            RoleList = Role.Set.Select(r => new SelectListItem(r.Name, r.Id.ToString())).ToList();
+            RoleList = GetRoleList();
             IsNameEditable = id <= 0;
-            if (id > 0)
-            {
-                Item = UserEntity.GetDetail(t => t.Id == id);
-                if (!CanAccessTarget(Item))
-                    Item = null;   // 越权：直接不回显，让前端报错
-            }
+        }
+
+        List<SelectListItem> GetRoleList()
+        {
+            if (Auth.IsAdmin(Auth.GetUser()))
+                return Role.Set.Select(r => new SelectListItem(r.Name, r.Id.ToString())).ToList();
             else
-            {
-                Item = new UserEntity();
-            }
+                return Auth.GetUser().Roles.Select(r => new SelectListItem(r.Name, r.Id.ToString())).ToList();
         }
 
         public IActionResult OnGetData(long id)
@@ -57,12 +55,12 @@ namespace App.Pages.Admins
             if (!isAdmin)
             {
                 // req.OrgId 不能超出管理员可见范围
-                if (!OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, req.OrgId))
+                if (!OrgFilter.IsAuth(cu?.AuthOrgId, req.OrgId))
                     return BuildResult(403, $"无权将用户部门设置为该组织（OrgId={req.OrgId}）");
 
                 // req.AuthOrgId：单值优先；否则从兼容集合 AuthOrgIds 取首个正数值；最后兜底 OrgId
                 long? reqAuthOrgId = req.AuthOrgId;
-                if (!OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, reqAuthOrgId))
+                if (!OrgFilter.IsAuth(cu?.AuthOrgId, reqAuthOrgId))
                     return BuildResult(403, $"无权将用户授权组织设置为该范围（AuthOrgId={reqAuthOrgId}）");
 
                 // 若为编辑已有用户：目标用户原本必须在管理员的 scope 中，否则禁止修改（防止跨部门窜改）
@@ -123,8 +121,8 @@ namespace App.Pages.Admins
             if (target == null) return false;
             var cu = Auth.GetUser();
             if (Auth.IsAdmin(cu)) return true;
-            var effective = target.EffectiveAuthOrgId;
-            return OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, effective);
+            var effective = target.AuthOrgId;
+            return OrgFilter.IsAuth(cu?.AuthOrgId, effective);
         }
     }
 }

@@ -35,7 +35,7 @@ namespace App.Pages.Open
                     return BuildResult(400, "分组、名称、网址不能为空");
 
                 var needPower = req.Id == 0 ? Power.RefSiteNew : Power.RefSiteEdit;
-                if (!CheckPower(needPower))
+                if (!HasPower(needPower))
                     return BuildResult(403, "无权操作");
 
                 var item = req.Id == 0 ? new Site() : Site.Get(req.Id);

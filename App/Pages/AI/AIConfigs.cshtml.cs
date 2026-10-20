@@ -21,7 +21,7 @@ namespace App.Pages.AI
 
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
-            if (!CheckPower(Power.AIConfig))
+            if (!HasPower(Power.AIConfig))
                 return BuildResult(403, "无权操作");
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");

@@ -110,7 +110,7 @@ namespace App.Pages.Me
         [BindProperty(SupportsGet = true)] public long? UserId { get; set; }
         [BindProperty(SupportsGet = true)] public string UserName { get; set; }
         public string UserRealName { get; private set; }  // 用户真实姓名
-        public bool CanChangeScope => Auth.CheckPower(Power.AdminLeader);  // 是否可切换用户名
+        public bool CanChangeScope => Auth.HasPower(Power.AdminLeader);  // 是否可切换用户名
         public List<long> CurrOrgIds => ResolveCurrOrgIds();   //   实际责任网格命中范围：URL(管理员) > 用户 EffectiveAuthOrgId 展开后的全部子孙
         public List<long> CurrRootOrgIds => ResolveCurrRootOrgIds();  // 责任网格根节点（未展开）：用于 URL 拼接，避免 Query 超长
 
@@ -309,7 +309,7 @@ namespace App.Pages.Me
             if (user == null) return new List<long>();
 
             // 简化：责任组织只取授权组织 EffectiveAuthOrgId（AuthOrgId ?? OrgId），不再把 OrgId 和 AuthOrgIds 拼接
-            var id = user.EffectiveAuthOrgId;
+            var id = user.AuthOrgId;
             if (id.HasValue && id.Value > 0) return new List<long> { id.Value };
             return new List<long>();
         }

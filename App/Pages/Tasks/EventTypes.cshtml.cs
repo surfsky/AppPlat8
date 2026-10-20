@@ -31,7 +31,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.EventDelete))
+            if (!HasPower(Power.EventDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

@@ -211,7 +211,7 @@
     
         <Bottom>
             <EleButton Type="Primary" Icon="Select" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Type="Success" Icon="Search" PopupUrl="/Checks/flow/CheckFlow?objectId=@Model.Item.Id&objectName=@UrlEncode(Model.Item.Name ?? string.Empty)" EnabledFor="Item.Id" Visible="@Auth.CheckPower(Power.CheckNew)" PopupTitle="隐患排查">开始排查</EleButton>
+            <EleButton Type="Success" Icon="Search" PopupUrl="/Checks/flow/CheckFlow?objectId=@Model.Item.Id&objectName=@UrlEncode(Model.Item.Name ?? string.Empty)" EnabledFor="Item.Id" Visible="@Auth.HasPower(Power.CheckNew)" PopupTitle="隐患排查">开始排查</EleButton>
             <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>

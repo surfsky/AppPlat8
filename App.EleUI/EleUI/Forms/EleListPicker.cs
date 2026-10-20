@@ -104,7 +104,7 @@ namespace App.EleUI
                 allowCreate: {(AllowCreate ? "true" : "false")},
                 filterable: {(Filterable ? "true" : "false")},
                 collapseTags: {(collapseTags ? "true" : "false")},
-                placeholder: '请输入关键字过滤',
+                placeholder: '关键字',
                 size: '{sizeSafe}',
                 fallbackOptions: {optionsExpr},
                 onChange: '{onChangeName}'

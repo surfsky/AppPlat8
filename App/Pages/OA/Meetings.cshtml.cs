@@ -34,7 +34,7 @@ namespace App.Pages.OA
 
         public IActionResult OnPostExport(Paging pi, List<DateTime> day, long? orgId, MeetingType? type, string keyword = "")
         {
-            if (!CheckPower(Power.MeetingExport)) return BuildResult(403, "无权导出");
+            if (!HasPower(Power.MeetingExport)) return BuildResult(403, "无权导出");
             var exportPaging = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var cu = Auth.GetUser();
             var q = Meeting.Search(day.GetVal(0), day.GetVal(1), orgId, type, keyword);
@@ -50,7 +50,7 @@ namespace App.Pages.OA
 
         public IActionResult OnPostImport()
         {
-            if (!CheckPower(Power.MeetingImport)) return BuildResult(403, "无权导入");
+            if (!HasPower(Power.MeetingImport)) return BuildResult(403, "无权导入");
             return EleHandler.ShowDrawer(
                 title:"导入会议记录", 
                 url: "/OA/MeetingImport", 
@@ -63,10 +63,10 @@ namespace App.Pages.OA
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
             if (ids == null || ids.Length == 0) return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.MeetingDelete)) return BuildResult(403, "无权删除");
+            if (!HasPower(Power.MeetingDelete)) return BuildResult(403, "无权删除");
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.EffectiveAuthOrgId;
+            var scopeId = cu?.AuthOrgId;
             var count = 0;
             foreach (var id in ids)
             {

@@ -213,7 +213,7 @@ namespace App.Pages.GIS
             if (geo == null)
                 return BuildResult(404, "图形不存在或无权访问");
 
-            var canEdit = Auth.CheckPower(HttpContext, Power.GisGeometryEdit) && GisGeometry.Get(id) != null;
+            var canEdit = Auth.HasPower(Power.GisGeometryEdit) && GisGeometry.Get(id) != null;
             var atts = BuildGeometryAtts(geo.UniId);
 
             return BuildResult(0, "success", new

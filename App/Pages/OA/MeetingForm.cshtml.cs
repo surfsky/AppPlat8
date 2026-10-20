@@ -19,7 +19,7 @@ namespace App.Pages.OA
             if (id > 0 && item != null)
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId))
                     return BuildResult(403, "越权访问");
             }
             return item == null ? BuildResult(404, "会议记录不存在") : BuildResult(0, "success", item.Export());
@@ -31,16 +31,16 @@ namespace App.Pages.OA
             Meeting item;
             if (req.Id <= 0)
             {
-                if (!CheckPower(Power.MeetingNew)) return BuildResult(403, "无权新增");
+                if (!HasPower(Power.MeetingNew)) return BuildResult(403, "无权新增");
                 item = new Meeting();
             }
             else
             {
-                if (!CheckPower(Power.MeetingEdit)) return BuildResult(403, "无权修改");
+                if (!HasPower(Power.MeetingEdit)) return BuildResult(403, "无权修改");
                 item = Meeting.Get(req.Id);
                 if (item == null) return BuildResult(404, "会议记录不存在");
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId))
                     return BuildResult(403, "越权修改");
             }
 

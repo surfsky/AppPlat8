@@ -12,16 +12,16 @@ namespace App.EleUI
     [HtmlTargetElement("EleTreePicker")]
     public class EleTreePicker : EleFormControl
     {
-        [HtmlAttributeName("Api")]           public string Api { get; set; }
-        [HtmlAttributeName("Items")]         public object Items { get; set; }
-        [HtmlAttributeName("IdField")]       public string IdField { get; set; }
-        [HtmlAttributeName("ValueField")]    public string ValueField { get; set; }
-        [HtmlAttributeName("NameField")]     public string NameField { get; set; }
-        [HtmlAttributeName("ChildrenField")] public string ChildrenField { get; set; }
-        [HtmlAttributeName("CheckStrictly")] public bool CheckStrictly { get; set; } = true;
-        [HtmlAttributeName("Multiple")]      public bool Multiple { get; set; } = false;
-        [HtmlAttributeName("CollapseTags")]  public bool? CollapseTags { get; set; } = false;
-        [HtmlAttributeName("TagType")]       public EleTagType TagType { get; set; } = EleTagType.Info;
+        [HtmlAttributeName("Api")]           public string Api { get; set; }                            // 树数据接口
+        [HtmlAttributeName("Items")]         public object Items { get; set; }                          // 静态树数据
+        [HtmlAttributeName("IdField")]       public string IdField { get; set; }                        // 树节点 ID 字段
+        [HtmlAttributeName("ValueField")]    public string ValueField { get; set; }                     // 树节点值 字段
+        [HtmlAttributeName("NameField")]     public string NameField { get; set; }                      // 树节点名称 字段
+        [HtmlAttributeName("ChildrenField")] public string ChildrenField { get; set; }                  // 树节点子项字段
+        [HtmlAttributeName("CheckStrictly")] public bool CheckStrictly { get; set; } = true;            // 是否严格检查选中项是否在树中
+        [HtmlAttributeName("Multiple")]      public bool Multiple { get; set; } = false;                // 是否支持多选
+        [HtmlAttributeName("CollapseTags")]  public bool? CollapseTags { get; set; } = false;           // 是否折叠标签
+        [HtmlAttributeName("TagType")]       public EleTagType TagType { get; set; } = EleTagType.Info; // 标签类型
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -110,7 +110,7 @@ namespace App.EleUI
                 multiple: {(Multiple ? "true" : "false")},
                 checkStrictly: {(CheckStrictly ? "true" : "false")},
                 collapseTags: {(collapseTags ? "true" : "false")},
-                placeholder: '输入关键字过滤',
+                placeholder: '关键字',
                 fallbackData: {fallbackExpr},
                 onChange: '{onChangeName}'
             }})";

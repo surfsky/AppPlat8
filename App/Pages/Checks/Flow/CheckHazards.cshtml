@@ -29,8 +29,8 @@
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="100" Fixed="right">
-                <Op Command="Edit"   Icon="Edit" Tooltip="处理" Visible="@Auth.CheckPower(Power.CheckHazardEdit)"></Op>
-                <Op Command="Delete" Icon="Delete" IconColor="Danger" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckHazardDelete) && Auth.CheckPower(Power.AdminOrg)"></Op>
+                <Op Command="Edit"   Icon="Edit" Tooltip="处理" Visible="@Auth.HasPower(Power.CheckHazardEdit)"></Op>
+                <Op Command="Delete" Icon="Delete" IconColor="Danger" Tooltip="删除" Visible="@Auth.HasPower(Power.CheckHazardDelete) && Auth.HasPower(Power.AdminOrg)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="120" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleColumn For="Item.CheckItemText" Label="检查项" MinWidth="250"  Link="true"></EleColumn>

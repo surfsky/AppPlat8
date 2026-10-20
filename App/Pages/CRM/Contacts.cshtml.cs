@@ -31,7 +31,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.ContactDelete))
+            if (!HasPower(Power.ContactDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
@@ -45,7 +45,7 @@ namespace App.Pages.OA
         /// <summary>打开导入窗口</summary>
         public IActionResult OnPostImport()
         {
-            if (!CheckPower(Power.ContactNew))
+            if (!HasPower(Power.ContactNew))
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.OA.Contact") + "&ignoreId=true";

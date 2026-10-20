@@ -23,7 +23,7 @@
                    - ?orgId=730 走 Model.Item.DutyOrgId（OnGet 中已经按 orgId 查到 Org 实体并绑定到 Item）；
                    - 其它参数（?name=xxx&address=yyy 等）直接用 QStr("key") 读取（_ViewImports 全局 @using static 导入），
                      无需 Model. 前缀，简单清晰。*@
-                <EleTreePicker For="DutyOrgId" Width="300px" Label="所属网格" Multiple="true" CollapseTags="false" Enabled="@Auth.CheckPower(Power.AdminLeader)"
+                <EleTreePicker For="DutyOrgId" Width="300px" Label="所属网格" Multiple="true" CollapseTags="false" Enabled="@Auth.HasPower(Power.AdminLeader)"
                                Api="/httpapi/orgs/GetAuthOrgTree" Value="@Model.DutyOrgId"></EleTreePicker>
                 <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Width="250px" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0"
                            Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QStr("checkerId"))"
@@ -48,11 +48,11 @@
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
-                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.CheckObjectNew)">新增</EleButton>
-                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.CheckObjectDelete)">删除</EleButton>
-                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">导入</EleButton>
-                <EleButton Type="Warning" Command="Export" Icon="Download" Visible="@Auth.CheckPower(Power.CheckObjectExport)">导出</EleButton>
-                <EleButton Type="Warning" Command="EditBatch" Icon="Edit" Visible="@Auth.CheckPower(Power.CheckObjectEdit)">批量修改
+                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.HasPower(Power.CheckObjectNew)">新增</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.HasPower(Power.CheckObjectDelete)">删除</EleButton>
+                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.HasPower(Power.CheckObjectEdit)">导入</EleButton>
+                <EleButton Type="Warning" Command="Export" Icon="Download" Visible="@Auth.HasPower(Power.CheckObjectExport)">导出</EleButton>
+                <EleButton Type="Warning" Command="EditBatch" Icon="Edit" Visible="@Auth.HasPower(Power.CheckObjectEdit)">批量修改
                     <BatchFields>
                         <BatchField Control="Picker"  Field="CheckerId" TextFor="CheckerName" Label="网格员" PopupUrl="/Admins/Users?multi=false&md=Select" />
                         <BatchField Control="Input"   Field="DutyMan"   Label="企业负责人" Placeholder="留空则不更新" />
@@ -60,20 +60,20 @@
                         <BatchField Control="Select"  Field="RiskLevel" Label="风险等级"   Options="无风险,低风险,中风险,高风险" />
                     </BatchFields>
                 </EleButton>
-                <EleButton Type="Success" Icon="Edit" Visible="@Auth.CheckPower(Power.AdminMaintain)" Handler="FixData" ConfirmText="该操作较为费时，确认操作吗？">修正数据</EleButton>
+                <EleButton Type="Success" Icon="Edit" Visible="@Auth.HasPower(Power.AdminMaintain)" Handler="FixData" ConfirmText="该操作较为费时，确认操作吗？">修正数据</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn Fixed="left"></EleNumColumn>
             <EleOpColumn Width="120" Fixed="right" Shows="2">
-                <Op Command="Edit"                                                     Icon="EditPen"         Text="编辑"      Mode="Text" Visible="@Auth.CheckPower(Power.CheckObjectEdit)"></Op>
-                <Op Popup="/Checks/Flow/CheckFlow?objectId={id}&objectName={name}"     Icon="Search"          Text="排查"      Mode="Text" Visible="@Auth.CheckPower(Power.CheckNew)"></Op>
-                <Op Popup="/Checks/Flow/CheckHazards?objectId={id}&objectName={name}"  Icon="WarningFilled"   Text="隐患清单"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckHazardView)"></Op>
-                <Op Popup="/Checks/Flow/Checks?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="排查历史"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckView)"></Op>
-                <Op Popup="/Checks/CheckPoints?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="检查点" Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
-                <Op Popup="/Checks/CheckObjectEvents?objectId={id}&objectName={name}"  Icon="DocumentChecked" Text="事件台账"  Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
-                <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"     Icon="User"            Text="联系人"    Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
-                <Op Popup="/Shared/Atts?uniId=CheckObject-{id}&name={name}"            Icon="Paperclip"       Text="文档资料"      Mode="Both" Visible="@Auth.CheckPower(Power.CheckObjectView)"></Op>
+                <Op Command="Edit"                                                     Icon="EditPen"         Text="编辑"      Mode="Text" Visible="@Auth.HasPower(Power.CheckObjectEdit)"></Op>
+                <Op Popup="/Checks/Flow/CheckFlow?objectId={id}&objectName={name}"     Icon="Search"          Text="排查"      Mode="Text" Visible="@Auth.HasPower(Power.CheckNew)"></Op>
+                <Op Popup="/Checks/Flow/CheckHazards?objectId={id}&objectName={name}"  Icon="WarningFilled"   Text="隐患清单"  Mode="Both" Visible="@Auth.HasPower(Power.CheckHazardView)"></Op>
+                <Op Popup="/Checks/Flow/Checks?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="排查历史"  Mode="Both" Visible="@Auth.HasPower(Power.CheckView)"></Op>
+                <Op Popup="/Checks/CheckPoints?objectId={id}&objectName={name}"        Icon="DocumentChecked" Text="检查点" Mode="Both" Visible="@Auth.HasPower(Power.CheckObjectView)"></Op>
+                <Op Popup="/Checks/CheckObjectEvents?objectId={id}&objectName={name}"  Icon="DocumentChecked" Text="事件台账"  Mode="Both" Visible="@Auth.HasPower(Power.CheckObjectView)"></Op>
+                <Op Popup="/Checks/ObjectContacts?objectId={id}&objectName={name}"     Icon="User"            Text="联系人"    Mode="Both" Visible="@Auth.HasPower(Power.CheckObjectView)"></Op>
+                <Op Popup="/Shared/Atts?uniId=CheckObject-{id}&name={name}"            Icon="Paperclip"       Text="文档资料"      Mode="Both" Visible="@Auth.HasPower(Power.CheckObjectView)"></Op>
                 <Op Command="Delete"                                                   Icon="Delete" Text="删除" Tooltip="删除" Visible="false" Mode="Both"></Op>
             </EleOpColumn>
             <EleColumn For="Item.Id" Label="Id" Link="true" Width="60" Sortable="true"></EleColumn>

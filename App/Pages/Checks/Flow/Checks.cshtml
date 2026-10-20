@@ -16,14 +16,14 @@
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
-                <EleButton Type="Primary" PopupUrl="/Checks/Flow/CheckFlow?objectId=@Model.ObjectId&objectName=@objectNameEncoded" Icon="DocumentChecked" Visible="@(Model.ObjectId.GetValueOrDefault() > 0 && Auth.CheckPower(Power.CheckNew))">开始排查</EleButton>
+                <EleButton Type="Primary" PopupUrl="/Checks/Flow/CheckFlow?objectId=@Model.ObjectId&objectName=@objectNameEncoded" Icon="DocumentChecked" Visible="@(Model.ObjectId.GetValueOrDefault() > 0 && Auth.HasPower(Power.CheckNew))">开始排查</EleButton>
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">删除</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="60" Fixed="right">
-                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.CheckDelete) && Auth.CheckPower(Power.AdminOrg)"></Op>
+                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.HasPower(Power.CheckDelete) && Auth.HasPower(Power.AdminOrg)"></Op>
             </EleOpColumn>
             <EleColumn For="Item.CheckDt" Label="检查时间" Width="120" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleColumn For="Item.CheckObjectName" Label="检查对象" MinWidth="150"></EleColumn>

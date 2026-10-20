@@ -39,7 +39,7 @@ namespace App.Pages.Maintains
                 return BuildResult(400, "概述不能为空");
 
             var needPower = req.Id > 0 ? Power.FeedBackEdit : Power.FeedBackNew;
-            if (!CheckPower(needPower))
+            if (!HasPower(needPower))
                 return BuildResult(403, "无权操作");
 
             Feedback item;

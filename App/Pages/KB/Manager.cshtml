@@ -8,10 +8,10 @@
     // 权限：统一写成 JS 可识别的小写字符串 "true" / "false"，
     // 因为 Manager3 是原生 Vue，@(xxx) 会直接输出到 JS 源码里，
     // 字符串版不会触发 JS 的关键字/大小写问题，也能无缝配合 !currentMenuId 这种 JS 逻辑。
-    var canNew    = Auth.CheckPower(Power.KbMenuNew)    ? "true" : "false";
-    var canEdit   = Auth.CheckPower(Power.KbMenuEdit)   ? "true" : "false";
-    var canDelete = Auth.CheckPower(Power.KbMenuDelete) ? "true" : "false";
-    var canUploadDir = (Auth.CheckPower(Power.KbMenuNew) || Auth.CheckPower(Power.KbMenuEdit)) ? "true" : "false";
+    var canNew    = Auth.HasPower(Power.KbMenuNew)    ? "true" : "false";
+    var canEdit   = Auth.HasPower(Power.KbMenuEdit)   ? "true" : "false";
+    var canDelete = Auth.HasPower(Power.KbMenuDelete) ? "true" : "false";
+    var canUploadDir = (Auth.HasPower(Power.KbMenuNew) || Auth.HasPower(Power.KbMenuEdit)) ? "true" : "false";
     var defaultIframeUrl = Model.DefaultAttsUrl;
     var treeJson = JsonSerializer.Serialize(
         Model.MenuTree ?? new List<KbMenu>(),

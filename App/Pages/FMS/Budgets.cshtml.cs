@@ -40,12 +40,12 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.BudgetDelete))
+            if (!HasPower(Power.BudgetDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.EffectiveAuthOrgId;
+            var scopeId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var target = Budget.Get(id);
@@ -66,7 +66,7 @@ namespace App.Pages.OA
             if (req.Id > 0)
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item?.OrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item?.OrgId))
                     return BuildResult(403, "越权修改");
             }
             item.Name = req.Name;

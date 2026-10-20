@@ -180,7 +180,7 @@
     <div id="geo-detail-panel" class="geo-detail-panel" aria-label="图形详情">
         <gis-panel id="geo-detail-gis-panel" class="geo-detail-gis-panel" title="点位信息" width="100%" height="100%" closable="true" close-label="关闭">
             <div data-panel-actions>
-                @if (Auth.CheckPower(Power.GisGeometryEdit))
+                @if (Auth.HasPower(Power.GisGeometryEdit))
                 {
                     <button class="gis-panel-close" type="button" title="编辑" aria-label="编辑" data-panel-edit-geometry>
                         <i class="fa-regular fa-pen-to-square"></i>

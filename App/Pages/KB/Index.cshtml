@@ -443,11 +443,11 @@
                                     },
                                     template: `
 <div class="ele-tree-picker-panel h-full flex flex-col">
-    <div class="px-4 pt-4 pb-3 border-b border-slate-200 bg-white">
+    <div class="px-2 pt-4 pb-3 border-b border-slate-200 bg-white">
         <el-input
             :model-value="state.keyword"
             clearable
-            placeholder="输入关键字过滤"
+            placeholder="关键字"
             @@update:model-value="onFilterChange">
             <template #prefix>
                 <el-icon><Search /></el-icon>

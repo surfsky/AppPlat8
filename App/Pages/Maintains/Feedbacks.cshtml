@@ -17,8 +17,8 @@
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
-                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.CheckPower(Power.FeedBackNew)">新增</EleButton>
-                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.CheckPower(Power.FeedBackDelete)">删除</EleButton>
+                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@Auth.HasPower(Power.FeedBackNew)">新增</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@Auth.HasPower(Power.FeedBackDelete)">删除</EleButton>
             </Buttons>
         </Toolbar>
 
@@ -34,8 +34,8 @@
             <EleColumn For="Item.Reply" Label="回应" MinWidth="220" ShowOverflowTooltip="true"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="170" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleOpColumn Width="100" Fixed="right">
-                <Op Command="Edit" Icon="Edit" Tooltip="编辑" Visible="@Auth.CheckPower(Power.FeedBackEdit)"></Op>
-                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.CheckPower(Power.FeedBackDelete)"></Op>
+                <Op Command="Edit" Icon="Edit" Tooltip="编辑" Visible="@Auth.HasPower(Power.FeedBackEdit)"></Op>
+                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@Auth.HasPower(Power.FeedBackDelete)"></Op>
             </EleOpColumn>
         </Columns>
     </EleTable>

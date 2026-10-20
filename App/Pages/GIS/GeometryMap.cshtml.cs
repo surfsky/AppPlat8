@@ -63,7 +63,7 @@ namespace App.Pages.GIS
         {
             if (req == null || req.Id <= 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.GisGeometryDelete))
+            if (!HasPower(Power.GisGeometryDelete))
                 return BuildResult(403, "无权操作");
 
             GisGeometry.Delete(req.Id);
@@ -74,7 +74,7 @@ namespace App.Pages.GIS
         {
             if (req == null || req.Id <= 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.GisGeometryEdit))
+            if (!HasPower(Power.GisGeometryEdit))
                 return BuildResult(403, "无权操作");
 
             var item = GisGeometry.Get(req.Id);

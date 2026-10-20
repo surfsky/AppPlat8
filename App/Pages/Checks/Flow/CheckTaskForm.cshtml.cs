@@ -71,7 +71,7 @@ namespace App.Pages.Checks
             if (string.IsNullOrEmpty(pi.SortDirection)) pi.SortDirection = "ASC";
 
             var cu = Auth.GetUser();
-            var authOrgId = cu?.EffectiveAuthOrgId;
+            var authOrgId = cu?.AuthOrgId;
             var isAdmin = Auth.IsAdmin(cu);
 
             // 用 Search 简化基础过滤（taskId + checkerId），并补充嵌套 Include 供投影使用

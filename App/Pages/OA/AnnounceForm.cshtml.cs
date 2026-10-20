@@ -27,7 +27,7 @@ namespace App.Pages.Admin
         {
             if (id == 0)
             {
-                if (!CheckPower(Power.AnnounceNew))
+                if (!HasPower(Power.AnnounceNew))
                     return BuildResult(403, "无权新增");
                 var a = new Announce
                 {
@@ -47,13 +47,13 @@ namespace App.Pages.Admin
             }
             else
             {
-                if (!CheckPower(Power.AnnounceView))
+                if (!HasPower(Power.AnnounceView))
                     return BuildResult(403, "无权查看");
                 var a = Announce.Get(id);
                 if (a == null)
                     return BuildResult(404, "无效参数");
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, a.OrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, a.OrgId))
                     return BuildResult(403, "越权访问");
                 return BuildResult(0, "success", a);
             }
@@ -65,7 +65,7 @@ namespace App.Pages.Admin
             if (req == null || String.IsNullOrWhiteSpace(req.Title))
                 return BuildResult(400, "标题不能为空");
             var needPower = (req.Id == 0) ? Power.AnnounceNew : Power.AnnounceEdit;
-            if (!CheckPower(needPower))
+            if (!HasPower(needPower))
                 return BuildResult(403, "无权操作");
 
             var userName = GetUserName();
@@ -76,7 +76,7 @@ namespace App.Pages.Admin
             if (req.Id > 0)
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, a?.OrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, a?.OrgId))
                     return BuildResult(403, "越权修改");
             }
             a.Title = req.Title.Trim();

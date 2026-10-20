@@ -28,32 +28,32 @@ namespace App.DAL
     //public class User : IKeyId
     public class User : EntityBase<User>, IDeleteLogic, IFixAll
     {
-        [UI("是否失效")]   public bool? IsDel { get; set; } = false;
+        [UI("是否失效")]    public bool? IsDel { get; set; } = false;
         [UI("失效时间")]    public DateTime? DeleteDt { get; set; }
-        [UI("用户名")]     public string Name { get; set; }
-        [UI("邮箱")]       public string Email { get; set; }
-        [UI("密码")]       public string Password { get; set; }
+        [UI("用户名")]      public string Name { get; set; }
+        [UI("邮箱")]        public string Email { get; set; }
+        [UI("密码")]        public string Password { get; set; }
         [UI("性别")]        public string Gender { get; set; }
         [UI("昵称")]        public string NickName { get; set; }
         [UI("真实姓名")]     public string RealName { get; set; }
         [UI("照片")]        public string Photo { get; set; }
-        [UI("工作电话")]    public string OfficePhone { get; set; }
-        [UI("手机号")]        public string Mobile { get; set; }
+        [UI("工作电话")]     public string OfficePhone { get; set; }
+        [UI("手机号")]      public string Mobile { get; set; }
         [UI("地址")]        public string Address { get; set; }
         [UI("备注")]        public string Remark { get; set; }
-        [UI("身份证")]        public string IdCard { get; set; }
-        [UI("生日")]           public DateTime? Birthday { get; set; }
-        [UI("任职时间")]        public DateTime? TakeOfficeDt { get; set; }
-        [UI("上次登录时间")]     public DateTime? LastLoginDt { get; set; }
-        [UI("职务")]            public string  Title { get; set; }
-        [UI("所属组织")]        public long? OrgId { get; set; }
+        [UI("身份证")]      public string IdCard { get; set; }
+        [UI("生日")]        public DateTime? Birthday { get; set; }
+        [UI("任职时间")]    public DateTime? TakeOfficeDt { get; set; }
+        [UI("上次登录时间")] public DateTime? LastLoginDt { get; set; }
+        [UI("职务")]        public string  Title { get; set; }
+        [UI("所属组织")]     public long? OrgId { get; set; }
         /// <summary>授权组织（单值）；保存前若为空将自动兜底为 OrgId</summary>
-        [UI("授权组织")]        public long? AuthOrgId { get; set; }
+        [UI("授权组织")]     public long? AuthOrgId{ get; set; }
 
         // Relations
-        [UI("所属组织")]        public virtual Org Org { get; set; }
-        [UI("用户角色")]        public virtual List<Role> Roles { get; set; } = new List<Role>();
-        [UI("授权组织")]        public virtual Org AuthOrg { get; set; }
+        [UI("所属组织")]     public virtual Org Org { get; set; }
+        [UI("授权组织")]     public virtual Org AuthOrg { get; set; }
+        [UI("用户角色")] public virtual List<Role> Roles { get; set; } = new List<Role>();
 
 
         //------------------------------------------------------
@@ -65,17 +65,11 @@ namespace App.DAL
         public string OrgFullName => this.Org?.FullName;
         public string AuthOrgName => this.AuthOrg?.Name;
         public string AuthOrgFullName => this.AuthOrg?.FullName;
-
-        /// <summary>授权组织或所属组织的兜底值（AuthOrgId ?? OrgId）</summary>
-        [NotMapped]
-        public long? EffectiveAuthOrgId => this.AuthOrgId ?? this.OrgId;
-
-        public string MobileMasked => this.Mobile?.Mask(3, 4);
-        public string OfficePhoneMasked => this.OfficePhone?.Mask(3, 4);
-
+        public string MobileMasked => this.Mobile.Mask();
+        public string OfficePhoneMasked => this.OfficePhone.Mask();
 
         //------------------------------------------------------
-        // 角色相关（用UserRoles表存储）
+        // 角色（用UserRoles表存储）
         //------------------------------------------------------
         public string RoleNames => this.Roles==null ? "" : this.Roles.Select(t => t.Name).Distinct().ToJoinString(",");
 
@@ -124,29 +118,6 @@ namespace App.DAL
                 .ToList();
         }
 
-        /// <summary>获取用户授权组织（单值语义；返回 0~1 个 Org，保持签名兼容）。</summary>
-        public List<Org> GetAuthorizedOrgs()
-        {
-            var list = new List<Org>();
-            var orgId = this.EffectiveAuthOrgId;
-            if (!orgId.HasValue || orgId.Value <= 0) return list;
-
-            // 优先走导航属性（若 GetDetail 已 Include）
-            if (this.AuthOrg != null && this.AuthOrg.Id == orgId.Value)
-            {
-                list.Add(this.AuthOrg);
-                return list;
-            }
-            if (this.Org != null && this.Org.Id == orgId.Value)
-            {
-                list.Add(this.Org);
-                return list;
-            }
-
-            var org = Org.Set.FirstOrDefault(o => o.Id == orgId.Value);
-            if (org != null) list.Add(org);
-            return list;
-        }
 
         /// <summary>按角色ID列表更新导航属性。</summary>
         public void SetRoles(IEnumerable<long> roleIds)
@@ -159,18 +130,6 @@ namespace App.DAL
         }
 
 
-        //------------------------------------------------------
-        // 保存钩子：AuthOrgId 空值兜底
-        //------------------------------------------------------
-        /// <summary>保存前若 AuthOrgId 为空，则兜底为所属组织 OrgId。</summary>
-        public override void BeforeSave(EntityOp op)
-        {
-            base.BeforeSave(op);
-            if (!this.AuthOrgId.HasValue || this.AuthOrgId.Value <= 0)
-            {
-                this.AuthOrgId = (this.OrgId.HasValue && this.OrgId.Value > 0) ? this.OrgId : (long?)null;
-            }
-        }
 
         //------------------------------------------------------
         // 权限（用RolePower表存储）
@@ -310,25 +269,9 @@ namespace App.DAL
         // 
         //------------------------------------------------------
         /// <summary>导出数据（可根据不同场景导出不同字段）</summary>
-        public override object Export(ExportMode type = ExportMode.Normal)
+        public override object Export(ExportMode mode = ExportMode.Normal)
         {
-            var authOrgs = this.GetAuthorizedOrgs()
-                .Select(t => new
-                {
-                    t.Id,
-                    t.ParentId,
-                    t.Name,
-                    t.FullName,
-                    Level = (int?)t.Level,
-                    t.Remark,
-                    t.SortId,
-                    t.TreeLevel,
-                    Gps = type == ExportMode.Detail ? t.Gps : null,
-                    GeoData = type == ExportMode.Detail ? t.GeoData : null,
-                })
-                .ToList();
-            var roles = this.Roles.Export(type);
-
+            var roles = this.Roles.Export(mode);
             return new
             {
                 this.Id,
@@ -348,8 +291,8 @@ namespace App.DAL
                 this.TakeOfficeDt,
                 this.LastLoginDt,
                 this.Title,
-                OfficePhone = (type == ExportMode.Detail) ? this.OfficePhone : this.OfficePhone?.Mask(),
-                Mobile = (type == ExportMode.Detail) ? this.Mobile : this.Mobile?.Mask(),
+                OfficePhone = (mode == ExportMode.Detail) ? this.OfficePhone : this.OfficePhone?.Mask(),
+                Mobile      = (mode == ExportMode.Detail) ? this.Mobile      : this.Mobile?.Mask(),
                 this.Address,
                 this.Remark,
                 this.IdCard,
@@ -358,7 +301,6 @@ namespace App.DAL
                 RoleIds = this.GetRoleIds(),
                 this.RoleNames,
                 Roles = roles,
-                AuthOrgs = authOrgs,
             };
         }
 
@@ -410,11 +352,25 @@ namespace App.DAL
             return q;
         }
 
+        //------------------------------------------------------
+        // 保存钩子和数据修正
+        //------------------------------------------------------
+        /// <summary>保存前若 AuthOrgId 为空，则兜底为所属组织 OrgId。</summary>
+        public override void BeforeSave(EntityOp op)
+        {
+            base.BeforeSave(op);
+            if (this.AuthOrgId.IsEmpty())
+            {
+                this.AuthOrgId = this.OrgId;
+            }
+        }
+
         /// <summary>修复所有用户的 AuthOrgId 属性</summary>
         public static int FixAll()
         {
             // 批量更新用户的 AuthOrgId 属性，如果为空，就用OrgId填充
-            return User.Set.Where(o => o.AuthOrgId == null).ExecuteUpdate(s => s.SetProperty(o => o.AuthOrgId, o=>o.OrgId));
+            var n1 = User.Set.Where(o => o.AuthOrgId == null).ExecuteUpdate(s => s.SetProperty(o => o.AuthOrgId, o=>o.OrgId));
+            return n1;
         }
     }
 }

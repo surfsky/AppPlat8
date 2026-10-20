@@ -24,7 +24,7 @@ namespace App.Pages.Me
         public string OrgDisplay { get; private set; }
 
         /// <summary>是否允许切换组织范围。</summary>
-        public bool CanChangeScope => Auth.CheckPower(Power.AdminLeader);
+        public bool CanChangeScope => Auth.HasPower(Power.AdminLeader);
 
         /// <summary>页面统计卡片：对象。</summary>
         public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
@@ -45,7 +45,7 @@ namespace App.Pages.Me
                     return 0L;
 
                 var user = App.DAL.User.Get(uid.Value);
-                var orgId = user?.EffectiveAuthOrgId;
+                var orgId = user?.AuthOrgId;
                 return orgId.HasValue && orgId.Value > 0 ? orgId.Value : 0L;
             }
         }

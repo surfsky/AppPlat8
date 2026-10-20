@@ -23,7 +23,7 @@ namespace App.Pages.GIS
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "请选择要删除的记录");
-            if (!CheckPower(Power.GisGeometryDelete))
+            if (!HasPower(Power.GisGeometryDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

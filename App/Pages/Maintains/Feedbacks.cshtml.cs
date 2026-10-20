@@ -35,7 +35,7 @@ namespace App.Pages.Maintains
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.FeedBackDelete))
+            if (!HasPower(Power.FeedBackDelete))
                 return BuildResult(403, "无权操作");
 
             var items = Feedback.Set.Where(t => ids.Contains(t.Id)).ToList();

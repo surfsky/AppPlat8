@@ -100,7 +100,7 @@ namespace App.Pages.Checks
                 var uid = checkerId.Value;
                 var u = App.DAL.User.ValidSet.AsNoTracking().FirstOrDefault(x => x.Id == uid);
                 List<long> scopeOrgIds = null;
-                var rootOrgId = u?.EffectiveAuthOrgId;
+                var rootOrgId = u?.AuthOrgId;
                 if (rootOrgId.HasValue && rootOrgId.Value > 0)
                 {
                     scopeOrgIds = App.DAL.Org.All
@@ -167,7 +167,7 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.CheckHazardDelete))
+            if (!HasPower(Power.CheckHazardDelete))
                 return BuildResult(403, "无权操作");
             foreach (var id in ids)
                 CheckHazard.Delete(id);
@@ -178,7 +178,7 @@ namespace App.Pages.Checks
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.CheckHazardEdit))
+            if (!HasPower(Power.CheckHazardEdit))
                 return BuildResult(403, "无权操作");
 
             CheckHazard item = req.Id == 0 ? new CheckHazard() : CheckHazard.Get(req.Id);

@@ -48,7 +48,7 @@ namespace App.Pages.KB
             {
                 if (req.OrgId.HasValue && req.OrgId.Value > 0)
                 {
-                    if (!OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, req.OrgId.Value))
+                    if (!OrgFilter.IsAuth(cu?.AuthOrgId, req.OrgId.Value))
                         return BuildResult(403, $"无权将目录归属于该组织（OrgId={req.OrgId}）");
                 }
                 // 非 admin 禁止把目录设置为公共（OrgId=null），避免把内部内容暴露给全系统
@@ -67,7 +67,7 @@ namespace App.Pages.KB
             {
                 if (item.OrgId.HasValue)
                 {
-                    if (!OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.OrgId.Value))
+                    if (!OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId.Value))
                         return BuildResult(403, "无权编辑该目录");
                 }
             }
@@ -89,7 +89,7 @@ namespace App.Pages.KB
             if (Auth.IsAdmin(cu))
                 return all.ToTree();
 
-            var authId = cu?.EffectiveAuthOrgId;
+            var authId = cu?.AuthOrgId;
             List<KbMenu> visible;
             if (!authId.HasValue || authId.Value <= 0)
                 visible = all.Where(m => m.OrgId == null).ToList();

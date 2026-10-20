@@ -129,7 +129,7 @@ namespace App.Entities
             string orgPropName = "OrgId",
             int maxOrNodes = 512)
         {
-            var authOrgId = currentUser?.EffectiveAuthOrgId;
+            var authOrgId = currentUser?.AuthOrgId;
             return query.FilterByOrg(authOrgId, orgPropName, maxOrNodes);
         }
 

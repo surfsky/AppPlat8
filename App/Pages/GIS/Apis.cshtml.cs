@@ -30,7 +30,7 @@ namespace App.Pages.GIS
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.GisGeometryDelete))
+            if (!HasPower(Power.GisGeometryDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
@@ -41,7 +41,7 @@ namespace App.Pages.GIS
 
         public IActionResult OnPostRefresh([FromBody] long id)
         {
-            if (!CheckPower(Power.GisGeometryEdit))
+            if (!HasPower(Power.GisGeometryEdit))
                 return BuildResult(403, "无权操作");
 
             var item = GisApi.Get(id);

@@ -35,12 +35,12 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.TaskDelete))
+            if (!HasPower(Power.TaskDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var authOrgId = cu?.EffectiveAuthOrgId;
+            var authOrgId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var target = AssignTask.Get(id);

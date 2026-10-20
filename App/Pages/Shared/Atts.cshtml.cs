@@ -80,7 +80,7 @@ namespace App.Pages.Shared
                 return OkResult(400, "请先勾选要删除的附件");
             if (string.IsNullOrWhiteSpace(uniId))
                 return OkResult(400, "参数错误：缺少uniId");
-            if (!CheckPower(Power.CheckObjectEdit))
+            if (!HasPower(Power.CheckObjectEdit))
                 return OkResult(403, "无权删除附件");
 
             var allowIds = Att.Set.Where(t => ids.Contains(t.Id) && t.Key == uniId).Select(t => t.Id).ToList();
@@ -103,7 +103,7 @@ namespace App.Pages.Shared
             uniId = uniId?.Trim();
             if (id <= 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.CheckObjectView))
+            if (!HasPower(Power.CheckObjectView))
                 return BuildResult(403, "无权访问");
 
             var item = Att.Get(id);
@@ -171,7 +171,7 @@ namespace App.Pages.Shared
                 uniId = uniId?.Trim();
                 if (string.IsNullOrWhiteSpace(uniId))
                     return OkResult(400, "参数错误：缺少uniId");
-                if (!CheckPower(Power.CheckObjectEdit))
+                if (!HasPower(Power.CheckObjectEdit))
                     return OkResult(403, "无权上传附件");
 
                 var files = Request?.Form?.Files;
@@ -227,7 +227,7 @@ namespace App.Pages.Shared
                 return OkResult(400, "缺少源目录Key");
             if (req.TargetMenuId <= 0)
                 return OkResult(400, "请选择目标目录");
-            if (!CheckPower(Power.CheckObjectEdit))
+            if (!HasPower(Power.CheckObjectEdit))
                 return OkResult(403, "无权移动附件");
 
             // 强校验：当前页面必须属于知识库目录
@@ -283,7 +283,7 @@ namespace App.Pages.Shared
             long moveId = env.SafeSelectedCount > 0 ? env.SafeFirstSelectedId ?? 0L : 0L;
             if (moveId <= 0)
                 return OkResult(400, "请先勾选一个附件再调整顺序");
-            if (!CheckPower(Power.CheckObjectEdit))
+            if (!HasPower(Power.CheckObjectEdit))
                 return OkResult(403, "无权调整附件顺序");
 
             // ============ 关键修复：idx 判断基准和 EleTable 展示排序完全对齐 ============

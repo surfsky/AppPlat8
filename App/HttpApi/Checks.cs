@@ -52,7 +52,7 @@ namespace App.API
             var userId = Auth.GetUserId();
             var user = User.Get(userId);
             // 默认按当前用户授权组织收敛
-            orgId = orgId ?? user?.EffectiveAuthOrgId ?? user?.OrgId;
+            orgId = orgId ?? user?.AuthOrgId ?? user?.OrgId;
             var q = CheckObject.Search(
                 name: name,
                 socialCreditCode: socialCreditCode,
@@ -134,7 +134,7 @@ namespace App.API
             }
             else
             {
-                var orgId = user?.EffectiveAuthOrgId;
+                var orgId = user?.AuthOrgId;
                 visible = allTags
                     .Where(t => t.OrgId == null || (orgId.HasValue && t.OrgId == orgId.Value))
                     .ToList();
@@ -316,7 +316,7 @@ namespace App.API
                 return new APIResult(400, "隐患不存在");
             if (hazard.Status == CheckHazardStatus.Archived)
                 return new APIResult(400, "隐患已关闭，无法删除");
-            if (!Auth.CheckRole("Admins") && hazard.CheckerId != Auth.GetUserId())
+            if (!Auth.HasRole("Admins") && hazard.CheckerId != Auth.GetUserId())
                 return new APIResult(403, "无权操作");
 
             CheckHazard.Delete(id);

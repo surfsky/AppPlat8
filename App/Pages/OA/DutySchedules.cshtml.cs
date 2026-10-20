@@ -38,7 +38,7 @@ namespace App.Pages.OA
             List<DateTime> day,
             string keyword = "")
         {
-            if (!CheckPower(Power.DutyScheduleExport))
+            if (!HasPower(Power.DutyScheduleExport))
                 return BuildResult(403, "无权导出");
 
             DateTime? startDay = day.GetVal(0);
@@ -56,7 +56,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!CheckPower(Power.DutyScheduleDelete))
+            if (!HasPower(Power.DutyScheduleDelete))
                 return BuildResult(403, "无权操作");
             int n = 0;
             foreach (var id in ids)

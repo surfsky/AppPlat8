@@ -29,13 +29,13 @@ namespace App.Pages.Checks
             var item = (id>0) ? CheckObject.GetDetail(id) : new CheckObject();
             if (id == 0)
             {
-                item.DutyOrgId = cu.EffectiveAuthOrgId;
+                item.DutyOrgId = cu.AuthOrgId;
                 item.CheckerId = cu.Id;
                 CheckerName = cu.Name;  // Picker 的 Name 该如何设置初始值
             }
             else
             {
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.DutyOrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.DutyOrgId))
                     return BuildResult(403, "越权访问");
             }
             return BuildResult(0, "success", item.Export(ExportMode.Normal));
@@ -55,7 +55,7 @@ namespace App.Pages.Checks
             else
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.EffectiveAuthOrgId, item.DutyOrgId))
+                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.DutyOrgId))
                     return BuildResult(403, "越权修改");
             }
 
