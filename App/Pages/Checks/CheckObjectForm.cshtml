@@ -33,7 +33,7 @@
         <EleInput For="Item.ProductContent" Label="生产内容" Rows="1" FillRow="true"></EleInput>
         <EleInput For="Item.EleMeeterNum" Label="电表号"></EleInput>
         <EleNumber For="Item.EmployeeCount" Label="员工数"></EleNumber>
-        <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true" TagType="Warning"></EleTreePicker>
+        <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true" TagType="Warning" Required="true"></EleTreePicker>
 
         <EleLabel Label="责任信息" Color="#0A79C4" FillRow="true"></EleLabel>
         <EleTreePicker For="Item.DutyOrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" Required="true"></EleTreePicker>
@@ -70,7 +70,7 @@
             </Header>
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
-                    <span class="text-xs text-gray-400 shrink-0 w-16 truncate text-center">{{ item.contactTypeName }}</span>
+                    <span class="text-xs text-gray-800 shrink-0 w-16 truncate text-center">{{ item.contactTypeName }}</span>
                     <a href="javascript:void(0)" class="text-sm text-blue-800 hover:text-blue-600 truncate flex-1"
                        :title="item.name"
                        v-on:click="openLinkInDrawer(`/Checks/ObjectContactForm?id=${item.id}&objectId=${item.checkObjectId}&md=View`, item.name)">{{ item.name }}</a>
@@ -94,11 +94,11 @@
             </Header>
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
-                    <a href="javascript:void(0)" class="text-sm text-blue-800 hover:text-blue-600 shrink-0 w-28 truncate text-center"
+                    <a href="javascript:void(0)" class="text-xs text-blue-800 hover:text-blue-600 shrink-0 w-28 truncate text-center"
                        :title="item.createDtText"
                            v-on:click="openLinkInDrawer(`/Checks/Flow/CheckHazardForm?id=${item.id}&md=View`, item.description)">{{ item.createDtText }}
                     </a>
-                    <span class="flex-1 min-w-0 truncate" :title="item.description">{{ item.description }}</span>
+                    <span class="flex-1 text-xs min-w-0 truncate" :title="item.description">{{ item.description }}</span>
                     <span class="text-xs text-gray-500 shrink-0 w-20 truncate text-center">{{ item.statusName }}</span>
                     <span class="text-xs text-gray-400 shrink-0 w-32 truncate text-center">{{ item.expireDtText }}</span>
                 </div>
@@ -120,10 +120,10 @@
             </Header>
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
-                    <span class="text-xs text-gray-400 shrink-0 w-24 truncate text-center">{{ item.checkDtText }}</span>
-                    <a href="javascript:void(0)" class="text-sm text-blue-800 hover:text-blue-600 truncate flex-1"
+                    <a href="javascript:void(0)" class="text-xs text-blue-800 shrink-0 w-24 truncate text-center"
                        :title="item.checkDtText"
-                       v-on:click="openLinkInDrawer(`/Checks/Flow/CheckForm?id=${item.id}&md=View`, '隐患排查' +item.checkDtText)">{{ item.checkerName }}</a>
+                       v-on:click="openLinkInDrawer(`/Checks/Flow/CheckForm?id=${item.id}&md=View`, '隐患排查' +item.checkDtText)">{{ item.checkDtText }}</a>
+                    <span class="text-sm text-gray-800 truncate flex-1">{{ item.checkerName }}</span>
                     <span class="text-xs text-gray-500 shrink-0 text-center" v-if="item.hazardCount > 0">隐患 {{ item.hazardCount }}</span>
                 </div>
             </ItemTemplate>
@@ -149,7 +149,7 @@
                           :class="item.riskLevel == null ? 'bg-gray-100 text-gray-500' : (item.riskLevel >= 3 ? 'bg-red-50 text-red-600 border border-red-200' : (item.riskLevel >= 2 ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' : 'bg-green-50 text-green-700 border border-green-200'))"
                           v-if="item.riskLevelName">{{ item.riskLevelName }}</span>
                     <span class="shrink-0 w-16 text-center text-xs text-gray-400" v-else>-</span>
-                    <a href="javascript:void(0)" class="text-sm text-blue-800 hover:text-blue-600 truncate flex-1"
+                    <a href="javascript:void(0)" class="text-xs text-blue-800 hover:text-blue-600 truncate flex-1"
                        :title="item.name"
                        v-on:click="openLinkInDrawer(`/Checks/CheckPointForm?id=${item.id}&objectId=${item.checkObjectId}&md=View`, item.name)">{{ item.name }}</a>
                     <span class="text-xs text-gray-400 shrink-0 w-24 truncate text-center" :title="item.gps">{{ item.gps }}</span>
@@ -172,8 +172,8 @@
             </Header>
             <ItemTemplate>
                 <div class="flex items-center justify-between gap-2 text-sm">
-                    <span class="text-xs text-gray-400 shrink-0 w-24 truncate text-center">{{ item.happenDtText }}</span>
-                    <a href="javascript:void(0)" class="text-sm text-blue-800 hover:text-blue-600 truncate flex-1"
+                    <span class="text-xs text-gray-800 shrink-0 w-24 truncate text-center">{{ item.happenDtText }}</span>
+                    <a href="javascript:void(0)" class="text-xs text-blue-800 hover:text-blue-600 truncate flex-1"
                        :title="item.title"
                        v-on:click="openLinkInDrawer(`/Checks/CheckObjectEventForm?id=${item.id}&objectId=${item.checkObjectId}&md=View`, item.title)">{{ item.title }}</a>
                 </div>

@@ -559,6 +559,7 @@ Done
         /用户窗口角色限制：不能超过当前登录用户的角色；
         /删除 EffectiveAuthOrgId，直接用AuthOrgId
         /Users 页面默认orgid、增加mobile
+    /优化CheckObjectForm 各子表，可点击的都用蓝色；
     普通网格员：
         网格员修改用户的责任网格后未能刷新（程）
         专项任务优化：在任务表单中，可以将自己的企业加入进去

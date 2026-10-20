@@ -65,6 +65,7 @@ namespace App.DAL
         //
         public string StatusName => Status.GetTitle();
         public string ObjectName => CheckObject?.Name;
+        public string DutyOrgName => CheckObject?.DutyOrgName;
         public string CheckerName => Checker?.Name;
         public string CheckSheetName => CheckSheet?.Name;
         public string CheckItemName => CheckItem?.Name;
@@ -107,6 +108,8 @@ namespace App.DAL
                 HazardLevel,
                 HazardLevelName = HazardLevel.GetTitle(),
                 CheckDtText = Check?.CheckDt?.ToString("yyyy-MM-dd HH:mm"),
+
+                DutyOrgName,
             };
         }
         public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt, long? dutyOrgId = null, DateTime? expireTo = null, List<long> dutyOrgIds = null)

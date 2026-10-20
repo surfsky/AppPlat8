@@ -37,12 +37,13 @@
             <EleColumn For="Item.Status" Label="状态" Width="80"></EleColumn>
             <EleColumn For="Item.HazardLevel" Label="隐患等级" Width="100" ></EleColumn>
             <EleColumn For="Item.CheckerName" Label="检查人" MinWidth="100" ></EleColumn>
-            <EleColumn For="Item.ObjectName" Label="检查对象" MinWidth="150"></EleColumn>
+            <EleColumn For="Item.ObjectName" Label="检查对象" MinWidth="150" PopupUrl="/checks/CheckObjectForm?id={checkObjectId}"></EleColumn>
             <EleColumn For="Item.CheckSheetName" Label="检查表" MinWidth="150" ></EleColumn>
             <EleColumn For="Item.Description" Label="隐患描述" MinWidth="200" ></EleColumn>
             <EleColumn For="Item.ExpireDt" Label="整改期限" Width="120" FormatString="yyyy-MM-dd"></EleColumn>
             <EleColumn For="Item.RectifyDt" Label="整改日期" Width="120" FormatString="yyyy-MM-dd"></EleColumn>
             <EleColumn For="Item.IsIn141" Label="入141" Width="80" ></EleColumn>
+            <EleColumn For="Item.DutyOrgName" Label="组织" MinWidth="150" ></EleColumn>
         </Columns>
     </EleTable>
 }
