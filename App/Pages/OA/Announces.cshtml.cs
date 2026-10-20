@@ -20,12 +20,12 @@ namespace App.Pages.Admin
         /// <summary>查询</summary>
         public IActionResult OnGetData(Paging pi, string title, AnnounceStatus? status, List<DateTime> createDt)
         {
+            var cu = Auth.GetUser();
             DateTime? startDt = createDt.GetVal(0);
             DateTime? endDt = createDt.GetVal(1);
-            var cu = Auth.GetUser();
             var q = Announce.Search(title, status, fromDt:startDt, toDt:endDt);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            //q = q.FilterByOrg(cu);  // 原逻辑：普通用户只能查看授权查看的公告（授权组织以下的数据）
+            // TODO：公告的过滤逻辑不一样，普通用户可以查看自己组织以及上级组织发的公告（公告发布组织及子组织都能看到）
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }

@@ -39,8 +39,7 @@ namespace App.Pages.Checks
         {
             var cu = Auth.GetUser();
             var q = Check.Search(objectName, socialCreditCode, objectId, objectType, checkStartDt, checkEndDt);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }

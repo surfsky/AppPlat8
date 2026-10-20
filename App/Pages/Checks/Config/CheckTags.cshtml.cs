@@ -23,8 +23,7 @@ namespace App.Pages.Checks
             // 先按条件过滤（名称模糊包含 + 组织精确匹配），再 ToTree 形成父子结构
             var cu = Auth.GetUser();
             var q = new CheckTag().Query(name: name, orgId: orgId);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q.ToList();
             var items = list.ToTree();
             return BuildResult(0, "success", items);

@@ -50,9 +50,7 @@ namespace App.Pages.Admins
             var cu = Auth.GetUser();
             var exportMode = this.Mode == PageMode.Select ? ExportMode.Simple : ExportMode.Detail;
             var q = App.DAL.User.Search(name: name, realName: realName, mobile: mobile, orgId: orgId, roleId: roleId, isDel: isDel, includeSubOrg: includeSubOrg);
-            // 非全局 admin 时：按当前登录用户的授权组织子树（AuthOrgId）收敛可见员工
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q.SortPageExport(pi, exportMode);
             return BuildResult(0, "success", list, pi);
         }
@@ -63,8 +61,7 @@ namespace App.Pages.Admins
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
             var cu = Auth.GetUser();
             var q = App.DAL.User.Search(name: name, realName: realName, mobile: mobile, orgId: orgId, roleId: roleId, includeSubOrg: includeSubOrg);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"用户列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
             Logger.Info($"导出用户列表，共 {list.Count} 条记录");

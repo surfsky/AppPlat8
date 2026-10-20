@@ -23,8 +23,7 @@ namespace App.Pages.OA
         {
             var cu = Auth.GetUser();
             var q = Meeting.Search(day.GetVal(0), day.GetVal(1), orgId, type, keyword);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q
                 .OrderByDescending(item => item.Day)
                 .ThenByDescending(item => item.Id)
@@ -38,8 +37,7 @@ namespace App.Pages.OA
             var exportPaging = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var cu = Auth.GetUser();
             var q = Meeting.Search(day.GetVal(0), day.GetVal(1), orgId, type, keyword);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q
                 .OrderByDescending(item => item.Day)
                 .ThenByDescending(item => item.Id)

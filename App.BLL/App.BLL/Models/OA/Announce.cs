@@ -18,8 +18,8 @@ namespace App.DAL
     [UI("系统", "公告")]
     public class Announce : EntityBase<Announce>
     {
-        [UI("标题")]                                   public string Title { get; set; }
         [UI("组织")]                                   public long? OrgId { get; set; }
+        [UI("标题")]                                   public string Title { get; set; }
         [UI("发布时间")]                               public DateTime? PublishDt { get; set; }
         [UI("作者")]                                   public string Author { get; set; }
         [UI("作者Id")]                                 public long? AuthorId { get; set; }
@@ -32,6 +32,11 @@ namespace App.DAL
         [UI("状态名称")]                               public string StatusName => Status.GetTitle();
 
 
+        public virtual Org Org { get; set; }
+        
+        /// <summary>组织名称</summary>
+        public string OrgName => Org?.Name;
+        
         //-----------------------------------------------
         // 公共方法
         //-----------------------------------------------
@@ -42,6 +47,7 @@ namespace App.DAL
                 this.Id,
                 this.Title,
                 this.OrgId,
+                this.OrgName,
                 this.Author,
                 this.Status,
                 this.StatusName,
@@ -71,11 +77,11 @@ namespace App.DAL
         /// <summary>增加浏览次数</summary>
         public static void IncreaseViewCount(long id)
         {
-            var announcement = Set.FirstOrDefault(a => a.Id == id);
-            if (announcement != null)
+            var announce = Set.FirstOrDefault(a => a.Id == id);
+            if (announce != null)
             {
-                announcement.ViewCount = (announcement.ViewCount ?? 0) + 1;
-                announcement.Save();
+                announce.ViewCount = (announce.ViewCount ?? 0) + 1;
+                announce.Save();
             }
         }
 

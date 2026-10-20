@@ -622,3 +622,15 @@ shadow-[inset_0_1px_0_rgba(191,219,254,0.9),inset_0_-1px_0_rgba(191,219,254,0.9)
                 :class="isSelected(item.value)
                     ? 'border-l-transparent  bg-white'
                     : 'border-l-transparent  bg-white'"
+
+
+        /// <summary>便捷重载：从当前用户对象中取 AuthOrgId 再过滤。</summary>
+        public static IQueryable<T> FilterByOrg<T>(
+            this IQueryable<T> query,
+            App.DAL.User currentUser,
+            string orgPropName = "OrgId",
+            int maxOrNodes = 512)
+        {
+            var authOrgId = currentUser?.AuthOrgId;
+            return query.FilterByOrg(authOrgId, orgPropName, maxOrNodes);
+        }

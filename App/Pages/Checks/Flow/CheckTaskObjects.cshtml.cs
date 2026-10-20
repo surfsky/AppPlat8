@@ -95,9 +95,7 @@ namespace App.Pages.Checks
                 includeContacts: false
             );
 
-            if (!isAdmin)
-                q = q.FilterByOrg(cu, nameof(CheckObject.DutyOrgId));
-
+            q = q.FilterByOrg(cu, nameof(CheckObject.DutyOrgId));
             if (onlyUnselected && taskId > 0)
             {
                 var selectedIds = CheckTaskObject.Set

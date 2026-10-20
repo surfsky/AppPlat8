@@ -35,8 +35,7 @@ namespace App.Pages.OA
         {
             var cu = Auth.GetUser();
             var q = Event.Search(title, typeId, orgId, publisherId);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q.SortPageExport(pi);
             //EleManager.ShowToast("定时刷新", NotifyType.Info);
             Console.WriteLine("定时刷新" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));

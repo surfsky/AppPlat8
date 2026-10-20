@@ -25,8 +25,7 @@ namespace App.Pages.OA
         {
             var cu = Auth.GetUser();
             var q = Comment.Search(targetId, type, author);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }

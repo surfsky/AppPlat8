@@ -25,8 +25,7 @@ namespace App.Pages.OA
         {
             var cu = Auth.GetUser();
             var q = Asset.Search(name, category, null);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }

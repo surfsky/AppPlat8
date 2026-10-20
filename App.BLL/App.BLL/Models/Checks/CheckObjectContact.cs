@@ -28,7 +28,7 @@ namespace App.DAL
         [UI("姓名")] public string Name { get; set; }
         [UI("照片")] public string Photo { get; set; }
         [UI("证件号")] public string IdCard { get; set; }
-        [UI("证件照片")] public string IdCardImage { get; set; }
+        [UI("证件照")] public string IdCardImage { get; set; }
         [UI("联系方式")] public string Phone { get; set; }
         [UI("执证日期")] public DateTime? CertDt { get; set; }
         [UI("过期日期")] public DateTime? CertExpireDt { get; set; }

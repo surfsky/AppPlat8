@@ -13,8 +13,6 @@ using App.HttpApi;
 namespace App.Pages.Admin
 {
     [Auth(Power.AnnounceView)]
-    //[Auth(Power.AnnounceView)]
-    [IgnoreAntiforgeryToken]
     public class AnnounceFormModel : AuthModel
     {
         [BindProperty]
@@ -25,6 +23,7 @@ namespace App.Pages.Admin
         /// <summary>获取公告详情</summary>
         public IActionResult OnGetData(long id)
         {
+            var user = GetUser();
             if (id == 0)
             {
                 if (!HasPower(Power.AnnounceNew))
@@ -32,8 +31,9 @@ namespace App.Pages.Admin
                 var a = new Announce
                 {
                     Title = "",
-                    Author = GetUser()?.RealName,
-                    AuthorId = GetUserId(),
+                    Author = user.RealName,
+                    AuthorId = user.Id,
+                    OrgId = user.OrgId,
                     Status = AnnounceStatus.Draft,
                     CreateDt = DateTime.Now,
                     PublishDt = null,
@@ -47,14 +47,7 @@ namespace App.Pages.Admin
             }
             else
             {
-                if (!HasPower(Power.AnnounceView))
-                    return BuildResult(403, "无权查看");
                 var a = Announce.Get(id);
-                if (a == null)
-                    return BuildResult(404, "无效参数");
-                var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, a.OrgId))
-                    return BuildResult(403, "越权访问");
                 return BuildResult(0, "success", a);
             }
         }
@@ -62,26 +55,18 @@ namespace App.Pages.Admin
         /// <summary>保存公告</summary>
         public IActionResult OnPostSave([FromBody] Announce req)
         {
+            var user = Auth.GetUser();
             if (req == null || String.IsNullOrWhiteSpace(req.Title))
                 return BuildResult(400, "标题不能为空");
             var needPower = (req.Id == 0) ? Power.AnnounceNew : Power.AnnounceEdit;
             if (!HasPower(needPower))
                 return BuildResult(403, "无权操作");
 
-            var userName = GetUserName();
-            var curUser = App.DAL.User.Set.FirstOrDefault(u => u.Name == userName);
 
             Announce a = req.Id == 0 ? new Announce() : Announce.Get(req.Id);
-            // 非全局 admin：修改已有记录必须先做范围校验
-            if (req.Id > 0)
-            {
-                var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, a?.OrgId))
-                    return BuildResult(403, "越权修改");
-            }
             a.Title = req.Title.Trim();
             a.Author = req.Author;
-            a.AuthorId = curUser?.Id;
+            a.AuthorId = user.Id;
             a.Content = req.Content;
             a.Summary = req.Summary;
             a.Status = req.Status;
@@ -89,12 +74,12 @@ namespace App.Pages.Admin
             a.ViewCount = req.ViewCount;
             a.IsTop = req.IsTop;
             a.PublishDt = req.PublishDt;
-            a.CreateDt = (req.CreateDt ?? a.CreateDt) ?? DateTime.Now;
+            a.OrgId = user.OrgId;
 
             // 已发布但未设置发布时间时自动补齐
             if (a.Status == AnnounceStatus.Published && !a.PublishDt.HasValue)
                 a.PublishDt = DateTime.Now;
-            a.Save(null, log: true);
+            a.Save();
             return BuildResult(0, "保存成功", new { id = a.Id });
         }
     }

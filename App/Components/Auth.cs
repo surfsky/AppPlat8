@@ -207,6 +207,7 @@ namespace App.Components
         //--------------------------------------------------
         public static bool IsAdmin(App.DAL.User u) => u != null && u.Name == "admin";
 
+
         public static bool HasRole(string roleName, HttpContext context=null)
         {
             context = context ?? Asp.Current;

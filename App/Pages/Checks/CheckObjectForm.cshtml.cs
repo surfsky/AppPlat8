@@ -138,8 +138,7 @@ namespace App.Pages.Checks
             if (objectId <= 0) return BuildResult(0, "success", new { items = new List<object>(), total = 0 });
             var cu = Auth.GetUser();
             var q = Check.Search(null, null, objectId, null, null, null);
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu);
+            q = q.FilterByOrg(cu);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }

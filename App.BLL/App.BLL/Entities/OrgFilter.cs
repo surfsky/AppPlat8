@@ -60,6 +60,18 @@ namespace App.Entities
         //-------------------------------------------
         // 3. IQueryable 表达式树过滤（保证 SQL 翻译）
         //-------------------------------------------
+        /// <summary>根据用户授权组织，过滤查询结果</summary>
+        public static IQueryable<T> FilterByOrg<T>(
+            this IQueryable<T> query,
+            App.DAL.User user,
+            string orgPropName = "OrgId",
+            int maxOrNodes = 512)
+        {
+            if (user != null && user.Name != "admin")
+                return query.FilterByOrg(user?.AuthOrgId, orgPropName, maxOrNodes);
+            return query;
+        }
+
         /// <summary>
         /// 按授权组织子树过滤：OrgId ∈ adminAuthOrgId 子树（含自身）。
         /// - 若实体无 OrgId 属性：原样返回；
@@ -84,19 +96,19 @@ namespace App.Entities
             if (!authOrgId.HasValue || authOrgId.Value <= 0)
                 return query;
 
+            // 目标实体是否有 long OrgId 属性，没有就退出
             var type = typeof(T);
             var prop = type.GetProperty(orgPropName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
             if (prop == null) return query; // 目标实体没有 OrgId → 原样返回
-
             var propType = prop.PropertyType;
             if (propType != typeof(long) && propType != typeof(long?))
                 return query;
 
-            // 取子树集合
+            // 如果有，先取子树集合
             var ids = GetAuthOrgIds(authOrgId);
             if (ids.Count == 0)
             {
-                // 找不到子树但管理员有 AuthOrgId → 说明数据异常，保守返回空（避免越权）
+                // 找不到授权id，说明数据异常，保守返回空（避免越权）
                 return query.Where(t => false);
             }
 
@@ -122,16 +134,6 @@ namespace App.Entities
             return query.Where(BuildOrEqualPredicate<T>(prop, ids));
         }
 
-        /// <summary>便捷重载：从当前用户对象中取 EffectiveAuthOrgId 再过滤。</summary>
-        public static IQueryable<T> FilterByOrg<T>(
-            this IQueryable<T> query,
-            App.DAL.User currentUser,
-            string orgPropName = "OrgId",
-            int maxOrNodes = 512)
-        {
-            var authOrgId = currentUser?.AuthOrgId;
-            return query.FilterByOrg(authOrgId, orgPropName, maxOrNodes);
-        }
 
         //-------------------------------------------
         // 内部工具

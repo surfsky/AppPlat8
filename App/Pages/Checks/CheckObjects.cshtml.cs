@@ -245,8 +245,7 @@ namespace App.Pages.Checks
 
             // 应用组织过滤
             var cu = Auth.GetUser();
-            if (!Auth.IsAdmin(cu))
-                q = q.FilterByOrg(cu, nameof(CheckObject.DutyOrgId));
+            q = q.FilterByOrg(cu, nameof(CheckObject.DutyOrgId));
             return q;
         }
 
