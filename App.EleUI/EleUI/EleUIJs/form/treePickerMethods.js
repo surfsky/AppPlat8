@@ -299,10 +299,11 @@ export const treePickerMethods = {
                     }
                 });
 
+                ctx.state.footerAlignClass = 'justify-center';
                 setFooterButtons([
-                    { text: '取消', action: 'close' },
                     {
                         text: '确定',
+                        icon: 'Check',
                         type: 'primary',
                         handler: (_action, _btn, drawerCtx) => {
                             const vm = app._instance?.proxy;
@@ -321,7 +322,8 @@ export const treePickerMethods = {
                             form.notifyTreePickerChanged(modelKey, form.form.value[modelKey], multiple, config.onChange || '');
                             drawerCtx.close({ message: 'selected', data: { type: 'EleTreePicker', value: form.form.value[modelKey] } });
                         }
-                    }
+                    },
+                    { text: '取消', icon: 'Close', action: 'close' }
                 ]);
 
                 return () => {

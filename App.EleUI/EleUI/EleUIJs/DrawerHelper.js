@@ -477,6 +477,9 @@ export class DrawerHelper {
                 :plain="!!btn.plain"
                 @click="onFooterClick(btn)"
             >
+                <el-icon v-if="btn.icon" class="mr-1">
+                    <component :is="btn.icon"></component>
+                </el-icon>
                 {{ btn.text || '按钮' }}
             </el-button>
         </div>

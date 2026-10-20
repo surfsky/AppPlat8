@@ -609,3 +609,16 @@
 
         /// <summary>获取当前登录用户拥有的全部权限列表</summary>
         protected List<Power> GetPowers() => Auth.GetUserPowers(HttpContext);
+
+                    <span
+                        v-if="isSelected(item.value)"
+                        class="shrink-0 rounded-full bg-blue-600/10 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+                        已选
+                    </span>
+
+
+shadow-[inset_0_1px_0_rgba(191,219,254,0.9),inset_0_-1px_0_rgba(191,219,254,0.9)]
+
+                :class="isSelected(item.value)
+                    ? 'border-l-transparent  bg-white'
+                    : 'border-l-transparent  bg-white'"
