@@ -8,13 +8,11 @@ using App.Utils;
 
 namespace App.DAL.OA
 {
-    /// <summary>事件类别</summary>
+    /// <summary>事件类别（树结构）</summary>
     [UI("OA", "事件类别")]
-    public class EventType : EntityBase<EventType>, ISort
+    public class EventType : TreeEntity<EventType>
     {
-        [UI("名称")]        public string Name { get; set; }
-        [UI("排序")]        public int SortId  {get;set;}
-
+        /// <summary>按名称查询（实体约定方法）</summary>
         public static IQueryable<EventType> Search(string name)
         {
             var q = IncludeSet.AsQueryable();

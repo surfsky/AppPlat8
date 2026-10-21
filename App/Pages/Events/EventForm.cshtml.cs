@@ -10,7 +10,6 @@ using App.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
@@ -22,16 +21,12 @@ namespace App.Pages.OA
     public class EventFormModel : AuthModel
     {
         public Event Item { get; set; }
-        public List<SelectListItem> EventTypes { get; set; }
+        public List<EventType> EventTypes { get; set; }
         public List<App.DAL.Org> OrgTree { get; set; }
 
         public void OnGet()
         {
-            EventTypes = EventType.Set
-                .OrderBy(t => t.SortId)
-                .ThenBy(t => t.Id)
-                .Select(t => new SelectListItem(t.Name, t.Id.ToString()))
-                .ToList();
+            EventTypes = EventType.GetTree();
             OrgTree = App.DAL.Org.GetTree();
         }
 

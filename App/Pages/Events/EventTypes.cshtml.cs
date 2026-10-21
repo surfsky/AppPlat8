@@ -23,19 +23,21 @@ namespace App.Pages.OA
 
         public IActionResult OnGetData(Paging pi, string name)
         {
-            var list = EventType.Search(name).SortPageExport(pi);
+            var list = EventType.GetTree();
             return BuildResult(0, "success", list, pi);
         }
 
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
-            if (ids == null || ids.Length == 0)
-                return BuildResult(400, "参数错误");
-            if (!HasPower(Power.EventDelete))
-                return BuildResult(403, "无权操作");
+            if (ids == null || ids.Length == 0)      return BuildResult(400, "参数错误");
+            if (!HasPower(Power.EventDelete))        return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
+            {
+                if (EventType.Set.Any(x => x.ParentId == id))  return BuildResult(400, "存在下级类别，无法删除");
+                if (Event.Set.Any(x => x.TypeId == id))            return BuildResult(400, "该类别下存在事件，无法删除");
                 EventType.Delete(id);
+            }
             return BuildResult(0, "删除成功");
         }
     }

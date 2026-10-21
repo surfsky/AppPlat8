@@ -8,7 +8,7 @@
 @section body {
     <EleForm LabelWidth="120px">
         <EleInput For="Item.Title" Label="标题" Required="true"></EleInput>
-        <EleSelect For="Item.TypeId" Label="类别" Items="Model.EventTypes" Required="true"></EleSelect>
+        <EleTreePicker For="Item.TypeId" Label="类别" Items="Model.EventTypes" Required="true"></EleTreePicker>
         <EleDatePicker For="Item.TriggleDt" Label="时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
         <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree"  CheckStrictly="true"></EleTreePicker>
         <EleInput For="Item.Content" Label="内容" Rows="5"></EleInput>

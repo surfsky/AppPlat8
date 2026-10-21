@@ -17,8 +17,12 @@ namespace App.Pages.OA
     public class EventTypeFormModel : AuthModel
     {
         public EventType Item { get; set; }
+        public List<EventType> TypeTree { get; set; }
 
-        public void OnGet() { }
+        public void OnGet()
+        {
+            this.TypeTree = EventType.GetTree();
+        }
 
         public IActionResult OnGetData(long id)
         {
@@ -30,10 +34,13 @@ namespace App.Pages.OA
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
+            if (req.Id > 0 && req.ParentId == req.Id)
+                return BuildResult(400, "上级类别不能是自己");
 
             var item = req.Id > 0 ? EventType.Get(req.Id) : new EventType();
             item.Name = req.Name;
             item.SortId = req.SortId;
+            item.ParentId = (req.ParentId == 0) ? null : req.ParentId;
             item.Save();
             return BuildResult(0, "保存成功");
         }
