@@ -65,7 +65,7 @@ namespace App.DAL
         //
         public string StatusName => Status.GetTitle();
         public string ObjectName => CheckObject?.Name;
-        public string DutyOrgName => CheckObject?.DutyOrgName;
+        public string OrgName => CheckObject?.OrgName;
         public string CheckerName => Checker?.Name;
         public string CheckSheetName => CheckSheet?.Name;
         public string CheckItemName => CheckItem?.Name;
@@ -108,11 +108,14 @@ namespace App.DAL
                 HazardLevel,
                 HazardLevelName = HazardLevel.GetTitle(),
                 CheckDtText = Check?.CheckDt?.ToString("yyyy-MM-dd HH:mm"),
-
-                DutyOrgName,
+                DutyOrgName = OrgName,
             };
         }
-        public static IQueryable<CheckHazard> Search(string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt, long? dutyOrgId = null, DateTime? expireTo = null, List<long> dutyOrgIds = null)
+        public static IQueryable<CheckHazard> Search(
+            string objectName, long? objectId, 
+            string checkerName, long? checkerId, CheckHazardStatus? status, 
+            DateTime? createStartDt, DateTime? expireTo = null, 
+            long? orgId = null, List<long> orgIds = null)
         {
             IQueryable<CheckHazard> q = CheckHazard.IncludeSet.Include(t => t.CheckObject).Include(t => t.Checker).Include(t => t.CheckItem).Include(t => t.Check);
             if (objectId.IsNotEmpty())          q = q.Where(o => o.CheckObjectId == objectId.Value);
@@ -120,18 +123,18 @@ namespace App.DAL
             if (checkerId.IsNotEmpty())         q = q.Where(o => o.CheckerId == checkerId.Value);
             else if (checkerName.IsNotEmpty())  q = q.Where(o => o.Checker.Name.Contains(checkerName.Trim()));
             if (status.IsNotEmpty())            q = q.Where(o => o.Status == status.Value);
-            var dutyNetIds = GetOrgIds(dutyOrgIds, dutyOrgId);
-            if (dutyNetIds.Count > 0)            q = q.Where(o => o.CheckObject != null && o.CheckObject.DutyOrgId.HasValue && dutyNetIds.Contains(o.CheckObject.DutyOrgId.Value));
+            var dutyNetIds = GetOrgIds(orgIds, orgId);
+            if (dutyNetIds.Count > 0)            q = q.Where(o => o.CheckObject != null && o.CheckObject.OrgId.HasValue && dutyNetIds.Contains(o.CheckObject.OrgId.Value));
             if (expireTo.IsNotEmpty())          q = q.Where(o => o.ExpireDt.HasValue && o.ExpireDt.Value <= expireTo.Value.Date);
             if (createStartDt.IsNotEmpty())     q = q.Where(o => o.CreateDt >= createStartDt.Value.Date);
             return q;
         }
 
-        private static List<long> GetOrgIds(List<long> dutyOrgIds, long? dutyOrgId)
+        private static List<long> GetOrgIds(List<long> orgIds, long? orgId)
         {
             var list = new List<long>();
-            if (dutyOrgIds != null && dutyOrgIds.Count > 0) list.AddRange(dutyOrgIds);
-            if (dutyOrgId.IsNotEmpty()) list.Add(dutyOrgId.Value);
+            if (orgIds != null && orgIds.Count > 0) list.AddRange(orgIds);
+            if (orgId.IsNotEmpty()) list.Add(orgId.Value);
             list = list.Distinct().ToList();
             if (list.Count == 0) return new List<long>();
             return Org.All

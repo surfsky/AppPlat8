@@ -17,7 +17,7 @@ namespace App.Pages.OA
     [Auth(Power.TaskView)]
     public class TasksModel : AuthModel
     {
-        public App.DAL.OA.AssignTask Item { get; set; }
+        public AssignTask Item { get; set; }
 
         public void OnGet() { }
 

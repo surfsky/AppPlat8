@@ -59,7 +59,7 @@ namespace App.DAL
         //------------------------------------------------------
         // 计算属性
         //------------------------------------------------------
-        public string NameMask => this.Name.Mask();
+        public string NameMask => this.Name?.Mask();
         public string DisplayName => $"{this.RealName}({this.NameMask})";
         public string OrgName => this.Org?.Name;
         public string OrgFullName => this.Org?.FullName;

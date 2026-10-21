@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using App.Entities;
 using App.Utils;
 
-namespace App.DAL.OA
+namespace App.DAL
 {
     /// <summary>
     /// 交办任务状态

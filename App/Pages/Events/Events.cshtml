@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="事件" FormPage="EventForm" EnableBatch="true" >
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="事件" FormPage="EventForm" EnableBatch="true" SortField="HappenDt" SortOrder="desc" >
         <Toolbar>
             <Filters>
                 <EleInput For="Item.Title" Width="200px" Label="标题" LabelWidth="60px"></EleInput>
@@ -27,9 +27,9 @@
             </EleOpColumn>
             <EleColumn For="Item.Title" Label="标题" Link="true" MinWidth="200" Sortable="true"></EleColumn>
             <EleColumn For="Item.TypeName" Label="类别" Width="100"></EleColumn>
-            <EleColumn For="Item.TriggleDt" Label="时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
-            <EleColumn For="Item.Org.Name" Label="组织" Width="120"></EleColumn>
-            <EleColumn For="Item.Publisher.Name" Label="发布人" Width="100"></EleColumn>
+            <EleColumn For="Item.HappenDt" Label="时间" Width="200" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
+            <EleColumn For="Item.OrgName" Label="组织" Width="120"></EleColumn>
+            <EleColumn For="Item.PublisherName" Label="发布人" Width="100"></EleColumn>
             <EleColumn For="Item.AllowComment" Label="允许评论" Width="80"></EleColumn>
         </Columns>
     </EleTable>

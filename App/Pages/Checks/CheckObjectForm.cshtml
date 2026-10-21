@@ -36,7 +36,7 @@
         <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true" TagType="Warning" Required="true"></EleTreePicker>
 
         <EleLabel Label="责任信息" Color="#0A79C4" FillRow="true"></EleLabel>
-        <EleTreePicker For="Item.DutyOrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" Required="true"></EleTreePicker>
+        <EleTreePicker For="Item.OrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" Required="true"></EleTreePicker>
         <ElePicker For="Item.CheckerId" TextFor="CheckerName" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0" Required="true" ></ElePicker>
         <EleInput For="Item.DutyMan" Label="企业负责人"></EleInput>
         <EleInput For="Item.SafeMan" Label="安全管理员"></EleInput>

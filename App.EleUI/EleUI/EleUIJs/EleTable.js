@@ -83,13 +83,14 @@ export class EleTable {
         return rows;
     }
 
-    getTreePickerView(modelKey, _target, fallbackData = [], idField = 'id', nameField = 'name', childrenField = 'children', multiple = false, collapseTags = false) {
+    getTreePickerView(modelKey, target, fallbackData = [], idField = 'id', nameField = 'name', childrenField = 'children', multiple = false, collapseTags = false) {
         const model = this.filters?.value ? this.filters.value[modelKey] : null;
         const normalized = this.normalizeTreePickerValue(model, multiple);
         const values = Array.isArray(normalized) ? normalized : (normalized ? [normalized] : []);
 
         const loaded = Array.isArray(this.options?.value?.[modelKey]) ? this.options.value[modelKey] : null;
-        const treeData = loaded || (Array.isArray(fallbackData) ? fallbackData : []);
+        const fallback = loaded || (Array.isArray(fallbackData) ? fallbackData : []);
+        const treeData = this.getControlTreeData(target, fallback);
 
         const flat = this.flattenTreeNodes(treeData, idField, nameField, childrenField, []);
         const nameMap = new Map(flat.map(item => [item.id, item.name || item.id]));
@@ -131,7 +132,8 @@ export class EleTable {
         }
 
         const loadedData = Array.isArray(this.options?.value?.[modelKey]) ? this.options.value[modelKey] : null;
-        const treeData = loadedData || fallbackData;
+        const fallback = loadedData || fallbackData;
+        const treeData = this.getControlTreeData(config.target || `field:${modelKey}`, fallback);
         const normalizedTreeData = this.normalizeTreePickerNodes(treeData, childrenField);
         const currentValue = this.normalizeTreePickerValue(this.filters.value[modelKey], multiple);
         const selectedValues = Array.isArray(currentValue)
@@ -371,6 +373,51 @@ export class EleTable {
             return out;
         }
         return obj;
+    }
+
+    /** 解析控件的 JSON 属性（兼容历史上被二次转义的值） */
+    parseJsonAttribute(raw) {
+        if (!raw || typeof raw !== 'string') return null;
+
+        try {
+            return JSON.parse(raw);
+        } catch {
+            const decoded = raw
+                .replace(/&amp;quot;/g, '"')
+                .replace(/&quot;/g, '"')
+                .replace(/&#34;/g, '"')
+                .replace(/&amp;#34;/g, '"')
+                .replace(/&#x22;/gi, '"')
+                .replace(/&amp;#x22;/gi, '"');
+            try {
+                return JSON.parse(decoded);
+            } catch {
+                return null;
+            }
+        }
+    }
+
+    /** 获取控件的树数据：优先取已加载的 options，静态 Items 则从 data-static-items 回读 */
+    getControlTreeData(target, fallback = []) {
+        let data = fallback;
+
+        if ((!Array.isArray(data) || data.length === 0) && target) {
+            try {
+                const normalizedTarget = (target || '').toString().trim();
+                const nodes = document.querySelectorAll('[data-tree-model][data-static-items]');
+                for (const el of nodes) {
+                    const controlId = (el.getAttribute('data-ele-control-id') || '').toString().trim();
+                    if (controlId !== normalizedTarget) continue;
+                    const parsed = this.parseJsonAttribute(el.getAttribute('data-static-items'));
+                    if (Array.isArray(parsed)) data = parsed;
+                    break;
+                }
+            } catch {
+                // ignore static tree fallback lookup failures
+            }
+        }
+
+        return this.normalizeIds(Array.isArray(data) ? data : []);
     }
 
     findTreeNodeById(treeData, value, idField = 'id', childrenField = 'children') {

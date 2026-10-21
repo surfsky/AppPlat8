@@ -27,7 +27,7 @@ namespace App.Pages.OA
 
         public IActionResult OnGetData(long id)
         {
-            var item = App.DAL.OA.AssignTask.GetDetail(id) ?? new App.DAL.OA.AssignTask();
+            var item = AssignTask.GetDetail(id) ?? new AssignTask();
             if (id > 0 && item != null && item.Id > 0)
             {
                 var cu = Auth.GetUser();
@@ -37,7 +37,7 @@ namespace App.Pages.OA
             return BuildResult(0, "success", item.Export(ExportMode.Normal));
         }
 
-        public IActionResult OnPostSave([FromBody] App.DAL.OA.AssignTask req)
+        public IActionResult OnPostSave([FromBody] AssignTask req)
         {
             if (req == null)
                 return BuildResult(400, "参数错误");

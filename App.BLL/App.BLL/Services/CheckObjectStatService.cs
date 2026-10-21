@@ -116,7 +116,6 @@ namespace App.Services
     /// <summary>网格员对象统计行（在 CheckObjectStatRow 基础上增加网格员两列）</summary>
     public class CheckObjectCheckerStatRow : CheckObjectStatRow
     {
-        [UI("组织科室Id", Column = ColumnType.None)] public long?  DutyOrgId    { get; set; }
         [UI("网格员Id",   Column = ColumnType.None)] public long?  CheckerId    { get; set; }
         [UI("网格员")]              public string CheckerName  { get; set; }
 
@@ -127,7 +126,7 @@ namespace App.Services
                 Index,
                 SectionName,
                 SectionRemark,
-                DutyOrgId,
+                OrgId,
                 CheckerId,
                 CheckerName,
                 BaseCount, NewCount, CloseCount,
@@ -249,7 +248,7 @@ namespace App.Services
                 var sectionCheckerIds = new List<long>();
                 foreach (var o in ctx.Objects)
                 {
-                    if (!o.DutyOrgId.HasValue || !orgSet.Contains(o.DutyOrgId.Value)) continue;
+                    if (!o.OrgId.HasValue || !orgSet.Contains(o.OrgId.Value)) continue;
                     if (o.CheckerId.HasValue && o.CheckerId.Value > 0 && !sectionCheckerIds.Contains(o.CheckerId.Value))
                         sectionCheckerIds.Add(o.CheckerId.Value);
                 }
@@ -261,9 +260,9 @@ namespace App.Services
                     var checkerRow = new CheckObjectCheckerStatRow
                     {
                         Index         = ++idx,
-                        DutyOrgId     = s.OrgId,
+                        OrgId         = s.OrgId,
                         SectionName   = $"{s.Name}",
-                        SectionRemark = $"根据 CheckObjectStat.DutyOrgId= 统计",
+                        SectionRemark = $"根据 CheckObjectStat.OrgId= 统计",
                         CheckerId     = cid,
                         CheckerName   = checkerNameMap.TryGetValue(cid, out var cn) && !string.IsNullOrWhiteSpace(cn) ? cn : $"ID={cid}",
                     };
@@ -284,7 +283,7 @@ namespace App.Services
         sealed class ObjLite
         {
             public long Id; public bool? IsDel; public DateTime? CreateDt; public DateTime? DeleteDt;
-            public long? DutyOrgId; public long? CheckerId; public CheckRiskLevel? RiskLevel; public CheckObjectScale? Scale;
+            public long? OrgId; public long? CheckerId; public CheckRiskLevel? RiskLevel; public CheckObjectScale? Scale;
         }
 
         static StatContext BuildStatContext()
@@ -304,7 +303,7 @@ namespace App.Services
                     IsDel       = o.IsDel,
                     CreateDt    = o.CreateDt,
                     DeleteDt    = o.DeleteDt,
-                    DutyOrgId   = o.DutyOrgId,
+                    OrgId       = o.OrgId,
                     CheckerId   = o.CheckerId,
                     RiskLevel   = o.RiskLevel,
                     Scale       = o.Scale,
@@ -327,7 +326,7 @@ namespace App.Services
 
             foreach (var o in ctx.Objects)
             {
-                var inThis = o.DutyOrgId.HasValue && orgSet.Contains(o.DutyOrgId.Value);
+                var inThis = o.OrgId.HasValue && orgSet.Contains(o.OrgId.Value);
                 if (!inThis) continue;
                 if (!extraWhere(o)) continue;
 

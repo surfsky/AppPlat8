@@ -2,16 +2,16 @@
 @model App.Pages.Checks.CheckObjectsModel
 @{
     ViewData["Title"] = "检查对象管理";
-    // DataHandler 携带无对应过滤控件的 scope 参数（nextCheck/tagName/dutyOrgId/checkerId）；
+    // DataHandler 携带无对应过滤控件的 scope 参数（nextCheck/tagName/orgId/checkerId）；   
     // 这些参数来自 WorkDesk 卡片跳转 URL，EleTable 的过滤控件无法覆盖，需显式透传给 OnGetData。
     var nextCheck = Request.Query["nextCheck"].FirstOrDefault();
     var tagName = Request.Query["tagName"].FirstOrDefault();
-    var dutyOrgId = Request.Query["dutyOrgId"].FirstOrDefault();
+    var orgId = Request.Query["orgId"].FirstOrDefault();
     var checkerId = Request.Query["checkerId"].FirstOrDefault();
     var dataHandler = "?handler=Data";
     if (!string.IsNullOrWhiteSpace(nextCheck)) dataHandler += $"&nextCheck={Uri.EscapeDataString(nextCheck)}";
     if (!string.IsNullOrWhiteSpace(tagName))   dataHandler += $"&tagName={Uri.EscapeDataString(tagName)}";
-    if (!string.IsNullOrWhiteSpace(dutyOrgId)) dataHandler += $"&dutyOrgId={dutyOrgId}";
+    if (!string.IsNullOrWhiteSpace(orgId))     dataHandler += $"&orgId={orgId}";
     if (!string.IsNullOrWhiteSpace(checkerId)) dataHandler += $"&checkerId={checkerId}";
 }
 
@@ -20,17 +20,17 @@
         <Toolbar>
             <Filters Shows="4">
                 @* 过滤器支持 URL 参数预填充：
-                   - ?orgId=730 走 Model.Item.DutyOrgId（OnGet 中已经按 orgId 查到 Org 实体并绑定到 Item）；
+                   - ?orgId=730 走 Model.Item.OrgId（OnGet 中已经按 orgId 查到 Org 实体并绑定到 Item）；
                    - 其它参数（?name=xxx&address=yyy 等）直接用 QStr("key") 读取（_ViewImports 全局 @using static 导入），
                      无需 Model. 前缀，简单清晰。*@
-                <EleTreePicker For="DutyOrgId" Width="300px" Label="所属网格" Multiple="true" CollapseTags="false" Enabled="@Auth.HasPower(Power.AdminLeader)"
-                               Api="/httpapi/orgs/GetAuthOrgTree" Value="@Model.DutyOrgId"></EleTreePicker>
+                <EleTreePicker For="OrgId" Width="300px" Label="所属网格" Multiple="false" CollapseTags="false" Enabled="@Auth.HasPower(Power.AdminLeader)"
+                               Api="/httpapi/orgs/GetAuthOrgTree" Value="@Model.OrgId"></EleTreePicker>
                 <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Width="250px" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0"
                            Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QStr("checkerId"))"
                            TextValue="@Model.DefaultCheckerName">
                 </ElePicker>
                 <EleInput For="Item.Name"              Width="250px" Label="检查对象名称"     Value="@QStr("name")"></EleInput>
-                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@(string.IsNullOrEmpty(Model.ScopeTagIds) ? QStr("tagIds") : Model.ScopeTagIds)"></EleTreePicker>
+                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@(string.IsNullOrEmpty(Model.TagIds) ? QStr("tagIds") : Model.TagIds)"></EleTreePicker>
                 <EleInput For="Item.Address"           Width="250px" Label="详细地址"         Value="@QStr("address")"></EleInput>
                 <EleSelect For="Item.Scope" Width="250px" Label="所属领域" Value="@QStr("scope")"></EleSelect>
                 <EleSelect For="Item.ObjectType" Width="250px" Label="类型" Value="@QStr("objectType")"></EleSelect>
@@ -85,7 +85,7 @@
             <EleColumn For="Item.NextCheckDt" Label="下次巡查时间" Width="150" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleColumn For="Item.IsChecked" Label="是否检查" Width="100"></EleColumn>
 
-            <EleColumn For="Item.DutyOrgName" Label="责任网格" Width="200"></EleColumn>
+            <EleColumn For="Item.OrgName" Label="责任网格" Width="200"></EleColumn>
             <EleColumn For="Item.DutyMan" Label="企业负责人" Width="120"></EleColumn>
             <EleColumn For="Item.CheckerName" Label="网格员" Width="120"></EleColumn>
 
@@ -98,9 +98,9 @@
             <EleColumn For="Item.Scale" Label="规模" Width="100"></EleColumn>
             <EleColumn For="Item.ArchieveDt" Label="建档日期" Width="110" FormatString="yyyy-MM-dd"></EleColumn>
 
-            <EleColumn For="Item.DutyDeptName" Label="责任科室" Width="200" Sortable="false"></EleColumn>
-            <EleColumn For="Item.DutyUnitName" Label="责任单位" Width="200" Sortable="false"></EleColumn>
-            <EleColumn For="Item.DutyTownName" Label="责任乡镇" Width="200" Sortable="false"></EleColumn>
+            <EleColumn For="Item.OrgDeptName" Label="责任科室" Width="200" Sortable="false"></EleColumn>
+            <EleColumn For="Item.OrgUnitName" Label="责任单位" Width="200" Sortable="false"></EleColumn>
+            <EleColumn For="Item.OrgTownName" Label="责任乡镇" Width="200" Sortable="false"></EleColumn>
             <EleColumn For="Item.BuildingType" Label="建筑类型" Width="100" ></EleColumn>
 
             <EleColumn For="Item.HasHarzard" Label="存在隐患" Width="100"></EleColumn>

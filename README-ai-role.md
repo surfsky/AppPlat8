@@ -24,7 +24,7 @@
    var q = q.FilterByOrg(user.AuthOrgId);
 
    // 检查用户是否有访问该数据的权限
-   if (!OrgFilter.IsAuth(user.AuthOrgId, item.DutyOrgId))
+   if (!OrgFilter.IsAuth(user.AuthOrgId, item.OrgId))
       return BuildResult(403, "越权访问");
 
 ```

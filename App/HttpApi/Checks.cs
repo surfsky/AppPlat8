@@ -56,14 +56,14 @@ namespace App.API
             var q = CheckObject.Search(
                 name: name,
                 socialCreditCode: socialCreditCode,
-                dutyOrgId: orgId,
+                orgId: orgId,
                 checkerId: checkerId,
                 objectType: objectType,
                 scale: scale
             );
-            // 非 admin：显式按授权组织子树过滤 CheckObject（Search 默认仅用 dutyOrgId 等值过滤，需再收紧子树语义）
+            // 非 admin：显式按授权组织子树过滤 CheckObject（Search 默认仅用 OrgId 等值过滤，需再收紧子树语义）
             if (!Auth.IsAdmin(user))
-                q = q.FilterByOrg(user, nameof(CheckObject.DutyOrgId));
+                q = q.FilterByOrg(user, nameof(CheckObject.OrgId));
             return q.SortPageExport(pi).ToResult();
         }
 

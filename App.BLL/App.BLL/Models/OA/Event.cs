@@ -6,7 +6,7 @@ using App.Components;
 using App.Entities;
 using App.Utils;
 
-namespace App.DAL.OA
+namespace App.DAL
 {
     /// <summary>事件类别（树结构）</summary>
     [UI("OA", "事件类别")]
@@ -25,7 +25,7 @@ namespace App.DAL.OA
     [UI("OA", "事件")]
     public class Event : EntityBase<Event>
     {
-        [UI("发生时间")]     public DateTime? TriggleDt { get; set; }
+        [UI("发生时间")]     public DateTime? HappenDt { get; set; }
         [UI("类别")]        public long? TypeId { get; set; }
         [UI("标题")]        public string Title { get; set; }
         [UI("内容")]        public string Content { get; set; }
@@ -37,37 +37,48 @@ namespace App.DAL.OA
         public virtual EventType Type { get; set; }
         public virtual Org Org { get; set; }
         public virtual User Publisher { get; set; }
-
         public string TypeName => Type?.Name;
+        public string OrgName => Org?.Name;
+        public string PublisherName => Publisher?.RealName;
 
         public override object Export(ExportMode type = ExportMode.Normal)
         {
             return new
             {
                 Id,
-                TriggleDt,
+                HappenDt,
                 TypeId,
                 TypeName,
                 Title,
                 Content,
                 MainImage,
                 OrgId,
-                OrgName = Org?.Name,
+                OrgName,
                 PublisherId,
-                PublisherName = Publisher?.Name,
+                PublisherName,
                 AllowComment,
                 CreateDt,
             };
         }
 
-        public static IQueryable<Event> Search(string title, long? typeId, long? orgId, long? publisherId)
+        public static IQueryable<Event> Search(string title="", long? typeId=null, long? orgId=null, long? publisherId=null, DateTime? happenStartDt=null, DateTime? happenEndDt=null)
         {
             var q = IncludeSet.AsQueryable();
-            if (title.IsNotEmpty())         q = q.Where(o => o.Title.Contains(title.Trim()));
-            if (typeId.IsNotEmpty())       q = q.Where(o => o.TypeId == typeId.Value);
-            if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value);
-            if (publisherId.IsNotEmpty())  q = q.Where(o => o.PublisherId == publisherId.Value);
-            return q; //.Sort(t => t.SortId, "DESC");
+            if (title.IsNotEmpty())            q = q.Where(o => o.Title.Contains(title.Trim()));
+            if (happenStartDt.IsNotEmpty())    q = q.Where(o => o.HappenDt >= happenStartDt.Value);
+            if (happenEndDt.IsNotEmpty())      q = q.Where(o => o.HappenDt <= happenEndDt.Value);
+            if (publisherId.IsNotEmpty())      q = q.Where(o => o.PublisherId == publisherId.Value);
+            if (orgId.IsNotEmpty())
+            {
+                var ids = DAL.Org.GetChildIds(orgId.Value);
+                q = q.Where(o => ids.Contains(o.OrgId.Value));
+            }
+            if (typeId.IsNotEmpty())
+            {
+                var ids = DAL.EventType.GetChildIds(typeId.Value);
+                q = q.Where(o => ids.Contains(o.TypeId.Value));
+            }
+            return q;
          }
 
     }

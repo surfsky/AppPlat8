@@ -11,7 +11,7 @@
         Model.UserName = Model.UserRealName;
     var dutyOrgSingleVal = (Model.CurrOrgIds != null && Model.CurrOrgIds.Count == 1)
         ? Model.CurrOrgIds[0].ToString() : "";
-    var dutyOrgIdsStr    = (Model.CurrOrgIds != null && Model.CurrOrgIds.Count > 0)
+    var orgIdsStr    = (Model.CurrOrgIds != null && Model.CurrOrgIds.Count > 0)
         ? string.Join(",", Model.CurrOrgIds) : "";
 
     //
@@ -72,7 +72,7 @@
           </div>
           <input id="user-picker-id" type="hidden" value="@userVal" />
           <input id="duty-org-id"    type="hidden" value="@dutyOrgSingleVal" />
-          <input id="duty-org-ids"   type="hidden" value="@dutyOrgIdsStr" />
+          <input id="duty-org-ids"   type="hidden" value="@orgIdsStr" />
         </div>
         <div class="text-xs text-[#64748b] leading-snug">
           <div>默认显示当前用户</div>

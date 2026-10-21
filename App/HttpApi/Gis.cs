@@ -138,7 +138,7 @@ namespace App.API
             // 获取点位数据
             var q = CheckObject.Set.AsNoTracking()  .Where(t => !string.IsNullOrWhiteSpace(t.Gps));
             if (isDel != null)           q = q.Where(t => t.IsDel == isDel.Value);
-            if (orgId.IsNotEmpty())      q = q.Where(t => t.DutyOrgId == orgId.Value);
+            if (orgId.IsNotEmpty())      q = q.Where(t => t.OrgId == orgId.Value);
             if (name.IsNotEmpty())       q = q.Where(t => (t.Name ?? string.Empty).Contains(name.Trim()));
             var items = q
                 .OrderBy(t => t.Id)
@@ -153,7 +153,7 @@ namespace App.API
                     t.RiskLevel,
                     t.ObjectType,
                     t.Scale,
-                    DutyOrgId = t.DutyOrgId,
+                    t.OrgId,
                     t.DutyMan,
                 })
                 .ToList();
@@ -182,7 +182,7 @@ namespace App.API
                         item.RiskLevel,
                         item.ObjectType,
                         item.Scale,
-                        item.DutyOrgId,
+                        item.OrgId,
                         item.DutyMan,
                     }
                 });
@@ -196,7 +196,7 @@ namespace App.API
 
         /// <summary>获取检查对象统一 GIS 数据</summary>
         [HttpApi("Point", "获取检查对象GIS数据", AuthLogin = false)]
-        public static APIResult GetCheckObjects(string name = null, string tagNames = null, string tagIds = null, long? dutyOrgId = null, Paging pi = null)
+        public static APIResult GetCheckObjects(string name = null, string tagNames = null, string tagIds = null, long? orgId = null, Paging pi = null)
         {
             pi ??= new Paging();
             if (pi.PageSize <= 0) pi.PageSize = 20;
@@ -232,7 +232,7 @@ namespace App.API
             // 应使用 OR 语义（命中任意一个匹配标签即可）。因此不走 Search 的 tagIds 参数（内部是 AND），
             // 改为在 query 上追加 Any 形式的 OR 过滤。
             var keyword = name?.Trim();
-            var query = CheckObject.Search(includeTags: true, dutyOrgId: dutyOrgId)
+            var query = CheckObject.Search(includeTags: true, orgId: orgId)
                 .Where(t => keyword.IsEmpty() || (t.Name ?? string.Empty).Contains(keyword));
 
             if (hasTagFilter && mergedTagIds.Count > 0)

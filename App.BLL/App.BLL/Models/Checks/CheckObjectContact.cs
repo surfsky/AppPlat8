@@ -58,11 +58,19 @@ namespace App.DAL
             };
         }
 
-        public static IQueryable<CheckObjectContact> Search(string name="", string phone="", string socialCreditCode="", long? objectId=null, long? orgId=null, long? checkerId=null, CheckObjectType? objectType=null, CheckObjectScale? scale=null)
-        {
+        public static IQueryable<CheckObjectContact> Search(
+            string name="", 
+            string phone="", 
+            string socialCreditCode="", 
+            long? objectId=null, 
+            long? orgId=null, 
+            long? checkerId=null, 
+            CheckObjectType? objectType=null, 
+            CheckObjectScale? scale=null
+        ){
             IQueryable<CheckObjectContact>     q = CheckObjectContact.IncludeSet;
             if (objectId.IsNotEmpty())         q = q.Where(o => o.CheckObjectId == objectId.Value);
-            if (orgId.IsNotEmpty())            q = q.Where(o => o.CheckObject.DutyOrgId == orgId.Value);
+            if (orgId.IsNotEmpty())            q = q.Where(o => o.CheckObject.OrgId == orgId.Value);
             if (checkerId.IsNotEmpty())        q = q.Where(o => o.CheckObject.CheckerId == checkerId.Value);
             if (name.IsNotEmpty())             q = q.Where(o => o.Name.Contains(name.Trim()));
             if (phone.IsNotEmpty())            q = q.Where(o => o.Phone.Contains(phone.Trim()));

@@ -36,14 +36,14 @@
             <div class="rounded-lg border border-gray-300 bg-white p-4 max-h-[45vh] overflow-y-auto">
                 <EleForm BuildMode="None" Model="form" LabelWidth="80px" Class="filter-form-uniform" LabelPosition="None">
                     <EleInput For="Item.Name" Label="名称" VModel="form.name" Placeholder="名称" Clearable="true" Class="filter-control"></EleInput>
-                    <EleTreePicker For="DutyOrgIds"
+                    <EleTreePicker For="OrgIds"
                                    Label="所属网格"
                                    Multiple="true"
                                    CollapseTags="false"
                                    CheckStrictly="true"
                                    Api="/httpapi/orgs/GetAuthOrgTree"
                                    Class="filter-control"
-                                   Value="@(Model.DutyOrgIds != null && Model.DutyOrgIds.Count > 0 ? string.Join(",", Model.DutyOrgIds) : "")" ></EleTreePicker>
+                                   Value="@(Model.OrgIds != null && Model.OrgIds.Count > 0 ? string.Join(",", Model.OrgIds) : "")" ></EleTreePicker>
                     <ElePicker For="Item.CheckerId"
                                 TextFor="Item.CheckerName"
                                 Label="网格员"
@@ -262,7 +262,7 @@
                         name: '', code: '', socialCreditCode: '', socialCreditId: '',
                         address: '', dutyMan: '',
                         objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
-                        dutyOrgId: null, dutyOrgIds: [],
+                        orgId: null, orgIds: [],
                         checkerId: null, checkerName: '',
                         tagIds: []
                     };
@@ -378,10 +378,10 @@
 
                         const checkerId = toNum(f.checkerId);      if (checkerId != null) data.checkerId = String(checkerId);
 
-                        let dutyList = toLongList(f.dutyOrgIds);
-                        const singleDuty = toNum(f.dutyOrgId);
+                        let dutyList = toLongList(f.orgIds);
+                        const singleDuty = toNum(f.orgId);
                         if (singleDuty != null && !dutyList.includes(singleDuty)) dutyList.push(singleDuty);
-                        if (dutyList.length) data.dutyOrgIds = dutyList;
+                        if (dutyList.length) data.OrgIds = dutyList;
 
                         const tagList = toLongList(f.tagIds);
                         if (tagList.length) data.tagIds = tagList;
@@ -426,7 +426,7 @@
                         Object.assign(form.value, {
                             name: '', code: '', socialCreditCode: '', socialCreditId: '', address: '', dutyMan: '',
                             objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
-                            dutyOrgId: null, dutyOrgIds: [],
+                            orgId: null, orgIds: [],
                             checkerId: null, checkerName: '',
                             tagIds: []
                         });
@@ -652,7 +652,7 @@
                         const resetObj = {
                             name: '', code: '', socialCreditCode: '', address: '', dutyMan: '',
                             objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
-                            dutyOrgId: null, dutyOrgIds: [],
+                            orgId: null, orgIds: [],
                             checkerId: null, checkerName: '',
                             tagIds: [],
                             taskId: TASK_ID,

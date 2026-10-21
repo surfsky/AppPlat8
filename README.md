@@ -30,7 +30,7 @@
 ![gisglobal](./Doc/Images/gisglobal.png)
 ![cityweather](./Doc/Images/cityweather.png)
 
-## 快速开始
+## 1、快速开始
 
 1. 确保已安装 .NET 8 SDK。
 2. 在 `appsettings.json` 中配置数据库连接。
@@ -64,7 +64,7 @@ dotnet run --project App.Consoler
 
 4. 打开浏览器，访问 `http://localhost:6001` 或 `http://abc.org`。
 
-## 测试
+## 2、测试
 
 ### 调试项目
 
@@ -84,7 +84,7 @@ dotnet run --project App.Consoler
 - 测试用例：在 WebTest 目录下的测试用例文件
 - 测试环境：Selenium WebDriver
 
-## 部署
+## 3、部署
 
 ### 文件部署方式
 
@@ -98,21 +98,24 @@ dotnet run --project App.Consoler
 - 数据库文件映射：
 - 临时文件映射：
 
-## 数据库迁移
+## 4、数据库
 
-1. 使用 EF 机制进行数据库迁移: 运行
+### 数据库
+
+1. 数据库默认为 sqlite，可迁移到 postgresql、mysql等。
+2. 在 `appsettings.json` 中配置数据库连接字符串。
+
+### 数据库迁移
+
+1. 本项目采用 EntityFramework CodeFirst 模式，若实体类属性变更，可用使用 EF 机制进行数据库迁移: 运行
 
 ```bash
-   dotnet ef migrations add CheckObject --project App/App.csproj --startup-project App/App.csproj
+dotnet ef migrations add CheckObjectOrgId --project App/App.csproj --startup-project App/App.csproj
 ```
-
-## 数据备份
 
 ### 数据库备份：
 
 - sqlite 数据库备份：直接拷贝一份到别地方就行
-- 
-- 
 - postgresql 数据库备份：用 pg_dump 命令备份，用 pgagent 配置定时任务备份
 - mysql 数据库备份：用 mysqldump 命令备份，用 mysqlbackup 配置定时任务备份
 
@@ -120,7 +123,7 @@ dotnet run --project App.Consoler
 
 - /App/Files/
 
-## 项目目录说明
+## 5、项目目录说明
 
 - App：主系统项目，包含业务逻辑、数据库访问、用户认证等功能。
 - App.API: 提供 API 服务，用于前端调用，内置权限、异常、日志、文档、测试页面等功能。
@@ -133,14 +136,14 @@ dotnet run --project App.Consoler
 - WebTest: Web 自动化测试相关代码。
 - Temp：临时目录，用于存储临时文件，如测试日志、临时数据等。
 
-## 进度
+## 6、进度
 
 详见 [进度](./README-progress.md)
 
-## 技术栈
+## 7、技术栈
 
 详见 [技术栈](./README-stack.md)
 
-## 主系统
+## 8、主项目功能
 
 详见 [主系统](./App/README.md)

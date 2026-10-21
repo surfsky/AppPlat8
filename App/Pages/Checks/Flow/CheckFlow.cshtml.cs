@@ -95,7 +95,7 @@ namespace App.Pages.Checks
                 return BuildResult(400, "缺少检查对象参数");
 
             var obj = CheckObject.IncludeSet
-                .Include(t => t.DutyOrg)
+                .Include(t => t.Org)
                 .Include(t => t.Tags)
                 .ThenInclude(t => t.Tag)
                 .FirstOrDefault(t => t.Id == id);
@@ -133,7 +133,7 @@ namespace App.Pages.Checks
             {
                 ObjectId = obj.Id,
                 ObjectName = obj.Name,
-                DutyOrgName = obj.DutyOrgName,
+                DutyOrgName = obj.OrgName,
                 Address = obj.Address,
                 RiskLevelName = obj.RiskLevel?.GetTitle(),
                 ScopeName = obj.Scope?.GetTitle(),

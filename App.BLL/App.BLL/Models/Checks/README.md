@@ -209,7 +209,7 @@ erDiagram
     CheckObject ||--o{ CheckObjectContact : "1:n"
     CheckObject ||--o{ Check : "1:n"
     CheckObject ||--o{ CheckHazard : "1:n"
-    CheckObject }o--|| Org : "DutyOrgId"
+    CheckObject }o--|| Org : "OrgId"
     CheckObject }o--|| User : "CheckerId"
     CheckObject }o--|| User : "SocialCheckerId"
     

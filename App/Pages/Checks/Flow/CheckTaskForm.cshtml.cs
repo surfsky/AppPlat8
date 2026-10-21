@@ -76,17 +76,17 @@ namespace App.Pages.Checks
 
             // 用 Search 简化基础过滤（taskId + checkerId），并补充嵌套 Include 供投影使用
             IQueryable<CheckTaskObject> q = CheckTaskObject.Search(taskId: taskId, checkerId: checkerId)
-                .Include(t => t.CheckObject).ThenInclude(o => o.DutyOrg)
+                .Include(t => t.CheckObject).ThenInclude(o => o.Org)
                 .Include(t => t.CheckObject).ThenInclude(o => o.Checker);
 
             if (!isAdmin && authOrgId.HasValue && authOrgId.Value > 0)
             {
                 var scopeIds = OrgFilter.GetChildOrgIds(authOrgId.Value);
-                q = q.Where(t => t.CheckObject.DutyOrgId == null || scopeIds.Contains(t.CheckObject.DutyOrgId.Value));
+                q = q.Where(t => t.CheckObject.OrgId == null || scopeIds.Contains(t.CheckObject.OrgId.Value));
             }
             else if (!isAdmin)
             {
-                q = q.Where(t => t.CheckObject.DutyOrgId == null);
+                q = q.Where(t => t.CheckObject.OrgId == null);
             }
 
             pi.SetTotal(q.Count());
@@ -101,9 +101,9 @@ namespace App.Pages.Checks
                 SortId = t.SortId,
                 ObjectName = t.CheckObject != null ? t.CheckObject.Name : "",
                 DutyOrgName = t.CheckObject != null
-                    ? (t.CheckObject.DutyOrgName
-                       ?? t.CheckObject.DutyOrg?.FullName
-                       ?? t.CheckObject.DutyOrg?.Name
+                    ? (t.CheckObject.OrgName
+                       ?? t.CheckObject.Org?.FullName
+                       ?? t.CheckObject.Org?.Name
                        ?? "")
                     : "",
                 CheckerName = t.CheckObject != null

@@ -5,7 +5,7 @@ using System.Linq;
 using App.Entities;
 using App.Utils;
 
-namespace App.DAL.OA
+namespace App.DAL
 {
     /// <summary>项目管理</summary>
     [UI("OA", "项目")]

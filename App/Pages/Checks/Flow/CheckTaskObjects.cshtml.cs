@@ -22,13 +22,9 @@ namespace App.Pages.Checks
         public long TaskId { get; set; }
         public string TaskName { get; set; }
         public CheckTask Task { get; set; }
-
-        /// <summary>过滤区的 EleTreePicker/ElePicker/EleSelect 字段宿主，For="Item.Xxx" 会被转为 filters.xxx，对应 setup 里的官方 filters.*（picker/treePicker 直接读写这个对象）。</summary>
-        public CheckObject Item { get; set; } = new CheckObject();
-        /// <summary>所属网格（多选 ids：独立于 Item.DutyOrgId 单值）。</summary>
-        public List<long> DutyOrgIds { get; set; } = new List<long>();
-        /// <summary>标签（多选 ids）。</summary>
-        public List<long> TagIds { get; set; } = new List<long>();
+        public CheckObject Item { get; set; } = new CheckObject();  // 过滤区的 EleTreePicker/ElePicker/EleSelect 字段宿主，For="Item.Xxx" 会被转为 filters.xxx，对应 setup 里的官方 filters.*（picker/treePicker 直接读写这个对象）。
+        public List<long> OrgIds { get; set; } = new List<long>();  // 所属网格（多选 ids：独立于 Item.OrgId 单值）
+        public List<long> TagIds { get; set; } = new List<long>();  // 标签（多选 ids）。
 
         public void OnGet(long taskId, string taskName)
         {
@@ -53,8 +49,8 @@ namespace App.Pages.Checks
             CheckObjectScale? scale,
             CheckRiskLevel? riskLevel,
             CheckIndustryType? industryType,
-            long? dutyOrgId,
-            List<long> dutyOrgIds,
+            long? orgId,
+            List<long> orgIds,
             long? checkerId,
             List<long> tagIds,
             bool onlyUnselected = true)
@@ -63,7 +59,6 @@ namespace App.Pages.Checks
             if (string.IsNullOrEmpty(pi.SortField)) { pi.SortField = "Id"; pi.SortDirection = "DESC"; }
 
             var cu = Auth.GetUser();
-            var isAdmin = Auth.IsAdmin(cu);
 
             IQueryable<CheckObject> q = CheckObject.Search(
                 name: name ?? "",
@@ -71,8 +66,8 @@ namespace App.Pages.Checks
                 socialCreditCode: socialCreditCode ?? "",
                 address: address ?? "",
                 dutyMan: dutyMan ?? "",
-                dutyOrgId: dutyOrgId,
-                dutyOrgIds: dutyOrgIds,
+                orgId: orgId,
+                orgIds: orgIds,
                 tagIds: tagIds,
                 checkerId: checkerId,
                 objectType: objectType,
@@ -95,7 +90,7 @@ namespace App.Pages.Checks
                 includeContacts: false
             );
 
-            q = q.FilterByOrg(cu, nameof(CheckObject.DutyOrgId));
+            q = q.FilterByOrg(cu, nameof(CheckObject.OrgId));
             if (onlyUnselected && taskId > 0)
             {
                 var selectedIds = CheckTaskObject.Set
@@ -116,8 +111,8 @@ namespace App.Pages.Checks
                 Name = o.Name ?? "",
                 Code = o.Code ?? "",
                 Address = o.Address ?? "",
-                DutyOrgId = o.DutyOrgId,
-                DutyOrgName = o.DutyOrgName ?? o.DutyOrg?.FullName ?? o.DutyOrg?.Name ?? "",
+                OrgId = o.OrgId,
+                OrgName = o.OrgName ?? o.Org?.FullName ?? o.Org?.Name ?? "",
                 CheckerId = o.CheckerId,
                 CheckerName = o.CheckerName ?? BuildCheckerName(o.Checker),
                 ObjectTypeName = o.ObjectType.HasValue ? o.ObjectType.Value.ToString() : "",
@@ -145,7 +140,7 @@ namespace App.Pages.Checks
 
             IQueryable<CheckTaskObject> q = CheckTaskObject.Set
                 .Include(t => t.CheckObject)
-                    .ThenInclude(o => o.DutyOrg)
+                    .ThenInclude(o => o.Org)
                 .Include(t => t.CheckObject)
                     .ThenInclude(o => o.Checker)
                 .Where(t => t.TaskId == taskId);
@@ -153,11 +148,11 @@ namespace App.Pages.Checks
             if (!isAdmin && authOrgId.HasValue && authOrgId.Value > 0)
             {
                 var scopeIds = OrgFilter.GetChildOrgIds(authOrgId.Value);
-                q = q.Where(t => t.CheckObject.DutyOrgId == null || scopeIds.Contains(t.CheckObject.DutyOrgId.Value));
+                q = q.Where(t => t.CheckObject.OrgId == null || scopeIds.Contains(t.CheckObject.OrgId.Value));
             }
             else if (!isAdmin)
             {
-                q = q.Where(t => t.CheckObject.DutyOrgId == null);
+                q = q.Where(t => t.CheckObject.OrgId == null);
             }
 
             pi.SetTotal(q.Count());
@@ -171,8 +166,8 @@ namespace App.Pages.Checks
                 SortId = t.SortId,
                 IsFinished = t.IsFinished,
                 ObjectName = t.CheckObject?.Name ?? "",
-                DutyOrgName = t.CheckObject != null
-                    ? (t.CheckObject.DutyOrgName ?? t.CheckObject.DutyOrg?.FullName ?? t.CheckObject.DutyOrg?.Name ?? "")
+                OrgName = t.CheckObject != null
+                    ? (t.CheckObject.OrgName ?? t.CheckObject.Org?.FullName ?? t.CheckObject.Org?.Name ?? "")
                     : "",
                 CheckerName = t.CheckObject != null
                     ? (t.CheckObject.CheckerName ?? BuildCheckerName(t.CheckObject.Checker))
@@ -222,12 +217,12 @@ namespace App.Pages.Checks
                 var scopeHash = new HashSet<long>(scopeIds);
                 var scopeCheck = CheckObject.Set
                     .Where(o => ids.Contains(o.Id))
-                    .Select(o => new { o.Id, o.Name, o.DutyOrgId })
+                    .Select(o => new { o.Id, o.Name, OrgId = o.OrgId })
                     .ToList();
                 foreach (var co in scopeCheck)
                 {
-                    if (co.DutyOrgId == null) continue;
-                    if (!scopeHash.Contains(co.DutyOrgId.Value))
+                    if (co.OrgId == null) continue;
+                    if (!scopeHash.Contains(co.OrgId.Value))
                         return BuildResult(403, $"无权将对象加入任务：{co.Name ?? co.Id.ToString()}");
                 }
             }
@@ -369,8 +364,8 @@ namespace App.Pages.Checks
                 industryType: f.ContainsKey("industryType") && f["industryType"] != null
                     ? (CheckIndustryType?)Enum.ToObject(typeof(CheckIndustryType), Get<int>("industryType", 0))
                     : null,
-                dutyOrgId: f.ContainsKey("dutyOrgId") && f["dutyOrgId"] != null ? (long?)Get<long>("dutyOrgId", 0) : null,
-                dutyOrgIds: GetLongList("dutyOrgIds"),
+                orgId: f.ContainsKey("orgId") && f["orgId"] != null ? (long?)Get<long>("orgId", 0) : null,
+                orgIds: GetLongList("orgIds"),
                 checkerId: f.ContainsKey("checkerId") && f["checkerId"] != null ? (long?)Get<long>("checkerId", 0) : null,
                 tagIds: GetLongList("tagIds"),
                 onlyUnselected: !f.ContainsKey("onlyUnselected") || Get<bool>("onlyUnselected", true)
@@ -432,8 +427,8 @@ namespace App.Pages.Checks
             public string Name { get; set; }
             public string Code { get; set; }
             public string Address { get; set; }
-            public long? DutyOrgId { get; set; }
-            public string DutyOrgName { get; set; }
+            public long? OrgId { get; set; }
+            public string OrgName { get; set; }
             public long? CheckerId { get; set; }
             public string CheckerName { get; set; }
             public string ObjectTypeName { get; set; }
@@ -449,7 +444,7 @@ namespace App.Pages.Checks
             public int SortId { get; set; }
             public bool IsFinished { get; set; }
             public string ObjectName { get; set; }
-            public string DutyOrgName { get; set; }
+            public string OrgName { get; set; }
             public string CheckerName { get; set; }
             public string StatusName { get; set; }
         }

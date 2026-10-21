@@ -22,8 +22,8 @@ namespace App.Pages.Checks
         public CheckObject Item { get; set; } = new CheckObject();         // 检查对象实体（用于页面数据绑定）
         public long? DefaultCheckerId { get; set; }      // 默认检查人ID
         public string DefaultCheckerName { get; set; }  // 默认检查人名称
-        public long? DutyOrgId { get; set; }  // 单值，用于 ElePicker/Select 控件单独匹配
-        public string ScopeTagIds { get; set; }  // 多值，用于标签树控件回显
+        public long? OrgId { get; set; }  // 单值，用于 ElePicker/Select 控件单独匹配
+        public string TagIds { get; set; }  // 多值，用于标签树控件回显
 
         
         //-------------------------------------------------------------------------
@@ -33,17 +33,17 @@ namespace App.Pages.Checks
         {
             var user = GetUser();
 
-            // DutyOrgId
-            var dutyOrgId = Asp.GetQueryLong("dutyOrgId");
-            if (dutyOrgId != null)
+            // OrgId
+            var orgId = Asp.GetQueryLong("OrgId");
+            if (orgId != null)
             {
-                DutyOrgId = dutyOrgId;
-                Item.DutyOrgId = dutyOrgId;
+                OrgId = orgId;
+                Item.OrgId = orgId;
             }
             else
             {
-                DutyOrgId = user.AuthOrgId;
-                Item.DutyOrgId = user.AuthOrgId;
+                OrgId = user.AuthOrgId;
+                Item.OrgId = user.AuthOrgId;
             }
 
             // CheckerId
@@ -70,7 +70,7 @@ namespace App.Pages.Checks
                 var tag = CheckTag.Set.FirstOrDefault(t => t.Name == tagName);
                 if (tag != null)
                 {
-                    ScopeTagIds = tag.Id.ToString();
+                    TagIds = tag.Id.ToString();
                     Item.TagIds = new List<long> { tag.Id };
                 }
             }
@@ -106,10 +106,10 @@ namespace App.Pages.Checks
             string code="",
             string socialCreditCode="", 
             string address="",
-            string dutyUserName="",
+            string userName="",
             bool? hasHarzard=null,
             bool? isChecked=null,
-            long? dutyOrgId=null, 
+            long? orgId=null, 
             long? checkerId=null,
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
@@ -123,7 +123,7 @@ namespace App.Pages.Checks
             bool? isDel=null
             )
         {
-            var q = Query(name, code, socialCreditCode, address, dutyUserName, hasHarzard, isChecked, dutyOrgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel);
+            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
@@ -136,10 +136,10 @@ namespace App.Pages.Checks
             string code="",
             string socialCreditCode="", 
             string address="",
-            string dutyUserName="",
+            string userName="",
             bool? hasHarzard=null,
             bool? isChecked=null,
-            long? dutyOrgId=null,
+            long? orgId=null,
             long? checkerId=null,
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
@@ -153,7 +153,7 @@ namespace App.Pages.Checks
             bool? isDel=null
             )
         {
-            var q = Query(name, code, socialCreditCode, address, dutyUserName, hasHarzard, isChecked, dutyOrgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel);
+            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel);
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"检查对象列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
@@ -167,10 +167,10 @@ namespace App.Pages.Checks
             string code="",
             string socialCreditCode="", 
             string address="",
-            string dutyUserName="",
+            string userName="",
             bool? hasHarzard=null,
             bool? isChecked=null,
-            long? dutyOrgId=null, 
+            long? orgId=null, 
             long? checkerId=null,
             CheckObjectType? objectType=null, 
             CheckScope? scope=null,
@@ -223,8 +223,8 @@ namespace App.Pages.Checks
                 hasHarzard: hasHarzard,
                 socialCreditCode: socialCreditCode,
                 address: address,
-                dutyMan: dutyUserName,
-                dutyOrgId: dutyOrgId,
+                dutyMan: userName,
+                orgId: orgId,
                 tagIds: tagIds,
                 checkerId: checkerId,
                 objectType: objectType,
@@ -245,7 +245,7 @@ namespace App.Pages.Checks
 
             // 应用组织过滤
             var cu = Auth.GetUser();
-            q = q.FilterByOrg(cu, nameof(CheckObject.DutyOrgId));
+            q = q.FilterByOrg(cu, nameof(CheckObject.OrgId));
             return q;
         }
 
@@ -260,13 +260,11 @@ namespace App.Pages.Checks
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();
-            var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var item = CheckObject.Get(id);
                 if (item == null) continue;
-                if (!OrgFilter.IsAuth(cu, item.DutyOrgId))
+                if (!OrgFilter.IsAuth(cu, item.OrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 item.Delete();
             }

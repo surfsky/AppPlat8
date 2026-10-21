@@ -48,7 +48,7 @@ namespace App.DAL
             if (taskId.IsNotEmpty())       q = q.Where(o => o.TaskId == taskId.Value);
             if (isFinished.IsNotEmpty())   q = q.Where(o => o.IsFinished == isFinished.Value);
             if (objectId.IsNotEmpty())     q = q.Where(o => o.CheckObjectId == objectId.Value);
-            if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value || o.CheckObject.DutyOrgId == orgId.Value);
+            if (orgId.IsNotEmpty())        q = q.Where(o => o.OrgId == orgId.Value || o.CheckObject.OrgId == orgId.Value);
             if (checkerId.IsNotEmpty())    q = q.Where(o => o.CheckerId == checkerId.Value || o.CheckObject.CheckerId == checkerId.Value);
             return q;
         }
@@ -65,7 +65,7 @@ namespace App.DAL
         {
             if (this.CheckObjectId.IsNotEmpty() && this.OrgId.IsEmpty())
             {
-                this.OrgId = this.CheckObject?.DutyOrgId;
+                this.OrgId = this.CheckObject?.OrgId;
                 this.CheckerId = this.CheckObject?.CheckerId;
             }
             return this;

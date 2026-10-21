@@ -15,10 +15,10 @@
         <div class="flex-1 overflow-hidden">
             <el-table :data="users" @@current-change="handleCurrentChange" @@row-dblclick="handleRowDblClick" border stripe highlight-current-row v-loading="loading" height="100%">
                 <el-table-column type="index" label="序号" width="50"></el-table-column>
-                <el-table-column prop="name" label="账号" width="120" v-if="true"></el-table-column>
+                <el-table-column prop="nameMask" label="账号" width="120" v-if="true"></el-table-column>
                 <el-table-column prop="realName" label="姓名" width="120"></el-table-column>
                 <el-table-column prop="orgName" label="部门"></el-table-column>
-                <el-table-column prop="mobile" label="手机"></el-table-column>
+                <el-table-column prop="mobile" label="手机" v-if="false"></el-table-column>
             </el-table>
         </div>
     </div>

@@ -69,9 +69,9 @@ namespace App.Pages.Checks
             ScopeExcludeArchived = bool.TryParse(rawExclude, out var ea) && ea;
         }
 
-        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? createStartDt, long? dutyOrgId = null, List<long> dutyOrgIds = null, DateTime? expireTo = null)
+        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? createStartDt, long? orgId = null, List<long> orgIds = null, DateTime? expireTo = null)
         {
-            dutyOrgIds = ParseOrgIds(dutyOrgIds, Request.Query["dutyOrgIds"]);
+            orgIds = ParseOrgIds(orgIds, Request.Query["orgIds"]);
             var rawExcludeArchived = Request.Query["excludeArchived"].FirstOrDefault();
             bool excludeArchived = bool.TryParse(rawExcludeArchived, out var ea) && ea;
 
@@ -94,9 +94,10 @@ namespace App.Pages.Checks
             }
 
             IQueryable<CheckHazard> baseQ;
-            if (dutyOrgIds.Count == 0 && !dutyOrgId.HasValue && checkerId.HasValue)
+            if (orgIds.Count == 0 && !orgId.HasValue && checkerId.HasValue)
             {
-                // 与 WorkDesk.BuildHazardScopeQuery 对齐：scope = CheckerId == uid OR Object.DutyOrgId ∈ EffectiveAuthOrgId 的子孙
+                // 与 WorkDesk.BuildHazardScopeQuery 对齐：scope = CheckerId == uid OR Object.OrgId ∈ AuthOrgId 的子孙
+                // TODO：能否改用 OrgFilter.FilterOrg？                
                 var uid = checkerId.Value;
                 var u = App.DAL.User.ValidSet.AsNoTracking().FirstOrDefault(x => x.Id == uid);
                 List<long> scopeOrgIds = null;
@@ -114,34 +115,24 @@ namespace App.Pages.Checks
                     .AsNoTracking()
                     .Where(h => (h.CheckerId.HasValue && h.CheckerId.Value == uid)
                              || (scopeOrgIds != null && scopeOrgIds.Count > 0
-                                 && h.CheckObject != null && h.CheckObject.DutyOrgId.HasValue
-                                 && scopeOrgIds.Contains(h.CheckObject.DutyOrgId.Value)));
-                if (!string.IsNullOrWhiteSpace(objectName))
-                    baseQ = baseQ.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));
-                if (objectId.HasValue && objectId.Value > 0)
-                    baseQ = baseQ.Where(o => o.CheckObjectId == objectId.Value);
-                if (!string.IsNullOrWhiteSpace(checkerName))
-                    baseQ = baseQ.Where(o => o.Checker.Name.Contains(checkerName.Trim()));
+                                 && h.CheckObject != null && h.CheckObject.OrgId.HasValue
+                                 && scopeOrgIds.Contains(h.CheckObject.OrgId.Value)));
+                if (!string.IsNullOrWhiteSpace(objectName))    baseQ = baseQ.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));
+                if (objectId.HasValue && objectId.Value > 0)   baseQ = baseQ.Where(o => o.CheckObjectId == objectId.Value);
+                if (!string.IsNullOrWhiteSpace(checkerName))   baseQ = baseQ.Where(o => o.Checker.Name.Contains(checkerName.Trim()));
             }
             else
             {
-                baseQ = CheckHazard.Search(objectName, objectId, checkerName, checkerId, singleStatus, createStartDt, dutyOrgId, expireTo, dutyOrgIds);
+                baseQ = CheckHazard.Search(objectName, objectId, checkerName, checkerId, singleStatus, createStartDt, expireTo, orgId, orgIds);
             }
 
             var q = baseQ;
-            if (checkId.HasValue && checkId.Value > 0)
-                q = q.Where(h => h.CheckLogId == checkId.Value);
-            if (excludeArchived)
-                q = q.Where(h => !h.Status.HasValue || h.Status.Value != CheckHazardStatus.Archived);
-            else if (multiStatus != null && multiStatus.Count > 0)
-                q = q.Where(h => h.Status.HasValue && multiStatus.Contains(h.Status.Value));
-            else if (singleStatus.HasValue)
-                q = q.Where(h => h.Status.HasValue && h.Status.Value == singleStatus.Value);
-            // 与 WorkDesk 超期统计对齐：ExpireDt <= 当日零点（DateTime.Today），而非当日结束
-            if (expireTo.HasValue)
-                q = q.Where(h => h.ExpireDt.HasValue && h.ExpireDt.Value <= expireTo.Value.Date);
-            if (createStartDt.HasValue)
-                q = q.Where(h => h.CreateDt >= createStartDt.Value.Date);
+            if (checkId.HasValue && checkId.Value > 0)     q = q.Where(h => h.CheckLogId == checkId.Value);
+            if (excludeArchived)                           q = q.Where(h => !h.Status.HasValue || h.Status.Value != CheckHazardStatus.Archived);
+            else if (multiStatus != null && multiStatus.Count > 0)    q = q.Where(h => h.Status.HasValue && multiStatus.Contains(h.Status.Value));
+            else if (singleStatus.HasValue)                 q = q.Where(h => h.Status.HasValue && h.Status.Value == singleStatus.Value);
+            if (expireTo.HasValue)                          q = q.Where(h => h.ExpireDt.HasValue && h.ExpireDt.Value <= expireTo.Value.Date);
+            if (createStartDt.HasValue)                     q = q.Where(h => h.CreateDt >= createStartDt.Value.Date);
 
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

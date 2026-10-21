@@ -236,7 +236,7 @@ namespace App.Pages.Me
             IQueryable<CheckTaskObject> q = CheckTaskObject.Set
                 .AsNoTracking()
                 .Include(t => t.Task)
-                .Include(t => t.CheckObject).ThenInclude(o => o.DutyOrg)
+                .Include(t => t.CheckObject).ThenInclude(o => o.Org)
                 .Include(t => t.CheckObject).ThenInclude(o => o.Checker)
                 .Include(t => t.Checker);
 
@@ -245,7 +245,7 @@ namespace App.Pages.Me
                 (uid > 0 && t.CheckerId == uid)
                 || (uid > 0 && t.CheckObject.CheckerId == uid)
                 || (orgIds.Count > 0 && t.OrgId.HasValue && orgIds.Contains(t.OrgId.Value))
-                || (orgIds.Count > 0 && t.CheckObject.DutyOrgId.HasValue && orgIds.Contains(t.CheckObject.DutyOrgId.Value)));
+                || (orgIds.Count > 0 && t.CheckObject.OrgId.HasValue && orgIds.Contains(t.CheckObject.OrgId.Value)));
 
             // tab 过滤
             taskObjTab = taskObjTab ?? "unfinished";
@@ -267,7 +267,7 @@ namespace App.Pages.Me
                 TaskName = t.Task?.Name ?? "",
                 CheckObjectId = t.CheckObjectId,
                 ObjectName = t.CheckObject?.Name ?? "",
-                DutyOrgName = t.CheckObject?.DutyOrgName ?? t.CheckObject?.DutyOrg?.Name ?? "",
+                DutyOrgName = t.CheckObject?.OrgName ?? t.CheckObject?.Org?.Name ?? "",
                 CheckerName = t.Checker?.Name ?? t.CheckObject?.CheckerName ?? "",
                 IsFinished = t.IsFinished,
                 TaskStartDt = t.Task?.StartDt,
@@ -323,7 +323,7 @@ namespace App.Pages.Me
             var uid    = CurrUserId;
             var orgIds = CurrOrgIds;
             return App.DAL.CheckObject.Search(isDel: false)
-                .Where(o => (orgIds.Count > 0 && o.DutyOrgId.HasValue && orgIds.Contains(o.DutyOrgId.Value))
+                .Where(o => (orgIds.Count > 0 && o.OrgId.HasValue && orgIds.Contains(o.OrgId.Value))
                          || (o.CheckerId == uid));
         }
 
@@ -348,14 +348,14 @@ namespace App.Pages.Me
                 .Where(h => h.CheckerId == uid
                          || (orgIds.Count > 0
                              && h.CheckObject != null
-                             && h.CheckObject.DutyOrgId.HasValue
-                             && orgIds.Contains(h.CheckObject.DutyOrgId.Value)));
+                             && h.CheckObject.OrgId.HasValue
+                             && orgIds.Contains(h.CheckObject.OrgId.Value)));
         }
 
         //---------------------------------------------------------------------
-        // 卡片 URL 拼接：把当前 scope（checkerId/dutyOrgId）追加到目标列表页 URL 查询参数上
+        // 卡片 URL 拼接：把当前 scope（checkerId/orgId）追加到目标列表页 URL 查询参数上
         //---------------------------------------------------------------------
-        /// <summary>卡片 URL 拼接：把当前 scope（checkerId + dutyOrgId）追加到目标列表页 URL 查询参数上</summary>
+        /// <summary>卡片 URL 拼接：把当前 scope（checkerId + orgId）追加到目标列表页 URL 查询参数上</summary>
         private string AppendObjectScope(string rawUrl)
         {
             if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
@@ -366,9 +366,9 @@ namespace App.Pages.Me
 
             var roots = CurrRootOrgIds;
             if (roots != null && roots.Count == 1)
-                qs["dutyOrgId"] = roots[0].ToString();
+                qs["orgId"] = roots[0].ToString();
             else if (roots != null && roots.Count > 1)
-                qs["dutyOrgIds"] = string.Join(",", roots);
+                qs["orgIds"] = string.Join(",", roots);
 
             if (qs.Count == 0) return rawUrl;
             var sep = rawUrl.Contains('?') ? '&' : '?';

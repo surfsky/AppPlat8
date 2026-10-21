@@ -61,7 +61,7 @@ namespace App.Pages.OA
             }
             item.Title = req.Title;
             item.TypeId = req.TypeId;
-            item.TriggleDt = req.TriggleDt;
+            item.HappenDt = req.HappenDt;
             item.OrgId = req.OrgId;
             item.Content = req.Content;
             item.MainImage = Uploader.SaveFile(nameof(Event),req.MainImage);

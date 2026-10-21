@@ -48,7 +48,7 @@ namespace App.DAL
 
 
         //
-        [UI("基础", "责任网格")]    public long? DutyOrgId { get; set; }
+        [UI("基础", "责任网格")]    public long? OrgId { get; set; }
         [UI("基础", "网格员")]      public long? CheckerId { get; set; }
 
         //
@@ -77,16 +77,16 @@ namespace App.DAL
         // Relations
         public virtual List<CheckObjectTag> Tags { get; set; }  // 标签列表（1:n 关系）
         public virtual List<CheckObjectContact> Contacts { get; set; }  // 联系人列表（1:n 关系）
-        public virtual Org DutyOrg { get; set; }
+        public virtual Org Org { get; set; }
         public virtual User Checker { get; set; }
 
         // 扩展字段，供列表展示
-        [UI("基础", "责任网格")]   public string DutyOrgName => DutyOrg?.FullName ?? DutyOrg?.Name;
-        [UI("基础", "责任单位")]   public string DutyUnitName => this.DutyOrg?.GetAncestor(OrgLevel.Unit)?.Name;         // 责任单位
-        [UI("基础", "责任科室")]   public string DutyDeptName => this.DutyOrg?.GetAncestor(OrgLevel.Dept)?.Name;         // 责任科室
-        [UI("基础", "责任区县")]   public string DutyDistrictName => this.DutyOrg?.GetAncestor(OrgLevel.District)?.Name;         // 责任区县
-        [UI("基础", "责任乡镇")]   public string DutyTownName => this.DutyOrg?.GetAncestor(OrgLevel.Town)?.Name;         // 责任乡镇
-        [UI("基础", "责任社区")]   public string DutyCommunityName => this.DutyOrg?.GetAncestor(OrgLevel.Community)?.Name;         // 责任社区
+        [UI("基础", "责任网格")]   public string OrgName => Org?.FullName ?? Org?.Name;
+        [UI("基础", "责任单位")]   public string OrgUnitName => this.Org?.GetAncestor(OrgLevel.Unit)?.Name;         // 责任单位
+        [UI("基础", "责任科室")]   public string OrgDeptName => this.Org?.GetAncestor(OrgLevel.Dept)?.Name;         // 责任科室
+        [UI("基础", "责任区县")]   public string OrgDistrictName => this.Org?.GetAncestor(OrgLevel.District)?.Name;         // 责任区县
+        [UI("基础", "责任乡镇")]   public string OrgTownName => this.Org?.GetAncestor(OrgLevel.Town)?.Name;         // 责任乡镇
+        [UI("基础", "责任社区")]   public string OrgCommunityName => this.Org?.GetAncestor(OrgLevel.Community)?.Name;         // 责任社区
         [UI("基础", "技术检查员")] public string CheckerName => $"{Checker?.RealName}({Checker?.Mobile})";
         [UI("基础", "检查周期")]   public string CheckCycle => GetCheckCycleMonths(RiskLevel) + "个月";
 
@@ -129,15 +129,6 @@ namespace App.DAL
         public override object Export(ExportMode mode)
         {
             var checker = this.Checker;
-            string checkerName;
-            try
-            {
-                checkerName = (checker != null) ? $"{checker.RealName ?? checker.Name}({checker.Mobile})" : "";
-            }
-            catch
-            {
-                checkerName = "";
-            }
             return new
             {
                 Id,
@@ -166,15 +157,16 @@ namespace App.DAL
                 ObjectType,
 
                 // 责任网格相关字段
-                DutyOrgId,
-                DutyOrgName,        // 责任网格
-                DutyDistrictName,   // 责任区县
-                DutyTownName,       // 责任乡镇
-                DutyCommunityName,  // 责任社区
-                DutyUnitName,       // 责任单位
+                OrgId,
+                OrgName,        // 责任网格
+                OrgDistrictName,   // 责任区县
+                OrgTownName,       // 责任乡镇
+                OrgCommunityName,  // 责任社区
+                OrgUnitName,       // 责任单位
+                OrgDeptName,       // 责任科室
                 
                 CheckerId,
-                CheckerName = mode==ExportMode.Detail ? checkerName : checkerName.Mask(),
+                CheckerName,
                 EleMeeterNum,
                 EmployeeCount,
                 ProductContent,
@@ -223,8 +215,8 @@ namespace App.DAL
                     Scope,
                     Scale,
                     ObjectType,
-                    DutyOrgId,
-                    DutyOrgName,
+                    OrgId,
+                    OrgName,
                     CheckerId,
                     CheckerName,
                     DutyMan,
@@ -252,11 +244,11 @@ namespace App.DAL
             string code = "",
             string socialCreditCode = "",
             string address = "",
-            string dutyMan = "",
-            long? dutyOrgId = null,
-            List<long> dutyOrgIds = null,
+            string dutyMan = "",      // 企业责任人
+            long? orgId = null,
+            List<long> orgIds = null,
             List<long> tagIds = null,
-            long? checkerId = null,
+            long? checkerId = null,   // 网格员
             CheckObjectType? objectType = null,
             CheckScope? scope = null,
             CheckObjectScale? scale = null,
@@ -280,22 +272,22 @@ namespace App.DAL
         )
         {
             IQueryable<CheckObject> q = CheckObject.Set
-                .Include(o => o.DutyOrg)
+                .Include(o => o.Org)
                 .Include(o => o.Checker)
                 ;
-            var dutyNetOrgIds = GetOrgIds(dutyOrgIds, dutyOrgId);
-            // 注意：GetTagIds 已把每个用户勾选标签展开为"该标签+它所有子孙标签"；
-            // AND 语义：最终结果对象，对于每个用户勾选的标签，都要"命中该标签或其任一子孙标签"。
-            // 所以用用户勾选的原始 tagIds 做外层 AND 循环，每一项在已展开的子集合里做 OR。
-            var tagIdGroups = GetTagIdGroups(tagIds);
-            if (includeTags)                          q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
+            orgIds = GetOrgIds(orgIds, orgId);
             if (includeContacts)                      q = q.Include(o => o.Contacts);
-            if (dutyNetOrgIds.Count > 0)              q = q.Where(o => o.DutyOrgId.HasValue && dutyNetOrgIds.Contains(o.DutyOrgId.Value));
+            if (orgIds.Count > 0)                     q = q.Where(o => o.OrgId.HasValue && orgIds.Contains(o.OrgId.Value));
             if (checkerId.IsNotEmpty())               q = q.Where(o => o.CheckerId == checkerId.Value);
             if (name.IsNotEmpty())                    q = q.Where(o => o.Name.Contains(name.Trim()));
             if (code.IsNotEmpty())                    q = q.Where(o => o.Code.Contains(code.Trim()));
             if (address.IsNotEmpty())                 q = q.Where(o => o.Address.Contains(address.Trim()));
-            if (dutyMan.IsNotEmpty())            q = q.Where(o => o.DutyMan.Contains(dutyMan.Trim()));
+            if (dutyMan.IsNotEmpty())                 q = q.Where(o => o.DutyMan.Contains(dutyMan.Trim()));
+            // 注意：GetTagIds 已把每个用户勾选标签展开为"该标签+它所有子孙标签"；
+            // AND 语义：最终结果对象，对于每个用户勾选的标签，都要"命中该标签或其任一子孙标签"。
+            // 所以用用户勾选的原始 tagIds 做外层 AND 循环，每一项在已展开的子集合里做 OR。
+            var tagIdGroups = GetTagIdGroups(tagIds);
+            if (includeTags) q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
             // AND 过滤：用户勾选的每一个 tag，对象都必须"包含该 tag 或包含其任意子孙 tag"
             foreach (var grp in tagIdGroups)
             {
@@ -324,13 +316,13 @@ namespace App.DAL
             return q;
         }
 
-        /// <summary>递归获取网格及其子网格Id。先取 dutyOrgIds 列表，为空再回退 dutyOrgId 单个值。</summary>
-        private static List<long> GetOrgIds(List<long> dutyOrgIds, long? dutyOrgId)
+        /// <summary>递归获取网格及其子网格Id。先取 orgIds 列表，为空再回退 orgId 单个值。</summary>
+        private static List<long> GetOrgIds(List<long> orgIds, long? orgId)
         {
             // 合并两个来源 + 去重
             var list = new List<long>();
-            if (dutyOrgIds != null && dutyOrgIds.Count > 0) list.AddRange(dutyOrgIds);
-            if (dutyOrgId.IsNotEmpty()) list.Add(dutyOrgId.Value);
+            if (orgIds != null && orgIds.Count > 0) list.AddRange(orgIds);
+            if (orgId.IsNotEmpty()) list.Add(orgId.Value);
             list = list.Distinct().ToList();
             if (list.Count == 0)
                 return new List<long>();
@@ -341,9 +333,6 @@ namespace App.DAL
                 .Distinct()
                 .ToList();
         }
-
-        /// <summary>（兼容旧签名）递归获取单个网格及其子网格Id。</summary>
-        private static List<long> GetOrgIds(long? orgId) => GetOrgIds(null, orgId);
 
         /// <summary>
         /// 根据用户勾选的标签列表，返回“每个勾选标签一组”的 ID 集合（每组 = 该标签 + 所有子孙标签）。
