@@ -551,15 +551,10 @@ Done
             可设置过滤条件？保存到哪里？
             考察一下Notion软件
 
-2026/10/20
-    /EleTable.BorderColor -> LineColor 避免与基类 BorderColor 冲突
-    /EleListPicker：优化外观，当前选择行蓝色文本
-    /防越权代码检测
-        /用户组织限制：非管理员，只能设置组织为授权组织和子组织
-        /用户窗口角色限制：不能超过当前登录用户的角色；
-        /删除 EffectiveAuthOrgId，直接用AuthOrgId
-        /Users 页面默认orgid、增加mobile
-    /优化CheckObjectForm 各子表，可点击的都用蓝色；
+
+2026/10/21
+    /实现公告的反向组织过滤（FilterByAncestOrg），公告发布范围若包含授权部门，则可以看到该公告
+    将 EventType 改为树结构；
     普通网格员：
         网格员修改用户的责任网格后未能刷新（程）
         专项任务优化：在任务表单中，可以将自己的企业加入进去
@@ -586,6 +581,16 @@ Done
 
     优化
         如何教AI使用 LoginAI 页面，免得过一阵子又不知道怎么登录了
+
+2026/10/20
+    /EleTable.BorderColor -> LineColor 避免与基类 BorderColor 冲突
+    /EleListPicker：优化外观，当前选择行蓝色文本
+    /防越权代码检测
+        /用户组织限制：非管理员，只能设置组织为授权组织和子组织
+        /用户窗口角色限制：不能超过当前登录用户的角色；
+        /删除 EffectiveAuthOrgId，直接用AuthOrgId
+        /Users 页面默认orgid、增加mobile
+    /优化CheckObjectForm 各子表，可点击的都用蓝色；
 
 
 2026/10/19

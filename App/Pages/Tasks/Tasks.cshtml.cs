@@ -38,13 +38,11 @@ namespace App.Pages.OA
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();
-            var isAdmin = Auth.IsAdmin(cu);
-            var authOrgId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var target = AssignTask.Get(id);
                 if (target == null) continue;
-                if (!isAdmin && !OrgFilter.IsAuth(authOrgId, target.OrgId))
+                if (!OrgFilter.IsAuth(cu, target.OrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 AssignTask.Delete(id);
             }

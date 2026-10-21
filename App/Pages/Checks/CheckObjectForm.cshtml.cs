@@ -35,7 +35,7 @@ namespace App.Pages.Checks
             }
             else
             {
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.DutyOrgId))
+                if (!OrgFilter.IsAuth(cu, item.DutyOrgId))
                     return BuildResult(403, "越权访问");
             }
             return BuildResult(0, "success", item.Export(ExportMode.Normal));
@@ -55,7 +55,7 @@ namespace App.Pages.Checks
             else
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.DutyOrgId))
+                if (!OrgFilter.IsAuth(cu, item.DutyOrgId))
                     return BuildResult(403, "越权修改");
             }
 

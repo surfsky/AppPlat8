@@ -24,8 +24,7 @@ namespace App.Pages.Admin
             DateTime? startDt = createDt.GetVal(0);
             DateTime? endDt = createDt.GetVal(1);
             var q = Announce.Search(title, status, fromDt:startDt, toDt:endDt);
-            //q = q.FilterByOrg(cu);  // 原逻辑：普通用户只能查看授权查看的公告（授权组织以下的数据）
-            // TODO：公告的过滤逻辑不一样，普通用户可以查看自己组织以及上级组织发的公告（公告发布组织及子组织都能看到）
+            q = q.FilterByAncestOrg(cu);  // 公告可见范围：发布组织（含其下属）均可看到 → 保留"发布组织为当前用户组织或其上级组织"的公告（OrgId 为空视为公共公告）
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
@@ -34,18 +33,14 @@ namespace App.Pages.Admin
         /// <summary>删除</summary>
         public IActionResult OnPostDelete([FromBody]long[] ids)
         {
-            if (ids == null || ids.Length == 0)
-                return BuildResult(400, "参数错误");
-            if (!HasPower(Power.AnnounceDelete))
-                return BuildResult(403, "无权操作");
+            if (ids == null || ids.Length == 0)   return BuildResult(400, "参数错误");
+            if (!HasPower(Power.AnnounceDelete))  return BuildResult(403, "无权操作");
             var cu = Auth.GetUser();
-            var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var target = Announce.Get(id);
                 if (target == null) continue;
-                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                if (!OrgFilter.IsAuth(cu, target.OrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 Announce.Delete(id);
             }

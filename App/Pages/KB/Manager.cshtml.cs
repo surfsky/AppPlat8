@@ -55,7 +55,7 @@ namespace App.Pages.KB
             }
             else
             {
-                var orgIds = OrgFilter.GetAuthOrgIds(authId.Value);
+                var orgIds = OrgFilter.GetChildOrgIds(authId.Value);
                 visible = all.Where(m =>
                     m.OrgId == null ||
                     (m.OrgId.HasValue && orgIds.Contains(m.OrgId.Value))

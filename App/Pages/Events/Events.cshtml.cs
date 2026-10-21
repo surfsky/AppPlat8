@@ -22,6 +22,7 @@ namespace App.Pages.OA
     {
         public Event Item { get; set; }
         public List<SelectListItem> EventTypes { get; set; }
+
         public void OnGet()
         {
             EventTypes = EventType.Set
@@ -56,7 +57,7 @@ namespace App.Pages.OA
             {
                 var target = Event.Get(id);
                 if (target == null) continue;
-                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                if (!OrgFilter.IsAuth(cu, target.OrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 Event.Delete(id);
             }

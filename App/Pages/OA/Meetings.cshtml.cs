@@ -63,14 +63,12 @@ namespace App.Pages.OA
             if (ids == null || ids.Length == 0) return BuildResult(400, "参数错误");
             if (!HasPower(Power.MeetingDelete)) return BuildResult(403, "无权删除");
             var cu = Auth.GetUser();
-            var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.AuthOrgId;
             var count = 0;
             foreach (var id in ids)
             {
                 var item = Meeting.Get(id);
                 if (item == null) continue;
-                if (!isAdmin && !OrgFilter.IsAuth(scopeId, item.OrgId))
+                if (!OrgFilter.IsAuth(cu, item.OrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 item.Delete();
                 count++;

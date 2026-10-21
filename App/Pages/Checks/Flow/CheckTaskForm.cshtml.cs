@@ -81,7 +81,7 @@ namespace App.Pages.Checks
 
             if (!isAdmin && authOrgId.HasValue && authOrgId.Value > 0)
             {
-                var scopeIds = OrgFilter.GetAuthOrgIds(authOrgId.Value);
+                var scopeIds = OrgFilter.GetChildOrgIds(authOrgId.Value);
                 q = q.Where(t => t.CheckObject.DutyOrgId == null || scopeIds.Contains(t.CheckObject.DutyOrgId.Value));
             }
             else if (!isAdmin)

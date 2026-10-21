@@ -634,3 +634,49 @@ shadow-[inset_0_1px_0_rgba(191,219,254,0.9),inset_0_-1px_0_rgba(191,219,254,0.9)
             var authOrgId = currentUser?.AuthOrgId;
             return query.FilterByOrg(authOrgId, orgPropName, maxOrNodes);
         }
+
+                var param = Expression.Parameter(typeof(T), "t");
+                var orgPropExpr = Expression.Property(param, prop);
+                var listExpr = Expression.Constant(ids.ToList(), typeof(List<long>));
+                var containsCall = Expression.Call(
+                    typeof(Enumerable),
+                    nameof(Enumerable.Contains),
+                    new[] { typeof(long) },
+                    listExpr,
+                    MakeNonNullable(orgPropExpr)
+                );
+                var lambda = Expression.Lambda<Func<T, bool>>(containsCall, param);
+                return query.Where(lambda);
+
+        /// <summary>
+        /// 给 IQueryable 查询添加组织过滤条件： where orgId in (authOrgId...) 用户授权组织树（含自身）。
+        /// - 若实体无 OrgId 属性，原样返回；
+        /// - 若 rootOrgId 为空。原样返回；
+        /// - 默认用 or 语法，若子树节点数超过 maxOrNodes 时，改用 in 语法。
+        /// </summary>
+        /// <typeparam name="T">实体类型</typeparam>
+        /// <param name="query">原查询</param>
+        /// <param name="rootOrgId">组织根目录</param>
+        /// <param name="orgPropName">组织属性名，默认 "OrgId"</param>
+        /// <param name="maxOrNodes">Or 语法阈值。默认用 or 语法，超过阈值后变更为 in 语法；默认值 512</param>
+        public static IQueryable<T> FilterByOrg<T>(
+            this IQueryable<T> query,
+            long? rootOrgId,
+            string orgPropName = "OrgId",
+            int maxOrNodes = 512)
+        {
+            if (query == null) return query;
+            if (!rootOrgId.HasValue || rootOrgId.Value <= 0)     return query;  // 无授权上下文 → 不过滤（调用方为批处理/未登录）
+            var prop = ResolveOrgProperty<T>(orgPropName);
+            if (prop == null) return query; // 目标实体没有 OrgId → 原样返回
+
+            // 附加 in 或 or 语法
+            var ids = GetChildOrgIds(rootOrgId);
+            if (ids.Count > maxOrNodes)
+                return query.Where(BuildInPredicate<T>(prop, ids));
+            else
+                return query.Where(BuildOrEqualPredicate<T>(prop, ids));
+        }
+
+
+

@@ -266,7 +266,7 @@ namespace App.Pages.Checks
             {
                 var item = CheckObject.Get(id);
                 if (item == null) continue;
-                if (!isAdmin && !OrgFilter.IsAuth(scopeId, item.DutyOrgId))
+                if (!OrgFilter.IsAuth(cu, item.DutyOrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 item.Delete();
             }

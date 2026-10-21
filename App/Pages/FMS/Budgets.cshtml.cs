@@ -49,7 +49,7 @@ namespace App.Pages.OA
             {
                 var target = Budget.Get(id);
                 if (target == null) continue;
-                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                if (!OrgFilter.IsAuth(cu, target.OrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 Budget.Delete(id);
             }
@@ -65,7 +65,7 @@ namespace App.Pages.OA
             if (req.Id > 0)
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item?.OrgId))
+                if (!OrgFilter.IsAuth(cu, item?.OrgId))
                     return BuildResult(403, "越权修改");
             }
             item.Name = req.Name;

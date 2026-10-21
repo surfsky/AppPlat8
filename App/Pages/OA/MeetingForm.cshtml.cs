@@ -19,7 +19,7 @@ namespace App.Pages.OA
             if (id > 0 && item != null)
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId))
+                if (!OrgFilter.IsAuth(cu, item.OrgId))
                     return BuildResult(403, "越权访问");
             }
             return item == null ? BuildResult(404, "会议记录不存在") : BuildResult(0, "success", item.Export());
@@ -36,12 +36,11 @@ namespace App.Pages.OA
             }
             else
             {
-                if (!HasPower(Power.MeetingEdit)) return BuildResult(403, "无权修改");
-                item = Meeting.Get(req.Id);
-                if (item == null) return BuildResult(404, "会议记录不存在");
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId))
-                    return BuildResult(403, "越权修改");
+                item = Meeting.Get(req.Id);
+                if (!HasPower(Power.MeetingEdit))      return BuildResult(403, "无权修改");
+                if (item == null)                      return BuildResult(404, "会议记录不存在");
+                if (!OrgFilter.IsAuth(cu, item.OrgId)) return BuildResult(403, "越权修改");
             }
 
             item.Day = req.Day.Date;

@@ -44,7 +44,7 @@ namespace App.Pages.OA
             {
                 var target = Project.Get(id);
                 if (target == null) continue;
-                if (!isAdmin && !OrgFilter.IsAuth(scopeId, target.OrgId))
+                if (!OrgFilter.IsAuth(cu, target.OrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 Project.Delete(id);
             }

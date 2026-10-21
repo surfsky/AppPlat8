@@ -35,13 +35,11 @@ namespace App.Pages.Checks
             if (ids == null || ids.Length == 0) 
                 return BuildResult(400, "请选择要删除的记录");
             var cu = Auth.GetUser();
-            var isAdmin = Auth.IsAdmin(cu);
-            var scopeId = cu?.AuthOrgId;
             foreach (var id in ids)
             {
                 var item = CheckTag.Get(id);
                 if (item == null) continue;
-                if (!isAdmin && !OrgFilter.IsAuth(scopeId, item.OrgId))
+                if (!OrgFilter.IsAuth(cu, item.OrgId))
                     return BuildResult(403, $"无权删除记录（Id={id}）");
                 // 检查是否有子菜单
                 if (CheckTag.Set.Any(m => m.ParentId == id))

@@ -152,7 +152,7 @@ namespace App.Pages.Checks
 
             if (!isAdmin && authOrgId.HasValue && authOrgId.Value > 0)
             {
-                var scopeIds = OrgFilter.GetAuthOrgIds(authOrgId.Value);
+                var scopeIds = OrgFilter.GetChildOrgIds(authOrgId.Value);
                 q = q.Where(t => t.CheckObject.DutyOrgId == null || scopeIds.Contains(t.CheckObject.DutyOrgId.Value));
             }
             else if (!isAdmin)
@@ -210,7 +210,7 @@ namespace App.Pages.Checks
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
             var authOrgId = cu?.AuthOrgId;
-            var scopeIds = isAdmin ? null : OrgFilter.GetAuthOrgIds(authOrgId);
+            var scopeIds = isAdmin ? null : OrgFilter.GetChildOrgIds(authOrgId);
 
             var ids = (req.ObjectIds ?? new List<long>())
                 .Where(id => id > 0)

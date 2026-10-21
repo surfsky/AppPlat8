@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using App.DAL;
 
 namespace App.Entities
 {
@@ -22,122 +23,120 @@ namespace App.Entities
         // 1. 组织 Id 子树集合
         //-------------------------------------------
         /// <summary>获取授权组织 Id 集合（包含目标 Id）</summary>
-        public static HashSet<long> GetAuthOrgIds(long? rootId)  => GetAuthOrgIds(App.DAL.Org.All, rootId);
-
-        /// <summary>获取授权组织 Id 集合（包含目标 Id）</summary>
-        private static HashSet<long> GetAuthOrgIds(List<App.DAL.Org> allOrgs, long? rootId)
+        public static HashSet<long> GetChildOrgIds(long? rootId)
         {
+            var allOrgs = DAL.Org.All;
             if (!rootId.HasValue || rootId.Value <= 0 || allOrgs == null || allOrgs.Count == 0)
                 return new HashSet<long>();
             var des = allOrgs.GetDescendants(rootId);
-            return des?.Select(t => t.Id).Where(t => t > 0).ToHashSet() ?? new HashSet<long>();
+            return des?.Select(t => t.Id).Where(t => t > 0).ToHashSet() ?? new HashSet<long>();  // 为什么要用hashtable？ 用排序后的列表不行吗？
+        }
+
+
+        /// <summary>获取组织自身及其所有上级组织 Id（含自身）。用于"发布范围含下属"的反向过滤。</summary>
+        public static HashSet<long> GetAncestorOrgIds(long? orgId)
+        {
+            var result = new HashSet<long>();
+            var allOrgs = DAL.Org.All;
+            if (!orgId.HasValue || orgId.Value <= 0 || allOrgs == null || allOrgs.Count == 0)
+                return result;
+
+            var map = allOrgs.ToDictionary(t => t.Id, t => t);
+            var current = orgId;
+            while (current.HasValue && map.TryGetValue(current.Value, out var org))
+            {
+                if (!result.Add(org.Id)) break;      // 防环
+                current = org.ParentId;
+            }
+            return result;
         }
 
 
         //-------------------------------------------
         // 2. 单值越权校验（管理员 vs 目标）
         //-------------------------------------------
-        /// <summary>
-        /// 判断 targetOrgId 是否落在 adminAuthOrgId 的可见子树中。
-        /// 规则：
-        ///   - adminAuthOrgId 为空视为未授权（admin 未配置任何组织）：只有 targetOrgId 为空才放行；
-        ///   - targetOrgId 为空：在 adminOrg 也为空时放行，否则视为"越权尝试写入空值"拒绝；
-        ///   - 其它：targetOrgId 必须是 adminAuthOrgId 子树中的节点（包含自身）。
-        /// </summary>
-        public static bool IsAuth(long? authOrgId, long? targetOrgId)
+        /// <summary>判断用户是否可访问目标组织</summary>
+        public static bool IsAuth(User user,long? orgId)
+        {
+            if (user?.Name == "admin") return true;
+            return IsAuth(user.AuthOrgId, orgId);
+        }
+
+        /// <summary>判断 orgId 是否落在 rootOrgId 的可见子树中。</summary>
+        static bool IsAuth(long? rootOrgId, long? orgId)
         {
             // 两者都空：相等则算在范围内
-            if (!authOrgId.HasValue || authOrgId.Value <= 0)
-                return !targetOrgId.HasValue || targetOrgId.Value <= 0;
+            if (!rootOrgId.HasValue || rootOrgId.Value <= 0)
+                return !orgId.HasValue || orgId.Value <= 0;
 
-            if (!targetOrgId.HasValue || targetOrgId.Value <= 0)
+            if (!orgId.HasValue || orgId.Value <= 0)
                 return false;
 
-            var orgIds = GetAuthOrgIds(authOrgId);
-            return orgIds.Contains(targetOrgId.Value);
+            var orgIds = GetChildOrgIds(rootOrgId);
+            return orgIds.Contains(orgId.Value);
         }
 
         //-------------------------------------------
         // 3. IQueryable 表达式树过滤（保证 SQL 翻译）
         //-------------------------------------------
-        /// <summary>根据用户授权组织，过滤查询结果</summary>
+        /// <summary>给 IQueryable 查询添加组织过滤条件：where orgId in (user.AuthOrgId...) 用户授权组织树（含自身）。</summary>
         public static IQueryable<T> FilterByOrg<T>(
             this IQueryable<T> query,
-            App.DAL.User user,
-            string orgPropName = "OrgId",
-            int maxOrNodes = 512)
-        {
-            if (user != null && user.Name != "admin")
-                return query.FilterByOrg(user?.AuthOrgId, orgPropName, maxOrNodes);
-            return query;
-        }
-
-        /// <summary>
-        /// 按授权组织子树过滤：OrgId ∈ adminAuthOrgId 子树（含自身）。
-        /// - 若实体无 OrgId 属性：原样返回；
-        /// - 若 authOrgId 为空：原样返回（视为无授权上下文，调用方自行处理）；
-        /// - 其他情况：构造 SQL 可翻译的 OR 树表达式（避免从本地集合 Contains 造成客户端评估）。
-        ///   当子树节点数超过 maxOrNodes 时退化为 Contains(本地集合)，由 EF Core 翻译为参数化 IN。
-        /// </summary>
-        /// <typeparam name="T">实体类型</typeparam>
-        /// <param name="query">原查询</param>
-        /// <param name="authOrgId">管理员授权组织（EffectiveAuthOrgId）</param>
-        /// <param name="orgPropName">组织外键属性名，默认 "OrgId"</param>
-        /// <param name="maxOrNodes">超过阈值后退化为 Contains；默认 512</param>
-        public static IQueryable<T> FilterByOrg<T>(
-            this IQueryable<T> query,
-            long? authOrgId,
+            User user,
             string orgPropName = "OrgId",
             int maxOrNodes = 512)
         {
             if (query == null) return query;
-
-            // 无授权上下文 → 不过滤（调用方为批处理/未登录）
-            if (!authOrgId.HasValue || authOrgId.Value <= 0)
-                return query;
-
-            // 目标实体是否有 long OrgId 属性，没有就退出
-            var type = typeof(T);
-            var prop = type.GetProperty(orgPropName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+            if (user != null && user.Name == "admin") return query; // 管理员：不过滤
+            if (!user?.AuthOrgId.HasValue ?? true) return query; // 未登录/批处理或无授权组织 → 不过滤
+            var prop = ResolveOrgProperty<T>(orgPropName);
             if (prop == null) return query; // 目标实体没有 OrgId → 原样返回
-            var propType = prop.PropertyType;
-            if (propType != typeof(long) && propType != typeof(long?))
-                return query;
 
-            // 如果有，先取子树集合
-            var ids = GetAuthOrgIds(authOrgId);
-            if (ids.Count == 0)
-            {
-                // 找不到授权id，说明数据异常，保守返回空（避免越权）
-                return query.Where(t => false);
-            }
-
-            // 超过阈值 → 使用 EF Core 8 支持的 Contains 参数化
+            // 附加 in 或 or 语法
+            var ids = GetChildOrgIds(user.AuthOrgId);
             if (ids.Count > maxOrNodes)
-            {
-                var param = Expression.Parameter(typeof(T), "t");
-                var orgPropExpr = Expression.Property(param, prop);
-                var listExpr = Expression.Constant(ids.ToList(), typeof(List<long>));
-                var containsCall = Expression.Call(
-                    typeof(Enumerable),
-                    nameof(Enumerable.Contains),
-                    new[] { typeof(long) },
-                    listExpr,
-                    MakeNonNullable(orgPropExpr)
-                );
-                var lambda = Expression.Lambda<Func<T, bool>>(containsCall, param);
-                return query.Where(lambda);
-            }
+                return query.Where(BuildInPredicate<T>(prop, ids));
+            else
+                return query.Where(BuildOrPredicate<T>(prop, ids));
+        }
 
-            // 否则展开为 OR 树（long? == value || long? == value ...）
-            // 对应 SQL：OrgId = 1 OR OrgId = 2 OR ...。SQLite/SqlServer 均支持。
-            return query.Where(BuildOrEqualPredicate<T>(prop, ids));
+
+        //-------------------------------------------
+        // 4. 反向过滤：发布范围含下属
+        //-------------------------------------------
+        /// <summary>
+        /// 反向组织过滤：保留"发布组织为当前用户组织或其上级组织"的数据（OrgId 为空视为公共数据，人人可见）。
+        /// 用于"发布范围含下属"的语义：上级组织发布的数据，其下属组织均能看到（如公告）。
+        /// 即 SQL： OrgId IS NULL OR OrgId IN (用户组织及其祖先组织)。
+        /// </summary>
+        public static IQueryable<T> FilterByAncestOrg<T>(
+            this IQueryable<T> query,
+            User user,
+            string orgPropName = "OrgId")
+        {
+            if (query == null) return query;
+            if (user != null && user.Name == "admin") return query;   // 管理员：不过滤
+            var prop = ResolveOrgProperty<T>(orgPropName);
+            if (prop == null) return query;                           // 目标实体没有 OrgId 属性 → 原样返回
+
+            var ids = GetAncestorOrgIds(user?.AuthOrgId);
+            return query.Where(BuildOrPredicate<T>(prop, ids, includeNull: true));
         }
 
 
         //-------------------------------------------
         // 内部工具
         //-------------------------------------------
+        /// <summary>获取实体的 long/long? 组织属性；不存在或类型不符时返回 null。</summary>
+        private static PropertyInfo ResolveOrgProperty<T>(string orgPropName)
+        {
+            var prop = typeof(T).GetProperty(orgPropName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+            if (prop == null) return null;
+            var propType = prop.PropertyType;
+            return (propType == typeof(long) || propType == typeof(long?)) ? prop : null;
+        }
+
+
         /// <summary>将 long? 表达式转为 long 表达式（必要时取 Value）。</summary>
         private static Expression MakeNonNullable(Expression expr)
         {
@@ -147,31 +146,49 @@ namespace App.Entities
             return Expression.Convert(expr, typeof(long));
         }
 
+        /// <summary>构造 "prop in (...)" 的 Lambda。</summary>
+        private static Expression<Func<T, bool>> BuildInPredicate<T>(PropertyInfo prop, HashSet<long> ids)
+        {
+            var param = Expression.Parameter(typeof(T), "t");
+            var orgPropExpr = Expression.Property(param, prop);
+            var listExpr = Expression.Constant(ids.ToList(), typeof(List<long>));
+            var containsCall = Expression.Call(
+                typeof(Enumerable),
+                nameof(Enumerable.Contains),
+                new[] { typeof(long) },
+                listExpr,
+                MakeNonNullable(orgPropExpr)
+            );
+            var lambda = Expression.Lambda<Func<T, bool>>(containsCall, param);
+            return lambda;
+        }
+
         /// <summary>
-        /// 构造 "prop == ids[0] || prop == ids[1] || ..." 的 Lambda。
-        /// 支持 long / long? 属性：若属性可空则用 GetValueOrDefault() 与常量 0 比较，
-        /// 否则直接比较；为兼容 EF Core 翻译，使用统一的 (Nullable<long>).GetValueOrDefault() 方案。
+        /// 构造 "prop == id1 || prop == id2 || ..." 的 Lambda，支持 long / long? 属性。
+        /// - includeNull = true 时额外匹配 prop 为空的情形（视为公共数据，人人可见）；
+        /// - 若 ids 为空：includeNull 时等价于只匹配空值，否则恒为 false。
         /// </summary>
-        private static Expression<Func<T, bool>> BuildOrEqualPredicate<T>(PropertyInfo prop, IEnumerable<long> ids)
+        private static Expression<Func<T, bool>> BuildOrPredicate<T>(PropertyInfo prop, IEnumerable<long> ids, bool includeNull = false)
         {
             var param = Expression.Parameter(typeof(T), "t");
             Expression left = Expression.Property(param, prop);
-            // 归一为 long 值
-            Expression normalizedLeft;
-            if (prop.PropertyType == typeof(long?))
-                normalizedLeft = Expression.Call(left, nameof(Nullable<long>.GetValueOrDefault), Type.EmptyTypes);
-            else
-                normalizedLeft = left;
+            var isNullable = prop.PropertyType == typeof(long?);
 
-            Expression body = null;
+            // 空值分支：可空属性 + 需包含公共数据才有
+            Expression body = (includeNull && isNullable)
+                ? Expression.Equal(left, Expression.Constant(null, typeof(long?)))
+                : null;
+
             foreach (var id in ids)
             {
-                var c = Expression.Constant(id, typeof(long));
-                var eq = Expression.Equal(normalizedLeft, c);
+                var right = isNullable
+                    ? Expression.Constant(id, typeof(long?))
+                    : Expression.Constant(id, typeof(long));
+                var eq = Expression.Equal(left, right);
                 body = body == null ? eq : Expression.OrElse(body, eq);
             }
-            if (body == null) body = Expression.Constant(false);
-            return Expression.Lambda<Func<T, bool>>(body, param);
+
+            return Expression.Lambda<Func<T, bool>>(body ?? Expression.Constant(false), param);
         }
     }
 }

@@ -46,14 +46,9 @@ namespace App.Pages.KB
             // 越权校验：非 admin 时，新目录的 OrgId 必须在自己授权子树中或为 null（公共目录）
             if (!isAdmin)
             {
-                if (req.OrgId.HasValue && req.OrgId.Value > 0)
-                {
-                    if (!OrgFilter.IsAuth(cu?.AuthOrgId, req.OrgId.Value))
-                        return BuildResult(403, $"无权将目录归属于该组织（OrgId={req.OrgId}）");
-                }
+                if (!OrgFilter.IsAuth(cu, req.OrgId.Value))    return BuildResult(403, $"无权将目录归属于该组织（OrgId={req.OrgId}）");
                 // 非 admin 禁止把目录设置为公共（OrgId=null），避免把内部内容暴露给全系统
-                if (!req.OrgId.HasValue)
-                    return BuildResult(403, "普通用户只能将目录归属到自己的授权组织");
+                if (!req.OrgId.HasValue)    return BuildResult(403, "普通用户只能将目录归属到自己的授权组织");
             }
 
             var item = req.Id > 0 ? KbMenu.Get(req.Id) : new KbMenu();
@@ -65,11 +60,8 @@ namespace App.Pages.KB
             // 非 admin：编辑已有目录时，必须原本就在自己 scope 中
             if (!isAdmin && req.Id > 0)
             {
-                if (item.OrgId.HasValue)
-                {
-                    if (!OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId.Value))
-                        return BuildResult(403, "无权编辑该目录");
-                }
+                if (!OrgFilter.IsAuth(cu, item.OrgId.Value))
+                    return BuildResult(403, "无权编辑该目录");
             }
 
             item.Name = req.Name;
@@ -95,7 +87,7 @@ namespace App.Pages.KB
                 visible = all.Where(m => m.OrgId == null).ToList();
             else
             {
-                var orgIds = OrgFilter.GetAuthOrgIds(authId.Value);
+                var orgIds = OrgFilter.GetChildOrgIds(authId.Value);
                 visible = all.Where(m =>
                     m.OrgId == null ||
                     (m.OrgId.HasValue && orgIds.Contains(m.OrgId.Value))

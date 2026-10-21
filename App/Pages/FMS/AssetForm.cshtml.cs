@@ -69,7 +69,7 @@ namespace App.Pages.OA
                 if (item != null)
                 {
                     var cu = Auth.GetUser();
-                    if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item.OrgId))
+                    if (!OrgFilter.IsAuth(cu, item.OrgId))
                         return BuildResult(403, "越权访问");
                 }
                 
@@ -90,7 +90,7 @@ namespace App.Pages.OA
             if (req.Id > 0)
             {
                 var cu = Auth.GetUser();
-                if (!Auth.IsAdmin(cu) && !OrgFilter.IsAuth(cu?.AuthOrgId, item?.OrgId))
+                if (!OrgFilter.IsAuth(cu, item?.OrgId))
                     return BuildResult(403, "越权修改");
             }
             item.Name = req.Name;

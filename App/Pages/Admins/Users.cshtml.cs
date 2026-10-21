@@ -74,7 +74,7 @@ namespace App.Pages.Admins
             if (ids == null || ids.Length == 0) return BuildResult(400, "参数错误");
             var cu = Auth.GetUser();
             var isAdmin = Auth.IsAdmin(cu);
-            var orgIds = isAdmin ? null : OrgFilter.GetAuthOrgIds(cu?.AuthOrgId);
+            var orgIds = isAdmin ? null : OrgFilter.GetChildOrgIds(cu?.AuthOrgId);
             foreach (var id in ids)
             {
                 if (id == 1) continue;   // admin 管理员用户不能删除
