@@ -143,6 +143,7 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     table.loadData();
                     window.addEventListener('message', msgHandler);
                     document.addEventListener('keydown', enterSearchHandler, true);
+                    console.log('[EnterSearch] listener registered');
 
                     // mount 完成后：把 resetFilters / loadData / invokeCommand 等接口暴露到全局 instances
                     // （供页内脚本或 EleTableAppBuilder.getInstance('xxx').resetFilters() 调用）
@@ -190,11 +191,15 @@ export class EleTableAppBuilder extends EleAppBuilder {
                 });
                 // 在过滤区控件内按 Enter 触发 Search
                 const enterSearchHandler = (e) => {
-                    if (e.key !== 'Enter' || e.isComposing || e.defaultPrevented) return;
+                    if (e.key !== 'Enter') return;
                     const t = e.target;
-                    if (!(t instanceof Element) || !t.closest('.ele-table-toolbar .ele-table-filters-desktop, .ele-table-filters-block')) return;
-                    if (t.closest('textarea, button, a') || t.getAttribute('aria-expanded') === 'true') return;
-                    if (!getTableHost()?.contains(t)) return;
+                    console.log('[EnterSearch] keydown', { composing: e.isComposing, prevented: e.defaultPrevented, target: t, expanded: t instanceof Element ? t.getAttribute('aria-expanded') : null });
+                    if (e.isComposing || e.defaultPrevented) return;
+                    if (!(t instanceof Element) || !t.closest('.ele-table-toolbar .ele-table-filters-desktop, .ele-table-filters-block')) { console.log('[EnterSearch] not in filters'); return; }
+                    if (t.closest('textarea, button, a') || t.getAttribute('aria-expanded') === 'true') { console.log('[EnterSearch] skipped by target'); return; }
+                    const rootEl = document.querySelector(selector || '#app');
+                    if (rootEl && !rootEl.contains(t)) { console.log('[EnterSearch] outside app root', rootEl); return; }
+                    console.log('[EnterSearch] invoke Search');
                     e.preventDefault();
                     table.invokeCommand('Search');
                 };
