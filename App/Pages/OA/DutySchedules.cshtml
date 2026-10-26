@@ -5,7 +5,7 @@
 }
 
 @section body {
-    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="值班表" FormPage="DutyScheduleForm" EnableBatch="true">
+    <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="值班表" FormPage="DutyScheduleForm" EnableBatch="true" SortField="Day" SortDirection="Desc">
         <Toolbar>
             <Filters>
                 <EleDatePicker For="Item.Day" Type="DateRange"  Width="220px" Label="日期" Type="Date"> </EleDatePicker>

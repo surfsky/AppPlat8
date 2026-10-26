@@ -16,14 +16,15 @@ namespace App.EleUI
     [HtmlTargetElement("EleProperty")]
     public class EleProperty : EleFormControl
     {
-        [HtmlAttributeName("MinHeight")] public string MinHeight { get; set; } = null;
+        [HtmlAttributeName("MinHeight")]      public string MinHeight { get; set; } = null;
         [HtmlAttributeName("ButtonPosition")] public ElePropertyButtonPosition ButtonPosition { get; set; } = ElePropertyButtonPosition.Top;
-        [HtmlAttributeName("Editable")] public bool Editable { get; set; } = true;
-        [HtmlAttributeName("AddText")] public string AddText { get; set; } = null;
-        [HtmlAttributeName("FieldText")] public string FieldText { get; set; } = null;
-        [HtmlAttributeName("ValueText")] public string ValueText { get; set; } = null;
-        [HtmlAttributeName("ActionText")] public string ActionText { get; set; } = null;
-        [HtmlAttributeName("EmptyText")] public string EmptyText { get; set; } = null;
+        [HtmlAttributeName("ButtonText")]     public string ButtonText { get; set; } = "";
+        [HtmlAttributeName("Editable")]       public bool Editable { get; set; } = true;
+        [HtmlAttributeName("AddText")]        public string AddText { get; set; } = null;
+        [HtmlAttributeName("FieldText")]      public string FieldText { get; set; } = null;
+        [HtmlAttributeName("ValueText")]      public string ValueText { get; set; } = null;
+        [HtmlAttributeName("ActionText")]     public string ActionText { get; set; } = null;
+        [HtmlAttributeName("EmptyText")]      public string EmptyText { get; set; } = null;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -84,8 +85,9 @@ namespace App.EleUI
             // 新增按钮的 HTML：根据 ButtonPosition 决定放在表格上方或下方
             var addButton = $@"
     <div class=""{(ButtonPosition == ElePropertyButtonPosition.Top ? "mb-2" : "mt-2")} flex justify-end"" v-if=""!({finalDisabledExpr})"">
-        <el-button size=""small"" type=""primary"" plain title=""{addText}"" @click=""addPropertyRow('{propName}')"">
+        <el-button size=""normal"" type=""primary"" plain title=""{addText}"" @click=""addPropertyRow('{propName}')"">
             <el-icon><Plus></Plus></el-icon>
+            {ButtonText}
         </el-button>
     </div>";
             var topButton = ButtonPosition == ElePropertyButtonPosition.Top ? addButton : "";

@@ -142,6 +142,7 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     table._snapshotDefaults = filterDefaults;
                     table.loadData();
                     window.addEventListener('message', msgHandler);
+                    document.addEventListener('keydown', enterSearchHandler, true);
 
                     // mount 完成后：把 resetFilters / loadData / invokeCommand 等接口暴露到全局 instances
                     // （供页内脚本或 EleTableAppBuilder.getInstance('xxx').resetFilters() 调用）
@@ -187,8 +188,19 @@ export class EleTableAppBuilder extends EleAppBuilder {
                         }
                     });
                 });
+                // 在过滤区控件内按 Enter 触发 Search
+                const enterSearchHandler = (e) => {
+                    if (e.key !== 'Enter' || e.isComposing || e.defaultPrevented) return;
+                    const t = e.target;
+                    if (!(t instanceof Element) || !t.closest('.ele-table-toolbar .ele-table-filters-desktop, .ele-table-filters-block')) return;
+                    if (t.closest('textarea, button, a') || t.getAttribute('aria-expanded') === 'true') return;
+                    if (!getTableHost()?.contains(t)) return;
+                    e.preventDefault();
+                    table.invokeCommand('Search');
+                };
                 onUnmounted(() => {
                     window.removeEventListener('message', msgHandler);
+                    document.removeEventListener('keydown', enterSearchHandler, true);
                 });
                 onUnmounted(() => {
                     table.stopAutoRefresh();

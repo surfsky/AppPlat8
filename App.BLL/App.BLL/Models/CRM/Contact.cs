@@ -18,6 +18,7 @@ namespace App.DAL.OA
         [UI("联系人目录")] public virtual ContactMenu Menu { get; set; }
         [NotMapped] public string MenuName => Menu?.Name;
         [NotMapped] public string PhoneMask => Phone?.Mask();
+        [NotMapped] public string MenuFullName => Menu?.FullName;
 
         /// <summary>导出联系人数据</summary>
         public override object Export(ExportMode mode = ExportMode.Normal)
@@ -27,6 +28,7 @@ namespace App.DAL.OA
                 Id,
                 MenuId,
                 MenuName,
+                MenuFullName,
                 Name,
                 Title,
                 DataJson,

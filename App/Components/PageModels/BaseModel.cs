@@ -21,6 +21,11 @@ namespace App
     /// </summary>
     public partial class BaseModel : PageModel
     {
+        public virtual string About { get; set; } = string.Empty;
+
+        //-------------------------------------------------
+        // 构建API结果
+        //-------------------------------------------------
         private static readonly JsonSerializerOptions _jsonOptions = CreateJsonOptions();
 
         private static JsonSerializerOptions CreateJsonOptions()
@@ -43,31 +48,6 @@ namespace App
             return options;
         }
 
-
-        /// <summary>
-        /// 导出当前模型上标记了 [BindProperty] 的属性，供前端初始化/回传使用。
-        /// </summary>
-        public object Export()
-        {
-            IDictionary<string, object> data = new ExpandoObject();
-            var properties = GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
-
-            foreach (var property in properties)
-            {
-                if (!property.CanRead || property.GetIndexParameters().Length > 0)
-                    continue;
-                if (property.GetCustomAttribute<BindPropertyAttribute>() == null)
-                    continue;
-
-                data[property.Name] = property.GetValue(this);
-            }
-
-            return data;
-        }
-
-        //-------------------------------------------------
-        // 构建API结果
-        //-------------------------------------------------
         /// <summary>构建API结果</summary>
         public static JsonResult BuildResult(int code, string message, object data = null, Paging pager = null)
         {
