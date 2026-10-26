@@ -65,6 +65,8 @@ namespace App.DAL
         [UI("人员", "企业安全管理员")] public string SafeMan { get; set; }  // 格式如：张三/15300000000
         [UI("人员", "企业安全管家")] public string SafeSteward { get; set; }  // 格式如：张三/15300000000
         [UI("人员", "三方安全机构")] public string SafeAgency { get; set; }  // 格式如：张三/15300000000
+        [UI("人员", "首席安全官")] public string SafeOfficer { get; set; }  // 格式如：张三/15300000000
+
 
         // 建筑相关
         [UI("建筑", "建筑类型")] public CheckBuildingType? BuildingType { get; set; }
@@ -176,6 +178,7 @@ namespace App.DAL
                 DutyMan     = mode==ExportMode.Detail ? DutyMan     : DutyMan.Mask(),
                 SafeMan     = mode==ExportMode.Detail ? SafeMan     : SafeMan.Mask(),
                 SafeSteward = mode==ExportMode.Detail ? SafeSteward : SafeSteward.Mask(),
+                SafeOfficer = mode==ExportMode.Detail ? SafeOfficer : SafeOfficer.Mask(),
                 BuildingType,
                 LandArea,
                 BuildingArea,

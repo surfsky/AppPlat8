@@ -14,6 +14,7 @@
         <EleInput For="Item.Content" Label="内容" Rows="5"></EleInput>
         <EleImageUpload For="Item.MainImage" Label="主图" ></EleImageUpload>
         <EleSwitch For="Item.AllowComment" Label="允许评论"></EleSwitch>
+        <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location"></ElePicker>
     
         <Bottom>
             <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>

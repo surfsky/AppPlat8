@@ -29,6 +29,12 @@ namespace App.Pages.Me
         /// <summary>页面统计卡片：对象。</summary>
         public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
 
+        /// <summary>页面统计卡片：监管对象。</summary>
+        public List<WorkDeskStatCard> SuperviseStatCards { get; set; } = new List<WorkDeskStatCard>();
+
+        /// <summary>页面统计卡片：高风险对象。</summary>
+        public List<WorkDeskStatCard> RiskStatCards { get; set; } = new List<WorkDeskStatCard>();
+
         /// <summary>页面统计卡片：隐患。</summary>
         public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();
 
@@ -94,8 +100,16 @@ namespace App.Pages.Me
                 new WorkDeskStatCard("未巡查对象",       countUncheckedObjects,  AppendObjectScope("/Checks/CheckObjects?isDel=false&isChecked=false"), "fas fa-circle-check"),
                 new WorkDeskStatCard("临期巡查对象",     countNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}"), "fas fa-clock"),
                 new WorkDeskStatCard("超期未巡查对象",   countOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-triangle-exclamation"),
+            };
+
+            SuperviseStatCards = new List<WorkDeskStatCard>
+            {
                 new WorkDeskStatCard("重点监管企业",     CountObjectsByTag("重点监管"),   AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("重点监管")}"), "fas fa-exclamation-triangle"),
                 new WorkDeskStatCard("示范企业",        CountObjectsByTag("示范企业"),  AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("示范企业")}"), "fas fa-star"),
+            };
+
+            RiskStatCards = new List<WorkDeskStatCard>
+            {
                 new WorkDeskStatCard("八类高危企业",      CountObjectsByTag("八类高危企业"), AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("八类高危企业")}"), "fas fa-industry"),
                 new WorkDeskStatCard("三场所三企业",      CountObjectsByTag("三场所三企业"), AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("三场所三企业")}"), "fas fa-store"),
             };
@@ -250,6 +264,9 @@ namespace App.Pages.Me
             else if (roots.Count > 1)
                 qs["orgIds"] = string.Join(",", roots);
 
+            if (roots.Count > 0)
+                qs["scopeOrgOnly"] = "true";
+
             if (qs.Count == 0)
                 return rawUrl;
 
@@ -270,6 +287,9 @@ namespace App.Pages.Me
                 qs["orgId"] = roots[0].ToString();
             else if (roots.Count > 1)
                 qs["orgIds"] = string.Join(",", roots);
+
+            if (roots.Count > 0)
+                qs["scopeOrgOnly"] = "true";
 
             if (qs.Count == 0)
                 return rawUrl;

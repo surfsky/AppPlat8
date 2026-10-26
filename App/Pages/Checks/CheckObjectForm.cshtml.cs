@@ -79,6 +79,7 @@ namespace App.Pages.Checks
             item.LandArea = req.LandArea;
             item.BuildingArea = req.BuildingArea;
             item.SafeAgency = req.SafeAgency;
+            item.SafeOfficer = req.SafeOfficer;
             item.Remark = req.Remark;
 
             item.RiskLevel = req.RiskLevel;

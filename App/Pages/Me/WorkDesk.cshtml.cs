@@ -116,6 +116,8 @@ namespace App.Pages.Me
 
         
         public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
+        public List<WorkDeskStatCard> SuperviseStatCards { get; set; } = new List<WorkDeskStatCard>();
+        public List<WorkDeskStatCard> RiskStatCards { get; set; } = new List<WorkDeskStatCard>();
         public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();
 
         // 实际要查询的目标用户：URL(管理员) > 当前登录用户
@@ -182,8 +184,16 @@ namespace App.Pages.Me
                 new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false"), "fas fa-circle-check"),
                 new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}"), "fas fa-clock"),
                 new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-triangle-exclamation"),
+            };
+
+            SuperviseStatCards = new List<WorkDeskStatCard>
+            {
                 new WorkDeskStatCard("重点监管企业",     CountObjectsByTag("重点监管"), AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("重点监管")}"), "fas fa-exclamation-triangle"),
                 new WorkDeskStatCard("示范企业",        CountObjectsByTag("示范企业"),  AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("示范企业")}"), "fas fa-star"),
+            };
+
+            RiskStatCards = new List<WorkDeskStatCard>
+            {
                 new WorkDeskStatCard("八类高危企业",      CountObjectsByTag("八类高危企业"),    AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("八类高危企业")}"), "fas fa-industry"),
                 new WorkDeskStatCard("三场所三企业",      CountObjectsByTag("三场所三企业"),    AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("三场所三企业")}"), "fas fa-store"),
             };
@@ -369,6 +379,10 @@ namespace App.Pages.Me
                 qs["orgId"] = roots[0].ToString();
             else if (roots != null && roots.Count > 1)
                 qs["orgIds"] = string.Join(",", roots);
+
+            // 工作台对象统计按“本人负责对象 OR 本人授权组织内对象”计算，列表需保持同一语义。
+            if (uid > 0 && roots != null && roots.Count > 0)
+                qs["scopeCheckerOrOrg"] = "true";
 
             if (qs.Count == 0) return rawUrl;
             var sep = rawUrl.Contains('?') ? '&' : '?';

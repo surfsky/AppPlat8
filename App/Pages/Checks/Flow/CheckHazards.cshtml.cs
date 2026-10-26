@@ -43,6 +43,8 @@ namespace App.Pages.Checks
             if (CheckId.GetValueOrDefault() > 0)
                 return;
 
+            var scopeOrgOnly = bool.TryParse(Request.Query["scopeOrgOnly"].FirstOrDefault(), out var orgOnly) && orgOnly;
+
             // 读取 URL 注入的 scope 参数，供过滤控件回显
             var rawCheckerId = Request.Query["checkerId"].FirstOrDefault();
             if (long.TryParse(rawCheckerId, out var cid) && cid > 0)
@@ -51,7 +53,7 @@ namespace App.Pages.Checks
                 var u = App.DAL.User.Get(cid);
                 ScopeCheckerName = u != null ? (u.RealName.IsNotEmpty() ? u.RealName : u.Name) : string.Empty;
             }
-            else
+            else if (!scopeOrgOnly)
             {
                 var currentUser = GetUser();
                 if (currentUser != null)

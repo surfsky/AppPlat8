@@ -32,7 +32,9 @@ namespace App.DAL
         [UI("主图")]        public string MainImage { get; set; }
         [UI("组织")]        public long? OrgId { get; set; }
         [UI("发布人")]      public long? PublisherId { get; set; }
-        [UI("是否允许评论")] public bool AllowComment { get; set; }
+        [UI("是否允许评论")] public bool? AllowComment { get; set; }
+        [UI("经纬度")]      public string Gps { get; set; }
+
 
         public virtual EventType Type { get; set; }
         public virtual Org Org { get; set; }
@@ -58,6 +60,7 @@ namespace App.DAL
                 PublisherName,
                 AllowComment,
                 CreateDt,
+                Gps,
             };
         }
 

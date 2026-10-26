@@ -35,13 +35,6 @@
         <EleNumber For="Item.EmployeeCount" Label="员工数"></EleNumber>
         <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true" TagType="Warning" Required="true"></EleTreePicker>
 
-        <EleLabel Label="建筑信息" Color="#0A79C4" FillRow="true"></EleLabel>
-        <EleSelect For="Item.BuildingType" Label="建筑类型" ></EleSelect>
-        <EleNumber For="Item.LandArea" Label="占地面积" Append="㎡" ControlPosition="right" ></EleNumber>
-        <EleNumber For="Item.BuildingArea" Label="建筑面积" Append="㎡" ControlPosition="right" ></EleNumber>
-        <EleSelect For="Item.FactoryUsageType" Label="厂房使用权"></EleSelect>
-        <EleSelect For="Item.BuildingStructure" Label="房屋结构"></EleSelect>
-
 
         <EleLabel Label="责任信息" Color="#0A79C4" FillRow="true"></EleLabel>
         <EleTreePicker For="Item.OrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" Required="true"></EleTreePicker>
@@ -50,6 +43,15 @@
         <EleInput For="Item.SafeMan" Label="安全管理员"></EleInput>
         <EleInput For="Item.SafeSteward" Label="安全管家"></EleInput>
         <EleInput For="Item.SafeAgency" Label="三方机构"></EleInput>
+        <EleInput For="Item.SafeOfficer" Label="首席安全官"></EleInput>
+
+
+        <EleLabel Label="建筑信息" Color="#0A79C4" FillRow="true"></EleLabel>
+        <EleSelect For="Item.BuildingType" Label="建筑类型" ></EleSelect>
+        <EleNumber For="Item.LandArea" Label="占地面积" Append="㎡" ControlPosition="right" ></EleNumber>
+        <EleNumber For="Item.BuildingArea" Label="建筑面积" Append="㎡" ControlPosition="right" ></EleNumber>
+        <EleSelect For="Item.FactoryUsageType" Label="厂房使用权"></EleSelect>
+        <EleSelect For="Item.BuildingStructure" Label="房屋结构"></EleSelect>
 
 
         <EleLabel Label="风险信息" Color="#0A79C4" FillRow="true"></EleLabel>

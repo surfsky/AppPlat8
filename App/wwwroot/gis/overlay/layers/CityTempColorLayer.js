@@ -48,6 +48,13 @@ export const CityTempColorConfig = Object.freeze({
     ttlMs: 10 * 60 * 1000,
     maxEntries: 10
   },
+  /**视图变化超过阈值才重新取数/重绘；未超过则旧色斑随地图平移缩放 */
+  move: {
+    panRatio: 0.25,
+    zoomDelta: 0.75,
+    bearingDelta: 15,
+    pitchDelta: 10
+  },
   bounds: {
     lngPadMin: 8,
     lngPadMax: 24,
@@ -81,6 +88,10 @@ export class CityTempColorLayer extends MapLayer {
     this.isMapMoving = false;
     this.heatmapDirty = true;
     this.refreshTimer = null;
+    this.drawnView = null;
+    this.loadingEl = null;
+    this.refreshSeq = 0;
+    this.pendingLoads = 0;
     this.resizeHandler = () => this.resizeCanvas();
     this.fieldCache = new Map();
   }
@@ -91,20 +102,101 @@ export class CityTempColorLayer extends MapLayer {
     const { map } = runtime;
     map.on("movestart", () => {
       this.isMapMoving = true;
-      this.clearHeatmap();
+      if (this.refreshTimer) clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+      if (!this.pendingLoads) this.hideLoading();
+    });
+    map.on("move", () => {
+      if (this.visible) this.updateTransform();
     });
     map.on("moveend", () => {
       this.isMapMoving = false;
-      this.heatmapDirty = true;
-      if (this.visible) this.debouncedRefresh();
+      if (!this.visible) return;
+      this.updateTransform();
+      if (this.needsRefresh()) this.debouncedRefresh();
     });
   }
 
   debouncedRefresh() {
     if (this.refreshTimer) clearTimeout(this.refreshTimer);
-    this.refreshTimer = setTimeout(() => {
-      this.refresh();
+    this.showLoading();
+    this.refreshTimer = setTimeout(async () => {
+      this.refreshTimer = null;
+      this.pendingLoads++;
+      try {
+        await this.refresh();
+      } finally {
+        this.pendingLoads--;
+        if (!this.pendingLoads && !this.refreshTimer) this.hideLoading();
+      }
     }, CityTempColorConfig.api.debounceMsMin + Math.random() * CityTempColorConfig.api.debounceMsJitter);
+  }
+
+  captureView() {
+    const { map } = this.runtime;
+    const center = map.getCenter();
+    const p = map.project(center);
+    return {
+      center,
+      x: p.x,
+      y: p.y,
+      zoom: map.getZoom(),
+      bearing: map.getBearing(),
+      pitch: map.getPitch()
+    };
+  }
+
+  /**让已绘制的色斑跟随地图平移/缩放 */
+  updateTransform() {
+    const v = this.drawnView;
+    if (!v || !this.heatmapCanvas || !this.runtime) return;
+    const { map } = this.runtime;
+    const p = map.project(v.center);
+    const s = Math.pow(2, map.getZoom() - v.zoom);
+    this.heatmapCanvas.style.transformOrigin = `${v.x}px ${v.y}px`;
+    this.heatmapCanvas.style.transform = `translate(${p.x - v.x}px,${p.y - v.y}px) scale(${s})`;
+  }
+
+  resetTransform() {
+    if (!this.heatmapCanvas) return;
+    this.heatmapCanvas.style.transform = "";
+    this.heatmapCanvas.style.transformOrigin = "";
+  }
+
+  /**平移超过屏幕短边的 panRatio、缩放/旋转/倾斜超阈值，或视野超出已采样范围 */
+  needsRefresh() {
+    const v = this.drawnView;
+    if (!v || !this.field) return true;
+    const M = CityTempColorConfig.move;
+    const { map } = this.runtime;
+    if (Math.abs(map.getZoom() - v.zoom) >= M.zoomDelta) return true;
+    if (Math.abs(map.getPitch() - v.pitch) >= M.pitchDelta) return true;
+    let db = Math.abs(map.getBearing() - v.bearing) % 360;
+    if (db > 180) db = 360 - db;
+    if (db >= M.bearingDelta) return true;
+    const p = map.project(v.center);
+    const rect = map.getContainer().getBoundingClientRect();
+    if (Math.hypot(p.x - v.x, p.y - v.y) >= Math.min(rect.width, rect.height) * M.panRatio) return true;
+    const b = map.getBounds();
+    const fb = this.field.bounds;
+    return b.getWest() < fb.west || b.getEast() > fb.east || b.getSouth() < fb.south || b.getNorth() > fb.north;
+  }
+
+  showLoading() {
+    this.ensureStyle();
+    if (!this.loadingEl) {
+      const el = document.createElement("div");
+      el.className = "city-temp-color-loading";
+      el.innerHTML = '<span class="city-temp-color-spinner"></span>气温色斑加载中...';
+      this.loadingEl = el;
+    }
+    const host = this.hostEl || this.runtime?.map?.getContainer?.() || document.body;
+    if (this.loadingEl.parentNode !== host) host.appendChild(this.loadingEl);
+    this.loadingEl.style.display = "flex";
+  }
+
+  hideLoading() {
+    if (this.loadingEl) this.loadingEl.style.display = "none";
   }
 
   ensureCanvas() {
@@ -144,6 +236,31 @@ export class CityTempColorLayer extends MapLayer {
         opacity: ${C.heatmapOpacity};
         image-rendering: optimizeQuality;
       }
+      .city-temp-color-loading {
+        position: absolute;
+        left: 50%;
+        top: 90px;
+        transform: translateX(-50%);
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 16px;
+        background: rgba(10, 30, 80, 0.85);
+        color: #fff;
+        font-size: 13px;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .city-temp-color-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: city-temp-color-spin 0.8s linear infinite;
+      }
+      @keyframes city-temp-color-spin { to { transform: rotate(360deg); } }
     `;
     document.head.appendChild(style);
   }
@@ -391,6 +508,7 @@ export class CityTempColorLayer extends MapLayer {
     const cols = Math.max(2, Math.ceil(cssW / cell));
     const rows = Math.max(2, Math.ceil(cssH / cell));
     this.heatmapCtx.clearRect(0, 0, this.heatmapCanvas.width, this.heatmapCanvas.height);
+    const view = this.captureView();
 
     const projectionName = map.getProjection && map.getProjection()?.name;
     const isGlobe = projectionName === "globe";
@@ -417,14 +535,19 @@ export class CityTempColorLayer extends MapLayer {
       }
     }
     this.heatmapDirty = false;
+    this.drawnView = view;
+    this.resetTransform();
   }
 
   async refresh(force = false) {
     if (!this.runtime) return false;
     this.ensureCanvas();
     this.ensureCanvasOrder();
+    const seq = ++this.refreshSeq;
     try {
-      this.field = await this.fetchField();
+      const field = await this.fetchField();
+      if (seq !== this.refreshSeq) return false;
+      this.field = field;
       this.heatmapDirty = true;
       this.drawHeatmap();
       const timeText = this.formatDataTime(this.field);
@@ -456,7 +579,13 @@ export class CityTempColorLayer extends MapLayer {
   hide() {
     super.hide();
     if (this.heatmapCanvas) this.heatmapCanvas.style.display = "none";
+    if (this.refreshTimer) clearTimeout(this.refreshTimer);
+    this.refreshTimer = null;
+    this.refreshSeq++;
+    this.hideLoading();
     this.clearHeatmap();
+    this.resetTransform();
+    this.drawnView = null;
     this.clearDataTime();
     this.setInfoExtra("");
     return true;

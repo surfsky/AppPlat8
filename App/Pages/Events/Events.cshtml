@@ -8,14 +8,14 @@
     <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="事件" FormPage="EventForm" EnableBatch="true" SortField="HappenDt" SortOrder="desc" >
         <Toolbar>
             <Filters>
-                <EleInput For="Item.Title" Width="200px" Label="标题" LabelWidth="60px"></EleInput>
                 <EleTreePicker For="Item.TypeId" Width="150px" Label="类别" LabelWidth="60px" Items="Model.EventTypes" Clearable="true"></EleTreePicker>
+                <EleInput For="Item.Title" Width="200px" Label="标题" LabelWidth="60px"></EleInput>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
-                <EleButton Type="Success" PopupUrl="EventTypes" PopupTitle="事件类别" Icon="Setting" Visible="@Auth.HasPower(Power.EventTypeEdit)">类别管理</EleButton>
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">删除</EleButton>
+                <EleButton Type="Success" PopupUrl="EventTypes" PopupTitle="事件类别" Icon="Setting" Visible="@Auth.HasPower(Power.EventTypeEdit)">类别管理</EleButton>
                 <EleRefreshSwitch Interval="30" Triggle="Data" />
             </Buttons>
         </Toolbar>
@@ -31,6 +31,7 @@
             <EleColumn For="Item.OrgName" Label="组织" Width="120"></EleColumn>
             <EleColumn For="Item.PublisherName" Label="发布人" Width="100"></EleColumn>
             <EleColumn For="Item.AllowComment" Label="允许评论" Width="80"></EleColumn>
+            <EleColumn For="Item.Gps" Label="经纬度" Width="120"></EleColumn>
         </Columns>
     </EleTable>
 }

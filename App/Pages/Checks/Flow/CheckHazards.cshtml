@@ -6,8 +6,16 @@
     var titleSuffix = string.IsNullOrWhiteSpace(Model.ObjectName) ? string.Empty : $" - {Model.ObjectName}";
     // DataHandler 携带无对应过滤控件的 scope 参数（excludeArchived/checkId）；其余参数由过滤控件的 data-filter-default 机制注入
     var dataHandler = $"?handler=Data&objectId={Model.ObjectId}&objectName={objectNameEncoded}";
+    var orgId = Request.Query["orgId"].FirstOrDefault();
+    var orgIds = Request.Query["orgIds"].FirstOrDefault();
+    var checkerId = Request.Query["checkerId"].FirstOrDefault();
+    var scopeOrgOnly = Request.Query["scopeOrgOnly"].FirstOrDefault();
     if (Model.CheckId.GetValueOrDefault() > 0) dataHandler += $"&checkId={Model.CheckId.Value}";
     if (Model.ScopeExcludeArchived) dataHandler += "&excludeArchived=true";
+    if (!string.IsNullOrWhiteSpace(orgId)) dataHandler += $"&orgId={orgId}";
+    if (!string.IsNullOrWhiteSpace(orgIds)) dataHandler += $"&orgIds={Uri.EscapeDataString(orgIds)}";
+    if (!string.IsNullOrWhiteSpace(checkerId)) dataHandler += $"&checkerId={checkerId}";
+    if (!string.IsNullOrWhiteSpace(scopeOrgOnly)) dataHandler += $"&scopeOrgOnly={scopeOrgOnly}";
 }
 
 @section body {

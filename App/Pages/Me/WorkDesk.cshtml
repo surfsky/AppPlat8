@@ -101,11 +101,11 @@
         </div>
       </section>
 
-      <!-- 我的管理对象 -->
-      <section class="mb-10">
-        <h2 class="mb-5 text-[18px] font-semibold text-slate-800">我的管理对象</h2>
+      <!-- 我的对象 / 监管对象 / 高风险对象 -->
+      <section v-for="g in objectGroups" v-bind:key="g.title" class="mb-10">
+        <h2 class="mb-5 text-[18px] font-semibold text-slate-800">{{ g.title }}</h2>
         <div class="flex flex-wrap gap-5">
-          <div v-for="c in objectCards" v-bind:key="c.url" class="inline-block">
+          <div v-for="c in g.cards" v-bind:key="c.url" class="inline-block">
             <el-badge v-bind:value="Number(c.count||0)" v-bind:max="999999" v-bind:hidden="!c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
               <el-link v-bind:href="c.url" target="_self" v-bind:underline="false" style="text-decoration:none;">
                 <el-button size="large" style="height:42px; width:180px; border-radius:8px; font-weight:500;">
@@ -212,6 +212,8 @@
 window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
     quickEntries  = quickEntries,
     objectCards   = Model.ObjectStatCards,
+    superviseCards = Model.SuperviseStatCards,
+    riskCards     = Model.RiskStatCards,
     hazardCards   = Model.HazardStatCards,
     userId        = userVal,
 }, new System.Text.Json.JsonSerializerOptions {
@@ -416,6 +418,8 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
                     // 卡片类数据（SSR 注入，切用户后由整页刷新重新注入）
                     quickEntries: decorateQuick(init.quickEntries),
                     objectCards: decorateCards(init.objectCards),
+                    superviseCards: decorateCards(init.superviseCards),
+                    riskCards: decorateCards(init.riskCards),
                     hazardCards: decorateCards(init.hazardCards),
                     // 任务对象表格（运行时 ajax 拉取）
                     loading: false,
@@ -544,8 +548,17 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
 
                 onMounted(loadObjs);
 
+                var objectGroups = Vue.computed(function () {
+                    return [
+                        { title: '我的对象', cards: state.objectCards },
+                        { title: '监管对象', cards: state.superviseCards },
+                        { title: '高风险对象', cards: state.riskCards },
+                    ];
+                });
+
                 return {
                     ...toRefs(state),
+                    objectGroups,
                     fmtDate,
                     onObjTabChange,
                     onPageChange,

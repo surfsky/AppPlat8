@@ -46,7 +46,9 @@ namespace App.Pages.Checks
                 Item.OrgId = user.AuthOrgId;
             }
 
-            // CheckerId
+            var scopeOrgOnly = bool.TryParse(Request.Query["scopeOrgOnly"].FirstOrDefault(), out var orgOnly) && orgOnly;
+
+            // CheckerId：工作台组织范围链接不默认叠加当前用户网格员过滤，避免把组织范围误收窄为交集。
             var checkerId = Asp.GetQueryLong("checkerId");
             if (checkerId != null)
             {
@@ -56,7 +58,7 @@ namespace App.Pages.Checks
                 if (u != null)
                     DefaultCheckerName = u.DisplayName;
             }
-            else
+            else if (!scopeOrgOnly)
             {
                 DefaultCheckerId = user.Id;
                 Item.CheckerId = user.Id;
@@ -120,10 +122,11 @@ namespace App.Pages.Checks
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
             string tagName=null,
-            bool? isDel=null
+            bool? isDel=null,
+            bool? scopeCheckerOrOrg=null
             )
         {
-            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel);
+            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel, scopeCheckerOrOrg);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
@@ -150,10 +153,11 @@ namespace App.Pages.Checks
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
             string tagName=null,
-            bool? isDel=null
+            bool? isDel=null,
+            bool? scopeCheckerOrOrg=null
             )
         {
-            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel);
+            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel, scopeCheckerOrOrg);
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"检查对象列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
@@ -181,7 +185,8 @@ namespace App.Pages.Checks
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
             string tagName=null,
-            bool? isDel=null            
+            bool? isDel=null,
+            bool? scopeCheckerOrOrg=null
         )
         {
             // tagIds
@@ -216,6 +221,7 @@ namespace App.Pages.Checks
             }
 
             // query
+            var useCheckerOrOrgScope = scopeCheckerOrOrg == true && (orgId.HasValue || checkerId.HasValue);
             var q = CheckObject.Search(
                 name: name,
                 code: code,
@@ -224,9 +230,9 @@ namespace App.Pages.Checks
                 socialCreditCode: socialCreditCode,
                 address: address,
                 dutyMan: userName,
-                orgId: orgId,
+                orgId: useCheckerOrOrgScope ? null : orgId,
                 tagIds: tagIds,
-                checkerId: checkerId,
+                checkerId: useCheckerOrOrgScope ? null : checkerId,
                 objectType: objectType,
                 scope: scope,
                 scale: scale,
@@ -241,6 +247,15 @@ namespace App.Pages.Checks
                 isDel: isDel,
                 includeTags: true
                 );
+
+            if (useCheckerOrOrgScope)
+            {
+                var scopeOrgIds = orgId.HasValue
+                    ? App.DAL.Org.All.GetDescendants(orgId.Value).Select(o => o.Id).Distinct().ToList()
+                    : new List<long>();
+                q = q.Where(o => (checkerId.HasValue && o.CheckerId == checkerId.Value)
+                              || (scopeOrgIds.Count > 0 && o.OrgId.HasValue && scopeOrgIds.Contains(o.OrgId.Value)));
+            }
 
 
             // 应用组织过滤

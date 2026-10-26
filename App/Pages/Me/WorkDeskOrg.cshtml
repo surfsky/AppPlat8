@@ -63,10 +63,6 @@
           </div>
           <input id="org-picker-id" type="hidden" value="@orgVal" />
         </div>
-        <div class="text-xs text-[#64748b] leading-snug">
-          <div>默认显示当前用户的授权组织</div>
-          <div>仅领导或管理员可切换其他组织</div>
-        </div>
       </div>
       <a href="/Me/WorkDesk" class="inline-flex items-center gap-2 rounded-md bg-[#1677ff] px-4 py-2 text-white text-sm no-underline hover:bg-[#0d5bd6]">
         <i class="fas fa-user"></i>
@@ -91,10 +87,10 @@
         </div>
       </section>
 
-      <section class="mb-10">
-        <h2 class="mb-5 text-[18px] font-semibold text-slate-800">科室的管理对象</h2>
+      <section v-for="g in objectGroups" v-bind:key="g.title" class="mb-10">
+        <h2 class="mb-5 text-[18px] font-semibold text-slate-800">{{ g.title }}</h2>
         <div class="flex flex-wrap gap-5">
-          <div v-for="c in objectCards" v-bind:key="c.url" class="inline-block">
+          <div v-for="c in g.cards" v-bind:key="c.url" class="inline-block">
             <el-badge v-bind:value="Number(c.count||0)" v-bind:max="999999" v-bind:hidden="!c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
               <el-link v-bind:href="c.url" target="_self" v-bind:underline="false" style="text-decoration:none;">
                 <el-button size="large" style="height:42px; width:180px; border-radius:8px; font-weight:500;">
@@ -190,6 +186,8 @@
 window.__WDO_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
     quickEntries = quickEntries,
     objectCards = Model.ObjectStatCards,
+  superviseCards = Model.SuperviseStatCards,
+  riskCards = Model.RiskStatCards,
     hazardCards = Model.HazardStatCards,
     orgId = orgVal,
 }, new System.Text.Json.JsonSerializerOptions {
@@ -376,7 +374,11 @@ window.__WDO_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
             setup() {
                 var state = reactive({
                     quickEntries: decorateQuick(init.quickEntries),
-                    objectCards: decorateCards(init.objectCards),
+                  objectGroups: [
+                    { title: '科室的管理对象', cards: decorateCards(init.objectCards) },
+                    { title: '科室的监管对象', cards: decorateCards(init.superviseCards) },
+                    { title: '科室的高风险对象', cards: decorateCards(init.riskCards) },
+                  ],
                     hazardCards: decorateCards(init.hazardCards),
                     loading: false,
                     objTab: initialTab,

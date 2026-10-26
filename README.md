@@ -110,7 +110,7 @@ dotnet run --project App.Consoler
 1. 本项目采用 EntityFramework CodeFirst 模式，若实体类属性变更，可用使用 EF 机制进行数据库迁移: 运行
 
 ```bash
-dotnet ef migrations add CheckObjectOrgId --project App/App.csproj --startup-project App/App.csproj
+dotnet ef migrations add CheckObjectSafeOfficer --project App/App.csproj --startup-project App/App.csproj
 ```
 
 ### 数据库备份：

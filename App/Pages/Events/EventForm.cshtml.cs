@@ -66,6 +66,7 @@ namespace App.Pages.OA
             item.Content = req.Content;
             item.MainImage = Uploader.SaveFile(nameof(Event),req.MainImage);
             item.AllowComment = req.AllowComment;
+            item.Gps = req.Gps;
             item.Save();
             return BuildResult(0, "保存成功");
         }
