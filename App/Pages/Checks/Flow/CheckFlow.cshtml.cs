@@ -98,6 +98,8 @@ namespace App.Pages.Checks
                 .Include(t => t.Org)
                 .Include(t => t.Tags)
                 .ThenInclude(t => t.Tag)
+                .Include(t => t.TagSpecs)
+                .ThenInclude(t => t.Tag)
                 .FirstOrDefault(t => t.Id == id);
             if (obj == null)
                 return BuildResult(404, "检查对象不存在");
@@ -109,6 +111,11 @@ namespace App.Pages.Checks
             var tagNames = obj.TagNames != null && obj.TagNames.Count > 0
                 ? string.Join("，", obj.TagNames)
                 : string.Empty;
+            var tagSpecNames = obj.TagSpecNames != null && obj.TagSpecNames.Count > 0
+                ? string.Join("，", obj.TagSpecNames)
+                : string.Empty;
+            if (!string.IsNullOrEmpty(tagSpecNames))
+                tagNames = string.IsNullOrEmpty(tagNames) ? tagSpecNames : $"{tagNames}；{tagSpecNames}";
             var objectTagIds = obj.TagIds?.Where(t => t > 0).Distinct().ToList() ?? new List<long>();
             var matchedSheetIds = objectTagIds.Count == 0
                 ? new List<long>()

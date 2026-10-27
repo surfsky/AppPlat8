@@ -76,6 +76,7 @@ namespace App.DAL
         public DbSet<CheckObjectContact> CheckObjectContacts { get; set; }
         public DbSet<CheckObjectEvent> CheckObjectEvents { get; set; }
         public DbSet<CheckObjectTag> CheckObjectTags { get; set; }
+        public DbSet<CheckObjectTagSpec> CheckObjectTagSpecs { get; set; }
         public DbSet<Check> Checks { get; set; }
         public DbSet<CheckHazard> CheckHazards { get; set; }
         public DbSet<CheckHazardLog> CheckHazardLogs { get; set; }

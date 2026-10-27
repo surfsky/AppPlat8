@@ -46,7 +46,7 @@ namespace App.DAL
                 .Let(o =>
                 {
                     if (o != null)
-                        o.TagIds = o.Tags?.Select(t => t.Id).ToList() ?? new List<long>();
+                        o.TagIds = o.Tags?.Where(tag => tag.TagType == CheckTagType.Basic).Select(t => t.Id).ToList() ?? new List<long>();
                 });
         }
 
@@ -56,8 +56,8 @@ namespace App.DAL
             IQueryable<CheckSheet>  q = CheckSheet.IncludeSet; //Set.AsQueryable().Include(o => o.Tags);
             if (name.IsNotEmpty())  q = q.Where(o => o.Name.Contains(name.Trim()));
             if (scope.IsNotEmpty()) q = q.Where(o => o.Scope == scope.Value);
-            if (tagId.IsNotEmpty()) q = q.Where(o => o.Tags.Any(t => t.Id == tagId.Value));
-            if (tagIds.IsNotEmpty()) q = q.Where(o => o.Tags.Any(t => tagIds.Contains(t.Id)));
+                if (tagId.IsNotEmpty())  q = q.Where(o => o.Tags.Any(t => t.Id == tagId.Value && t.TagType == CheckTagType.Basic));
+                if (tagIds.IsNotEmpty()) q = q.Where(o => o.Tags.Any(t => tagIds.Contains(t.Id) && t.TagType == CheckTagType.Basic));
             return q;
         }
 
@@ -68,7 +68,7 @@ namespace App.DAL
             tagIds = tagIds.Distinct().ToList();
             var tags = tagIds.Count == 0
                 ? new List<CheckTag>()
-                : CheckTag.Set.Where(t => tagIds.Contains(t.Id)).ToList();
+                : CheckTag.Set.Where(t => tagIds.Contains(t.Id) && t.TagType == CheckTagType.Basic).ToList();
             Tags.Clear();
             foreach (var tag in tags)
                 Tags.Add(tag);

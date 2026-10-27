@@ -78,6 +78,7 @@ namespace App.DAL
 
         // Relations
         public virtual List<CheckObjectTag> Tags { get; set; }  // 标签列表（1:n 关系）
+        public virtual List<CheckObjectTagSpec> TagSpecs { get; set; } = new();
         public virtual List<CheckObjectContact> Contacts { get; set; }  // 联系人列表（1:n 关系）
         public virtual Org Org { get; set; }
         public virtual User Checker { get; set; }
@@ -95,8 +96,16 @@ namespace App.DAL
 
         // Tag 相关信息
         private List<long> _tagIds;
+        private List<long> _tagSpecIds;
 
-        [UI("基础", "标签")]      public List<string> TagNames => Tags?.Select(t => t.Tag?.Name).ToList() ?? new List<string>();
+        [UI("基础", "标签")] public List<string> TagNames => Tags?
+            .Where(item => item.Tag?.TagType == CheckTagType.Basic)
+            .Select(item => item.Tag.Name)
+            .ToList() ?? new List<string>();
+        [UI("基础", "扩展标签")] public List<string> TagSpecNames => TagSpecs?
+            .Where(item => item.Tag?.TagType == CheckTagType.Spec)
+            .Select(item => item.Tag.Name)
+            .ToList() ?? new List<string>();
         [NotMapped, UI("基础", "标签")]
         public List<long> TagIds
         {
@@ -105,10 +114,17 @@ namespace App.DAL
                 if (_tagIds != null)
                     return _tagIds;
                 if (Tags != null && Tags.Count > 0)
-                    return Tags.Select(t => t.TagId).ToList();
+                    return Tags.Where(tag => tag.Tag?.TagType == CheckTagType.Basic).Select(t => t.TagId).ToList();
                 return new List<long>();
             }
             set => _tagIds = value ?? new List<long>();
+        }
+
+        [NotMapped, UI("基础", "扩展标签")]
+        public List<long> TagSpecIds
+        {
+            get => _tagSpecIds ??= TagSpecs?.Where(tag => tag.Tag?.TagType == CheckTagType.Spec).Select(tag => tag.TagId).ToList() ?? new List<long>();
+            set => _tagSpecIds = value ?? new List<long>();
         }
 
 
@@ -121,8 +137,20 @@ namespace App.DAL
             foreach (var tagId in ids)
             {
                 var tag = CheckTag.Set.Find(tagId);
-                if (tag != null)
+                if (tag?.TagType == CheckTagType.Basic)
                     new CheckObjectTag { TagId = tag.Id, CheckObjectId = Id }.Save();
+            }
+        }
+
+        public void SetTagSpecs(List<long> tagIds)
+        {
+            var ids = (tagIds ?? new List<long>()).Distinct().Where(id => id > 0).ToList();
+            CheckObjectTagSpec.Set.Where(tag => tag.CheckObjectId == Id).Delete();
+            foreach (var tagId in ids)
+            {
+                var tag = CheckTag.Set.Find(tagId);
+                if (tag?.TagType == CheckTagType.Spec)
+                    new CheckObjectTagSpec { TagId = tag.Id, CheckObjectId = Id }.Save();
             }
         }
 
@@ -187,8 +215,11 @@ namespace App.DAL
                 IndustryType,
                 IndustryRisk,
                 TagIds,
+                TagSpecIds,
                 TagNames,
+                TagSpecNames,
                 Tags = Tags?.Select(t => t.Export(mode)).ToList(),
+                TagSpecs = TagSpecs?.Select(t => t.Export(mode)).ToList(),
             };
         }
 
@@ -224,6 +255,7 @@ namespace App.DAL
                     CheckerName,
                     DutyMan,
                     TagNames,
+                    TagSpecNames,
                     IsDel
                 }),
                 IsVisible = true,
@@ -233,11 +265,12 @@ namespace App.DAL
             };
         }
 
-        /// <summary>获取详情（包含 Tags/Contacts 等集合导航属性）</summary>
+        /// <summary>获取详情（包含标签及联系人关系）</summary>
         public new static CheckObject GetDetail(long id)
         {
             return IncludeSet
                 .Include(o => o.Tags).ThenInclude(t => t.Tag)
+            .Include(o => o.TagSpecs).ThenInclude(t => t.Tag)
                 .Include(o => o.Contacts)
                 .FirstOrDefault(o => o.Id == id);
         }
@@ -251,6 +284,7 @@ namespace App.DAL
             long? orgId = null,
             List<long> orgIds = null,
             List<long> tagIds = null,
+            List<long> tagSpecIds = null,
             long? checkerId = null,   // 网格员
             CheckObjectType? objectType = null,
             CheckScope? scope = null,
@@ -290,13 +324,20 @@ namespace App.DAL
             // AND 语义：最终结果对象，对于每个用户勾选的标签，都要"命中该标签或其任一子孙标签"。
             // 所以用用户勾选的原始 tagIds 做外层 AND 循环，每一项在已展开的子集合里做 OR。
             var tagIdGroups = GetTagIdGroups(tagIds);
-            if (includeTags) q = q.Include(o => o.Tags).ThenInclude(t => t.Tag);
+            if (includeTags) q = q.Include(o => o.Tags).ThenInclude(t => t.Tag)
+                .Include(o => o.TagSpecs).ThenInclude(t => t.Tag);
             // AND 过滤：用户勾选的每一个 tag，对象都必须"包含该 tag 或包含其任意子孙 tag"
             foreach (var grp in tagIdGroups)
             {
                 if (grp.Count == 0) continue;
                 var group = grp;
                 q = q.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && group.Contains(t.TagId)));
+            }
+            foreach (var grp in GetTagIdGroups(tagSpecIds))
+            {
+                if (grp.Count == 0) continue;
+                var group = grp;
+                q = q.Where(o => CheckObjectTagSpec.IncludeSet.Any(t => t.CheckObjectId == o.Id && group.Contains(t.TagId)));
             }
             if (objectType.IsNotEmpty())              q = q.Where(o => o.ObjectType == objectType.Value);
             if (scope.IsNotEmpty())                   q = q.Where(o => o.Scope == scope.Value);

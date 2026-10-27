@@ -47,7 +47,7 @@ namespace App.API
         // 检查对象管理
         //--------------------------------------------
         [HttpApi("检查对象列表", AuthLogin = true)]
-        public static APIResult GetCheckObjects(Paging pi, string name, string socialCreditCode, long? orgId, long? checkerId, CheckObjectType? objectType, CheckObjectScale? scale)
+        public static APIResult GetCheckObjects(Paging pi, string name, string socialCreditCode, long? orgId, long? checkerId, CheckObjectType? objectType, CheckObjectScale? scale, List<long> tagIds = null, List<long> tagSpecIds = null)
         {
             var userId = Auth.GetUserId();
             var user = User.Get(userId);
@@ -58,8 +58,11 @@ namespace App.API
                 socialCreditCode: socialCreditCode,
                 orgId: orgId,
                 checkerId: checkerId,
+                tagIds: tagIds,
                 objectType: objectType,
-                scale: scale
+                scale: scale,
+                tagSpecIds: tagSpecIds,
+                includeTags: true
             );
             // 非 admin：显式按授权组织子树过滤 CheckObject（Search 默认仅用 OrgId 等值过滤，需再收紧子树语义）
             if (!Auth.IsAdmin(user))
@@ -70,7 +73,7 @@ namespace App.API
         [HttpApi("检查对象详情", AuthLogin = true)]
         public static APIResult GetCheckObject(int id)
         {
-            return CheckObject.Get(id).ToResult();
+            return CheckObject.GetDetail(id).ToResult();
         }
 
         [HttpApi("添加检查对象", AuthLogin = true)]
@@ -79,7 +82,9 @@ namespace App.API
             obj.CreateDt = DateTime.Now;
             obj.UpdateDt = DateTime.Now;
             obj.Save(EntityOp.New);
-            return obj.ToResult();
+            obj.SetTags(obj.TagIds);
+            obj.SetTagSpecs(obj.TagSpecIds);
+            return CheckObject.GetDetail(obj.Id).ToResult();
         }
 
         [HttpApi("修改检查对象", AuthLogin = true)]
@@ -87,7 +92,9 @@ namespace App.API
         {
             obj.UpdateDt = DateTime.Now;
             obj.Save(EntityOp.Edit);
-            return obj.ToResult();
+            obj.SetTags(obj.TagIds);
+            obj.SetTagSpecs(obj.TagSpecIds);
+            return CheckObject.GetDetail(obj.Id).ToResult();
         }
 
         [HttpApi("删除检查对象", AuthLogin = true)]
@@ -102,10 +109,10 @@ namespace App.API
         //--------------------------------------------
         // 获取检查标签树
         [HttpApi("获取检查标签树", AuthLogin=true)]
-        public static APIResult GetCheckTagTree(long? excludeId = null, long? selectedId = null)
+        public static APIResult GetCheckTagTree(long? excludeId = null, long? selectedId = null, CheckTagType? tagType = CheckTagType.Basic, bool includeAll = false)
         {
             var selectedIds = selectedId.HasValue ? new List<long> { selectedId.Value } : new List<long>();
-            return BuildCheckTagTreeResult(excludeId, selectedIds);
+            return BuildCheckTagTreeResult(excludeId, selectedIds, includeAll ? null : tagType);
         }
 
         [HttpApi("获取检查表标签树", AuthLogin=true)]
@@ -118,27 +125,28 @@ namespace App.API
                 selectedIds = sheet?.TagIds ?? new List<long>();
             }
 
-            return BuildCheckTagTreeResult(null, selectedIds);
+            return BuildCheckTagTreeResult(null, selectedIds, CheckTagType.Basic);
         }
 
-        private static APIResult BuildCheckTagTreeResult(long? excludeId, List<long> selectedIds)
+        [HttpApi("获取检查对象标签树", AuthLogin = true)]
+        public static APIResult GetCheckTagTreeForObject(long objectId, CheckTagType tagType = CheckTagType.Basic)
         {
-            // 获取当前用户可见的标签列表
-            var user = Auth.GetUser();
+            var item = objectId > 0 ? CheckObject.GetDetail(objectId) : null;
+            if (objectId > 0 && item == null)
+                return new APIResult(404, "检查对象不存在");
+            var selectedIds = item == null
+                ? new List<long>()
+                : tagType == CheckTagType.Spec ? item.TagSpecIds : item.TagIds;
+            return BuildCheckTagTreeResult(null, selectedIds, tagType);
+        }
+
+        private static APIResult BuildCheckTagTreeResult(long? excludeId, List<long> selectedIds, CheckTagType? tagType)
+        {
             var allTags = CheckTag.IncludeSet.ToList();
             var allMap = allTags.ToDictionary(t => t.Id, t => t);
-            List<CheckTag> visible;
-            if (Auth.IsAdmin(user))
-            {
-                visible = allTags;
-            }
-            else
-            {
-                var orgId = user?.AuthOrgId;
-                visible = allTags
-                    .Where(t => t.OrgId == null || (orgId.HasValue && t.OrgId == orgId.Value))
-                    .ToList();
-            }
+            var visible = tagType.HasValue
+                ? allTags.Where(tag => tag.TagType == tagType.Value).ToList()
+                : allTags.ToList();
 
             // 补齐可见节点的祖先，保证树结构完整（避免“子节点可见但父节点缺失”导致树断层）。
             var visibleMap = visible.ToDictionary(t => t.Id, t => t);
@@ -155,10 +163,12 @@ namespace App.API
                 }
             }
 
-            // 补齐已选中节点及其祖先，避免表单回显成纯 ID。
+            // 补齐同类型的已选节点及祖先，避免表单回显成纯 ID。
             foreach (var selectedId in (selectedIds ?? new List<long>()).Distinct())
             {
                 if (!allMap.TryGetValue(selectedId, out var selected))
+                    continue;
+                if (tagType.HasValue && selected.TagType != tagType.Value)
                     continue;
 
                 var current = selected;
@@ -173,6 +183,11 @@ namespace App.API
             }
 
             visible = visibleMap.Values.ToList();
+            if (tagType.HasValue)
+            {
+                foreach (var tag in visible)
+                    tag.Disabled = tag.TagType != tagType.Value;
+            }
 
             // 编辑时排除“当前节点及其子孙”，避免形成环路和无效父级。
             if (excludeId != null)

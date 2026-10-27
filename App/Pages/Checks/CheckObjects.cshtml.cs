@@ -24,6 +24,7 @@ namespace App.Pages.Checks
         public string DefaultCheckerName { get; set; }  // 默认检查人名称
         public long? OrgId { get; set; }  // 单值，用于 ElePicker/Select 控件单独匹配
         public string TagIds { get; set; }  // 多值，用于标签树控件回显
+        public string TagSpecIds { get; set; }
 
         
         //-------------------------------------------------------------------------
@@ -69,7 +70,7 @@ namespace App.Pages.Checks
             var tagName = Asp.GetQueryString("tagName");
             if (tagName.IsNotEmpty())
             {
-                var tag = CheckTag.Set.FirstOrDefault(t => t.Name == tagName);
+                var tag = CheckTag.Set.FirstOrDefault(t => t.Name == tagName && t.TagType == CheckTagType.Basic);
                 if (tag != null)
                 {
                     TagIds = tag.Id.ToString();
@@ -121,12 +122,13 @@ namespace App.Pages.Checks
             List<DateTime> createDt=null,
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
+            List<long> tagSpecIds=null,
             string tagName=null,
             bool? isDel=null,
             bool? scopeCheckerOrOrg=null
             )
         {
-            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel, scopeCheckerOrOrg);
+            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagSpecIds, tagName, isDel, scopeCheckerOrOrg);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
@@ -152,12 +154,13 @@ namespace App.Pages.Checks
             List<DateTime> createDt=null,
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
+            List<long> tagSpecIds=null,
             string tagName=null,
             bool? isDel=null,
             bool? scopeCheckerOrOrg=null
             )
         {
-            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagName, isDel, scopeCheckerOrOrg);
+            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagSpecIds, tagName, isDel, scopeCheckerOrOrg);
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"检查对象列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
@@ -184,6 +187,7 @@ namespace App.Pages.Checks
             List<DateTime> createDt=null,
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
+            List<long> tagSpecIds=null,
             string tagName=null,
             bool? isDel=null,
             bool? scopeCheckerOrOrg=null
@@ -191,12 +195,13 @@ namespace App.Pages.Checks
         {
             // tagIds
             tagIds = ParseTagIds(tagIds, Request.Query["tagIds"]);
+            tagSpecIds = ParseTagIds(tagSpecIds, Request.Query["tagSpecIds"]);
             if (tagIds == null || tagIds.Count == 0)
             {
                 var rawTagName = tagName.IsEmpty() ? Request.Query["tagName"].FirstOrDefault() : tagName;
                 if (rawTagName.IsNotEmpty())
                 {
-                    var tag = CheckTag.Set.FirstOrDefault(t => t.Name == rawTagName);
+                    var tag = CheckTag.Set.FirstOrDefault(t => t.Name == rawTagName && t.TagType == CheckTagType.Basic);
                     if (tag != null) tagIds = new List<long> { tag.Id };
                 }
             }
@@ -232,6 +237,7 @@ namespace App.Pages.Checks
                 dutyMan: userName,
                 orgId: useCheckerOrOrgScope ? null : orgId,
                 tagIds: tagIds,
+                tagSpecIds: tagSpecIds,
                 checkerId: useCheckerOrOrgScope ? null : checkerId,
                 objectType: objectType,
                 scope: scope,

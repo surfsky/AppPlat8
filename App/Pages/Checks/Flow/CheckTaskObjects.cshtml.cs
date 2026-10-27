@@ -25,6 +25,7 @@ namespace App.Pages.Checks
         public CheckObject Item { get; set; } = new CheckObject();  // 过滤区的 EleTreePicker/ElePicker/EleSelect 字段宿主，For="Item.Xxx" 会被转为 filters.xxx，对应 setup 里的官方 filters.*（picker/treePicker 直接读写这个对象）。
         public List<long> OrgIds { get; set; } = new List<long>();  // 所属网格（多选 ids：独立于 Item.OrgId 单值）
         public List<long> TagIds { get; set; } = new List<long>();  // 标签（多选 ids）。
+        public List<long> TagSpecIds { get; set; } = new List<long>();
 
         public void OnGet(long taskId, string taskName)
         {
@@ -53,6 +54,7 @@ namespace App.Pages.Checks
             List<long> orgIds,
             long? checkerId,
             List<long> tagIds,
+            List<long> tagSpecIds,
             bool onlyUnselected = true)
         {
             pi ??= new Paging { PageIndex = 1, PageSize = 20 };
@@ -69,6 +71,7 @@ namespace App.Pages.Checks
                 orgId: orgId,
                 orgIds: orgIds,
                 tagIds: tagIds,
+                tagSpecIds: tagSpecIds,
                 checkerId: checkerId,
                 objectType: objectType,
                 scope: scope,
@@ -368,6 +371,7 @@ namespace App.Pages.Checks
                 orgIds: GetLongList("orgIds"),
                 checkerId: f.ContainsKey("checkerId") && f["checkerId"] != null ? (long?)Get<long>("checkerId", 0) : null,
                 tagIds: GetLongList("tagIds"),
+                tagSpecIds: GetLongList("tagSpecIds"),
                 onlyUnselected: !f.ContainsKey("onlyUnselected") || Get<bool>("onlyUnselected", true)
             );
         }

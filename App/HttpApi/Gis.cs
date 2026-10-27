@@ -238,7 +238,8 @@ namespace App.API
             if (hasTagFilter && mergedTagIds.Count > 0)
             {
                 var tagIdSet = mergedTagIds.ToHashSet();
-                query = query.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && tagIdSet.Contains(t.TagId)));
+                query = query.Where(o => CheckObjectTag.IncludeSet.Any(t => t.CheckObjectId == o.Id && tagIdSet.Contains(t.TagId))
+                                      || CheckObjectTagSpec.IncludeSet.Any(t => t.CheckObjectId == o.Id && tagIdSet.Contains(t.TagId)));
             }
 
             query = query

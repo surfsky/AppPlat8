@@ -9,8 +9,8 @@
 @section body {
     <EleForm LabelWidth="100px">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
-        <EleTreePicker For="Item.ParentId" Label="上级" Api="/httpapi/checks/GetCheckTagTree?excludeId=@currentId&selectedId=@selectedId"></EleTreePicker>
-        <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree" ></EleTreePicker>
+        <EleTreePicker For="Item.ParentId" Label="上级" Api="/httpapi/checks/GetCheckTagTree?excludeId=@currentId&selectedId=@selectedId&includeAll=true" OnChange="ParentChanged"></EleTreePicker>
+        <EleSelect For="Item.TagType" Label="类型" Enabled="@HasPower(Power.AdminLeader)"></EleSelect>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
         
         <Bottom>

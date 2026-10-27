@@ -52,12 +52,20 @@
                                 Class="filter-control"></ElePicker>
                     <EleTreePicker For="TagIds"
                                    Label="标签"
-                                   Api="/httpapi/checks/GetCheckTagTree"
+                                   Api="/httpapi/checks/GetCheckTagTree?tagType=Basic"
                                    Multiple="true"
                                    CollapseTags="false"
                                    CheckStrictly="true"
                                    Class="filter-control"
                                    Value="@(Model.TagIds != null && Model.TagIds.Count > 0 ? string.Join(",", Model.TagIds) : "")" ></EleTreePicker>
+                    <EleTreePicker For="TagSpecIds"
+                                   Label="应急专用标签"
+                                   Api="/httpapi/checks/GetCheckTagTree?tagType=Spec"
+                                   Multiple="true"
+                                   CollapseTags="false"
+                                   CheckStrictly="true"
+                                   Class="filter-control"
+                                   Value="@(Model.TagSpecIds != null && Model.TagSpecIds.Count > 0 ? string.Join(",", Model.TagSpecIds) : "")"></EleTreePicker>
                     <EleInput For="Item.Address" Label="地址" VModel="form.address" Placeholder="地址" Clearable="true" Class="filter-control"></EleInput>
                     <EleInput For="Item.SocialCreditId" Label="社会信用代码" VModel="form.socialCreditCode" Placeholder="社会信用代码" Clearable="true" Class="filter-control"></EleInput>
                     <EleInput For="Item.Code" Label="编码" VModel="form.code" Placeholder="编码" Clearable="true" Class="filter-control"></EleInput>
@@ -264,7 +272,7 @@
                         objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
                         orgId: null, orgIds: [],
                         checkerId: null, checkerName: '',
-                        tagIds: []
+                        tagIds: [], tagSpecIds: []
                     };
                     const eleForm = new EleForm(defaultModel, { dataHandler: null, saveHandler: null });
 
@@ -385,6 +393,8 @@
 
                         const tagList = toLongList(f.tagIds);
                         if (tagList.length) data.tagIds = tagList;
+                        const tagSpecList = toLongList(f.tagSpecIds);
+                        if (tagSpecList.length) data.tagSpecIds = tagSpecList;
 
                         return buildQs(data);
                     }
@@ -428,7 +438,7 @@
                             objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
                             orgId: null, orgIds: [],
                             checkerId: null, checkerName: '',
-                            tagIds: []
+                            tagIds: [], tagSpecIds: []
                         });
                         candPageIndex.value = 0; loadCandidates();
                     }
@@ -654,7 +664,7 @@
                             objectType: null, scope: null, scale: null, riskLevel: null, industryType: null,
                             orgId: null, orgIds: [],
                             checkerId: null, checkerName: '',
-                            tagIds: [],
+                            tagIds: [], tagSpecIds: [],
                             taskId: TASK_ID,
                             onlyUnselected: true,
                         };

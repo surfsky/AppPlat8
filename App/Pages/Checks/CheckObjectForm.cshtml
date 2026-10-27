@@ -18,22 +18,23 @@
         <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location"></ElePicker>
         <EleDatePicker For="Item.ArchieveDt" Label="建档日期"></EleDatePicker>
         <EleDatePicker For="Item.LastCheckDt" Label="最后巡查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
+        <EleSelect For="Item.ObjectType" Label="类型" Placeholder="请选择" Required="true"></EleSelect>
+        <EleListPicker For="Item.Scope" Label="领域" Required="true"></EleListPicker>
+        <EleSelect For="Item.IndustryType" Label="行业类型" Required="false" Visible="false"></EleSelect>
+        <EleSelect For="Item.Scale" Label="规模" Required="false" Visible="false"></EleSelect>
+        <EleTreePicker For="Item.TagIds"     Required="true" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForObject?objectId=@Model.Item.Id&tagType=Basic" Multiple="true" CollapseTags="false" FillRow="true" TagType="Warning" ExpandLevel="2" ChunkSelectable="false"></EleTreePicker>
+        <EleTreePicker For="Item.TagSpecIds" Label="扩展标签" Api="/httpapi/checks/GetCheckTagTreeForObject?objectId=@Model.Item.Id&tagType=Spec" Multiple="true" CollapseTags="false" FillRow="true" TagType="Danger" ExpandLevel="2" ChunkSelectable="false"></EleTreePicker>
         <EleSwitch For="Item.HasHarzard" Label="是否存在隐患"></EleSwitch>
-        <EleSwitch For="Item.IsDel" Label="是否失效"></EleSwitch>
+        <EleSwitch For="Item.IsDel" Label="是否失效" Enabled="false"></EleSwitch>
         <div v-show="form.isDel === true">
             <EleSelect For="Item.FailReason" Label="失效原因" FillRow="true" ></EleSelect>
         </div>
 
         <EleLabel Label="营业信息" FillRow="true" Color="#0A79C4" Bold="true"></EleLabel>
         <EleImageUpload For="Item.LicenseImage" Label="工商执照" FillRow="true"></EleImageUpload>
-        <EleSelect For="Item.ObjectType" Label="类型" Placeholder="请选择"></EleSelect>
-        <EleListPicker For="Item.Scope" Label="领域"></EleListPicker>
-        <EleSelect For="Item.IndustryType" Label="行业类型"></EleSelect>
-        <EleSelect For="Item.Scale" Label="规模"></EleSelect>
         <EleInput For="Item.ProductContent" Label="生产内容" Rows="1" FillRow="true"></EleInput>
         <EleInput For="Item.EleMeeterNum" Label="电表号"></EleInput>
         <EleNumber For="Item.EmployeeCount" Label="员工数"></EleNumber>
-        <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTreeForSheet?objectId=@Model.Item.Id" Multiple="true" CollapseTags="false" FillRow="true" TagType="Warning" Required="true" ExpandLevel="2" ChunkSelectable="false"></EleTreePicker>
 
 
         <EleLabel Label="责任信息" Color="#0A79C4" FillRow="true"></EleLabel>

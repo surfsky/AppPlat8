@@ -11,22 +11,27 @@ using App.Utils;
 */
 namespace App.DAL
 {
+    public enum CheckTagType
+    {
+        [UI("基础")]        Basic = 0,
+        [UI("扩展")]        Spec = 1
+    }
+
     [UI("检查", "标签")]
     public class CheckTag : TreeEntity<CheckTag>
     {
-        [UI("组织")]                    public long? OrgId { get; set; }
-
-
-        [UI("组织")]                    public virtual Org Org { get; set; }
-        [UI("组织名称"), NotMapped]      public string OrgName => Org?.Name;
-        [UI("检查表Id列表"), NotMapped]   public List<long> SheetIds { get; set; } = new List<long>();      // 冗余属性，用于表单数据传递
+        [UI("类型")]                     public CheckTagType TagType { get; set; } = CheckTagType.Basic;
         [UI("检查表列表")]                public virtual List<CheckSheet> Sheets { get; set; } = new List<CheckSheet>();  // 检查表。n:n关系
+
+        [NotMapped]                     public bool Disabled {get;set;}
+        [UI("检查表Id列表"), NotMapped]   public List<long> SheetIds { get; set; } = new List<long>();      // 冗余属性，用于表单数据传递
+
 
         //
         public override CheckTag Clone()
         {
             return base.Clone().Let(t => {
-                t.OrgId = this.OrgId;
+                t.TagType = this.TagType;
                 t.SheetIds = this.SheetIds;
             });
         }
@@ -40,10 +45,10 @@ namespace App.DAL
                 this.Name,
                 this.ParentId,
                 this.TreeLevel,
-                this.OrgId,
-                this.OrgName,
+                this.TagType,
                 this.SheetIds,
                 this.SortId,
+                this.Disabled,
                 this.Children // Add this line to include children in JSON output
             };
         }
@@ -57,12 +62,12 @@ namespace App.DAL
         }
 
         //
-        public IQueryable<CheckTag> Query(string name="", long? sheetId=null, long? orgId=null)
+        public IQueryable<CheckTag> Query(string name = "", long? sheetId = null, CheckTagType? tagType = null)
         {
             IQueryable<CheckTag> q = CheckTag.IncludeSet;
             if (name.IsNotEmpty())  q = q.Where(t => t.Name.Contains(name));
             if (sheetId != null)    q = q.Where(t => t.Sheets.Any(s => s.Id == sheetId));
-            if (orgId != null)      q = q.Where(t => t.OrgId == orgId);
+            if (tagType.HasValue)   q = q.Where(t => t.TagType == tagType.Value);
             return q;
         }
     }

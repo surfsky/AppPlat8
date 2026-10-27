@@ -26,7 +26,7 @@ namespace App.Pages.Checks
         public IActionResult OnGetData(long id)
         {
             var cu = Auth.GetUser();
-            var item = (id>0) ? CheckObject.GetDetail(id) : new CheckObject();
+            var item = (id > 0) ? CheckObject.GetDetail(id) : new CheckObject();
             if (id == 0)
             {
                 item.OrgId = cu.AuthOrgId;
@@ -98,6 +98,7 @@ namespace App.Pages.Checks
 
             item.Save();
             item.SetTags(req.TagIds);
+            item.SetTagSpecs(req.TagSpecIds);
             return BuildResult(0, "保存成功");
         }
 

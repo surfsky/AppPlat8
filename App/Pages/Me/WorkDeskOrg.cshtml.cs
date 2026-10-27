@@ -153,7 +153,7 @@ namespace App.Pages.Me
             if (string.IsNullOrWhiteSpace(tagName))
                 return 0;
 
-            var tag = App.DAL.CheckTag.Set.FirstOrDefault(t => t.Name == tagName);
+            var tag = App.DAL.CheckTag.Set.FirstOrDefault(t => t.Name == tagName && t.TagType == CheckTagType.Basic);
             if (tag == null)
                 return 0;
 
