@@ -49,15 +49,16 @@ export class EleTable {
         return value === null || value === undefined ? '' : String(value);
     }
 
-    normalizeTreePickerNodes(list, childrenField = 'children') {
+    normalizeTreePickerNodes(list, childrenField = 'children', chunkSelectable = true) {
         const nodes = Array.isArray(list) ? list : [];
         return nodes.map(node => {
             if (!node || typeof node !== 'object') return node;
             const clone = { ...node };
-            clone.disabled = clone.disabled === true || clone.enabled === false;
             const children = clone[childrenField];
-            if (Array.isArray(children) && children.length > 0) {
-                clone[childrenField] = this.normalizeTreePickerNodes(children, childrenField);
+            const hasChildren = Array.isArray(children) && children.length > 0;
+            clone.disabled = clone.disabled === true || clone.enabled === false || (!chunkSelectable && hasChildren);
+            if (hasChildren) {
+                clone[childrenField] = this.normalizeTreePickerNodes(children, childrenField, chunkSelectable);
             }
             return clone;
         });
@@ -125,6 +126,7 @@ export class EleTable {
         const nameField = config.nameField || 'name';
         const childrenField = config.childrenField || 'children';
         const multiple = !!config.multiple;
+        const chunkSelectable = config.chunkSelectable !== false;
         const collapseTags = !!config.collapseTags;
         const checkStrictly = config.checkStrictly !== false;
         const title = config.title || config.label || '选择';
@@ -142,11 +144,28 @@ export class EleTable {
         const loadedData = Array.isArray(this.options?.value?.[modelKey]) ? this.options.value[modelKey] : null;
         const fallback = loadedData || fallbackData;
         const treeData = this.getControlTreeData(config.target || `field:${modelKey}`, fallback);
-        const normalizedTreeData = this.normalizeTreePickerNodes(treeData, childrenField);
+        const normalizedTreeData = this.normalizeTreePickerNodes(treeData, childrenField, chunkSelectable);
+        const isLeafKey = (nodes, key) => {
+            if (!Array.isArray(nodes)) return false;
+            for (const node of nodes) {
+                if (!node || typeof node !== 'object') continue;
+                if (String(node[idField]) === String(key)) {
+                    const children = node[childrenField];
+                    return !Array.isArray(children) || children.length === 0;
+                }
+                if (isLeafKey(node[childrenField], key)) return true;
+            }
+            return false;
+        };
         const currentValue = this.normalizeTreePickerValue(this.filters.value[modelKey], multiple);
         const selectedValues = Array.isArray(currentValue)
             ? [...currentValue]
             : (currentValue ? [currentValue] : []);
+        if (!chunkSelectable) {
+            for (let i = selectedValues.length - 1; i >= 0; i -= 1) {
+                if (!isLeafKey(normalizedTreeData, selectedValues[i])) selectedValues.splice(i, 1);
+            }
+        }
 
         // 关键：el-tree 的 :current-node-key / :default-checked-keys 用 === 严格匹配节点 id 字段。
         // selectedValues 当前是 String 化的"730"，而 treeData 经 normalizeIds 后是 number 730，
@@ -271,7 +290,10 @@ export class EleTable {
                                 : [];
                             // el-tree.getCheckedKeys() 返回的 key 与 node-key 字段同类型（已被 normalizeIds 处理），
                             // 直接保留原始类型，避免下次打开弹窗时类型不匹配。
-                            state.values = Array.isArray(keys) ? [...keys] : [];
+                            const selectableKeys = Array.isArray(keys) ? keys : [];
+                            state.values = selectableKeys
+                                .filter(key => chunkSelectable || isLeafKey(state.nodes, key))
+                                .map(key => key);
                         },
                         getSummary() {
                             const view = table.getTreePickerView(
@@ -395,7 +417,8 @@ export class EleTable {
                                     ? tree.getCheckedKeys(false)
                                     : state.values;
                                 // 直接保留 el-tree 返回的原始类型
-                                table.filters.value[modelKey] = Array.isArray(keys) ? [...keys] : [];
+                                table.filters.value[modelKey] = (Array.isArray(keys) ? keys : [])
+                                    .filter(key => chunkSelectable || isLeafKey(state.nodes, key));
                             } else {
                                 // 直接保留 state.current 的原始类型（与 el-tree 节点 id 同类型）
                                 table.filters.value[modelKey] = (state.current === null || state.current === undefined || state.current === '')

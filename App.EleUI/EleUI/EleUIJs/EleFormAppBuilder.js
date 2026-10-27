@@ -56,6 +56,26 @@ export class EleFormAppBuilder extends EleAppBuilder {
                 // Register message handlers for cross-origin communication
                 const msgHandler = (e) => form.messageHandler(e);
                 const pickerHandler = (e) => form.handlePickerMessage(e);
+                const enterButtonHandler = (e) => {
+                    if (e.key !== 'Enter' || e.isComposing || e.defaultPrevented) return;
+                    const target = e.target;
+                    if (!(target instanceof Element)
+                        || target.closest('textarea, [contenteditable="true"], button, a, [role="button"]')) return;
+
+                    const root = document.querySelector(selector || '#app');
+                    if (!root || !root.contains(target)) return;
+                    const button = Array.from(root.querySelectorAll('button.el-button, .el-button')).find((item) => {
+                        const style = window.getComputedStyle(item);
+                        return !item.disabled
+                            && item.getClientRects().length > 0
+                            && style.visibility !== 'hidden'
+                            && style.display !== 'none';
+                    });
+                    if (!button) return;
+
+                    e.preventDefault();
+                    button.click();
+                };
                 let listWindowScrollHandler = null;
                 onMounted(async () => {
                     if (config.autoLoad === false) {
@@ -120,6 +140,7 @@ export class EleFormAppBuilder extends EleAppBuilder {
                     window.addEventListener('message', msgHandler);
                     window.addEventListener('message', pickerHandler);
                     window.addEventListener('message', winMsgHandler);
+                    document.addEventListener('keydown', enterButtonHandler);
                     if (typeof window.addEventListener === 'function') {
                         window.addEventListener('eleui:refresh-data', customEvtHandler);
                     }
@@ -149,6 +170,7 @@ export class EleFormAppBuilder extends EleAppBuilder {
                     window.removeEventListener('message', msgHandler);
                     window.removeEventListener('message', pickerHandler);
                     window.removeEventListener('message', winMsgHandler);
+                    document.removeEventListener('keydown', enterButtonHandler);
                     if (typeof window.removeEventListener === 'function') {
                         window.removeEventListener('eleui:refresh-data', customEvtHandler);
                     }

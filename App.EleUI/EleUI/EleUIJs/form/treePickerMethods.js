@@ -5,15 +5,16 @@ export function initTreePickerState(form, vueApi) {
 
 export const treePickerMethods = {
     /**Normalize tree picker nodes and map enabled=false to Element Plus disabled */
-    normalizeTreePickerNodes(list, childrenField = 'children') {
+    normalizeTreePickerNodes(list, childrenField = 'children', chunkSelectable = true) {
         const nodes = Array.isArray(list) ? list : [];
         return nodes.map(node => {
             if (!node || typeof node !== 'object') return node;
             const clone = { ...node };
-            clone.disabled = clone.disabled === true || clone.enabled === false;
             const children = clone[childrenField];
-            if (Array.isArray(children) && children.length > 0) {
-                clone[childrenField] = this.normalizeTreePickerNodes(children, childrenField);
+            const hasChildren = Array.isArray(children) && children.length > 0;
+            clone.disabled = clone.disabled === true || clone.enabled === false || (!chunkSelectable && hasChildren);
+            if (hasChildren) {
+                clone[childrenField] = this.normalizeTreePickerNodes(children, childrenField, chunkSelectable);
             }
             return clone;
         });
@@ -126,6 +127,7 @@ export const treePickerMethods = {
         const nameField = config.nameField || 'name';
         const childrenField = config.childrenField || 'children';
         const multiple = !!config.multiple;
+        const chunkSelectable = config.chunkSelectable !== false;
         const collapseTags = !!config.collapseTags;
         const checkStrictly = config.checkStrictly !== false;
         const title = config.title || config.label || '选择';
@@ -146,10 +148,27 @@ export const treePickerMethods = {
         const treeData = typeof this.getControlTreeData === 'function'
             ? this.getControlTreeData(target, fallback)
             : fallback;
-        const normalizedTreeData = this.normalizeTreePickerNodes(treeData, childrenField);
+        const normalizedTreeData = this.normalizeTreePickerNodes(treeData, childrenField, chunkSelectable);
+        const isLeafKey = (nodes, key) => {
+            if (!Array.isArray(nodes)) return false;
+            for (const node of nodes) {
+                if (!node || typeof node !== 'object') continue;
+                if (String(node[idField]) === String(key)) {
+                    const children = node[childrenField];
+                    return !Array.isArray(children) || children.length === 0;
+                }
+                if (isLeafKey(node[childrenField], key)) return true;
+            }
+            return false;
+        };
         const selectedValues = Array.isArray(currentValue)
             ? [...currentValue]
             : (currentValue ? [currentValue] : []);
+        if (!chunkSelectable) {
+            for (let i = selectedValues.length - 1; i >= 0; i -= 1) {
+                if (!isLeafKey(normalizedTreeData, selectedValues[i])) selectedValues.splice(i, 1);
+            }
+        }
         const form = this;
 
         EleManager.openDrawer({
@@ -254,7 +273,10 @@ export const treePickerMethods = {
                             const keys = typeof tree.getCheckedKeys === 'function'
                                 ? tree.getCheckedKeys(false)
                                 : [];
-                            state.values = Array.isArray(keys) ? keys.map(v => String(v)) : [];
+                            const selectableKeys = Array.isArray(keys) ? keys : [];
+                            state.values = selectableKeys
+                                .filter(key => chunkSelectable || isLeafKey(state.nodes, key))
+                                .map(v => String(v));
                         },
                         /**Return current selected labels */
                         getSummary() {
@@ -378,7 +400,9 @@ export const treePickerMethods = {
                                 const keys = tree && typeof tree.getCheckedKeys === 'function'
                                     ? tree.getCheckedKeys(false)
                                     : state.values;
-                                result = Array.isArray(keys) ? keys.map(v => String(v)) : [];
+                                result = (Array.isArray(keys) ? keys : [])
+                                    .filter(key => chunkSelectable || isLeafKey(state.nodes, key))
+                                    .map(v => String(v));
                                 form.form.value[modelKey] = result;
                             } else {
                                 result = state.current ? String(state.current) : null;

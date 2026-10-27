@@ -19,6 +19,7 @@ namespace App.EleUI
         [HtmlAttributeName("NameField")]     public string NameField { get; set; }                      // 树节点名称 字段
         [HtmlAttributeName("ChildrenField")] public string ChildrenField { get; set; }                  // 树节点子项字段
         [HtmlAttributeName("CheckStrictly")] public bool CheckStrictly { get; set; } = true;            // 是否严格检查选中项是否在树中
+        [HtmlAttributeName("ChunkSelectable")] public bool ChunkSelectable { get; set; } = true;         // 枝干节点是否可选择
         [HtmlAttributeName("Multiple")]      public bool Multiple { get; set; } = false;                // 是否支持多选
         [HtmlAttributeName("CollapseTags")]  public bool? CollapseTags { get; set; } = false;           // 是否折叠标签
         [HtmlAttributeName("ExpandLevel")]   public int ExpandLevel { get; set; } = 4;                  // 默认展开层次（0 不展开，-1 全部展开）
@@ -111,6 +112,7 @@ namespace App.EleUI
                 childrenField: '{EscapeJs(childrenField)}',
                 multiple: {(Multiple ? "true" : "false")},
                 checkStrictly: {(CheckStrictly ? "true" : "false")},
+                chunkSelectable: {(ChunkSelectable ? "true" : "false")},
                 collapseTags: {(collapseTags ? "true" : "false")},
                 expandLevel: {ExpandLevel},
                 showAllButton: {(ShowAllButton ? "true" : "false")},
