@@ -79,14 +79,14 @@ namespace App.Pages.Me
 
             SuperviseStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("重点监管企业",     CountObjectsByTag("重点监管"),   AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("重点监管")}"), "fas fa-exclamation-triangle"),
-                new WorkDeskStatCard("示范企业",        CountObjectsByTag("示范企业"),  AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("示范企业")}"), "fas fa-star"),
+                CreateTagSpecCard("重点监管企业", "重点监管", "fas fa-exclamation-triangle"),
+                CreateTagSpecCard("示范企业", "示范企业", "fas fa-star"),
             };
 
             RiskStatCards = new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("八类高危企业",      CountObjectsByTag("八类高危企业"), AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("八类高危企业")}"), "fas fa-industry"),
-                new WorkDeskStatCard("三场所三企业",      CountObjectsByTag("三场所三企业"), AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagName={Uri.EscapeDataString("三场所三企业")}"), "fas fa-store"),
+                CreateTagSpecCard("八类高危企业", "八类高危企业", "fas fa-industry"),
+                CreateTagSpecCard("三场所三企业", "三场所三企业", "fas fa-store"),
             };
 
             var hazards = BuildHazardScopeQuery();
@@ -147,23 +147,26 @@ namespace App.Pages.Me
             return BuildResult(0, "success", rows, pi);
         }
 
-        /// <summary>按标签名称统计对象数量。</summary>
-        private int CountObjectsByTag(string tagName)
+        /// <summary>按扩展标签统计对象，并生成对应的列表链接。</summary>
+        private WorkDeskStatCard CreateTagSpecCard(string title, string tagName, string iconCls)
         {
             if (string.IsNullOrWhiteSpace(tagName))
-                return 0;
+                return new WorkDeskStatCard(title, 0, AppendObjectScope("/Checks/CheckObjects?isDel=false"), iconCls);
 
-            var tag = App.DAL.CheckTag.Set.FirstOrDefault(t => t.Name == tagName && t.TagType == CheckTagType.Basic);
+            var tags = App.DAL.CheckTag.Set.Where(t => t.TagType == CheckTagType.Spec);
+            var tag = tags.FirstOrDefault(t => t.Name == tagName)
+                ?? tags.Where(t => t.Name.Contains(tagName)).OrderBy(t => t.Name.Length).FirstOrDefault();
             if (tag == null)
-                return 0;
+                return new WorkDeskStatCard(title, 0, AppendObjectScope("/Checks/CheckObjects?isDel=false"), iconCls);
 
             var tagIds = App.DAL.CheckTag.GetChildIds(tag.Id);
-            if (tagIds.Count == 0)
-                return 0;
-
-            return BuildObjectScopeQuery()
-                .Where(o => App.DAL.CheckObjectTag.IncludeSet.Any(ct => ct.CheckObjectId == o.Id && tagIds.Contains(ct.TagId)))
-                .Count();
+            var count = tagIds.Count == 0
+                ? 0
+                : BuildObjectScopeQuery()
+                    .Where(o => App.DAL.CheckObjectTagSpec.IncludeSet.Any(ct => ct.CheckObjectId == o.Id && tagIds.Contains(ct.TagId)))
+                    .Count();
+            var url = AppendObjectScope($"/Checks/CheckObjects?isDel=false&tagSpecIds={tag.Id}");
+            return new WorkDeskStatCard(title, count, url, iconCls);
         }
 
         /// <summary>解析当前组织显示名。</summary>

@@ -6,6 +6,7 @@
     // 这些参数来自 WorkDesk 卡片跳转 URL，EleTable 的过滤控件无法覆盖，需显式透传给 OnGetData。
     var nextCheck = Request.Query["nextCheck"].FirstOrDefault();
     var tagName = Request.Query["tagName"].FirstOrDefault();
+    var tagSpecIds = Request.Query["tagSpecIds"].FirstOrDefault();
     var orgId = Request.Query["orgId"].FirstOrDefault();
     var checkerId = Request.Query["checkerId"].FirstOrDefault();
     var scopeCheckerOrOrg = Request.Query["scopeCheckerOrOrg"].FirstOrDefault();
@@ -13,6 +14,7 @@
     var dataHandler = "?handler=Data";
     if (!string.IsNullOrWhiteSpace(nextCheck)) dataHandler += $"&nextCheck={Uri.EscapeDataString(nextCheck)}";
     if (!string.IsNullOrWhiteSpace(tagName))   dataHandler += $"&tagName={Uri.EscapeDataString(tagName)}";
+    if (!string.IsNullOrWhiteSpace(tagSpecIds)) dataHandler += $"&tagSpecIds={Uri.EscapeDataString(tagSpecIds)}";
     if (!string.IsNullOrWhiteSpace(orgId))     dataHandler += $"&orgId={orgId}";
     if (!string.IsNullOrWhiteSpace(checkerId)) dataHandler += $"&checkerId={checkerId}";
     if (!string.IsNullOrWhiteSpace(scopeCheckerOrOrg)) dataHandler += $"&scopeCheckerOrOrg={scopeCheckerOrOrg}";
