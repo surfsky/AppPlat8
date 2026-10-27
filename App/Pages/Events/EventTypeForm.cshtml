@@ -1,5 +1,5 @@
 @page
-@model App.Pages.OA.EventTypeFormModel
+@model App.Pages.Events.EventTypeFormModel
 @{
     Layout = "_Layout";
     ViewData["Title"] = "事件类别信息";
@@ -12,8 +12,8 @@
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
     
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
+            <EleButton Type="Primary" Command="SaveClose"  Icon="Check"Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
 }

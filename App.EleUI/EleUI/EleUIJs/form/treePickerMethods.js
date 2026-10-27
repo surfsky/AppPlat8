@@ -92,6 +92,14 @@ export const treePickerMethods = {
         this.notifyTreePickerChanged(modelKey, multiple ? [] : null, multiple, onChange);
     },
 
+    removeTreePickerTag(modelKey, value, onChange = '') {
+        if (!this.form?.value) return;
+        const values = this.normalizeTreePickerValue(this.form.value[modelKey], true);
+        const remaining = values.filter(item => item !== String(value));
+        this.form.value[modelKey] = remaining;
+        this.notifyTreePickerChanged(modelKey, remaining, true, onChange);
+    },
+
     /**Post tree picker change callback */
     notifyTreePickerChanged(modelKey, value, multiple = false, onChange = '') {
         if (!onChange || typeof this.postHandler !== 'function') return;
@@ -125,6 +133,8 @@ export const treePickerMethods = {
         const source = config.source || '';
         const fallbackData = Array.isArray(config.fallbackData) ? config.fallbackData : [];
         const placeholder = config.placeholder || '请输入关键字过滤';
+        const expandLevel = Number.isFinite(Number(config.expandLevel)) ? Number(config.expandLevel) : 5;
+        const showAllButton = !!config.showAllButton;
         const currentValue = this.normalizeTreePickerValue(this.form.value[modelKey], multiple);
 
         if (source && !this.options?.value?.[modelKey]) {
@@ -160,14 +170,51 @@ export const treePickerMethods = {
                     nodes: Array.isArray(normalizedTreeData) ? normalizedTreeData : [],
                     values: [...selectedValues],
                     current: !multiple && selectedValues.length > 0 ? selectedValues[0] : '',
-                    collapseTags
+                    collapseTags,
+                    expandKeys: [],
+                    baseExpandKeys: [],
+                    expandAll: expandLevel < 0,
+                    treeKey: 0
                 });
+
+                // 收集前 expandLevel 层有子节点的节点 key
+                const collectExpandKeys = (nodes, depth, keys) => {
+                    if (!Array.isArray(nodes) || depth >= expandLevel) return keys;
+                    for (const n of nodes) {
+                        const kids = n && n[childrenField];
+                        if (Array.isArray(kids) && kids.length > 0) {
+                            keys.push(n[idField]);
+                            collectExpandKeys(kids, depth + 1, keys);
+                        }
+                    }
+                    return keys;
+                };
+                if (expandLevel > 0) state.baseExpandKeys = collectExpandKeys(state.nodes, 0, []);
+                const collectAllExpandKeys = (nodes, keys = []) => {
+                    if (!Array.isArray(nodes)) return keys;
+                    for (const node of nodes) {
+                        const children = node && node[childrenField];
+                        if (Array.isArray(children) && children.length > 0) {
+                            keys.push(node[idField]);
+                            collectAllExpandKeys(children, keys);
+                        }
+                    }
+                    return keys;
+                };
+                const allExpandKeys = collectAllExpandKeys(state.nodes);
+                if (expandLevel < 0) state.baseExpandKeys = [...allExpandKeys];
+                state.expandKeys = [...state.baseExpandKeys];
 
                 const app = createApp({
                     data() {
                         return { state };
                     },
                     methods: {
+                        setExpandAll(value) {
+                            state.expandAll = !!value;
+                            state.expandKeys = state.expandAll ? [...allExpandKeys] : [...state.baseExpandKeys];
+                            state.treeKey += 1;
+                        },
                         /**Filter tree nodes */
                         onFilterChange(value) {
                             state.keyword = value || '';
@@ -223,14 +270,26 @@ export const treePickerMethods = {
                             );
                             if (multiple) {
                                 view.values = [...state.values];
+                                const flat = form.flattenTreeNodes(state.nodes, idField, nameField, childrenField, []);
+                                view.labels = state.values.map(value => {
+                                    const id = String(value);
+                                    const hit = flat.find(item => item.id === id);
+                                    if (!hit) return id;
+                                    const label = hit.raw && hit.raw.displayName ? String(hit.raw.displayName) : (hit.name || id);
+                                    return `${label} (${id})`;
+                                });
+                                view.displayLabels = collapseTags && view.labels.length > 0 ? [view.labels[0]] : view.labels;
+                                view.hiddenCount = collapseTags ? view.labels.length - view.displayLabels.length : 0;
+                                view.text = view.labels.join(', ');
                             } else {
                                 view.values = state.current ? [state.current] : [];
                                 const flat = form.flattenTreeNodes(state.nodes, idField, nameField, childrenField, []);
                                 const picked = view.values.map(v => {
-                                    const hit = flat.find(item => item.id === v);
-                                    if (!hit) return v;
-                                    const displayName = hit.raw && hit.raw.displayName ? String(hit.raw.displayName) : (hit.name || String(hit.id));
-                                    return v ? `${displayName} (${v})` : displayName;
+                                    const id = String(v);
+                                    const hit = flat.find(item => item.id === id);
+                                    if (!hit) return id;
+                                    const displayName = hit.raw && hit.raw.displayName ? String(hit.raw.displayName) : (hit.name || id);
+                                    return `${displayName} (${id})`;
                                 });
                                 view.labels = picked;
                                 view.displayLabels = picked;
@@ -243,7 +302,9 @@ export const treePickerMethods = {
                     template: `
 <div class="ele-tree-picker-panel h-full flex flex-col">
     <div class="px-4 pt-4 pb-3 border-b border-slate-200 bg-white">
+        <div class="flex items-center gap-3">
         <el-input
+            class="flex-1"
             :model-value="state.keyword"
             clearable
             :placeholder='${JSON.stringify(placeholder)}'
@@ -253,17 +314,21 @@ export const treePickerMethods = {
                 <el-icon><Search /></el-icon>
             </template>
         </el-input>
+        <el-switch v-if="${showAllButton ? 'true' : 'false'}" :model-value="state.expandAll" inline-prompt active-text="展开" inactive-text="恢复" @change="setExpandAll"></el-switch>
+        </div>
         <div class="mt-3 text-xs text-slate-500" v-if="getSummary().text">
             已选：{{ getSummary().text }}
         </div>
     </div>
     <div class="flex-1 min-h-0 overflow-auto bg-white p-2">
         <el-tree
+            :key="state.treeKey"
             ref="treeRef"
             node-key="${idField}"
             :data="state.nodes"
             :props="{ label: '${nameField}', children: '${childrenField}', disabled: 'disabled' }"
-            :default-expand-all="true"
+            :default-expand-all="${expandLevel < 0 && !showAllButton ? 'true' : 'false'}"
+            :default-expanded-keys="state.expandKeys"
             :expand-on-click-node="${multiple ? 'false' : 'true'}"
             :highlight-current="${multiple ? 'false' : 'true'}"
             :show-checkbox="${multiple ? 'true' : 'false'}"

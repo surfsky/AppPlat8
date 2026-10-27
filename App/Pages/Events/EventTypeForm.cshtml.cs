@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace App.Pages.OA
+namespace App.Pages.Events
 {
     [Auth(Power.EventEdit)]
     public class EventTypeFormModel : AuthModel

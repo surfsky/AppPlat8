@@ -110,6 +110,12 @@ export class EleTable {
         this.filters.value[modelKey] = multiple ? [] : null;
     }
 
+    removeTreePickerTag(modelKey, value) {
+        if (!this.filters?.value) return;
+        const values = this.normalizeTreePickerValue(this.filters.value[modelKey], true);
+        this.filters.value[modelKey] = values.filter(item => item !== String(value));
+    }
+
     async openTreePicker(config = {}) {
         if (!config || !config.modelKey || !this.filters?.value) return;
         if (!window.EleManager || typeof EleManager.openDrawer !== 'function') return;
@@ -126,6 +132,8 @@ export class EleTable {
         const source = config.source || '';
         const fallbackData = Array.isArray(config.fallbackData) ? config.fallbackData : [];
         const placeholder = config.placeholder || '请输入关键字过滤';
+        const expandLevel = Number.isFinite(Number(config.expandLevel)) ? Number(config.expandLevel) : 5;
+        const showAllButton = !!config.showAllButton;
 
         if (source && !this.options?.value?.[modelKey]) {
             await this.fetchOptions(modelKey, source);
@@ -179,14 +187,51 @@ export class EleTable {
                     nodes: Array.isArray(normalizedTreeData) ? normalizedTreeData : [],
                     values: [...initialValues],
                     current: !multiple && initialValues.length > 0 ? initialValues[0] : '',
-                    collapseTags
+                    collapseTags,
+                    expandKeys: [],
+                    baseExpandKeys: [],
+                    expandAll: expandLevel < 0,
+                    treeKey: 0
                 });
+
+                // 收集前 expandLevel 层有子节点的节点 key
+                const collectExpandKeys = (nodes, depth, keys) => {
+                    if (!Array.isArray(nodes) || depth >= expandLevel) return keys;
+                    for (const n of nodes) {
+                        const kids = n && n[childrenField];
+                        if (Array.isArray(kids) && kids.length > 0) {
+                            keys.push(n[idField]);
+                            collectExpandKeys(kids, depth + 1, keys);
+                        }
+                    }
+                    return keys;
+                };
+                if (expandLevel > 0) state.baseExpandKeys = collectExpandKeys(state.nodes, 0, []);
+                const collectAllExpandKeys = (nodes, keys = []) => {
+                    if (!Array.isArray(nodes)) return keys;
+                    for (const node of nodes) {
+                        const children = node && node[childrenField];
+                        if (Array.isArray(children) && children.length > 0) {
+                            keys.push(node[idField]);
+                            collectAllExpandKeys(children, keys);
+                        }
+                    }
+                    return keys;
+                };
+                const allExpandKeys = collectAllExpandKeys(state.nodes);
+                if (expandLevel < 0) state.baseExpandKeys = [...allExpandKeys];
+                state.expandKeys = [...state.baseExpandKeys];
 
                 const app = createApp({
                     data() {
                         return { state };
                     },
                     methods: {
+                        setExpandAll(value) {
+                            state.expandAll = !!value;
+                            state.expandKeys = state.expandAll ? [...allExpandKeys] : [...state.baseExpandKeys];
+                            state.treeKey += 1;
+                        },
                         onFilterChange(value) {
                             state.keyword = value || '';
                             const tree = this.$refs.treeRef;
@@ -241,12 +286,26 @@ export class EleTable {
                             );
                             if (multiple) {
                                 view.values = [...state.values];
+                                const flat = table.flattenTreeNodes(state.nodes, idField, nameField, childrenField, []);
+                                view.labels = state.values.map(value => {
+                                    const id = String(value);
+                                    const hit = flat.find(item => item.id === id);
+                                    if (!hit) return id;
+                                    const label = hit.raw && hit.raw.displayName ? String(hit.raw.displayName) : (hit.name || id);
+                                    return `${label} (${id})`;
+                                });
+                                view.displayLabels = collapseTags && view.labels.length > 0 ? [view.labels[0]] : view.labels;
+                                view.hiddenCount = collapseTags ? view.labels.length - view.displayLabels.length : 0;
+                                view.text = view.labels.join(', ');
                             } else {
                                 view.values = state.current ? [state.current] : [];
-                                const picked = view.values.map(v => {
-                                    const flat = table.flattenTreeNodes(state.nodes, idField, nameField, childrenField, []);
-                                    const hit = flat.find(item => item.id === v);
-                                    return hit ? hit.name : v;
+                                const flat = table.flattenTreeNodes(state.nodes, idField, nameField, childrenField, []);
+                                const picked = view.values.map(value => {
+                                    const id = String(value);
+                                    const hit = flat.find(item => item.id === id);
+                                    if (!hit) return id;
+                                    const label = hit.raw && hit.raw.displayName ? String(hit.raw.displayName) : (hit.name || id);
+                                    return `${label} (${id})`;
                                 });
                                 view.labels = picked;
                                 view.displayLabels = picked;
@@ -259,7 +318,9 @@ export class EleTable {
                     template: `
 <div class="ele-tree-picker-panel h-full flex flex-col">
     <div class="px-4 pt-4 pb-3 border-b border-slate-200 bg-white">
+        <div class="flex items-center gap-3">
         <el-input
+            class="flex-1"
             :model-value="state.keyword"
             clearable
             :placeholder='${JSON.stringify(placeholder)}'
@@ -269,17 +330,21 @@ export class EleTable {
                 <el-icon><Search /></el-icon>
             </template>
         </el-input>
+        <el-switch v-if="${showAllButton ? 'true' : 'false'}" :model-value="state.expandAll" inline-prompt active-text="展开" inactive-text="恢复" @change="setExpandAll"></el-switch>
+        </div>
         <div class="mt-3 text-xs text-slate-500" v-if="getSummary().text">
             已选：{{ getSummary().text }}
         </div>
     </div>
     <div class="flex-1 min-h-0 overflow-auto bg-white p-2">
         <el-tree
+            :key="state.treeKey"
             ref="treeRef"
             node-key="${idField}"
             :data="state.nodes"
             :props="{ label: '${nameField}', children: '${childrenField}', disabled: 'disabled' }"
-            :default-expand-all="true"
+            :default-expand-all="${expandLevel < 0 && !showAllButton ? 'true' : 'false'}"
+            :default-expanded-keys="state.expandKeys"
             :expand-on-click-node="${multiple ? 'false' : 'true'}"
             :highlight-current="${multiple ? 'false' : 'true'}"
             :show-checkbox="${multiple ? 'true' : 'false'}"

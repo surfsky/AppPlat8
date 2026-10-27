@@ -43,6 +43,20 @@ namespace App.EleUI
         Circle,
     }
 
+    public enum EleButtonFixPosition
+    {
+        None,
+        TopLeft,
+        TopCenter,
+        TopRight,
+        BottomLeft,
+        BottomCenter,
+        BottomRight,
+        MiddleLeft,
+        MiddleCenter,
+        MiddleRight
+    }
+
     /// <summary>
     /// 按钮。支持不同类型、图标、命令等功能。输出 <el-button> 元素。
     /// 参考：https://element-plus.org/en-US/component/button
@@ -110,21 +124,25 @@ namespace App.EleUI
         /// <summary>命令类型。如果设置了命令类型，点击事件将自动绑定为 invokeCommand('{Command.ToString()}')</summary>
         [HtmlAttributeName("Command")]         public Command Command { get; set; } // Default is None (0)
 
-
-        /// <summary>弹窗URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。会生成：v-on:click="openForm(0, '...')"。</summary>
-        [HtmlAttributeName("PopupUrl")]        public string PopupUrl { get; set; }
-
-        /// <summary>导航URL。点击后直接跳转当前页面到该地址（window.location.href）。</summary>
-        [HtmlAttributeName("NavigateUrl")]     public string NavigateUrl { get; set; }
-
-        /// <summary>弹出页面标题。与 PopupUrl 配合使用。</summary>
-        [HtmlAttributeName("PopupTitle")]      public string PopupTitle { get; set; }
-
         /// <summary>二次确认文案。Handler / VClick / Command 场景下，点击后先弹出 ElMessageBox.confirm(ConfirmText, ConfirmTitle)，用户确认后再执行 Handler 逻辑。</summary>
         [HtmlAttributeName("ConfirmText")]     public string ConfirmText { get; set; }
 
         /// <summary>二次确认对话框标题，默认"提示"。需与 ConfirmText 同时配置才生效。</summary>
         [HtmlAttributeName("ConfirmTitle")]    public string ConfirmTitle { get; set; } = null;
+
+
+        /// <summary>导航URL。点击后直接跳转当前页面到该地址（window.location.href）。</summary>
+        [HtmlAttributeName("NavigateUrl")]     public string NavigateUrl { get; set; }
+
+        /// <summary>弹窗URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。会生成：v-on:click="openForm(0, '...')"。</summary>
+        [HtmlAttributeName("PopupUrl")]        public string PopupUrl { get; set; }
+
+        /// <summary>弹出页面标题。与 PopupUrl 配合使用。</summary>
+        [HtmlAttributeName("PopupTitle")]      public string PopupTitle { get; set; }
+
+        [HtmlAttributeName("PopupText")]       public string PopupText { get; set; }
+        [HtmlAttributeName("FixPosition")]     public EleButtonFixPosition FixPosition { get; set; } = EleButtonFixPosition.None;
+
 
 
         /// <summary>处理标签</summary>
@@ -150,6 +168,25 @@ namespace App.EleUI
 
             output.TagName = "el-button";
             AddCommonAttributes(context, output);
+
+            var fixedPositionStyle = FixPosition switch
+            {
+                EleButtonFixPosition.TopLeft => "position:fixed;top:16px;left:16px;z-index:4990;",
+                EleButtonFixPosition.TopCenter => "position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:4990;",
+                EleButtonFixPosition.TopRight => "position:fixed;top:16px;right:16px;z-index:4990;",
+                EleButtonFixPosition.BottomLeft => "position:fixed;bottom:16px;left:16px;z-index:4990;",
+                EleButtonFixPosition.BottomCenter => "position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:4990;",
+                EleButtonFixPosition.BottomRight => "position:fixed;bottom:16px;right:16px;z-index:4990;",
+                EleButtonFixPosition.MiddleLeft => "position:fixed;top:50%;left:16px;transform:translateY(-50%);z-index:4990;",
+                EleButtonFixPosition.MiddleCenter => "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4990;",
+                EleButtonFixPosition.MiddleRight => "position:fixed;top:50%;right:16px;transform:translateY(-50%);z-index:4990;",
+                _ => string.Empty
+            };
+            if (!string.IsNullOrEmpty(fixedPositionStyle))
+            {
+                var existingStyle = output.Attributes["style"]?.Value?.ToString() ?? string.Empty;
+                output.Attributes.SetAttribute("style", $"{existingStyle}{fixedPositionStyle}");
+            }
             
             // type, outlook
             output.Attributes.SetAttribute("type", Type.ToString().ToLower());
@@ -249,6 +286,12 @@ namespace App.EleUI
                 {
                     primaryExpr = $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}' }}) : null))";
                 }
+            }
+            else if (!string.IsNullOrWhiteSpace(PopupText))
+            {
+                var popupTitle = EscapeJs(string.IsNullOrWhiteSpace(PopupTitle) ? "提示" : PopupTitle);
+                var popupText = EscapeJs(PopupText);
+                primaryExpr = $"(window.EleManager && typeof window.EleManager.openDrawer === 'function' ? window.EleManager.openDrawer({{ title: '{popupTitle}', content: '{popupText}' }}) : null)";
             }
             else if (!string.IsNullOrEmpty(NavigateUrl))
             {

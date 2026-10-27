@@ -19,8 +19,8 @@
     <EleInput For="Item.Content" Label="内容" Rows="12" FillRow="true"></EleInput>
 
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
+            <EleButton Type="Primary" Command="SaveClose"  Icon="Check"Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
 }

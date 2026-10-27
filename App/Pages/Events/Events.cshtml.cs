@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Common;
 
-namespace App.Pages.OA
+namespace App.Pages.Events
 {
     //[Auth(Power.EventView)]
     public class EventsModel : AuthModel

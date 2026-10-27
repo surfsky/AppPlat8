@@ -27,8 +27,8 @@
         <ElePicker For="Item.ChartJson" TextFor="Item.ChartJson" Label="图表配置" Class="chart-json-picker" PopupUrl="ChartEditor" KeyMode="Storage" Icon="Edit" Rows="10" Editable="true" FillRow="true"></ElePicker>
         <EleInput For="Item.Content" Label="普通内容HTML" Rows="8" FillRow="true"></EleInput>
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
+            <EleButton Type="Primary" Command="SaveClose"  Icon="Check"Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
 }

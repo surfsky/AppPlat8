@@ -21,6 +21,8 @@ namespace App.EleUI
         [HtmlAttributeName("CheckStrictly")] public bool CheckStrictly { get; set; } = true;            // 是否严格检查选中项是否在树中
         [HtmlAttributeName("Multiple")]      public bool Multiple { get; set; } = false;                // 是否支持多选
         [HtmlAttributeName("CollapseTags")]  public bool? CollapseTags { get; set; } = false;           // 是否折叠标签
+        [HtmlAttributeName("ExpandLevel")]   public int ExpandLevel { get; set; } = 4;                  // 默认展开层次（0 不展开，-1 全部展开）
+        [HtmlAttributeName("ShowAllButton")] public bool ShowAllButton { get; set; } = true;           // 是否显示全部展开开关（默认显示）
         [HtmlAttributeName("TagType")]       public EleTagType TagType { get; set; } = EleTagType.Info; // 标签类型
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
@@ -110,6 +112,8 @@ namespace App.EleUI
                 multiple: {(Multiple ? "true" : "false")},
                 checkStrictly: {(CheckStrictly ? "true" : "false")},
                 collapseTags: {(collapseTags ? "true" : "false")},
+                expandLevel: {ExpandLevel},
+                showAllButton: {(ShowAllButton ? "true" : "false")},
                 placeholder: '关键字',
                 fallbackData: {fallbackExpr},
                 onChange: '{onChangeName}'
@@ -133,6 +137,8 @@ namespace App.EleUI
                         :key=""idx""
                         type=""{tagTypeName}""
                         disable-transitions
+                        :closable=""{(Clearable == false ? "false" : "true")} && !({disabledExpr})""
+                        @close.stop=""removeTreePickerTag('{EscapeJs(propName)}', {viewExpr}.values[idx], '{onChangeName}')""
                         class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap""
                     >
                         {{{{ txt }}}}

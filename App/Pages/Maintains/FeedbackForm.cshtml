@@ -27,8 +27,8 @@
         <EleImageUpload For="Item.ReplyImage" Label="处理图片" ItemWidth="120" FillRow="true"></EleImageUpload>
 
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
+            <EleButton Type="Primary" Command="SaveClose"  Icon="Check"Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
 }

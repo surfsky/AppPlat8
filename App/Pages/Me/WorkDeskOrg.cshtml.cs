@@ -12,31 +12,18 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.Me
 {
     /// <summary>科室工作台页面模型。</summary>
-    public class WorkDeskOrgModel : BaseModel
+    public class WorkDeskOrgModel : AuthModel
     {
-        /// <summary>来自 URL 的组织 Id。</summary>
-        [BindProperty(SupportsGet = true)] public long? OrgId { get; set; }
-
-        /// <summary>来自 URL 的组织名称。</summary>
-        [BindProperty(SupportsGet = true)] public string OrgName { get; set; }
-
-        /// <summary>当前组织显示名。</summary>
-        public string OrgDisplay { get; private set; }
-
-        /// <summary>是否允许切换组织范围。</summary>
-        public bool CanChangeScope => Auth.HasPower(Power.AdminLeader);
-
-        /// <summary>页面统计卡片：对象。</summary>
-        public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
-
-        /// <summary>页面统计卡片：监管对象。</summary>
-        public List<WorkDeskStatCard> SuperviseStatCards { get; set; } = new List<WorkDeskStatCard>();
-
-        /// <summary>页面统计卡片：高风险对象。</summary>
-        public List<WorkDeskStatCard> RiskStatCards { get; set; } = new List<WorkDeskStatCard>();
-
-        /// <summary>页面统计卡片：隐患。</summary>
-        public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();
+        [BindProperty(SupportsGet = true)] public long? OrgId { get; set; }  // 来自 URL 的组织 Id。
+        [BindProperty(SupportsGet = true)] public string OrgName { get; set; }  // 来自 URL 的组织名称。
+        public List<long> CurrRootOrgIds => ResolveCurrRootOrgIds();   // 当前生效的组织根节点列表。
+        public List<long> CurrOrgIds => ResolveCurrOrgIds();   // 当前生效的组织范围（含子孙）。
+        public string OrgDisplay { get; private set; }  // 当前组织显示名。
+        public bool CanChangeScope => Auth.HasPower(Power.AdminLeader);  // 是否允许切换组织范围。
+        public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();     // 页面统计卡片：对象。
+        public List<WorkDeskStatCard> SuperviseStatCards { get; set; } = new List<WorkDeskStatCard>();     // 页面统计卡片：监管对象。
+        public List<WorkDeskStatCard> RiskStatCards { get; set; } = new List<WorkDeskStatCard>();     // 页面统计卡片：高风险对象。
+        public List<WorkDeskStatCard> HazardStatCards { get; set; } = new List<WorkDeskStatCard>();     // 页面统计卡片：隐患。
 
         /// <summary>当前生效的组织根节点。</summary>
         public long EffectiveOrgId
@@ -45,22 +32,10 @@ namespace App.Pages.Me
             {
                 if (CanChangeScope && OrgId.HasValue && OrgId.Value > 0)
                     return OrgId.Value;
-
-                var uid = GetUserId();
-                if (!uid.HasValue || uid.Value <= 0)
-                    return 0L;
-
-                var user = App.DAL.User.Get(uid.Value);
-                var orgId = user?.AuthOrgId;
-                return orgId.HasValue && orgId.Value > 0 ? orgId.Value : 0L;
+                return this.GetUser()?.AuthOrgId ?? 0L;
             }
         }
 
-        /// <summary>当前生效的组织根节点列表。</summary>
-        public List<long> CurrRootOrgIds => ResolveCurrRootOrgIds();
-
-        /// <summary>当前生效的组织范围（含子孙）。</summary>
-        public List<long> CurrOrgIds => ResolveCurrOrgIds();
 
         /// <summary>页面初始加载：计算统计卡片。</summary>
         public void OnGet()

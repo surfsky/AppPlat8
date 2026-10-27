@@ -28,13 +28,13 @@
                    - 其它参数（?name=xxx&address=yyy 等）直接用 QStr("key") 读取（_ViewImports 全局 @using static 导入），
                      无需 Model. 前缀，简单清晰。*@
                 <EleTreePicker For="OrgId" Width="300px" Label="所属网格" Multiple="false" CollapseTags="false" Enabled="@Auth.HasPower(Power.AdminLeader)"
-                               Api="/httpapi/orgs/GetAuthOrgTree" Value="@Model.OrgId"></EleTreePicker>
+                               Api="/httpapi/orgs/GetAuthOrgTree" Value="@Model.OrgId" ExpandLevel="3" ShowAllButton="true"></EleTreePicker>
                 <ElePicker For="Item.CheckerId" TextFor="Item.CheckerName" Width="250px" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0"
                            Value="@(Model.DefaultCheckerId.HasValue ? Model.DefaultCheckerId.Value.ToString() : QStr("checkerId"))"
                            TextValue="@Model.DefaultCheckerName">
                 </ElePicker>
                 <EleInput For="Item.Name"              Width="250px" Label="检查对象名称"     Value="@QStr("name")"></EleInput>
-                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" Value="@(string.IsNullOrEmpty(Model.TagIds) ? QStr("tagIds") : Model.TagIds)"></EleTreePicker>
+                <EleTreePicker For="Item.TagIds" Label="标签" Api="/httpapi/checks/GetCheckTagTree" Multiple="true" CollapseTags="false" FillRow="true" ExpandLevel="0" ShowAllButton="true" Value="@(string.IsNullOrEmpty(Model.TagIds) ? QStr("tagIds") : Model.TagIds)"></EleTreePicker>
                 <EleInput For="Item.Address"           Width="250px" Label="详细地址"         Value="@QStr("address")"></EleInput>
                 <EleSelect For="Item.Scope" Width="250px" Label="所属领域" Value="@QStr("scope")"></EleSelect>
                 <EleSelect For="Item.ObjectType" Width="250px" Label="类型" Value="@QStr("objectType")"></EleSelect>

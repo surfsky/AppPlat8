@@ -13,9 +13,9 @@
         <EleNumber For="Item.SortId" Label="排序"></EleNumber>
     
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Type="Primary" Command="SaveClose"  Icon="Check"Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Type="Primary" Command="SaveNew" Visible="@(Model.Mode != PageMode.View)">保存并新增</EleButton>
-            <EleButton Command="Close">关闭</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>
 }
