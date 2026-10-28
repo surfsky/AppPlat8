@@ -27,6 +27,7 @@ namespace App.EleUI
         [HtmlAttributeName("DrawerTitle")] public string DrawerTitle { get; set; }
         [HtmlAttributeName("DrawerSize")] public string DrawerSize { get; set; }
         [HtmlAttributeName("TagType")] public EleTagType TagType { get; set; } = EleTagType.Info;
+        [HtmlAttributeName("Icon")] public EleIcons Icon { get; set; } = EleIcons.ArrowRight;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -55,6 +56,9 @@ namespace App.EleUI
                 options = AppendFromBool(options);
 
             var defaultOptionsJson = BuildDefaultOptionsJson(options);
+            var suffixIconHtml = Icon == EleIcons.None
+                ? string.Empty
+                : $"<el-icon class=\"el-select__caret pointer-events-none shrink-0 text-slate-400 text-[14px]\"><component :is=\"'{Icon}'\"></component></el-icon>";
 
             var vModel = GetVModel(context);
             if (Value != null && !string.IsNullOrWhiteSpace(vModel))
@@ -149,7 +153,7 @@ namespace App.EleUI
                 @click.stop=""clearListPicker('{modelKeySafe}', {(Multiple ? "true" : "false")}, '{onChangeName}')"">
                 <CircleClose />
             </el-icon>
-            <el-icon class=""el-select__caret pointer-events-none shrink-0 text-slate-400 text-[14px]""><ArrowDown /></el-icon>
+            {suffixIconHtml}
         </div>
     </div>
 </div>";
