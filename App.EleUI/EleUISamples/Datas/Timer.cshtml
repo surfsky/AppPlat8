@@ -1,0 +1,27 @@
+@page
+@model App.Pages.EleUISamples.TimerModel
+
+@{
+    ViewData["Title"] = "定时刷新示例";
+}
+
+@section body {
+    <EleTable Title="定时刷新表格" PageSize="10" SortField="Id" SortOrder="asc">
+        <Toolbar>
+            <Filters>
+                <EleInput For="Item.Name" Label="任务名称" Width="220px"></EleInput>
+            </Filters>
+            <Buttons>
+                <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                <EleTimer Interval="5" Triggle="Data" Text="每 5 秒自动刷新"></EleTimer>
+            </Buttons>
+        </Toolbar>
+        <Columns>
+            <EleNumColumn></EleNumColumn>
+            <EleColumn For="Item.Name" Label="任务名称" MinWidth="180"></EleColumn>
+            <EleColumn For="Item.Status" Label="状态" Width="120"></EleColumn>
+            <EleColumn For="Item.RefreshCount" Label="服务端请求次数" Width="160"></EleColumn>
+            <EleColumn For="Item.RefreshedAt" Label="最近更新时间" Width="200" FormatString="yyyy-MM-dd HH:mm:ss"></EleColumn>
+        </Columns>
+    </EleTable>
+}

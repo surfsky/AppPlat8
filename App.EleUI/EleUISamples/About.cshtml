@@ -1,0 +1,116 @@
+@page
+@{
+    ViewData["Title"] = "EleUI 示例说明";
+}
+
+@section head {
+    <style>
+        .about-page { min-height: 100%; padding: 22px; background: #fff; color: #303133; }
+        .about-wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 16px; }
+        .about-hero {
+            padding: 28px 32px;
+            border: 1px solid #d9ecff;
+            border-radius: 8px;
+            background: linear-gradient(120deg, #ecf5ff 0%, #fff 74%);
+        }
+        .about-eyebrow { color: #409eff; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+        .about-hero h1 { margin-top: 8px; color: #303133; font-size: 30px; font-weight: 650; line-height: 1.2; }
+        .about-hero p { max-width: 820px; margin-top: 12px; color: #606266; font-size: 14px; line-height: 1.8; }
+        .about-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+        .about-tag { padding: 4px 10px; border: 1px solid #d9ecff; border-radius: 4px; background: #fff; color: #409eff; font-size: 12px; }
+        .about-section { padding: 22px 24px; border: 1px solid #e4e7ed; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgb(0 0 0 / 3%); }
+        .about-section h2 { margin-top: 4px; color: #303133; font-size: 19px; font-weight: 600; }
+        .about-section-intro { margin-top: 7px; color: #909399; font-size: 13px; line-height: 1.6; }
+        .about-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+        .about-card { padding: 16px; border: 1px solid #ebeef5; border-radius: 6px; background: #fff; }
+        .about-card h3 { color: #303133; font-size: 14px; font-weight: 600; }
+        .about-card p { margin-top: 7px; color: #606266; font-size: 13px; line-height: 1.7; }
+        .about-flow { margin-top: 14px; padding: 13px 15px; border: 1px solid #d9ecff; border-left: 3px solid #409eff; border-radius: 4px; background: #f4f9ff; color: #606266; font-size: 13px; line-height: 1.8; }
+        .about-benefits { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        @@media (max-width: 720px) {
+            .about-page { padding: 12px; }
+            .about-hero { padding: 22px 18px; }
+            .about-section { padding: 18px; }
+            .about-grid, .about-benefits { grid-template-columns: 1fr; }
+        }
+    </style>
+}
+
+@section body {
+    <main class="about-page">
+        <div class="about-wrap">
+            <section class="about-hero">
+                <p class="about-eyebrow">Razor Components · Vue 3 · Element Plus</p>
+                <h1>EleUI</h1>
+                <p>
+                    面向 ASP.NET Core Razor Pages 的组件化 UI 框架。以 Razor TagHelper 描述UI，展示为 Vue 3 、Element Plus、Tailwind CSS 的页面结构，并能指派后端 Handler 处理请求和响应。
+                </p>
+                <div class="about-tags">
+                    <span class="about-tag">声明式 Razor</span>
+                    <span class="about-tag">服务端 + 客户端协作</span>
+                    <span class="about-tag">可组合组件</span>
+                </div>
+            </section>
+
+            <section class="about-section">
+                <div>
+                    <p class="about-eyebrow">Architecture</p>
+                    <h2>框架结构</h2>
+                    <p class="about-section-intro">从页面声明到浏览器交互，各层职责清晰，可以按需组合。</p>
+                </div>
+                <div class="about-grid">
+                    <article class="about-card">
+                        <h3>01 · Razor Pages</h3>
+                        <p>承载页面与业务入口，使用熟悉的 .NET 页面模型和 Handler 组织请求。</p>
+                    </article>
+                    <article class="about-card">
+                        <h3>02 · EleUI TagHelpers</h3>
+                        <p>将表单、布局、弹层、数据视图等能力封装成 Razor 标签，负责生成组件结构及绑定信息。</p>
+                    </article>
+                    <article class="about-card">
+                        <h3>03 · Vue 3 + Element Plus</h3>
+                        <p>提供响应式状态与成熟的基础 UI 组件，支持表单交互、动态选项和客户端渲染。</p>
+                    </article>
+                    <article class="about-card">
+                        <h3>04 · EleManager + EleHandler</h3>
+                        <p>服务端通过 Handler 返回统一命令，客户端管理器执行提示、抽屉、控件更新及数据刷新等操作。</p>
+                    </article>
+                </div>
+                <div class="about-flow">
+                    典型流程：Razor 页面声明组件 → TagHelper 输出 Vue 绑定 → 用户操作触发 Handler → EleHandler 返回命令 → EleManager 更新界面。
+                </div>
+            </section>
+
+            <section class="about-section">
+                <p class="about-eyebrow">Why EleUI</p>
+                <h2>设计优点</h2>
+                <div class="about-grid about-benefits">
+                    <article class="about-card">
+                        <h3>贴近 .NET 开发方式</h3>
+                        <p>页面、模型和服务端逻辑保留在 Razor / C# 体系中，减少为常见交互另建前端工程的负担。</p>
+                    </article>
+                    <article class="about-card">
+                        <h3>声明简洁，复用方便</h3>
+                        <p>以 TagHelper 组合页面控件，统一常用属性、模型绑定和组件输出方式。</p>
+                    </article>
+                    <article class="about-card">
+                        <h3>前后端协作一致</h3>
+                        <p>OnChange、SetControl 等机制可将服务端业务结果映射为客户端状态更新。</p>
+                    </article>
+                    <article class="about-card">
+                        <h3>基于成熟生态</h3>
+                        <p>结合 Vue 3 响应式能力与 Element Plus 控件，覆盖常见管理界面需求。</p>
+                    </article>
+                    <article class="about-card">
+                        <h3>交互能力集中</h3>
+                        <p>统一管理通知、抽屉、对话框、控件状态和刷新等页面级操作。</p>
+                    </article>
+                    <article class="about-card">
+                        <h3>示例可直接体验</h3>
+                        <p>左侧目录按布局、控件、弹层、容器和数据场景组织，可逐项查看组件用法。</p>
+                    </article>
+                </div>
+            </section>
+        </div>
+    </main>
+}

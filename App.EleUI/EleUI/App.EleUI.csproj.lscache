@@ -83,11 +83,11 @@ Forms/
  ElePicker.cs
  EleProperty.cs
  EleRadio.cs
- EleRefreshSwitch.cs
  EleSelect.cs
  EleSwitch.cs
  EleTagType.cs
  EleText.cs
+ EleTimer.cs
  EleTree.cs
  EleTreePicker.cs
  EleTreeSelect.cs

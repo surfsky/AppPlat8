@@ -17,7 +17,7 @@ using NuGet.Common;
 namespace App.Pages.Events
 {
     //[Auth(Power.EventView)]
-    public class EventsModel : AuthModel
+    public class EventsModel : BaseModel //AuthModel
     {
         public Event Item { get; set; }
         public List<EventType> EventTypes { get; set; }

@@ -2,11 +2,13 @@
 @model App.Pages.Events.EventsModel
 @{
     ViewData["Title"] = "工作动态管理";
+    string about = @"工作动态管理
+    - 可根据类别、标题、发布的组织来筛选查找工作动态
+    - 点击右侧的“自动刷新”开关，即可自动刷新工作动态列表"
+    ;
 }
 
 @section body {
-                <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="TopRight" PopupText="https://www.baidu.com"></EleButton>
-
     <EleTable PageSize="@SiteConfig.Instance.PageSize" Title="工作动态" FormPage="EventForm" EnableBatch="true" SortField="HappenDt" SortOrder="desc" >
         <Toolbar>
             <Filters>
@@ -20,7 +22,8 @@
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">删除</EleButton>
                 <EleButton Type="Success" PopupUrl="EventTypes" PopupTitle="事件类别" Icon="Setting" Visible="@Auth.HasPower(Power.EventTypeEdit)">类别管理</EleButton>
-                <EleRefreshSwitch Interval="30" Triggle="Data" />
+                <EleTimer Interval="10" Triggle="Data" Value="true" />
+                <EleButton Look="Circle" Icon="Opportunity" FixPosition="TopRight" PopupText="@about" PopupWidth="33%"></EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

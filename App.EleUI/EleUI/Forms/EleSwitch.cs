@@ -7,6 +7,8 @@ namespace App.EleUI
     public class EleSwitch : EleFormControl
     {
         [HtmlAttributeName("Checked")]   public bool? Checked { get; set; }
+        [HtmlAttributeName("TrueText")]  public string TrueText { get; set; }
+        [HtmlAttributeName("FalseText")] public string FalseText { get; set; }
 
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
@@ -18,6 +20,13 @@ namespace App.EleUI
 
             output.Attributes.SetAttribute(":active-value", "true");
             output.Attributes.SetAttribute(":inactive-value", "false");
+
+            if (!string.IsNullOrWhiteSpace(TrueText) && !string.IsNullOrWhiteSpace(FalseText))
+            {
+                output.Attributes.SetAttribute("active-text", TrueText);
+                output.Attributes.SetAttribute("inactive-text", FalseText);
+                output.Attributes.SetAttribute("inline-prompt", "true");
+            }
 
             // In table/list filter context, switches should default to false even before user interaction.
             // The app builder reads this marker and initializes filters.{field} accordingly.

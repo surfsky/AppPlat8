@@ -502,6 +502,8 @@ export class EleForm {
 const eleFormMessageMethods = {
     messageHandler(e) {
         if (!e) return;
+        // Keep dynamic control patches reactive; this handler also owns form refresh messages.
+        controlStateMethods.messageHandler.call(this, e);
         const payload = e && e.data;
         if (!payload || typeof payload !== 'object') return;
 

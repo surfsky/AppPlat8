@@ -73,6 +73,7 @@ dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
 ### Datas
 
 - /EleUISamples/Datas/Users: EleTable + 查询 + 增删改
+- /EleUISamples/Datas/Timer: EleTimer 定时刷新 EleTable 数据
 - /EleUISamples/Datas/UserList: EleList 列表示例
 - /EleUISamples/Datas/UserForm: 表单示例
 - /EleUISamples/Datas/RoleUsers: SplitPanel 左右联动（左角色，右用户）

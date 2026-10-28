@@ -1,4 +1,5 @@
 @page
+@model App.Pages.EleUISamples.IndexModel
 @{
     Layout = "_Layout";
     ViewData["Title"] = "EleUI 组件库示例";
@@ -6,84 +7,407 @@
 
 @section head {
     <style>
-        .link {
-            display: inline-block;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            text-decoration: none;
-            color: #3b82f6;
-            font-weight: 500;
+        .sample-shell {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            background: #f5f7fa;
         }
-        .link:hover {
-            background-color: #f0f4ff;
-            border-color: #dbe3f3;
+        .sample-header {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            flex: 0 0 58px;
+            padding: 0 22px;
+            background: linear-gradient(110deg, #409eff 0%, #3988e5 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px rgb(64 158 255 / 22%);
+        }
+        .sample-brand-mark {
+            display: grid;
+            width: 34px;
+            height: 36px;
+            place-items: center;
+            flex: 0 0 auto;
+        }
+        .sample-brand-mark img {
+            display: block;
+            width: 29px;
+            height: 34px;
+            filter: brightness(0) invert(1);
+        }
+        .sample-brand-title {
+            font-size: 15px;
+            font-weight: 650;
+            letter-spacing: .02em;
+        }
+        .sample-brand-caption {
+            margin-top: 2px;
+            color: rgb(255 255 255 / 82%);
+            font-size: 11px;
+        }
+        .sample-github {
+            display: grid;
+            width: 36px;
+            height: 36px;
+            margin-left: auto;
+            place-items: center;
+            border: 1px solid rgb(255 255 255 / 28%);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 20px;
+            text-decoration: none;
+            transition: background .15s ease;
+        }
+        .sample-github:hover {
+            background: rgb(255 255 255 / 16%);
+            color: #fff;
+        }
+        .sample-workspace {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            gap: 12px;
+            padding: 12px;
+        }
+        .sample-sidebar {
+            flex: 0 0 218px;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 10px 8px;
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+            scrollbar-gutter: stable;
+        }
+        .sample-sidebar:hover {
+            scrollbar-color: rgb(144 147 153 / 55%) transparent;
+        }
+        .sample-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sample-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sample-sidebar::-webkit-scrollbar-thumb {
+            border-radius: 8px;
+            background: transparent;
+        }
+        .sample-sidebar:hover::-webkit-scrollbar-thumb {
+            background: rgb(144 147 153 / 50%);
+        }
+        .sample-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgb(144 147 153 / 72%);
+        }
+        .sample-sidebar .el-tree {
+            --el-tree-node-hover-bg-color: #f5f7fa;
+            --el-tree-text-color: #606266;
+            background: transparent;
+            font-size: 12px;
+        }
+        .sample-sidebar .el-tree-node__content {
+            height: 30px;
+            margin: 1px 0;
+            border-radius: 5px;
+        }
+        .sample-sidebar .el-tree-node__label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sample-sidebar .el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content {
+            background: #ecf5ff;
+            color: #409eff;
+        }
+        .sample-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
+        }
+        .sample-tabs {
+            display: flex;
+            flex: 0 0 42px;
+            align-items: stretch;
+            gap: 22px;
+            padding: 0 16px;
+            border-bottom: 1px solid #e4e7ed;
+            background: #fff;
+        }
+        .sample-tab {
+            position: relative;
+            padding: 0 2px;
+            border: 0;
+            background: transparent;
+            color: #606266;
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .sample-tab:hover,
+        .sample-tab.is-active {
+            color: #409eff;
+        }
+        .sample-tab.is-active::after {
+            position: absolute;
+            right: 0;
+            bottom: -1px;
+            left: 0;
+            height: 2px;
+            background: #409eff;
+            content: "";
+        }
+        .sample-view {
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            overflow: auto;
+        }
+        .sample-frame {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            background: #fff;
+        }
+        .sample-source {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: auto;
+            background: #f6f8fa;
+            color: #24292f;
+            font: 12px/1.65 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            tab-size: 4;
+        }
+        .sample-source code {
+            display: block;
+            min-height: 100%;
+            padding: 18px 20px;
+            white-space: pre;
+        }
+        .code-comment { color: #6a737d; font-style: italic; }
+        .code-string { color: #032f62; }
+        .code-keyword { color: #d73a49; }
+        .code-tag { color: #22863a; }
+        .code-attribute { color: #6f42c1; }
+        .code-razor { color: #e36209; font-weight: 600; }
+        .code-number { color: #005cc5; }
+        .code-loading,
+        .code-error {
+            padding: 20px;
+            color: #909399;
+            font-size: 13px;
+        }
+        .code-error { color: #f56c6c; }
+        @@media (max-width: 640px) {
+            .sample-header { flex-basis: 52px; padding: 0 14px; }
+            .sample-workspace { gap: 7px; padding: 7px; }
+            .sample-sidebar { flex-basis: 168px; padding: 7px 5px; }
         }
     </style>
 }
 
 @section body {
-    <VStack Gap="3" class="h-full w-full px-4 py-6 overflow-y-auto" ShrinkChildren="false">
-        <H1 class="font-semibold text-slate-900 text-center mb-4">EleUI 示例</H1>
-
-        <EleCard Title="Manager" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-            <VStack Gap="2">
-                <a href="./Managers/ManagerServer" class="link">Manager Server</a>
-                <a href="./Managers/Manager" class="link">Manager</a>
-                <a href="Theme" class="link">Theme</a>
-            </VStack>
-        </EleCard>
-
-        <EleCard Title="Layout" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-            <VStack Gap="2">
-                <a href="./Layouts/HStack" class="link">行布局（HStack）</a>
-                <a href="./Layouts/VStack" class="link">列布局（VStack）</a>
-                <a href="./Layouts/Grid" class="link">网格布局（Grid）</a>
-            </VStack>
-        </EleCard>
-
-        <EleCard Title="Controls" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-            <VStack Gap="2">
-                <a href="./Controls/Button" class="link">按钮（Button）</a>
-                <a href="./Controls/Form" class="link">表单控件（Forms）</a>
-                <a href="./Controls/Tree" class="link">树控件（Tree）</a>
-                <a href="./Controls/CitySelect" class="link">省市县联动（CitySelect）</a>
-                <a href="./Controls/Icons" class="link">图标（Icons）</a>
-                <a href="./Controls/ImageViewer" class="link">图片预览（ImageViewer）</a>
-            </VStack>
-        </EleCard>
-
-        <EleCard Title="Popups" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-            <VStack Gap="2">
-                <a href="./Popups/Drawer" class="link">抽屉（Drawer）</a>
-                <a href="./Popups/ServerDrawer" class="link">服务端抽屉（ServerDrawer）</a>
-                <a href="./Popups/OpenDrawer" class="link">全局抽屉（OpenDrawer）</a>
-                <a href="./Popups/Dialog" class="link">对话框（Dialog）</a>
-            </VStack>
-        </EleCard>
-
-        <EleCard Title="Containers" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-            <VStack Gap="2">
-                <a href="./Containers/Card" class="link">卡片（Card）</a>
-                <a href="./Containers/SplitPanel" class="link">分隔面板（SplitPanel）</a>
-                <a href="./Containers/Container" class="link">容器（Container）</a>
-            </VStack>
-        </EleCard>
-
-        <EleCard Title="Data" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-            <VStack Gap="2">
-                <a href="./Datas/Users" class="link">列表与表单（Users）</a>
-                <a href="./Datas/UserList" class="link">用户列表（UserList）</a>
-                <a href="./Datas/RoleUsers" class="link">角色-用户联动（RoleUsers）</a>
-                <a href="./Datas/DeptUsers" class="link">部门-用户联动（DeptUsers）</a>
-            </VStack>
-        </EleCard>
-
-        <EleCard Title="App" Border="1px solid #dbe3f3" Radius="12px" class="shadow-sm">
-            <VStack Gap="2">
-                <a href="./Apps/Index" class="link">应用示例（Users）</a>
-            </VStack>
-        </EleCard>
-    </VStack>
+    <div class="sample-shell">
+        <header class="sample-header">
+            <span class="sample-brand-mark"><img src="/EleUI.svg" alt="EleUI"></span>
+            <div>
+                <div class="sample-brand-title">EleUI 示例中心</div>
+                <div class="sample-brand-caption">DotNet Razor Components · Vue 3 · Element Plus · Tailwind CSS</div>
+            </div>
+                <a class="sample-github" href="https://github.com/surfsky/eleui" target="_blank" rel="noopener noreferrer" title="在 GitHub 上查看 EleUI" aria-label="在 GitHub 上查看 EleUI">
+                    <i class="fa-brands fa-github" aria-hidden="true"></i>
+                </a>
+        </header>
+        <div class="sample-workspace">
+            <nav class="sample-sidebar" aria-label="示例菜单">
+                <EleTree Items="@("menuTree")"
+                         NodeKey="id"
+                         NameField="label"
+                         ChildrenField="children"
+                         DefaultExpandAll="true"
+                         HighlightCurrent="true"
+                         ExpandOnClickNode="true"
+                         CurrentNodeKey="@("activeMenuId")"
+                         NodeClick="onMenuNodeClick">
+                </EleTree>
+            </nav>
+            <main class="sample-content">
+                <div class="sample-tabs" role="tablist" aria-label="示例视图">
+                    <button type="button" class="sample-tab" :class="{ 'is-active': activeTab === 'page' }" role="tab" :aria-selected="activeTab === 'page'" @@click="selectTab('page')">页面</button>
+                    <button type="button" class="sample-tab" :class="{ 'is-active': activeTab === 'razor' }" role="tab" :aria-selected="activeTab === 'razor'" @@click="selectTab('razor')">cshtml 源码</button>
+                    <button type="button" class="sample-tab" :class="{ 'is-active': activeTab === 'codeBehind' }" role="tab" :aria-selected="activeTab === 'codeBehind'" @@click="selectTab('codeBehind')">cshtml.cs 源码</button>
+                </div>
+                <div class="sample-view" v-show="activeTab === 'page'">
+                    <iframe class="sample-frame" name="sample-frame" src="/EleUISamples/About" title="EleUI 示例说明"></iframe>
+                </div>
+                <div class="sample-view" v-show="activeTab !== 'page'">
+                    <div v-if="sourceLoading" class="code-loading">正在加载源码…</div>
+                    <div v-else-if="sourceError" class="code-error">{{ sourceError }}</div>
+                    <pre v-else class="sample-source"><code v-html="getHighlightedSource()"></code></pre>
+                </div>
+            </main>
+        </div>
+    </div>
     <EleApp />
+}
+
+@section script {
+    <script>
+        window.model = {
+            activeMenuId: 'about',
+            activeTab: 'page',
+            sourceText: '',
+            sourceLoading: false,
+            sourceError: '',
+            sourceCache: {},
+            menuTree: [
+                { id: 'about', label: '关于', url: '/EleUISamples/About' },
+                { id: 'manager', label: 'Manager', children: [
+                    { id: 'manager-server', label: 'Manager Server', url: '/EleUISamples/Managers/ManagerServer' },
+                    { id: 'manager-client', label: 'Manager', url: '/EleUISamples/Managers/Manager' },
+                    { id: 'theme', label: 'Theme', url: '/EleUISamples/Theme' }
+                ] },
+                { id: 'layout', label: '布局', children: [
+                    { id: 'hstack', label: '行布局（HStack）', url: '/EleUISamples/Layouts/HStack' },
+                    { id: 'vstack', label: '列布局（VStack）', url: '/EleUISamples/Layouts/VStack' },
+                    { id: 'grid', label: '网格布局（Grid）', url: '/EleUISamples/Layouts/Grid' }
+                ] },
+                { id: 'controls', label: '控件', children: [
+                    { id: 'button', label: '按钮（Button）', url: '/EleUISamples/Controls/Button' },
+                    { id: 'forms', label: '表单控件（Forms）', url: '/EleUISamples/Controls/Form' },
+                    { id: 'tree', label: '树控件（Tree）', url: '/EleUISamples/Controls/Tree' },
+                    { id: 'city-select', label: '省市县联动（CitySelect）', url: '/EleUISamples/Controls/CitySelect' },
+                    { id: 'icons', label: '图标（Icons）', url: '/EleUISamples/Controls/Icons' },
+                    { id: 'image-viewer', label: '图片预览（ImageViewer）', url: '/EleUISamples/Controls/ImageViewer' }
+                ] },
+                { id: 'popups', label: '弹层', children: [
+                    { id: 'drawer', label: '抽屉（Drawer）', url: '/EleUISamples/Popups/Drawer' },
+                    { id: 'server-drawer', label: '服务端抽屉（ServerDrawer）', url: '/EleUISamples/Popups/ServerDrawer' },
+                    { id: 'open-drawer', label: '全局抽屉（OpenDrawer）', url: '/EleUISamples/Popups/OpenDrawer' },
+                    { id: 'dialog', label: '对话框（Dialog）', url: '/EleUISamples/Popups/Dialog' }
+                ] },
+                { id: 'containers', label: '容器', children: [
+                    { id: 'card', label: '卡片（Card）', url: '/EleUISamples/Containers/Card' },
+                    { id: 'split-panel', label: '分隔面板（SplitPanel）', url: '/EleUISamples/Containers/SplitPanel' },
+                    { id: 'container', label: '容器（Container）', url: '/EleUISamples/Containers/Container' },
+                ] },
+                { id: 'datas', label: '数据', children: [
+                    { id: 'users', label: '列表与表单（Users）', url: '/EleUISamples/Datas/Users' },
+                    { id: 'user-list', label: '用户列表（UserList）', url: '/EleUISamples/Datas/UserList' },
+                    { id: 'timer', label: '定时刷新（Timer）', url: '/EleUISamples/Datas/Timer' },
+                    { id: 'role-users', label: '角色-用户联动（RoleUsers）', url: '/EleUISamples/Datas/RoleUsers' },
+                    { id: 'dept-users', label: '部门-用户联动（DeptUsers）', url: '/EleUISamples/Datas/DeptUsers' },
+                    { id: 'app-example', label: '应用示例（Users）', url: '/EleUISamples/Apps/Index' }
+                ] }
+            ],
+            menuTreeProps: { label: 'label', children: 'children' },
+
+            //
+            onMenuNodeClick(node) {
+                if (!node || !node.url) return;
+                this.activeMenuId = node.id;
+                const frame = document.querySelector('.sample-frame');
+                if (!frame) return;
+                frame.title = `${node.label} 示例`;
+                frame.src = node.url;
+                this.sourceText = '';
+                this.sourceError = '';
+                if (this.activeTab !== 'page') this.loadSource(this.activeTab);
+            },
+
+            async selectTab(tab) {
+                this.activeTab = tab;
+                if (tab !== 'page') await this.loadSource(tab);
+            },
+
+            async loadSource(tab) {
+                const key = `${this.activeMenuId}:${tab}`;
+                this.sourceError = '';
+                if (Object.prototype.hasOwnProperty.call(this.sourceCache, key)) {
+                    this.sourceText = this.sourceCache[key];
+                    return;
+                }
+
+                this.sourceLoading = true;
+                try {
+                    const kind = tab === 'codeBehind' ? 'cshtmlcs' : 'cshtml';
+                    const url = `/EleUISamples/Index?handler=Source&id=${encodeURIComponent(this.activeMenuId)}&kind=${kind}`;
+                    const response = await fetch(url, { credentials: 'same-origin' });
+                    const text = await response.text();
+                    if (!response.ok) throw new Error(text || `加载源码失败（HTTP ${response.status}）`);
+                    this.sourceCache[key] = text;
+                    this.sourceText = text;
+                } catch (error) {
+                    this.sourceError = error?.message || '源码加载失败';
+                } finally {
+                    this.sourceLoading = false;
+                }
+            },
+
+            getHighlightedSource() {
+                const escapeHtml = text => text.replace(/[&<>"']/g, char => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                })[char]);
+                const pattern = /(<!--.*?-->|\/\/[^\n]*|\/\*[\s\S]*?\*\/)|(\x40(?:page|model|using|section|inject|functions|addTagHelper|removeTagHelper|inherits|namespace|attribute)\b)|(\x40\w+(?:\.\w+)*)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(<\/?[A-Za-z][\w:-]*|\/?>)|\b(class|public|private|protected|internal|static|readonly|async|await|return|new|var|const|let|function|if|else|for|foreach|in|using|namespace|return|true|false|null|this|void|string|int|bool|Task|IActionResult)\b|\b\d+(?:\.\d+)?\b/g;
+                let result = '';
+                let lastIndex = 0;
+                for (const match of this.sourceText.matchAll(pattern)) {
+                    result += escapeHtml(this.sourceText.slice(lastIndex, match.index));
+                    const token = match[0];
+                    let type = 'code-number';
+                    if (match[1]) type = 'code-comment';
+                    else if (match[2] || match[3]) type = 'code-razor';
+                    else if (match[4]) type = 'code-string';
+                    else if (match[5]) type = 'code-tag';
+                    else if (match[6]) type = 'code-keyword';
+                    result += `<span class="${type}">${escapeHtml(token)}</span>`;
+                    lastIndex = match.index + token.length;
+                }
+                return result + escapeHtml(this.sourceText.slice(lastIndex));
+            },
+
+            //
+            syncMenuActive(url) {
+                let path = '';
+                try { path = new URL(url, window.location.href).pathname.replace(/\/+$/, '').toLowerCase(); } catch { return; }
+                const find = nodes => {
+                    for (const node of nodes || []) {
+                        if (node.url && node.url.toLowerCase() === path) return node;
+                        const child = find(node.children);
+                        if (child) return child;
+                    }
+                    return null;
+                };
+                const node = find(this.menuTree);
+                if (node) this.activeMenuId = node.id;
+            }
+        };
+
+        const sampleFrame = document.querySelector('.sample-frame');
+        sampleFrame?.addEventListener('load', () => {
+            try {
+                const model = window.__appBindings?.model;
+                model?.syncMenuActive(sampleFrame.contentWindow.location.href);
+                if (model?.activeTab !== 'page') model.loadSource(model.activeTab);
+            } catch {
+                const model = window.__appBindings?.model;
+                model?.syncMenuActive(sampleFrame.src);
+                if (model?.activeTab !== 'page') model.loadSource(model.activeTab);
+            }
+        });
+    </script>
 }

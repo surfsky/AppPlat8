@@ -21,7 +21,7 @@
         <EleLabel Label="日期/切换" Size="16px" FillRow="true"></EleLabel>
         <EleDatePicker For="Item.Birthday"></EleDatePicker>
         <EleDatePicker For="Item.Birthday" Type="DateRange"></EleDatePicker>
-        <EleSwitch For="Item.IsEnabled"></EleSwitch>
+        <EleSwitch For="Item.IsEnabled" TrueText="启用" FalseText="禁用"></EleSwitch>
 
         <!-- 列表控件 -->
         <EleLabel Label="选择框" Size="16px" FillRow="true"></EleLabel>
@@ -49,8 +49,17 @@
         <ElePicker For="Item.UserId" TextFor="Item.UserName" Label="选择用户" PopupUrl="/Shared/UserSelector?multi=0"></ElePicker>
 
         <Bottom>
-            <EleButton Type="Primary" Command="Save" Visible="@(Request.Query["md"].ToString().ToLower() != "view")">保存</EleButton>
+            <EleButton Type="Primary" Command="Save" Icon="Check" Visible="@(Request.Query["md"].ToString().ToLower() != "view")">保存</EleButton>
             <EleButton Command="Close" Icon="Close">关闭</EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="TopLeft" PopupText="https://www.baidu.com"></EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="TopCenter" PopupText="https://www.baidu.com"></EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="TopRight" PopupText="https://www.baidu.com"></EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="MiddleLeft" PopupText="https://www.baidu.com"></EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="MiddleCenter" PopupText="https://www.baidu.com"></EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="MiddleRight" PopupText="https://www.baidu.com"></EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="BottomLeft" PopupText="https://www.baidu.com"></EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="BottomCenter" PopupText="https://www.baidu.com"></EleButton>
+            <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="BottomRight" PopupText="https://www.baidu.com"></EleButton>
         </Bottom>
     </EleForm>
 }

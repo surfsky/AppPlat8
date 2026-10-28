@@ -54,7 +54,9 @@ TemporaryDependencyNodeTargetIdentifier=net8.0
 /warnaserror+:NU1605,SYSLIB0011
 
 [sourceFiles]
-Components/Uploader.cs
+Components/
+ BaseModel.cs
+ Uploader.cs
 Controls/
  Button.cshtml.cs
  CitySelect.cshtml.cs
@@ -67,6 +69,7 @@ Datas/
  DeptUsersUsers.cshtml.cs
  RoleUsers.cshtml.cs
  RoleUsersUsers.cshtml.cs
+ Timer.cshtml.cs
  UserForm.cshtml.cs
  UserList.cshtml.cs
  Users.cshtml.cs
@@ -83,8 +86,8 @@ Popups/
  Dialog.cshtml.cs
  Drawer.cshtml.cs
  ServerDrawer.cshtml.cs
-BaseModel.cs
 Culture.cshtml.cs
+Index.cshtml.cs
 Program.cs
 
 [frameworkPacks]
@@ -159,6 +162,7 @@ Datas/
  DeptUsersUsers.cshtml
  RoleUsers.cshtml
  RoleUsersUsers.cshtml
+ Timer.cshtml
  UserForm.cshtml
  UserList.cshtml
  Users.cshtml
@@ -176,6 +180,7 @@ Popups/
  OpenDrawer.cshtml
  ServerDrawer.cshtml
 Shared/IconSelector.cshtml
+About.cshtml
 Culture.cshtml
 Index.cshtml
 _Layout.cshtml

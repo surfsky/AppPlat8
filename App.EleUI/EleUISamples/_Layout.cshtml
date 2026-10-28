@@ -55,6 +55,30 @@
         html { box-sizing: border-box; }
         *, *::before, *::after { box-sizing: inherit; }
         html, body { margin: 0; padding: 0; min-height: 100%; background: var(--color-slate-50); }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: transparent transparent;
+        }
+        *:hover {
+            scrollbar-color: rgb(71 85 105 / 40%) transparent;
+        }
+        *::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        *::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        *::-webkit-scrollbar-thumb {
+            border-radius: 8px;
+            background: transparent;
+        }
+        *:hover::-webkit-scrollbar-thumb {
+            background: rgb(71 85 105 / 38%);
+        }
+        *::-webkit-scrollbar-thumb:hover {
+            background: rgb(71 85 105 / 58%);
+        }
     </style>
 
     <script>

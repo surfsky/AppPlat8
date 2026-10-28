@@ -465,7 +465,7 @@ export class DrawerHelper {
     <div v-else-if="state.custom" :id="state.bodyId" :class="['ele-manager-drawer-body-host', state.bodyClass]"></div>
     <div v-else-if="state.html" v-html="state.content"></div>
     <div v-else class="space-y-3">
-        <p>{{ state.content || '暂无内容' }}</p>
+        <p class="whitespace-pre-line leading-7">{{ state.content || '暂无内容' }}</p>
     </div>
 
     <template #footer v-if="state.showFooter">

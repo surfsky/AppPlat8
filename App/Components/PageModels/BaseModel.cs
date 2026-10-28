@@ -21,8 +21,6 @@ namespace App
     /// </summary>
     public partial class BaseModel : PageModel
     {
-        public virtual string About { get; set; } = string.Empty;
-
         //-------------------------------------------------
         // 构建API结果
         //-------------------------------------------------

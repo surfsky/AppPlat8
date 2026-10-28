@@ -131,17 +131,12 @@ namespace App.EleUI
         [HtmlAttributeName("ConfirmTitle")]    public string ConfirmTitle { get; set; } = null;
 
 
-        /// <summary>导航URL。点击后直接跳转当前页面到该地址（window.location.href）。</summary>
-        [HtmlAttributeName("NavigateUrl")]     public string NavigateUrl { get; set; }
-
-        /// <summary>弹窗URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。会生成：v-on:click="openForm(0, '...')"。</summary>
-        [HtmlAttributeName("PopupUrl")]        public string PopupUrl { get; set; }
-
-        /// <summary>弹出页面标题。与 PopupUrl 配合使用。</summary>
-        [HtmlAttributeName("PopupTitle")]      public string PopupTitle { get; set; }
-
-        [HtmlAttributeName("PopupText")]       public string PopupText { get; set; }
-        [HtmlAttributeName("FixPosition")]     public EleButtonFixPosition FixPosition { get; set; } = EleButtonFixPosition.None;
+        [HtmlAttributeName("NavigateUrl")]     public string NavigateUrl { get; set; }  // 导航URL。点击后直接跳转当前页面到该地址（window.location.href）。
+        [HtmlAttributeName("PopupUrl")]        public string PopupUrl { get; set; }     // 弹出页面URL。用于简化在表格页面中的“新增/打开弹窗”按钮写法。会生成：v-on:click="openForm(0, '...')"。
+        [HtmlAttributeName("PopupTitle")]      public string PopupTitle { get; set; }   // 弹出页面标题。与 PopupUrl 配合使用。
+        [HtmlAttributeName("PopupText")]       public string PopupText { get; set; }    // 弹出页面文本内容。若设置了该属性，会在弹出页面中显示对应文本。
+        [HtmlAttributeName("PopupWidth")]      public string PopupWidth { get; set; }   // PopupText/PopupUrl 抽屉的宽度，支持像素和百分比值。
+        [HtmlAttributeName("FixPosition")]     public EleButtonFixPosition FixPosition { get; set; } = EleButtonFixPosition.None;  // 按钮固定位置，按钮脱离文档流固定布置在页面指定位置。
 
 
 
@@ -277,21 +272,32 @@ namespace App.EleUI
             {
                 var resolvedPopupUrl = ResolvePopupUrl(PopupUrl);
                 var popupUrlExpr = resolvedPopupUrl.Replace("'", "\\'");
-                if (!string.IsNullOrEmpty(PopupTitle))
+                if (!string.IsNullOrWhiteSpace(PopupWidth))
                 {
-                    var popupTitleExpr = PopupTitle.Replace("'", "\\'");
-                    primaryExpr = $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}', '{popupTitleExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}', title: '{popupTitleExpr}' }}) : null))";
+                    var popupTitleExpr = EscapeJs(string.IsNullOrWhiteSpace(PopupTitle) ? "" : PopupTitle.Trim());
+                    primaryExpr = $"(window.EleManager && typeof window.EleManager.openDrawer === 'function' ? window.EleManager.openDrawer({{ url: '{popupUrlExpr}', title: '{popupTitleExpr}', size: '{EscapeJs(PopupWidth.Trim())}' }}) : null)";
                 }
                 else
                 {
-                    primaryExpr = $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}' }}) : null))";
+                    if (!string.IsNullOrEmpty(PopupTitle))
+                    {
+                        var popupTitleExpr = PopupTitle.Replace("'", "\\'");
+                        primaryExpr = $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}', '{popupTitleExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}', title: '{popupTitleExpr}' }}) : null))";
+                    }
+                    else
+                    {
+                        primaryExpr = $"(typeof openForm === 'function' ? openForm(0, '{popupUrlExpr}') : ($eleManager && typeof $eleManager.openDrawer === 'function' ? $eleManager.openDrawer({{ url: '{popupUrlExpr}' }}) : null))";
+                    }
                 }
             }
             else if (!string.IsNullOrWhiteSpace(PopupText))
             {
                 var popupTitle = EscapeJs(string.IsNullOrWhiteSpace(PopupTitle) ? "提示" : PopupTitle);
                 var popupText = EscapeJs(PopupText);
-                primaryExpr = $"(window.EleManager && typeof window.EleManager.openDrawer === 'function' ? window.EleManager.openDrawer({{ title: '{popupTitle}', content: '{popupText}' }}) : null)";
+                var popupWidthOption = string.IsNullOrWhiteSpace(PopupWidth)
+                    ? string.Empty
+                    : $", size: '{EscapeJs(PopupWidth.Trim())}'";
+                primaryExpr = $"(window.EleManager && typeof window.EleManager.openDrawer === 'function' ? window.EleManager.openDrawer({{ title: '{popupTitle}', content: '{popupText}'{popupWidthOption} }}) : null)";
             }
             else if (!string.IsNullOrEmpty(NavigateUrl))
             {
@@ -389,6 +395,14 @@ namespace App.EleUI
                 output.Content.SetHtmlContent(buttonText);
              else
                 output.Content.SetHtmlContent(""); // 保持 <el-button></el-button>，不输出空格或换行
+
+            // 固定按钮从表格工具栏、滚动容器等祖先节点中脱离，避免其 overflow/transform
+            // 建立新的 fixed containing block，导致 Bottom* 定位被裁剪或定位异常。
+            if (FixPosition != EleButtonFixPosition.None)
+            {
+                output.PreElement.AppendHtml("<teleport to=\"body\">");
+                output.PostElement.AppendHtml("</teleport>");
+            }
         }
 
         private string ResolvePopupUrl(string rawUrl)

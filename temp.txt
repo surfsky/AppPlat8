@@ -20,3 +20,7 @@
 
             return data;
         }
+
+
+        public virtual string About { get; set; } = string.Empty;
+
