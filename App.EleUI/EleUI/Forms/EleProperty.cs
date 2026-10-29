@@ -18,7 +18,7 @@ namespace App.EleUI
     {
         [HtmlAttributeName("MinHeight")]      public string MinHeight { get; set; } = null;
         [HtmlAttributeName("ButtonPosition")] public ElePropertyButtonPosition ButtonPosition { get; set; } = ElePropertyButtonPosition.Top;
-        [HtmlAttributeName("ButtonText")]     public string ButtonText { get; set; } = "";
+        [HtmlAttributeName("ButtonText")]     public string ButtonText { get; set; } = "新增";
         [HtmlAttributeName("Editable")]       public bool Editable { get; set; } = true;
         [HtmlAttributeName("AddText")]        public string AddText { get; set; } = null;
         [HtmlAttributeName("FieldText")]      public string FieldText { get; set; } = null;

@@ -220,7 +220,7 @@ export class PressureLayer extends MapLayer {
     const rows = Math.max(2, Math.ceil(cssH / cell));
     this.heatmapCtx.clearRect(0, 0, this.heatmapCanvas.width, this.heatmapCanvas.height);
 
-    const projectionName = map.getProjection && map.getProjection()?.name;
+    const projectionName = map.getProjection && map.getProjection()?.type;
     const isGlobe = projectionName === "globe";
 
     for (let r = 0; r < rows; r++) {
@@ -251,7 +251,7 @@ export class PressureLayer extends MapLayer {
 
   getSamplingBounds() {
     const { map } = this.runtime;
-    const projectionName = map.getProjection && map.getProjection()?.name;
+    const projectionName = map.getProjection && map.getProjection()?.type;
     if (projectionName === "globe") {
       return {
         west: -180,

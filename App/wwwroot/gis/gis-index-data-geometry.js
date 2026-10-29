@@ -277,7 +277,7 @@
                 if (!canOpenGeometryDetail(item, evt)) return;
                 onGeometryMarkerClick(item.id, evt);
             });
-            return new mapboxgl.Marker({ element: el, anchor: 'center' })
+            return new maplibregl.Marker({ element: el, anchor: 'center' })
                 .setLngLat([gps.lng, gps.lat])
                 .addTo(map);
         }
@@ -290,7 +290,7 @@
             const iconImg = document.createElement('img');
             iconImg.src = '/icons/camera.svg';
             iconImg.alt = '监控';
-            iconImg.style.cssText = 'width:36px;height:36px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));';
+            iconImg.style.cssText = 'width:36px;height:36px;';
             iconImg.onerror = function () {
                 this.style.display = 'none';
                 const fallback = document.createElement('span');
@@ -311,7 +311,7 @@
                 onGeometryMarkerClick(item.id, evt);
             });
 
-            return new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+            return new maplibregl.Marker({ element: el, anchor: 'bottom' })
                 .setLngLat([gps.lng, gps.lat])
                 .addTo(map);
         }
@@ -326,12 +326,12 @@
                 const img = document.createElement('img');
                 img.src = fileUrl;
                 img.alt = '附件';
-                img.style.cssText = 'max-width:48px;max-height:48px;display:block;margin:0 auto 2px;object-fit:contain;box-shadow:0 2px 6px rgba(0,0,0,0.15);border-radius:4px;';
+                img.style.cssText = 'max-width:48px;max-height:48px;display:block;margin:0 auto 2px;object-fit:contain;border-radius:4px;';
                 el.appendChild(img);
             } else {
                 const iconSpan = document.createElement('span');
                 iconSpan.textContent = '📄';
-                iconSpan.style.cssText = 'font-size:32px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));display:block;';
+                iconSpan.style.cssText = 'font-size:32px;display:block;';
                 el.appendChild(iconSpan);
             }
 
@@ -346,7 +346,7 @@
                 onGeometryMarkerClick(item.id, evt);
             });
 
-            return new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+            return new maplibregl.Marker({ element: el, anchor: 'bottom' })
                 .setLngLat([gps.lng, gps.lat])
                 .addTo(map);
         }

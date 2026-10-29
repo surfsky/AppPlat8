@@ -24,3 +24,10 @@
 
         public virtual string About { get; set; } = string.Empty;
 
+
+                <el-tooltip content="查看清单">
+                    <el-button class="gm-tool-btn" type="default" size="small" circle @@click="gotoList"><i class="fa-solid fa-list"></i></el-button>
+                </el-tooltip>
+
+
+            <ElePicker For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-picker datajson-picker" PopupUrl="/Shared/PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>

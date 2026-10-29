@@ -182,7 +182,10 @@ namespace App
             app.UseImager();                                // 图像处理中间件：缓存、缩放等
 
             // 允许通过 /Files/* 访问项目根目录 Files 下的上传文件。
-            app.UseStaticFiles();
+            // wwwroot 静态文件；.pbf 为 MapLibre 自托管字体 glyphs
+            var webrootTypes = new FileExtensionContentTypeProvider();
+            webrootTypes.Mappings[".pbf"] = "application/x-protobuf";
+            app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = webrootTypes });
 
             // 允许下载Files目录下的各种静态文件（物理路径从 Paths.FilesRoot 取，允许配置到网站外跨盘目录）
             app.UseStaticFiles(new StaticFileOptions

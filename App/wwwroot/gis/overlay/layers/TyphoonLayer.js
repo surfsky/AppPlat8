@@ -230,7 +230,7 @@ export class TyphoonLayer extends MapLayer {
         border-top: 3px solid currentColor;
       }
       .typhoon-line.dashed { border-top-style: dashed; }
-      .mapboxgl-popup.typhoon-popup .mapboxgl-popup-content {
+      .maplibregl-popup.typhoon-popup .maplibregl-popup-content {
         padding: 0;
         border-radius: 16px;
         overflow: hidden;
@@ -2027,7 +2027,7 @@ export class TyphoonLayer extends MapLayer {
     const { map } = this.runtime;
     if (!feature?.properties) return;
     if (!this.popup) {
-      this.popup = new mapboxgl.Popup({
+      this.popup = new maplibregl.Popup({
         closeButton: false,
         closeOnClick: false,
         className: "typhoon-popup",

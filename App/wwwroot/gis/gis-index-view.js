@@ -5,7 +5,9 @@
     function create(ctx) {
         const map = ctx.map;
         const state = ctx.state;
-        const terrainSourceId = ctx.terrainSourceId || 'mapbox-dem';
+        const terrainSourceId = ctx.terrainSourceId || 'terrain-dem';
+        const hillshadeSourceId = 'terrain-hillshade';
+        const hillshadeLayerId = 'hillshade';
         const closeViewMenu = ctx.closeViewMenu || (() => {});
         let pending3DRequestId = 0;
 
@@ -13,171 +15,16 @@
             return String(value || '').trim().toLowerCase();
         }
 
-        function getFallbackStyles() {
-            return [
-                { name: 'TiandituSatellite', title: '天地图遥感', path: 'tianditu://satellite', tileTemplate: 'https://t{s}.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}', labelTemplate: 'https://t{s}.tianditu.gov.cn/cia_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cia&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}', subdomains: ['0','1','2','3','4','5','6','7'], tileSize: 256, maxZoom: 18, attribution: '影像：国家基础地理信息中心 Tianditu', aliases: ['tianditusatellite','tianditu-satellite','tianditu-yingxiang','tianditu-img'] },
-                { name: 'TiandituStreets',   title: '天地图街道', path: 'tianditu://streets',   tileTemplate: 'https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}', labelTemplate: 'https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}', subdomains: ['0','1','2','3','4','5','6','7'], tileSize: 256, maxZoom: 18, attribution: '矢量：国家基础地理信息中心 Tianditu', aliases: ['tianditustreets','tianditu-streets','tianditu-vector','tianditu-vec'] },
-                { name: 'OpenStreetMap',    title: 'OpenStreetMap', path: 'osm://default', tileTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', subdomains: [], tileSize: 256, maxZoom: 19, attribution: '© OpenStreetMap contributors', aliases: ['osm','openstreetmap'] },
-                { name: 'SatelliteStreets', title: 'Mapbox 卫星街道', path: 'mapbox://styles/mapbox/satellite-streets-v12', aliases: ['satellitestreets', 'satellite-streets', 'satellite_streets'] },
-                { name: 'Streets',          title: 'Mapbox 街道', path: 'mapbox://styles/mapbox/streets-v11', aliases: ['street', 'streets'] },
-                { name: 'Satellite',        title: 'Mapbox 卫星', path: 'mapbox://styles/mapbox/satellite-v9', aliases: ['satellite', 'terrain', 'sat'] },
-                { name: 'Dark',             title: 'Mapbox 暗色', path: 'mapbox://styles/mapbox/dark-v10', aliases: ['dark'] },
-                { name: 'Light',            title: 'Mapbox 明亮', path: 'mapbox://styles/mapbox/light-v10', aliases: ['light'] },
-                { name: 'Outdoors',         title: 'Mapbox 户外', path: 'mapbox://styles/mapbox/outdoors-v11', aliases: ['outdoors'] },
-                { name: 'Navigation',       title: 'Mapbox 导航', path: 'mapbox://styles/mapbox/navigation-v1', aliases: ['navigation', 'night'] }
-            ];
-        }
-
         function resolveProjection(projection) {
-            if (projection === null || projection === undefined || projection === '') {
-                return 'mercator';
-            }
-
-            const raw = String(projection).trim();
-            const key = raw.toLowerCase();
-            const mapping = {
-                '0': 'mercator',
-                mercator: 'mercator',
-                '1': 'globe',
-                globe: 'globe',
-                '2': 'equirectangular',
-                equirectangular: 'equirectangular',
-                '3': 'naturalEarth',
-                naturalearth: 'naturalEarth',
-                '4': 'winkelTripel',
-                winkeltripel: 'winkelTripel'
-            };
-
-            return mapping[key] || 'mercator';
+            return window.MapFactory.normalizeProjection(projection);
         }
 
         function resolveStyle(styleKey) {
-            const key = normalizeStyleKey(styleKey);
-            const styles = Array.isArray(state.mapStyles) && state.mapStyles.length > 0
-                ? state.mapStyles
-                : getFallbackStyles();
-
-            let match = styles.find(item =>
-                normalizeStyleKey(item.name) === key || normalizeStyleKey(item.path) === key
-            );
-            if (match) {
-                return {
-                    name: match.name,
-                    title: match.title || match.Title || match.name,
-                    path: match.path,
-                    tileTemplate: match.tileTemplate || match.TileTemplate,
-                    labelTemplate: match.labelTemplate || match.LabelTemplate,
-                    subdomains: match.subdomains || match.Subdomains,
-                    tileSize: match.tileSize || match.TileSize,
-                    maxZoom: match.maxZoom || match.MaxZoom,
-                    attribution: match.attribution || match.Attrib
-                };
-            }
-
-            match = getFallbackStyles().find(item =>
-                item.aliases.some(alias => normalizeStyleKey(alias) === key)
-            );
-            if (match) {
-                return {
-                    name: match.name,
-                    title: match.title || match.name,
-                    path: match.path,
-                    tileTemplate: match.tileTemplate,
-                    labelTemplate: match.labelTemplate,
-                    subdomains: match.subdomains,
-                    tileSize: match.tileSize,
-                    maxZoom: match.maxZoom,
-                    attribution: match.attribution
-                };
-            }
-
-            if (styles.length > 0) {
-                const s0 = styles[0];
-                return {
-                    name: s0.name,
-                    title: s0.title || s0.Title || s0.name,
-                    path: s0.path,
-                    tileTemplate: s0.tileTemplate || s0.TileTemplate,
-                    labelTemplate: s0.labelTemplate || s0.LabelTemplate,
-                    subdomains: s0.subdomains || s0.Subdomains,
-                    tileSize: s0.tileSize || s0.TileSize,
-                    maxZoom: s0.maxZoom || s0.MaxZoom,
-                    attribution: s0.attribution || s0.Attrib
-                };
-            }
-
-            return null;
-        }
-
-        function fillTileTemplate(template, tk, defaultSubdomain) {
-            if (!template) return '';
-            let s = String(template);
-            if (tk) s = s.replace(/\{tk\}/g, encodeURIComponent(String(tk)));
-            if (s.indexOf('{s}') >= 0 && defaultSubdomain !== null) {
-                const sub = (typeof defaultSubdomain === 'string' && defaultSubdomain.length > 0) ? defaultSubdomain : '0';
-                s = s.replace(/\{s\}/g, sub);
-            }
-            return s;
+            return window.MapFactory.resolveStyle(styleKey, state.mapStyles);
         }
 
         function buildTileStyle(styleInfo) {
-            if (!styleInfo || !styleInfo.tileTemplate) return null;
-            const keys = window.MapFactory.getKeys();
-            const tk = keys.tiandituKey || '';
-            const subdomains = Array.isArray(styleInfo.subdomains) && styleInfo.subdomains.length > 0 ? styleInfo.subdomains : null;
-            const templates = subdomains
-                ? subdomains.map((subdomain) => fillTileTemplate(styleInfo.tileTemplate, tk, String(subdomain)))
-                : [fillTileTemplate(styleInfo.tileTemplate, tk, '0')];
-            const labelTemplates = styleInfo.labelTemplate
-                ? (subdomains
-                    ? subdomains.map((subdomain) => fillTileTemplate(styleInfo.labelTemplate, tk, String(subdomain)))
-                    : [fillTileTemplate(styleInfo.labelTemplate, tk, '0')])
-                : [];
-            const tileSize = Number(styleInfo.tileSize) || 256;
-            const maxZoom = Number(styleInfo.maxZoom) || 18;
-
-            const sources = {
-                'raster-tiles': {
-                    type: 'raster',
-                    tiles: templates,
-                    tileSize,
-                    maxzoom: maxZoom,
-                    attribution: styleInfo.attribution || ''
-                }
-            };
-
-            const layers = [
-                {
-                    id: 'raster-tiles',
-                    type: 'raster',
-                    source: 'raster-tiles',
-                    minzoom: 0,
-                    maxzoom: 24
-                }
-            ];
-
-            if (labelTemplates.length > 0) {
-                sources['raster-labels'] = {
-                    type: 'raster',
-                    tiles: labelTemplates,
-                    tileSize,
-                    maxzoom: maxZoom
-                };
-                layers.push({
-                    id: 'raster-labels',
-                    type: 'raster',
-                    source: 'raster-labels',
-                    minzoom: 0,
-                    maxzoom: 24
-                });
-            }
-
-            return {
-                version: 8,
-                glyphs: 'mapbox://fonts/mapbox/{fontstack}/{range}.pbf',
-                sources,
-                layers
-            };
+            return window.MapFactory.buildTileStyle(styleInfo, { projection: state.currentProjection });
         }
 
         function isTileStyle(styleInfo) {
@@ -247,26 +94,10 @@
             } catch {
             }
             if (!isGlobe) {
-                if (!state.is3D && typeof map.setFog === 'function') {
-                    try {
-                        map.setFog(null);
-                    } catch {
-                    }
-                }
+                if (!state.is3D) applySky(false);
                 return;
             }
-            if (typeof map.setFog === 'function') {
-                try {
-                    map.setFog({
-                        color: 'rgb(186, 210, 235)',
-                        'high-color': 'rgb(36, 92, 223)',
-                        'horizon-blend': 0.08,
-                        'space-color': 'rgb(2, 6, 23)',
-                        'star-intensity': 0.35
-                    });
-                } catch {
-                }
-            }
+            applySky(true);
             try {
                 const style = map.getStyle();
                 const bgLayerId = style?.layers?.find(l => l?.type === 'background')?.id;
@@ -278,12 +109,20 @@
             }
         }
 
+        let _skyOn = null;
+
         function applyProjection(projection, options = {}) {
             const projectionName = resolveProjection(projection);
-            state.currentProjection = projectionName;
-            if (typeof map.setProjection === 'function') {
-                map.setProjection(projectionName);
+            // 幂等保护：已经是目标投影就跳过，避免 MapLibre 内部 setStyle 通道再次触发 style.load
+            let current = '';
+            try { current = resolveProjection(map.getProjection?.()); } catch {}
+            if (current === projectionName && state.currentProjection === projectionName) {
+                syncProjectionButtons();
+                if (options.closeMenu !== false) closeViewMenu();
+                return;
             }
+            state.currentProjection = projectionName;
+            try { map.setProjection({ type: projectionName }); } catch {}
             syncProjectionButtons();
             syncProjectionBackdrop(projectionName);
             if (options.closeMenu !== false) {
@@ -291,22 +130,132 @@
             }
         }
 
-        function ensureTerrainEnabled() {
-            if (!map.getSource(terrainSourceId)) {
-                map.addSource(terrainSourceId, {
-                    type: 'raster-dem',
-                    url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-                    tileSize: 512,
-                    maxzoom: 15
-                });
+        function applySky(on) {
+            // 幂等保护：已经设为目标状态就跳过 setSky，避免 MapLibre 内部走 setStyle 通道
+            if (_skyOn === !!on) return;
+            _skyOn = !!on;
+            try {
+                map.setSky(on ? {
+                    'sky-color': '#4f8bdc',
+                    'horizon-color': 'rgb(186, 210, 235)',
+                    'fog-color': 'rgb(186, 210, 235)',
+                    'sky-horizon-blend': 0.5,
+                    'horizon-fog-blend': 0.5,
+                    'fog-ground-blend': 0.3,
+                    'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 7, 0]
+                } : null);
+            } catch {
+                _skyOn = null;
             }
+        }
 
-            map.setTerrain({ source: terrainSourceId, exaggeration: 1.8 });
-            map.setFog({
-                color: 'rgb(186, 210, 235)',
-                'high-color': 'rgb(36, 92, 223)',
-                'horizon-blend': 0.08
-            });
+        // DEM 瓦片自托管于 /tiles/dem（Data/download_dem_tiles.py 生成）；缺失时只调整视角，不启用地形
+        async function ensureTerrainEnabled() {
+            const _log = (...a) => console.log('[3D] ensureTerrainEnabled', ...a);
+            try {
+                if (!(await window.MapFactory.hasDem())) {
+                    console.warn('[3D] 未找到本地 DEM 瓦片（/tiles/dem），3D 地形未启用');
+                    return false;
+                }
+                _log('DEM 存在，开始配置 source/layer/terrain/sky');
+                if (!map.getSource(terrainSourceId)) {
+                    map.addSource(terrainSourceId, window.MapFactory.getTerrainSource());
+                    _log('added source', terrainSourceId);
+                }
+                if (!map.getSource(hillshadeSourceId)) {
+                    map.addSource(hillshadeSourceId, window.MapFactory.getTerrainSource());
+                    _log('added source', hillshadeSourceId);
+                }
+                if (!map.getLayer(hillshadeLayerId)) {
+                    map.addLayer({
+                        id: hillshadeLayerId,
+                        type: 'hillshade',
+                        source: hillshadeSourceId,
+                        layout: { visibility: 'visible' },
+                        paint: {
+                            'hillshade-shadow-color': '#3a3a3a',
+                            'hillshade-highlight-color': '#ffffff',
+                            'hillshade-accent-color': '#666666'
+                        }
+                    });
+                    _log('added hillshade layer');
+                }
+
+                // 关键：开启 terrain 后 raster 图层需要 raster-elevation:0 贴地，否则被地形 z-buffer 裁掉
+                const _elevateRasters = () => {
+                    const style = map.getStyle();
+                    if (!style?.layers) return;
+                    style.layers.forEach(layer => {
+                        if (layer.type === 'raster') {
+                            try {
+                                map.setPaintProperty(layer.id, 'raster-elevation', 0);
+                            } catch {}
+                        }
+                    });
+                };
+                _elevateRasters();
+
+                const curTerrain = map.getStyle?.()?.terrain;
+                const needTerrain = !curTerrain || curTerrain.source !== terrainSourceId;
+                if (needTerrain) {
+                    _log('setTerrain({source:', terrainSourceId, ', exaggeration:1.8})');
+                    map.setTerrain({ source: terrainSourceId, exaggeration: 1.8 });
+                } else {
+                    _log('terrain 已配置，跳过 setTerrain');
+                }
+                _log('setSky(true)');
+                applySky(true);
+                _log('ensureTerrainEnabled OK');
+                return true;
+            } catch (err) {
+                console.error('[3D] 启用地形失败', err);
+                state.is3D = false;
+                sync3DToggleButton();
+                return false;
+            }
+        }
+
+        // 将地形相关 source/terrain/sky 注入到任意 style 对象中（setStyle 前调用，避免切换时丢失）
+        function injectTerrainIntoStyle(styleObj) {
+            if (!styleObj || typeof styleObj !== 'object') return styleObj;
+            try {
+                const terrainSource = window.MapFactory.getTerrainSource();
+                styleObj.sources = styleObj.sources || {};
+                if (!styleObj.sources[terrainSourceId]) styleObj.sources[terrainSourceId] = terrainSource;
+                if (!styleObj.sources[hillshadeSourceId]) styleObj.sources[hillshadeSourceId] = terrainSource;
+                styleObj.terrain = { source: terrainSourceId, exaggeration: 1.8 };
+                if (!('sky' in styleObj)) styleObj.sky = {};
+                if (!Array.isArray(styleObj.layers)) styleObj.layers = [];
+                // 关键：terrain 模式下所有 raster 图层需要 raster-elevation:0 贴地
+                styleObj.layers.forEach(layer => {
+                    if (layer && layer.type === 'raster') {
+                        layer.paint = layer.paint || {};
+                        if (layer.paint['raster-elevation'] === undefined) {
+                            layer.paint['raster-elevation'] = 0;
+                        }
+                    }
+                });
+                const hasHillshade = styleObj.layers.some(l => l && l.id === hillshadeLayerId);
+                if (!hasHillshade) {
+                    const insertIdx = styleObj.layers.findIndex(l => l && l.id === 'raster-tiles');
+                    const hillshadeLayer = {
+                        id: hillshadeLayerId,
+                        type: 'hillshade',
+                        source: hillshadeSourceId,
+                        layout: { visibility: 'visible' },
+                        paint: {
+                            'hillshade-shadow-color': '#3a3a3a',
+                            'hillshade-highlight-color': '#ffffff',
+                            'hillshade-accent-color': '#666666'
+                        }
+                    };
+                    if (insertIdx >= 0) styleObj.layers.splice(insertIdx + 1, 0, hillshadeLayer);
+                    else styleObj.layers.push(hillshadeLayer);
+                }
+            } catch (err) {
+                console.error('[3D] 注入地形到样式失败', err);
+            }
+            return styleObj;
         }
 
         function isTerrainStyleReady() {
@@ -321,12 +270,13 @@
             }
         }
 
-        function canEnable3D() {
-            try {
-                return !!map.getSource('composite');
-            } catch {
-                return false;
-            }
+        // 建筑矢量源（OpenMapTiles 结构）未配置时返回 false
+        function ensureBuildingSource() {
+            if (map.getSource('buildings')) return true;
+            const source = window.MapFactory.getBuildingSource();
+            if (!source) return false;
+            map.addSource('buildings', source);
+            return true;
         }
 
         async function waitForTerrainStyleReady(timeoutMs = 5000) {
@@ -385,26 +335,24 @@
                 return;
             }
 
-            ensureTerrainEnabled();
-            if (canEnable3D()) {
-                const layers = map.getStyle().layers;
-                const labelLayerId = layers.find(l => l.type === 'symbol' && l.layout && l.layout['text-field'])?.id;
-                if (!map.getLayer('3d-buildings')) {
-                    map.addLayer({
-                        id: '3d-buildings',
-                        source: 'composite',
-                        'source-layer': 'building',
-                        filter: ['==', 'extrude', 'true'],
-                        type: 'fill-extrusion',
-                        minzoom: 15,
-                        paint: {
-                            'fill-extrusion-color': '#94a3b8',
-                            'fill-extrusion-height': ['get', 'height'],
-                            'fill-extrusion-base': ['get', 'min_height'],
-                            'fill-extrusion-opacity': 0.55
-                        }
-                    }, labelLayerId);
-                }
+            await ensureTerrainEnabled();
+            if (requestId !== pending3DRequestId || !state.is3D) {
+                return;
+            }
+            if (ensureBuildingSource() && !map.getLayer('3d-buildings')) {
+                map.addLayer({
+                    id: '3d-buildings',
+                    source: 'buildings',
+                    'source-layer': 'building',
+                    type: 'fill-extrusion',
+                    minzoom: 15,
+                    paint: {
+                        'fill-extrusion-color': '#94a3b8',
+                        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 8],
+                        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+                        'fill-extrusion-opacity': 0.55
+                    }
+                });
             }
             if (adjustCamera) {
                 map.easeTo({ pitch: 72, duration: 1000 });
@@ -417,10 +365,10 @@
         function disable3D(options = {}) {
             pending3DRequestId++;
             const adjustCamera = options.adjustCamera !== false;
-            map.setTerrain(null);
-            if (map.getLayer('3d-buildings')) {
-                map.removeLayer('3d-buildings');
-            }
+            try { map.setTerrain(null); } catch {}
+            if (state.currentProjection !== 'globe') applySky(false);
+            try { if (map.getLayer(hillshadeLayerId)) map.removeLayer(hillshadeLayerId); } catch {}
+            try { if (map.getLayer('3d-buildings')) map.removeLayer('3d-buildings'); } catch {}
             state.is3D = false;
             sync3DToggleButton();
             if (adjustCamera) {
@@ -443,15 +391,12 @@
             state.currentStyle = style.name;
             syncStyleButtons();
 
-            if (isTileStyle(style)) {
-                // OSM / 天地图：构造内联 MapLibre Style Spec 对象加载（天地图需 tiandituKey）
-                const styleObj = buildTileStyle(style);
-                if (styleObj) {
-                    map.setStyle(styleObj);
-                }
-            } else {
-                // Mapbox：直接加载 style path（需要 mapbox accessToken）
-                map.setStyle(style.path);
+            // 天地图 / OSM：构造内联 MapLibre Style Spec 对象加载（天地图需 tiandituKey）
+            const styleObj = isTileStyle(style) ? buildTileStyle(style) : null;
+            if (styleObj) {
+                // 3D 模式下将地形 source/terrain/sky/hillshade 直接注入新样式，避免 setStyle 后异步间隙丢失
+                if (state.is3D) injectTerrainIntoStyle(styleObj);
+                map.setStyle(styleObj);
             }
             const manager = window.top?.EleManager || window.EleManager;
             if (manager && typeof manager.toast === 'function') {

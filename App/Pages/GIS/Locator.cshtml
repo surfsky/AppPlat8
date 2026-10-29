@@ -25,8 +25,8 @@
 }
 
 @section head {
-    <script src="/lib/mapbox-gl/mapbox-gl.js"></script>
-    <link href="/lib/mapbox-gl/mapbox-gl.css" rel="stylesheet" />
+    <script src="/lib/maplibre-gl/maplibre-gl.js"></script>
+    <link href="/lib/maplibre-gl/maplibre-gl.css" rel="stylesheet" />
     <script src="/gis/gis-address-search.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
     <style>
@@ -97,7 +97,7 @@
                 let map = null;
                 let marker = null;
                 const addressSearch = window.GisAddressSearch?.create?.() || null;
-                // 统一通过 MapFactory.setKeys 保存 SiteConfig 下发的 GIS Key，内部会同步设置 mapboxgl.accessToken / telemetry
+                // 统一通过 MapFactory.setKeys 保存 SiteConfig 下发的 GIS Key
                 MapFactory.setKeys({
                     mapboxKey:   "@SiteConfig.Instance.MapboxKey",
                     tiandituKey: "@(SiteConfig.Instance.TiandituKey ?? "")",
@@ -122,7 +122,7 @@
                     lat.value = Number(newLat);
                     updateCoordText();
                     if (!marker) {
-                        marker = new mapboxgl.Marker({ color: '#ef4444', draggable: true })
+                        marker = new maplibregl.Marker({ color: '#ef4444', draggable: true })
                             .setLngLat([lng.value, lat.value])
                             .addTo(map);
                         marker.on('dragend', () => {
@@ -143,8 +143,8 @@
                         showError('mapfactory.js 未加载');
                         return;
                     }
-                    if (!MapFactory.getTiandituKey() && !MapFactory.getMapboxKey()) {
-                        showError('缺少天地图 Key 或 Mapbox Token，请在系统配置中设置');
+                    if (!MapFactory.getTiandituKey()) {
+                        showError('缺少天地图 Key，请在系统配置中设置');
                     }
                     map = MapFactory.createMap({
                         container: 'map',
@@ -153,14 +153,14 @@
                     });
 
                     // 增加工具栏按钮
-                    map.addControl(new mapboxgl.NavigationControl(), 'top-right');  // 导航
-                    map.addControl(new mapboxgl.GeolocateControl({
+                    map.addControl(new maplibregl.NavigationControl(), 'top-right');  // 导航
+                    map.addControl(new maplibregl.GeolocateControl({
                         positionOptions: { enableHighAccuracy: true },
                         trackUserLocation: true,
                         showUserHeading: true
                     }), 'top-right');  // 定位
-                    map.addControl(new mapboxgl.FullscreenControl());  // 全屏
-                    //map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');  // 版权信息
+                    map.addControl(new maplibregl.FullscreenControl());  // 全屏
+                    //map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');  // 版权信息
 
                     // 事件
                     map.on('load', () => { setPoint(lng.value, lat.value, false); });

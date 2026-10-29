@@ -682,10 +682,10 @@ class MapMarkerRender {
         height: 18px;
         fill: currentColor;
       }
-      .mapboxgl-ctrl-top-right,
-      .mapboxgl-ctrl-top-left,
-      .mapboxgl-ctrl-bottom-right,
-      .mapboxgl-ctrl-bottom-left {
+      .maplibregl-ctrl-top-right,
+      .maplibregl-ctrl-top-left,
+      .maplibregl-ctrl-bottom-right,
+      .maplibregl-ctrl-bottom-left {
         z-index: 1300 !important;
       }
       .mmr-ctrl-wrap {
@@ -944,7 +944,7 @@ class MapMarkerRender {
       hidden: false
     };
     const markerEl = this.createMarkerEl(entry);
-    const marker = new mapboxgl.Marker({
+    const marker = new maplibregl.Marker({
       element: markerEl,
       anchor: "center"
     }).setLngLat(this.getPointCoords(item)).addTo(this.map);
@@ -1194,14 +1194,14 @@ class MapMarkerRender {
         this._map = map;
         renderer.ensureStyles();
         this._container = document.createElement("div");
-        this._container.className = "mapboxgl-ctrl mmr-ctrl-wrap";
+        this._container.className = "maplibregl-ctrl mmr-ctrl-wrap";
 
         this._btns = document.createElement("div");
-        this._btns.className = "mapboxgl-ctrl-group mmr-ctrl-btns";
+        this._btns.className = "maplibregl-ctrl-group mmr-ctrl-btns";
 
         this._button = document.createElement("button");
         this._button.type = "button";
-        this._button.className = "mapboxgl-ctrl-icon gis-reset-btn mmr-mode-ctrl";
+        this._button.className = "maplibregl-ctrl-icon gis-reset-btn mmr-mode-ctrl";
         this._button.innerHTML = `
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 2.5c-3.58 0-6.5 2.87-6.5 6.42 0 4.67 5.1 10.56 5.31 10.81a1.6 1.6 0 0 0 2.38 0c.21-.25 5.31-6.14 5.31-10.81C18.5 5.37 15.58 2.5 12 2.5zm0 9.1a2.68 2.68 0 1 1 0-5.36 2.68 2.68 0 0 1 0 5.36z"></path>

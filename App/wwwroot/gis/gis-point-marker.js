@@ -123,7 +123,7 @@
             labelEl?.addEventListener('click', onClick);
 
             const lngLat = [Number(gps.lng), Number(gps.lat)];
-            const iconMarker = new mapboxgl.Marker({
+            const iconMarker = new maplibregl.Marker({
                 element: iconEl,
                 anchor: ctx.iconAnchor || 'center',
                 draggable: !!ctx.draggable,
@@ -133,7 +133,7 @@
                 .addTo(map);
 
             const labelMarker = labelEl
-                ? new mapboxgl.Marker({
+                ? new maplibregl.Marker({
                     element: labelEl,
                     anchor: labelAnchor,
                     offset: labelOffset

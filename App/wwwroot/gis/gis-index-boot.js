@@ -9,6 +9,7 @@
         const viewApi = ctx.viewApi;
         const objectApi = ctx.objectApi;
         const panelApi = ctx.panelApi;
+        let _styleLoadDepth = 0;
 
         function switchSceneInternal(scene) {
             // 调用注入的 loadScenes/switchScene 上下文函数
@@ -49,13 +50,13 @@
         }
 
         function addMapControls() {
-            map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-            map.addControl(new mapboxgl.GeolocateControl({
+            map.addControl(new maplibregl.NavigationControl(), 'top-right');
+            map.addControl(new maplibregl.GeolocateControl({
                 positionOptions: { enableHighAccuracy: true },
                 trackUserLocation: true,
                 showUserHeading: true
             }), 'top-right');
-            map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
+            map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
             const centerCoordControl = mapApi.createCenterCoordControl();
             map.addControl(centerCoordControl, 'bottom-right');
@@ -165,7 +166,6 @@
                 if (state.geometries == null || state.geometries.length === 0) await ctx.loadGeometries();
 
                 await panelApi.loadPanels();
-                mapApi.applyChineseLabels();
 
                 startHeaderDatetime();
                 positionHeaderDatetime();
@@ -175,35 +175,54 @@
                 setTimeout(() => setPageLoading(false), 120);
             });
 
+            // 注意：MapLibre v5 里 setProjection / setSky / setTerrain 内部会走 setStyle 通道，
+            // 从而再次触发 style.load，形成死循环。用 _styleLoadDepth guard 拦截重入。
             map.on('style.load', async () => {
-                mapApi.applyChineseLabels();
-                objectApi.buildMarkers(state.objects);
-                if (state.menuNodeMap && state.menuNodeMap.size > 0) {
-                    await ctx.loadGeometries();
-                }
+                const depth = ++_styleLoadDepth;
+                const isReentry = depth > 1;
+                console.log('[boot] style.load fired, depth=' + depth + ' isReentry=' + isReentry + ' state.is3D=' + state.is3D);
 
-                const restoreGeometryLayers = () => {
+                try {
+                    // 无论是否重入，marker 和 geometry 图层都必须重建
+                    objectApi.buildMarkers(state.objects);
+
                     const geometryLayerManager = ctx.getGeometryLayerManager();
-                    if (!geometryLayerManager || !map.isStyleLoaded()) return;
-                    geometryLayerManager.setDataFromRows(
-                        typeof ctx.getGeometryRowsForDisplay === 'function'
-                            ? ctx.getGeometryRowsForDisplay()
-                            : (state.geometries || [])
-                    );
-                    geometryLayerManager.render();
-                    ctx.applyGeometryVisibility();
-                };
+                    const restoreGeometryLayers = () => {
+                        if (!geometryLayerManager || !map.isStyleLoaded()) return;
+                        geometryLayerManager.setDataFromRows(
+                            typeof ctx.getGeometryRowsForDisplay === 'function'
+                                ? ctx.getGeometryRowsForDisplay()
+                                : (state.geometries || [])
+                        );
+                        geometryLayerManager.render();
+                        ctx.applyGeometryVisibility();
+                    };
 
-                restoreGeometryLayers();
-                viewApi.applyProjection(state.currentProjection, { closeMenu: false });
-                requestAnimationFrame(restoreGeometryLayers);
-                map.once('idle', restoreGeometryLayers);
-                if (state.is3D) viewApi.enable3D({ closeMenu: false, adjustCamera: false });
-                if (state.isAutoRotate) viewApi.enableRotate({ closeMenu: false });
-                else viewApi.disableRotate({ closeMenu: false });
+                    restoreGeometryLayers();
+                    requestAnimationFrame(restoreGeometryLayers);
+                    map.once('idle', restoreGeometryLayers);
 
-                objectApi.setLayerVisible(true);
-                ctx.renderMenuTree();
+                    if (isReentry) {
+                        console.log('[boot] 重入，跳过 applyProjection/enable3D/enableRotate');
+                        return;
+                    }
+
+                    if (state.menuNodeMap && state.menuNodeMap.size > 0) {
+                        await ctx.loadGeometries();
+                    }
+
+                    console.log('[boot] depth=1, 执行 applyProjection(' + state.currentProjection + ')');
+                    viewApi.applyProjection(state.currentProjection, { closeMenu: false });
+                    console.log('[boot] depth=1, state.is3D=' + state.is3D + ', state.isAutoRotate=' + state.isAutoRotate);
+                    if (state.is3D) viewApi.enable3D({ closeMenu: false, adjustCamera: false });
+                    if (state.isAutoRotate) viewApi.enableRotate({ closeMenu: false });
+                    else viewApi.disableRotate({ closeMenu: false });
+
+                    objectApi.setLayerVisible(true);
+                    ctx.renderMenuTree();
+                } finally {
+                    _styleLoadDepth--;
+                }
             });
         }
 

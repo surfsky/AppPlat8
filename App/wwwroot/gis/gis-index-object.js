@@ -51,7 +51,7 @@
                 el.title = item.name || '检查对象';
                 el.addEventListener('click', () => selectObject(item, true));
 
-                const marker = new mapboxgl.Marker(el).setLngLat([item.lng, item.lat]).addTo(map);
+                const marker = new maplibregl.Marker({ element: el }).setLngLat([item.lng, item.lat]).addTo(map);
                 state.markerMap.set(item.id, marker);
             });
         }

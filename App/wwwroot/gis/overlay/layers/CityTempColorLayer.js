@@ -510,7 +510,7 @@ export class CityTempColorLayer extends MapLayer {
     this.heatmapCtx.clearRect(0, 0, this.heatmapCanvas.width, this.heatmapCanvas.height);
     const view = this.captureView();
 
-    const projectionName = map.getProjection && map.getProjection()?.name;
+    const projectionName = map.getProjection && map.getProjection()?.type;
     const isGlobe = projectionName === "globe";
 
     for (let r = 0; r < rows; r++) {

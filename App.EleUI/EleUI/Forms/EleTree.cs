@@ -14,40 +14,44 @@ namespace App.EleUI
     [HtmlTargetElement("EleTree")]
     public class EleTree : EleControl
     {
-        [HtmlAttributeName("Items")] public object Items { get; set; }
-        [HtmlAttributeName("IdField")] public string IdField { get; set; }
-        [HtmlAttributeName("NameField")] public string NameField { get; set; }
-        [HtmlAttributeName("ChildrenField")] public string ChildrenField { get; set; }
-        [HtmlAttributeName("DisabledField")] public string DisabledField { get; set; }
-        [HtmlAttributeName("NodeKey")] public string NodeKey { get; set; }
+        // data
+        [HtmlAttributeName("Items")]                public object Items { get; set; }
+        [HtmlAttributeName("IdField")]              public string IdField { get; set; }
+        [HtmlAttributeName("NameField")]            public string NameField { get; set; }
+        [HtmlAttributeName("ChildrenField")]        public string ChildrenField { get; set; }
+        [HtmlAttributeName("DisabledField")]        public string DisabledField { get; set; }
+        [HtmlAttributeName("NodeKey")]              public string NodeKey { get; set; }
+        [HtmlAttributeName("Target")]               public string Target { get; set; }
+        [HtmlAttributeName("UrlTemplate")]          public string UrlTemplate { get; set; }
+        [HtmlAttributeName("DefaultExpandedKeys")]  public object DefaultExpandedKeys { get; set; }
+        [HtmlAttributeName("DefaultCheckedKeys")]   public object DefaultCheckedKeys { get; set; }
+        [HtmlAttributeName("CurrentNodeKey")]       public object CurrentNodeKey { get; set; }
 
-        [HtmlAttributeName("ShowCheckbox")] public bool ShowCheckbox { get; set; }
-        [HtmlAttributeName("CheckStrictly")] public bool CheckStrictly { get; set; }
-        [HtmlAttributeName("DefaultExpandAll")] public bool DefaultExpandAll { get; set; }
-        [HtmlAttributeName("Accordion")] public bool Accordion { get; set; }
-        [HtmlAttributeName("HighlightCurrent")] public bool HighlightCurrent { get; set; }
-        [HtmlAttributeName("Draggable")] public bool Draggable { get; set; }
+        // outlook
 
-        [HtmlAttributeName("ExpandOnClickNode")] public bool? ExpandOnClickNode { get; set; }
-        [HtmlAttributeName("CheckOnClickNode")] public bool? CheckOnClickNode { get; set; }
-        [HtmlAttributeName("RenderAfterExpand")] public bool? RenderAfterExpand { get; set; }
-        [HtmlAttributeName("AutoExpandParent")] public bool? AutoExpandParent { get; set; }
+        [HtmlAttributeName("Indent")]               public int? Indent { get; set; }
+        [HtmlAttributeName("EmptyText")]            public string EmptyText { get; set; }
+        [HtmlAttributeName("ShowCheckbox")]         public bool ShowCheckbox { get; set; }
+        [HtmlAttributeName("CheckStrictly")]        public bool CheckStrictly { get; set; }
+        [HtmlAttributeName("DefaultExpandAll")]     public bool DefaultExpandAll { get; set; }
+        [HtmlAttributeName("Accordion")]            public bool Accordion { get; set; }
+        [HtmlAttributeName("HighlightCurrent")]     public bool HighlightCurrent { get; set; }
+        [HtmlAttributeName("Draggable")]            public bool Draggable { get; set; }
 
-        [HtmlAttributeName("DefaultExpandedKeys")] public object DefaultExpandedKeys { get; set; }
-        [HtmlAttributeName("DefaultCheckedKeys")] public object DefaultCheckedKeys { get; set; }
-        [HtmlAttributeName("CurrentNodeKey")] public object CurrentNodeKey { get; set; }
+        // behavior
+        [HtmlAttributeName("ExpandOnClickNode")]    public bool? ExpandOnClickNode { get; set; }
+        [HtmlAttributeName("CheckOnClickNode")]     public bool? CheckOnClickNode { get; set; }
+        [HtmlAttributeName("RenderAfterExpand")]    public bool? RenderAfterExpand { get; set; }
+        [HtmlAttributeName("AutoExpandParent")]     public bool? AutoExpandParent { get; set; }
 
-        [HtmlAttributeName("Indent")] public int? Indent { get; set; }
-        [HtmlAttributeName("EmptyText")] public string EmptyText { get; set; }
-        [HtmlAttributeName("FilterNodeMethod")] public string FilterNodeMethod { get; set; }
 
-        [HtmlAttributeName("NodeClick")] public string NodeClick { get; set; }
-        [HtmlAttributeName("CurrentChange")] public string CurrentChange { get; set; }
-        [HtmlAttributeName("CheckChange")] public string CheckChange { get; set; }
-        [HtmlAttributeName("OnNodeClick")] public string OnNodeClick { get; set; }
-        [HtmlAttributeName("OnCheckChange")] public string OnCheckChange { get; set; }
-        [HtmlAttributeName("Target")] public string Target { get; set; }
-        [HtmlAttributeName("UrlTemplate")] public string UrlTemplate { get; set; }
+        // events
+        [HtmlAttributeName("FilterNodeMethod")]     public string FilterNodeMethod { get; set; }
+        [HtmlAttributeName("NodeClick")]            public string NodeClick { get; set; }
+        [HtmlAttributeName("CurrentChange")]        public string CurrentChange { get; set; }
+        [HtmlAttributeName("CheckChange")]          public string CheckChange { get; set; }
+        [HtmlAttributeName("OnNodeClick")]          public string OnNodeClick { get; set; }
+        [HtmlAttributeName("OnCheckChange")]        public string OnCheckChange { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -98,18 +102,12 @@ namespace App.EleUI
             output.Attributes.SetAttribute("node-key", nodeKey);
             output.Attributes.SetAttribute(":props", ToVueExpression($"{{ label: '{nameField}', children: '{childrenField}', disabled: '{disabledField}' }}"));
 
-            if (ShowCheckbox)
-                output.Attributes.SetAttribute("show-checkbox", "true");
-            if (CheckStrictly)
-                output.Attributes.SetAttribute("check-strictly", "true");
-            if (DefaultExpandAll)
-                output.Attributes.SetAttribute("default-expand-all", "true");
-            if (Accordion)
-                output.Attributes.SetAttribute("accordion", "true");
-            if (HighlightCurrent)
-                output.Attributes.SetAttribute("highlight-current", "true");
-            if (Draggable)
-                output.Attributes.SetAttribute("draggable", "true");
+            if (ShowCheckbox)       output.Attributes.SetAttribute("show-checkbox", "true");
+            if (CheckStrictly)      output.Attributes.SetAttribute("check-strictly", "true");
+            if (DefaultExpandAll)   output.Attributes.SetAttribute("default-expand-all", "true");
+            if (Accordion)          output.Attributes.SetAttribute("accordion", "true");
+            if (HighlightCurrent)   output.Attributes.SetAttribute("highlight-current", "true");
+            if (Draggable)          output.Attributes.SetAttribute("draggable", "true");
 
             SetBooleanBinding(output, ":expand-on-click-node", ExpandOnClickNode);
             SetBooleanBinding(output, ":check-on-click-node", CheckOnClickNode);
@@ -120,7 +118,7 @@ namespace App.EleUI
             SetJsonBinding(output, ":default-checked-keys", DefaultCheckedKeys);
             SetJsonBinding(output, ":current-node-key", CurrentNodeKey);
 
-            if (Indent.HasValue)
+            if (Indent.HasValue)    
                 output.Attributes.SetAttribute(":indent", Indent.Value.ToString());
             if (!string.IsNullOrWhiteSpace(EmptyText))
                 output.Attributes.SetAttribute("empty-text", EmptyText.Trim());

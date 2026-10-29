@@ -81,43 +81,20 @@
 @section body {
     <div class="geo-form-drawer">
         <EleForm Model="form" LabelWidth="120px">
+            <EleLabel Label="基础" FillRow="true"></EleLabel>
             <EleInput For="Item.Id" Label="ID" Enabled="false"></EleInput>
             <EleInput For="Item.CreatorName" Label="编辑者" Enabled="false"></EleInput>
-            <EleTreePicker For="Item.MenuId" Label="所属菜单" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreePicker>
-            <EleSelect For="Item.Type" Label="类型" Clearable="true" ></EleSelect>
             <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
             <EleInput For="Item.Alias" Label="简称"></EleInput>
-            <EleInput For="Item.Addr" Label="地址" FillRow="true"></EleInput>
-            <ElePicker For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-picker datajson-picker" PopupUrl="/Shared/PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>
-
-            <EleInput For="Item.Url" Label="链接" FillRow="true" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
+            <EleTreePicker For="Item.MenuId" Label="所属菜单" Required="true" Api="/httpapi/gis/GetMenuTree?selectedId=@selectedId&_ts=@menuTreeTs" Clearable="true" CheckStrictly="true"></EleTreePicker>
+            <EleInput For="Item.Addr" Label="地址" FillRow="false"></EleInput>
             <EleNumber For="Item.SortId" Label="排序" Min="0" Max="100000"></EleNumber>
             <EleSwitch For="Item.IsVisible" Label="是否可见"></EleSwitch>
 
-            <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
-                <EleLabel Label="样式" FillRow="true"></EleLabel>
-            </div>
-            <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
-                <EleNumber For="Item.Scale" Label="缩放" Min="0.1" Max="10" Step="0.1" Precision="2"></EleNumber>
-            </div>
-            <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
-                <EleInput For="Item.LabelColor" Label="色彩" Placeholder="#000000"></EleInput>
-            </div>
 
-            <EleLabel Label="更多" FillRow="true"></EleLabel>
-            <div class="geo-field-toggle" v-show="!form.type || ['1','点','point','3','文字','text','5','监控','video','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">
-                <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="定位" Class="gps-picker" PopupUrl="Locator" Icon="Location" Editable="true"></ElePicker>
-            </div>
-
-            <div class="geo-field-toggle" v-show="['4','图片','image','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">
-                <EleFileUpload For="Item.File" Label="文件" FillRow="true" Placeholder="请选择附件文件" Exts=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.obj,.fbx,.gltf,.glb,.zip,.rar,.7z,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" MaxSizeMb="80" ViewerUrl="/Shared/FileViews/Viewer?src={0}"></EleFileUpload>
-            </div>
-            <div class="geo-field-toggle" v-show="['4','图片','image'].includes((form.type ?? '').toString().toLowerCase())">
-                <ElePicker For="Item.Region" TextFor="Item.Region" Label="图片区域" PopupUrl="MapImage" KeyMode="Url" Icon="Location" Editable="true" FillRow="true"></ElePicker>
-            </div>
-            <div class="geo-field-toggle" v-show="['1','点','point','2','形状','shape'].includes((form.type ?? '').toString().toLowerCase())">
-                <ElePicker For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-picker geometry-json-picker" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></ElePicker>
-            </div>
+            <EleLabel Label="数据" FillRow="true"></EleLabel>
+            <EleInput For="Item.Url" Label="链接" FillRow="true" Placeholder="例如 /Checks/CheckObjects?orgId={{id}}"></EleInput>
+            <EleProperty For="Item.DataJson" Label="属性" ButtonPosition="Bottom" ButtonText="新增" FillRow="true"></EleProperty>
             <EleList Label="附件" FillRow="true" DataHandler="?handler=AttData&id=@currentId" PageSize="8" SortField="Id" SortDirection="DESC" Height="180px" EmptyText="暂无附件" ScrollClass="flex-1 overflow-auto px-0" ItemsClass="space-y-1 pb-1" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
                 <ItemTemplate>
                     <div class="flex items-center justify-between gap-3">
@@ -135,9 +112,34 @@
                     </div>
                 </Header>
                 <Footer>
-                    <EleButton Type="Primary" Look="Text" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">管理附件</EleButton>
+                    <EleButton Type="Primary" Look="Plain" Icon="Document" Handler="ShowFiles" EnabledFor="Item.Id">管理</EleButton>
                 </Footer>
             </EleList>
+
+
+            <EleLabel Label="图形" FillRow="true"></EleLabel>
+            <EleSelect For="Item.Type" Label="类型" Required="true" Clearable="true" ></EleSelect>
+            <div class="geo-field-toggle" v-show="!form.type || ['1','点','point','3','文字','text','5','监控','video','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">
+                <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="定位" Class="gps-picker" PopupUrl="Locator" Icon="Location" Editable="true"></ElePicker>
+            </div>
+            <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleNumber For="Item.Scale" Label="缩放" Min="0.1" Max="10" Step="0.1" Precision="2"></EleNumber>
+            </div>
+            <div class="geo-field-toggle" v-show="['1','点','point'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleInput For="Item.LabelColor" Label="色彩" Placeholder="#000000"></EleInput>
+            </div>
+
+
+            <div class="geo-field-toggle" v-show="['4','图片','image','6','文件','file'].includes((form.type ?? '').toString().toLowerCase())">
+                <EleFileUpload For="Item.File" Label="文件" FillRow="true" Placeholder="请选择附件文件" Exts=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.mkv,.obj,.fbx,.gltf,.glb,.zip,.rar,.7z,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" MaxSizeMb="80" ViewerUrl="/Shared/FileViews/Viewer?src={0}"></EleFileUpload>
+            </div>
+            <div class="geo-field-toggle" v-show="['4','图片','image'].includes((form.type ?? '').toString().toLowerCase())">
+                <ElePicker For="Item.Region" TextFor="Item.Region" Label="图片区域" PopupUrl="MapImage" KeyMode="Url" Icon="Location" Editable="true" FillRow="true"></ElePicker>
+            </div>
+            <div class="geo-field-toggle" v-show="['2','形状','shape'].includes((form.type ?? '').toString().toLowerCase())">
+                <ElePicker For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-picker geometry-json-picker" PopupUrl="GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></ElePicker>
+            </div>
+
             <Bottom>
                 <EleButton Type="Primary" Command="SaveClose"  Icon="Check"Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
                 <EleButton Command="Close" Icon="Close">关闭</EleButton>

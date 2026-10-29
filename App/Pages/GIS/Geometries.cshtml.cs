@@ -28,32 +28,25 @@ namespace App.Pages.GIS
 
         public IActionResult OnGetData(Paging pi, string name, GeometryType? type, bool? isVisible, long? menuId, string menuIds = null)
         {
-            var ids = ParseMenuIds(menuIds);
+            var ids = ParseIds(menuIds);
             if (ids.Count == 0)
             {
-                var list0 = GisGeometry.Search(name:name, type:type, isVisible:isVisible, menuId:menuId, recursive:false).SortPageExport(pi);
+                // 查询指定单个菜单下的几何数据
+                var list0 = GisGeometry.Search(name:name, type:type, isVisible:isVisible, menuId:menuId, recursive:true).SortPageExport(pi);
                 return BuildResult(0, "success", list0, pi);
             }
+            else
+            {
+                // 查询指定几个菜单及其子菜单下的几何数据
+                var allMenuIds = ResolveMenuWithDescendants(ids);
+                var q = GisGeometry.Search(name:name, type:type, isVisible:isVisible)
+                    .Where(g => g.MenuId.HasValue && allMenuIds.Contains(g.MenuId.Value));
 
-            var allMenuIds = ResolveMenuWithDescendants(ids);
-            var q = GisGeometry.Search(name:name, type:type, isVisible:isVisible)
-                .Where(g => g.MenuId.HasValue && allMenuIds.Contains(g.MenuId.Value));
-
-            var list = q.SortPageExport(pi);
-            return BuildResult(0, "success", list, pi);
+                var list = q.SortPageExport(pi);
+                return BuildResult(0, "success", list, pi);
+            }
         }
 
-        static HashSet<long> ParseMenuIds(string menuIds)
-        {
-            if (string.IsNullOrWhiteSpace(menuIds))
-                return new HashSet<long>();
-
-            return menuIds
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(x => long.TryParse(x, out var id) ? id : 0)
-                .Where(id => id > 0)
-                .ToHashSet();
-        }
 
         static HashSet<long> ResolveMenuWithDescendants(HashSet<long> menuIds)
         {

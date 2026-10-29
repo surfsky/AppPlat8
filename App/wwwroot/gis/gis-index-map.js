@@ -8,48 +8,6 @@
         const zoom = ctx.zoom;
         const addressApi = window.GisIndexAddress?.create({ map });
 
-        /**应用中文标签*/
-        function applyChineseLabels() {
-            const style = map.getStyle();
-            if (!style || !Array.isArray(style.layers)) return;
-            style.layers.forEach(layer => {
-                if (!layer || layer.type !== 'symbol') return;
-                const layerId = layer.id || '';
-                if (layerId.startsWith('draw-label-')) return;
-                if (layerId.includes('gl-draw-')) return;
-                if (layer.source && layer.source !== 'composite') return;
-
-                // 隐藏底图道路盾牌，避免黄色/绿色编号框干扰业务标注。
-                if (layerId === 'road-number-shield' || layerId === 'road-exit-shield') {
-                    try {
-                        map.setLayoutProperty(layerId, 'visibility', 'none');
-                    } catch {
-                        // ignore incompatible shield layer visibility
-                    }
-                    return;
-                }
-
-                const textField = map.getLayoutProperty(layer.id, 'text-field');
-                if (!textField) return;
-                try {
-                    map.setLayoutProperty(layer.id, 'text-field', [
-                        'coalesce',
-                        ['get', 'name_zh-Hans'],
-                        ['get', 'name_zh-Hans-CN'],
-                        ['get', 'name_zh'],
-                        ['get', 'name_zh_CN'],
-                        ['get', 'name_zh_TW'],
-                        ['get', 'local_name'],
-                        ['get', 'name'],
-                        ['get', 'NAME'],
-                        ''
-                    ]);
-                } catch {
-                    // ignore incompatible text-field expression
-                }
-            });
-        }
-
         /**创建中心坐标控制按钮*/
         function createCenterCoordControl() {
             let container = null;
@@ -114,7 +72,7 @@
             return {
                 onAdd() {
                     container = document.createElement('div');
-                    container.className = 'mapboxgl-ctrl map-center-ctrl';
+                    container.className = 'maplibregl-ctrl map-center-ctrl';
                     container.setAttribute('aria-label', '地图中心坐标');
                     container.addEventListener('dblclick', async (e) => {
                         e.preventDefault();
@@ -142,11 +100,11 @@
             return {
                 onAdd() {
                     container = document.createElement('div');
-                    container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+                    container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
 
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'mapboxgl-ctrl-icon gis-reset-btn';
+                    button.className = 'maplibregl-ctrl-icon gis-reset-btn';
                     button.title = '重置地图';
                     button.setAttribute('aria-label', '重置地图');
                     button.innerHTML = '<i class="fa-solid fa-rotate-right" aria-hidden="true"></i>';
@@ -196,11 +154,11 @@
             return {
                 onAdd() {
                     container = document.createElement('div');
-                    container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+                    container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
 
                     button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'mapboxgl-ctrl-icon gis-fullscreen-btn';
+                    button.className = 'maplibregl-ctrl-icon gis-fullscreen-btn';
                     button.innerHTML = `
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <path d="M9 4H5v4" />
@@ -262,7 +220,6 @@
         }
 
         return {
-            applyChineseLabels,
             createCenterCoordControl,
             createResetControl,
             createFullscreenControl,

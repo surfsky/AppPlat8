@@ -975,38 +975,6 @@
             return true;
         }
 
-        function applyChineseLabels() {
-            if (!map) return;
-            var style = map.getStyle();
-            if (!style || !Array.isArray(style.layers)) return;
-
-            style.layers.forEach(function (layer) {
-                if (!layer || layer.type !== 'symbol') return;
-                if ((layer.id || '').startsWith('draw-label-')) return;
-                if ((layer.id || '').indexOf('gl-draw-') >= 0) return;
-                if (layer.source && layer.source !== 'composite') return;
-                var textField = map.getLayoutProperty(layer.id, 'text-field');
-                if (!textField) return;
-
-                try {
-                    map.setLayoutProperty(layer.id, 'text-field', [
-                        'coalesce',
-                        ['get', 'name_zh-Hans'],
-                        ['get', 'name_zh-Hans-CN'],
-                        ['get', 'name_zh'],
-                        ['get', 'name_zh_CN'],
-                        ['get', 'name_zh_TW'],
-                        ['get', 'local_name'],
-                        ['get', 'name'],
-                        ['get', 'NAME'],
-                        ''
-                    ]);
-                } catch {
-                    // ignore layers that don't support text-field expressions
-                }
-            });
-        }
-
         function getFeatureCenterPoint(feature) {
             if (!feature || !feature.geometry) return null;
             return getLabelAnchorPoint(feature);
@@ -1448,7 +1416,7 @@
             el.className = 'geometry-reference-marker';
             el.title = '定位参考点';
 
-            referenceMarker = new mapboxgl.Marker({
+            referenceMarker = new maplibregl.Marker({
                 element: el,
                 anchor: 'bottom'
             })
@@ -1748,8 +1716,8 @@
                 zoom: initialZoom
             });
 
-            map.addControl(new mapboxgl.NavigationControl(), 'top-left');
-            map.addControl(new mapboxgl.GeolocateControl({
+            map.addControl(new maplibregl.NavigationControl(), 'top-left');
+            map.addControl(new maplibregl.GeolocateControl({
                 positionOptions: { enableHighAccuracy: true },
                 trackUserLocation: false,
                 showUserHeading: true
@@ -1845,7 +1813,6 @@
 
             map.on('load', function () {
                 bindInteractionEvents();
-                applyChineseLabels();
                 enhanceDrawLayerColors();
                 ensureLabelLayer();
                 ensureRectanglePreviewLayers();
@@ -1869,9 +1836,6 @@
                 applyCursorByTool();
             });
 
-            map.on('style.load', function () {
-                applyChineseLabels();
-            });
         }
 
         return {

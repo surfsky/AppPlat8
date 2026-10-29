@@ -11,7 +11,7 @@ namespace App.EleUI
     [HtmlTargetElement("EleLabel")]
     public class EleLabel : EleFormControl
     {
-        [HtmlAttributeName("Color")]           public string Color { get; set; }
+        [HtmlAttributeName("Color")]           public string Color { get; set; } = "#0A79C4";
         [HtmlAttributeName("Size")]            public string Size { get; set; } = "14px";
         [HtmlAttributeName("Bold")]            public bool Bold { get; set; } = true;
 

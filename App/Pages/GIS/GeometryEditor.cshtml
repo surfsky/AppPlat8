@@ -23,12 +23,13 @@
 }
 
 @section head {
-    <script src="/lib/mapbox-gl/mapbox-gl.js"></script>
-    <link href="/lib/mapbox-gl/mapbox-gl.css" rel="stylesheet" />
+    <script src="/lib/maplibre-gl/maplibre-gl.js"></script>
+    <link href="/lib/maplibre-gl/maplibre-gl.css" rel="stylesheet" />
     <script src="/lib/mapbox-gl-draw/mapbox-gl-draw.js"></script>
     <link href="/lib/mapbox-gl-draw/mapbox-gl-draw.css" rel="stylesheet" />
     <link rel="stylesheet" href="/lib/font-awesome-6.5.2/css/all.min.css" />
     <script src="/gis/gis-geojson-helper.js?v=1.0"></script>
+    <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/maphelper.js?v=3.5"></script>
     <link rel="stylesheet" href="~/Pages/GIS/GeometryEditor.cshtml.css?v=3.5" asp-append-version="true" />
 }
@@ -139,27 +140,27 @@
                 </div>
                 </div>
                 <div class="toolbar-actions">
-                <el-tooltip placement="bottom" content="属性">
-                    <span class="draw-tool-tip">
-                        <el-button type="primary" plain circle class="toolbar-action-btn" @@click="openPropsDrawer">
-                            <i class="fa-regular fa-rectangle-list"></i>
-                        </el-button>
-                    </span>
-                </el-tooltip>
-                <el-tooltip placement="bottom" content="删除选中">
-                    <span class="draw-tool-tip">
-                        <el-button type="warning" circle class="toolbar-action-btn" @@click="removeSelected">
-                            <i class="fa-regular fa-trash-can"></i>
-                        </el-button>
-                    </span>
-                </el-tooltip>
-                <el-tooltip placement="bottom" content="保存">
-                    <span class="draw-tool-tip">
-                        <el-button type="primary" circle class="toolbar-action-btn" @@click="confirmGeometry">
-                            <i class="fa-regular fa-floppy-disk"></i>
-                        </el-button>
-                    </span>
-                </el-tooltip>
+                    <el-tooltip placement="bottom" content="保存">
+                        <span class="draw-tool-tip">
+                            <el-button type="primary" circle class="toolbar-action-btn" @@click="confirmGeometry">
+                                <i class="fa-solid fa-check"></i>
+                            </el-button>
+                        </span>
+                    </el-tooltip>
+                    <el-tooltip placement="bottom" content="属性">
+                        <span class="draw-tool-tip">
+                            <el-button type="primary" circle class="toolbar-action-btn" @@click="openPropsDrawer">
+                                <i class="fa-regular fa-rectangle-list"></i>
+                            </el-button>
+                        </span>
+                    </el-tooltip>
+                    <el-tooltip placement="bottom" content="删除选中">
+                        <span class="draw-tool-tip">
+                            <el-button type="danger" circle class="toolbar-action-btn" @@click="removeSelected">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </el-button>
+                        </span>
+                    </el-tooltip>
                 </div>
             </div>
         </div>

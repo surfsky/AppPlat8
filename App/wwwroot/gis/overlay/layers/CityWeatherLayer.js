@@ -105,16 +105,16 @@ export class CityWeatherLayer extends MapLayer {
         color: #e2e8f0;
         text-shadow: 0 1px 2px rgba(15, 23, 42, 0.85);
       }
-      .city-weather-mapbox-popup .mapboxgl-popup-content {
+      .city-weather-mapbox-popup .maplibregl-popup-content {
         padding: 0;
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
       }
-      .city-weather-mapbox-popup .mapboxgl-popup-tip {
+      .city-weather-mapbox-popup .maplibregl-popup-tip {
         border-top-color: #ffffff;
       }
-      .city-weather-mapbox-popup .mapboxgl-popup-close-button {
+      .city-weather-mapbox-popup .maplibregl-popup-close-button {
         right: 8px;
         top: 8px;
         width: 28px;
@@ -411,7 +411,7 @@ export class CityWeatherLayer extends MapLayer {
     if (!this.runtime) return;
     const { map } = this.runtime;
     if (this.popup) this.popup.remove();
-    this.popup = new mapboxgl.Popup({
+    this.popup = new maplibregl.Popup({
       closeButton: true,
       closeOnClick: true,
       maxWidth: "420px",
@@ -455,7 +455,7 @@ export class CityWeatherLayer extends MapLayer {
     };
 
     header.addEventListener("pointerdown", evt => {
-      if (evt.target.closest(".mapboxgl-popup-close-button")) return;
+      if (evt.target.closest(".maplibregl-popup-close-button")) return;
       dragging = true;
       startX = evt.clientX;
       startY = evt.clientY;
@@ -490,7 +490,7 @@ export class CityWeatherLayer extends MapLayer {
       this.openPopup(city, item);
     });
     root.style.opacity = `${this.opacity ?? 1}`;
-    return new mapboxgl.Marker({ element: root, anchor: "bottom-left", offset: [0, -6] })
+    return new maplibregl.Marker({ element: root, anchor: "bottom-left", offset: [0, -6] })
       .setLngLat([city.lon, city.lat])
       .addTo(this.runtime.map);
   }

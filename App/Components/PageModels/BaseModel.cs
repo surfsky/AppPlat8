@@ -96,5 +96,24 @@ namespace App
 
         /// <summary>检查当前用户是否拥有某个权限</summary>
         protected bool HasPower(Power power) => Auth.HasPower(power, HttpContext);
+
+
+        //-------------------------------------------------
+        // 一些辅助方法
+        //-------------------------------------------------
+        /// <summary>解析ID字符串，返回有效的ID集合</summary>
+        /// <param name="ids">查询参数，多个ID用逗号分隔</param>
+        /// <returns>有效的ID集合</returns>
+        public static HashSet<long> ParseIds(string ids)
+        {
+            if (string.IsNullOrWhiteSpace(ids))
+                return new HashSet<long>();
+
+            return ids
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => long.TryParse(x, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .ToHashSet();
+        }
     }
 }

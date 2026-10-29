@@ -198,7 +198,8 @@
                         subdomains: item.subdomains || item.Subdomains || null,
                         tileSize: item.tileSize ?? item.TileSize ?? null,
                         maxZoom: item.maxZoom ?? item.MaxZoom ?? null,
-                        attribution: item.attribution || item.Attrib || ''
+                        attribution: item.attribution || item.Attrib || '',
+                        effect: item.effect || item.Effect || ''
                     }))
                     .filter(item => item.name && (item.path || item.tileTemplate));
 

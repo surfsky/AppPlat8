@@ -17,7 +17,8 @@ namespace App.DAL.GIS
         string[] Subdomains = null,
         int TileSize = 256,
         int MaxZoom = 18,
-        string Attrib = null
+        string Attrib = null,
+        string Effect = null
     );
 
     /// <summary>GIS 场景展示图层定义</summary>
@@ -40,7 +41,7 @@ namespace App.DAL.GIS
         /// <summary>地图样式</summary>
         public static List<GisMapStyle> Styles = new List<GisMapStyle>
         {
-            //-- 国内图层优先：天地图（需要 SiteConfig.TiandituKey 配置）
+            //-- 国内图层优先：天地图（需要 SiteConfig.TiandituKey 配置）。MapLibre 无法使用 Mapbox 官方样式，已移除
             // 天地图-影像（遥感），叠加影像注记，默认底图
             new("TiandituSatellite",
                 Path: "tianditu://satellite",
@@ -73,13 +74,40 @@ namespace App.DAL.GIS
                 MaxZoom: 19,
                 Attrib: "© OpenStreetMap contributors"
             ),
-            //-- 国际图层（需要 SiteConfig.MapKey 配置 Mapbox token）
-            new("SatelliteStreets", "mapbox://styles/mapbox/satellite-streets-v12", "Mapbox 卫星街道"),
-            new("Streets",          "mapbox://styles/mapbox/streets-v11",           "Mapbox 街道"),
-            new("Satellite",        "mapbox://styles/mapbox/satellite-v9",          "Mapbox 卫星"),
-            new("Dark",             "mapbox://styles/mapbox/dark-v10",              "Mapbox 暗色"),
-            new("Light",            "mapbox://styles/mapbox/light-v10",             "Mapbox 明亮"),
-            new("Outdoors",         "mapbox://styles/mapbox/outdoors-v11",          "Mapbox 户外"),
+            // 天地图-地形晕渲，叠加地形注记
+            new("TiandituTerrain",
+                Path: "tianditu://terrain",
+                Title: "天地图地形",
+                TileTemplate: "https://t{s}.tianditu.gov.cn/ter_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ter&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}",
+                LabelTemplate: "https://t{s}.tianditu.gov.cn/cta_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cta&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}",
+                Subdomains: new [] { "0", "1", "2", "3", "4", "5", "6", "7" },
+                TileSize: 256,
+                MaxZoom: 14,
+                Attrib: "地形：国家基础地理信息中心 Tianditu"
+            ),
+            // 明亮 / 暗色：天地图矢量底图的客户端着色（灰度 / 明度反转），与 MapLibre 一同使用
+            new("Light",
+                Path: "tianditu://light",
+                Title: "明亮",
+                TileTemplate: "https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}",
+                LabelTemplate: "https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}",
+                Subdomains: new [] { "0", "1", "2", "3", "4", "5", "6", "7" },
+                TileSize: 256,
+                MaxZoom: 18,
+                Attrib: "矢量：国家基础地理信息中心 Tianditu",
+                Effect: "light"
+            ),
+            new("Dark",
+                Path: "tianditu://dark",
+                Title: "暗色",
+                TileTemplate: "https://t{s}.tianditu.gov.cn/vec_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=vec&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}",
+                LabelTemplate: "https://t{s}.tianditu.gov.cn/cva_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=cva&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILECOL={x}&TILEROW={y}&TILEMATRIX={z}&tk={tk}",
+                Subdomains: new [] { "0", "1", "2", "3", "4", "5", "6", "7" },
+                TileSize: 256,
+                MaxZoom: 18,
+                Attrib: "矢量：国家基础地理信息中心 Tianditu",
+                Effect: "dark"
+            ),
         };
 
         /// <summary>场景展示图层定义</summary>

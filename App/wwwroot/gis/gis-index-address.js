@@ -14,7 +14,7 @@
             if (searchMarker) {
                 searchMarker.remove();
             }
-            searchMarker = new mapboxgl.Marker({ color: '#ef4444' }).setLngLat([lng, lat]).addTo(map);
+            searchMarker = new maplibregl.Marker({ color: '#ef4444' }).setLngLat([lng, lat]).addTo(map);
         }
 
         function hideAddressSuggestList() {

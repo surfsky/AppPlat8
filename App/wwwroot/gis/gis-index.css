@@ -1513,16 +1513,16 @@ body.layer-panel-resizing * {
 /*****************************************************
 * Map Controls
 *****************************************************/
-.mapboxgl-control-container {
+.maplibregl-control-container {
     z-index: 4015;
 }
 
-.mapboxgl-ctrl-top-right {
+.maplibregl-ctrl-top-right {
     top: 86px;
     right: 8px;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl {
+.maplibregl-ctrl-top-right .maplibregl-ctrl {
     margin-top: 4px;
 }
 
@@ -1543,18 +1543,18 @@ body.gis-marker-dock-mode .map-toolbar {
     display: none;
 }
 
-body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
+body.gis-marker-dock-mode .maplibregl-ctrl-top-right {
     top: 8px;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group,
-.mapboxgl-ctrl-top-left .mapboxgl-ctrl-group {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group,
+.maplibregl-ctrl-top-left .maplibregl-ctrl-group {
     border: 1px solid rgba(22, 170, 255, 0.55);
     background: rgba(3, 16, 80, 0.86);
     box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.35), 0 6px 18px rgba(2, 6, 23, 0.45);
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -1564,44 +1564,44 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
     box-shadow: none;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button,
-.mapboxgl-ctrl-top-left .mapboxgl-ctrl-group button {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button,
+.maplibregl-ctrl-top-left .maplibregl-ctrl-group button {
     background: rgba(3, 16, 80, 0.86);
     border-bottom: 1px solid rgba(10, 100, 180, 0.45);
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button {
     border: 1px solid rgba(22, 170, 255, 0.55);
     border-radius: 8px;
     box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.35), 0 6px 18px rgba(2, 6, 23, 0.45);
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button:hover,
-.mapboxgl-ctrl-top-left .mapboxgl-ctrl-group button:hover {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button:hover,
+.maplibregl-ctrl-top-left .maplibregl-ctrl-group button:hover {
     background: rgba(14, 66, 146, 0.66);
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button:last-child,
-.mapboxgl-ctrl-top-left .mapboxgl-ctrl-group button:last-child {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button:last-child,
+.maplibregl-ctrl-top-left .maplibregl-ctrl-group button:last-child {
     border-bottom: none;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button + button {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button + button {
     margin-top: 0;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group .mapboxgl-ctrl-icon:not(.gis-reset-btn),
-.mapboxgl-ctrl-top-left .mapboxgl-ctrl-group .mapboxgl-ctrl-icon:not(.gis-reset-btn) {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group .maplibregl-ctrl-icon:not(.gis-reset-btn),
+.maplibregl-ctrl-top-left .maplibregl-ctrl-group .maplibregl-ctrl-icon:not(.gis-reset-btn) {
     filter: invert(1) saturate(0.6) brightness(1.3);
 }
 
-.mapboxgl-ctrl-group .mapboxgl-ctrl-icon.fa-solid {
+.maplibregl-ctrl-group .maplibregl-ctrl-icon.fa-solid {
     font-size: 14px;
     line-height: 30px;
     color: #dbeafe;
 }
 
-.mapboxgl-ctrl-group .mapboxgl-ctrl-icon.gis-reset-btn {
+.maplibregl-ctrl-group .maplibregl-ctrl-icon.gis-reset-btn {
     background-image: none !important;
     background: rgba(3, 16, 80, 0.86);
     border-color: rgba(22, 170, 255, 0.55);
@@ -1613,7 +1613,7 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
     filter: none !important;
 }
 
-.mapboxgl-ctrl-group .mapboxgl-ctrl-icon.gis-fullscreen-btn {
+.maplibregl-ctrl-group .maplibregl-ctrl-icon.gis-fullscreen-btn {
     background-image: none !important;
     background: rgba(3, 16, 80, 0.86);
     border-color: rgba(22, 170, 255, 0.55);
@@ -1624,15 +1624,15 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
     filter: none !important;
 }
 
-.mapboxgl-ctrl-group .mapboxgl-ctrl-icon.gis-reset-btn:hover {
+.maplibregl-ctrl-group .maplibregl-ctrl-icon.gis-reset-btn:hover {
     background: rgba(14, 66, 146, 0.66);
 }
 
-.mapboxgl-ctrl-group .mapboxgl-ctrl-icon.gis-fullscreen-btn:hover {
+.maplibregl-ctrl-group .maplibregl-ctrl-icon.gis-fullscreen-btn:hover {
     background: rgba(14, 66, 146, 0.66);
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-reset-btn {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-reset-btn {
     background: rgba(3, 16, 80, 0.86) !important;
     color: #dbeafe !important;
     border: 1px solid rgba(22, 170, 255, 0.55) !important;
@@ -1643,7 +1643,7 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
     appearance: none;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-fullscreen-btn {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-fullscreen-btn {
     background: rgba(3, 16, 80, 0.86) !important;
     color: #dbeafe !important;
     border-bottom: 0 !important;
@@ -1654,39 +1654,39 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
     appearance: none;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-reset-btn:hover {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-reset-btn:hover {
     background: rgba(14, 66, 146, 0.66) !important;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-fullscreen-btn:hover {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-fullscreen-btn:hover {
     background: rgba(14, 66, 146, 0.66) !important;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-reset-btn:focus,
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-reset-btn:focus-visible,
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-reset-btn:active {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-reset-btn:focus,
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-reset-btn:focus-visible,
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-reset-btn:active {
     background: rgba(14, 66, 146, 0.66) !important;
     color: #e0f2fe !important;
     outline: none !important;
     box-shadow: none !important;
 }
 
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-fullscreen-btn:focus,
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-fullscreen-btn:focus-visible,
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-fullscreen-btn:active,
-.mapboxgl-ctrl-top-right .mapboxgl-ctrl-group button.mapboxgl-ctrl-icon.gis-fullscreen-btn.is-active {
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-fullscreen-btn:focus,
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-fullscreen-btn:focus-visible,
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-fullscreen-btn:active,
+.maplibregl-ctrl-top-right .maplibregl-ctrl-group button.maplibregl-ctrl-icon.gis-fullscreen-btn.is-active {
     background: rgba(14, 66, 146, 0.66) !important;
     color: #e0f2fe !important;
     outline: none !important;
 }
 
-.mapboxgl-ctrl-group .gis-reset-btn i {
+.maplibregl-ctrl-group .gis-reset-btn i {
     font-size: 14px;
     line-height: 1;
     pointer-events: none;
 }
 
-.mapboxgl-ctrl-group .gis-fullscreen-btn svg {
+.maplibregl-ctrl-group .gis-fullscreen-btn svg {
     width: 15px;
     height: 15px;
     stroke: currentColor;
@@ -1697,14 +1697,14 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
     pointer-events: none;
 }
 
-.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib {
     background: rgba(3, 16, 80, 0.86);
     border: 1px solid rgba(22, 170, 255, 0.55);
     box-shadow: inset 0 0 0 1px rgba(10, 100, 180, 0.35);
     color: #cbd5e1;
 }
 
-.mapboxgl-ctrl-bottom-right {
+.maplibregl-ctrl-bottom-right {
     display: flex;
     flex-direction: row;
     align-items: flex-end;
@@ -1713,13 +1713,13 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
     bottom: 8px;
 }
 
-.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl {
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl {
     float: none;
     clear: none;
     margin: 0;
 }
 
-.mapboxgl-ctrl-bottom-right .map-center-ctrl {
+.maplibregl-ctrl-bottom-right .map-center-ctrl {
     order: 0;
     cursor: text;
     white-space: nowrap;
@@ -1733,20 +1733,20 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-top-right {
     z-index: 7;
 }
 
-body.gis-marker-dock-mode .mapboxgl-ctrl-bottom-right .map-center-ctrl {
+body.gis-marker-dock-mode .maplibregl-ctrl-bottom-right .map-center-ctrl {
     display: none;
 }
 
-.mapboxgl-ctrl-bottom-right .map-center-ctrl:hover {
+.maplibregl-ctrl-bottom-right .map-center-ctrl:hover {
     background: rgba(15, 23, 42, 0.62);
     border-color: rgba(125, 211, 252, 0.52);
 }
 
-.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib {
     order: 1;
 }
 
-.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib a {
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-attrib a {
     color: #93c5fd;
 }
 
@@ -1769,7 +1769,6 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-bottom-right .map-center-ctrl {
     width: 20px;
     height: 20px;
     object-fit: contain;
-    filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.35));
 }
 .geometry-point-marker .dot-fallback {
     width: 12px;
@@ -1777,7 +1776,6 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-bottom-right .map-center-ctrl {
     border-radius: 999px;
     background: #60a5fa;
     border: 2px solid #fff;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
 }
 .geometry-point-marker.is-selected .marker-icon,
 .geometry-point-marker.is-selected .dot-fallback {
@@ -2058,7 +2056,7 @@ body.gis-marker-dock-mode .mapboxgl-ctrl-bottom-right .map-center-ctrl {
     .geo-detail-panel {
         width: 100%;
     }
-    .mapboxgl-ctrl-bottom-right .map-center-ctrl {
+    .maplibregl-ctrl-bottom-right .map-center-ctrl {
         max-width: calc(100vw - 20px);
         font-size: 12px;
         line-height: 1.3;
