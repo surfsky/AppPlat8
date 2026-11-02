@@ -31,3 +31,12 @@
 
 
             <ElePicker For="Item.DataJson" TextFor="Item.DataJson" Label="属性" Class="geojson-picker datajson-picker" PopupUrl="/Shared/PropsEditor" KeyMode="Storage" Icon="Edit" Rows="4" Editable="true" FillRow="true"></ElePicker>
+
+
+            foreach (var part in parts)
+            {
+                if (long.TryParse(part, out var id) && id > 0)
+                    list.Add(id);
+            }
+
+            return list.Distinct().ToList();

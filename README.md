@@ -46,7 +46,7 @@ dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
 dotnet app.dll --urls=http://localhost:6060;http://abc.org # 若端口被占用，查找并杀掉占用端口 6060 的进程
 
 // 关闭进程
-lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9
+lsof -nP -iTCP:6001 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9
 lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
 lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
 

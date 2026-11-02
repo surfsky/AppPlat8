@@ -1,0 +1,93 @@
+@page
+@model App.Pages.GIS.Index2Model
+@using App.DAL
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "GIS 3D 地形";
+    var tk = SiteConfig.Instance?.TiandituKey ?? "";
+}
+
+@section body {
+<link href='/lib/maplibre-gl-v6/maplibre-gl.css' rel='stylesheet' />
+
+<div id="map2" style="width:100%;height:calc(100vh - 50px);"></div>
+
+<script type="module">
+    import * as maplibregl from '/lib/maplibre-gl-v6/maplibre-gl.mjs';
+    window.maplibregl = maplibregl;
+
+    const TIANDITU_KEY = '@tk';
+
+    const map = new maplibregl.Map({
+        container: 'map2',
+        zoom: 4,
+        center: [120.6034, 27.5686],
+        pitch: 0,     // 俯仰角度
+        bearing: 0,   // 方向
+        hash: false,  // 是否开启url哈希参数
+        style: {
+            version: 8,
+            'projection': {
+                'type': 'globe'
+            },
+            sources: {
+                'raster-tiles': {
+                    type: 'raster',
+                    tiles: TIANDITU_KEY ? [
+                        'https://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=' + TIANDITU_KEY,
+                        'https://t1.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=' + TIANDITU_KEY,
+                        'https://t2.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=' + TIANDITU_KEY,
+                        'https://t3.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=' + TIANDITU_KEY
+                    ] : ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    maxzoom: 18
+                },
+                'terrain-dem': {
+                    type: 'raster-dem',
+                    tiles: ['/tiles/dem/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    encoding: 'terrarium',
+                    maxzoom: 11
+                },
+                'terrain-hillshade': {
+                    type: 'raster-dem',
+                    tiles: ['/tiles/dem/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    encoding: 'terrarium',
+                    maxzoom: 11
+                }
+            },
+            layers: [
+                { id: 'raster-tiles', type: 'raster', source: 'raster-tiles' },
+                {
+                    id: 'hillshade',
+                    type: 'hillshade',
+                    source: 'terrain-hillshade',
+                    layout: { visibility: 'visible' },
+                    paint: {
+                        'hillshade-shadow-color': '#3a3a3a',
+                        'hillshade-highlight-color': '#ffffff',
+                        'hillshade-accent-color': '#666666'
+                    }
+                }
+            ],
+            terrain: { source: 'terrain-dem', exaggeration: 1.5 },
+            sky: {}
+        },
+        maxZoom: 18,
+        maxPitch: 85
+    });
+
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true, showZoom: true, showCompass: true }));
+    map.addControl(new maplibregl.TerrainControl({ source: 'terrain-dem', exaggeration: 1.5 }));
+    map.addControl(new maplibregl.FullscreenControl());
+    map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }));
+
+    map.on('load', () => console.log('[Index2] ✅ 地图加载完成，3D 地形已启用！'));
+    map.on('style.load', () => console.log('[Index2] style.load'));
+    map.on('error', (e) => {
+        if (e.error?.message?.includes('tile')) console.warn('[Index2] 瓦片:', e.error.message);
+        else console.error('[Index2] error:', e.error);
+    });
+</script>
+}

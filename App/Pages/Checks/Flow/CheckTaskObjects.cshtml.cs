@@ -17,7 +17,7 @@ namespace App.Pages.Checks
     /// 纯对象选取工作区：顶部过滤 + 中部双列表（查询结果 / 当前选择）+ 底部操作。
     /// </summary>
     //[Auth(Power.CheckTaskEdit)]
-    public class CheckTaskObjectsModel : BaseModel  // AuthModel
+    public class CheckTaskObjectsModel : AuthModel
     {
         public long TaskId { get; set; }
         public string TaskName { get; set; }

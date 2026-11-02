@@ -30,8 +30,12 @@
 }
 
 @section head {
-    <script src='/lib/maplibre-gl/maplibre-gl.js'></script>
-    <link href='/lib/maplibre-gl/maplibre-gl.css' rel='stylesheet' />
+    <link href='/lib/maplibre-gl-v6/maplibre-gl.css' rel='stylesheet' />
+    <script type="module">
+        import * as maplibregl from '/lib/maplibre-gl-v6/maplibre-gl.mjs';
+        window.maplibregl = maplibregl;
+        console.log('[ML6] v6.10.0 loaded from local, TerrainControl:', !!maplibregl.TerrainControl);
+    </script>
     <script src="/js/echarts.min.js"></script>
     <link rel="stylesheet" href="/gis/gis-index.css?v=@DateTime.Now.Ticks" />
     <script src="/gis/gis-geojson-helper.js?v=@DateTime.Now.Ticks"></script>
@@ -199,7 +203,9 @@
 }
 
 @section script {
-    <script>
+    <script type="module">
+        import { MapTerrainHelper } from '/js/gis3/MapTerrainHelper.js';
+
         // GIS Key 统一通过 MapFactory.setKeys() 设置
         MapFactory.setKeys({
             mapboxKey:   "@SiteConfig.Instance.MapboxKey",
@@ -340,7 +346,13 @@
         const viewApi = GisIndexView.create({
             map,
             state,
-            terrainSourceId,
+            terrainHelper: new MapTerrainHelper({ map, currentExaggeration: 0 }, {
+                terrainSourceId,
+                hillSourceId: 'terrain-hillshade',
+                hillLayerId: 'hillshade',
+                hillBeforeLayerId: 'raster-labels',
+                getDemSource: () => MapFactory.getTerrainSource(),
+            }),
             closeViewMenu: () => {}
         });
         const mapApi = GisIndexMap.create({

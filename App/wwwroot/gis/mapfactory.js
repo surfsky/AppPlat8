@@ -274,7 +274,8 @@
         var tileSize = Number(styleInfo.tileSize) || 256;
         var maxZoom = Number(styleInfo.maxZoom) || 18;
         var sources = {
-            'raster-tiles': { type: 'raster', tiles: templates, tileSize: tileSize, maxzoom: maxZoom, attribution: styleInfo.attribution || '' }
+            'raster-tiles': { type: 'raster', tiles: templates, tileSize: tileSize, maxzoom: maxZoom, attribution: styleInfo.attribution || '' },
+            'terrain-dem': getTerrainSource()
         };
         var baseLayer = { id: 'raster-tiles', type: 'raster', source: 'raster-tiles', minzoom: 0, maxzoom: 24 };
         if (styleInfo.effect === 'light') {
@@ -289,6 +290,8 @@
             version: 8,
             glyphs: getGlyphsUrl(),
             projection: { type: normalizeProjection(options && options.projection) },
+            terrain: undefined,
+            sky: {},
             sources: sources,
             layers: layers
         };
@@ -340,7 +343,7 @@
 
         var maplibre = opts.maplibregl || global.maplibregl;
         if (!maplibre || typeof maplibre.Map !== 'function') {
-            throw new Error('[MapFactory] maplibre-gl 未加载，请先引入 /lib/maplibre-gl/maplibre-gl.js');
+            throw new Error('[MapFactory] maplibre-gl 未加载，请先引入 v6.x 版本');
         }
 
         var mapOptions = Object.assign(

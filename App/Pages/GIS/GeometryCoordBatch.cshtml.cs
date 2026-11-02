@@ -73,26 +73,6 @@ namespace App.Pages.GIS
             });
         }
 
-        private static List<long> ParseIds(string ids)
-        {
-            var list = new List<long>();
-            if (string.IsNullOrWhiteSpace(ids))
-                return list;
-
-            var parts = ids
-                .Replace("，", ",")
-                .Replace("；", ",")
-                .Replace(";", ",")
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            foreach (var part in parts)
-            {
-                if (long.TryParse(part, out var id) && id > 0)
-                    list.Add(id);
-            }
-
-            return list.Distinct().ToList();
-        }
 
         public class CoordBatchConvertReq
         {

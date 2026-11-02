@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>DEM 地形服务测试 — MapLibre v6 本地</title>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='/lib/maplibre-gl-v6/maplibre-gl.css' />
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+        html, body { height: 100%; }
+        #map { position: absolute; top: 0; right: 0; bottom: 0; left: 340px; }
+        #panel {
+            position: absolute; top: 0; left: 0; bottom: 0; width: 340px;
+            background: #fff; border-right: 1px solid #e5e7eb;
+            overflow-y: auto; padding: 16px; box-sizing: border-box;
+            font-size: 14px;
+        }
+        #panel h2 { font-size: 16px; margin: 0 0 12px; color: #1f2937; }
+        #panel h3 { font-size: 13px; margin: 16px 0 8px; color: #374151; border-bottom: 1px solid #f3f4f6; padding-bottom: 4px; }
+        .svc-item {
+            display: block; padding: 10px 12px; margin-bottom: 8px;
+            border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;
+            transition: all .15s; text-decoration: none; color: inherit;
+        }
+        .svc-item:hover { border-color: #3b82f6; background: #eff6ff; }
+        .svc-item.active { border-color: #2563eb; background: #dbeafe; }
+        .svc-name { font-weight: 600; color: #111827; }
+        .svc-desc { font-size: 12px; color: #6b7280; margin-top: 2px; }
+        .svc-badge {
+            display: inline-block; font-size: 10px; padding: 1px 6px;
+            border-radius: 10px; margin-left: 6px;
+        }
+        .badge-free { background: #dcfce7; color: #166534; }
+        .badge-key { background: #fef3c7; color: #92400e; }
+        .badge-raw { background: #fee2e2; color: #991b1b; }
+        .badge-local { background: #e0e7ff; color: #3730a3; }
+        .badge-hill { background: #f3e8ff; color: #6b21a8; }
+        input[type="text"] {
+            width: 100%; padding: 6px 10px; border: 1px solid #d1d5db;
+            border-radius: 4px; font-size: 13px; box-sizing: border-box;
+        }
+        .row { margin-bottom: 10px; }
+        .label { font-size: 12px; color: #6b7280; margin-bottom: 4px; display: block; }
+        button {
+            width: 100%; padding: 8px; background: #2563eb; color: #fff;
+            border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
+        }
+        button:hover { background: #1d4ed8; }
+        button.terrain-btn { background: #059669; margin-top: 8px; }
+        button.terrain-btn.off { background: #6b7280; }
+        .tip { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+        .link { color: #2563eb; text-decoration: none; font-size: 12px; }
+        .link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div id="panel">
+    <h2>🗺️ DEM 地形服务测试</h2>
+    <div class="tip">点击服务名切换，输入 API Key 后生效</div>
+
+    <h3>1️⃣ 本地 DEM（已有）</h3>
+    <a class="svc-item active" data-terrain="local">
+        <div><span class="svc-name">本地 DEM 瓦片</span><span class="svc-badge badge-local">terrarium</span></div>
+        <div class="svc-desc">/tiles/dem/ — 浙江温州周边，zoom 5-11</div>
+    </a>
+
+    <h3>2️⃣ 全球免费（需要 Key）</h3>
+    <a class="svc-item" data-terrain="maptiler">
+        <div><span class="svc-name">MapTiler Terrain</span><span class="svc-badge badge-key">terrarium</span></div>
+        <div class="svc-desc">全球 50k tile/月 免费，需注册 Key</div>
+    </a>
+
+    <h3>3️⃣ 全球免费（无需 Key）</h3>
+    <a class="svc-item" data-terrain="arcgis">
+        <div><span class="svc-name">ArcGIS World Terrain</span><span class="svc-badge badge-raw">raw ⚠️</span></div>
+        <div class="svc-desc">完全免费无 Key，但编码非 terrarium（需转换，暂不可直接用）</div>
+    </a>
+
+    <h3>4️⃣ 仅晕渲底图（非 DEM）</h3>
+    <a class="svc-item" data-terrain="hill-tianditu">
+        <div><span class="svc-name">天地图地形晕渲</span><span class="svc-badge badge-hill">hill</span></div>
+        <div class="svc-desc">中国范围地形晕渲底图，需 Key</div>
+    </a>
+    <a class="svc-item" data-terrain="hill-geoq">
+        <div><span class="svc-name">GeoQ 地形晕渲</span><span class="svc-badge badge-free">免费</span></div>
+        <div class="svc-desc">中国在线地形图，无需 Key</div>
+    </a>
+
+    <h3>🔑 API Key 配置</h3>
+    <div class="row">
+        <label class="label">MapTiler Key</label>
+        <input type="text" id="maptilerKey" placeholder="https://cloud.maptiler.com/accounts/ 注册获取">
+    </div>
+    <div class="row">
+        <label class="label">天地图 Key</label>
+        <input type="text" id="tiandituKey" value="@SiteConfig.Instance?.TiandituKey ?? """>
+    </div>
+
+    <button class="terrain-btn" id="terrainBtn">✅ 启用 3D 地形</button>
+
+    <h3>📦 下载地址</h3>
+    <div style="font-size:12px;line-height:1.8;color:#374151;">
+        <div><b>原始 DEM 数据：</b></div>
+        <div>• SRTM 30m：<a class="link" target="_blank" href="https://earthexplorer.usgs.gov">earthexplorer.usgs.gov</a></div>
+        <div>• ALOS AW3D30：<a class="link" target="_blank" href="https://www.eorc.jaxa.jp/ALOS/en/aw3d30">eorc.jaxa.jp/ALOS</a></div>
+        <div>• Copernicus 30m：<a class="link" target="_blank" href="https://registry.opendata.aws/copernicus-dem">AWS OpenData</a></div>
+        <div>• 中科院 50m：<a class="link" target="_blank" href="http://datamirror.csdb.cn">datamirror.csdb.cn</a></div>
+        <div style="margin-top:8px;"><b>免费瓦片服务：</b></div>
+        <div>• MapTiler Free：<a class="link" target="_blank" href="https://cloud.maptiler.com/accounts">maptiler.com</a></div>
+        <div>• ArcGIS Elevation：<a class="link" target="_blank" href="https://elevation3d.arcgis.com">elevation3d.arcgis.com</a></div>
+        <div style="margin-top:8px;"><b>瓦片生成工具：</b></div>
+        <div>• <a class="link" target="_blank" href="https://github.com/tilezen/terrainium">terrainium</a>（转 terrarium）</div>
+        <div>• <a class="link" target="_blank" href="https://gdal.org">GDAL</a>（通用工具）</div>
+        <div>• <a class="link" target="_blank" href="https://www.maptiler.com/desktop">MapTiler Desktop</a></div>
+    </div>
+</div>
+<div id="map"></div>
+
+<script type="module">
+    import * as maplibregl from '/lib/maplibre-gl-v6/maplibre-gl.mjs';
+    window.maplibregl = maplibregl;
+
+    const TIANDITU_KEY = document.getElementById('tiandituKey').value.trim();
+
+    const BASEMAPS = {
+        osm: { type: 'raster', tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19 },
+        tianditu: TIANDITU_KEY ? {
+            type: 'raster',
+            tiles: [0,1,2,3].map(i => `https://t${i}.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TIANDITU_KEY}`),
+            tileSize: 256, maxzoom: 18
+        } : null
+    };
+
+    function terrainSource(id, tiles, opts = {}) {
+        return { id, type: 'raster-dem', tiles, tileSize: 256, encoding: opts.encoding || 'terrarium', maxzoom: opts.maxzoom || 11 };
+    }
+
+    const TERRAIN_PRESETS = {
+        local: {
+            terrain: terrainSource('terrain-local', ['/tiles/dem/{z}/{x}/{y}.png']),
+            hillshade: terrainSource('hill-local', ['/tiles/dem/{z}/{x}/{y}.png']),
+            label: '本地 DEM'
+        },
+        maptiler: {
+            get terrain() {
+                const k = document.getElementById('maptilerKey').value.trim();
+                return terrainSource('terrain-mt', [`https://api.maptiler.com/tiles/terrain-rgb/{z}/{x}/{y}.png?key=${k}`], { encoding: 'terrarium', maxzoom: 14 });
+            },
+            get hillshade() {
+                const k = document.getElementById('maptilerKey').value.trim();
+                return terrainSource('hill-mt', [`https://api.maptiler.com/tiles/terrain-rgb/{z}/{x}/{y}.png?key=${k}`], { encoding: 'terrarium', maxzoom: 14 });
+            },
+            label: 'MapTiler'
+        },
+        arcgis: {
+            terrain: terrainSource('terrain-ag', ['https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/MapServer/tile/{z}/{y}/{x}'], { encoding: 'terrarium', maxzoom: 13 }),
+            hillshade: terrainSource('hill-ag', ['https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/MapServer/tile/{z}/{y}/{x}'], { encoding: 'terrarium', maxzoom: 13 }),
+            label: 'ArcGIS（⚠️ 编码不兼容）'
+        },
+        'hill-tianditu': null,
+        'hill-geoq': null
+    };
+
+    const HILL_PRESETS = {
+        'hill-tianditu': {
+            type: 'raster',
+            tiles: TIANDITU_KEY ? [0,1,2,3].map(i => `https://t${i}.tianditu.gov.cn/ter_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ter&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TIANDITU_KEY}`) : null,
+            tileSize: 256, maxzoom: 18
+        },
+        'hill-geoq': {
+            type: 'raster',
+            tiles: ['https://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineCommunityENG/MapServer/tile/{z}/{y}/{x}'],
+            tileSize: 256, maxzoom: 18
+        }
+    };
+
+    let currentTerrainKey = 'local';
+    let terrainOn = true;
+
+    const baseLayers = [
+        { id: 'basemap', type: 'raster', source: 'basemap' }
+    ];
+
+    const hillLayer = {
+        id: 'hillshade',
+        type: 'hillshade',
+        source: 'hill',
+        paint: {
+            'hillshade-shadow-color': '#3a3a3a',
+            'hillshade-highlight-color': '#ffffff',
+            'hillshade-accent-color': '#666666'
+        }
+    };
+
+    function buildStyle() {
+        const sources = { basemap: BASEMAPS.tianditu || BASEMAPS.osm };
+        const layers = [...baseLayers];
+
+        const preset = TERRAIN_PRESETS[currentTerrainKey];
+        let terrainDef = null;
+        if (preset) {
+            const t = preset.terrain;
+            const h = preset.hillshade;
+            sources[t.id] = { type: t.type, tiles: t.tiles, tileSize: t.tileSize, encoding: t.encoding, maxzoom: t.maxzoom };
+            sources[h.id] = { type: h.type, tiles: h.tiles, tileSize: h.tileSize, encoding: h.encoding, maxzoom: h.maxzoom };
+            layers.push({ ...hillLayer, source: h.id });
+            if (terrainOn) terrainDef = { source: t.id, exaggeration: 1.5 };
+        } else {
+            const hill = HILL_PRESETS[currentTerrainKey];
+            if (hill && hill.tiles) {
+                sources['hill-bg'] = hill;
+                layers.push({ id: 'hill-bg', type: 'raster', source: 'hill-bg' });
+            }
+        }
+
+        return { version: 8, sources, layers, terrain: terrainDef, sky: terrainOn ? {} : undefined };
+    }
+
+    const map = new maplibregl.Map({
+        container: 'map',
+        zoom: 5,
+        center: [104.0, 35.0],
+        pitch: 0,
+        bearing: 0,
+        hash: true,
+        style: buildStyle(),
+        maxZoom: 18,
+        maxPitch: 85
+    });
+
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }));
+    map.addControl(new maplibregl.FullscreenControl());
+
+    map.on('style.load', () => {
+        console.log('[测试] style.load, terrain=', !!map.getStyle().terrain);
+    });
+
+    map.on('error', (e) => {
+        if (!e.error?.message?.includes('tile')) console.error('[测试] error:', e.error?.message);
+    });
+
+    function switchTo(key) {
+        currentTerrainKey = key;
+        document.querySelectorAll('.svc-item').forEach(el => {
+            el.classList.toggle('active', el.dataset.terrain === key);
+        });
+        map.setStyle(buildStyle());
+        console.log('[测试] 切换到:', TERRAIN_PRESETS[key]?.label || HILL_PRESETS[key] && '地形晕渲');
+    }
+
+    document.querySelectorAll('.svc-item').forEach(el => {
+        el.addEventListener('click', () => switchTo(el.dataset.terrain));
+    });
+
+    const terrainBtn = document.getElementById('terrainBtn');
+    terrainBtn.addEventListener('click', () => {
+        terrainOn = !terrainOn;
+        terrainBtn.textContent = terrainOn ? '✅ 启用 3D 地形' : '⬜ 关闭 3D 地形（纯 2D）';
+        terrainBtn.classList.toggle('off', !terrainOn);
+        switchTo(currentTerrainKey);
+    });
+</script>
+</body>
+</html>

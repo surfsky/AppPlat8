@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>DEM 3D 地形 — CDN v6 测试</title>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@6.10.0/dist/maplibre-gl.css' />
+    <style>body { margin: 0; padding: 0; } html, body, #map { height: 100%; }</style>
+</head>
+<body>
+<div id="map"></div>
+<script type="module">
+    import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.10.0/dist/maplibre-gl.mjs';
+    window.maplibregl = maplibregl;
+    console.log('[CDN-test] MapLibre:', maplibregl.version, 'TerrainControl:', !!maplibregl.TerrainControl);
+
+    const map = new maplibregl.Map({
+        container: 'map',
+        zoom: 11,
+        center: [120.6034, 27.5686],
+        pitch: 55,
+        bearing: -30,
+        hash: true,
+        style: {
+            version: 8,
+            sources: {
+                osm: {
+                    type: 'raster',
+                    tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    attribution: '&copy; OpenStreetMap',
+                    maxzoom: 19
+                },
+                terrainSource: {
+                    type: 'raster-dem',
+                    tiles: ['./tiles/dem/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    encoding: 'terrarium',
+                    maxzoom: 11
+                },
+                hillshadeSource: {
+                    type: 'raster-dem',
+                    tiles: ['./tiles/dem/{z}/{x}/{y}.png'],
+                    tileSize: 256,
+                    encoding: 'terrarium',
+                    maxzoom: 11
+                }
+            },
+            layers: [
+                { id: 'osm', type: 'raster', source: 'osm' },
+                {
+                    id: 'hills',
+                    type: 'hillshade',
+                    source: 'hillshadeSource',
+                    layout: { visibility: 'visible' },
+                    paint: {
+                        'hillshade-shadow-color': '#3a3a3a',
+                        'hillshade-highlight-color': '#ffffff',
+                        'hillshade-accent-color': '#666666'
+                    }
+                }
+            ],
+            terrain: { source: 'terrainSource', exaggeration: 1.5 },
+            sky: {}
+        },
+        maxZoom: 18,
+        maxPitch: 85
+    });
+
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true, showZoom: true, showCompass: true }));
+    map.addControl(new maplibregl.TerrainControl({ source: 'terrainSource', exaggeration: 1.5 }));
+    map.addControl(new maplibregl.FullscreenControl());
+
+    map.on('load', () => console.log('[CDN-test] ✅ 地图加载完成！'));
+    map.on('style.load', () => console.log('[CDN-test] style.load, terrain=', map.getStyle().terrain));
+    map.on('error', (e) => {
+        if (e.error?.message?.includes('tile')) console.warn('[CDN-test] 瓦片:', e.error.message);
+        else console.error('[CDN-test] error:', e.error);
+    });
+</script>
+</body>
+</html>

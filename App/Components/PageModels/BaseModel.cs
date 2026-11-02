@@ -13,6 +13,7 @@ using System.Text.Encodings.Web;
 using App.DAL;
 using App.Components;
 using App.HttpApi;
+using App.Utils;
 
 namespace App
 {
@@ -101,19 +102,39 @@ namespace App
         //-------------------------------------------------
         // 一些辅助方法
         //-------------------------------------------------
+        /// <summary>解析ID字符串，返回有效的ID列表</summary>
+        public static List<long> ParseIds(string ids)
+        {
+            if (string.IsNullOrWhiteSpace(ids))
+                return new List<long>();
+
+            return ids
+                .Replace("，", ",")
+                .Replace("；", ",")
+                .Replace(";", ",")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => long.TryParse(x, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList()
+                ;
+        }
+
         /// <summary>解析ID字符串，返回有效的ID集合</summary>
-        /// <param name="ids">查询参数，多个ID用逗号分隔</param>
-        /// <returns>有效的ID集合</returns>
-        public static HashSet<long> ParseIds(string ids)
+        public static HashSet<long> ParseIdSet(string ids)
         {
             if (string.IsNullOrWhiteSpace(ids))
                 return new HashSet<long>();
 
             return ids
+                .Replace("，", ",")
+                .Replace("；", ",")
+                .Replace(";", ",")
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(x => long.TryParse(x, out var id) ? id : 0)
                 .Where(id => id > 0)
                 .ToHashSet();
         }
+
     }
 }

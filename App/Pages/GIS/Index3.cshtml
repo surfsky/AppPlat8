@@ -1,0 +1,148 @@
+@page
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "GIS 3D 地形工作台";
+    var tk = App.DAL.SiteConfig.Instance?.TiandituKey ?? "";
+}
+
+@section body {
+<meta name="tianditu-key" content="@tk" />
+<link rel="stylesheet" href="/lib/maplibre-gl-v6/maplibre-gl.css" />
+<style>
+    /* ===== 主题变量 ===== */
+    html[data-theme="light"] {
+        --gis-map-bg: #ffffff;
+        --gis-btn-bg: #ffffff;
+        --gis-btn-text: #1f1f1f;
+        --gis-btn-hover: #e8e8e8;
+        --gis-panel-bg: #ffffff;
+        --gis-panel-text: #1f1f1f;
+        --gis-panel-hover: #f0f0f0;
+        --gis-panel-border: #d0d0d0;
+        --gis-panel-shadow: rgba(0,0,0,0.15);
+    }
+    html[data-theme="dark"] {
+        --gis-map-bg: #000000;
+        --gis-btn-bg: #2a2a2a;
+        --gis-btn-text: #ffffff;
+        --gis-btn-hover: #3a3a3a;
+        --gis-panel-bg: #2a2a2a;
+        --gis-panel-text: #ffffff;
+        --gis-panel-hover: #3a3a3a;
+        --gis-panel-border: #444444;
+        --gis-panel-shadow: rgba(0,0,0,0.5);
+    }
+
+    /* ===== 页面布局 ===== */
+    .map-page { display: flex; flex-direction: column; height: 100%; padding: 0; margin: 0; overflow: hidden; }
+    #map { flex: 1; position: relative; background: var(--gis-map-bg, #ffffff); }
+    /* 星空画布 z-index 为 0，地图画布在其上、原生控件在更上方。 */
+    #map .maplibregl-canvas { z-index: 1; }
+
+    /* ===== MapLibre 原生控件：背景+圆角 ===== */
+    .maplibregl-ctrl-group {
+        border-radius: 6px !important;
+        overflow: hidden;
+        background: var(--gis-btn-bg) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    /* PopupControl 需要 overflow: visible 才能让弹出面板露出来 */
+    .maplibregl-ctrl-group:has(.gis-popup-panel) {
+        overflow: visible !important;
+    }
+    .maplibregl-ctrl-group button {
+        width: 32px !important; height: 32px !important;
+        min-width: 32px !important; min-height: 32px !important;
+        color: var(--gis-btn-text) !important;
+        background: var(--gis-btn-bg) !important;
+        transition: background 0.15s;
+    }
+    .maplibregl-ctrl-group button:hover { background: var(--gis-btn-hover) !important; }
+
+    /* MapLibre 原生图标是 span 的背景图片，而非内联 SVG。 */
+    html[data-theme="dark"] #map .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+        filter: brightness(0) invert(1);
+    }
+
+    /* ===== 自定义 IconButtonControl 按钮 ===== */
+    .gis-ctrl-btn {
+        width: 32px; height: 32px;
+        background: var(--gis-btn-bg);
+        border: none; border-radius: 6px;
+        cursor: pointer; color: var(--gis-btn-text);
+        display: flex; align-items: center; justify-content: center;
+        transition: background 0.15s;
+        padding: 0;
+    }
+    .gis-ctrl-btn:hover { background: var(--gis-btn-hover); }
+    .gis-ctrl-btn i {
+        font-size: 14px;
+        color: var(--gis-btn-text) !important;
+        display: flex; align-items: center; justify-content: center;
+        width: 100%; height: 100%;
+    }
+
+    /* ===== PopupControl 弹出面板 ===== */
+    .gis-popup-panel {
+        display: none;                          /* 默认隐藏！ */
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 4px;
+        background: var(--gis-panel-bg) !important;
+        border: 1px solid var(--gis-panel-border);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px var(--gis-panel-shadow);
+        min-width: 150px;
+        padding: 6px 0;
+        z-index: 100;
+    }
+    .gis-popup-panel.gis-open { display: block; } /* 点击后显示 */
+
+    .gis-popup-title {
+        padding: 4px 14px 8px 14px;
+        font-size: 12px;
+        color: var(--gis-panel-text);
+        opacity: 0.6;
+        border-bottom: 1px solid var(--gis-panel-border);
+        margin-bottom: 4px;
+    }
+    .gis-popup-row { display: flex; flex-direction: column; }
+    .gis-popup-item {
+        padding: 8px 14px;
+        cursor: pointer;
+        color: var(--gis-panel-text) !important;
+        font-size: 13px;
+        transition: background 0.1s;
+        background: transparent;
+        border: none;
+        text-align: left;
+    }
+    .gis-popup-item:hover { background: var(--gis-panel-hover) !important; }
+    .gis-popup-item.gis-active {
+        background: var(--gis-panel-hover) !important;
+        font-weight: 600;
+        position: relative;
+    }
+    .gis-popup-item.gis-active::before {
+        content: "";
+        position: absolute;
+        left: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: var(--gis-btn-text);
+    }
+    .gis-popup-item.gis-active { padding-left: 18px; }
+</style>
+
+<div class="map-page">
+    <div id="map"></div>
+</div>
+
+<script type="module">
+    import { initMap } from '/js/gis3/index3.js';
+    initMap();
+</script>
+}

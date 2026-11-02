@@ -50,11 +50,10 @@
         }
 
         function addMapControls() {
-            map.addControl(new maplibregl.NavigationControl(), 'top-right');
+            map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
             map.addControl(new maplibregl.GeolocateControl({
                 positionOptions: { enableHighAccuracy: true },
-                trackUserLocation: true,
-                showUserHeading: true
+                trackUserLocation: true, showUserHeading: true
             }), 'top-right');
             map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
@@ -62,6 +61,7 @@
             map.addControl(centerCoordControl, 'bottom-right');
             map.addControl(mapApi.createResetControl(ctx.resetView), 'top-right');
             map.addControl(mapApi.createFullscreenControl(), 'top-right');
+            map.addControl(viewApi.createTerrainToggleControl(), 'top-right');
             map.on('move', () => centerCoordControl.update());
         }
 
@@ -125,7 +125,11 @@
         }
 
         function bindMapLifecycle() {
-            map.on('load', async () => {
+            let _initRan = false;
+            const runFullInit = async () => {
+                if (_initRan) return;
+                _initRan = true;
+                console.log('[boot] runFullInit()');
                 setPageLoading(true, '地图与面板加载中...');
                 const mapHelperReady = await mapApi.ensureMapGeometryHelperReady();
                 if (!mapHelperReady) {
@@ -133,14 +137,10 @@
                     setPageLoading(false);
                     return;
                 }
-
                 ctx.createGeometryLayerManager();
                 ctx.bindGeometryMapInteractions();
-
                 await ctx.loadMapStyles();
                 await ctx.loadScenes();
-
-                // -- 根据场景清单，默认选中并应用 IsDefault=true 的场景
                 if (Array.isArray(state.scenes) && state.scenes.length > 0) {
                     let defScene = state.scenes.find(s => {
                         const flag = s.isDefault ?? s.IsDefault;
@@ -153,7 +153,6 @@
                         try {
                             await ctx.loadMenus();
                             await ctx.loadGeometries();
-                            // 应用默认场景：场景切换会负责 样式/投影/3D/旋转/相机/图层 全量设置
                             const toSwitch = { id: defScene.id ?? defScene.Id, name: defScene.name ?? defScene.Name };
                             await switchSceneInternal(toSwitch);
                         } catch (e) {
@@ -161,29 +160,27 @@
                         }
                     }
                 }
-
                 if (state.menuNodeMap == null || state.menuNodeMap.size === 0) await ctx.loadMenus();
                 if (state.geometries == null || state.geometries.length === 0) await ctx.loadGeometries();
-
                 await panelApi.loadPanels();
-
                 startHeaderDatetime();
                 positionHeaderDatetime();
                 bindPageEvents();
                 syncInitialUi();
                 window.dispatchEvent(new CustomEvent('gis:index-ready', { detail: window.__gisIndexContext }));
                 setTimeout(() => setPageLoading(false), 120);
-            });
+            };
+            if (map.isStyleLoaded()) {
+                console.log('[boot] style already loaded, pre-running init');
+                runFullInit();
+            }
 
-            // 注意：MapLibre v5 里 setProjection / setSky / setTerrain 内部会走 setStyle 通道，
-            // 从而再次触发 style.load，形成死循环。用 _styleLoadDepth guard 拦截重入。
             map.on('style.load', async () => {
                 const depth = ++_styleLoadDepth;
                 const isReentry = depth > 1;
                 console.log('[boot] style.load fired, depth=' + depth + ' isReentry=' + isReentry + ' state.is3D=' + state.is3D);
 
                 try {
-                    // 无论是否重入，marker 和 geometry 图层都必须重建
                     objectApi.buildMarkers(state.objects);
 
                     const geometryLayerManager = ctx.getGeometryLayerManager();
@@ -203,9 +200,10 @@
                     map.once('idle', restoreGeometryLayers);
 
                     if (isReentry) {
-                        console.log('[boot] 重入，跳过 applyProjection/enable3D/enableRotate');
                         return;
                     }
+
+                    await runFullInit();
 
                     if (state.menuNodeMap && state.menuNodeMap.size > 0) {
                         await ctx.loadGeometries();
@@ -214,12 +212,12 @@
                     console.log('[boot] depth=1, 执行 applyProjection(' + state.currentProjection + ')');
                     viewApi.applyProjection(state.currentProjection, { closeMenu: false });
                     console.log('[boot] depth=1, state.is3D=' + state.is3D + ', state.isAutoRotate=' + state.isAutoRotate);
-                    if (state.is3D) viewApi.enable3D({ closeMenu: false, adjustCamera: false });
                     if (state.isAutoRotate) viewApi.enableRotate({ closeMenu: false });
                     else viewApi.disableRotate({ closeMenu: false });
 
                     objectApi.setLayerVisible(true);
                     ctx.renderMenuTree();
+
                 } finally {
                     _styleLoadDepth--;
                 }
@@ -227,6 +225,25 @@
         }
 
         function initialize() {
+            // 等待 Index.cshtml 里 fetch+blob+import 异步加载 v6
+            (async function waitForMapLibre() {
+                var waited = 0;
+                while (waited < 20000) {
+                    if (window.maplibregl && typeof window.maplibregl.Map === 'function') {
+                        var v = window.maplibregl.getVersion?.() || 'unknown';
+                        console.log('[boot] maplibregl v' + v + ' ready after ' + waited + 'ms');
+                        doInitialize();
+                        return;
+                    }
+                    await new Promise(r => setTimeout(r, 100));
+                    waited += 100;
+                }
+                console.error('[boot] maplibregl load timeout (20s)! Check CDN at https://unpkg.com/maplibre-gl@6.10.0/dist/maplibre-gl.mjs');
+                setPageLoading(false, 'maplibregl 加载超时，请检查网络');
+            })();
+        }
+
+        function doInitialize() {
             setPageLoading(true, '地图初始化中...');
             addMapControls();
             bindMapLifecycle();

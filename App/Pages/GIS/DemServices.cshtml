@@ -1,0 +1,325 @@
+@page
+@model App.Pages.GIS.DemServicesModel
+@{
+    Layout = null;
+    var tk = SiteConfig.Instance?.TiandituKey ?? "";
+}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>DEM 地形服务测试</title>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel='stylesheet' href='/lib/maplibre-gl-v6/maplibre-gl.css' />
+    <style>
+        body { margin: 0; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+        html, body { height: 100%; }
+        #map { position: absolute; top: 0; right: 0; bottom: 0; left: 340px; }
+        #panel {
+            position: absolute; top: 0; left: 0; bottom: 0; width: 340px;
+            background: #fafafa; border-right: 1px solid #e5e7eb;
+            overflow-y: auto; padding: 0; font-size: 14px;
+        }
+        .panel-header { padding: 16px; background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; }
+        .panel-header h1 { margin: 0; font-size: 18px; font-weight: 700; }
+        .panel-header p { margin: 4px 0 0; font-size: 12px; opacity: .85; }
+        .section { margin: 0; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; background: #fff; }
+        .section-title {
+            font-size: 12px; font-weight: 700; color: #374151; margin: 0 0 10px;
+            display: flex; align-items: center; gap: 6px; letter-spacing: .5px;
+        }
+        .section-title .num {
+            background: #2563eb; color: #fff; width: 18px; height: 18px; border-radius: 50%;
+            font-size: 11px; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .option {
+            display: flex; align-items: center; padding: 9px 12px; margin-bottom: 6px;
+            border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;
+            transition: all .12s; background: #fff;
+        }
+        .option:hover { border-color: #93c5fd; background: #f0f7ff; }
+        .option.active { border-color: #2563eb; background: #eff6ff; box-shadow: 0 1px 2px rgba(37,99,235,.15); }
+        .option-radio {
+            width: 16px; height: 16px; border: 2px solid #d1d5db; border-radius: 50%;
+            margin-right: 10px; flex-shrink: 0; position: relative;
+        }
+        .option.active .option-radio { border-color: #2563eb; }
+        .option.active .option-radio::after {
+            content: ''; position: absolute; top: 3px; left: 3px; width: 8px; height: 8px;
+            border-radius: 50%; background: #2563eb;
+        }
+        .option-label { flex: 1; font-size: 13px; color: #1f2937; }
+        .option-sub { font-size: 11px; color: #6b7280; margin-top: 1px; }
+        .tag {
+            font-size: 10px; padding: 1px 7px; border-radius: 10px; font-weight: 500; flex-shrink: 0;
+        }
+        .tag-blue { background: #dbeafe; color: #1d4ed8; }
+        .tag-green { background: #dcfce7; color: #166534; }
+        .tag-orange { background: #ffedd5; color: #c2410c; }
+        .tag-gray { background: #f3f4f6; color: #4b5563; }
+        .tag-purple { background: #f3e8ff; color: #6b21a8; }
+        .input-row { margin-bottom: 10px; }
+        .input-row:last-child { margin-bottom: 0; }
+        .input-label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+        .input-label .req { color: #dc2626; }
+        input[type="text"] {
+            width: 100%; padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+            font-size: 13px; box-sizing: border-box; font-family: inherit;
+        }
+        input[type="text"]:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+        .input-hint { font-size: 10px; color: #9ca3af; margin-top: 3px; }
+        .action-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 600; transition: all .15s;
+        }
+        .btn-terrain-on { background: #059669; color: #fff; }
+        .btn-terrain-on:hover { background: #047857; }
+        .btn-terrain-off { background: #6b7280; color: #fff; }
+        .btn-terrain-off:hover { background: #4b5563; }
+        .links { font-size: 12px; line-height: 2; color: #374151; }
+        .links a { color: #2563eb; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+        .links b { color: #1f2937; display: inline-block; margin-top: 4px; }
+        .note {
+            padding: 8px 10px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px;
+            font-size: 11px; color: #92400e; line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div id="panel">
+    <div class="panel-header">
+        <h1>🗺️ GIS 3D 地形测试</h1>
+        <p>选择底图和 DEM 地形源，一键启用 3D 隆起</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title"><span class="num">1</span> 地图底图</div>
+        <div class="option active" data-basemap="tianditu-ter">
+            <div class="option-radio"></div>
+            <div>
+                <div class="option-label">天地图 · 地形晕渲</div>
+                <div class="option-sub">中国风地形晕渲底图</div>
+            </div>
+            <span class="tag tag-blue">WMTS</span>
+        </div>
+        <div class="option" data-basemap="tianditu-img">
+            <div class="option-radio"></div>
+            <div>
+                <div class="option-label">天地图 · 卫星影像</div>
+                <div class="option-sub">高清卫星影像 + 注记</div>
+            </div>
+            <span class="tag tag-blue">WMTS</span>
+        </div>
+        <div class="option" data-basemap="osm">
+            <div class="option-radio"></div>
+            <div>
+                <div class="option-label">OpenStreetMap</div>
+                <div class="option-sub">全球街道地图</div>
+            </div>
+            <span class="tag tag-green">免费</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title"><span class="num">2</span> 三维地形（DEM）</div>
+        <div class="option active" data-terrain="off">
+            <div class="option-radio"></div>
+            <div class="option-label">不启用（纯 2D）</div>
+            <span class="tag tag-gray">—</span>
+        </div>
+        <div class="option" data-terrain="local">
+            <div class="option-radio"></div>
+            <div>
+                <div class="option-label">本地 DEM 瓦片</div>
+                <div class="option-sub">浙江温州周边 /tiles/dem/</div>
+            </div>
+            <span class="tag tag-purple">terrarium</span>
+        </div>
+        <div class="option" data-terrain="maptiler">
+            <div class="option-radio"></div>
+            <div>
+                <div class="option-label">MapTiler Terrain</div>
+                <div class="option-sub">全球覆盖 · 免费 50k tile/月</div>
+            </div>
+            <span class="tag tag-orange">mapbox</span>
+        </div>
+        <div class="option" data-terrain="mapterhorn">
+            <div class="option-radio"></div>
+            <div>
+                <div class="option-label">Mapterhorn DEM</div>
+                <div class="option-sub">开源免费全球 DEM</div>
+            </div>
+            <span class="tag tag-green">免费</span>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title"><span class="num">3</span> API Key 配置</div>
+        <div class="input-row">
+            <label class="input-label">MapTiler Key <span class="req">*</span>（启用 MapTiler 地形时需要）</label>
+            <input type="text" id="maptilerKey" placeholder="https://cloud.maptiler.com 注册获取">
+            <div class="input-hint">免费 5 万瓦片/月，全球 mapbox 编码</div>
+        </div>
+        <div class="input-row">
+            <label class="input-label">天地图 Key <span class="req">*</span>（自动填充）</label>
+            <input type="text" id="tiandituKey" value="@tk">
+            <div class="input-hint">应用配置已自动读取</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title"><span class="num">4</span> 其它</div>
+        <button class="action-btn btn-terrain-on" id="terrainBtn">
+            ✅ 地形已启用
+        </button>
+        <div class="note" style="margin-top:10px;">
+            💡 提示：选择「天地图晕渲底图」+「MapTiler 地形」组合效果最佳！中国风晕渲贴图 + 全球 3D 隆起。
+        </div>
+        <div class="links" style="margin-top:12px;">
+            <b>📦 DEM 下载地址：</b><br>
+            • <a target="_blank" href="https://earthexplorer.usgs.gov">SRTM 30m（USGS）</a><br>
+            • <a target="_blank" href="https://www.eorc.jaxa.jp/ALOS/en/aw3d30">ALOS AW3D30（JAXA）</a><br>
+            • <a target="_blank" href="https://registry.opendata.aws/copernicus-dem">Copernicus 30m（AWS）</a><br>
+            • <a target="_blank" href="http://datamirror.csdb.cn">中科院 50m DEM（中国）</a><br>
+            <b>🛠️ 瓦片生成工具：</b><br>
+            • <a target="_blank" href="https://www.maptiler.com/desktop">MapTiler Desktop</a><br>
+            • <a target="_blank" href="https://gdal.org">GDAL</a>
+        </div>
+        <div class="links" style="margin-top:12px;">
+            <b>🌐 MapLibre vs Cesium DEM 格式对比：</b><br>
+            <table style="border-collapse:collapse;font-size:11px;margin-top:6px;width:100%;">
+                <tr><td style="border:1px solid #d1d5db;padding:4px 6px;background:#f3f4f6;">引擎</td><td style="border:1px solid #d1d5db;padding:4px 6px;">MapLibre GL JS</td><td style="border:1px solid #d1d5db;padding:4px 6px;">CesiumJS</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:4px 6px;background:#f3f4f6;">DEM 格式</td><td style="border:1px solid #d1d5db;padding:4px 6px;"><b>raster-dem</b>（PNG 瓦片）</td><td style="border:1px solid #d1d5db;padding:4px 6px;"><b>quantized-mesh</b>（二进制 mesh）</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:4px 6px;background:#f3f4f6;">编码</td><td style="border:1px solid #d1d5db;padding:4px 6px;">terrarium / mapbox</td><td style="border:1px solid #d1d5db;padding:4px 6px;">quantized-mesh v1.0</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:4px 6px;background:#f3f4f6;">Cesium World Terrain</td><td style="border:1px solid #d1d5db;padding:4px 6px;color:#dc2626;">❌ 不支持</td><td style="border:1px solid #d1d5db;padding:4px 6px;color:#16a34a;">✅ 原生支持</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:4px 6px;background:#f3f4f6;">我们用的</td><td style="border:1px solid #d1d5db;padding:4px 6px;color:#2563eb;">✅ raster-dem (terrarium)</td><td style="border:1px solid #d1d5db;padding:4px 6px;">—</td></tr>
+            </table>
+            <div class="note" style="margin-top:6px;">
+                💡 Cesium World Terrain（quantized-mesh）是 Cesium 官方 DEM，但 MapLibre 原生不支持该格式。MapLibre 生态的全球 DEM 主要用 <b>raster-dem terrarium/mapbox 编码</b>，如 Mapterhorn、MapTiler Terrain、OpenTopoData。
+            </div>
+        </div>
+    </div>
+</div>
+<div id="map"></div>
+
+<script type="module">
+    import * as maplibregl from '/lib/maplibre-gl-v6/maplibre-gl.mjs';
+    window.maplibregl = maplibregl;
+
+    const TIANDITU_KEY = '@tk';
+    let currentBase = 'tianditu-ter';
+    let currentTerrain = 'off';
+
+    function tdTiles(path) {
+        return [0,1,2,3].map(i => `https://t${i}.tianditu.gov.cn/${path}/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${path.replace('_w','').replace('_c','')}&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=${TIANDITU_KEY}`);
+    }
+
+    const BASEMAPS = {
+        'tianditu-ter': TIANDITU_KEY ? { type: 'raster', tiles: tdTiles('ter_w'), tileSize: 256, maxzoom: 18 } : null,
+        'tianditu-img': TIANDITU_KEY ? { type: 'raster', tiles: tdTiles('img_w'), tileSize: 256, maxzoom: 18 } : null,
+        'osm': { type: 'raster', tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, maxzoom: 19 }
+    };
+
+    const TERRAINS = {
+        'off': null,
+        'local': { url: null, tiles: ['/tiles/dem/{z}/{x}/{y}.png'], encoding: 'terrarium', maxzoom: 11 },
+        'maptiler': {
+            get tiles() {
+                const k = document.getElementById('maptilerKey').value.trim();
+                return [`https://api.maptiler.com/tiles/terrain-rgb/{z}/{x}/{y}.png?key=${k}`];
+            },
+            url: null,
+            encoding: 'mapbox',
+            maxzoom: 14
+        },
+        'mapterhorn': { url: 'https://tiles.mapterhorn.com/tilejson.json' }
+    };
+
+    function buildStyle() {
+        const sources = {};
+        const layers = [];
+
+        const baseDef = BASEMAPS[currentBase] || BASEMAPS.osm;
+        sources.basemap = baseDef;
+        layers.push({ id: 'basemap', type: 'raster', source: 'basemap' });
+
+        let terrainDef = null;
+        const tConf = TERRAINS[currentTerrain];
+        if (tConf) {
+            let terrainSrc, hillSrc;
+            if (tConf.url) {
+                terrainSrc = { type: 'raster-dem', url: tConf.url };
+                hillSrc = { type: 'raster-dem', url: tConf.url };
+            } else {
+                const tiles = typeof tConf.tiles === 'function' ? tConf.tiles() : tConf.tiles;
+                terrainSrc = { type: 'raster-dem', tiles, tileSize: 256, encoding: tConf.encoding, maxzoom: tConf.maxzoom };
+                hillSrc = { type: 'raster-dem', tiles, tileSize: 256, encoding: tConf.encoding, maxzoom: tConf.maxzoom };
+            }
+            sources['terrain-dem'] = terrainSrc;
+            sources['terrain-hill'] = hillSrc;
+
+            layers.push({
+                id: 'hillshade', type: 'hillshade', source: 'terrain-hill',
+                paint: {
+                    'hillshade-shadow-color': '#3a3a3a',
+                    'hillshade-highlight-color': '#ffffff',
+                    'hillshade-accent-color': '#666666'
+                }
+            });
+            terrainDef = { source: 'terrain-dem', exaggeration: 1.5 };
+        }
+
+        const style = { version: 8, sources, layers };
+        if (terrainDef) style.terrain = terrainDef;
+        if (terrainDef) style.sky = {};
+        return style;
+    }
+
+    const map = new maplibregl.Map({
+        container: 'map', zoom: 5, center: [104.0, 35.0], pitch: 45, bearing: 0,
+        hash: true, style: buildStyle(), maxZoom: 18, maxPitch: 85
+    });
+
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }));
+    map.addControl(new maplibregl.FullscreenControl());
+
+    map.on('style.load', () => console.log('[DemServices] ✅ style.load, terrain=', !!map.getStyle().terrain));
+    map.on('error', (e) => {
+        if (!e.error?.message?.includes('tile')) console.error('[DemServices]', e.error?.message);
+    });
+
+    function updatePanel() {
+        document.querySelectorAll('.option[data-basemap]').forEach(el => {
+            el.classList.toggle('active', el.dataset.basemap === currentBase);
+        });
+        document.querySelectorAll('.option[data-terrain]').forEach(el => {
+            el.classList.toggle('active', el.dataset.terrain === currentTerrain);
+        });
+        const hasTerrain = currentTerrain !== 'off';
+        const btn = document.getElementById('terrainBtn');
+        btn.textContent = hasTerrain ? '✅ 地形已启用' : '⬜ 地形已关闭';
+        btn.className = 'action-btn ' + (hasTerrain ? 'btn-terrain-on' : 'btn-terrain-off');
+    }
+
+    document.querySelectorAll('.option[data-basemap]').forEach(el => {
+        el.addEventListener('click', () => {
+            currentBase = el.dataset.basemap;
+            updatePanel();
+            map.setStyle(buildStyle());
+        });
+    });
+
+    document.querySelectorAll('.option[data-terrain]').forEach(el => {
+        el.addEventListener('click', () => {
+            currentTerrain = el.dataset.terrain;
+            updatePanel();
+            map.setStyle(buildStyle());
+        });
+    });
+
+    updatePanel();
+</script>
+</body>
+</html>
