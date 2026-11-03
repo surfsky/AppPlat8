@@ -606,10 +606,9 @@ Done
         CheckHazardsModel 简化，用Search方法
         Gis.GetCheckObjects()
 
-2026/11/2
-    安全生产模块优化
-        优化CheckObject，如果有orgId url参数，同当前用户的授权authOrgId相比较，哪个小用哪个
-        优化工作台：展示太慢，考虑先展示所有控件，再通过接口刷新标签（13个请求）
+
+
+    优化工作台WorkDesk和WorkDeskOrg两个页面：由于其统计展示太慢，考虑先展示所有控件，再通过接口刷新统计标签
     文档
         /脑图
         写帮助文档、培训文档
@@ -625,16 +624,31 @@ Done
         /8、页面提供管理一个帮助文档入口，来说明业务规则；
         9、实现隐患排查工作统计报表； 省巡24个小微园高频隐患整治
         10、优化稿件：建设必要性、系统功能、培训稿；
-    Gis优化
-        Gis/index：做几个资源类的统计面板
-        Gis/Index: 重构闭包模式，全部用class重构
-        Gis/Index: 基于某个点位周边的查询过滤
-        /修正gis/index应急事件模块，且约束事件类别为“突发事件”
-        /eleUI重构，简化EleTable、EleColumn 的valign、halign属性
-        /eleUI.EleTable重构，确保过滤弹窗中的label宽度一致对齐；
     部署
         咨询部署方法，不要每次都拷贝代码包，另外数据库和附件文件要怎么处理
         数据库迁移到PosgreSql/人大金仓KingbaseES
+    Gis
+        Gis/index：做几个资源类的统计面板
+        Gis/Index: 重构闭包模式，全部用class重构
+        Gis/Index: 基于某个点位周边的查询过滤
+        GisGeometry: 看是否需要增加一个UrlDataCnt属性，表示url的数据个数；比较困难，URL要改为api接口才行
+        重构接口：Gis/GetCheckObjects() 相关方法，缠缠绵绵都看不懂什么意思
+
+
+2026/11/3
+    实现eleui的明暗两色切换，可以用url参数 scheme=light/dark 来
+    /改index页面的背景色为白色，改主区域ifrme的背景色为白色
+    /优化接口，https/Gis/GetCheckObjects 的汉字被编码了:修正及简化接口返回的数据，里面的汉字能否直接输出，而不是做了编码（http://localhost:6001/httpapi/gis/GetCheckObjects?orgId=199）
+    /优化接口：给 #sym:HttpApiConfig  增加一个属性 AuthLogin ，若为true，除非接口方法显式标注AuthLogin="false"，则所有接口默认都必须校验是否登录，
+    /优化接口，删除Gis/GetCheckObjectPoints 老接口
+    /安全生产模块优化
+        /优化CheckObject页面，若设置了其它参数如OrgId，则不约束 CheckId=User.Id，避免重复约束导致数据不准确
+        /优化CheckObject，如果有orgId url参数，同当前用户的授权authOrgId相比较，哪个小用哪个。（从Gis/index图层进入）
+    /Gis优化
+        /gis/index：点位信息面板，修正点位信息dataurl；
+        /修正gis/index应急事件模块，且约束事件类别为“突发事件”
+        /eleUI重构，简化EleTable、EleColumn 的valign、halign属性
+        /eleUI.EleTable重构，确保过滤弹窗中的label宽度一致对齐；
 
 
 2026/10/31

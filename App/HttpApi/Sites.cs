@@ -9,7 +9,7 @@ namespace App.API
     public class Sites
     {
         /// <summary>获取网站分组</summary>
-        [HttpApi("获取参考网站分组", AuthLogin = true)]
+        [HttpApi("获取参考网站分组", true)]
         public static APIResult GetSiteGroups()
         {
             var list = Site.Set.AsNoTracking()

@@ -56,8 +56,10 @@ TemporaryDependencyNodeTargetIdentifier=net8.0
 [sourceFiles]
 <NUGET>/microsoft.net.test.sdk/17.8.0/build/netcoreapp3.1/Microsoft.NET.Test.Sdk.Program.cs
 Database/
+ CheckObjectGeometryJsonTests.cs
  DataAuditAutoFillTests.cs
  ElePayloadEnvelopeBindingTests.cs
+ ElePropertyLayoutTests.cs
  EleTableHeadAlignmentTests.cs
  ResetAdminPasswordForTests.cs
  SignInLoginAITests.cs

@@ -29,7 +29,7 @@ namespace App.API
             return o.ImageData ?? o.Image;
         }
 
-        [HttpApi("发送短信验证码", AuthLogin = true)]
+        [HttpApi("发送短信验证码", true)]
         [HttpParam("mobile", "手机号码")]
         [HttpParam("type", "短信消息类别")]
         [HttpParam("appType", "App类型")]
@@ -103,7 +103,7 @@ namespace App.API
         //--------------------------------------------
         // 用户授权信息
         //--------------------------------------------
-        [HttpApi("获取登录用户信息", AuthLogin=true)]
+        [HttpApi("获取登录用户信息", true)]
         public static APIResult GetLoginUser()
         {
             var id = Auth.GetUserId(Asp.Current);
@@ -112,7 +112,7 @@ namespace App.API
             return User.Get(id.Value).ToResult();
         }
 
-        [HttpApi("获取登录用户权限", AuthLogin=true)]
+        [HttpApi("获取登录用户权限", true)]
         public static APIResult GetLoginUserPower()
         {
             var id = Auth.GetUserId(Asp.Current);
@@ -121,25 +121,25 @@ namespace App.API
             return Auth.GetUserPowers(Asp.Current).ToResult();
         }
 
-        [HttpApi("获取所有权限", AuthLogin=true)]
+        [HttpApi("获取所有权限", true)]
         public static APIResult GetPowers()
         {
             return EnumHelper.GetEnumInfos(typeof(Power)).ToResult();
         }
 
-        [HttpApi("获取所有组织", AuthLogin=true)]
+        [HttpApi("获取所有组织", true)]
         public static APIResult GetOrgs()
         {
             return App.DAL.Org.Set.OrderBy(o => o.SortId).ToList().ToResult();
         }
 
-        [HttpApi("获取组织树形结构", AuthLogin=true)]
+        [HttpApi("获取组织树形结构", true)]
         public static APIResult GetOrgTree()
         {
             return App.DAL.Org.GetTree().ToResult();
         }
 
-        [HttpApi("获取菜单树形结构", AuthLogin=true)]
+        [HttpApi("获取菜单树形结构", true)]
         public static APIResult GetMenuTree()
         {
             return Menu.GetTree().ToResult();

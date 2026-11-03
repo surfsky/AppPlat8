@@ -34,35 +34,31 @@ namespace App.Pages.Checks
         {
             var user = GetUser();
 
-            // OrgId
+            // OrgId (默认为授权组织ID，若指定了OrgId参数且用户可以访问该组织，则使用该组织ID)
+            OrgId = user.AuthOrgId;
+            Item.OrgId = user.AuthOrgId;
             var orgId = Asp.GetQueryLong("OrgId");
-            if (orgId != null)
+            if (orgId != null && user.CanAccessOrg(orgId.Value))
             {
                 OrgId = orgId;
                 Item.OrgId = orgId;
             }
-            else
-            {
-                OrgId = user.AuthOrgId;
-                Item.OrgId = user.AuthOrgId;
-            }
 
-            var scopeOrgOnly = bool.TryParse(Request.Query["scopeOrgOnly"].FirstOrDefault(), out var orgOnly) && orgOnly;
-
-            // CheckerId：工作台组织范围链接不默认叠加当前用户网格员过滤，避免把组织范围误收窄为交集。
+            // CheckerId
+            var scopeOrgOnly = Asp.GetQueryBool("scopeOrgOnly") ?? false;
             var checkerId = Asp.GetQueryLong("checkerId");
             if (checkerId != null)
             {
-                DefaultCheckerId = checkerId.Value;
+                // 若指定了检查人ID，则默认使用该检查人ID
                 Item.CheckerId = checkerId.Value;
-                var u = App.DAL.User.Get(checkerId.Value);
-                if (u != null)
-                    DefaultCheckerName = u.DisplayName;
+                DefaultCheckerId = checkerId.Value;
+                DefaultCheckerName = App.DAL.User.Get(checkerId.Value)?.DisplayName;
             }
-            else if (!scopeOrgOnly)
+            else if (orgId == null)
             {
-                DefaultCheckerId = user.Id;
+                // 若未指定检查人ID，也未指定组织范围，则默认使用当前用户
                 Item.CheckerId = user.Id;
+                DefaultCheckerId = user.Id;
                 DefaultCheckerName = user.DisplayName;
             }
 
@@ -70,7 +66,7 @@ namespace App.Pages.Checks
             var tagName = Asp.GetQueryString("tagName");
             if (tagName.IsNotEmpty())
             {
-                var tag = CheckTag.Set.FirstOrDefault(t => t.Name == tagName && t.TagType == CheckTagType.Basic);
+                var tag = CheckTag.Set.FirstOrDefault(t => t.Name == tagName);
                 if (tag != null)
                 {
                     TagIds = tag.Id.ToString();

@@ -238,16 +238,11 @@ namespace App
                 o.FormatLowCamel = true;
                 o.FormatLongNumber = "Int64,Decimal";
                 o.Language = "en";
+                o.AuthLogin = true;
                 //o.OnVisit += args => Logger.Info("[API] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
                 o.OnBan += args => Logger.Warn("[BAN] {0} {1} from {2}", args.Context.Request.Method, args.Context.Request.GetFullUrl(), args.Context.Connection.RemoteIpAddress);
                 o.OnAuth += args =>
                 {
-                    var path = args?.Context?.Request?.Path.Value ?? string.Empty;
-                    if (path.Equals("/HttpApi/Gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase))
-                        return;
-                    if (path.Equals("/HttpApi/Gis/GetCheckObjectPoints", StringComparison.OrdinalIgnoreCase))
-                        return;
-
                     if (!AuthHelper.CheckHeaderAuth())
                         throw new HttpApiException(StatusCodes.Status401Unauthorized, "Unauthorized token");
                 };

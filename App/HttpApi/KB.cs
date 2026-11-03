@@ -16,7 +16,7 @@ namespace App.API
     public class KB
     {
         /// <summary>获取知识库导航数据。</summary>
-        [HttpApi("获取知识库导航数据", AuthLogin = true)]
+        [HttpApi("获取知识库导航数据", CacheSeconds = 60, CacheByUser = true)]
         public static APIResult GetNavigation(long? orgId = null)
         {
             var user = Auth.GetUser();

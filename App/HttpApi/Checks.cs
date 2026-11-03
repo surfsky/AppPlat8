@@ -12,6 +12,7 @@ using App.Utils.Gis;
 using App.Web;
 using System.Linq;
 using App.Entities;
+using NPOI.OpenXmlFormats.Vml.Office;
 
 namespace App.API
 {
@@ -22,31 +23,30 @@ namespace App.API
         //--------------------------------------------
         // 枚举信息
         //--------------------------------------------
-        [HttpApi("ObjectType", CacheSeconds = 60 * 60, AuthLogin=true)]
+        [HttpApi("ObjectType", false, CacheSeconds = 60 * 60)]
         public static APIResult GetObjectType() => typeof(CheckObjectType).GetEnumInfos().ToResult();
 
-        [HttpApi("RiskLevel", CacheSeconds = 60 * 60, AuthLogin=true)]
+        [HttpApi("RiskLevel", false, CacheSeconds = 60 * 60)]
         public static APIResult GetRiskLevel() => typeof(CheckRiskLevel).GetEnumInfos().ToResult();
 
 
-        [HttpApi("BuildingType", CacheSeconds = 60 * 60, AuthLogin=true)]
+        [HttpApi("BuildingType", false, CacheSeconds = 60 * 60)]
         public static APIResult GetBuildingType() => typeof(CheckBuildingType).GetEnumInfos().ToResult();
 
-        [HttpApi("Scope", CacheSeconds = 60 * 60, AuthLogin=true)]
+        [HttpApi("Scope", false, CacheSeconds = 60 * 60)]
         public static APIResult GetScope() => typeof(CheckScope).GetEnumInfos().ToResult();
 
-        [HttpApi("ObjectScale", CacheSeconds = 60 * 60, AuthLogin=true)]
+        [HttpApi("ObjectScale", false, CacheSeconds = 60 * 60)]
         public static APIResult GetObjectScale() => typeof(CheckObjectScale).GetEnumInfos().ToResult();
 
-
-        [HttpApi("HazardStatus", CacheSeconds = 60 * 60, AuthLogin=true)]
+        [HttpApi("HazardStatus", false, CacheSeconds = 60 * 60)]
         public static APIResult GetHazardStatus() => typeof(CheckHazardStatus).GetEnumInfos().ToResult();
 
 
         //--------------------------------------------
         // 检查对象管理
         //--------------------------------------------
-        [HttpApi("检查对象列表", AuthLogin = true)]
+        [HttpApi("检查对象列表")]
         public static APIResult GetCheckObjects(Paging pi, string name, string socialCreditCode, long? orgId, long? checkerId, CheckObjectType? objectType, CheckObjectScale? scale, List<long> tagIds = null, List<long> tagSpecIds = null)
         {
             var userId = Auth.GetUserId();
@@ -70,13 +70,13 @@ namespace App.API
             return q.SortPageExport(pi).ToResult();
         }
 
-        [HttpApi("检查对象详情", AuthLogin = true)]
+        [HttpApi("检查对象详情")]
         public static APIResult GetCheckObject(int id)
         {
             return CheckObject.GetDetail(id).ToResult();
         }
 
-        [HttpApi("添加检查对象", AuthLogin = true)]
+        [HttpApi("添加检查对象")]
         public static APIResult AddCheckObject(CheckObject obj)
         {
             obj.CreateDt = DateTime.Now;
@@ -87,7 +87,7 @@ namespace App.API
             return CheckObject.GetDetail(obj.Id).ToResult();
         }
 
-        [HttpApi("修改检查对象", AuthLogin = true)]
+        [HttpApi("修改检查对象")]
         public static APIResult UpdateCheckObject(CheckObject obj)
         {
             obj.UpdateDt = DateTime.Now;
@@ -97,7 +97,7 @@ namespace App.API
             return CheckObject.GetDetail(obj.Id).ToResult();
         }
 
-        [HttpApi("删除检查对象", AuthLogin = true)]
+        [HttpApi("删除检查对象")]
         public static APIResult DeleteCheckObject(int id)
         {
             CheckObject.Delete(id);
@@ -108,14 +108,14 @@ namespace App.API
         // 检查标签和检查表
         //--------------------------------------------
         // 获取检查标签树
-        [HttpApi("获取检查标签树", AuthLogin=true)]
+        [HttpApi("获取检查标签树", CacheSeconds = 60)]
         public static APIResult GetCheckTagTree(long? excludeId = null, long? selectedId = null, CheckTagType? tagType = CheckTagType.Basic, bool includeAll = false)
         {
             var selectedIds = selectedId.HasValue ? new List<long> { selectedId.Value } : new List<long>();
             return BuildCheckTagTreeResult(excludeId, selectedIds, includeAll ? null : tagType);
         }
 
-        [HttpApi("获取检查表标签树", AuthLogin=true)]
+        [HttpApi("获取检查表标签树", CacheSeconds = 60)]
         public static APIResult GetCheckTagTreeForSheet(long? sheetId = null)
         {
             var selectedIds = new List<long>();
@@ -128,7 +128,7 @@ namespace App.API
             return BuildCheckTagTreeResult(null, selectedIds, CheckTagType.Basic);
         }
 
-        [HttpApi("获取检查对象标签树", AuthLogin = true)]
+        [HttpApi("获取检查对象标签树", CacheSeconds = 60)]
         public static APIResult GetCheckTagTreeForObject(long objectId, CheckTagType tagType = CheckTagType.Basic)
         {
             var item = objectId > 0 ? CheckObject.GetDetail(objectId) : null;
@@ -200,20 +200,20 @@ namespace App.API
             return tree.ToResult();
         }
 
-        [HttpApi("获取检查表", AuthLogin=true)]
+        [HttpApi("获取检查表", CacheSeconds = 60)]
         public static APIResult GetCheckSheets(string name, CheckScope? scope=null, long? tagId=null)
         {
             return CheckSheet.Search(name, scope, tagId).ToList().ToResult();
         }
 
-        [HttpApi("获取某个对象的检查表", AuthLogin=true)]
+        [HttpApi("获取某个对象的检查表", CacheSeconds = 60)]
         public static APIResult GetObjectCheckSheets(long objectId)
         {
             var tagIds = CheckObject.GetDetail(objectId).Tags.Select(t => t.TagId).ToList();
             return CheckSheet.Search(tagIds:tagIds).ToList().ToResult();
         }
 
-        [HttpApi("获取某个检查表的检查项", AuthLogin=true)]
+        [HttpApi("获取某个检查表的检查项", CacheSeconds = 60)]
         public static APIResult GetCheckSheetItems(long sheetId)
         {
             return CheckSheetItem.Search(sheetId:sheetId).ToList().ToResult();
@@ -223,19 +223,19 @@ namespace App.API
         //--------------------------------------------
         // 检查
         //--------------------------------------------
-        [HttpApi("检查列表", AuthLogin = true)]
+        [HttpApi("检查列表", CacheSeconds = 5)]
         public static APIResult GetChecks(Paging pi, string objectName, string socialCreditCode, long? objectId, CheckObjectType? objectType, DateTime? checkStartDt, DateTime? checkEndDt)
         {
             return Check.Search(objectName, socialCreditCode, objectId, objectType, checkStartDt, checkEndDt).SortPageExport(pi).ToResult();
         }
 
-        [HttpApi("检查详情", AuthLogin = true)]
+        [HttpApi("检查详情", CacheSeconds = 5)]
         public static APIResult GetCheck(int id)
         {
             return Check.GetDetail(id).ToResult();
         }
 
-        [HttpApi("添加检查记录", AuthLogin = true)]
+        [HttpApi("添加检查记录", true)]
         public static APIResult AddCheckLog(DAL.Check log)
         {
             if (log == null)
@@ -253,7 +253,7 @@ namespace App.API
             return DAL.Check.GetDetail(item.Id).ToResult();
         }
 
-        [HttpApi("修改检查记录", AuthLogin = true)]
+        [HttpApi("修改检查记录", true)]
         public static APIResult UpdateCheckLog(DAL.Check log)
         {
             if (log == null || log.Id <= 0)
@@ -284,7 +284,7 @@ namespace App.API
             target.RemainHazardCount = source.RemainHazardCount;
         }
 
-        [HttpApi("删除检查记录", AuthLogin = true)]
+        [HttpApi("删除检查记录", true)]
         public static APIResult DeleteCheckLog(int id)
         {
             DAL.Check.Delete(id);
@@ -294,19 +294,19 @@ namespace App.API
         //--------------------------------------------
         // 隐患
         //--------------------------------------------
-        [HttpApi("隐患列表", AuthLogin = true)]
+        [HttpApi("隐患列表")]
         public static APIResult GetCheckHazards(Paging pi, string objectName, long? objectId, string checkerName, long? checkerId, CheckHazardStatus? status, DateTime? createStartDt)
         {
             return CheckHazard.Search(objectName, objectId, checkerName, checkerId, status, createStartDt).SortPageExport(pi).ToResult();
         }
 
-        [HttpApi("隐患详情", AuthLogin = true)]
+        [HttpApi("隐患详情")]
         public static APIResult GetCheckHazard(int id)
         {
             return CheckHazard.GetDetail(id).ToResult();
         }
 
-        [HttpApi("添加隐患", AuthLogin = true)]
+        [HttpApi("添加隐患")]
         public static APIResult AddCheckHazard(CheckHazard hazard)
         {
             hazard.CreateDt = DateTime.Now;
@@ -315,7 +315,7 @@ namespace App.API
             return hazard.ToResult();
         }
 
-        [HttpApi("修改隐患", AuthLogin = true)]
+        [HttpApi("修改隐患")]
         public static APIResult UpdateCheckHazard(CheckHazard hazard)
         {
             hazard.UpdateDt = DateTime.Now;
@@ -323,7 +323,7 @@ namespace App.API
             return hazard.ToResult();
         }
 
-        [HttpApi("删除隐患", AuthLogin = true)]
+        [HttpApi("删除隐患")]
         public static APIResult DeleteCheckHazard(int id)
         {
             var hazard = CheckHazard.Get(id);
@@ -341,7 +341,7 @@ namespace App.API
         //--------------------------------------------
         // 风险点
         //--------------------------------------------
-        [HttpApi("风险点列表", AuthLogin = true)]
+        [HttpApi("风险点列表", CacheSeconds = 5)]
         public static APIResult GetCheckPoints(Paging pi, long objectId, string name, CheckRiskLevel? riskLevel, string geoRegion)
         {
             if (geoRegion.IsNotEmpty())

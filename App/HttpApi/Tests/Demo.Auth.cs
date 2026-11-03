@@ -63,7 +63,7 @@ namespace App.Api
         }
 
 
-        [HttpApi("用户必须登录后才能访问该接口，若无授权则返回401错误", AuthLogin=true)]
+        [HttpApi("用户必须登录后才能访问该接口，若无授权则返回401错误", true)]
         public string LimitLogin()
         {
             System.Threading.Thread.Sleep(200);

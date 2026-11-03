@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 using App.DAL.GIS;
 using App.Entities;
 using App.Utils;
@@ -19,17 +21,19 @@ namespace App.DAL
     [UI("检查", "检查对象")]
     public class CheckObject : EntityBase<CheckObject>, IDeleteLogic, IFixAll
     {
+        private static readonly JsonSerializerOptions JsonOptions = new() { Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)};
+
         //  IDeleteLogic 实现
-        [UI("基础", "是否失效")] public bool? IsDel { get; set; } = false;
-        [UI("基础", "失效时间")] public DateTime? DeleteDt { get; set; }
+        [UI("基础", "是否失效")]   public bool? IsDel { get; set; } = false;
+        [UI("基础", "失效时间")]   public DateTime? DeleteDt { get; set; }
 
         //
-        [UI("基础", "编码")]      public string Code { get; set; }
+        [UI("基础", "编码")]       public string Code { get; set; }
         [UI("基础", "失效原因")]    public CheckObjectFailReason? FailReason { get; set; }
         [UI("基础", "是否存在隐患")] public bool? HasHarzard { get; set; } = false;
         [UI("基础", "名称")]        public string Name { get; set;}
-        [UI("基础", "地块号")]       public string AreaCode { get; set; }
-        [UI("基础", "社会信用代码")]  public string SocialCreditId { get; set;}
+        [UI("基础", "地块号")]      public string AreaCode { get; set; }
+        [UI("基础", "社会信用代码")] public string SocialCreditId { get; set;}
         [UI("基础", "地址")]        public string Address { get; set; }
         [UI("基础", "GPS")]        public string Gps { get; set; }
         [UI("基础", "是否巡查")]     public bool? IsChecked { get; set; } 
@@ -106,6 +110,7 @@ namespace App.DAL
             .Where(item => item.Tag?.TagType == CheckTagType.Spec)
             .Select(item => item.Tag.Name)
             .ToList() ?? new List<string>();
+            
         [NotMapped, UI("基础", "标签")]
         public List<long> TagIds
         {
@@ -257,7 +262,7 @@ namespace App.DAL
                     TagNames,
                     TagSpecNames,
                     IsDel
-                }),
+                }, JsonOptions),
                 IsVisible = true,
                 Icon = null,
                 MenuName = null,

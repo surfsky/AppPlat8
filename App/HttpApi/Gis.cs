@@ -24,7 +24,7 @@ namespace App.API
         //---------------------------------------------------------
         // GIS菜单树相关接口
         //---------------------------------------------------------
-        [HttpApi("Map", "获取GIS菜单树", AuthLogin = true)]
+        [HttpApi("Map", "获取GIS菜单树")]
         public static APIResult GetMenuTree(long? excludeId = null, long? selectedId = null)
         {
             // 这里使用实时查询，避免前端在菜单调整后读取到旧缓存。
@@ -60,13 +60,13 @@ namespace App.API
         //---------------------------------------------------------
         // GIS场景相关接口
         //---------------------------------------------------------
-        [HttpApi("Map", "获取GIS地图样式", AuthLogin = true)]
+        [HttpApi("Map", "获取GIS地图样式")]
         public static APIResult GetMapStyles()
         {
             return GisScene.Styles.ToResult();
         }
 
-        [HttpApi("Map", "获取GIS场景列表", AuthLogin = true)]
+        [HttpApi("Map", "获取GIS场景列表")]
         public static APIResult GetScenes()
         {
             // 默认场景优先，其次按 SortId、Id
@@ -97,7 +97,7 @@ namespace App.API
         }
 
 
-        [HttpApi("Map", "获取GIS场景详情", AuthLogin = true)]
+        [HttpApi("Map", "获取GIS场景详情")]
         public static APIResult GetSceneDetail(long id)
         {
             var scene = GisScene.Set.AsNoTracking()
@@ -129,73 +129,8 @@ namespace App.API
         //---------------------------------------------------------
         // 点位
         //---------------------------------------------------------
-        [HttpApi("Point","获取检查对象点位数据", AuthLogin = false)]
-        public static APIResult GetCheckObjectPoints(string name = null, long? orgId = null, bool? isDel = false, string region = null, int maxCount = 500)
-        {
-            if (maxCount <= 0)     maxCount = 100;
-            if (maxCount > 5000)   maxCount = 5000;
-
-            // 获取点位数据
-            var q = CheckObject.Set.AsNoTracking()  .Where(t => !string.IsNullOrWhiteSpace(t.Gps));
-            if (isDel != null)           q = q.Where(t => t.IsDel == isDel.Value);
-            if (orgId.IsNotEmpty())      q = q.Where(t => t.OrgId == orgId.Value);
-            if (name.IsNotEmpty())       q = q.Where(t => (t.Name ?? string.Empty).Contains(name.Trim()));
-            var items = q
-                .OrderBy(t => t.Id)
-                .Take(maxCount * 4)
-                .Select(t => new
-                {
-                    t.Id,
-                    t.Name,
-                    t.Address,
-                    t.Gps,
-                    t.SocialCreditId,
-                    t.RiskLevel,
-                    t.ObjectType,
-                    t.Scale,
-                    t.OrgId,
-                    t.DutyMan,
-                })
-                .ToList();
-
-            // 过滤掉不合法的坐标和不在指定区域内的点位。
-            var regioner = GisRegion.Parse(region);
-            var list = new List<object>();
-            foreach (var item in items)
-            {
-                if (!GisHelper.TryParseLngLat(item.Gps, out var lng, out var lat))
-                    continue;
-                if (regioner != null && !regioner.Contains(lng, lat))
-                    continue;
-
-                list.Add(new
-                {
-                    id = item.Id,
-                    name = item.Name,
-                    gps = item.Gps,
-                    addr = item.Address,
-                    lng,
-                    lat,
-                    dataJson = new
-                    {
-                        item.SocialCreditId,
-                        item.RiskLevel,
-                        item.ObjectType,
-                        item.Scale,
-                        item.OrgId,
-                        item.DutyMan,
-                    }
-                });
-
-                if (list.Count >= maxCount)
-                    break;
-            }
-
-            return list.ToResult();
-        }
-
         /// <summary>获取检查对象统一 GIS 数据</summary>
-        [HttpApi("Point", "获取检查对象GIS数据", AuthLogin = false)]
+        [HttpApi("Point", "获取检查对象GIS数据")]
         public static APIResult GetCheckObjects(string name = null, string tagNames = null, string tagIds = null, long? orgId = null, Paging pi = null)
         {
             pi ??= new Paging();
@@ -266,7 +201,7 @@ namespace App.API
         //---------------------------------------------------------
         // 地址查询相关接口（使用高德地图API）
         //---------------------------------------------------------
-        [HttpApi("Search", "获取地址列表", AuthLogin = true)]
+        [HttpApi("Search", "获取地址列表")]
         public static APIResult GetAddrs(string name)
         {
             if (name.IsEmpty())
@@ -276,7 +211,7 @@ namespace App.API
 
 
 
-        [HttpApi("Search", "获取单个地址", AuthLogin = true)]
+        [HttpApi("Search", "获取单个地址")]
         public static APIResult GetAddr(string name)
         {
             var addr = AmapHelper.GetAddr(name);
@@ -345,6 +280,9 @@ namespace App.API
             return GisGeometry.Search(menuId: menuId.Value, recursive: true).Count();
         }
 
+        //---------------------------------------------------------
+        // 获取类别为 Geometry 的 GIS 菜单数据
+        //---------------------------------------------------------
         /// <summary>获取 Geometry 菜单数据</summary>
         static List<GeometryItem> GetGeometryMenuItems(long menuId, string keyword, bool? isVisible, string itemUrl = null)
         {
@@ -384,6 +322,9 @@ namespace App.API
                 .ToList();
         }
 
+        //---------------------------------------------------------
+        // 获取类别为 API 的 GIS 菜单数据
+        //---------------------------------------------------------
         /// <summary>获取 API 菜单数据</summary>
         static List<GeometryItem> GetApiMenuGeometryItems(GisMenu menu, Paging pi, string keyword)
         {

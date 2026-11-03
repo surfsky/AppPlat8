@@ -373,5 +373,13 @@ namespace App.DAL
             var n1 = User.Set.Where(o => o.AuthOrgId == null).ExecuteUpdate(s => s.SetProperty(o => o.AuthOrgId, o=>o.OrgId));
             return n1;
         }
+
+        /// <summary>判断用户是否可以访问指定组织</summary>
+        public bool CanAccessOrg(long orgId)
+        {
+            if (this.Name == "admin")      return true;
+            if (this.AuthOrgId.IsEmpty())  return false;
+            return Org.GetChildIds(this.AuthOrgId.Value).Contains(orgId);
+        }
     }
 }

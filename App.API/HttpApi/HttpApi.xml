@@ -112,7 +112,7 @@
             <summary>是否校验授权码</summary>
         </member>
         <member name="P:App.HttpApi.HttpApiAttribute.AuthLogin">
-            <summary>是否校验登录(User.IsAuthenticated)</summary>
+            <summary>是否校验登录</summary>
         </member>
         <member name="P:App.HttpApi.HttpApiAttribute.AuthUsers">
             <summary>可访问的用户（用逗号隔开）</summary>
@@ -634,9 +634,6 @@
             <summary>
             HttpApi 配置
             </summary>
-        </member>
-        <member name="P:App.HttpApi.HttpApiConfig.JsonOptions">
-            <summary>System.Text.Json Serializer Options</summary>
         </member>
         <member name="M:App.HttpApi.HttpApiConfig.GetJsonOptions">
             <summary>从配置中获取 System.Text.Json 序列化选项</summary>

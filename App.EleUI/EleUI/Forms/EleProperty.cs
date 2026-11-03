@@ -72,15 +72,12 @@ namespace App.EleUI
             if (!string.IsNullOrWhiteSpace(target))
                 output.Attributes.SetAttribute("data-ele-control-id", target);
 
-            // 计算滚动区域高度：用 Height/MinHeight 控制，参照 EleList
-            // 默认 min-height 120px（约3行）；若设置了 Height 但未设 MinHeight，取 40px 使 max-height 生效
-            var minHeight = !string.IsNullOrWhiteSpace(MinHeight)
-                ? MinHeight.Trim()
-                : (string.IsNullOrWhiteSpace(Height) ? "120px" : "40px");
-            var maxHeight = string.IsNullOrWhiteSpace(Height) ? null : Height.Trim();
-            var scrollStyle = maxHeight == null
-                ? $"overflow:auto; min-height:{minHeight};"
-                : $"overflow:auto; min-height:{minHeight}; max-height:{maxHeight};";
+            // 默认随内容收缩；仅在显式指定时限制最小高度或滚动区域最大高度。
+            var scrollStyle = "overflow:auto;";
+            if (!string.IsNullOrWhiteSpace(MinHeight))
+                scrollStyle += $" min-height:{MinHeight.Trim()};";
+            if (!string.IsNullOrWhiteSpace(Height))
+                scrollStyle += $" max-height:{Height.Trim()};";
 
             // 新增按钮的 HTML：根据 ButtonPosition 决定放在表格上方或下方
             var addButton = $@"

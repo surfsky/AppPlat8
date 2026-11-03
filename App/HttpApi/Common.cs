@@ -19,7 +19,7 @@ namespace App.API
         //--------------------------------------------
         // 网站信息
         //--------------------------------------------
-        [HttpApi("网站信息", CacheSeconds = 60 * 60, AuthLogin=false)]
+        [HttpApi("网站信息", false, CacheSeconds = 60 * 60)]
         public static APIResult GetSiteInfo()
         {
             var site = SiteConfig.Instance;
@@ -67,7 +67,7 @@ namespace App.API
             return img;
         }
 
-        [HttpApi("Upload file", PostFile = true, AuthLogin = true)]
+        [HttpApi("Upload file", true, PostFile = true)]
         [HttpParam("folder", "file folder, eg. Articles")]
         [HttpParam("fileName", "file name, eg. a.png")]
         public APIResult Upload(string folder, string fileName)

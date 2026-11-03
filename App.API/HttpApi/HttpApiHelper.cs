@@ -301,8 +301,9 @@ namespace App.HttpApi
                     throw new HttpApiException(400, "Auth verbs fail: " + attr.AuthVerbs);
             }
 
-            // 校验登录与否
-            if (attr.AuthLogin)
+            // 校验登录（若方法要求登录，若为空则校验全局配置）
+            var cfg = HttpApiConfig.Instance;
+            if (attr.AuthLogin == true || (attr.AuthLogin == null && cfg.AuthLogin == true))
             {
                 if (!Asp.IsLogin())
                     throw new HttpApiException(401, "Auth login fail");
@@ -422,7 +423,7 @@ namespace App.HttpApi
                         CacheDuration = attr.CacheSeconds,
                         AuthIP = attr.AuthIP,
                         AuthToken = attr.AuthToken,
-                        AuthLogin = attr.AuthLogin,
+                        AuthLogin = attr.AuthLogin ?? HttpApiConfig.Instance.AuthLogin,
                         AuthUsers = attr.AuthUsers,
                         AuthRoles = attr.AuthRoles,
                         AuthVerbs = attr.AuthVerbs.IsEmpty() ? "" : attr.AuthVerbs.ToUpper(),

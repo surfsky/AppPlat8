@@ -9,6 +9,10 @@ const MenuTree = {
             type: String,
             default: ''
         },
+        autoNavigate: {
+            type: Boolean,
+            default: true
+        },
         textColor: {
             type: String,
             default: '#cbd5e1' // slate-300
@@ -43,6 +47,7 @@ const MenuTree = {
                         class="ml-3"
                         :menu-data="item.children" 
                         :default-target="defaultTarget" 
+                        :auto-navigate="autoNavigate"
                         :text-color="textColor"
                         :active-key="activeKey"
                         @navigate="handleNavigate"
@@ -68,6 +73,12 @@ const MenuTree = {
         };
 
         const handleItemClick = (item) => {
+            // 允许宿主统一管理导航及其加载状态。
+            if (!props.autoNavigate) {
+                emit('navigate', item);
+                return;
+            }
+
             // Determine target
             const target = item.target || props.defaultTarget;
             

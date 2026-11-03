@@ -15,7 +15,6 @@ namespace App.DAL.GIS
         string Addr { get; }
         string Gps { get; }
         string Region { get; }
-        string Url { get; }
         string File { get; }
         string GeoJson { get; }
         string DataJson { get; }
@@ -25,7 +24,8 @@ namespace App.DAL.GIS
         string LabelColor { get; }
         string Icon { get; }
         string MenuName { get; }
-        string ItemUrl { get; }
+        string Url { get; }      // 列表页链接
+        string ItemUrl { get; }  // 详情页链接
         GisDataFrom DataFrom { get; }
     }
 

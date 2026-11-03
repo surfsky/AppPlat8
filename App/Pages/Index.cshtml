@@ -75,6 +75,13 @@
 
         .main-content {
             transition: all 0.3s ease;
+            background-color: #fff;
+        }
+
+        /* iframe 加载或切换页面期间，内容区域保持白色。 */
+        .frame-container,
+        #contentFrame {
+            background-color: #fff;
         }
 
         .nav-item {
@@ -160,8 +167,40 @@
             padding: 8px 10px;
         }
         .frame-container {
+            position: relative;
             padding-top: 0.25rem;
             min-height: 0;
+        }
+
+        .frame-loading {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #fff;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .frame-loading-spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #dbeafe;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: frame-loading-spin .8s linear infinite;
+        }
+
+        @@keyframes frame-loading-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            .frame-loading-spinner { animation-duration: 2s; }
         }
 
         /* Sub-items collapse/expand animation */
@@ -394,6 +433,7 @@
                     <menu-tree 
                         :menu-data="mainMenuItems" 
                         default-target="contentFrame" 
+                        :auto-navigate="false"
                         :text-color="menuTextColor"
                         :active-key="currentPage"
                         @@navigate="handleMenuNavigate"
@@ -403,6 +443,7 @@
                     <menu-tree 
                         :menu-data="bottomMenuItems" 
                         default-target="contentFrame" 
+                        :auto-navigate="false"
                         :text-color="menuTextColor"
                         :active-key="currentPage"
                         @@navigate="handleMenuNavigate"
@@ -423,9 +464,13 @@
 
             <div id="sidebarOverlay" class="sidebar-overlay md:hidden" @@click="closeSidebar"></div>
 
-            <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden h-full box-border px-1 py-1">
-                <div class="frame-container flex-1 overflow-hidden">
-                    <iframe id="contentFrame" src="/me/WorkDesk" class="w-full h-full"></iframe>
+            <div class="main-content flex-1 flex flex-col bg-white overflow-hidden h-full box-border px-1 py-1">
+                <div class="frame-container flex-1 overflow-hidden" :aria-busy="frameLoading">
+                    <iframe id="contentFrame" class="w-full h-full" @@load="onFrameLoad"></iframe>
+                    <div class="frame-loading" v-show="frameLoading" role="status" aria-live="polite">
+                        <span class="frame-loading-spinner" aria-hidden="true"></span>
+                        <span>页面加载中...</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -476,6 +521,7 @@
                 const isMobile = ref(window.innerWidth < 768);
                 const sidebarPanelSize = ref(240);
                 const desktopSidebarCollapsed = ref(false);
+                const frameLoading = ref(true);
 
                 try {
                     const savedWidth = parseInt(localStorage.getItem('index.sidebar.size') || '', 10);
@@ -553,6 +599,34 @@
                     return document.getElementById('contentFrame');
                 };
 
+                // 同一文档内仅锚点变化不会触发 iframe 的 load 事件。
+                const showFrameLoading = (iframe, url) => {
+                    if (!iframe || !url) return;
+                    try {
+                        const current = new URL(iframe.contentWindow.location.href);
+                        const next = new URL(url, window.location.href);
+                        if (current.href !== next.href &&
+                            current.origin === next.origin && current.pathname === next.pathname &&
+                            current.search === next.search) return;
+                    } catch (e) {
+                        // 跨域时无法读取当前地址，按普通导航处理。
+                    }
+                    frameLoading.value = true;
+                };
+
+                const onFrameLoad = (event) => {
+                    try {
+                        if (event.target.contentWindow.location.href === 'about:blank') return;
+                        // 同源子页面自身跳转时，也在旧页面卸载前显示加载状态。
+                        event.target.contentWindow.addEventListener('beforeunload', () => {
+                            frameLoading.value = true;
+                        }, { once: true });
+                    } catch (e) {
+                        // 跨域页面仍可通过 load 事件判断导航结束。
+                    }
+                    frameLoading.value = false;
+                };
+
 
                 const navigateTo = (page, title = '', pushHistory = true, loadIframe = true) => {
                     // Rebuild map if needed (lazy way)
@@ -580,7 +654,10 @@
                     
                     if (loadIframe) {
                         const iframe = getActiveFrame();
-                        iframe.src = pageConfig.url;
+                        if (iframe) {
+                            showFrameLoading(iframe, pageConfig.url);
+                            iframe.src = pageConfig.url;
+                        }
                     }
 
                     // Set location hash for direct navigation
@@ -592,7 +669,7 @@
                 };
 
                 const handleMenuNavigate = (item) => {
-                    navigateTo(item.key, item.text, true, false);
+                    navigateTo(item.key, item.text);
                 };
 
                 // Helper for iframe pages to request navigation
@@ -640,13 +717,15 @@
                     
                     // Check for direct hash navigation
                     const hash = (location.hash || '').replace('#', '').trim();
-                    if (hash && pageMap[hash]) {
+                    if (hash && pageMap[hash]?.url && !['_blank', '_top'].includes(pageMap[hash].target)) {
                         navigateTo(hash, pageMap[hash].text, false);
                     } else {
                         const iframe = getActiveFrame();
                         const defaultPageConfig = pageMap['dashboard'];
-                        if (iframe && defaultPageConfig && defaultPageConfig.url) {
-                            iframe.src = defaultPageConfig.url;
+                        if (iframe) {
+                            const url = defaultPageConfig?.url || '/me/WorkDesk';
+                            showFrameLoading(iframe, url);
+                            iframe.src = url;
                         }
                     }
                 });
@@ -664,7 +743,8 @@
                         
                         const iframe = getActiveFrame();
                         const pageConfig = pageMap[prevPage];
-                        if (iframe && pageConfig) {
+                        if (iframe && pageConfig?.url) {
+                            showFrameLoading(iframe, pageConfig.url);
                             iframe.src = pageConfig.url;
                         }
 
@@ -705,6 +785,7 @@
                 const refreshMainContent = () => {
                     const iframe = getActiveFrame();
                     if (!iframe) return;
+                    frameLoading.value = true;
 
                     try {
                         if (iframe.contentWindow) {
@@ -717,6 +798,7 @@
 
                     const currentSrc = iframe.getAttribute('src');
                     if (currentSrc) iframe.setAttribute('src', currentSrc);
+                    else frameLoading.value = false;
                 };
 
                 const openAiChatDrawer = () => {
@@ -744,6 +826,8 @@
                     isMobile,
                     sidebarPanelSize,
                     desktopSidebarCollapsed,
+                    frameLoading,
+                    onFrameLoad,
                     aiDrawerVisible,
                     aiDrawerSize,
                     aiChatUrl,

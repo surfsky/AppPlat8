@@ -4,6 +4,7 @@
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
+  --color-bg: white;
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;
   --color-slate-200: #e2e8f0;
@@ -44,7 +45,7 @@ html, body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background: var(--color-slate-50);
+  background: var(--color-bg);
 }
 
 /* 全局统一 Safari 风滚动条：默认不显示，hover/scroll/focus 时淡入细圆角灰条 */

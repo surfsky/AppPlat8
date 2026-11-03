@@ -14,20 +14,19 @@ namespace App.API
     [Description("组织")]
     public class Orgs
     {
-        [HttpApi("获取所有组织", AuthLogin=true)]
+        [HttpApi("获取所有组织", true)]
         public static APIResult GetOrgs()
         {
             return App.DAL.Org.Set.OrderBy(o => o.SortId).ToList().ToResult();
         }
 
-        [HttpApi("获取组织树形结构", AuthLogin=true)]
+        [HttpApi("获取组织树形结构", true)]
         public static APIResult GetOrgTree()
         {
             return App.DAL.Org.GetTree().ToResult();
         }
 
-        [HttpApi("获取授权组织树", AuthLogin=true, CacheByUser = true, CacheSeconds = 60)]  // 0.273， 0.052， 0.029
-        //[HttpApi("获取授权组织树", AuthLogin=true)]  // 0.29， 0.068， 0.06， 0.037， 0.063
+        [HttpApi("获取授权组织树", true, CacheSeconds = 60, CacheByUser = true)]  // 0.273， 0.052， 0.029
         public static APIResult GetAuthOrgTree()
         {
             var user = Auth.GetUser();

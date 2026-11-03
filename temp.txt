@@ -40,3 +40,83 @@
             }
 
             return list.Distinct().ToList();
+
+
+        [HttpApi("Point","获取检查对象点位数据", AuthLogin = false)]
+        public static APIResult GetCheckObjectPoints(string name = null, long? orgId = null, bool? isDel = false, string region = null, int maxCount = 500)
+        {
+            if (maxCount <= 0)     maxCount = 100;
+            if (maxCount > 5000)   maxCount = 5000;
+
+            // 获取点位数据
+            var q = CheckObject.Set.AsNoTracking()  .Where(t => !string.IsNullOrWhiteSpace(t.Gps));
+            if (isDel != null)           q = q.Where(t => t.IsDel == isDel.Value);
+            if (orgId.IsNotEmpty())      q = q.Where(t => t.OrgId == orgId.Value);
+            if (name.IsNotEmpty())       q = q.Where(t => (t.Name ?? string.Empty).Contains(name.Trim()));
+            var items = q
+                .OrderBy(t => t.Id)
+                .Take(maxCount * 4)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Name,
+                    t.Address,
+                    t.Gps,
+                    t.SocialCreditId,
+                    t.RiskLevel,
+                    t.ObjectType,
+                    t.Scale,
+                    t.OrgId,
+                    t.DutyMan,
+                })
+                .ToList();
+
+            // 过滤掉不合法的坐标和不在指定区域内的点位。
+            var regioner = GisRegion.Parse(region);
+            var list = new List<object>();
+            foreach (var item in items)
+            {
+                if (!GisHelper.TryParseLngLat(item.Gps, out var lng, out var lat))
+                    continue;
+                if (regioner != null && !regioner.Contains(lng, lat))
+                    continue;
+
+                list.Add(new
+                {
+                    id = item.Id,
+                    name = item.Name,
+                    gps = item.Gps,
+                    addr = item.Address,
+                    lng,
+                    lat,
+                    dataJson = new
+                    {
+                        item.SocialCreditId,
+                        item.RiskLevel,
+                        item.ObjectType,
+                        item.Scale,
+                        item.OrgId,
+                        item.DutyMan,
+                    }
+                });
+
+                if (list.Count >= maxCount)
+                    break;
+            }
+
+            return list.ToResult();
+        }
+
+                            var path = args?.Context?.Request?.Path.Value ?? string.Empty;
+                    if (path.Equals("/HttpApi/Gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase))
+                        return;
+                    if (path.Equals("/HttpApi/Gis/GetCheckObjectPoints", StringComparison.OrdinalIgnoreCase))
+                        return;
+
+            // 全局配置要求登录，方法配置要求登录
+            // true  true   => true
+            // true  false  => false
+            // true  null   => true
+            // false true   => true
+            // false false  => false
+            // false null   => false

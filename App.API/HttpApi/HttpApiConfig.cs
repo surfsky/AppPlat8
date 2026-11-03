@@ -81,9 +81,8 @@ namespace App.HttpApi
         public bool? Wrap                   { get; set; } = null;
         public int? MaxDepth                { get; set; } = null;
         public int? BanMinutes              { get; set; } = null;
-
-        /// <summary>System.Text.Json Serializer Options</summary>
-        public JsonSerializerOptions JsonOptions { get; set; }
+        public bool AuthLogin               { get; set; } = false;
+        public JsonSerializerOptions JsonOptions { get; set; }  // 序列化选项，用于控制 JSON 序列化行为。
 
 
         //public static void Configure(IHttpContextAccessor contextAccessor)

@@ -12,7 +12,7 @@ namespace App.API
     public class OA
     {
         /// <summary>获取联系人目录树</summary>
-        [HttpApi("获取联系人目录树", AuthLogin = true)]
+        [HttpApi("获取联系人目录树", true)]
         public static APIResult GetContactMenuTree(long? excludeId = null, long? selectedId = null)
         {
             var all = ContactMenu.Set.AsNoTracking().ToList();
@@ -49,7 +49,7 @@ namespace App.API
         }
 
         /// <summary>获取联系人目录平铺列表</summary>
-        [HttpApi("获取联系人目录列表", AuthLogin = true)]
+        [HttpApi("获取联系人目录列表", true)]
         public static APIResult GetContactMenus(string name = null)
         {
             var list = ContactMenu.Search(name)
@@ -62,7 +62,7 @@ namespace App.API
         }
 
         /// <summary>获取当前用户可见的通讯录目录树（节点带 canEdit 标记）</summary>
-        [HttpApi("获取当前用户可见的通讯录目录树", AuthLogin = true)]
+        [HttpApi("获取当前用户可见的通讯录目录树", true)]
         public static APIResult GetUserVisibleContactMenuTree(long userId)
         {
             var seeIds = new HashSet<long>(RoleContactMenu.GetUserMenuIds(userId, true));

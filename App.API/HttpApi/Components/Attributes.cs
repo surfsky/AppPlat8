@@ -149,8 +149,8 @@ namespace App.HttpApi
         /// <summary>是否校验授权码</summary>
         public bool AuthToken { get; set; } = false;
 
-        /// <summary>是否校验登录(User.IsAuthenticated)</summary>
-        public bool AuthLogin { get; set; } = false;
+        /// <summary>是否校验登录</summary>
+        public bool? AuthLogin { get; set; } = null;
 
         /// <summary>可访问的用户（用逗号隔开）</summary>
         public string AuthUsers { get; set; }
@@ -180,21 +180,29 @@ namespace App.HttpApi
         //---------------------------------------------------
         // 构造函数
         //---------------------------------------------------
-        public HttpApiAttribute() { }
-        public HttpApiAttribute(string description, bool authLogin=false, int cacheSeconds=0)
+        public HttpApiAttribute() {}
+        public HttpApiAttribute(string description)
+        {
+            this.Description = description;
+        }
+        public HttpApiAttribute(string description, bool authLogin)
         {
             this.Description = description;
             this.AuthLogin = authLogin;
-            this.CacheSeconds = cacheSeconds;
         }
-        public HttpApiAttribute(string group, string description, bool authLogin = false, int cacheSeconds = 0)
+
+        //
+        public HttpApiAttribute(string group, string description)
+        {
+            this.Group = group;
+            this.Description = description;
+        }
+        public HttpApiAttribute(string group, string description, bool authLogin)
         {
             this.Group = group;
             this.Description = description;
             this.AuthLogin = authLogin;
-            this.CacheSeconds = cacheSeconds;
         }
-
     }
 
 }

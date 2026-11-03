@@ -31,17 +31,20 @@ namespace App.DAL.GIS
         [UI("GIS菜单")]     public long? MenuId { get; set; }
         [UI("排序")]        public int SortId { get; set; }
         [UI("地址")]        public string Addr { get; set; }
-        [UI("链接地址")]     public string Url { get; set; }         // 通用链接地址（原 PageUrl）
+        [UI("链接地址")]     public string Url { get; set; }         // 通用链接地址
         [UI("文件")]        public string File { get; set; }        // 文件链接（图片、模型、视频等）
+        [UI("扩展数据")]    public string DataJson { get; set; }
+        [UI("是否可见")]    public bool? IsVisible { get; set; }
+        [UI("备注")]        public string Remark { get; set; }
 
+        // GIS信息
         [UI("经纬度")]      public string Gps { get; set; }
         [UI("区域矩形")]    public string Region { get; set; }      // 图片显示区域：tlx,tly,brx,bry
         [UI("图形数据")]    public string GeoJson { get; set; }
-        [UI("扩展数据")]    public string DataJson { get; set; }
-        [UI("是否可见")]    public bool? IsVisible { get; set; }
+
+        // 展示信息
         [UI("缩放")]        public double? Scale { get; set; } = 1.0;
         [UI("标签颜色")]    public string LabelColor { get; set; } = "#000000";
-        [UI("备注")]        public string Remark { get; set; }
 
         //
         public virtual GisMenu Menu { get; set; }

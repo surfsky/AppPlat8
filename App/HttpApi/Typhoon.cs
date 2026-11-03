@@ -17,7 +17,7 @@ namespace App.API
     public class Typhoon
     {
         /// <summary>列出台风</summary>
-        [HttpApi("台风列表", AuthLogin = false)]
+        [HttpApi("台风列表", true, CacheSeconds = 60)]
         public static APIResult List(int? year = null, string name = null)
         {
             var list = GisTyphoon.Search(name: name, year: year).ToList();
@@ -45,7 +45,7 @@ namespace App.API
         }
 
         /// <summary>获取台风</summary>
-        [HttpApi("台风详情", AuthLogin = false)]
+        [HttpApi("台风详情", true, CacheSeconds = 60)]
         public static APIResult Get(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -73,7 +73,7 @@ namespace App.API
         }
 
         /// <summary>获取轨迹</summary>
-        [HttpApi("台风轨迹", AuthLogin = false)]
+        [HttpApi("台风轨迹", CacheSeconds = 60)]
         public static APIResult Logs(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -83,7 +83,7 @@ namespace App.API
         }
 
         /// <summary>获取预测</summary>
-        [HttpApi("台风预测", AuthLogin = false)]
+        [HttpApi("台风预测", CacheSeconds = 60)]
         public static APIResult Predict(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -92,7 +92,7 @@ namespace App.API
         }
 
         /// <summary>导入前端从实时源抓取的台风数据（自动更新/新增入库）</summary>
-        [HttpApi("导入实时台风", AuthLogin = false)]
+        [HttpApi("导入实时台风", CacheSeconds = 60)]
         public static APIResult ImportLive()
         {
             string body;
