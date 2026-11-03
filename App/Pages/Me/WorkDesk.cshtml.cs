@@ -26,8 +26,10 @@ namespace App.Pages.Me
         [BindProperty(SupportsGet = true)] public string UserName { get; set; }
         public string UserRealName { get; private set; }  // 用户真实姓名
         public bool CanChangeScope => Auth.HasPower(Power.AdminLeader);  // 是否可切换用户名
-        public List<long> CurrOrgIds => ResolveCurrOrgIds();   //   实际责任网格命中范围：URL(管理员) > 用户 EffectiveAuthOrgId 展开后的全部子孙
-        public List<long> CurrRootOrgIds => ResolveCurrRootOrgIds();  // 责任网格根节点（未展开）：用于 URL 拼接，避免 Query 超长
+        private List<long> _currOrgIds;
+        private List<long> _currRootOrgIds;
+        public List<long> CurrOrgIds => _currOrgIds ??= ResolveCurrOrgIds();   // 实际责任网格范围（含子孙）
+        public List<long> CurrRootOrgIds => _currRootOrgIds ??= ResolveCurrRootOrgIds();  // 责任网格根节点，用于 URL 拼接
 
         
         public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();
@@ -49,7 +51,7 @@ namespace App.Pages.Me
 
 
         //---------------------------------------------------------------------
-        // 页面加载：统计计数 + 卡片初始化
+        // 页面加载只初始化卡片和链接，统计通过独立请求加载。
         //---------------------------------------------------------------------
         public void OnGet()
         {
@@ -59,92 +61,99 @@ namespace App.Pages.Me
                 UserId = GetUserId();
 
             ResolveUserRealName();
+            ObjectStatCards = BuildObjectCards(false);
+            SuperviseStatCards = BuildSuperviseCards(false);
+            RiskStatCards = BuildRiskCards(false);
+            HazardStatCards = BuildHazardCards(false);
+        }
+
+        /// <summary>按分组加载统计，沿用工作台原有用户及组织授权范围。</summary>
+        public IActionResult OnGetStats(string group)
+        {
+            var cards = group switch
+            {
+                "objects" => BuildObjectCards(true),
+                "supervise" => BuildSuperviseCards(true),
+                "risk" => BuildRiskCards(true),
+                "hazards" => BuildHazardCards(true),
+                _ => null
+            };
+            return cards == null ? BuildResult(400, "无效的统计分组") : BuildResult(0, "success", cards);
+        }
+
+        private List<WorkDeskStatCard> BuildObjectCards(bool includeCounts)
+        {
             var today = DateTime.Today;
-
-            var objects = BuildObjectScopeQuery();
-            var CountMyObjects = objects.Count();
-
-            // ？？？
-            // NextCheckDt 是实体 getter-only 计算属性（NotMapped），EF Core 无法翻译为 SQL。
-            // 解决办法：先把 LatestCheckDt / RiskLevel / IsChecked 投影到内存，再本地计数。
-            var projection = objects
-                .Select(o => new
+            var myObjectsCnt = 0;
+            var uncheckedObjectsCnt = 0;
+            var nearExpireObjectsCnt = 0;
+            var overdueObjectsCnt = 0;
+            if (includeCounts)
+            {
+                var projection = BuildObjectScopeQuery()
+                    .Select(o => new { o.IsChecked, o.NextCheckDt })
+                    .AsNoTracking()
+                    .ToList();
+                myObjectsCnt = projection.Count;
+                uncheckedObjectsCnt = projection.Count(o => o.IsChecked == false);
+                nearExpireObjectsCnt = projection.Count(o =>
                 {
-                    o.IsChecked,
-                    o.LastCheckDt,
-                    o.RiskLevel
-                })
-                .AsNoTracking()
-                .ToList();
-            var CountUncheckedObjects = projection.Count(o => (o.IsChecked == null || o.IsChecked == false) || o.LastCheckDt == null);
-            var CountNearExpireObjects = projection
-                .Count(o =>
-                {
-                    var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
-                    // 与 CheckObjects 的 nextCheck 解析对齐：按日期比较，临期范围 [today+1, today+7]
+                    var next = o.NextCheckDt;
                     return next.HasValue && next.Value.Date >= today.AddDays(1) && next.Value.Date <= today.AddDays(7);
                 });
-            var CountOverdueObjects = projection
-                .Count(o =>
+                overdueObjectsCnt = projection.Count(o =>
                 {
-                    var next = ComputeNextCheckDt(o.LastCheckDt, o.RiskLevel);
-                    // 与 CheckObjects 的 nextCheck 解析对齐：按日期比较，超期范围 (-inf, today]
+                    var next = o.NextCheckDt;
                     return next.HasValue && next.Value.Date <= today;
                 });
+            }
 
-            // 初始化对象统计卡片
-            ObjectStatCards = new List<WorkDeskStatCard>
+            return new List<WorkDeskStatCard>
             {
-                new WorkDeskStatCard("我的对象",         CountMyObjects,         AppendObjectScope($"/Checks/CheckObjects?isDel=false"), "fas fa-warehouse"),
-                new WorkDeskStatCard("未巡查对象",       CountUncheckedObjects,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false"), "fas fa-circle-check"),
-                new WorkDeskStatCard("临期巡查对象",     CountNearExpireObjects, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}"), "fas fa-clock"),
-                new WorkDeskStatCard("超期未巡查对象",   CountOverdueObjects,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-triangle-exclamation"),
+                new WorkDeskStatCard("我的对象",         myObjectsCnt,         AppendObjectScope($"/Checks/CheckObjects?isDel=false"), "fas fa-warehouse"),
+                new WorkDeskStatCard("未巡查对象",       uncheckedObjectsCnt,  AppendObjectScope($"/Checks/CheckObjects?isDel=false&isChecked=false"), "fas fa-circle-check"),
+                new WorkDeskStatCard("临期巡查对象",     nearExpireObjectsCnt, AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck={today.AddDays(1):yyyy-MM-dd},{today.AddDays(7):yyyy-MM-dd}"), "fas fa-clock"),
+                new WorkDeskStatCard("超期未巡查对象",   overdueObjectsCnt,    AppendObjectScope($"/Checks/CheckObjects?isDel=false&nextCheck=,{today:yyyy-MM-dd}"), "fas fa-triangle-exclamation"),
             };
 
-            SuperviseStatCards = new List<WorkDeskStatCard>
-            {
-                CreateTagSpecCard("重点监管企业", "重点监管", "fas fa-exclamation-triangle"),
-                CreateTagSpecCard("示范企业", "示范企业", "fas fa-star"),
-            };
+        }
 
-            RiskStatCards = new List<WorkDeskStatCard>
+        private List<WorkDeskStatCard> BuildSuperviseCards(bool includeCounts)
+        {
+            return new List<WorkDeskStatCard>
             {
-                CreateTagSpecCard("八类高危企业", "八类高危企业", "fas fa-industry"),
-                CreateTagSpecCard("三场所三企业", "三场所三企业", "fas fa-store"),
+                CreateTagSpecCard("重点监管企业", "重点监管", "fas fa-exclamation-triangle", includeCounts),
+                CreateTagSpecCard("示范企业", "示范企业", "fas fa-star", includeCounts),
             };
+        }
 
-            // 初始化隐患统计卡片
-            var hazards = BuildHazardScopeQuery();
-            var CountMyHazards       = hazards.Count();
-            var CountPendingHazards  = hazards.Where(h => h.Status == CheckHazardStatus.Waiting || h.Status == CheckHazardStatus.Processing).Count();
-            var CountOverdueHazards  = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
-            HazardStatCards = new List<WorkDeskStatCard>
+        private List<WorkDeskStatCard> BuildRiskCards(bool includeCounts)
+        {
+            return new List<WorkDeskStatCard>
+            {
+                CreateTagSpecCard("八类高危企业", "八类高危企业", "fas fa-industry", includeCounts),
+                CreateTagSpecCard("三场所三企业", "三场所三企业", "fas fa-store", includeCounts),
+            };
+        }
+
+        private List<WorkDeskStatCard> BuildHazardCards(bool includeCounts)
+        {
+            var today = DateTime.Today;
+            var CountMyHazards = 0;
+            var CountPendingHazards = 0;
+            var CountOverdueHazards = 0;
+            if (includeCounts)
+            {
+                var hazards = BuildHazardScopeQuery();
+                CountMyHazards = hazards.Count();
+                CountPendingHazards = hazards.Where(h => h.Status == CheckHazardStatus.Waiting || h.Status == CheckHazardStatus.Processing).Count();
+                CountOverdueHazards = hazards.Where(h => h.Status != CheckHazardStatus.Archived && h.ExpireDt.HasValue && h.ExpireDt.Value <= today).Count();
+            }
+            return new List<WorkDeskStatCard>
             {
                 new WorkDeskStatCard("我发现的隐患",   CountMyHazards,      AppendHazardScope($"/Checks/Flow/CheckHazards"), "fas fa-eye"),
                 new WorkDeskStatCard("待处理隐患",     CountPendingHazards, AppendHazardScope($"/Checks/Flow/CheckHazards?status=0,1"), "fas fa-inbox"),
                 new WorkDeskStatCard("超期隐患",       CountOverdueHazards, AppendHazardScope($"/Checks/Flow/CheckHazards?excludeArchived=true&expireTo={today:yyyy-MM-dd}"), "fas fa-skull-crossbones"),
-            };
-        }
-
-        //---------------------------------------------------------------------
-        // Helpers：计算下一次巡查时间（与 CheckObject.NextCheckDt 实现保持一致）
-        //---------------------------------------------------------------------
-        private static DateTime? ComputeNextCheckDt(DateTime? latestCheckDt, CheckRiskLevel? riskLevel)
-        {
-            if (!latestCheckDt.HasValue) return null;
-            int months = GetCheckCycleMonths(riskLevel);
-            return latestCheckDt.Value.AddMonths(months);
-        }
-
-        private static int GetCheckCycleMonths(CheckRiskLevel? riskLevel)
-        {
-            return riskLevel switch
-            {
-                CheckRiskLevel.None   => 12,
-                CheckRiskLevel.Low    => 9,
-                CheckRiskLevel.Medium => 6,
-                CheckRiskLevel.High   => 3,
-                _ => 12
             };
         }
 
@@ -220,7 +229,7 @@ namespace App.Pages.Me
 
         private List<long> ResolveCurrOrgIds()
         {
-            var ids = ResolveCurrRootOrgIds();
+            var ids = CurrRootOrgIds;
             if (ids.Count == 0) return new List<long>();
             return OrgDescendants(ids);
         }
@@ -249,16 +258,17 @@ namespace App.Pages.Me
             var orgIds = CurrOrgIds;
             return App.DAL.CheckObject.Search(isDel: false)
                 .Where(o => (orgIds.Count > 0 && o.OrgId.HasValue && orgIds.Contains(o.OrgId.Value))
-                         || (o.CheckerId == uid));
+                         || (o.CheckerId == uid))
+                .FilterByOrg(Auth.GetUser(), nameof(CheckObject.OrgId));
         }
 
         /// <summary>按扩展标签统计对象，并生成对应的列表链接。</summary>
-        private WorkDeskStatCard CreateTagSpecCard(string title, string tagName, string iconCls)
+        private WorkDeskStatCard CreateTagSpecCard(string title, string tagName, string iconCls, bool includeCounts)
         {
             var tags = App.DAL.CheckTag.Set.Where(t => t.TagType == CheckTagType.Spec);
             var tag = tags.FirstOrDefault(t => t.Name == tagName)
                 ?? tags.Where(t => t.Name.Contains(tagName)).OrderBy(t => t.Name.Length).FirstOrDefault();
-            var tagIds = tag == null ? new List<long>() : App.DAL.CheckTag.GetChildIds(tag.Id);
+            var tagIds = !includeCounts || tag == null ? new List<long>() : App.DAL.CheckTag.GetChildIds(tag.Id);
             var count = tagIds.Count == 0
                 ? 0
                 : BuildObjectScopeQuery()
@@ -274,12 +284,19 @@ namespace App.Pages.Me
         {
             var uid    = CurrUserId;
             var orgIds = CurrOrgIds;
-            return App.DAL.CheckHazard.Search(null, null, null, null, null, null)
+            var q = App.DAL.CheckHazard.Search(null, null, null, null, null, null)
                 .Where(h => h.CheckerId == uid
                          || (orgIds.Count > 0
                              && h.CheckObject != null
                              && h.CheckObject.OrgId.HasValue
                              && orgIds.Contains(h.CheckObject.OrgId.Value)));
+            var user = Auth.GetUser();
+            if (user != null && user.Name != "admin" && user.AuthOrgId.HasValue)
+            {
+                var allowed = OrgFilter.GetChildOrgIds(user.AuthOrgId);
+                q = q.Where(h => h.CheckObject != null && h.CheckObject.OrgId.HasValue && allowed.Contains(h.CheckObject.OrgId.Value));
+            }
+            return q;
         }
 
         //---------------------------------------------------------------------
@@ -297,11 +314,9 @@ namespace App.Pages.Me
             var roots = CurrRootOrgIds;
             if (roots != null && roots.Count == 1)
                 qs["orgId"] = roots[0].ToString();
-            else if (roots != null && roots.Count > 1)
-                qs["orgIds"] = string.Join(",", roots);
 
             // 工作台对象统计按“本人负责对象 OR 本人授权组织内对象”计算，列表需保持同一语义。
-            if (uid > 0 && roots != null && roots.Count > 0)
+            if (uid > 0)
                 qs["scopeCheckerOrOrg"] = "true";
 
             if (qs.Count == 0) return rawUrl;
@@ -316,6 +331,9 @@ namespace App.Pages.Me
 
             var uid = CurrUserId;
             if (uid > 0) qs["checkerId"] = uid.ToString();
+            var roots = CurrRootOrgIds;
+            if (roots.Count == 1) qs["orgId"] = roots[0].ToString();
+            if (uid > 0) qs["scopeCheckerOrOrg"] = "true";
 
             if (qs.Count == 0) return rawUrl;
             var sep = rawUrl.Contains('?') ? '&' : '?';

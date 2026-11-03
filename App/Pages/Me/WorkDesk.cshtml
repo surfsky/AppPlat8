@@ -105,9 +105,12 @@
       <!-- 我的对象 / 监管对象 / 高风险对象 -->
       <section v-for="g in objectGroups" v-bind:key="g.title" class="mb-10">
         <h2 class="mb-5 text-[18px] font-semibold text-slate-800">{{ g.title }}</h2>
+        <div v-if="statsStatus[g.statusKey] === 'error'" class="mb-2 text-sm text-red-600" role="alert">
+          统计加载失败，<button type="button" class="underline" v-on:click="loadStats(g.statusKey)">重试</button>
+        </div>
         <div class="flex flex-wrap gap-5">
           <div v-for="c in g.cards" v-bind:key="c.url" class="inline-block">
-            <el-badge v-bind:value="Number(c.count||0)" v-bind:max="999999" v-bind:hidden="!c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
+            <el-badge v-bind:value="statsStatus[g.statusKey] === 'loading' ? '…' : (statsStatus[g.statusKey] === 'error' ? '!' : Number(c.count||0))" v-bind:max="999999" v-bind:hidden="statsStatus[g.statusKey] === 'ready' && !c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
               <el-link v-bind:href="c.url" target="_self" v-bind:underline="false" style="text-decoration:none;">
                 <el-button size="large" style="height:42px; width:180px; border-radius:8px; font-weight:500;">
                   <span style="display:inline-flex; align-items:center; gap:10px;">
@@ -124,9 +127,12 @@
       <!-- 我的隐患 -->
       <section class="mb-10">
         <h2 class="mb-5 text-[18px] font-semibold text-slate-800">我的隐患</h2>
+        <div v-if="statsStatus.hazards === 'error'" class="mb-2 text-sm text-red-600" role="alert">
+          统计加载失败，<button type="button" class="underline" v-on:click="loadStats('hazards')">重试</button>
+        </div>
         <div class="flex flex-wrap gap-5">
           <div v-for="c in hazardCards" v-bind:key="c.url" class="inline-block">
-            <el-badge v-bind:value="Number(c.count||0)" v-bind:max="999999" v-bind:hidden="!c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
+            <el-badge v-bind:value="statsStatus.hazards === 'loading' ? '…' : (statsStatus.hazards === 'error' ? '!' : Number(c.count||0))" v-bind:max="999999" v-bind:hidden="statsStatus.hazards === 'ready' && !c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
               <el-link v-bind:href="c.url" target="_self" v-bind:underline="false" style="text-decoration:none;">
                 <el-button size="large" style="height:42px; width:180px; border-radius:8px; font-weight:500;">
                   <span style="display:inline-flex; align-items:center; gap:10px;">
@@ -208,7 +214,7 @@
 
 @section script {
 <script>
-// 把 SSR 初始化数据（快捷入口 / 对象卡片 / 隐患卡片 / 人员）安全注入给 JS，
+// 把 SSR 初始化数据（快捷入口 / 卡片和链接 / 人员）安全注入给 JS，
 // 模板直接写在 HTML 中，Vue 侧只读 window.__WD_INITIAL__ 取数据。
 window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
     quickEntries  = quickEntries,
@@ -225,7 +231,7 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
 
 <script>
 /* 原生全局辅助：人员选择器（在 Vue app 挂载外操作，避免 Vue 重绘销毁 input value）
- * 选完人后整页刷新 URL（因为我的管理对象 / 我的隐患两个统计卡由 SSR 渲染，没法局部刷新）
+ * 选完人后整页刷新 URL，以同步人员、卡片链接和任务列表的范围。
  * —— 但 我的专项检查任务 切换 tab 走局部 load，不触发整页刷新。
  */
 (function () {
@@ -416,12 +422,13 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
         var app = createApp({
             setup() {
                 var state = reactive({
-                    // 卡片类数据（SSR 注入，切用户后由整页刷新重新注入）
+                    // 首屏先展示卡片及链接，统计数字按组异步刷新。
                     quickEntries: decorateQuick(init.quickEntries),
                     objectCards: decorateCards(init.objectCards),
                     superviseCards: decorateCards(init.superviseCards),
                     riskCards: decorateCards(init.riskCards),
                     hazardCards: decorateCards(init.hazardCards),
+                    statsStatus: { objects: 'loading', supervise: 'loading', risk: 'loading', hazards: 'loading' },
                     // 任务对象表格（运行时 ajax 拉取）
                     loading: false,
                     objTab: initialTab,
@@ -435,6 +442,28 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
                     pageSize: 10,
                     userId: initialUserId,
                 });
+
+                function loadStats(group) {
+                  var target = { objects: 'objectCards', supervise: 'superviseCards', risk: 'riskCards', hazards: 'hazardCards' }[group];
+                  if (!target) return;
+                  state.statsStatus[group] = 'loading';
+                  var params = new URLSearchParams(location.search || '');
+                  params.set('handler', 'Stats');
+                  params.set('group', group);
+                  return axios.get(location.pathname, { params: params })
+                    .then(function (res) {
+                      var payload = res && res.data;
+                      if (!payload || String(payload.code) !== '0' || !Array.isArray(payload.data)) {
+                        throw new Error('统计接口返回无效数据');
+                      }
+                      state[target] = decorateCards(payload.data);
+                      state.statsStatus[group] = 'ready';
+                    })
+                    .catch(function (error) {
+                      console.error('[WorkDesk.Stats] ' + group + ' 加载失败：', error);
+                      state.statsStatus[group] = 'error';
+                    });
+                }
 
                 // 日期格式化
                 function fmtDate(s) {
@@ -547,19 +576,23 @@ window.__WD_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new 
                     }
                 }
 
-                onMounted(loadObjs);
+                onMounted(function () {
+                  loadObjs();
+                  ['objects', 'supervise', 'risk', 'hazards'].forEach(loadStats);
+                });
 
                 var objectGroups = Vue.computed(function () {
                     return [
-                        { title: '我的对象', cards: state.objectCards },
-                        { title: '监管对象', cards: state.superviseCards },
-                        { title: '高风险对象', cards: state.riskCards },
+                        { title: '我的对象', cards: state.objectCards, statusKey: 'objects' },
+                        { title: '监管对象', cards: state.superviseCards, statusKey: 'supervise' },
+                        { title: '高风险对象', cards: state.riskCards, statusKey: 'risk' },
                     ];
                 });
 
                 return {
                     ...toRefs(state),
                     objectGroups,
+                    loadStats,
                     fmtDate,
                     onObjTabChange,
                     onPageChange,

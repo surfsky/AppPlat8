@@ -89,9 +89,12 @@
 
       <section v-for="g in objectGroups" v-bind:key="g.title" class="mb-10">
         <h2 class="mb-5 text-[18px] font-semibold text-slate-800">{{ g.title }}</h2>
+        <div v-if="statsStatus[g.statusKey] === 'error'" class="mb-2 text-sm text-red-600" role="alert">
+          统计加载失败，<button type="button" class="underline" v-on:click="loadStats(g.statusKey)">重试</button>
+        </div>
         <div class="flex flex-wrap gap-5">
           <div v-for="c in g.cards" v-bind:key="c.url" class="inline-block">
-            <el-badge v-bind:value="Number(c.count||0)" v-bind:max="999999" v-bind:hidden="!c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
+            <el-badge v-bind:value="statsStatus[g.statusKey] === 'loading' ? '…' : (statsStatus[g.statusKey] === 'error' ? '!' : Number(c.count||0))" v-bind:max="999999" v-bind:hidden="statsStatus[g.statusKey] === 'ready' && !c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
               <el-link v-bind:href="c.url" target="_self" v-bind:underline="false" style="text-decoration:none;">
                 <el-button size="large" style="height:42px; width:180px; border-radius:8px; font-weight:500;">
                   <span style="display:inline-flex; align-items:center; gap:10px;">
@@ -107,9 +110,12 @@
 
       <section class="mb-10">
         <h2 class="mb-5 text-[18px] font-semibold text-slate-800">科室的隐患</h2>
+        <div v-if="statsStatus.hazards === 'error'" class="mb-2 text-sm text-red-600" role="alert">
+          统计加载失败，<button type="button" class="underline" v-on:click="loadStats('hazards')">重试</button>
+        </div>
         <div class="flex flex-wrap gap-5">
           <div v-for="c in hazardCards" v-bind:key="c.url" class="inline-block">
-            <el-badge v-bind:value="Number(c.count||0)" v-bind:max="999999" v-bind:hidden="!c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
+            <el-badge v-bind:value="statsStatus.hazards === 'loading' ? '…' : (statsStatus.hazards === 'error' ? '!' : Number(c.count||0))" v-bind:max="999999" v-bind:hidden="statsStatus.hazards === 'ready' && !c.showBadge && !(c.count>0)" class="item-badge" style="--el-badge-bg-color:linear-gradient(135deg,#f59e0b,#d97706);">
               <el-link v-bind:href="c.url" target="_self" v-bind:underline="false" style="text-decoration:none;">
                 <el-button size="large" style="height:42px; width:180px; border-radius:8px; font-weight:500;">
                   <span style="display:inline-flex; align-items:center; gap:10px;">
@@ -239,6 +245,8 @@ window.__WDO_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
     function applyOrgScope(nextOrgId) {
         var qs = new URLSearchParams(location.search);
         if (nextOrgId) qs.set('orgId', nextOrgId); else qs.delete('orgId');
+      // 清除旧名称，避免清空选择后又按 orgName 恢复原组织。
+      qs.delete('orgName');
         var tb = qs.get('taskObjTab');
         if (!tb) qs.set('taskObjTab', 'unfinished');
         var url = location.pathname + (qs.toString() ? ('?' + qs.toString()) : '');
@@ -368,18 +376,19 @@ window.__WDO_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
 
         var qs0 = new URLSearchParams(location.search || '');
         var initialTab = qs0.get('taskObjTab') || 'unfinished';
-        var initialOrgId = qs0.get('orgId') || init.orgId || '';
+        var initialOrgId = init.orgId || qs0.get('orgId') || '';
 
         var app = createApp({
             setup() {
                 var state = reactive({
                     quickEntries: decorateQuick(init.quickEntries),
-                  objectGroups: [
-                    { title: '科室的管理对象', cards: decorateCards(init.objectCards) },
-                    { title: '科室的监管对象', cards: decorateCards(init.superviseCards) },
-                    { title: '科室的高风险对象', cards: decorateCards(init.riskCards) },
-                  ],
+                    objectGroups: [
+                        { title: '科室的管理对象', cards: decorateCards(init.objectCards), statusKey: 'objects' },
+                        { title: '科室的监管对象', cards: decorateCards(init.superviseCards), statusKey: 'supervise' },
+                        { title: '科室的高风险对象', cards: decorateCards(init.riskCards), statusKey: 'risk' },
+                    ],
                     hazardCards: decorateCards(init.hazardCards),
+                    statsStatus: { objects: 'loading', supervise: 'loading', risk: 'loading', hazards: 'loading' },
                     loading: false,
                     objTab: initialTab,
                     tabs: [
@@ -392,6 +401,31 @@ window.__WDO_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
                     pageSize: 10,
                     orgId: initialOrgId,
                 });
+
+                function loadStats(group) {
+                  var target = state.objectGroups.find(function (item) { return item.statusKey === group; });
+                  if (!target && group !== 'hazards') return;
+                  state.statsStatus[group] = 'loading';
+                  var params = new URLSearchParams(location.search || '');
+                  // 首屏可能由 orgName 解析出 orgId；后续统计与任务列表使用同一范围。
+                  if (state.orgId) params.set('orgId', state.orgId);
+                  params.set('handler', 'Stats');
+                  params.set('group', group);
+                  return axios.get(location.pathname, { params: params })
+                    .then(function (res) {
+                      var payload = res && res.data;
+                      if (!payload || String(payload.code) !== '0' || !Array.isArray(payload.data)) {
+                        throw new Error('统计接口返回无效数据');
+                      }
+                      if (target) target.cards = decorateCards(payload.data);
+                      else state.hazardCards = decorateCards(payload.data);
+                      state.statsStatus[group] = 'ready';
+                    })
+                    .catch(function (error) {
+                      console.error('[WorkDeskOrg.Stats] ' + group + ' 加载失败：', error);
+                      state.statsStatus[group] = 'error';
+                    });
+                }
 
                 function fmtDate(s) {
                     if (!s) return '';
@@ -494,7 +528,10 @@ window.__WDO_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
                     }
                 }
 
-                onMounted(loadObjs);
+                onMounted(function () {
+                  loadObjs();
+                  ['objects', 'supervise', 'risk', 'hazards'].forEach(loadStats);
+                });
 
                 return {
                     fmtDate: fmtDate,
@@ -503,6 +540,7 @@ window.__WDO_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
                     onSizeChange: onSizeChange,
                     openTaskDetail: openTaskDetail,
                     openCheckFlow: openCheckFlow,
+                    loadStats: loadStats,
                     ...toRefs(state),
                 };
             }

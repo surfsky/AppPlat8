@@ -34,18 +34,19 @@ namespace App.Pages.Checks
         {
             var user = GetUser();
 
-            // OrgId (默认为授权组织ID，若指定了OrgId参数且用户可以访问该组织，则使用该组织ID)
-            OrgId = user.AuthOrgId;
-            Item.OrgId = user.AuthOrgId;
+            // OR 范围以工作台指定的组织为准；最终结果仍由 FilterByOrg 收敛到登录用户授权范围。
+            var scopeCheckerOrOrg = Asp.GetQueryBool("scopeCheckerOrOrg") ?? false;
+            var scopeOrgOnly = Asp.GetQueryBool("scopeOrgOnly") ?? false;
+            OrgId = scopeCheckerOrOrg ? null : user.AuthOrgId;
+            Item.OrgId = OrgId;
             var orgId = Asp.GetQueryLong("OrgId");
-            if (orgId != null && user.CanAccessOrg(orgId.Value))
+            if (orgId != null && (scopeCheckerOrOrg || scopeOrgOnly || user.CanAccessOrg(orgId.Value)))
             {
                 OrgId = orgId;
                 Item.OrgId = orgId;
             }
 
             // CheckerId
-            var scopeOrgOnly = Asp.GetQueryBool("scopeOrgOnly") ?? false;
             var checkerId = Asp.GetQueryLong("checkerId");
             if (checkerId != null)
             {
@@ -54,7 +55,7 @@ namespace App.Pages.Checks
                 DefaultCheckerId = checkerId.Value;
                 DefaultCheckerName = App.DAL.User.Get(checkerId.Value)?.DisplayName;
             }
-            else if (orgId == null)
+            else if (orgId == null && !scopeOrgOnly && !scopeCheckerOrOrg)
             {
                 // 若未指定检查人ID，也未指定组织范围，则默认使用当前用户
                 Item.CheckerId = user.Id;

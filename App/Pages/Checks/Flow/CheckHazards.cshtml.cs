@@ -71,9 +71,11 @@ namespace App.Pages.Checks
             ScopeExcludeArchived = bool.TryParse(rawExclude, out var ea) && ea;
         }
 
-        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? createStartDt, long? orgId = null, List<long> orgIds = null, DateTime? expireTo = null)
+        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? createStartDt, long? orgId = null, List<long> orgIds = null, DateTime? expireTo = null, bool scopeCheckerOrOrg = false, bool scopeOrgOnly = false)
         {
             orgIds = ParseOrgIds(orgIds, Request.Query["orgIds"]);
+            // picker 的 checkerName 是 checkerId 的显示文本，不是额外的筛选条件。
+            if (checkerId.HasValue) checkerName = null;
             var rawExcludeArchived = Request.Query["excludeArchived"].FirstOrDefault();
             bool excludeArchived = bool.TryParse(rawExcludeArchived, out var ea) && ea;
 
@@ -96,14 +98,14 @@ namespace App.Pages.Checks
             }
 
             IQueryable<CheckHazard> baseQ;
-            if (orgIds.Count == 0 && !orgId.HasValue && checkerId.HasValue)
+            if (checkerId.HasValue && (scopeCheckerOrOrg || (orgIds.Count == 0 && !orgId.HasValue)))
             {
                 // 与 WorkDesk.BuildHazardScopeQuery 对齐：scope = CheckerId == uid OR Object.OrgId ∈ AuthOrgId 的子孙
                 // TODO：能否改用 OrgFilter.FilterOrg？                
                 var uid = checkerId.Value;
                 var u = App.DAL.User.ValidSet.AsNoTracking().FirstOrDefault(x => x.Id == uid);
                 List<long> scopeOrgIds = null;
-                var rootOrgId = u?.AuthOrgId;
+                var rootOrgId = scopeCheckerOrOrg ? orgId : u?.AuthOrgId;
                 if (rootOrgId.HasValue && rootOrgId.Value > 0)
                 {
                     scopeOrgIds = App.DAL.Org.All
@@ -129,6 +131,15 @@ namespace App.Pages.Checks
             }
 
             var q = baseQ;
+            if (scopeCheckerOrOrg || scopeOrgOnly)
+            {
+                var user = Auth.GetUser();
+                if (user != null && user.Name != "admin" && user.AuthOrgId.HasValue)
+                {
+                    var allowed = OrgFilter.GetChildOrgIds(user.AuthOrgId);
+                    q = q.Where(h => h.CheckObject != null && h.CheckObject.OrgId.HasValue && allowed.Contains(h.CheckObject.OrgId.Value));
+                }
+            }
             if (checkId.HasValue && checkId.Value > 0)     q = q.Where(h => h.CheckLogId == checkId.Value);
             if (excludeArchived)                           q = q.Where(h => !h.Status.HasValue || h.Status.Value != CheckHazardStatus.Archived);
             else if (multiStatus != null && multiStatus.Count > 0)    q = q.Where(h => h.Status.HasValue && multiStatus.Contains(h.Status.Value));
