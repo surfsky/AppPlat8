@@ -5,12 +5,10 @@
     // 仅传递无对应过滤控件的参数；组织、人员和扩展标签由控件传递，避免重复参数覆盖用户选择。
     var nextCheck = Request.Query["nextCheck"].FirstOrDefault();
     var tagName = Request.Query["tagName"].FirstOrDefault();
-    var scopeCheckerOrOrg = Request.Query["scopeCheckerOrOrg"].FirstOrDefault();
     var scopeOrgOnly = Request.Query["scopeOrgOnly"].FirstOrDefault();
     var dataHandler = "?handler=Data";
     if (!string.IsNullOrWhiteSpace(nextCheck)) dataHandler += $"&nextCheck={Uri.EscapeDataString(nextCheck)}";
     if (!string.IsNullOrWhiteSpace(tagName))   dataHandler += $"&tagName={Uri.EscapeDataString(tagName)}";
-    if (!string.IsNullOrWhiteSpace(scopeCheckerOrOrg)) dataHandler += $"&scopeCheckerOrOrg={scopeCheckerOrOrg}";
     if (!string.IsNullOrWhiteSpace(scopeOrgOnly)) dataHandler += $"&scopeOrgOnly={scopeOrgOnly}";
 }
 
@@ -44,7 +42,7 @@
                 <EleDatePicker For="Item.CreateDt" Type="DateRange" Width="250px" Label="创建时间" Type="DateTime" Value="@QStr("createStartDt")"></EleDatePicker>
                 <EleDatePicker For="Item.LastCheckDt" Type="DateRange" Width="250px" Label="巡查时间" Type="DateTime" Value="@QStr("lastCheckStartDt")"></EleDatePicker>
                 <EleSelect For="Item.IndustryRisk" Width="250px" Label="行业风险类型" Value="@QStr("industryRisk")" Visible="false"></EleSelect>
-                <EleSelect For="Item.IsDel" Width="250px" Label="已删除" Value="@QStr("isDel", "false")"></EleSelect>
+                <EleSelect For="Item.IsDel" Width="250px" Label="已删除" Value="@QStr("isDel")" Clearable="true"></EleSelect>
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
@@ -106,7 +104,7 @@
 
             <EleColumn For="Item.HasHarzard" Label="存在隐患" Width="100"></EleColumn>
             <EleColumn For="Item.Code" Label="编码" Width="120" Sortable="true"></EleColumn>
-            <EleColumn For="Item.IsDel" Label="是否失效" Width="100"></EleColumn>
+            <EleColumn For="Item.IsDel" Label="是否失效" Width="100" Clearable="true"></EleColumn>
         </Columns>
     </EleTable>
 }

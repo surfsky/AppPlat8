@@ -608,7 +608,7 @@ Done
 
 
 
-    优化工作台WorkDesk和WorkDeskOrg两个页面：由于其统计展示太慢，考虑先展示所有控件，再通过接口刷新统计标签
+2026/11/4
     文档
         /脑图
         写帮助文档、培训文档
@@ -632,11 +632,14 @@ Done
         Gis/Index: 重构闭包模式，全部用class重构
         Gis/Index: 基于某个点位周边的查询过滤
         GisGeometry: 看是否需要增加一个UrlDataCnt属性，表示url的数据个数；比较困难，URL要改为api接口才行
+    优化
         重构接口：Gis/GetCheckObjects() 相关方法，缠缠绵绵都看不懂什么意思
+        实现eleui的明暗两色切换，可以用url参数 scheme=light/dark 来
 
 
 2026/11/3
-    实现eleui的明暗两色切换，可以用url参数 scheme=light/dark 来
+    /WorkDesk优化: 优化工作台WorkDesk和WorkDeskOrg两个页面：由于其统计展示太慢，考虑先展示所有控件，再通过接口刷新统计标签
+    /WorkDesk优化：修正统计数据和清单的差异；
     /改index页面的背景色为白色，改主区域ifrme的背景色为白色
     /优化接口，https/Gis/GetCheckObjects 的汉字被编码了:修正及简化接口返回的数据，里面的汉字能否直接输出，而不是做了编码（http://localhost:6001/httpapi/gis/GetCheckObjects?orgId=199）
     /优化接口：给 #sym:HttpApiConfig  增加一个属性 AuthLogin ，若为true，除非接口方法显式标注AuthLogin="false"，则所有接口默认都必须校验是否登录，

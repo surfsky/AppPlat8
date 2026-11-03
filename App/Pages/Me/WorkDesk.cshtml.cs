@@ -254,11 +254,9 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         private IQueryable<CheckObject> BuildObjectScopeQuery()
         {
-            var uid    = CurrUserId;
-            var orgIds = CurrOrgIds;
+            var uid = CurrUserId;
             return App.DAL.CheckObject.Search(isDel: false)
-                .Where(o => (orgIds.Count > 0 && o.OrgId.HasValue && orgIds.Contains(o.OrgId.Value))
-                         || (o.CheckerId == uid))
+                .Where(o => o.CheckerId == uid)
                 .FilterByOrg(Auth.GetUser(), nameof(CheckObject.OrgId));
         }
 
@@ -302,7 +300,7 @@ namespace App.Pages.Me
         //---------------------------------------------------------------------
         // 卡片 URL 拼接：把当前 scope（checkerId/orgId）追加到目标列表页 URL 查询参数上
         //---------------------------------------------------------------------
-        /// <summary>卡片 URL 拼接：把当前 scope（checkerId + orgId）追加到目标列表页 URL 查询参数上</summary>
+        /// <summary>卡片 URL 拼接：把当前检查人追加到目标列表页 URL 查询参数上。</summary>
         private string AppendObjectScope(string rawUrl)
         {
             if (string.IsNullOrWhiteSpace(rawUrl)) return rawUrl ?? string.Empty;
@@ -310,14 +308,6 @@ namespace App.Pages.Me
 
             var uid = CurrUserId;
             if (uid > 0) qs["checkerId"] = uid.ToString();
-
-            var roots = CurrRootOrgIds;
-            if (roots != null && roots.Count == 1)
-                qs["orgId"] = roots[0].ToString();
-
-            // 工作台对象统计按“本人负责对象 OR 本人授权组织内对象”计算，列表需保持同一语义。
-            if (uid > 0)
-                qs["scopeCheckerOrOrg"] = "true";
 
             if (qs.Count == 0) return rawUrl;
             var sep = rawUrl.Contains('?') ? '&' : '?';

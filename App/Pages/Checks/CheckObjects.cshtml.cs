@@ -34,20 +34,18 @@ namespace App.Pages.Checks
         {
             var user = GetUser();
 
-            // OR 范围以工作台指定的组织为准；最终结果仍由 FilterByOrg 收敛到登录用户授权范围。
-            var scopeCheckerOrOrg = Asp.GetQueryBool("scopeCheckerOrOrg") ?? false;
             var scopeOrgOnly = Asp.GetQueryBool("scopeOrgOnly") ?? false;
-            OrgId = scopeCheckerOrOrg ? null : user.AuthOrgId;
+            var checkerId = Asp.GetQueryLong("checkerId");
+            OrgId = checkerId.HasValue && !scopeOrgOnly ? null : user.AuthOrgId;
             Item.OrgId = OrgId;
             var orgId = Asp.GetQueryLong("OrgId");
-            if (orgId != null && (scopeCheckerOrOrg || scopeOrgOnly || user.CanAccessOrg(orgId.Value)))
+            if (orgId != null && (scopeOrgOnly || user.CanAccessOrg(orgId.Value)))
             {
                 OrgId = orgId;
                 Item.OrgId = orgId;
             }
 
             // CheckerId
-            var checkerId = Asp.GetQueryLong("checkerId");
             if (checkerId != null)
             {
                 // 若指定了检查人ID，则默认使用该检查人ID
@@ -55,7 +53,7 @@ namespace App.Pages.Checks
                 DefaultCheckerId = checkerId.Value;
                 DefaultCheckerName = App.DAL.User.Get(checkerId.Value)?.DisplayName;
             }
-            else if (orgId == null && !scopeOrgOnly && !scopeCheckerOrOrg)
+            else if (orgId == null && !scopeOrgOnly)
             {
                 // 若未指定检查人ID，也未指定组织范围，则默认使用当前用户
                 Item.CheckerId = user.Id;
@@ -222,8 +220,6 @@ namespace App.Pages.Checks
                 if (parts.Length >= 2 && DateTime.TryParse(parts[1], out var d1)) nextCheckTo = d1.Date.AddDays(1).AddTicks(-1);
             }
 
-            // query
-            var useCheckerOrOrgScope = scopeCheckerOrOrg == true && (orgId.HasValue || checkerId.HasValue);
             var q = CheckObject.Search(
                 name: name,
                 code: code,
@@ -232,10 +228,10 @@ namespace App.Pages.Checks
                 socialCreditCode: socialCreditCode,
                 address: address,
                 dutyMan: userName,
-                orgId: useCheckerOrOrgScope ? null : orgId,
+                orgId: orgId,
                 tagIds: tagIds,
                 tagSpecIds: tagSpecIds,
-                checkerId: useCheckerOrOrgScope ? null : checkerId,
+                checkerId: checkerId,
                 objectType: objectType,
                 scope: scope,
                 scale: scale,
@@ -250,15 +246,6 @@ namespace App.Pages.Checks
                 isDel: isDel,
                 includeTags: true
                 );
-
-            if (useCheckerOrOrgScope)
-            {
-                var scopeOrgIds = orgId.HasValue
-                    ? App.DAL.Org.All.GetDescendants(orgId.Value).Select(o => o.Id).Distinct().ToList()
-                    : new List<long>();
-                q = q.Where(o => (checkerId.HasValue && o.CheckerId == checkerId.Value)
-                              || (scopeOrgIds.Count > 0 && o.OrgId.HasValue && scopeOrgIds.Contains(o.OrgId.Value)));
-            }
 
 
             // 应用组织过滤

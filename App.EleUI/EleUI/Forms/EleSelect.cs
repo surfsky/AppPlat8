@@ -43,14 +43,14 @@ namespace App.EleUI
             var vModel = GetVModel(context);
             if (Value != null && !string.IsNullOrWhiteSpace(vModel))
             {
-                var defaultRaw = GetDefaultRaw();
-                var defaultExpr = GetDefaultValueExpression();
-
                 TrySetFilterDefault(context, output);
-
-                output.Attributes.RemoveAll("v-model");
-                output.Attributes.SetAttribute(":model-value", $"({vModel} ?? {defaultExpr})");
-                output.Attributes.SetAttribute("@update:model-value", $"{vModel} = $event");
+                if (context.Items.ContainsKey("IsEleForm"))
+                {
+                    var defaultExpr = GetDefaultValueExpression();
+                    output.Attributes.RemoveAll("v-model");
+                    output.Attributes.SetAttribute(":model-value", $"({vModel} ?? {defaultExpr})");
+                    output.Attributes.SetAttribute("@update:model-value", $"{vModel} = $event");
+                }
             }
 
             // Build unified options list for runtime override (SetControlData)
