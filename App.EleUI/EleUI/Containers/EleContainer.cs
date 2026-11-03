@@ -15,37 +15,14 @@ namespace App.EleUI
     [HtmlTargetElement("EleContainer")]
     public class EleContainer : EleItem
     {
-        /// <summary>是否水平居中（mx-auto）。默认 true。</summary>
-        [HtmlAttributeName("Center")]
-        public bool Center { get; set; } = true;
-
-        /// <summary>是否启用 Bootstrap 风格响应式宽度。默认 true。</summary>
-        [HtmlAttributeName("Responsive")]
-        public bool Responsive { get; set; } = true;
-
-        /// <summary>水平内边距（px-）。默认 "4"。</summary>
-        [HtmlAttributeName("PaddingX")]
-        public string PaddingX { get; set; } = "4";
-
-        /// <summary>外边距（m-）。示例："8" 对应 "m-8"。</summary>
-        [HtmlAttributeName("Margin")]
-        public string Margin { get; set; }
-
-        /// <summary>md 断点固定宽度。默认 768px。</summary>
-        [HtmlAttributeName("MdWidth")]
-        public string MdWidth { get; set; } = "768px";
-
-        /// <summary>lg 断点固定宽度。默认 992px。</summary>
-        [HtmlAttributeName("LgWidth")]
-        public string LgWidth { get; set; } = "992px";
-
-        /// <summary>xl 断点固定宽度。默认 1200px。</summary>
-        [HtmlAttributeName("XlWidth")]
-        public string XlWidth { get; set; } = "1200px";
-
-        /// <summary>xxl 断点固定宽度。默认 1400px。</summary>
-        [HtmlAttributeName("XxlWidth")]
-        public string XxlWidth { get; set; } = "1400px";
+        [HtmlAttributeName("Center")]        public bool Center { get; set; } = true;  // 是否水平居中
+        [HtmlAttributeName("Responsive")]    public bool Responsive { get; set; } = true;  // 是否启用响应式宽度
+        [HtmlAttributeName("PaddingX")]      public string PaddingX { get; set; } = "4";   // 水平内边距（px-）。默认 "4"。
+        [HtmlAttributeName("Margin")]        public string Margin { get; set; }   // 外边距（m-）。示例："8" 对应 "m-8"。
+        [HtmlAttributeName("MdWidth")]       public string MdWidth { get; set; } = "768px";  // md 断点固定宽度。默认 768px。
+        [HtmlAttributeName("LgWidth")]       public string LgWidth { get; set; } = "992px";  // lg 断点固定宽度。默认 992px。
+        [HtmlAttributeName("XlWidth")]       public string XlWidth { get; set; } = "1200px";  // xl 断点固定宽度。默认 1200px。
+        [HtmlAttributeName("XxlWidth")]      public string XxlWidth { get; set; } = "1400px";  // xxl 断点固定宽度。默认 1400px。
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

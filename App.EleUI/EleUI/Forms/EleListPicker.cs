@@ -16,18 +16,18 @@ namespace App.EleUI
     [HtmlTargetElement("EleListPicker")]
     public class EleListPicker : EleFormControl
     {
-        [HtmlAttributeName("Items")] public object Items { get; set; }
-        [HtmlAttributeName("Multiple")] public bool Multiple { get; set; }
-        [HtmlAttributeName("AllowCreate")] public bool AllowCreate { get; set; }
-        [HtmlAttributeName("Filterable")] public bool Filterable { get; set; } = true;
-        [HtmlAttributeName("KeyField")] public string KeyField { get; set; }
-        [HtmlAttributeName("TextField")] public string TextField { get; set; }
-        [HtmlAttributeName("Clearable")] public new bool? Clearable { get; set; } = true;
+        [HtmlAttributeName("Items")]        public object Items { get; set; }
+        [HtmlAttributeName("Multiple")]     public bool Multiple { get; set; }
+        [HtmlAttributeName("AllowCreate")]  public bool AllowCreate { get; set; }
+        [HtmlAttributeName("Filterable")]   public bool Filterable { get; set; } = true;
+        [HtmlAttributeName("KeyField")]     public string KeyField { get; set; }
+        [HtmlAttributeName("TextField")]    public string TextField { get; set; }
+        [HtmlAttributeName("Clearable")]    public new bool? Clearable { get; set; } = true;
         [HtmlAttributeName("CollapseTags")] public bool? CollapseTags { get; set; } = false;
-        [HtmlAttributeName("DrawerTitle")] public string DrawerTitle { get; set; }
-        [HtmlAttributeName("DrawerSize")] public string DrawerSize { get; set; }
-        [HtmlAttributeName("TagType")] public EleTagType TagType { get; set; } = EleTagType.Info;
-        [HtmlAttributeName("Icon")] public EleIcons Icon { get; set; } = EleIcons.ArrowRight;
+        [HtmlAttributeName("DrawerTitle")]  public string DrawerTitle { get; set; }
+        [HtmlAttributeName("DrawerSize")]   public string DrawerSize { get; set; }
+        [HtmlAttributeName("TagType")]      public EleTagType TagType { get; set; } = EleTagType.Info;
+        [HtmlAttributeName("Icon")]         public EleIcons Icon { get; set; } = EleIcons.ArrowRight;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

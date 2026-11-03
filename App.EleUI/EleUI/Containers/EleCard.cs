@@ -35,23 +35,12 @@ namespace App.EleUI
     [HtmlTargetElement("EleCard")]
     public class EleCard : EleControl
     {
-        [HtmlAttributeName("Title")]
-        public string Title { get; set; }
-
-        [HtmlAttributeName("Icon")]
-        public EleIcons Icon { get; set; } = EleIcons.None;
-
-        [HtmlAttributeName("IconCls")]
-        public string IconCls { get; set; }
-
-        [HtmlAttributeName("Collapsible")]
-        public bool Collapsible { get; set; } = false;
-
-        [HtmlAttributeName("BodyStyle")]
-        public string BodyStyle { get; set; }
-
-        [HtmlAttributeName("HeaderClass")]
-        public string HeaderClass { get; set; } = "card-header";
+        [HtmlAttributeName("Title")]         public string Title { get; set; }
+        [HtmlAttributeName("Icon")]          public EleIcons Icon { get; set; } = EleIcons.None;
+        [HtmlAttributeName("IconCls")]       public string IconCls { get; set; }
+        [HtmlAttributeName("Collapsible")]   public bool Collapsible { get; set; } = false;
+        [HtmlAttributeName("BodyStyle")]     public string BodyStyle { get; set; }
+        [HtmlAttributeName("HeaderClass")]   public string HeaderClass { get; set; } = "card-header";
 
         public override void Init(TagHelperContext context)
         {

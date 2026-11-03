@@ -8,43 +8,16 @@ namespace App.EleUI
     public abstract class EleColumnBase : TagHelper
     {
         [HtmlAttributeNotBound]
-        [ViewContext]
-        public ViewContext ViewContext { get; set; }
-
-        [HtmlAttributeName("Label")]
-        public string Label { get; set; }
-
-        [HtmlAttributeName("Width")]
-        public string Width { get; set; }
-
-        [HtmlAttributeName("Size")]
-        public string Size { get; set; }
-
-        [HtmlAttributeName("MinWidth")]
-        public string MinWidth { get; set; }
-
-        [HtmlAttributeName("Sortable")]
-        public bool? Sortable { get; set; }
-
-        [HtmlAttributeName("Resizable")]
-        public bool? Resizable { get; set; }
-
-        [HtmlAttributeName("Visible")]
-        public bool Visible { get; set; } = true;
-
-        [HtmlAttributeName("Fixed")]
-        public string Fixed { get; set; }
-
-        [HtmlAttributeName("Align")]
-        public string Align { get; set; }
-
-        /// <summary>表头对齐方式；若为空则回退到 EleTable.HeaderAlign。别名：LabelAlign。</summary>
-        [HtmlAttributeName("HeaderAlign")]
-        public string HeaderAlign { get; set; }
-
-        /// <summary>HeaderAlign 的别名（用户习惯写法）。</summary>
-        [HtmlAttributeName("LabelAlign")]
-        public string LabelAlign { get; set; }
+        [ViewContext]                         public ViewContext ViewContext { get; set; }
+        [HtmlAttributeName("Label")]          public string Label { get; set; }
+        [HtmlAttributeName("Width")]          public string Width { get; set; }
+        [HtmlAttributeName("Size")]           public string Size { get; set; }
+        [HtmlAttributeName("MinWidth")]       public string MinWidth { get; set; }
+        [HtmlAttributeName("Sortable")]       public bool? Sortable { get; set; }
+        [HtmlAttributeName("Resizable")]      public bool? Resizable { get; set; }
+        [HtmlAttributeName("Visible")]        public bool Visible { get; set; } = true;
+        [HtmlAttributeName("Fixed")]          public string Fixed { get; set; }
+        [HtmlAttributeName("Align")]          public string Align { get; set; } // 单元格内容水平对齐
 
         protected bool CheckVisible(TagHelperOutput output)
         {
@@ -88,10 +61,8 @@ namespace App.EleUI
             if (!string.IsNullOrWhiteSpace(Align))
                 output.Attributes.SetAttribute("align", Align);
 
-            // Header alignment: explicit HeaderAlign / LabelAlias > EleTable default header-align
-            var ha = HeaderAlign ?? LabelAlign ?? tableHeaderAlign;
-            if (!string.IsNullOrWhiteSpace(ha))
-                output.Attributes.SetAttribute("header-align", ha);
+            if (!string.IsNullOrWhiteSpace(tableHeaderAlign))
+                output.Attributes.SetAttribute("header-align", tableHeaderAlign);
         }
     }
 }

@@ -8,20 +8,11 @@ namespace App.EleUI
     [HtmlTargetElement("ElePopover")]
     public class ElePopover : EleControl
     {
-        [HtmlAttributeName("Placement")]
-        public string Placement { get; set; }
-
-        [HtmlAttributeName("Title")]
-        public string Title { get; set; }
-
-        [HtmlAttributeName("Width")]
-        public string PopoverWidth { get; set; }
-
-        [HtmlAttributeName("Trigger")]
-        public string Trigger { get; set; }
-
-        [HtmlAttributeName("Content")]
-        public string Content { get; set; }
+        [HtmlAttributeName("Placement")]      public string Placement { get; set; }
+        [HtmlAttributeName("Title")]          public string Title { get; set; }
+        [HtmlAttributeName("Width")]          public string PopoverWidth { get; set; }
+        [HtmlAttributeName("Trigger")]        public string Trigger { get; set; }
+        [HtmlAttributeName("Content")]        public string Content { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

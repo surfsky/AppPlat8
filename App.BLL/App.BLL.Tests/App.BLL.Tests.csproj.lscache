@@ -58,6 +58,7 @@ TemporaryDependencyNodeTargetIdentifier=net8.0
 Database/
  DataAuditAutoFillTests.cs
  ElePayloadEnvelopeBindingTests.cs
+ EleTableHeadAlignmentTests.cs
  ResetAdminPasswordForTests.cs
  SignInLoginAITests.cs
 obj/Debug/net8.0/

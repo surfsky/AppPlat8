@@ -8,23 +8,12 @@ namespace App.EleUI
     [HtmlTargetElement("VStack")]
     public class EleVStack : EleItem
     {
-        [HtmlAttributeName("Gap")]
-        public string Gap { get; set; } = "4";
-
-        [HtmlAttributeName("Items")]
-        public string Items { get; set; }
-
-        [HtmlAttributeName("Justify")]
-        public string Justify { get; set; }
-
-        [HtmlAttributeName("Reverse")]
-        public bool Reverse { get; set; }
-
-        [HtmlAttributeName("Grow")]
-        public bool Grow { get; set; }
-
-        [HtmlAttributeName("ShrinkChildren")]
-        public bool? ShrinkChildren { get; set; } = null;
+        [HtmlAttributeName("Gap")]             public string Gap { get; set; } = "4";
+        [HtmlAttributeName("Items")]           public string Items { get; set; }
+        [HtmlAttributeName("Justify")]         public string Justify { get; set; }
+        [HtmlAttributeName("Reverse")]         public bool Reverse { get; set; }
+        [HtmlAttributeName("Grow")]            public bool Grow { get; set; }
+        [HtmlAttributeName("ShrinkChildren")]  public bool? ShrinkChildren { get; set; } = null;
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

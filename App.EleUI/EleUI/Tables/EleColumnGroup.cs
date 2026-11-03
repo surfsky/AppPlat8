@@ -11,8 +11,7 @@ namespace App.EleUI
     {
         [HtmlAttributeName("Label")]   public string Label   { get; set; }
         [HtmlAttributeName("Align")]   public string Align   { get; set; }
-        [HtmlAttributeName("HeaderAlign")] public string HeaderAlign { get; set; }
-        [HtmlAttributeName("LabelAlign")]  public string LabelAlign  { get; set; }
+        [HtmlAttributeName("HAlign")]  public string HAlign  { get; set; }
         [HtmlAttributeName("Width")]   public string Width   { get; set; }
         [HtmlAttributeName("MinWidth")] public string MinWidth { get; set; }
         [HtmlAttributeName("Fixed")]   public string Fixed   { get; set; }
@@ -31,8 +30,7 @@ namespace App.EleUI
             if (!string.IsNullOrWhiteSpace(Label))    output.Attributes.SetAttribute("label", Label);
             if (!string.IsNullOrWhiteSpace(Align))    output.Attributes.SetAttribute("align", Align);
 
-            // Group header align: explicit HeaderAlign/LabelAlign > table default
-            var ha = HeaderAlign ?? LabelAlign ?? tableHeaderAlign;
+            var ha = string.IsNullOrWhiteSpace(HAlign) ? tableHeaderAlign : HAlign;
             if (!string.IsNullOrWhiteSpace(ha))
                 output.Attributes.SetAttribute("header-align", ha);
 

@@ -64,12 +64,20 @@ namespace App.DAL
             };
         }
 
-        public static IQueryable<Event> Search(string title="", long? typeId=null, long? orgId=null, long? publisherId=null, DateTime? happenStartDt=null, DateTime? happenEndDt=null)
-        {
+        public static IQueryable<Event> Search(
+            string title="", 
+            long? typeId=null, 
+            string typeName="",
+            long? orgId=null, 
+            long? publisherId=null, 
+            DateTime? happenStartDt=null, 
+            DateTime? happenEndDt=null
+        ){
             var q = IncludeSet.AsQueryable();
             if (title.IsNotEmpty())            q = q.Where(o => o.Title.Contains(title.Trim()));
             if (happenStartDt.IsNotEmpty())    q = q.Where(o => o.HappenDt >= happenStartDt.Value);
             if (happenEndDt.IsNotEmpty())      q = q.Where(o => o.HappenDt <= happenEndDt.Value);
+            if (typeName.IsNotEmpty())         q = q.Where(o => o.Type.Name.Contains(typeName.Trim()));
             if (publisherId.IsNotEmpty())      q = q.Where(o => o.PublisherId == publisherId.Value);
             if (orgId.IsNotEmpty())
             {

@@ -8,20 +8,11 @@ namespace App.EleUI
     [HtmlTargetElement("ElePopconfirm")]
     public class ElePopconfirm : EleControl
     {
-        [HtmlAttributeName("Title")]
-        public string Title { get; set; }
-
-        [HtmlAttributeName("Confirm")]
-        public string Confirm { get; set; }
-
-        [HtmlAttributeName("Cancel")]
-        public string Cancel { get; set; }
-
-        [HtmlAttributeName("ConfirmText")]
-        public string ConfirmText { get; set; }
-
-        [HtmlAttributeName("CancelText")]
-        public string CancelText { get; set; }
+        [HtmlAttributeName("Title")]        public string Title { get; set; }
+        [HtmlAttributeName("Confirm")]      public string Confirm { get; set; }
+        [HtmlAttributeName("Cancel")]       public string Cancel { get; set; }
+        [HtmlAttributeName("ConfirmText")]  public string ConfirmText { get; set; }
+        [HtmlAttributeName("CancelText")]   public string CancelText { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

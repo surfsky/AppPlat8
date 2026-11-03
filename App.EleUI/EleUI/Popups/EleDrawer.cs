@@ -43,37 +43,15 @@ namespace App.EleUI
     [HtmlTargetElement("EleDrawer")]
     public class EleDrawer : EleControl
     {
-        [HtmlAttributeName("Title")]
-        public string Title { get; set; } = string.Empty;
-
-        /// <summary>抽屉方向</summary>
-        [HtmlAttributeName("Direction")]
-        public DrawerDirection Direction { get; set; } = DrawerDirection.Rtl;
-
-        [HtmlAttributeName("Size")]
-        public string Size { get; set; } = "30%";
-        
-        [HtmlAttributeName("AppendToBody")]
-        public bool AppendToBody { get; set; } = false;
-
-        [HtmlAttributeName("WithHeader")]
-        public bool WithHeader { get; set; } = true;
-
-        /// <summary>是否显示遮罩层</summary>
-        [HtmlAttributeName("IsModal")]
-        public bool IsModal { get; set; } = true;
-
-        /// <summary>当不为空时，内容区域显示 iframe 并填满</summary>
-        [HtmlAttributeName("IFrameUrl")]
-        public string IFrameUrl { get; set; } = string.Empty;
-
-        /// <summary>客户端关闭回调函数名（支持 window 上的路径，如 managerClientHandler）</summary>
-        [HtmlAttributeName("CloseHandler")]
-        public string CloseHandler { get; set; } = string.Empty;
-
-        /// <summary>服务端关闭回调处理器名（会 POST 到 ?handler={name}）</summary>
-        [HtmlAttributeName("ServerCloseHandler")]
-        public string ServerCloseHandler { get; set; } = string.Empty;
+        [HtmlAttributeName("Title")]               public string Title { get; set; } = string.Empty;
+        [HtmlAttributeName("Direction")]           public DrawerDirection Direction { get; set; } = DrawerDirection.Rtl;  // 抽屉方向
+        [HtmlAttributeName("Size")]                public string Size { get; set; } = "30%";
+        [HtmlAttributeName("AppendToBody")]        public bool AppendToBody { get; set; } = false;
+        [HtmlAttributeName("WithHeader")]          public bool WithHeader { get; set; } = true;
+        [HtmlAttributeName("IsModal")]             public bool IsModal { get; set; } = true;    // 是否显示遮罩层
+        [HtmlAttributeName("IFrameUrl")]           public string IFrameUrl { get; set; } = string.Empty;   // 当不为空时，内容区域显示 iframe 并填满
+        [HtmlAttributeName("CloseHandler")]        public string CloseHandler { get; set; } = string.Empty;   // 客户端关闭回调函数名（支持 window 上的路径，如 managerClientHandler）
+        [HtmlAttributeName("ServerCloseHandler")]  public string ServerCloseHandler { get; set; } = string.Empty;    // 服务端关闭回调处理器名（会 POST 到 ?handler={name}）
         
 
         public override void Init(TagHelperContext context)

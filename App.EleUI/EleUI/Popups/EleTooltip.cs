@@ -8,14 +8,9 @@ namespace App.EleUI
     [HtmlTargetElement("EleTooltip")]
     public class EleTooltip : EleControl
     {
-        [HtmlAttributeName("Content")]
-        public string Content { get; set; }
-
-        [HtmlAttributeName("Placement")]
-        public string Placement { get; set; }
-
-        [HtmlAttributeName("Trigger")]
-        public string Trigger { get; set; }
+        [HtmlAttributeName("Content")]        public string Content { get; set; }
+        [HtmlAttributeName("Placement")]      public string Placement { get; set; }
+        [HtmlAttributeName("Trigger")]        public string Trigger { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

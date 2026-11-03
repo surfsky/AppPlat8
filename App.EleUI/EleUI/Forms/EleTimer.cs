@@ -11,7 +11,6 @@ namespace App.EleUI
     {
         [HtmlAttributeName("Interval")]    public int Interval { get; set; } = 30;         // 刷新间隔秒数，默认 30
         [HtmlAttributeName("Triggle")]     public string Triggle { get; set; } = "Data";   // Post 到服务器的 handler 名称，默认 Data
-        //[HtmlAttributeName("Text")]        public string Text { get; set; } = "自动刷新";   // 刷新开关文本，默认 "自动刷新"
         [HtmlAttributeName("TrueText")]    public string TrueText { get; set; } = "自动刷新";    // 开启状态文本
         [HtmlAttributeName("FalseText")]   public string FalseText { get; set; } = "关闭刷新";   // 关闭状态文本
 

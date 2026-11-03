@@ -62,7 +62,7 @@ lsof -nP -iTCP:6002 -sTCP:LISTEN && lsof -ti tcp:6002 | xargs -n 1 kill -9
 dotnet run --project App.Consoler
 ```
 
-4. 打开浏览器，访问 `http://localhost:6001` 或 `http://abc.org`。
+4. 打开浏览器，访问 `http://localhost:6001`
 
 ## 2、测试
 
@@ -90,7 +90,7 @@ dotnet run --project App.Consoler
 
 - 将/App目录下的所有文件复制到部署目录下。
 - 配置数据库连接字符串：在部署目录下的 `appsettings.json` 文件中配置数据库连接字符串。
-- dotnet app.dll --urls=http://localhost:6060;http://abc.org
+- dotnet app.dll --urls=http://localhost:6001;http://abc.org
 
 ### Docker 部署方式
 

@@ -120,15 +120,9 @@ namespace App.EleUI
         /// 点击时会自动调用 postHandler(name, payload_envelope)，envelope 包含对应结构体字段。
         /// </summary>
         [HtmlAttributeName("Payload")]         public string Payload { get; set; }
-
-        /// <summary>命令类型。如果设置了命令类型，点击事件将自动绑定为 invokeCommand('{Command.ToString()}')</summary>
-        [HtmlAttributeName("Command")]         public Command Command { get; set; } // Default is None (0)
-
-        /// <summary>二次确认文案。Handler / VClick / Command 场景下，点击后先弹出 ElMessageBox.confirm(ConfirmText, ConfirmTitle)，用户确认后再执行 Handler 逻辑。</summary>
-        [HtmlAttributeName("ConfirmText")]     public string ConfirmText { get; set; }
-
-        /// <summary>二次确认对话框标题，默认"提示"。需与 ConfirmText 同时配置才生效。</summary>
-        [HtmlAttributeName("ConfirmTitle")]    public string ConfirmTitle { get; set; } = null;
+        [HtmlAttributeName("Command")]         public Command Command { get; set; } // 令类型。如果设置了命令类型，点击事件将自动绑定为 invokeCommand('{Command.ToString()}')
+        [HtmlAttributeName("ConfirmText")]     public string ConfirmText { get; set; }   // 二次确认文案。Handler / VClick / Command 场景下，点击后先弹出 ElMessageBox.confirm(ConfirmText, ConfirmTitle)，用户确认后再执行 Handler 逻辑。
+        [HtmlAttributeName("ConfirmTitle")]    public string ConfirmTitle { get; set; } = null;   // 二次确认对话框标题。默认"提示"。需与 ConfirmText 同时配置才生效。
 
 
         [HtmlAttributeName("NavigateUrl")]     public string NavigateUrl { get; set; }  // 导航URL。点击后直接跳转当前页面到该地址（window.location.href）。

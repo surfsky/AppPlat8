@@ -8,32 +8,15 @@ namespace App.EleUI
     [HtmlTargetElement("Grid")]
     public class EleGridLayout : EleItem
     {
-        [HtmlAttributeName("Cols")]
-        public int Cols { get; set; } = 1;
-
-        [HtmlAttributeName("SmallCols")]
-        public int? SmallCols { get; set; }
-
-        [HtmlAttributeName("MiddleCols")]
-        public int? MiddleCols { get; set; }
-
-        [HtmlAttributeName("LargeCols")]
-        public int? LargeCols { get; set; }
-
-        [HtmlAttributeName("XLargeCols")]
-        public int? XLargeCols { get; set; }
-
-        [HtmlAttributeName("Gap")]
-        public string Gap { get; set; } = "4";
-
-        [HtmlAttributeName("MaxWidth")]
-        public string MaxWidth { get; set; } = "7xl";
-
-        [HtmlAttributeName("Center")]
-        public bool Center { get; set; } = true;
-
-        [HtmlAttributeName("PaddingX")]
-        public string PaddingX { get; set; } = "4";
+        [HtmlAttributeName("Cols")]          public int Cols { get; set; } = 1;
+        [HtmlAttributeName("SmallCols")]     public int? SmallCols { get; set; }
+        [HtmlAttributeName("MiddleCols")]    public int? MiddleCols { get; set; }
+        [HtmlAttributeName("LargeCols")]     public int? LargeCols { get; set; }
+        [HtmlAttributeName("XLargeCols")]    public int? XLargeCols { get; set; }
+        [HtmlAttributeName("Gap")]           public string Gap { get; set; } = "4";
+        [HtmlAttributeName("MaxWidth")]      public string MaxWidth { get; set; } = "7xl";
+        [HtmlAttributeName("Center")]        public bool Center { get; set; } = true;
+        [HtmlAttributeName("PaddingX")]      public string PaddingX { get; set; } = "4";
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

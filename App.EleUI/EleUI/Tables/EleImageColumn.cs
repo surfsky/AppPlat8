@@ -15,11 +15,8 @@ namespace App.EleUI
     [HtmlTargetElement("EleImageColumn", ParentTag = "EleColumnGroup")] 
     public class EleImageColumn : EleColumn
     {
-        [HtmlAttributeName("ThumbnailWidth")]
-        public int ThumbnailWidth { get; set; } = 40;
-
-        [HtmlAttributeName("ThumbnailHeight")]
-        public int ThumbnailHeight { get; set; } = 40;
+        [HtmlAttributeName("ThumbnailWidth")]      public int ThumbnailWidth { get; set; } = 40;
+        [HtmlAttributeName("ThumbnailHeight")]     public int ThumbnailHeight { get; set; } = 40;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

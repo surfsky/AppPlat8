@@ -205,7 +205,7 @@ namespace App.DAL
                         {
                             Name = "事件",
                             SortId = 50,
-                            NavigateUrl = "Tasks/Events",
+                            NavigateUrl = "Events/Events",
                             ImageUrl = "fas fa-edit",
                             Power = (Power?)221,
                         },

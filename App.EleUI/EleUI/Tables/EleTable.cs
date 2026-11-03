@@ -11,6 +11,12 @@ using System.Text;
 
 namespace App.EleUI
 {
+    /// <summary>表头水平对齐方式。</summary>
+    public enum TableHeadHAlign { Left, Center, Right }
+
+    /// <summary>表头垂直对齐方式。</summary>
+    public enum TableHeadVAlign { Top, Middle, Bottom }
+
     /// <summary>
     /// 表格上下文（包含工具栏、列定义等）
     /// </summary>
@@ -33,38 +39,32 @@ namespace App.EleUI
         private static readonly object _idLock = new();
         private static int _idCounter = 0;
 
-        [HtmlAttributeName("Title")]             public string Title { get; set; } = null;
-        [HtmlAttributeName("FormPage")]          public string FormPage { get; set; }
-        [HtmlAttributeName("FormDrawerSize")]    public string FormDrawerSize { get; set; }
-        [HtmlAttributeName("DataHandler")]       public string DataHandler { get; set; } = "?handler=Data";
-        [HtmlAttributeName("DeleteHandler")]     public string DeleteHandler { get; set; } = "?handler=Delete";
-        [HtmlAttributeName("EnableBatch")]       public bool EnableBatch { get; set; } = false;
-        [HtmlAttributeName("RowKey")]            public string RowKey { get; set; }
-        [HtmlAttributeName("BuildMode")]         public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;
-        [HtmlAttributeName("PageSize")]          public int? PageSize { get; set; } = 20;
-        [HtmlAttributeName("ShowPage")]          public bool ShowPage { get; set; } = true;
-        [HtmlAttributeName("SortField")]         public string SortField { get; set; } = "";
-        [HtmlAttributeName("SortDirection")]     public string SortDirection { get; set; } = "ASC";
+        [HtmlAttributeName("Title")]                 public string Title { get; set; } = null;
+        [HtmlAttributeName("FormPage")]              public string FormPage { get; set; }
+        [HtmlAttributeName("FormDrawerSize")]        public string FormDrawerSize { get; set; }
+        [HtmlAttributeName("DataHandler")]           public string DataHandler { get; set; } = "?handler=Data";
+        [HtmlAttributeName("DeleteHandler")]         public string DeleteHandler { get; set; } = "?handler=Delete";
+        [HtmlAttributeName("EnableBatch")]           public bool EnableBatch { get; set; } = false;
+        [HtmlAttributeName("RowKey")]                public string RowKey { get; set; }
+        [HtmlAttributeName("BuildMode")]             public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;
+        [HtmlAttributeName("PageSize")]              public int? PageSize { get; set; } = 20;
+        [HtmlAttributeName("ShowPage")]              public bool ShowPage { get; set; } = true;
+        [HtmlAttributeName("SortField")]             public string SortField { get; set; } = "";
+        [HtmlAttributeName("SortDirection")]         public string SortDirection { get; set; } = "ASC";
 
-        [HtmlAttributeName("HeaderAlign")]           public string HeaderAlign { get; set; } = "center";  // 局表头对齐（left/center/right，可被单个列的 HeaderAlign/LabelAlign 覆盖
-        [HtmlAttributeName("TitleAlign")]            public string TitleAlign { get; set; }    //
-        [HtmlAttributeName("HeaderWrap")]            public bool HeaderWrap { get; set; }   // 表头长文字是否自动换行
-
-        /// <summary>全局表头垂直对齐（top/middle/bottom，可被单个列的 HeaderVAlign/LabelVAlign 覆盖。别名：TitleVAlign。默认 middle。</summary>
-        [HtmlAttributeName("HeaderVerticalAlign")]   public string HeaderVerticalAlign { get; set; } = "middle";
-        [HtmlAttributeName("HeaderVAlign")]          public string HeaderVAlign { get; set; }
-        [HtmlAttributeName("TitleVAlign")]           public string TitleVAlign { get; set; }
         [HtmlAttributeName("HighlightCurrentRow")]   public bool HighlightCurrentRow { get; set; } = true;
-        [HtmlAttributeName("LineColor")]            public string LineColor { get; set; } = "#e5e5e5";
+        [HtmlAttributeName("LineColor")]             public string LineColor { get; set; } = "#e5e5e5";
+
+        [HtmlAttributeName("HeadHAlign")]            public TableHeadHAlign HeadHAlign { get; set; } = TableHeadHAlign.Center;
+        [HtmlAttributeName("HeadVAlign")]            public TableHeadVAlign HeadVAlign { get; set; } = TableHeadVAlign.Middle;
+        [HtmlAttributeName("HeadWrap")]              public bool HeadWrap { get; set; } // 表头长文字是否自动换行
+
 
         public override void Init(TagHelperContext context)
         {
             base.Init(context);
-            var hva = string.IsNullOrWhiteSpace(TitleVAlign) ? (string.IsNullOrWhiteSpace(HeaderVAlign) ? null : HeaderVAlign.Trim()) : TitleVAlign.Trim();
-            if (!string.IsNullOrWhiteSpace(hva)) HeaderVerticalAlign = hva;
             context.Items[typeof(TableContext)] = new TableContext();
-            context.Items["TableHeaderAlign"] = HeaderAlign;
-            context.Items["TableHeaderVerticalAlign"] = HeaderVerticalAlign;
+            context.Items["TableHeaderAlign"] = HeadHAlign.ToString().ToLowerInvariant();
         }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
@@ -122,12 +122,12 @@ namespace App.EleUI
         // 作用域 CSS：覆盖 Element Plus 的表头对齐与换行（放在 #app-etbl-N 根，避免被 Vue el-main 吞掉）
         private string CreateHeaderScopeCss(string appId)
         {
-            var haVar = string.IsNullOrWhiteSpace(HeaderAlign) ? "center" : HeaderAlign;
-            var hvaVar = string.IsNullOrWhiteSpace(HeaderVerticalAlign) ? "middle" : HeaderVerticalAlign;
+            var haVar = HeadHAlign.ToString().ToLowerInvariant();
+            var hvaVar = HeadVAlign.ToString().ToLowerInvariant();
             var scope = $"#{appId}";
-            var wrap = HeaderWrap;
+            var wrap = HeadWrap;
 
-            // 对齐映射：水平 justify-content（row 主轴），垂直垂直居中由 align-items:center 统一，多行用 align-content
+            // 水平对齐作用于表头内容，垂直对齐由表头单元格控制。
             string Jc(string align) => (align ?? "center").ToLower() switch { "left" => "flex-start", "right" => "flex-end", _ => "center" };
             string Va(string align) => (align ?? "middle").ToLower() switch { "top" => "top", "bottom" => "bottom", _ => "middle" };
 
@@ -144,14 +144,17 @@ namespace App.EleUI
 {scope} th.el-table__cell {{ text-align: {haVar} !important; vertical-align: {Va(hvaVar)} !important; }}
 {scope} th.el-table__cell .cell {{
   display: inline-flex !important; flex-direction: row !important;
-  justify-content: {Jc(haVar)} !important; align-items: center !important; align-content: {Jc(hvaVar)} !important;
+    justify-content: {Jc(haVar)} !important; align-items: center !important;
   width: 100% !important; min-height: 32px !important; box-sizing: border-box !important;
-  padding: 6px 8px !important; height: 100% !important; text-align: {haVar} !important;
+    padding: 6px 8px !important; text-align: {haVar} !important;
   column-gap: 6px !important;
   {wrapFlex}
   {wrapStyles}
 }}
 {scope} th.el-table__cell .cell > span {{ display: inline-flex; align-items: center; line-height: inherit; white-space: inherit; word-break: inherit; }}
+{scope} th.el-table__cell.is-left .cell {{ justify-content: flex-start !important; text-align: left !important; }}
+{scope} th.el-table__cell.is-center .cell {{ justify-content: center !important; text-align: center !important; }}
+{scope} th.el-table__cell.is-right .cell {{ justify-content: flex-end !important; text-align: right !important; }}
 {scope} th.el-table__cell .cell .caret-wrapper {{
   display: inline-flex !important; margin: {caretMargin} !important; flex: 0 0 auto !important; align-self: center !important;
   position: relative !important; top: auto !important; transform: none !important;
@@ -192,9 +195,9 @@ namespace App.EleUI
             var highlightAttr = !EnableBatch ? "highlight-current-row" : "";
             var selectionEvent = EnableBatch ? @"v-on:selection-change=""onSelectionChange""" : @"v-on:current-change=""onCurrentChange""";
             var defaultSortAttr = BuildDefaultSortAttr();
-            var globalHeaderAlign = string.IsNullOrWhiteSpace(HeaderAlign) ? "" : $"header-align=\"{HeaderAlign}\"";
-            var haVar = string.IsNullOrWhiteSpace(HeaderAlign) ? "center" : HeaderAlign;
-            var wrap = HeaderWrap;
+            var haVar = HeadHAlign.ToString().ToLowerInvariant();
+            var globalHeaderAlign = $"header-align=\"{haVar}\"";
+            var wrap = HeadWrap;
             var headerWrapStyle = wrap
                 ? " --el-table-header-cell-white-space: normal; --el-table-header-cell-line-height: 1.4; "
                 : "";

@@ -301,13 +301,13 @@
         openEventDrawer() {
             const manager = this.getManager();
             if (!manager || typeof manager.openDrawer !== 'function') {
-                window.open('/Tasks/Events', '_blank', 'noopener,noreferrer');
+                window.open('/Events/Events?typeName=突发事件', '_blank', 'noopener,noreferrer');
                 return;
             }
 
             manager.openDrawer({
-                title: '事件',
-                url: '/Tasks/Events',
+                title: '突发事件',
+                url: '/Events/Events?typeName=突发事件',
                 size: '50%',
                 direction: 'rtl',
                 showFooter: false,

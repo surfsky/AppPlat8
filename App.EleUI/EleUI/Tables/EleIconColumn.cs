@@ -12,8 +12,8 @@ namespace App.EleUI
     public class EleIconColumn : EleColumn
     {
         /// <summary>图标外层 &lt;i&gt; 的额外 class，如 text-lg text-primary-600。</summary>
-        [HtmlAttributeName("IconClass")]
-        public string IconClass { get; set; } = "text-lg text-primary-600";
+        [HtmlAttributeName("IconClass")]    public string IconClass { get; set; } = "text-lg text-primary-600";
+
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

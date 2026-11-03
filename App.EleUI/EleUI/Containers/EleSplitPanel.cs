@@ -21,13 +21,8 @@ namespace App.EleUI
     [HtmlTargetElement("EleSplitPanel")]
     public class EleSplitPanel : EleControl
     {
-        /// <summary>Layout direction of the splitter (horizontal / vertical). Default: horizontal</summary>
-        [HtmlAttributeName("Direction")]
-        public SplitDirection Direction { get; set; } = SplitDirection.Horizontal;
-
-        /// <summary>Whether to enable lazy mode. Default: false</summary>
-        [HtmlAttributeName("Lazy")]
-        public bool Lazy { get; set; }
+        [HtmlAttributeName("Direction")]   public SplitDirection Direction { get; set; } = SplitDirection.Horizontal;  // 分隔面板布局方向。默认水平。
+        [HtmlAttributeName("Lazy")]        public bool Lazy { get; set; }  // 是否启用懒加载模式。默认 false。
 
         public override Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

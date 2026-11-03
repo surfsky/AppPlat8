@@ -9,23 +9,15 @@ namespace App.EleUI
     [HtmlTargetElement("Filters", ParentTag = "Toolbar")]
     public class EleFilters : TagHelper
     {
-        [HtmlAttributeName("Icon")]
-        public string Icon { get; set; } = "Filter";
-
-        [HtmlAttributeName("Title")]
-        public string Title { get; set; } = null;
-
-        [HtmlAttributeName("DrawerTitle")]
-        public string DrawerTitle { get; set; } = null;
-
-        [HtmlAttributeName("SearchText")]
-        public string SearchText { get; set; } = null;
+        [HtmlAttributeName("Icon")]         public string Icon { get; set; } = "Filter";
+        [HtmlAttributeName("Title")]        public string Title { get; set; } = null;
+        [HtmlAttributeName("DrawerTitle")]  public string DrawerTitle { get; set; } = null;
+        [HtmlAttributeName("SearchText")]   public string SearchText { get; set; } = null;
 
         /// <summary>默认显示的过滤条件数量（仅桌面端生效）。
         /// - 0 或负数：不启用折叠，全部显示（兼容历史）
         /// - 正整数 N：仅默认显示前 N 个过滤条件，多余的收起，右侧显示『展开/收起』按钮</summary>
-        [HtmlAttributeName("Shows")]
-        public int Shows { get; set; } = 0;
+        [HtmlAttributeName("Shows")]        public int Shows { get; set; } = 0;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -181,9 +173,9 @@ namespace App.EleUI
         </div>
 
         <template #footer>
-            <div class='flex items-center justify-end gap-2'>
-                <el-button v-on:click='closeFiltersDrawer'>{cancelText}</el-button>
-                <el-button type='primary' v-on:click='applyFiltersAndSearch'>{searchText}</el-button>
+            <div class='flex items-center justify-center gap-2' style='display:flex;justify-content:center;gap:8px'>
+                <el-button type='primary' v-on:click='applyFiltersAndSearch'><el-icon><component :is='""Check""'></component></el-icon><span>{searchText}</span></el-button>
+                <el-button v-on:click='closeFiltersDrawer' style='margin-left:0'><el-icon><component :is='""Close""'></component></el-icon><span>{cancelText}</span></el-button>
             </div>
         </template>
     </el-drawer>

@@ -240,6 +240,18 @@ body.ele-fullscreen-page,
         max-width: none !important;
     }
 
+    /* 抽屉中的筛选项使用相同标签宽度，不影响工具栏或普通表单。 */
+    .ele-table-filters-drawer .el-form-item > .el-form-item__label,
+    .ele-table-filters-drawer .el-form-item > .el-form-item__label-wrap {
+        flex: 0 0 100px !important;
+        width: 100px !important;
+        box-sizing: border-box;
+    }
+
+    .ele-table-filters-drawer .el-form-item__label-wrap > .el-form-item__label {
+        width: 100% !important;
+    }
+
     .ele-table-filters-drawer .el-form-item__content {
         min-width: 0 !important;
         flex: 1 1 auto !important;

@@ -27,12 +27,7 @@ namespace App.EleUI
     {
         [HtmlAttributeName("Label")]           public string Label { get; set; }
         [HtmlAttributeName("LabelWidth")]      public string LabelWidth { get; set; } = "100px";
-        /// <summary>
-        /// 单个列表控件的 Label 位置；默认 null（跟随父 EleForm 全局）。
-        /// Left/Right/Top：单个列表覆盖父级；
-        /// None：不显示 Label，也不渲染外层 el-form-item（节省一行 Label 高度）。
-        /// </summary>
-        [HtmlAttributeName("LabelPosition")]   public EleLabelPosition? LabelPosition { get; set; }
+        [HtmlAttributeName("LabelPosition")]   public EleLabelPosition? LabelPosition { get; set; }  // 单个列表控件的 Label 位置；默认 null（跟随父 EleForm 全局）。
         [HtmlAttributeName("ColSpan")]         public int? ColSpan { get; set; }
         [HtmlAttributeName("FillRow")]         public bool FillRow { get; set; }
         [HtmlAttributeName("ShowHeader")]      public bool? ShowHeader { get; set; }

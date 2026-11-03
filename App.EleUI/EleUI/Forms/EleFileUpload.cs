@@ -7,17 +7,10 @@ namespace App.EleUI
     [HtmlTargetElement("EleFileUpload")]
     public class EleFileUpload : EleFormControl
     {
-        [HtmlAttributeName("Exts")]
-        public string Exts { get; set; } = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.7z";
-
-        [HtmlAttributeName("MaxSizeMb")]
-        public int MaxSizeMb { get; set; } = 20;
-
-        [HtmlAttributeName("ButtonText")]
-        public string ButtonText { get; set; } = null;
-
-        [HtmlAttributeName("ViewerUrl")]
-        public string ViewerUrl { get; set; } = string.Empty;
+        [HtmlAttributeName("Exts")]             public string Exts { get; set; } = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.7z";
+        [HtmlAttributeName("MaxSizeMb")]        public int MaxSizeMb { get; set; } = 20;
+        [HtmlAttributeName("ButtonText")]       public string ButtonText { get; set; } = null;
+        [HtmlAttributeName("ViewerUrl")]        public string ViewerUrl { get; set; } = string.Empty;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

@@ -33,55 +33,22 @@ namespace App.EleUI
     [HtmlTargetElement("EleDialog")]
     public class EleDialog : EleControl
     {
-        [HtmlAttributeName("Title")]
-        public string Title { get; set; } = string.Empty;
-
-        [HtmlAttributeName("Width")]
-        public string DialogWidth { get; set; } = "50%";
-
-        [HtmlAttributeName("Top")]
-        public string Top { get; set; } = string.Empty;
-
-        [HtmlAttributeName("AppendToBody")]
-        public bool AppendToBody { get; set; } = false;
-
-        [HtmlAttributeName("DestroyOnClose")]
-        public bool DestroyOnClose { get; set; } = false;
-
-        [HtmlAttributeName("Draggable")]
-        public bool Draggable { get; set; } = false;
-
-        [HtmlAttributeName("Fullscreen")]
-        public bool Fullscreen { get; set; } = false;
-
-        [HtmlAttributeName("Center")]
-        public bool Center { get; set; } = false;
-
-        [HtmlAttributeName("AlignCenter")]
-        public bool AlignCenter { get; set; } = false;
-
-        [HtmlAttributeName("ShowClose")]
-        public bool ShowClose { get; set; } = true;
-
-        [HtmlAttributeName("IsModal")]
-        public bool IsModal { get; set; } = true;
-
-        [HtmlAttributeName("CloseOnClickModal")]
-        public bool CloseOnClickModal { get; set; } = true;
-
-        [HtmlAttributeName("CloseOnPressEscape")]
-        public bool CloseOnPressEscape { get; set; } = true;
-
-        [HtmlAttributeName("LockScroll")]
-        public bool LockScroll { get; set; } = true;
-
-        /// <summary>客户端关闭回调函数名（支持 window 上的路径，如 managerClientHandler）</summary>
-        [HtmlAttributeName("CloseHandler")]
-        public string CloseHandler { get; set; } = string.Empty;
-
-        /// <summary>服务端关闭回调处理器名（会 POST 到 ?handler={name}）</summary>
-        [HtmlAttributeName("ServerCloseHandler")]
-        public string ServerCloseHandler { get; set; } = string.Empty;
+        [HtmlAttributeName("Title")]               public string Title { get; set; } = string.Empty;
+        [HtmlAttributeName("Width")]               public string DialogWidth { get; set; } = "50%";
+        [HtmlAttributeName("Top")]                 public string Top { get; set; } = string.Empty;
+        [HtmlAttributeName("AppendToBody")]        public bool AppendToBody { get; set; } = false;
+        [HtmlAttributeName("DestroyOnClose")]      public bool DestroyOnClose { get; set; } = false;
+        [HtmlAttributeName("Draggable")]           public bool Draggable { get; set; } = false;
+        [HtmlAttributeName("Fullscreen")]          public bool Fullscreen { get; set; } = false;
+        [HtmlAttributeName("Center")]              public bool Center { get; set; } = false;
+        [HtmlAttributeName("AlignCenter")]         public bool AlignCenter { get; set; } = false;
+        [HtmlAttributeName("ShowClose")]           public bool ShowClose { get; set; } = true;
+        [HtmlAttributeName("IsModal")]             public bool IsModal { get; set; } = true;
+        [HtmlAttributeName("CloseOnClickModal")]   public bool CloseOnClickModal { get; set; } = true;
+        [HtmlAttributeName("CloseOnPressEscape")]  public bool CloseOnPressEscape { get; set; } = true;
+        [HtmlAttributeName("LockScroll")]          public bool LockScroll { get; set; } = true;
+        [HtmlAttributeName("CloseHandler")]        public string CloseHandler { get; set; } = string.Empty;  // 客户端关闭回调函数名（支持 window 上的路径，如 managerClientHandler）
+        [HtmlAttributeName("ServerCloseHandler")]  public string ServerCloseHandler { get; set; } = string.Empty;  // 服务端关闭回调处理器名（会 POST 到 ?handler={name}）
 
         public override void Init(TagHelperContext context)
         {

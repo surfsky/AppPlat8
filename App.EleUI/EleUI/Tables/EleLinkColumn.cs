@@ -10,12 +10,12 @@ namespace App.EleUI
     [HtmlTargetElement("EleLinkColumn", ParentTag = "EleColumnGroup")]
     public class EleLinkColumn : EleColumn
     {
-        [HtmlAttributeName("TextFor")] public ModelExpression TextFor { get; set; }
-        [HtmlAttributeName("TextProp")] public string TextProp { get; set; }
-        [HtmlAttributeName("Text")] public string Text { get; set; }
-        [HtmlAttributeName("Target")] public EleLinkTarget Target { get; set; } = EleLinkTarget.Blank;
+        [HtmlAttributeName("TextFor")]     public ModelExpression TextFor { get; set; }
+        [HtmlAttributeName("TextProp")]    public string TextProp { get; set; }
+        [HtmlAttributeName("Text")]        public string Text { get; set; }
+        [HtmlAttributeName("Target")]      public EleLinkTarget Target { get; set; } = EleLinkTarget.Blank;
         [HtmlAttributeName("DrawerTitle")] public string DrawerTitle { get; set; }
-        [HtmlAttributeName("DrawerSize")] public string DrawerSize { get; set; }
+        [HtmlAttributeName("DrawerSize")]  public string DrawerSize { get; set; }
 
         /// <summary>渲染超链接列</summary>
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)

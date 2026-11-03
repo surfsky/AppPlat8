@@ -16,21 +16,33 @@ using NuGet.Common;
 
 namespace App.Pages.Events
 {
-    //[Auth(Power.EventView)]
+    /// <summary>事件清单（包括普通工作动态和突发事件）</summary>
+    /// <param name="typeName">事件类别名称</param>
     public class EventsModel : AuthModel
     {
-        public Event Item { get; set; }
+        public Event Item { get; set; } = new Event();
         public List<EventType> EventTypes { get; set; }
+        public bool EventTypeEnabled { get; set; } = true;
 
-        public void OnGet()
+        public void OnGet(string typeName = "")
         {
             EventTypes = EventType.GetTree();
+            // 如果指定了 typeName 参数，默认选中该类别，且禁用类别选择器
+            if (typeName.IsNotEmpty())
+            {
+                var type = EventType.Get(t => t.Name == typeName);
+                if (type != null)
+                {
+                    Item.TypeId = type.Id;
+                    EventTypeEnabled = false;
+                }
+            }
         }
 
-        public IActionResult OnGetData(Paging pi, string title, long? typeId, long? orgId, long? publisherId)
+        public IActionResult OnGetData(Paging pi, string title, long? typeId, string typeName, long? orgId, long? publisherId)
         {
             var cu = Auth.GetUser();
-            var q = Event.Search(title, typeId, orgId, publisherId);
+            var q = Event.Search(title, typeId, typeName, orgId, publisherId);
             q = q.FilterByOrg(cu);
             var list = q.SortPageExport(pi);
             //EleManager.ShowToast("定时刷新", NotifyType.Info);

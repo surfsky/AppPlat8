@@ -8,17 +8,10 @@ namespace App.EleUI
     [HtmlTargetElement("HStack")]
     public class EleHStack : EleItem
     {
-        [HtmlAttributeName("Wrap")]
-        public bool Wrap { get; set; } = true;
-
-        [HtmlAttributeName("Gap")]
-        public string Gap { get; set; } = "2";
-
-        [HtmlAttributeName("Items")]
-        public string Items { get; set; }
-
-        [HtmlAttributeName("Justify")]
-        public string Justify { get; set; }
+        [HtmlAttributeName("Wrap")]         public bool Wrap { get; set; } = true;
+        [HtmlAttributeName("Gap")]          public string Gap { get; set; } = "2";
+        [HtmlAttributeName("Items")]        public string Items { get; set; }
+        [HtmlAttributeName("Justify")]      public string Justify { get; set; }
 
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {

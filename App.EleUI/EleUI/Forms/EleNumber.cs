@@ -16,8 +16,6 @@ namespace App.EleUI
         [HtmlAttributeName("Step")]              public double Step { get; set; } = 0;
         [HtmlAttributeName("Prefix")]            public string Prefix { get; set; }  // 前缀
         [HtmlAttributeName("Suffix")]            public string Suffix { get; set; }  // 后缀
-        //[HtmlAttributeName("Prepend")]           public string Prepend { get; set; }  // 前缀（？是否重复）
-        //[HtmlAttributeName("Append")]            public string Append { get; set; }  // 后缀（？是否重复）
         [HtmlAttributeName("ControlPosition")]   public string ControlPosition { get; set; }  // 控制按钮位置
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
