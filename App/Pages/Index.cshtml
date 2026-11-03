@@ -533,7 +533,7 @@
                 }
 
                 try {
-                    desktopSidebarCollapsed.value = localStorage.getItem('index.sidebar.collapsed') === '1';
+                    localStorage.removeItem('index.sidebar.collapsed');
                 } catch (e) {
                     // ignore localStorage access errors
                 }
@@ -775,11 +775,6 @@
                 const toggleDesktopSidebar = () => {
                     if (isMobile.value) return;
                     desktopSidebarCollapsed.value = !desktopSidebarCollapsed.value;
-                    try {
-                        localStorage.setItem('index.sidebar.collapsed', desktopSidebarCollapsed.value ? '1' : '0');
-                    } catch (e) {
-                        // ignore localStorage access errors
-                    }
                 };
 
                 const refreshMainContent = () => {
