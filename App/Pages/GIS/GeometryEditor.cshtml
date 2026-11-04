@@ -23,14 +23,14 @@
 }
 
 @section head {
-    <script src="/lib/maplibre-gl/maplibre-gl.js"></script>
-    <link href="/lib/maplibre-gl/maplibre-gl.css" rel="stylesheet" />
+    <script src="/lib/maplibre-gl-v5/maplibre-gl.js"></script>
+    <link href="/lib/maplibre-gl-v5/maplibre-gl.css" rel="stylesheet" />
     <script src="/lib/mapbox-gl-draw/mapbox-gl-draw.js"></script>
     <link href="/lib/mapbox-gl-draw/mapbox-gl-draw.css" rel="stylesheet" />
     <link rel="stylesheet" href="/lib/font-awesome-6.5.2/css/all.min.css" />
     <script src="/gis/gis-geojson-helper.js?v=1.0"></script>
     <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
-    <script src="/gis/maphelper.js?v=3.5"></script>
+    <script src="/gis/maphelper.js?v=@DateTime.Now.Ticks"></script>
     <link rel="stylesheet" href="~/Pages/GIS/GeometryEditor.cshtml.css?v=3.5" asp-append-version="true" />
 }
 
@@ -188,5 +188,5 @@
             initialZoom: @mapZoom.ToString(CultureInfo.InvariantCulture)
         };
     </script>
-    <script src="~/Pages/GIS/GeometryEditor.cshtml.js?v=3.3" asp-append-version="true"></script>
+    <script src="~/Pages/GIS/GeometryEditor.cshtml.js?v=3.4" asp-append-version="true"></script>
 }

@@ -23,12 +23,12 @@ namespace App.Pages.GIS
         public double? Brx { get; set; }
         public double? Bry { get; set; }
 
-        public void OnGet(string region, string selectorValue, string data, string att)
+        public void OnGet(string dv, string att)
         {
             Att = (att ?? string.Empty).Trim();
             ImageUrl = ResolveImageUrl(Att);
 
-            Region = FirstNonEmpty(region, selectorValue, data)?.Trim();
+            Region = dv?.Trim();
             if (string.IsNullOrWhiteSpace(Region))
                 return;
 
@@ -54,17 +54,6 @@ namespace App.Pages.GIS
             Tly = maxLat;
             Brx = maxLng;
             Bry = minLat;
-        }
-
-        private static string FirstNonEmpty(params string[] values)
-        {
-            if (values == null) return string.Empty;
-            foreach (var value in values)
-            {
-                if (!string.IsNullOrWhiteSpace(value))
-                    return value;
-            }
-            return string.Empty;
         }
 
         /// <summary>

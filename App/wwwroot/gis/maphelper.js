@@ -207,13 +207,21 @@
             return Array.isArray(fc.features) ? fc.features : [];
         }
 
-        function sanitizeFeature(feature) {
+        function cloneFeature(feature, keepId) {
             if (!feature || !feature.geometry) return null;
-            return {
+            var nextFeature = {
                 type: 'Feature',
                 properties: normalizeProperties(feature.properties),
                 geometry: feature.geometry
             };
+            if (keepId && feature.id !== undefined && feature.id !== null) {
+                nextFeature.id = feature.id;
+            }
+            return nextFeature;
+        }
+
+        function sanitizeFeature(feature) {
+            return cloneFeature(feature, false);
         }
 
         function setFeaturePropertySafe(featureId, key, value) {
@@ -505,7 +513,7 @@
                         'symbol-placement': 'line',
                         'text-field': ['get', 'label'],
                         'text-size': 15,
-                        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+                        'text-font': ['noto-sans-bold', 'noto-sans-regular'],
                         'text-allow-overlap': true,
                         'text-ignore-placement': true,
                         'text-keep-upright': true,
@@ -528,9 +536,9 @@
                     layout: {
                         'text-field': ['get', 'label'],
                         'text-size': 13,
-                        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-                        'text-offset': [0, 1.1],
-                        'text-anchor': 'top',
+                        'text-font': ['noto-sans-bold', 'noto-sans-regular'],
+                        'text-offset': [0, 0],
+                        'text-anchor': 'center',
                         'text-allow-overlap': true,
                         'text-ignore-placement': true
                     },
@@ -601,33 +609,45 @@
 
         function readInitialRaw() {
             var params = new URLSearchParams(global.location.search || '');
-            var key = (params.get('dk') || params.get('dataKey') || params.get('selectorKey') || params.get('geojsonKey') || '').trim();
-            var direct = (params.get('data') || params.get('geojson') || '').trim();
-            var pickerValue = (params.get('pickerValue') || params.get('selectorValue') || '').trim();
+            var key = (params.get('dk') || '').trim();
+            var direct = (params.get('dv') || '').trim();
 
             function readFromStorage(storage, k) {
                 if (!storage || !k) return '';
                 try {
                     var v = (storage.getItem(k) || '').trim();
-                    if (v) return v;
+                    return v || '';
+                } catch {
+                    return '';
+                }
+            }
+
+            // data key 模式：读取后删除对应存储键，避免本地存储膨胀
+            function removeFromStorage(storage, k) {
+                if (!storage || !k) return;
+                try {
+                    storage.removeItem(k);
                 } catch {
                     // ignore
                 }
-                return '';
             }
 
-            if (key && global.sessionStorage) {
-                var s = readFromStorage(sessionStorage, key);
-                if (s) return s;
-            }
-
-            if (key && global.localStorage) {
-                var l = readFromStorage(localStorage, key);
-                if (l) return l;
+            if (key) {
+                var s = readFromStorage(global.sessionStorage, key);
+                if (s) {
+                    removeFromStorage(global.sessionStorage, key);
+                    removeFromStorage(global.localStorage, key);
+                    return s;
+                }
+                var l = readFromStorage(global.localStorage, key);
+                if (l) {
+                    removeFromStorage(global.localStorage, key);
+                    removeFromStorage(global.sessionStorage, key);
+                    return l;
+                }
             }
 
             if (direct) return direct;
-            if (pickerValue) return pickerValue;
             return (initGeoJson || '').trim();
         }
 
@@ -706,14 +726,6 @@
                 return id.indexOf('vertex') >= 0;
             }
 
-            function isInactiveVertexLayer(id) {
-                return id.indexOf('vertex') >= 0 && id.indexOf('inactive') >= 0;
-            }
-
-            function isActiveVertexLayer(id) {
-                return id.indexOf('vertex') >= 0 && id.indexOf('active') >= 0 && id.indexOf('inactive') < 0;
-            }
-
             var lineColorExpr = ['coalesce', ['get', 'stroke'], palette.lineColor];
             var lineWidthExpr = ['to-number', ['coalesce', ['get', 'stroke-width'], palette.lineWidth]];
             var fillColorExpr = ['coalesce', ['get', 'fill'], palette.fillColor];
@@ -746,20 +758,21 @@
                         map.setPaintProperty(id, 'circle-stroke-color', '#ffffff');
                         map.setPaintProperty(id, 'circle-stroke-width', 1.5);
                     }
-                    // Inactive vertices use gray to reduce visual noise.
-                    if (isInactiveVertexLayer(id) && layer.type === 'circle') {
-                        map.setPaintProperty(id, 'circle-color', '#9ca3af');
-                        map.setPaintProperty(id, 'circle-radius', 4.5);
-                        map.setPaintProperty(id, 'circle-stroke-color', '#ffffff');
-                        map.setPaintProperty(id, 'circle-stroke-width', 1.2);
-                    }
+                    if (isVertexLayer(id) && layer.type === 'circle') {
+                        var vertexActiveExpr = ['==', ['to-string', ['coalesce', ['get', 'active'], false]], 'true'];
+                        var isOuterVertexLayer = id.indexOf('outer') >= 0;
 
-                    // Only the currently active vertex is highlighted in red.
-                    if (isActiveVertexLayer(id) && layer.type === 'circle') {
-                        map.setPaintProperty(id, 'circle-color', '#ef4444');
-                        map.setPaintProperty(id, 'circle-radius', 6);
-                        map.setPaintProperty(id, 'circle-stroke-color', '#ffffff');
-                        map.setPaintProperty(id, 'circle-stroke-width', 1.6);
+                        if (isOuterVertexLayer) {
+                            map.setPaintProperty(id, 'circle-color', '#ffffff');
+                            map.setPaintProperty(id, 'circle-radius', ['case', vertexActiveExpr, 9, 6]);
+                            map.setPaintProperty(id, 'circle-stroke-color', ['case', vertexActiveExpr, '#dc2626', '#9ca3af']);
+                            map.setPaintProperty(id, 'circle-stroke-width', ['case', vertexActiveExpr, 2.4, 1.2]);
+                        } else {
+                            map.setPaintProperty(id, 'circle-color', ['case', vertexActiveExpr, '#dc2626', '#9ca3af']);
+                            map.setPaintProperty(id, 'circle-radius', ['case', vertexActiveExpr, 6.5, 4.5]);
+                            map.setPaintProperty(id, 'circle-stroke-color', '#ffffff');
+                            map.setPaintProperty(id, 'circle-stroke-width', ['case', vertexActiveExpr, 1.4, 1.1]);
+                        }
                     }
                 } catch {
                     // ignore unsupported layer paint properties
@@ -891,7 +904,7 @@
         }
 
         function serializeFeaturesForHistory() {
-            var features = getAllFeatures().map(sanitizeFeature).filter(Boolean);
+            var features = getAllFeatures().map(function (feature) { return cloneFeature(feature, true); }).filter(Boolean);
             return JSON.stringify({ type: 'FeatureCollection', features: features });
         }
 
@@ -1073,10 +1086,127 @@
             return null;
         }
 
+        function getSelectedPointCount() {
+            if (!draw || typeof draw.getSelectedPoints !== 'function') return 0;
+            try {
+                var fc = draw.getSelectedPoints() || {};
+                var features = Array.isArray(fc.features) ? fc.features : [];
+                return features.length;
+            } catch {
+                return 0;
+            }
+        }
+
+        function logDeleteState(stage, extra) {
+            if (typeof console === 'undefined' || typeof console.info !== 'function') return;
+            try {
+                console.info('[GeometryEditor.delete]', Object.assign({
+                    stage: stage,
+                    mode: draw && typeof draw.getMode === 'function' ? draw.getMode() : '',
+                    selectedIds: draw && typeof draw.getSelectedIds === 'function' ? (draw.getSelectedIds() || []) : [],
+                    selectedPointCount: getSelectedPointCount(),
+                    lastPickedFeatureId: lastPickedFeatureId,
+                    lastDirectSelectInfo: lastDirectSelectInfo
+                }, extra || {}));
+            } catch {
+                // ignore logging errors
+            }
+        }
+
+        function deleteSelectedVertex() {
+            if (!draw || typeof draw.trash !== 'function') return false;
+
+            var selectedIds = draw && typeof draw.getSelectedIds === 'function'
+                ? (draw.getSelectedIds() || []).map(function (id) { return String(id); })
+                : [];
+            var currentFeatureId = selectedIds.length > 0
+                ? selectedIds[0]
+                : (lastDirectSelectInfo && lastDirectSelectInfo.featureId ? String(lastDirectSelectInfo.featureId) : (lastPickedFeatureId ? String(lastPickedFeatureId) : ''));
+            if (!currentFeatureId) return false;
+
+            var featureBeforeDelete = findFeatureById(currentFeatureId);
+            if (!featureBeforeDelete) return false;
+
+            var deletedCoordPath = lastDirectSelectInfo && lastDirectSelectInfo.coordPath
+                ? String(lastDirectSelectInfo.coordPath)
+                : findNearestCoordPathOnFeature(featureBeforeDelete, lastDirectSelectInfo && lastDirectSelectInfo.lngLat);
+            var directAnchor = lastDirectSelectInfo && Array.isArray(lastDirectSelectInfo.lngLat)
+                ? [Number(lastDirectSelectInfo.lngLat[0]), Number(lastDirectSelectInfo.lngLat[1])]
+                : null;
+
+            logDeleteState('delete-vertex-before', {
+                featureId: currentFeatureId,
+                coordPath: deletedCoordPath,
+                anchorLngLat: directAnchor
+            });
+
+            draw.trash();
+            refresh();
+            commitHistorySnapshot(false);
+
+            requestAnimationFrame(function () {
+                var featureAfterDelete = findFeatureById(currentFeatureId);
+                if (!featureAfterDelete) {
+                    logDeleteState('delete-vertex-feature-removed', { featureId: currentFeatureId });
+                    lastPickedFeatureId = null;
+                    lastDirectSelectInfo = null;
+                    return;
+                }
+
+                var nextCoordPath = findNextCoordPathOnFeature(featureAfterDelete, deletedCoordPath)
+                    || findNearestCoordPathOnFeature(featureAfterDelete, directAnchor);
+                var nextCoord = nextCoordPath ? parseCoordAtPath(featureAfterDelete, nextCoordPath) : null;
+
+                try {
+                    if (nextCoordPath) {
+                        // Mapbox Draw will short-circuit direct_select -> direct_select on the same feature id,
+                        // so we briefly hop to simple_select before entering the next adjacent vertex.
+                        draw.changeMode('simple_select', { featureIds: [currentFeatureId] });
+                        requestAnimationFrame(function () {
+                            try {
+                                draw.changeMode('direct_select', { featureId: currentFeatureId, coordPath: nextCoordPath });
+                                lastPickedFeatureId = currentFeatureId;
+                                lastDirectSelectInfo = {
+                                    featureId: currentFeatureId,
+                                    coordPath: nextCoordPath,
+                                    lngLat: nextCoord
+                                };
+                                logDeleteState('delete-vertex-after', {
+                                    featureId: currentFeatureId,
+                                    nextCoordPath: nextCoordPath,
+                                    nextCoord: nextCoord
+                                });
+                                queueLabelSync();
+                            } catch {
+                                lastPickedFeatureId = null;
+                                lastDirectSelectInfo = null;
+                                logDeleteState('delete-vertex-reselect-failed', {
+                                    featureId: currentFeatureId,
+                                    nextCoordPath: nextCoordPath
+                                });
+                            }
+                        });
+                    } else {
+                        draw.changeMode('simple_select', { featureIds: [currentFeatureId] });
+                        lastPickedFeatureId = currentFeatureId;
+                        lastDirectSelectInfo = null;
+                        logDeleteState('delete-vertex-fallback-select-feature', { featureId: currentFeatureId });
+                        queueLabelSync();
+                    }
+                } catch {
+                    lastPickedFeatureId = null;
+                    lastDirectSelectInfo = null;
+                    logDeleteState('delete-vertex-reselect-failed', { featureId: currentFeatureId });
+                }
+            });
+
+            return true;
+        }
+
         function replaceFeatureProperties(featureId, nextProps) {
             if (!draw || !featureId) return false;
 
-            var all = getAllFeatures().map(sanitizeFeature).filter(Boolean);
+            var all = getAllFeatures().map(function (feature) { return cloneFeature(feature, true); }).filter(Boolean);
             if (all.length === 0) return false;
 
             var targetId = String(featureId);
@@ -1188,6 +1318,35 @@
             if (!feature || !coordPath) return false;
             var all = enumerateFeatureCoordCandidates(feature);
             return all.some(function (item) { return item && item.coordPath === coordPath; });
+        }
+
+        function parseCoordAtPath(feature, coordPath) {
+            if (!feature || !feature.geometry || !coordPath) return null;
+            var geometry = feature.geometry;
+            var coords = geometry.coordinates;
+            var type = geometry.type;
+
+            if (type === 'LineString' && Array.isArray(coords)) {
+                var lineIdx = Number.parseInt(String(coordPath), 10);
+                var lineCoord = Number.isFinite(lineIdx) ? coords[lineIdx] : null;
+                return Array.isArray(lineCoord) && lineCoord.length >= 2
+                    ? [Number(lineCoord[0]), Number(lineCoord[1])]
+                    : null;
+            }
+
+            if (type === 'Polygon' && Array.isArray(coords)) {
+                var parts = String(coordPath).split('.');
+                if (parts.length < 2) return null;
+                var ringIdx = Number.parseInt(parts[0], 10);
+                var ptIdx = Number.parseInt(parts[1], 10);
+                var ring = Number.isFinite(ringIdx) ? coords[ringIdx] : null;
+                var pt = Array.isArray(ring) && Number.isFinite(ptIdx) ? ring[ptIdx] : null;
+                return Array.isArray(pt) && pt.length >= 2
+                    ? [Number(pt[0]), Number(pt[1])]
+                    : null;
+            }
+
+            return null;
         }
 
         function findNextCoordPathOnFeature(feature, deletedCoordPath) {
@@ -1984,64 +2143,17 @@
                 var allBefore = getAllFeatures();
                 var selectedIds = draw.getSelectedIds() || [];
                 var mode = typeof draw.getMode === 'function' ? draw.getMode() : '';
+                var hasSelectedPoints = getSelectedPointCount() > 0;
+                var isDirectSelection = mode === 'direct_select' || hasSelectedPoints || !!(lastDirectSelectInfo && lastDirectSelectInfo.featureId);
+                logDeleteState('removeSelected-enter', {
+                    isDirectSelection: isDirectSelection,
+                    hasSelectedPoints: hasSelectedPoints
+                });
 
-                if (mode === 'direct_select' && typeof draw.trash === 'function') {
-                    var currentFeatureId = null;
-                    if (Array.isArray(selectedIds) && selectedIds.length > 0) {
-                        currentFeatureId = String(selectedIds[0]);
-                    } else if (lastDirectSelectInfo && lastDirectSelectInfo.featureId) {
-                        currentFeatureId = String(lastDirectSelectInfo.featureId);
-                    } else if (lastPickedFeatureId) {
-                        currentFeatureId = String(lastPickedFeatureId);
+                if (isDirectSelection) {
+                    if (deleteSelectedVertex()) {
+                        return;
                     }
-
-                    var directAnchor = lastDirectSelectInfo && Array.isArray(lastDirectSelectInfo.lngLat)
-                        ? [Number(lastDirectSelectInfo.lngLat[0]), Number(lastDirectSelectInfo.lngLat[1])]
-                        : null;
-                    var deletedCoordPath = lastDirectSelectInfo && lastDirectSelectInfo.coordPath
-                        ? String(lastDirectSelectInfo.coordPath)
-                        : null;
-
-                    draw.trash();
-                    refresh();
-                    commitHistorySnapshot(false);
-
-                    if (currentFeatureId) {
-                        requestAnimationFrame(function () {
-                            var featureAfterDelete = findFeatureById(currentFeatureId);
-                            if (!featureAfterDelete) {
-                                lastPickedFeatureId = null;
-                                lastDirectSelectInfo = null;
-                                return;
-                            }
-
-                            var nextCoordPath = findNextCoordPathOnFeature(featureAfterDelete, deletedCoordPath)
-                                || findNearestCoordPathOnFeature(featureAfterDelete, directAnchor);
-                            try {
-                                if (nextCoordPath) {
-                                    draw.changeMode('direct_select', { featureId: currentFeatureId, coordPath: nextCoordPath });
-                                    lastPickedFeatureId = currentFeatureId;
-                                    lastDirectSelectInfo = {
-                                        featureId: currentFeatureId,
-                                        coordPath: nextCoordPath,
-                                        lngLat: directAnchor
-                                    };
-                                } else {
-                                    draw.changeMode('simple_select', { featureIds: [currentFeatureId] });
-                                    lastPickedFeatureId = currentFeatureId;
-                                    lastDirectSelectInfo = null;
-                                }
-                                queueLabelSync();
-                            } catch {
-                                lastPickedFeatureId = null;
-                                lastDirectSelectInfo = null;
-                            }
-                        });
-                    } else {
-                        lastPickedFeatureId = null;
-                        lastDirectSelectInfo = null;
-                    }
-                    return;
                 }
 
                 if ((!Array.isArray(selectedIds) || selectedIds.length === 0) && lastPickedFeatureId) {
@@ -2187,6 +2299,9 @@
             getSelectedLabel: function () {
                 if (!draw || typeof draw.getSelectedIds !== 'function') return '';
                 var selected = draw.getSelectedIds();
+                if ((!selected || selected.length === 0) && lastPickedFeatureId) {
+                    selected = [lastPickedFeatureId];
+                }
                 if (!selected || selected.length === 0) return '';
                 var feature = findFeatureById(selected[0]);
                 return getFeatureLabel(feature);
@@ -2194,6 +2309,9 @@
             setSelectedLabel: function (label) {
                 if (!draw || typeof draw.getSelectedIds !== 'function') return;
                 var selected = draw.getSelectedIds();
+                if ((!selected || selected.length === 0) && lastPickedFeatureId) {
+                    selected = [lastPickedFeatureId];
+                }
                 if (!selected || selected.length === 0) return;
                 var text = label === null || label === undefined ? '' : String(label).trim();
                 selected.forEach(function (id) {
@@ -2203,6 +2321,7 @@
                     replaceFeatureProperties(id, nextProps);
                 });
                 commitHistorySnapshot(false);
+                queueLabelSync();
             },
             getSelectedProperties: function () {
                 if (!draw || typeof draw.getSelectedIds !== 'function') return {};
@@ -2247,6 +2366,36 @@
             setLabelPriorityFields: function (fields) {
                 labelPriorityFields = normalizeLabelPriorityFields(fields);
                 queueLabelSync();
+            },
+            debugSelectCoordPath: function (featureId, coordPath) {
+                if (!draw || !featureId || !coordPath) return null;
+                try {
+                    draw.changeMode('direct_select', { featureId: String(featureId), coordPath: String(coordPath) });
+                    var feature = findFeatureById(String(featureId));
+                    var lngLat = feature ? feature.getCoordinate ? feature.getCoordinate(String(coordPath)) : null : null;
+                    lastPickedFeatureId = String(featureId);
+                    lastDirectSelectInfo = {
+                        featureId: String(featureId),
+                        coordPath: String(coordPath),
+                        lngLat: Array.isArray(lngLat) ? [Number(lngLat[0]), Number(lngLat[1])] : null
+                    };
+                    queueLabelSync();
+                    return this.getDebugSelectionState();
+                } catch {
+                    return null;
+                }
+            },
+            getDebugSelectionState: function () {
+                return {
+                    mode: draw && typeof draw.getMode === 'function' ? draw.getMode() : '',
+                    selectedIds: draw && typeof draw.getSelectedIds === 'function' ? (draw.getSelectedIds() || []) : [],
+                    selectedPointCount: getSelectedPointCount(),
+                    lastPickedFeatureId: lastPickedFeatureId,
+                    lastDirectSelectInfo: lastDirectSelectInfo
+                };
+            },
+            debugGetExportObject: function () {
+                return buildExportObject();
             },
             getExportGeoJson: function () {
                 return JSON.stringify(buildExportObject());
@@ -2475,7 +2624,7 @@
                     layout: {
                         'text-field': ['coalesce', ['get', 'label'], ''],
                         'text-size': 14,
-                        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+                        'text-font': ['noto-sans-bold', 'noto-sans-regular'],
                         'text-anchor': 'center',
                         'text-offset': [0, 0],
                         'text-allow-overlap': true,
@@ -2499,7 +2648,7 @@
                         'symbol-placement': 'line',
                         'text-field': ['coalesce', ['get', 'label'], ''],
                         'text-size': 14,
-                        'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+                        'text-font': ['noto-sans-bold', 'noto-sans-regular'],
                         'text-keep-upright': true,
                         'text-allow-overlap': true,
                         'text-ignore-placement': true,

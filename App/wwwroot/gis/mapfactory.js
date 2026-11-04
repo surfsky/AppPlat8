@@ -25,7 +25,7 @@
 
     // 自托管资源与可选数据源；DEM 瓦片由 Data/download_dem_tiles.py 生成，buildingTiles 为 OpenMapTiles 结构的矢量瓦片（可空）
     var _cfg = {
-        glyphsBase: '/lib/maplibre-gl/glyphs/',
+        glyphsBase: '/lib/maplibre-gl-v5/glyphs/',
         demTiles: '/tiles/dem/{z}/{x}/{y}.png',
         demEncoding: 'terrarium',
         demMaxZoom: 11,

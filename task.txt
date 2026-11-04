@@ -601,6 +601,7 @@ Done
 
     优化
         如何教AI使用 LoginAI 页面，免得过一阵子又不知道怎么登录了
+        组织管理页面：树能否不要全部展开？查找“龙江”找不到数据？
 
     Bad smell
         CheckHazardsModel 简化，用Search方法
@@ -609,6 +610,18 @@ Done
 
 
 2026/11/4
+    调整网格
+        龙江工作办公室
+        沿江工作办公室
+        白沙工作办公室
+        湖前工作办公室
+        江山工作办公室
+        平等工作办公室
+        肥膳工作办公室
+        芦浦工作办公室
+        云岩工作办公室
+        龙港市新城
+
     更换用户登录后会遇到奇奇怪怪的事情：
         陈慧左侧的菜单消失，已经设置为“员工”、“科室管理员”，测试一下菜单接口
     文档
@@ -636,187 +649,3 @@ Done
     优化
         重构接口：Gis/GetCheckObjects() 相关方法，缠缠绵绵都看不懂什么意思
         实现eleui的明暗两色切换，可以用url参数 scheme=light/dark 来
-
-
-2026/11/3
-    /CheckObjects页面的网格应该可以修改，且收到当前登录人的AuthOrgId约束；
-    /系统开发脑图
-    /WorkDesk优化: 优化工作台WorkDesk和WorkDeskOrg两个页面：由于其统计展示太慢，考虑先展示所有控件，再通过接口刷新统计标签
-    /WorkDesk优化：修正统计数据和清单的差异；
-    /改index页面的背景色为白色，改主区域ifrme的背景色为白色
-    /优化接口，https/Gis/GetCheckObjects 的汉字被编码了:修正及简化接口返回的数据，里面的汉字能否直接输出，而不是做了编码（http://localhost:6001/httpapi/gis/GetCheckObjects?orgId=199）
-    /优化接口：给 #sym:HttpApiConfig  增加一个属性 AuthLogin ，若为true，除非接口方法显式标注AuthLogin="false"，则所有接口默认都必须校验是否登录，
-    /优化接口，删除Gis/GetCheckObjectPoints 老接口
-    /安全生产模块优化
-        /优化CheckObject页面，若设置了其它参数如OrgId，则不约束 CheckId=User.Id，避免重复约束导致数据不准确
-        /优化CheckObject，如果有orgId url参数，同当前用户的授权authOrgId相比较，哪个小用哪个。（从Gis/index图层进入）
-    /Gis优化
-        /gis/index：点位信息面板，修正点位信息dataurl；
-        /修正gis/index应急事件模块，且约束事件类别为“突发事件”
-        /eleUI重构，简化EleTable、EleColumn 的valign、halign属性
-        /eleUI.EleTable重构，确保过滤弹窗中的label宽度一致对齐；
-
-
-2026/10/31
-    /地图切换到 MapLibre 框架，并确保全部功能国内可用
-        /更换Gis/Locator 的地图框架为 MapLibre
-        /更换Gis地图框架 MapBox -> MapLibre
-        /优化GeometryForm DataJson -> EleProperty
-        /创建测试页面 Exam/MapLibre/dem.html，使用dem/目录下的高程图片
-        /app/pages/gis/index 页面一点“3D地形”，页面就卡死，无法显示3D地形。可参考 Exam/MapLibre/Terrain.html页面实现
-        /app/pages/gis/index 右侧的地图工具中，“切换点位显示模式”控件失效了
-        /gis/GeometryManager 优化：左侧的树默认不要选择根节点
-        /gis/GeometryManager 优化：左侧的树点击后，右侧的查询结构可递推到子目录
-
-
-2026/10/28
-    /EleTimer 控件优化及示例：增加属性Value=True/False, 增加属性 TrueText/FalseText
-    /EleSamples 项目结构重构，改为顶、左、右结构
-    /EleHandler 回调方法 SetControl 矫正
-    /EleButton FixPosition 功能矫正
-    /EleUI 设计图标
-    /优化EleUISamples页面，右侧改为三标签布局，可查看：页面、cshtml源码、cshtml.cs 源码
-    /优化帮助文档：
-        /在页面顶部展示问号图标点击展示帮助文档（详见 Events 页面）。
-        /方案1: 考虑给BaseModel增加属性About（太麻烦而且硬编码，放弃）
-        /方案2: 考虑用数据库来管理页面对应的帮助文档（page=>helptext)，管理员可以直接编辑文档（容后）；
-    /EleListPicker： 增加 Icon 属性（用EleIcons枚举），可在右侧显示一个图标，默认为右箭头；
-
-
-2026/10/27
-    /优化EleProperty增加ButtonText属性，可显示按钮文本
-    /优化 EleTable，若在操作某个搜索控件（toolbar/filters/）时按了enter键盘，则自动尝试触发 Search command命令
-    /驾驶舱：优化驾驶舱图层拖动更新更新逻辑，以气温色斑图层为例。拖动时原有图层不回突然消失，拖动超过某个阈值（请提供合适的阈值方案），显示loading，然后刷新出图层；
-    /工作台：对应按钮点击后（图2），对应的页面无数据（图3），请检查一下传入参数，以及对应页面的实现逻辑，是页面内置逻辑约束了，还是参数没有设置对（所有按钮都检查一下）；以示范企业为例，进入后的日志如下：
-    /优化 EleTreePicker： 选择值实时，名称+ID
-    /优化 TreePicker，标签带关闭按钮
-    /优化 EleTreePicker：增加展开/恢复按钮
-    /优化 EleTreePicker： 增加属性 ChunkSelectable 枝干是否可选择，默认值为true，若设置为false则枝干不可选择（只能选叶子节点）
-    /优化EleForm，按回车键后尝试触发第一个可见按钮的事件
-
-
-
-
-2026/10/21
-    /实现公告的反向组织过滤（FilterByAncestOrg），公告发布范围若包含授权部门，则可以看到该公告
-    /将 EventType 改为树结构；
-    /统一将 CheckObject.DutyOrgId 改为 OrgId，简化逻辑
-    /网格员修改用户的责任网格后未能刷新（程）
-
-
-2026/10/20
-    /EleTable.BorderColor -> LineColor 避免与基类 BorderColor 冲突
-    /EleListPicker：优化外观，当前选择行蓝色文本
-    /防越权代码检测
-        /用户组织限制：非管理员，只能设置组织为授权组织和子组织
-        /用户窗口角色限制：不能超过当前登录用户的角色；
-        /删除 EffectiveAuthOrgId，直接用AuthOrgId
-        /Users 页面默认orgid、增加mobile
-    /优化CheckObjectForm 各子表，可点击的都用蓝色；
-
-
-2026/10/19
-        /OrgSelector 页面中，只能选择当前授权组织，父组织也不能选。修复TreePicker，父节点不让选；
-        /恢复默认 eletable 的边框颜色（淡一点）；对于统计报表模块，独立设置深一点（便于导出）。加了BorderColor属性
-    /实现控制台调度页面/pages/Maintains/Consoler，可运行控制台调度器项目 app.consoler 的输出，并查看其控制台输出；
-    /运行网站时，自动启动 Consoler 项目
-    /用什么办法可以加速计算 CheckObject.FixAll()？理论上只是批量更新 NextCheckDt 和 IsCheck 字段，没理由那么慢。几个策略：
-        /少选一些字段
-        /用数据库批量更新写法（如果支持）
-        /每次批量更新一个字段
-    /profile 增加 AuthOrgName
-    /隐患排查图片要求必须提供
-    /批量修改所有账户的密码
-    /CheckObectModel 中的代码也乱糟糟的
-    /给 EleTable 增加 BorderColor 属性
-    /EleTable 中的属性过于混乱，需要梳理（Header、Head、Title）
-
-
-2026/10/16
-        /把所有 XXXSelector 的字样都改掉（算了）
-    /修复startup 数据库访问报错的问题（数据审计环境出了问题）
-    /重新规划端口：
-        app   运行   6001
-        app   debug 5000
-        app   部署   6060
-        eleui 运行   6002
-    /隐患排查，整改期限默认设置为1个月后；
-    /隐患排查：复查时不允许改首次排查的图片
-    /隐患排查：排查保存时，若选择的任务中没有包含该对象，会把该对象加入任务对象表中（CheckTaskObject）
-    /EleImageUploader：修正Enable=false时仍可编辑的bug
-    /EleImageUploader： 可限制图片上传数量、图片裁剪尺寸
-    /隐患清单：默认设置为自己、状态为“全部”
-    /隐患排查：复查页面的"状态"和操作信息用 url 参数传递进去
-    /跑通任务分配和检查流程
-        /部门管理员才能修改任务企业清单 AdminOrg
-        /拿“应急管理局”测试一下逻辑
-    /隐患表单 CheckHazardForm 页面优化，增加整改类别选项（限期整改、立查立改）
-        /如果是限期整改，则显示“整改期限“， 保存后正常处理（关闭窗口）
-        /如果是立查立改，则隐藏”整改期限“（值还是在的），保存后则弹出整改窗口（CheckHazardLogForm），并带入合适的参数
-
-
-2026/10/15
-    /统一实体内中的 CheckObjectId， ObjectId， 都用 CheckObjectId
-    /全网页统一按钮颜色：查询蓝色、新增、删除红色、其它黄色
-    /隐患排查时自动查找并列出匹配的任务（Checks/Flow/CheckFlow）；
-    /EleButton: 实现按钮的Confirm能力
-    /EleButton: 实现AutoLoadin参数，点击后出现loading效果
-    /WorkDesk 重构，显示任务对象清单，而不是任务进度；
-    /实现部门科室工作台：/pages/me/WorkDeskOrg
-    /实现EleButton 的Stream SSE 进度传输方案，并应用在“CheckObject.FixData”上；
-    /修复新隐患图片未能保存并显示的问题:            item.AddAtt(Uploader.SaveFiles(nameof(CheckHazard), req.ImageUrls));
-    /实现方法
-        /获取某个对象对应的任务清单
-        /获取某人的任务清单
-        /获取某个组织的任务清单
-    /对象页面提供检查任务过滤框（算了，从工作台进入就行了）
-    /优化：CheckFlow 如果对象没有匹配的标签、检查表，则自动显示高频检查表
-    /建立测试对象应急测试xxx
-
-2026/10/13
-    /实现检查任务：
-        /删除CheckTaskSheet
-        /给HttpApi 增加 CacheByUse=true 选项，可以根据当前用户来缓存
-        /提高接口 http://localhost:5000/httpapi/orgs/GetAuthOrgTree 性能，只导出必要的列
-        /重新思考该怎么设计（如何统计到各组织），还是删除CheckTaskOrg 会更简单一些（删除CheckTaskOrg）
-        /修正工作台页面的数字角标和跳转链接
-        /将通讯录挪到“应急指挥”下面去；
-        /更新值班表，用导入方式
-        /Importor 优化：按钮加图标；
-        /CheckObjects 页面的网格员默认显示自己
-        /CheckObjects 页面的组织控件根据权限判断是否可编辑；
-        /把 NextCheckDt 改为物理字段，检查时自动填写下次检查日期，实现 IFix 接口，便于调度器调度
-        /CheckObjects: 增加批量修复数据按钮，仅AdminMaintain 权限可见；
-        /CheckObjects: 给批量更新按钮增加 Handler=“EditBatch” 的属性，以对应到后端的 OnPostBatchSave 方法，显式声明处理方法，不会那么诡异；
-        /Importor 优化：下载的模版中不显示“创建人”、“责任人”列；
-        /CheckObjectForm ：新增时网格员默认写当前用户
-
-
-2026/10/13
-    /检查任务
-        /记录检查事件时，自动遍历在用的检查任务，看是否在任务列表中，如果在的话，自动闭环并更新检查任务统计（***）（Check.cs）
-        /完善检查任务页面，点击某个对象时，可以查看其检查状态
-    /重整角色权限
-    /完善官方网页首页（about）
-
-2026/10/12
-    /增加系统状态页面（maintains/system）
-    /权限控制：实现部门科室管理员逻辑：建一个权限（部门管理员）
-    /EleProperty 优化，可控制按钮位置；
-    /EleList 优化，可控制Footer中按钮的布局
-    /Role.SortId
-
-2026/10/11
-    /删除列 Check.IsClosed 看是否需要删除，闭环主要是指隐患而不是检查本身；
-    /优化对象表单CheckObjectForm
-        /优化EleList，支持Header固顶、Footer固底。全项目都加上header。
-        /对象联系人类型
-        /TreePicker tagType
-        /CheckObjectContact
-        /CheckObjectEvent.HappenDt
-        /简化 ObjectContactFormModel，估计是老代码未简化
-        /用EleManager 显示对象的备注数据
-
-
-
-

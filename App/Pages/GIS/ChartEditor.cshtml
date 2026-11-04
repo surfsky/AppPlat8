@@ -67,6 +67,8 @@
         createApp({
             setup() {
                 const previewTheme = '@Model.Theme';
+                const params = new URLSearchParams(window.location.search || '');
+                const dialogDataKey = (params.get('dk') || '').trim();
                 const model = reactive({
                     version: 1,
                     type: 'line',
@@ -92,22 +94,43 @@
 
                 const getManager = () => (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
 
+                const savePayloadToStorage = (key, value) => {
+                    if (!key) return false;
+                    const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+                    for (let i = 0; i < storages.length; i += 1) {
+                        try {
+                            storages[i].setItem(key, String(value ?? ''));
+                            return true;
+                        } catch {
+                            // try next storage
+                        }
+                    }
+                    return false;
+                };
+
                 const setJsonByModel = () => {
                     jsonText.value = JSON.stringify(model, null, 2);
                 };
 
                 const readInitialValue = () => {
-                    const params = new URLSearchParams(window.location.search || '');
                     const candidates = [];
-                    const dataKey = params.get('dk') || params.get('dataKey') || params.get('selectorKey') || '';
-                    if (dataKey && window.sessionStorage) {
-                        const v = window.sessionStorage.getItem(dataKey) || window.localStorage.getItem(dataKey);
-                        if (v) candidates.push(v);
+                    if (dialogDataKey) {
+                        const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+                        for (let i = 0; i < storages.length; i += 1) {
+                            try {
+                                const v = storages[i].getItem(dialogDataKey);
+                                if (v !== null && v !== undefined && String(v).trim()) {
+                                    candidates.push(v);
+                                    break;
+                                }
+                            } catch {
+                                // ignore storage read errors
+                            }
+                        }
                     }
-                    ['selectorValue', 'data', 'json', 'chartJson', 'chartjson'].forEach(k => {
-                        const v = params.get(k);
-                        if (v !== null && v !== undefined && String(v).trim()) candidates.push(v);
-                    });
+                    // 小数据模式：URL 参数 dv（data value）
+                    const dv = params.get('dv');
+                    if (dv !== null && dv !== undefined && String(dv).trim()) candidates.push(String(dv));
                     return candidates.find(v => String(v).trim()) || '';
                 };
 
@@ -183,9 +206,8 @@
                 };
 
                 const closeOnly = () => {
-                    const manager = getManager();
-                    if (manager && typeof manager.closePage === 'function') {
-                        manager.closePage({});
+                    if (window.EleManager) {
+                        window.EleManager.closePage({});
                         return;
                     }
                     window.close();
@@ -194,10 +216,13 @@
                 const save = () => {
                     syncModelFromJson();
                     const text = JSON.stringify(model);
-                    const payload = { type: 'ElePicker', data: [{ id: text, name: text }] };
-                    const manager = getManager();
-                    if (manager && typeof manager.closePage === 'function') {
-                        manager.closePage(payload);
+                    let payloadItem = { id: text, name: text };
+                    if (dialogDataKey && savePayloadToStorage(dialogDataKey, text)) {
+                        payloadItem = { id: text, name: text, dataKey: dialogDataKey };
+                    }
+                    const payload = { type: 'ElePicker', data: [payloadItem] };
+                    if (window.EleManager) {
+                        window.EleManager.closePage(payload);
                         return;
                     }
                     if (window.parent) {

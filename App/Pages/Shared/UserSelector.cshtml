@@ -69,7 +69,7 @@
                         };
 
                         // Unified close protocol for top-level drawer host.
-                        if (window.EleManager && typeof window.EleManager.closePage === 'function') {
+                        if (window.EleManager) {
                             window.EleManager.closePage(payload);
                         }
                         

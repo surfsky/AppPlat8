@@ -632,34 +632,22 @@
         const grid = document.getElementById('iconGrid');
         const searchInput = document.getElementById('searchInput');
 
-        /** 从 URL 中解析当前已选的图标 class。
-         *  传入的参数可能叫 pickerValue / data / imageUrl / geojson，并且值可能被重复 URL 编码、
-         *  或是 "fas fa-file-alt" 这种带空格的形式，所以：
-         *  1) 按优先级取：pickerValue > data > imageUrl > geojson > 第一个非空值；
-         *  2) 每个参数在解码后做 trim；空值跳过。
+        /** 从 URL 参数 dv（data value）解析当前已选的图标 class。
+         *  小数据模式使用 dv 传值；值可能被重复 URL 编码，或形如 "fas fa-file-alt"（带空格），
+         *  因此解码后做 trim；空值返回空字符串。
          */
         function readSelectedFromUrl() {
             try {
                 const params = new URL(window.location.href).searchParams;
-                const candidateKeys = ['pickerValue', 'data', 'imageUrl', 'geojson'];
-                const decoded = [];
-                params.forEach(function (value, key) {
-                    if (candidateKeys.indexOf(key) < 0) return;
-                    var raw = params.get(key);
-                    if (raw == null) return;
-                    var s = String(raw).trim();
-                    if (s) decoded.push({ k: key, v: s });
-                    try {
-                        var s2 = decodeURIComponent(raw);
-                        if (s2 && s2 !== s) decoded.push({ k: key, v: String(s2).trim() });
-                    } catch (_) { /* ignore malformed */ }
-                });
-                for (var i = 0; i < candidateKeys.length; i++) {
-                    var key = candidateKeys[i];
-                    var found = decoded.find(function (x) { return x.k === key && x.v; });
-                    if (found) return found.v;
-                }
-                return decoded.length ? decoded[0].v : '';
+                const raw = params.get('dv');
+                if (raw == null) return '';
+                const s = String(raw).trim();
+                if (!s) return '';
+                try {
+                    const s2 = decodeURIComponent(raw).trim();
+                    if (s2 && s2 !== s) return s2;
+                } catch (_) { /* ignore malformed */ }
+                return s;
             } catch (_) {
                 return '';
             }

@@ -6,15 +6,42 @@ using System.Threading.Tasks;
 namespace App.EleUI
 {
     /// <summary>
+    /// 选择器值传输模式。
+    /// </summary>
+    public enum ElePickerKeyMode
+    {
+        Url,      // 从URL参数获取值，如 ?dv=xxxx
+        Storage,  // 从本地存储获取值，如 ?dk=xxxxx
+        Auto      // 自动
+    }
+
+    /// <summary>
     /// 选择器组件
     /// </summary>
+    /// <remarks>
+    /// 通讯协议：
+    /// 调用者将参数传递给弹窗，弹窗根据KeyMode从URL参数或本地存储获取值。
+    /// 1. 从URL参数获取值，如 ?dv=xxxx
+    /// 2. 从本地存储获取值，如 ?dk=xxxxx
+    ///    - 主窗口 picker 点击修改按钮-> 生成storagekey并保存key名 -> 打开弹窗并带上dk参数 ->
+    ///    - 弹窗解析dk参数并从storage中获取数据并展示及处理 -> 点击弹窗“保存关闭”按钮时，将修改后的数据保存到原storagekey中，并关闭窗口 ->
+    ///    - 主窗口查看storageKey的值展示, 并删除storagekey；
+    /// 
+    /// 弹窗关闭后返回数据给Picker对象进行处理，结构如：
+    /// {
+    ///     type: 'ElePicker',
+    ///     data: [
+    ///         { id, name, dataKey? }
+    ///     ]
+    /// }
+    /// </remarks>
     [HtmlTargetElement("ElePicker")]
     public class ElePicker : EleFormControl
     {
         [HtmlAttributeName("PopupUrl")]      public string PopupUrl { get; set; }
         [HtmlAttributeName("Multi")]         public bool Multi { get; set; } = false;
         [HtmlAttributeName("TextFor")]       public ModelExpression TextFor { get; set; }
-        [HtmlAttributeName("KeyMode")]       public string KeyMode { get; set; } = "Url";
+        [HtmlAttributeName("KeyMode")]       public ElePickerKeyMode KeyMode { get; set; } = ElePickerKeyMode.Url;
         [HtmlAttributeName("Icon")]          public EleIcons Icon { get; set; } = EleIcons.Search;
         [HtmlAttributeName("Rows")]          public int Rows { get; set; } = 1;
         [HtmlAttributeName("Editable")]      public bool Editable { get; set; } = false;
@@ -71,7 +98,7 @@ namespace App.EleUI
             var popupUrl = (this.PopupUrl ?? string.Empty).Replace("'", "\\'");
             var title = (Label ?? Texts.Current.Select).Replace("'", "\\'");
             var multiStr = Multi.ToString().ToLower();
-            var keyMode = (KeyMode ?? "Url").Replace("'", "\\'");
+            var keyMode = KeyMode.ToString().Replace("'", "\\'");
             var iconName = Icon == EleIcons.None ? EleIcons.Search : Icon;
             var rowCount = Rows > 0 ? Rows : 1;
             var isTextArea = rowCount > 1;

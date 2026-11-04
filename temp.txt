@@ -120,3 +120,90 @@
             // false true   => true
             // false false  => false
             // false null   => false
+
+
+@section script {
+    <script>
+        (function () {
+            const storageKey = '__gis_geometry_editor_reference_gps';
+            const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+            const gpsSelectors = [
+                '[data-ele-control-id="field:gps"]',
+                '.gps-picker'
+            ];
+            const geoJsonSelectors = [
+                '[data-ele-control-id="field:geoData"]',
+                '.geojson-picker'
+            ];
+
+            function findHost(selectors) {
+                for (let i = 0; i < selectors.length; i += 1) {
+                    const el = document.querySelector(selectors[i]);
+                    if (el) return el;
+                }
+                return null;
+            }
+
+            function getGpsInputValue() {
+                const host = findHost(gpsSelectors);
+                if (!host) return '';
+                const input = host.querySelector('input,textarea');
+                return String(input?.value || '').trim();
+            }
+
+            function syncReferenceGps() {
+                try {
+                    const gps = getGpsInputValue();
+                    storages.forEach(storage => {
+                        if (gps) storage.setItem(storageKey, gps);
+                        else storage.removeItem(storageKey);
+                    });
+                } catch {
+                }
+            }
+
+            function bindGpsSync() {
+                const host = findHost(gpsSelectors);
+                if (!host) return false;
+                const input = host.querySelector('input,textarea');
+                if (input && !input.__gisGpsSyncBound) {
+                    input.__gisGpsSyncBound = true;
+                    ['input', 'change', 'blur'].forEach(name => {
+                        input.addEventListener(name, syncReferenceGps, true);
+                    });
+                }
+                syncReferenceGps();
+                return !!input;
+            }
+
+            ['pointerdown', 'mousedown', 'click'].forEach(name => {
+                document.addEventListener(name, function (evt) {
+                    if (!evt.target || !evt.target.closest) return;
+                    if (evt.target.closest(geoJsonSelectors.join(','))) {
+                        syncReferenceGps();
+                    }
+                }, true);
+            });
+
+            let retry = 0;
+            const timer = setInterval(() => {
+                retry++;
+                const ok = bindGpsSync();
+                if (ok || retry >= 20) {
+                    clearInterval(timer);
+                }
+            }, 300);
+        })();
+    </script>
+}
+
+@section head {
+    <style>
+        .geojson-picker .el-input__inner {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+}
+

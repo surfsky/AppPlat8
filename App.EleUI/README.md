@@ -10,21 +10,19 @@
 - Element Plus: https://element-plus.org/zh-CN
 - Vue 3: https://cn.vuejs.org/
 
+## 控件使用示例						
 
-## 控件使用示例
-
-``` html
+```html
 <script src="~/eleui/eleui.js"></script>
 <EleButton Handler="OnClick">默认按钮</EleButton>
-```        
+```
 
-``` cs
+```cs
 public void OnClick([FromForm] req)
 {
     // 处理点击事件
 }
 ```
-
 
 ## 运行
 
@@ -46,7 +44,6 @@ lsof -iTCP:6070 -sTCP:LISTEN
 kill -9 <pid>
 ```
 
-
 ## 发布 NuGet
 
 ```bash
@@ -67,7 +64,6 @@ dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/i
   - `Popups/`: 弹层组件（`EleDialog`、`EleDrawer`、`ElePopover`）
   - `EleUIJs/`: 前端运行时与构建器（`EleForm`、`EleTable`、`EleManager`）
 - `App.EleUI/EleUISamples`：示例网站项目。
-
 
 ## 关键基类职责
 
@@ -137,7 +133,6 @@ dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/i
 - `Utils.js`: 通用工具
 - `EleFixes.css`: 一些运行时样式修正
 
-
 ## 类继承关系图
 
 ```mermaid
@@ -198,4 +193,3 @@ EleItem <|-- EleLayoutGrid
 
 - 带弹窗选择语义的控件统一使用 `XXXPicker` 后缀。如：`ElePicker`、`EleIconPicker`
 - 抽屉/iframe 关闭统一走 `EleManager.closePage(...)` 协议。
-

@@ -18,15 +18,15 @@ namespace App.Pages.Shared
         [BindProperty(SupportsGet = true)]
         public double? Lat { get; set; }
 
-        public void OnGet(string gps, double? lng, double? lat)
+        public void OnGet(string dv, double? lng, double? lat)
         {
-            Gps = gps;
+            Gps = dv ?? string.Empty;
             Lng = lng;
             Lat = lat;
 
-            if (!string.IsNullOrWhiteSpace(gps))
+            if (!string.IsNullOrWhiteSpace(Gps))
             {
-                var normalized = gps.Replace('，', ',').Replace('；', ',').Replace(';', ',').Trim();
+                var normalized = Gps.Replace('，', ',').Replace('；', ',').Replace(';', ',').Trim();
                 normalized = Regex.Replace(normalized, "\\s+", ",");
                 var parts = normalized.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 if (parts.Length >= 2

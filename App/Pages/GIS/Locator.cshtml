@@ -25,8 +25,8 @@
 }
 
 @section head {
-    <script src="/lib/maplibre-gl/maplibre-gl.js"></script>
-    <link href="/lib/maplibre-gl/maplibre-gl.css" rel="stylesheet" />
+    <script src="/lib/maplibre-gl-v5/maplibre-gl.js"></script>
+    <link href="/lib/maplibre-gl-v5/maplibre-gl.css" rel="stylesheet" />
     <script src="/gis/gis-address-search.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
     <style>
@@ -86,6 +86,8 @@
         const { createApp, ref, onMounted } = Vue;
         const app = createApp({
             setup() {
+                const params = new URLSearchParams(window.location.search || '');
+                const dialogDataKey = (params.get('dk') || '').trim();
                 const keyword = ref('');
                 const searching = ref(false);
                 const searchResults = ref([]);
@@ -110,6 +112,36 @@
                     } else {
                         alert(msg);
                     }
+                };
+
+                const readPayloadFromStorage = (key) => {
+                    if (!key) return '';
+                    const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+                    for (let i = 0; i < storages.length; i += 1) {
+                        try {
+                            const value = storages[i].getItem(key);
+                            if (value !== null && value !== undefined && String(value).trim()) {
+                                return String(value).trim();
+                            }
+                        } catch {
+                            // ignore storage read errors
+                        }
+                    }
+                    return '';
+                };
+
+                const savePayloadToStorage = (key, value) => {
+                    if (!key) return false;
+                    const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+                    for (let i = 0; i < storages.length; i += 1) {
+                        try {
+                            storages[i].setItem(key, String(value ?? ''));
+                            return true;
+                        } catch {
+                            // try next storage
+                        }
+                    }
+                    return false;
                 };
 
                 const updateCoordText = () => {
@@ -237,7 +269,7 @@
                 };
 
                 const closeOnly = () => {
-                    if (window.EleManager && typeof window.EleManager.closePage === 'function') {
+                    if (window.EleManager) {
                         window.EleManager.closePage({});
                         return;
                     }
@@ -251,15 +283,15 @@
 
                 const confirmLocation = () => {
                     const gps = `${Number(lng.value).toFixed(6)}, ${Number(lat.value).toFixed(6)}`;
+                    const payloadItem = dialogDataKey && savePayloadToStorage(dialogDataKey, gps)
+                        ? { id: gps, name: gps, dataKey: dialogDataKey }
+                        : { id: gps, name: gps };
                     const payload = {
                         type: 'ElePicker',
-                        data: [{
-                            id: gps,
-                            name: gps
-                        }]
+                        data: [payloadItem]
                     };
 
-                    if (window.EleManager && typeof window.EleManager.closePage === 'function') {
+                    if (window.EleManager) {
                         window.EleManager.closePage(payload);
                         return;
                     }
@@ -273,6 +305,19 @@
                 };
 
                 onMounted(() => {
+                    const initialGps = readPayloadFromStorage(dialogDataKey);
+                    if (initialGps) {
+                        const normalized = initialGps.replace(/，|；|;/g, ',').trim();
+                        const parts = normalized.split(',').map(t => t.trim()).filter(Boolean);
+                        if (parts.length >= 2) {
+                            const initialLng = Number(parts[0]);
+                            const initialLat = Number(parts[1]);
+                            if (Number.isFinite(initialLng) && Number.isFinite(initialLat)) {
+                                lng.value = initialLng;
+                                lat.value = initialLat;
+                            }
+                        }
+                    }
                     updateCoordText();
                     initMap();
                 });

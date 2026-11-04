@@ -32,8 +32,8 @@
 }
 
 @section head {
-    <script src="/lib/maplibre-gl/maplibre-gl.js"></script>
-    <link href="/lib/maplibre-gl/maplibre-gl.css" rel="stylesheet" />
+    <script src="/lib/maplibre-gl-v5/maplibre-gl.js"></script>
+    <link href="/lib/maplibre-gl-v5/maplibre-gl.css" rel="stylesheet" />
     <script src="/gis/mapfactory.js?v=@DateTime.Now.Ticks"></script>
     <script src="/gis/gis-address-search.js?v=@DateTime.Now.Ticks"></script>
     <style>
@@ -183,6 +183,8 @@
                     tiandituKey: "@(SiteConfig.Instance.TiandituKey ?? "")",
                     amapKey:     "@(SiteConfig.Instance.AmapKey ?? "")"
                 });
+                const params = new URLSearchParams(window.location.search || '');
+                const dialogDataKey = (params.get('dk') || '').trim();
                 const initial = {
                     minLng: @tlx.ToString(CultureInfo.InvariantCulture),
                     maxLng: @brx.ToString(CultureInfo.InvariantCulture),
@@ -219,6 +221,36 @@
                     maxLat: initial.maxLat
                 };
 
+                function readPayloadFromStorage(key) {
+                    if (!key) return '';
+                    const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+                    for (let i = 0; i < storages.length; i += 1) {
+                        try {
+                            const value = storages[i].getItem(key);
+                            if (value !== null && value !== undefined && String(value).trim()) {
+                                return String(value).trim();
+                            }
+                        } catch {
+                            // ignore storage read errors
+                        }
+                    }
+                    return '';
+                }
+
+                function savePayloadToStorage(key, value) {
+                    if (!key) return false;
+                    const storages = [window.sessionStorage, window.localStorage].filter(Boolean);
+                    for (let i = 0; i < storages.length; i += 1) {
+                        try {
+                            storages[i].setItem(key, String(value ?? ''));
+                            return true;
+                        } catch {
+                            // try next storage
+                        }
+                    }
+                    return false;
+                }
+
                 const showError = (msg) => {
                     const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
                     if (manager && typeof manager.showError === 'function') manager.showError(msg);
@@ -241,6 +273,24 @@
                     bounds.maxLng = minLng + gapLng;
                     bounds.minLat = clampLat(minLat);
                     bounds.maxLat = clampLat(minLat + gapLat);
+                }
+
+                function applyRegionTextValue(regionValue) {
+                    const raw = String(regionValue || '').replace(/，|；|;/g, ',').trim();
+                    if (!raw) return false;
+                    const parts = raw.split(',').map(t => t.trim()).filter(Boolean);
+                    if (parts.length < 4) return false;
+                    const tlx = Number(parts[0]);
+                    const tly = Number(parts[1]);
+                    const brx = Number(parts[2]);
+                    const bry = Number(parts[3]);
+                    if (![tlx, tly, brx, bry].every(Number.isFinite)) return false;
+                    bounds.minLng = Math.min(tlx, brx);
+                    bounds.maxLng = Math.max(tlx, brx);
+                    bounds.minLat = Math.min(tly, bry);
+                    bounds.maxLat = Math.max(tly, bry);
+                    normalizeBounds();
+                    return true;
                 }
 
                 function currentCenter() {
@@ -665,9 +715,8 @@
                 }
 
                 function closeOnly() {
-                    const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
-                    if (manager && typeof manager.closePage === 'function') {
-                        manager.closePage({});
+                    if (window.EleManager) {
+                        window.EleManager.closePage({});
                         return;
                     }
                     if (window.parent) window.parent.postMessage({ __elePageClose: true, data: {} }, '*');
@@ -676,14 +725,16 @@
 
                 function confirmRegion() {
                     const value = computeRegionText();
+                    const payloadItem = dialogDataKey && savePayloadToStorage(dialogDataKey, value)
+                        ? { id: value, name: value, dataKey: dialogDataKey, att: imageUrlText.value || '' }
+                        : { id: value, name: value, att: imageUrlText.value || '' };
                     const payload = {
                         type: 'ElePicker',
-                        data: [{ id: value, name: value, att: imageUrlText.value || '' }]
+                        data: [payloadItem]
                     };
 
-                    const manager = (window.top && window.top.EleManager) ? window.top.EleManager : window.EleManager;
-                    if (manager && typeof manager.closePage === 'function') {
-                        manager.closePage(payload);
+                    if (window.EleManager) {
+                        window.EleManager.closePage(payload);
                         return;
                     }
                     if (window.parent) window.parent.postMessage(payload, '*');
@@ -713,6 +764,10 @@
                 }
 
                 onMounted(() => {
+                    const initialRegion = readPayloadFromStorage(dialogDataKey);
+                    if (initialRegion) {
+                        applyRegionTextValue(initialRegion);
+                    }
                     initMap();
                 });
 

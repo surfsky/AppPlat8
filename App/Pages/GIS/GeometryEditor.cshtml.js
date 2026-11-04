@@ -17,6 +17,7 @@ createApp({
             return [lng, lat];
         };
         const search = new URLSearchParams(window.location.search || '');
+        const dialogDataKey = (search.get('dk') || '').trim();
         const readRefGpsFromStorage = () => {
             const wins = [window, window.parent, window.top].filter(Boolean);
             for (let i = 0; i < wins.length; i += 1) {
@@ -76,6 +77,22 @@ createApp({
             if (window.top && window.top.EleManager) return window.top.EleManager;
             if (window.parent && window.parent !== window && window.parent.EleManager) return window.parent.EleManager;
             return window.EleManager || null;
+        };
+
+        const closePage = (payload = {}) => {
+            // 关闭带返回值的抽屉时，必须优先使用 iframe 自身上下文里的 EleManager.closePage，
+            // 这样才会由当前页面向父窗口 postMessage 回传 payload。
+            if (window.EleManager) {
+                window.EleManager.closePage(payload);
+                return true;
+            }
+            if (window.parent) {
+                window.parent.postMessage({ __elePageClose: true, data: payload }, '*');
+            }
+            if (window.top && window.top !== window.parent) {
+                window.top.postMessage({ __elePageClose: true, data: payload }, '*');
+            }
+            return true;
         };
 
         const showError = (msg) => {
@@ -162,11 +179,11 @@ createApp({
             menuVisible.value = true;
         };
 
-        const createStorageToken = () => `sk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+        const createStorageToken = () => `dk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
         const cleanupSelectorStorage = (maxKeep = 120) => {
             const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
-            const shouldManage = (k) => typeof k === 'string' && (k.startsWith('sk_') || k.startsWith('ele_selector_'));
+            const shouldManage = (k) => typeof k === 'string' && (k.startsWith('dk_') || k.startsWith('ele_selector_'));
             storages.forEach((storage) => {
                 try {
                     const keys = [];
@@ -175,16 +192,9 @@ createApp({
                         if (shouldManage(k)) keys.push(k);
                     }
                     if (keys.length <= maxKeep) return;
-                    keys.sort((a, b) => {
-                        const ta = storage.getItem(`${a}__t`) || '0';
-                        const tb = storage.getItem(`${b}__t`) || '0';
-                        return Number(ta) - Number(tb);
-                    });
                     const removeCount = keys.length - maxKeep;
                     for (let i = 0; i < removeCount; i += 1) {
-                        const k = keys[i];
-                        storage.removeItem(k);
-                        storage.removeItem(`${k}__t`);
+                        storage.removeItem(keys[i]);
                     }
                 } catch {
                     // ignore
@@ -192,37 +202,45 @@ createApp({
             });
         };
 
-        const writePayloadToStorage = (text) => {
-            const token = createStorageToken();
+        const savePayloadToStorage = (key, text) => {
+            if (!key) return false;
             const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
             for (let i = 0; i < storages.length; i += 1) {
                 const storage = storages[i];
                 try {
-                    storage.setItem(token, text);
-                    storage.setItem(`${token}__t`, String(Date.now()));
-                    return token;
+                    storage.setItem(key, text);
+                    return true;
                 } catch {
                     cleanupSelectorStorage(80);
                     try {
-                        storage.setItem(token, text);
-                        storage.setItem(`${token}__t`, String(Date.now()));
-                        return token;
+                        storage.setItem(key, text);
+                        return true;
                     } catch {
                         // try next storage
                     }
                 }
             }
+            return false;
+        };
+
+        const writePayloadToStorage = (text) => {
+            const token = createStorageToken();
+            if (savePayloadToStorage(token, text)) return token;
             return '';
         };
 
+        // data key 模式：读取后删除对应存储键，避免本地存储膨胀
         const readPayloadFromStorage = (key) => {
             if (!key) return '';
             const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
             for (let i = 0; i < storages.length; i += 1) {
                 const storage = storages[i];
                 try {
-                    const value = storage.getItem(key) || '';
-                    if (String(value).trim()) return String(value);
+                    const value = storage.getItem(key);
+                    if (value !== null && value !== undefined) {
+                        storage.removeItem(key);
+                        if (String(value).trim()) return String(value);
+                    }
                 } catch {
                     // ignore storage errors
                 }
@@ -240,15 +258,17 @@ createApp({
             const md = isViewMode ? 'view' : 'edit';
             const serialized = JSON.stringify(props || {});
             let url = `/Shared/PropsEditor?md=${md}`;
+            let requestDataKey = '';
             if (typeof window !== 'undefined') {
                 const key = writePayloadToStorage(serialized);
                 if (key) {
+                    requestDataKey = key;
                     url += `&dk=${encodeURIComponent(key)}`;
                 } else {
-                    url += `&data=${encodeURIComponent(serialized)}`;
+                    url += `&dv=${encodeURIComponent(serialized)}`;
                 }
             } else {
-                url += `&data=${encodeURIComponent(serialized)}`;
+                url += `&dv=${encodeURIComponent(serialized)}`;
             }
 
             const applySelectorPayload = (selectorData) => {
@@ -256,7 +276,7 @@ createApp({
                 const list = Array.isArray(selectorData.data) ? selectorData.data : [];
                 if (list.length === 0) return;
                 const firstItem = list[0] || {};
-                const dataKey = firstItem.dataKey || firstItem.dk || '';
+                const dataKey = firstItem.dataKey || '';
                 const raw = readPayloadFromStorage(String(dataKey || ''))
                     || (firstItem.id !== undefined ? String(firstItem.id) : '');
                 if (!raw) return;
@@ -290,6 +310,10 @@ createApp({
                             : (payload?.data?.type === 'ElePicker' ? payload.data : null);
                         if (selectorData) {
                             applySelectorPayload(selectorData);
+                            return;
+                        }
+                        if (requestDataKey) {
+                            readPayloadFromStorage(String(requestDataKey));
                         }
                     }
                 });
@@ -448,17 +472,7 @@ createApp({
         };
 
         const closeOnly = () => {
-            const manager = getManager();
-            if (manager && typeof manager.closePage === 'function') {
-                manager.closePage({});
-                return;
-            }
-            if (window.parent) {
-                window.parent.postMessage({ __elePageClose: true, data: {} }, '*');
-            }
-            if (window.top && window.top !== window.parent) {
-                window.top.postMessage({ __elePageClose: true, data: {} }, '*');
-            }
+            closePage({});
         };
 
         const confirmGeometry = () => {
@@ -466,27 +480,16 @@ createApp({
                 const geojson = editor?.getExportGeoJson?.();
                 if (!geojson) throw new Error('请先绘制图形');
 
-                const key = geojson.length > 1200 ? writePayloadToStorage(geojson) : '';
-                const payloadItem = key
-                    ? { id: key, name: geojson, dataKey: key }
-                    : { id: geojson, name: geojson };
+                let payloadItem = { id: geojson, name: geojson };
+                if (dialogDataKey && savePayloadToStorage(dialogDataKey, geojson)) {
+                    payloadItem = { id: geojson, name: geojson, dataKey: dialogDataKey };
+                }
 
                 const payload = {
                     type: 'ElePicker',
                     data: [payloadItem]
                 };
-
-                const manager = getManager();
-                if (manager && typeof manager.closePage === 'function') {
-                    manager.closePage(payload);
-                    return;
-                }
-                if (window.parent) {
-                    window.parent.postMessage(payload, '*');
-                }
-                if (window.top && window.top !== window.parent) {
-                    window.top.postMessage(payload, '*');
-                }
+                closePage(payload);
             } catch (e) {
                 showWarning(e?.message || '当前图形不满足导出条件');
             }
@@ -537,6 +540,7 @@ createApp({
                 }
             });
             editor.init();
+            window.__geometryEditorDebug = editor;
 
             keydownHandler = (evt) => {
                 if (isTypingTarget(evt.target)) return;
@@ -580,10 +584,14 @@ createApp({
                 if (!isDeleteKey) return;
                 if (!editor || !editor.hasActiveSelection?.()) return;
                 evt.preventDefault();
+                if (typeof evt.stopImmediatePropagation === 'function') {
+                    evt.stopImmediatePropagation();
+                }
+                evt.stopPropagation();
                 removeSelected();
                 hideMenu();
             };
-            window.addEventListener('keydown', keydownHandler);
+            window.addEventListener('keydown', keydownHandler, true);
 
             mapContextMenuHandler = (evt) => {
                 if (longPressTriggered) {
@@ -688,7 +696,10 @@ createApp({
         });
 
         onBeforeUnmount(() => {
-            if (keydownHandler) window.removeEventListener('keydown', keydownHandler);
+            if (window.__geometryEditorDebug === editor) {
+                delete window.__geometryEditorDebug;
+            }
+            if (keydownHandler) window.removeEventListener('keydown', keydownHandler, true);
 
             const mapEl = document.getElementById('map');
             if (mapEl && mapContextMenuHandler) {

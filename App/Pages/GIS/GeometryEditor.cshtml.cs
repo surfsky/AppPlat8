@@ -1,18 +1,19 @@
 using App.Components;
 using App.DAL;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace App.Pages.Shared
 {
-    [Auth(Power.GisGeometryView)]
-    public class GeometryEditorModel : AuthModel
+    //[Auth(Power.GisGeometryView)]
+    public class GeometryEditorModel : BaseModel // AuthModel
     {
         [BindProperty(SupportsGet = true)]
         public string GeoJson { get; set; }
 
-        public void OnGet(string geojson)
+        public void OnGet(string dv)
         {
-            GeoJson = geojson;
+            GeoJson = dv ?? string.Empty;
         }
     }
 }

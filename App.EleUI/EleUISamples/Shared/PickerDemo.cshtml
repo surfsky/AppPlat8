@@ -1,0 +1,191 @@
+@page "/Shared/PickerDemo"
+@{
+    ViewData["Title"] = "选择演示";
+}
+
+@section head {
+    <style>
+        .picker-item { cursor: pointer; transition: all .15s ease; }
+        .picker-item:hover { border-color: #409eff; background: #ecf5ff; }
+        .picker-item.is-selected { border-color: #409eff; background: #ecf5ff; box-shadow: inset 0 0 0 1px #409eff; }
+    </style>
+}
+
+@section body {
+    <div class="h-full flex flex-col bg-white">
+        <!-- 调用方传入的初始值：dv（小数据）或 dk（大数据） -->
+        <div class="px-4 py-3 border-b border-gray-100 space-y-2">
+            <div class="text-sm font-medium text-gray-700">调用方传入的初始值</div>
+            <div class="flex items-start gap-2 text-xs">
+                <span id="sourceTag" class="shrink-0 px-2 py-0.5 rounded bg-gray-100 text-gray-600">无</span>
+                <span id="initialValue" class="font-mono text-gray-500 break-all">（空）</span>
+            </div>
+            <label class="flex items-center gap-1 text-xs text-gray-600">
+                <input type="checkbox" id="largeMode">
+                以“大数据”模式返回（写入 Storage 并回传 dataKey）
+            </label>
+        </div>
+
+        <div class="flex-1 overflow-auto p-4">
+            <div id="itemList" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+        </div>
+
+        <div class="px-4 py-3 border-t border-gray-100 flex items-center gap-3">
+            <div class="text-xs text-gray-400">
+                Storage 中的 dk_ 键：<span id="storageKeys" class="font-mono text-gray-600">0</span>
+            </div>
+            <div class="flex-1"></div>
+            <button id="btnCancel" class="px-4 py-1.5 rounded border border-gray-300 text-sm text-gray-600 hover:bg-gray-50">取消</button>
+            <button id="btnConfirm" class="px-4 py-1.5 rounded bg-blue-500 text-white text-sm hover:bg-blue-600">确定</button>
+        </div>
+    </div>
+}
+
+@section script {
+    <script>
+        (function () {
+            // 不同 src 对应不同演示数据集
+            const datasets = {
+                user: [
+                    { id: '1', name: 'admin（管理员）' },
+                    { id: '2', name: 'zhangsan（张三）' },
+                    { id: '3', name: 'lisi（李四）' },
+                    { id: '4', name: 'wangwu（王五）' },
+                    { id: '5', name: 'zhaoliu（赵六）' }
+                ],
+                role: [
+                    { id: '1', name: 'Admin（系统管理员）' },
+                    { id: '2', name: 'Manager（经理）' },
+                    { id: '3', name: 'User（普通用户）' }
+                ],
+                dept: [
+                    { id: '110', name: '行政办公室' },
+                    { id: '120', name: '人力资源部' },
+                    { id: '210', name: '平台研发部' },
+                    { id: '220', name: '应用研发部' },
+                    { id: '310', name: '客户成功部' }
+                ]
+            };
+
+            const params = new URLSearchParams(location.search);
+            const items = datasets[params.get('src')] || datasets.user;
+            const multi = params.get('multi') === '1';
+            const dialogKey = params.get('dk') || '';
+            const storages = [window.localStorage, window.sessionStorage];
+
+            // 生成与框架一致的本地存储令牌
+            function createToken() {
+                return `dk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+            }
+
+            // Storage 模式：弹窗只读取 dk，不在读取阶段删除；真正删除交给主窗口消费后完成。
+            function readInitialValue() {
+                if (dialogKey) {
+                    for (const storage of storages) {
+                        try {
+                            const value = storage.getItem(dialogKey);
+                            if (value !== null && value !== undefined) {
+                                return { source: 'dk（Storage）', value: String(value) };
+                            }
+                        } catch { }
+                    }
+                    return { source: 'dk（Storage）', value: '' };
+                }
+                const dv = params.get('dv');
+                if (dv !== null && dv !== undefined && String(dv).trim()) {
+                    return { source: 'dv（URL）', value: String(dv) };
+                }
+                return { source: '无', value: '' };
+            }
+
+            const initial = readInitialValue();
+            const selected = new Set(initial.value.split(',').map(s => s.trim()).filter(Boolean));
+
+            const listEl = document.getElementById('itemList');
+            document.getElementById('sourceTag').textContent = initial.source;
+            document.getElementById('initialValue').textContent = initial.value || '（空）';
+
+            function renderList() {
+                listEl.innerHTML = '';
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'picker-item flex items-center gap-2 px-3 py-2 border border-gray-200 rounded'
+                        + (selected.has(item.id) ? ' is-selected' : '');
+                    div.innerHTML = `<span class="text-xs text-gray-400">${item.id}</span><span class="text-sm text-gray-700">${item.name}</span>`;
+                    div.addEventListener('click', () => {
+                        if (multi) {
+                            if (selected.has(item.id)) selected.delete(item.id);
+                            else selected.add(item.id);
+                        } else {
+                            selected.clear();
+                            selected.add(item.id);
+                        }
+                        renderList();
+                    });
+                    listEl.appendChild(div);
+                });
+            }
+
+            // 统计 Storage 中的 dk_ 键，用于演示 data key 消费后即被删除
+            function refreshStorageCount() {
+                let count = 0;
+                storages.forEach(storage => {
+                    try {
+                        for (let i = 0; i < storage.length; i += 1) {
+                            const key = storage.key(i) || '';
+                            if (key.startsWith('dk_')) count += 1;
+                        }
+                    } catch { }
+                });
+                document.getElementById('storageKeys').textContent = String(count);
+            }
+
+            function saveToStorage(key, value) {
+                if (!key) return false;
+                for (const storage of storages) {
+                    try {
+                        storage.setItem(key, String(value ?? ''));
+                        return true;
+                    } catch { }
+                }
+                return false;
+            }
+
+            // 构造回传数据：Storage 模式回写原 dk 并回传同一个 dataKey；普通模式直接回传值。
+            function buildRows() {
+                return items.filter(t => selected.has(t.id)).map(item => {
+                    if (dialogKey) {
+                        if (saveToStorage(dialogKey, item.id)) {
+                            return { id: item.id, name: item.name, dataKey: dialogKey };
+                        }
+                    }
+
+                    const large = document.getElementById('largeMode').checked;
+                    if (!large) return { id: item.id, name: item.name };
+
+                    const token = createToken();
+                    if (saveToStorage(token, `${item.id}|${item.name}|${'x'.repeat(2000)}`)) {
+                        return { id: item.id, name: item.name, dataKey: token };
+                    }
+                    return { id: item.id, name: item.name };
+                });
+            }
+
+            function close(data) {
+                if (window.EleManager) {
+                    window.EleManager.closePage(data);
+                }
+            }
+
+            document.getElementById('btnConfirm').addEventListener('click', () => {
+                const rows = buildRows();
+                close(rows.length === 0 ? null : { type: 'ElePicker', data: rows });
+            });
+            document.getElementById('btnCancel').addEventListener('click', () => close(null));
+
+            renderList();
+            refreshStorageCount();
+            setInterval(refreshStorageCount, 1000);
+        })();
+    </script>
+}

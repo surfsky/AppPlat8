@@ -274,9 +274,7 @@ window.__WDO_INITIAL__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
             if (!canChange || !popupUrl) return;
             waitForEleManager(function () {
                 var u = popupUrl + (popupUrl.indexOf('?') >= 0 ? '&' : '?') +
-                    'pickerKey=wdo_org&keyMode=Url' +
-                    '&pickerValue=' + encodeURIComponent(idInput.value || '') +
-                    '&pickerText=' + encodeURIComponent(wrap.getAttribute('data-current-name') || '');
+                    'dv=' + encodeURIComponent(idInput.value || '');
                 window.EleManager.openDrawer({
                     title: '选择目标组织',
                     key: 'WdoOrgPicker',

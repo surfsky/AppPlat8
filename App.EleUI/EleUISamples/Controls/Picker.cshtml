@@ -1,0 +1,31 @@
+@page
+@model App.Pages.EleUISamples.PickerModel
+
+@{
+    ViewData["Title"] = "弹出选择器示例";
+}
+
+@section body {
+    <EleForm LabelPosition="Top" LabelWidth="140px">
+        <!-- 小数据模式：调用方通过 URL 参数 dv（data value）把当前值传给弹窗 -->
+        <ElePicker For="Item.UserId" TextFor="Item.UserName" Label="① 用户（KeyMode=Url / dv）"
+                   KeyMode="Url" PopupUrl="/EleUISamples/Shared/PickerDemo?src=user"></ElePicker>
+
+        <!-- Storage 往返模式：主窗口先写入 dk，弹窗读写同一个 key，关闭后主窗口再消费并删除 -->
+        <ElePicker For="Item.RoleId" TextFor="Item.RoleName" Label="② 角色（KeyMode=Storage / dk）"
+                   KeyMode="Storage" PopupUrl="/EleUISamples/Shared/PickerDemo?src=role"></ElePicker>
+
+        <!-- 自动模式：小数据走 dv，超过 1200 字符时自动切换为 dk -->
+        <ElePicker For="Item.DeptId" TextFor="Item.DeptName" Label="③ 部门（KeyMode=Auto）"
+                   KeyMode="Auto" PopupUrl="/EleUISamples/Shared/PickerDemo?src=dept"></ElePicker>
+
+        <!-- 多选模式：弹窗回传多行数据，选择器用逗号拼接 -->
+        <ElePicker For="Item.MultiIds" TextFor="Item.MultiNames" Label="④ 多选（Multi）"
+                   Multi="true" PopupUrl="/EleUISamples/Shared/PickerDemo?src=user&amp;multi=1"></ElePicker>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="Save" Icon="Check">保存</EleButton>
+            <EleButton Command="Close" Icon="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}

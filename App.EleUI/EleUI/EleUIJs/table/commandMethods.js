@@ -520,6 +520,34 @@ export const commandMethods = {
                         const id = r.id !== undefined ? r.id : r.Id;
                         return id !== undefined ? String(id) : '';
                     }
+                    // data key 模式：读取本地存储中的完整载荷后立即删除，避免本地存储膨胀
+                    function consumeStorageValue(dataKey) {
+                        if (!dataKey || typeof window === 'undefined') return '';
+                        const storages = [window.localStorage, window.sessionStorage].filter(Boolean);
+                        for (let i = 0; i < storages.length; i += 1) {
+                            const storage = storages[i];
+                            try {
+                                const v = storage.getItem(dataKey);
+                                if (v !== null && v !== undefined) {
+                                    storage.removeItem(dataKey);
+                                    if (String(v).trim()) return String(v);
+                                }
+                            } catch {
+                                // ignore storage errors
+                            }
+                        }
+                        return '';
+                    }
+                    function pickerRowValue(r) {
+                        if (!r || typeof r !== 'object') return '';
+                        const rowKey = r.dataKey || r.dk || '';
+                        if (rowKey) {
+                            const stored = consumeStorageValue(String(rowKey));
+                            if (stored) return stored;
+                        }
+                        const id = r.id !== undefined ? r.id : r.Id;
+                        return id !== undefined ? id : '';
+                    }
                     function applyPickerRows(msgData) {
                         if (!msgData) return;
                         const src = msgData.data || msgData;
@@ -530,13 +558,13 @@ export const commandMethods = {
                                  : [];
                         if (!rows || rows.length === 0) return;
                         if (multi) {
-                            const idsArr   = rows.map(r => (r.id !== undefined ? r.id : r.Id));
+                            const idsArr   = rows.map(r => pickerRowValue(r));
                             const names = rows.map(r => makeDisplayName(r));
                             formState[key]     = idsArr.join(',');
                             formState[textKey] = names.join(',');
                         } else {
                             const first = rows[0] || {};
-                            const idVal   = first.id   !== undefined ? first.id   : first.Id;
+                            const idVal   = pickerRowValue(first);
                             const nameVal = makeDisplayName(first);
                             formState[key]     = idVal;
                             formState[textKey] = nameVal;
