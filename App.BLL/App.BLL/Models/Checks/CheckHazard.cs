@@ -36,8 +36,9 @@ namespace App.DAL
     /// 隐患表(CheckHazard----(1:n)----CheckHazardLog)
     //-------------------------------------------------------
     [UI("检查", "隐患")]
-    public class CheckHazard : EntityBase<CheckHazard>
+    public class CheckHazard : EntityBase<CheckHazard>, IFixAll
     {
+        [UI("区域")] public long? OrgId { get; set; } // 冗余存储
         [UI("检查对象")] public long? CheckObjectId { get; set; }    // 冗余存储，方便查询
         [UI("检查人员")] public long? CheckerId { get; set; }   // 冗余存储，方便查询
         [UI("检查记录")] public long? CheckLogId { get; set; }
@@ -49,6 +50,7 @@ namespace App.DAL
         [UI("整改期限")] public DateTime? ExpireDt { get; set; }
         [UI("整改日期")] public DateTime? RectifyDt { get; set; }
         [UI("整改方式")] public CheckHazardRectifyType? RectifyType { get; set; } = CheckHazardRectifyType.Limit;
+
 
         //
         [UI("录入141")] public bool? IsIn141 { get; set; }
@@ -108,9 +110,24 @@ namespace App.DAL
                 HazardLevel,
                 HazardLevelName = HazardLevel.GetTitle(),
                 CheckDtText = Check?.CheckDt?.ToString("yyyy-MM-dd HH:mm"),
-                DutyOrgName = OrgName,
+                OrgName
             };
         }
+
+        // 自动填充冗余字段
+        public override void BeforeSave(EntityOp op)
+        {
+            base.BeforeSave(op);
+            if (CheckObject != null)
+                OrgId = CheckObject.OrgId;
+            else if (CheckObjectId.IsNotEmpty())
+            {
+                CheckObject = CheckObject.Get(CheckObjectId.Value);
+                if (CheckObject != null)
+                    OrgId = CheckObject.OrgId;
+            }
+        }
+
         public static IQueryable<CheckHazard> Search(
             string objectName, long? objectId, 
             string checkerName, long? checkerId, CheckHazardStatus? status, 
@@ -124,7 +141,7 @@ namespace App.DAL
             else if (checkerName.IsNotEmpty())  q = q.Where(o => o.Checker.Name.Contains(checkerName.Trim()));
             if (status.IsNotEmpty())            q = q.Where(o => o.Status == status.Value);
             var dutyNetIds = GetOrgIds(orgIds, orgId);
-            if (dutyNetIds.Count > 0)            q = q.Where(o => o.CheckObject != null && o.CheckObject.OrgId.HasValue && dutyNetIds.Contains(o.CheckObject.OrgId.Value));
+            if (dutyNetIds.Count > 0)            q = q.Where(o => o.OrgId.HasValue && dutyNetIds.Contains(o.OrgId.Value));
             if (expireTo.IsNotEmpty())          q = q.Where(o => o.ExpireDt.HasValue && o.ExpireDt.Value <= expireTo.Value.Date);
             if (createStartDt.IsNotEmpty())     q = q.Where(o => o.CreateDt >= createStartDt.Value.Date);
             return q;
@@ -142,6 +159,30 @@ namespace App.DAL
                 .Select(t => t.Id)
                 .Distinct()
                 .ToList();
+        }
+
+        public static int FixAll()
+        {
+            // 批量回填隐患表的冗余 OrgId 字段。
+            var now = DateTime.Now;
+            var sql = @"
+UPDATE CheckHazards
+SET OrgId = (
+        SELECT OrgId
+        FROM CheckObjects
+        WHERE CheckObjects.Id = CheckHazards.CheckObjectId
+    ),
+    UpdateDt = {0}
+WHERE CheckObjectId IS NOT NULL
+  AND (
+        OrgId IS NULL
+        OR OrgId != (
+            SELECT OrgId
+            FROM CheckObjects
+            WHERE CheckObjects.Id = CheckHazards.CheckObjectId
+        )
+    );";
+            return Db.Database.ExecuteSqlRaw(sql, now);
         }
     }
 }

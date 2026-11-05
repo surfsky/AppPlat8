@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using App.Utils;
 using System.Threading.Tasks;
+using System.Linq;
 using App.Web;
 using Microsoft.AspNetCore.Authentication;
 
@@ -27,6 +28,43 @@ namespace App.Components
         {
             //return FineUICore.PageContext.GetRequestService<DAL.AppPlatContext>();
             return Asp.Current.RequestServices.GetService(typeof(DAL.AppPlatContext)) as DAL.AppPlatContext;
+        }
+
+        //-------------------------------------------------
+        // 一些辅助方法
+        //-------------------------------------------------
+        /// <summary>解析ID字符串，返回有效的ID列表</summary>
+        public static List<long> ParseIds(string ids)
+        {
+            if (string.IsNullOrWhiteSpace(ids))
+                return new List<long>();
+
+            return ids
+                .Replace("，", ",")
+                .Replace("；", ",")
+                .Replace(";", ",")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => long.TryParse(x, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList()
+                ;
+        }
+
+        /// <summary>解析ID字符串，返回有效的ID集合</summary>
+        public static HashSet<long> ParseIdSet(string ids)
+        {
+            if (string.IsNullOrWhiteSpace(ids))
+                return new HashSet<long>();
+
+            return ids
+                .Replace("，", ",")
+                .Replace("；", ",")
+                .Replace(";", ",")
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => long.TryParse(x, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .ToHashSet();
         }
     }
 }

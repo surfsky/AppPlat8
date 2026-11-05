@@ -94,10 +94,10 @@
 
         function set3D(enabled, opts = {}) {
             state.is3D = enabled;
-            terrainHelper.state.currentExaggeration = enabled ? 1.2 : 0;
+            terrainHelper.state.currentExaggeration = enabled ? 1.5 : 0;
             syncTerrainStyle();
             sync3DToggleButton();
-            if (opts.adjustCamera !== false && state.is3D === enabled) {
+            if (opts.adjustCamera !== false && state.is3D === enabled && map.getPitch() === 0) {
                 map.easeTo(enabled ? { pitch: 72, duration: 800 } : { pitch: 0, bearing: 0, duration: 500 });
             }
             if (opts.closeMenu !== false) closeViewMenu();

@@ -1,0 +1,66 @@
+@page
+@model App.Pages.Checks.Reports.CheckStatModel
+@{ ViewData["Title"] = "检查统计报表"; }
+
+@section body {
+<div class="w-full bg-white border border-gray-200 shadow-sm" style="min-height:calc(100vh - 10px);">
+<EleTable
+    Id="tblCheckStat"
+    DataHandler="?handler=Data"
+    Title="检查统计报表"
+    RowKey="orgId"
+    SortField=""
+    ShowPage="false"
+    HeadHAlign="Center"
+    HeadWrap="true"
+    Height="calc(100vh - 10px)"
+    LineColor="#c0c0c0"
+    >
+  <Toolbar>
+    <Filters>
+      <EleTreePicker For="OrgId"
+                     Label="网格区域"
+                     Width="320px"
+                     Api="/httpapi/orgs/GetAuthOrgTree"
+                     ExpandLevel="3"
+                     CheckStrictly="true"
+                     Value="@Model.OrgId">
+      </EleTreePicker>
+      <EleSelect For="QuickRange" Label="时间范围" Width="140px" Value="@Model.QuickRange" OnChange="QuickRangeChanged">
+        <el-option label="本月" value="month"></el-option>
+        <el-option label="本季度" value="quarter"></el-option>
+        <el-option label="本年" value="year"></el-option>
+      </EleSelect>
+      <EleDatePicker For="StartDt" Label="开始时间" Width="220px"
+                     Value="@Model.StartDt.ToString("yyyy-MM-ddTHH:mm:ss")"
+                     Placeholder="开始时间"
+                     Type="@EleDatePickerType.DateTime">
+      </EleDatePicker>
+      <EleDatePicker For="EndDt" Label="结束时间" Width="220px"
+                     Value="@Model.EndDt.ToString("yyyy-MM-ddTHH:mm:ss")"
+                     Placeholder="结束时间"
+                     Type="@EleDatePickerType.DateTime">
+      </EleDatePicker>
+    </Filters>
+    <Buttons>
+      <EleButton Type="Primary" Command="Search" Icon="Search">搜索</EleButton>
+      <EleButton Type="Warning" Command="Export" Icon="Download">导出</EleButton>
+      <EleButton Type="Default" Command="Reset" Icon="Refresh">重置</EleButton>
+    </Buttons>
+  </Toolbar>
+  <Columns>
+    <EleNumColumn Label="序号" Width="60" Fixed="left" Align="center" Sortable="false" />
+    <EleColumn For="Item.OrgName" Label="区域名称" MinWidth="180" Fixed="left" Sortable="false"
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckHazards?orgId={orgId}&amp;scopeOrgOnly=true&amp;createStartDt={hazardStart}&amp;createEndDt={hazardEnd}" />
+    <EleColumn For="Item.ObjectCount" Label="纳管对象数" Width="110" Align="right" Sortable="false" />
+    <EleColumn For="Item.CheckCount" Label="检查次数" Width="100" Align="right" Sortable="false" />
+    <EleColumn For="Item.NormalHazardText" Label="一般隐患数(已整改数)" Width="165" Align="center" Sortable="false" />
+    <EleColumn For="Item.HighHazardText" Label="重大隐患数(已整改数)" Width="165" Align="center" Sortable="false" />
+    <EleColumn For="Item.HighProblemText" Label="重点问题数(已整改数)" Width="165" Align="center" Sortable="false" />
+    <EleColumn For="Item.TotalHazardText" Label="隐患总数(已整改数)" Width="150" Align="center" Sortable="false" />
+    <EleColumn For="Item.HazardPerThousandText" Label="每千次巡查发现隐患数" Width="150" Align="right" Sortable="false" />
+    <EleColumn For="Item.MajorProblemRateText" Label="重大隐患、重点问题发现率" Width="180" Align="right" Sortable="false" />
+  </Columns>
+</EleTable>
+</div>
+}

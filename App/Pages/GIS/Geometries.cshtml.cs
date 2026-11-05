@@ -28,7 +28,7 @@ namespace App.Pages.GIS
 
         public IActionResult OnGetData(Paging pi, string name, GeometryType? type, bool? isVisible, long? menuId, string menuIds = null)
         {
-            var ids = ParseIdSet(menuIds);
+            var ids = Common.ParseIdSet(menuIds);
             if (ids.Count == 0)
             {
                 // 查询指定单个菜单下的几何数据

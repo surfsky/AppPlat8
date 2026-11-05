@@ -1,9 +1,20 @@
 export const commandMethods = {
     exportData() {
         try {
+            const iframeName = `ele-export-frame-${this.config?.hostId || 'default'}`;
+            let iframe = document.getElementById(iframeName);
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = iframeName;
+                iframe.name = iframeName;
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = this.exportHandler;
+            form.target = iframeName;
             form.style.display = 'none';
 
             const params = {
@@ -15,6 +26,8 @@ export const commandMethods = {
             };
 
             for (const [key, value] of Object.entries(params)) {
+                if (value === null || typeof value === 'undefined')
+                    continue;
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;

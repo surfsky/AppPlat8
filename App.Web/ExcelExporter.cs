@@ -37,11 +37,11 @@ namespace App.Web
         }
 
         /// <summary>导出Excel文件（多层表头版本：传入 ExportColumnConfig，支持 EleColumnGroup 一致的层级合并）</summary>
-        public static void Export(IEnumerable<object> objs, ExportColumnConfig cfg, string fileName = "Export.xls", bool showPropertyNameHeader = false)
+        public static void Export(IEnumerable<object> objs, ExportColumnConfig cfg, string fileName = "Export.xls", bool showPropertyNameHeader = false, int fixRows = 1)
         {
             var response = Asp.Response;
             fileName = HttpUtility.UrlEncode(fileName, Encoding.UTF8);
-            var bytes = ExcelHelper.ToExcelXml(objs, cfg, showPropertyNameHeader).ToBytes();
+            var bytes = ExcelHelper.ToExcelXml(objs, cfg, showPropertyNameHeader, fixRows).ToBytes();
             response.ContentType = "application/vnd.ms-excel; charset=utf-8";
             response.Headers["Content-Disposition"] = "attachment;filename=" + fileName;
             response.Body.WriteAsync(bytes, 0, bytes.Length).GetAwaiter().GetResult();

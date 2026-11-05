@@ -100,7 +100,7 @@ namespace App.Utils
         }
 
         // 将 IEnumerable<object> + ExportColumnConfig（多层表头）转换为 ExcelXml
-        public static string ToExcelXml(IEnumerable<object> objs, ExportColumnConfig cfg, bool showPropertyNameHeader = false)
+        public static string ToExcelXml(IEnumerable<object> objs, ExportColumnConfig cfg, bool showPropertyNameHeader = false, int fixRows = 1)
         {
             cfg = cfg ?? new ExportColumnConfig();
             var leafCols = cfg.GetLeafColumns() ?? new List<ExportColumn>();
@@ -135,10 +135,11 @@ namespace App.Utils
             sb.AppendFormat(" <Worksheet ss:Name=\"{0}\">", XmlEscape(sheetName)).AppendLine();
             sb.AppendLine("  <Table>");
 
-            // 列宽（默认 24；叶子列有 Width 则用 Width/7 换算）
+            // 列宽（默认按字符宽度估算为像素，避免 Excel 中挤成一团）
             foreach (var lc in leafCols)
             {
-                double w = (lc.Width.HasValue && lc.Width.Value > 0) ? Math.Max(1, lc.Width.Value / 7.0) : 24.0;
+                var widthChars = (lc.Width.HasValue && lc.Width.Value > 0) ? lc.Width.Value : 16.0;
+                double w = Math.Max(60.0, Math.Round(widthChars * 7.0, 2));
                 sb.AppendFormat("   <Column ss:Width=\"{0:0.##}\"/>", w).AppendLine();
             }
 
@@ -218,19 +219,20 @@ namespace App.Utils
 
             sb.AppendLine("  </Table>");
 
-            // 冻结窗格：冻结顶部表头行 + 左侧 FreezeCols 列
-            int freezeTopRows = maxDepth + (showPropertyNameHeader ? 1 : 0);
+            // 冻结窗格：默认只冻结首行，可通过 fixRows 调整
+            int maxFreezeRows = maxDepth + (showPropertyNameHeader ? 1 : 0);
+            int freezeTopRows = Math.Clamp(fixRows, 0, maxFreezeRows);
             if (freezeTopRows > 0 || cfg.FreezeCols > 0)
             {
                 sb.AppendLine("  <WorksheetOptions xmlns=\"urn:schemas-microsoft-com:office:excel\">");
                 sb.AppendLine("   <FreezePanes/>");
                 sb.AppendLine("   <FrozenNoSplit/>");
-                // 水平分割（列）：SplitHorizontal = 冻结左侧列数
-                if (cfg.FreezeCols > 0)
-                    sb.AppendFormat("   <SplitHorizontal>{0}</SplitHorizontal>", cfg.FreezeCols).AppendLine();
-                // 垂直分割（行）：SplitVertical = 冻结顶行数
+                // 水平分割（行）：SplitHorizontal = 冻结顶行数
                 if (freezeTopRows > 0)
-                    sb.AppendFormat("   <SplitVertical>{0}</SplitVertical>", freezeTopRows).AppendLine();
+                    sb.AppendFormat("   <SplitHorizontal>{0}</SplitHorizontal>", freezeTopRows).AppendLine();
+                // 垂直分割（列）：SplitVertical = 冻结左侧列数
+                if (cfg.FreezeCols > 0)
+                    sb.AppendFormat("   <SplitVertical>{0}</SplitVertical>", cfg.FreezeCols).AppendLine();
                 // Pane 编号：只冻结行=2；只冻结列=1；都冻结=3（右下为活动窗格）
                 int paneNo = (cfg.FreezeCols > 0 && freezeTopRows > 0) ? 3
                            : (cfg.FreezeCols > 0 ? 1 : 2);

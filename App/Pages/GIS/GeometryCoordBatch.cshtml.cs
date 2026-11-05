@@ -18,7 +18,7 @@ namespace App.Pages.GIS
 
         public void OnGet(string ids = null)
         {
-            SelectedIds = ParseIds(ids);
+            SelectedIds = Common.ParseIds(ids);
         }
 
         public IActionResult OnPostConvert([FromBody] CoordBatchConvertReq req)
