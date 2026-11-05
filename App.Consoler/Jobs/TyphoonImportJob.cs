@@ -3,12 +3,13 @@ using App.DAL;
 using App.DAL.GIS;
 using App.Entities;
 using Quartz;
+namespace App.Consoler;
 
 /// <summary>台风数据导入任务</summary>
 public class TyphoonImportJob : IJob
 {
     /// <summary>执行导入</summary>
-    public Task Execute(IJobExecutionContext context)
+    public Task Execute(IJobExecutionContext context) 
     {
         var root = ResolveRoot();
         var metaPath = Path.Combine(root, "Doc", "Map", "js", "layers", "typhoons.json");

@@ -29,12 +29,13 @@ This library supports many useful convinient extensions and methods, such as:
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+    <!-- 通用编译设置：unsafe 与告警抑制对 Debug / Release 均生效，避免 Release 编译失败 -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>SYSLIB0011;SYSLIB0014;SYSLIB0021;SYSLIB0023;CS0618;CA1416</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoWarn>SYSLIB0011;SYSLIB0014;SYSLIB0021;SYSLIB0023;CS0618;CA1416</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

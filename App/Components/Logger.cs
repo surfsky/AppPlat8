@@ -20,7 +20,7 @@ namespace App.Components
         static Serilog.Core.Logger CreateLogger()
         {
             // 日志路径统一从 Paths 取，允许配置外部目录；启动期 Paths 不依赖任何 Web/DAL
-            var logDir = Paths.LogsRoot;
+            var logDir = Paths.LogRoot;
             IO.PrepareDirectory(Path.Combine(logDir, "_.txt"));
             var logFile = Path.Combine(logDir, "log.txt");
             return new LoggerConfiguration()

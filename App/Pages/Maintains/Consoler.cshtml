@@ -3,7 +3,7 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "控制台调度器";
-    var projectPathJson = System.Text.Json.JsonSerializer.Serialize(Model.ProjectPath ?? string.Empty);
+    var consolerDllPathJson = System.Text.Json.JsonSerializer.Serialize(Model.ConsolerDllPath ?? string.Empty);
     var workingDirectoryJson = System.Text.Json.JsonSerializer.Serialize(Model.WorkingDirectory ?? string.Empty);
 }
 
@@ -16,12 +16,12 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold text-slate-800">控制台调度器</h1>
-                    <p class="mt-0.5 text-xs text-slate-500">运行 `App.Consoler` 项目，并实时查看控制台输出</p>
+                    <p class="mt-0.5 text-xs text-slate-500">运行 App.Consoler 调度器，并实时查看控制台输出</p>
                 </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <el-button type="primary" :loading="busy.starting" :disabled="!state.hasProject || state.isRunning" @@click="startRunner">
+                <el-button type="primary" :loading="busy.starting" :disabled="!state.hasConsolerDll || state.isRunning" @@click="startRunner">
                     <i class="fas fa-play mr-1"></i>
                     <span>启动</span>
                 </el-button>
@@ -45,13 +45,13 @@
         </div>
 
         <div class="mt-5 space-y-3">
-            <el-alert v-if="!state.hasProject"
-                      title="未找到 App.Consoler 项目文件，当前页面无法启动调度器。"
+            <el-alert v-if="!state.hasConsolerDll"
+                      title="未找到 App.Consoler.dll（调度器程序集），请确认它已随主站点一起发布。"
                       type="error"
                       :closable="false"
                       show-icon></el-alert>
-            <el-alert v-else-if="!state.hasDatabase"
-                      title="未找到默认数据库文件 App/Db/sqlite.db，调度器可能无法连接数据库。"
+            <el-alert v-else-if="!state.hasConnectionString"
+                      title="App.Consoler.Config.json 未配置数据库连接串，调度器可能无法连接数据库。"
                       type="warning"
                       :closable="false"
                       show-icon></el-alert>
@@ -98,16 +98,16 @@
             <div class="border-b border-slate-200 px-5 py-4">
                 <div class="grid gap-3 md:grid-cols-2">
                     <div>
-                        <div class="text-xs text-slate-500">项目路径</div>
-                        <div class="mt-1 break-all text-sm text-slate-800">{{ state.projectPath }}</div>
+                        <div class="text-xs text-slate-500">调度器程序集</div>
+                        <div class="mt-1 break-all text-sm text-slate-800">{{ state.consolerDllPath }}</div>
                     </div>
                     <div>
                         <div class="text-xs text-slate-500">工作目录</div>
                         <div class="mt-1 break-all text-sm text-slate-800">{{ state.workingDirectory }}</div>
                     </div>
                     <div>
-                        <div class="text-xs text-slate-500">数据库</div>
-                        <div class="mt-1 break-all text-sm text-slate-800">{{ state.dbPath }}</div>
+                        <div class="text-xs text-slate-500">调度器数据库连接串</div>
+                        <div class="mt-1 break-all text-sm text-slate-800">{{ state.connectionString }}</div>
                     </div>
                     <div>
                         <div class="text-xs text-slate-500">API Base Url</div>
@@ -156,13 +156,13 @@
                     lastError: '',
                     commandLine: '',
                     apiBaseUrl: '',
-                    projectPath: @Html.Raw(projectPathJson),
+                    consolerDllPath: @Html.Raw(consolerDllPathJson),
                     workingDirectory: @Html.Raw(workingDirectoryJson),
-                    dbPath: '',
+                    connectionString: '',
                     output: '',
                     lineCount: 0,
-                    hasProject: false,
-                    hasDatabase: false
+                    hasConsolerDll: false,
+                    hasConnectionString: false
                 });
                 const busy = reactive({
                     starting: false,
@@ -199,13 +199,13 @@
                     state.lastError = src.lastError || '';
                     state.commandLine = src.commandLine || '';
                     state.apiBaseUrl = src.apiBaseUrl || '';
-                    state.projectPath = src.projectPath || state.projectPath;
+                    state.consolerDllPath = src.consolerDllPath || state.consolerDllPath;
                     state.workingDirectory = src.workingDirectory || state.workingDirectory;
-                    state.dbPath = src.dbPath || '';
+                    state.connectionString = src.connectionString || '';
                     state.output = src.output || '';
                     state.lineCount = src.lineCount || 0;
-                    state.hasProject = !!src.hasProject;
-                    state.hasDatabase = !!src.hasDatabase;
+                    state.hasConsolerDll = !!src.hasConsolerDll;
+                    state.hasConnectionString = !!src.hasConnectionString;
                     await nextTick();
                     scrollToBottom();
                 };

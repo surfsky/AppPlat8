@@ -183,7 +183,7 @@ namespace App.Pages.Shared.FileViews
                 return false;
             }
 
-            var root = Paths.FilesRoot;
+            var root = Paths.FileRoot;
             fullPath = Path.GetFullPath(Path.Combine(root, safePath.Replace('/', Path.DirectorySeparatorChar)));
             var rootPath = Path.GetFullPath(root);
             if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))

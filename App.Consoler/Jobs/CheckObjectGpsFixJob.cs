@@ -1,6 +1,9 @@
 using System.Text.Json;
 using App.DAL;
 using Quartz;
+namespace App.Consoler;
+
+
 /// <summary>
 /// 检查对象GPS修复任务
 /// </summary>

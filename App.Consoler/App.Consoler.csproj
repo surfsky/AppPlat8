@@ -1,12 +1,26 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\App.BLL\App.BLL\App.BLL.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 与主站点保持一致的 ASP.NET Core 共享框架依赖：
+         主站点是 Web 项目，不会把共享框架内的程序集（Microsoft.Extensions.* 等）复制到输出目录，
+         而 App.Consoler 作为控制台进程单独运行时需要它们，故此处显式声明同一共享框架 -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
     <PackageReference Include="Quartz" Version="3.13.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 调度器独立配置文件：随构建复制到输出目录（名字区别于主站点 appsettings.json，避免冲突） -->
+    <None Update="App.Consoler.Config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <PropertyGroup>

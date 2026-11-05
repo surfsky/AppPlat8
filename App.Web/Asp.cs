@@ -106,14 +106,6 @@ namespace App.Web
                 .ToString();
         }
 
-
-        /// <summary>主机根物理路径</summary>
-        //public static string HostFolder => HttpRuntime.AppDomainAppPath;
-        //public static string GetHostFolder(IHostingEnvironment env)
-        //{
-        //    return env.ContentRootPath;
-        //}
-
         /// <summary>获取服务器 IP</summary>
         public static string ServerIP => Current.Connection.LocalIpAddress.MapToIPv4().ToString();
 
@@ -127,18 +119,6 @@ namespace App.Web
             }
         }
 
-        /*
-        /// <summary>
-        /// 结束对客户端的输出。
-        /// 由于.NET 设计原因，Response.End()在WebForm框架下可以终止代码执行，不再处理End()之后的代码。
-        /// 在MVC框架下则只是返回响应流，不会中止代码执行。
-        /// </summary>
-        public static void End()
-        {
-            Response.End();
-        }
-        */
-
         /// <summary>
         /// 强行断开与客户端的socket连接。
         /// 只有代码发生错误（恶意的攻击），希望终止对于客户端的响应/连接时才可以使用Response.Close()
@@ -149,70 +129,6 @@ namespace App.Web
             Response.Body.Close();
         }
         
-
-        //-------------------------------------
-        // Html
-        //-------------------------------------
-        /*
-        /// <summary>在页面头部注册移动端适配的meta语句</summary>
-        public static void RegistMobileMeta()
-        {
-            HtmlHead head = Page.Header;
-            HtmlMeta meta = new HtmlMeta();
-            meta.Name = "viewport";
-            meta.Content = "width=device-width, initial-scale=1.0";
-            head.Controls.AddAt(0, meta);
-        }
-        */
-
-        /*
-        /// <summary>在页面头部注册CSS</summary>
-        public static void RegistCSS(string url, bool appendOrInsert=true)
-        {
-            url = ResolveUrl(url);
-            HtmlLink css = new HtmlLink();
-            css.Href = url;
-            css.Attributes.Add("rel", "stylesheet");
-            css.Attributes.Add("type", "text/css");
-            var header = (HttpContext.Current.Handler as Page).Header;
-            if (appendOrInsert)
-                header.Controls.Add(css);
-            else
-                header.Controls.AddAt(0, css);
-        }
-        */
-
-        /*
-        /// <summary>在页面头部注册脚本</summary>
-        public static void RegistScript(string url)
-        {
-            HtmlGenericControl script = new HtmlGenericControl("script");
-            script.Attributes.Add("type", "text/javascript");
-            script.Attributes.Add("src", url);
-            (Asp.Current.Handler as Page).Header.Controls.Add(script);
-        }
-        */
-
-        /*
-        /// <summary>创建POST表单并跳转页面</summary>
-        public static void CreateFormAndPost(Page page, string url, Dictionary<string, string> data)
-        {
-            // 构建表单
-            string formId = "PostForm";
-            StringBuilder sb = new StringBuilder();
-            sb.AppendFormat(@"<form id=""{0}"" name=""{0}"" action=""{1}"" method=""POST"">", formId, url); 
-            foreach (var item in data)
-                sb.AppendFormat(@"<input type=""hidden"" name=""{0}"" value='{1}'>", item.Key, item.Value);
-            sb.Append("</form>");
-
-            // 创建js执行Form
-            sb.Append(@"<script type=""text/javascript"">");
-            sb.AppendFormat("var postForm = document.{0};", formId);
-            sb.Append("postForm.submit();");
-            sb.Append("</script>");
-            page.Controls.Add(new LiteralControl(sb.ToString()));
-        }
-        */
 
 
         //-------------------------------------------
@@ -238,9 +154,6 @@ namespace App.Web
                 return "";
             if (virtualPath.Contains("/"))
             {
-                // 识别已知前缀：/Files/* /Caches/* → 直接映射到 Paths 对应物理根（不受 ContentRoot 限制，允许跨盘/外网盘）
-                var known = Paths.TryMapKnownPrefix(virtualPath);
-                if (known.IsNotEmpty()) return known;
                 if (baseWwwroot)
                     return Path.Combine(_hostFolder, "wwwroot", virtualPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
                 return Path.Combine(_hostFolder, virtualPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
@@ -284,68 +197,6 @@ namespace App.Web
             return relativeUrl;
         }
 
-        /*
-        public static string ResolveUrl(string relativeUrl)
-        {
-            if (relativeUrl.IsEmpty())
-                return "";
-
-            if (relativeUrl.Length == 0 || relativeUrl[0] == '/' || relativeUrl[0] == '\\') 
-                return relativeUrl;
-
-            int idxOfScheme = relativeUrl.IndexOf(@"://", StringComparison.Ordinal);
-            if (idxOfScheme != -1)
-            {
-                int idxOfQM = relativeUrl.IndexOf('?');
-                if (idxOfQM == -1 || idxOfQM > idxOfScheme) 
-                    return relativeUrl;
-            }
-
-            StringBuilder sb = new StringBuilder();
-            //sb.Append(HttpRuntime.AppDomainAppVirtualPath);
-            sb.Append(HttpRuntime.AppDomainAppVirtualPath);
-            if (sb.Length == 0 || sb[sb.Length - 1] != '/') 
-                sb.Append('/');
-
-            // found question mark already? query string, do not touch!
-            bool foundQM = false;
-            bool foundSlash; // the latest char was a slash?
-            if (relativeUrl.Length > 1
-                && relativeUrl[0] == '~'
-                && (relativeUrl[1] == '/' || relativeUrl[1] == '\\'))
-            {
-                relativeUrl = relativeUrl.Substring(2);
-                foundSlash = true;
-            }
-            else 
-                foundSlash = false;
-
-            foreach (char c in relativeUrl)
-            {
-                if (!foundQM)
-                {
-                    if (c == '?') foundQM = true;
-                    else
-                    {
-                        if (c == '/' || c == '\\')
-                        {
-                            if (foundSlash) continue;
-                            else
-                            {
-                                sb.Append('/');
-                                foundSlash = true;
-                                continue;
-                            }
-                        }
-                        else if (foundSlash) foundSlash = false;
-                    }
-                }
-                sb.Append(c);
-            }
-
-            return sb.ToString();
-        }
-        */
 
         /// <summary>
         /// 将 URL 转化为相对于浏览器当前路径的相对路径。
@@ -413,28 +264,6 @@ namespace App.Web
             return GetQueryString(queryKey).ParseBool();
         }
 
-
-        /*
-        /// <summary>获取 URL 对应的处理器类</summary>
-        /// 
-        public static Type GetHandler(string url)
-        {
-            if (url.IsEmpty()) 
-                return null;
-            var u = new Url(url);
-            url = u.PurePath.ToLower();  // 只保留绝对路径，且去除查询字符串
-            var key = url.MD5();
-            return IO.GetCache<Type>(key, () =>
-            {
-                Type type = null;
-                try { type = BuildManager.GetCompiledType(url); }
-                catch { }
-                if (type != null && type.FullName.StartsWith("ASP.") && type.BaseType != null)
-                    type = type.BaseType;
-                return type;
-            });
-        }
-        */
 
         /// <summary>允许跨域（未测试）</summary>
         public static void EnableCros()

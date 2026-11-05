@@ -1,228 +1,153 @@
 using App.DAL;
 using App.Entities;
-using App.Utils;
-using Microsoft.EntityFrameworkCore;
 using Quartz;
 using Quartz.Impl;
-using System.IO;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading;
+using Microsoft.EntityFrameworkCore;
+namespace App.Consoler;
 
-
-//---------------------------------------------------------------
-// 启动参数检测
-// public static void Main(string[] args)
-//---------------------------------------------------------------
-// 解析检查对象点位接口基础URL
-var apiBaseUrl = args
-	.FirstOrDefault(t => t.StartsWith("--api-base=", StringComparison.OrdinalIgnoreCase))
-	?.Substring("--api-base=".Length)
-	?.Trim();
-if (string.IsNullOrWhiteSpace(apiBaseUrl))
-	apiBaseUrl = "http://localhost:6060";
-
-// 高德地图API密钥
-var amapKey = args
-	.FirstOrDefault(t => t.StartsWith("--amap-key=", StringComparison.OrdinalIgnoreCase))
-	?.Substring("--amap-key=".Length)
-	?.Trim();
-if (string.IsNullOrWhiteSpace(amapKey))
-	amapKey = "5eaa3c7ad8e09e3fdce1fb4fcf3e02f7";
-
-// 检查数据库连接
-var connArg = args.FirstOrDefault(t => t.StartsWith("--conn=", StringComparison.OrdinalIgnoreCase));
-var conn = connArg?.Substring("--conn=".Length);
-if (string.IsNullOrWhiteSpace(conn))
+/// <summary>App.Consoler 程序入口：负责配置解析、数据库连接、任务调度。</summary>
+public static class Program
 {
-	var dbPath = ResolveDefaultDbPath();
-	conn = $"Data Source={dbPath};";
-}
-if (!CanConnect(conn))
-{
-	Console.WriteLine($"数据库连接失败: {conn}");
-	return;
-}
-ConfigureEntity(conn);
-Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 调度器启动中");
-Console.WriteLine($"API Base Url: {apiBaseUrl}");
-Console.WriteLine($"数据库连接: {conn}");
+    /// <summary>程序入口</summary>
+    public static async Task Main(string[] args)
+    {
+        var config = ConsolerConfig.Parse(args);
+        Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 调度器启动中");
+        Console.WriteLine($"配置文件: {ConsolerConfig.ConfigFilePath}");
+        Console.WriteLine($"API Base Url: {config.ApiBase}");
+        Console.WriteLine($"数据库连接: {config.Conn}");
+
+        // 数据库连接校验：连不上直接退出，避免后续任务空跑
+        if (!CanConnect(config.Conn))
+        {
+            Console.WriteLine($"数据库连接失败: {config.Conn}");
+            return;
+        }
+
+        ConfigureEntity(config.Conn);
+
+        // --run=JobName：单次执行指定任务，不启动调度器
+        if (!string.IsNullOrWhiteSpace(config.Run))
+        {
+            await RunSingleJobAsync(config);
+            return;
+        }
+
+        // 默认：启动 Quartz 常驻调度
+        await RunSchedulerAsync();
+    }
 
 
+    //---------------------------------------------------------------
+    // 单次任务
+    //---------------------------------------------------------------
+    /// <summary>执行一次指定任务（--run=JobName）</summary>
+    static async Task RunSingleJobAsync(ConsolerConfig config)
+    {
+        var job = CreateJob(config.Run);
+        if (job == null)
+        {
+            Console.WriteLine($"任务 {config.Run} 不存在");
+            return;
+        }
 
-//---------------------------------------------------------------
-// 指定启动某个任务
-//---------------------------------------------------------------
-if (args.Any(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase)))
-{
-	var runArg = args.FirstOrDefault(t => t.StartsWith("--run=", StringComparison.OrdinalIgnoreCase));
-	var run = runArg?.Substring("--run=".Length);
-	if (string.IsNullOrWhiteSpace(run))
-	{
-		Console.WriteLine("run 参数为空");
-		return;
-	}
-	var job = GetJob(run);
-	if (job == null)
-	{
-		Console.WriteLine($"任务 {run} 不存在");
-		return;
-	}
+        JobExtras.Current = config.Extras;
+        var context = new FakeJobExecutionContext(config.Extras);
+        await job.Execute(context);
+        JobExtras.Current = null;
+        Console.WriteLine($"任务 {config.Run} 执行完成");
+    }
 
-	// 解析其他 --key=value 参数，通过 AsyncLocal 上下文传递给 Job
-	var extras = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-	foreach (var a in args)
-	{
-		var m = System.Text.RegularExpressions.Regex.Match(a, @"^--(?<k>[A-Za-z0-9_\-]+)=(?<v>.*)$");
-		if (!m.Success) continue;
-		var k = m.Groups["k"].Value;
-		if (k.Equals("run", StringComparison.OrdinalIgnoreCase)) continue;
-		if (k.Equals("conn", StringComparison.OrdinalIgnoreCase)) continue;
-		if (k.Equals("api-base", StringComparison.OrdinalIgnoreCase)) continue;
-		if (k.Equals("amap-key", StringComparison.OrdinalIgnoreCase)) continue;
-		extras[k] = m.Groups["v"].Value;
-	}
-	extras["conn"] = conn ?? "";
-	JobExtras.Current = extras;
-
-	// 直接运行指定任务（Quartz context 接口用 FakeJobExecutionContext 仅满足 Execute 签名）
-	var ctx = new FakeJobExecutionContext(extras);
-	await job.Execute(ctx);
-	JobExtras.Current = null;
-	Console.WriteLine($"任务 {run} 执行完成");
-	return;
-}
-
-/// <summary>获取指定任务实例</summary>
-IJob? GetJob(string? jobName)
-{
-	return (jobName ?? "").Trim().ToLower() switch
-	{
-		"statjob" => new StatJob(),
-		"apicheckjob" => new ApiCheckJob(),
-		"checkobjectstatusfixjob" => new CheckObjectStatusFixJob(),
-		"checkobjectgpsfixjob" => new CheckObjectGpsFixJob(),
-		"gismenustatjob" => new GisMenuStatJob(),
-		"typhoonimportjob" => new TyphoonImportJob(),
-		"checkerusermergejob" => new CheckerUserMergeJob(),
-		_ => null,
-	};
-}
+    /// <summary>按名称创建任务实例</summary>
+    static IJob? CreateJob(string jobName)
+    {
+        return (jobName ?? "").Trim().ToLower() switch
+        {
+            "statjob" => new StatJob(),
+            "apicheckjob" => new ApiCheckJob(),
+            "checkobjectstatusfixjob" => new CheckObjectStatusFixJob(),
+            "checkobjectgpsfixjob" => new CheckObjectGpsFixJob(),
+            "gismenustatjob" => new GisMenuStatJob(),
+            "typhoonimportjob" => new TyphoonImportJob(),
+            "typhoonjob" => new TyphoonJob(),
+            "checkerusermergejob" => new CheckerUserMergeJob(),
+            _ => null,
+        };
+    }
 
 
+    //---------------------------------------------------------------
+    // 常驻调度
+    //---------------------------------------------------------------
+    /// <summary>启动 Quartz 调度器并常驻等待退出</summary>
+    static async Task RunSchedulerAsync()
+    {
+        var factory = new StdSchedulerFactory();
+        var scheduler = await factory.GetScheduler();
 
-//---------------------------------------------------------------
-// 启动调度任务
-//---------------------------------------------------------------
-await RunSchedulerAsync();
+        // 定义调度任务和触发器（cron 格式：秒 分 时 日 月 周）
+        await ScheduleJobAsync<HeartBeat>(scheduler, "*/20 * * * * ?", "心跳任务"); // 每 20 秒执行一次心跳
+        await ScheduleJobAsync<StatJob>(scheduler, "0 0 * * * ?", "报表统计"); // 每天 0 点执行报表统计
+        await ScheduleJobAsync<ApiCheckJob>(scheduler, "0 0 * * * ?", "接口检测与菜单统计"); // 每天 0 点执行接口检测与菜单统计
+        await ScheduleJobAsync<CheckObjectStatusFixJob>(scheduler, "0 0 * * * ?", "检查对象状态修复"); // 每天 0 点执行检查对象状态修复
+        await ScheduleJobAsync<CheckObjectGpsFixJob>(scheduler, "0 0 * * * ?", "检查对象GPS修复"); // 每天 0 点执行检查对象GPS修复
+        await ScheduleJobAsync<GisMenuStatJob>(scheduler, "0 0 * * * ?", "菜单统计修复"); // 每天 0 点执行菜单统计修复
+        await ScheduleJobAsync<TyphoonJob>(scheduler, "0 */5 * * * ?", "台风数据采集"); // 每 5 分钟采集最近的台风轨迹
 
+        await scheduler.Start();
+        Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 调度器已启动，当前等待任务触发");
+        Console.WriteLine("按 Ctrl+C 退出。");
 
-/// <summary>启动Quartz调度任务</summary>
-static async Task RunSchedulerAsync()
-{
-	var factory = new StdSchedulerFactory();
-	var scheduler = await factory.GetScheduler();
+        await WaitForExitSignalAsync();
+        await scheduler.Shutdown(waitForJobsToComplete: true);
+    }
 
-	// 定义调度任务和触发器（cron 格式：秒 分 时 日 月 周）
-    await ScheduleJobAsync<HeartBeat>(scheduler, "*/10 * * * * ?", "心跳任务");     // 每10秒执行一次心跳任务，从第 0 秒开始，每 10 秒触发
-	await ScheduleJobAsync<StatJob>(scheduler, "0 0 * * * ?", "报表统计");                  // 每天0点执行报表统计
-	await ScheduleJobAsync<ApiCheckJob>(scheduler, "0 0 * * * ?", "接口检测与菜单统计");      // 每天0点执行接口检测与菜单统计
-	await ScheduleJobAsync<CheckObjectStatusFixJob>(scheduler, "0 0 * * * ?", "检查对象状态修复"); // 每天0点执行检查对象检查状态修复
-	await ScheduleJobAsync<CheckObjectGpsFixJob>(scheduler, "0 0 * * * ?", "检查对象GPS修复");     // 每天0点执行检查对象GPS修复
-	await ScheduleJobAsync<GisMenuStatJob>(scheduler, "0 0 * * * ?", "菜单统计修复");         // 每天0点执行菜单统计修复
+    /// <summary>注册任务并打印下一次触发时间</summary>
+    static async Task ScheduleJobAsync<TJob>(IScheduler scheduler, string cron, string title) where TJob : IJob
+    {
+        var job = JobBuilder.Create<TJob>().Build();
+        var trigger = TriggerBuilder.Create().WithCronSchedule(cron).Build();
+        await scheduler.ScheduleJob(job, trigger);
+        var next = trigger.GetNextFireTimeUtc()?.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
+        Console.WriteLine(
+            $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 已注册任务: {typeof(TJob).Name} / {title} / Cron={cron} / Next={next}");
+    }
 
-	// 启动调度器
-	await scheduler.Start();
-	Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 调度器已启动，当前等待任务触发");
-
-	// 等待退出信号
-	Console.WriteLine("按 Ctrl+C 退出。");
-	using var quitEvent = new ManualResetEventSlim(false);
-	Console.CancelKeyPress += (_, e) =>
-	{
-		e.Cancel = true;
-		quitEvent.Set();
-	};
-	quitEvent.Wait();
-	await scheduler.Shutdown(waitForJobsToComplete: true);
-}
-
-/// <summary>注册任务并打印下一次触发时间。</summary>
-static async Task ScheduleJobAsync<TJob>(IScheduler scheduler, string cron, string title) where TJob : IJob
-{
-	var job = JobBuilder.Create<TJob>().Build();
-	var trigger = TriggerBuilder.Create().WithCronSchedule(cron).Build();
-	await scheduler.ScheduleJob(job, trigger);
-	var next = trigger.GetNextFireTimeUtc()?.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "-";
-	Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 已注册任务: {typeof(TJob).Name} / {title} / Cron={cron} / Next={next}");
-}
-
-
-
-
-//---------------------------------------------------------------
-// 以下是一些辅助方法
-//---------------------------------------------------------------
-/// <summary>添加路径到候选列表</summary>
-static void AddPath(List<string> paths, string path)
-{
-	if (string.IsNullOrWhiteSpace(path))
-		return;
-	paths.Add(Path.GetFullPath(path));
-}
+    /// <summary>等待 Ctrl+C 退出信号</summary>
+    static Task WaitForExitSignalAsync()
+    {
+        var tcs = new TaskCompletionSource();
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            tcs.TrySetResult();
+        };
+        return tcs.Task;
+    }
 
 
-/// <summary>解析默认数据库路径</summary>
-static string ResolveDefaultDbPath()
-{
-	// 候选路径
-	var candidates = new List<string>();
-	AddPath(candidates, Path.Combine(Directory.GetCurrentDirectory(), "App", "Db", "sqlite.db"));
-	AddPath(candidates, Path.Combine(AppContext.BaseDirectory, "App", "Db", "sqlite.db"));
-	var current = new DirectoryInfo(AppContext.BaseDirectory);
-	for (var i = 0; i < 8 && current != null; i++)
-	{
-		AddPath(candidates, Path.Combine(current.FullName, "App", "Db", "sqlite.db"));
-		current = current.Parent;
-	}
+    //---------------------------------------------------------------
+    // 数据库
+    //---------------------------------------------------------------
+    /// <summary>检查数据库连接是否成功</summary>
+    static bool CanConnect(string conn)
+    {
+        var options = new DbContextOptionsBuilder<AppPlatContext>().UseSqlite(conn).Options;
+        using var db = new AppPlatContext(options);
+        return db.Database.CanConnect();
+    }
 
-	// 选择第一个存在的路径
-	var firstExists = candidates.FirstOrDefault(File.Exists);
-	if (!string.IsNullOrWhiteSpace(firstExists))
-		return firstExists;
-	return candidates.First();
-}
-
-/// <summary>检查数据库连接是否成功</summary>
-static bool CanConnect(string conn)
-{
-	var options = new DbContextOptionsBuilder<AppPlatContext>()
-		.UseSqlite(conn)
-		.Options;
-	using var db = new AppPlatContext(options);
-	return db.Database.CanConnect();
-}
-
-/// <summary>配置实体访问上下文</summary>
-static void ConfigureEntity(string conn)
-{
-	var options = new DbContextOptionsBuilder<AppPlatContext>()
-		.UseSqlite(conn)
-		.Options;
-	var db = new AppPlatContext(options);
-	EntityConfig.Instance.OnGetDb += () => db;
-	// 说明：已移除全局自动数据权限过滤器（OnGetDataAccessScope / DataAccessFilter.Apply）。
-	// 各 Job 中若需要按组织收敛数据，应显式通过 OrgScopeHelper.FilterByOrgScope 过滤。
-	EntityConfig.Instance.OnGetDataAuditScope += () => new DataAuditScope
-	{
-		Enabled = false,
-	};
-}
-
-/// <summary>简单的命令行参数 → Job 参数的 AsyncLocal 传递容器</summary>
-public static class JobExtras
-{
-	public static readonly AsyncLocal<Dictionary<string, string>?> _current = new();
-	public static Dictionary<string, string>? Current { get => _current.Value; set => _current.Value = value; }
+    /// <summary>配置实体访问上下文</summary>
+    static void ConfigureEntity(string conn)
+    {
+        var options = new DbContextOptionsBuilder<AppPlatContext>().UseSqlite(conn).Options;
+        var db = new AppPlatContext(options);
+        EntityConfig.Instance.OnGetDb += () => db;
+        // 说明：已移除全局自动数据权限过滤器（OnGetDataAccessScope / DataAccessFilter.Apply）。
+        // 各 Job 中若需要按组织收敛数据，应显式通过 OrgScopeHelper.FilterByOrgScope 过滤。
+        EntityConfig.Instance.OnGetDataAuditScope += () => new DataAuditScope
+        {
+            Enabled = false,
+        };
+    }
 }

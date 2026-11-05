@@ -10,13 +10,19 @@
     - 每日X点，执行报表统计任务（尚未实现）, 类名 StatJob
     - ...
 
-- 任务、调度、数据库连接、目录等信息都在 Program.cs 中定义和配置好
+- 运行参数由 ConsolerConfig 统一承载；其中数据库连接串 `conn` 仅从 `App.Consoler.Config.json` 读取，其它参数可由命令行覆盖
+- 任务调度定义在 Program.cs 中；API 地址、数据库连接、高德 Key 等可写入 App.Consoler.Config.json
 
 - 用户可临时执行某个任务，如
-    App.Consoler --run=CheckObjectStatusFixJob
+    dotnet App.Consoler.dll --run=CheckObjectStatusFixJob
 
 
-- 运行该项目：
+- 在源码目录下运行：
 ```
 dotnet run
+```
+
+- 运行已发布的程序集（与主站点同目录发布）：
+```
+dotnet App.Consoler.dll
 ```

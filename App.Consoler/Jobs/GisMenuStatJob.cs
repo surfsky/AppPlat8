@@ -1,6 +1,7 @@
 using Quartz;
 using App.DAL;
 using App.DAL.GIS;
+namespace App.Consoler;
 
 /// <summary>
 /// GisMenu 统计任务（独立）

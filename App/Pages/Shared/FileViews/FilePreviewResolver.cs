@@ -91,7 +91,7 @@ namespace App.Pages.Shared.FileViews
                     || safePath.Contains("..", StringComparison.Ordinal))
                     return string.Empty;
 
-                var root = Paths.FilesRoot;
+                var root = Paths.FileRoot;
                 var fullPath = Path.GetFullPath(Path.Combine(root, safePath.Replace('/', Path.DirectorySeparatorChar)));
                 var rootPath = Path.GetFullPath(root);
                 if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))

@@ -7,14 +7,14 @@ namespace App.Pages.Maintains
     /// <summary>控制台调度器维护页：启动、停止并查看 App.Consoler 输出。</summary>
     public partial class ConsolerModel : AuthModel
     {
-        [BindProperty] public string ProjectPath { get; set; }
+        [BindProperty] public string ConsolerDllPath { get; set; }
         [BindProperty] public string WorkingDirectory { get; set; }
 
         /// <summary>初始化页面静态信息。</summary>
         public void OnGet()
         {
             var status = ConsolerRunner.GetStatus(GetApiBaseUrl());
-            ProjectPath = status.ProjectPath;
+            ConsolerDllPath = status.ConsolerDllPath;
             WorkingDirectory = status.WorkingDirectory;
         }
 

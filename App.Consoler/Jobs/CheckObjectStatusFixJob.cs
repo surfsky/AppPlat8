@@ -1,5 +1,6 @@
 using Quartz;
 using App.DAL;
+namespace App.Consoler;
 
 /// <summary>
 /// 检查对象检查状态修复任务

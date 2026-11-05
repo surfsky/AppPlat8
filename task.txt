@@ -649,3 +649,11 @@ Done
     优化
         重构接口：Gis/GetCheckObjects() 相关方法，缠缠绵绵都看不懂什么意思
         实现eleui的明暗两色切换，可以用url参数 scheme=light/dark 来
+
+
+261105
+    /修正和梳理ElePicker 控件的调用和通讯逻辑，并确保Storage在使用后被正确释放；
+    /修正GeometryEditor页面，可以正确显示文本，可以正确删除点，高亮当前点
+    /改造Consoler项目，改为由主项目引用；Consoler页面改为运行dll；programe改为传统class方式；用Config类来容纳输入参数；用配置文件来容纳预设参数；
+    /完善调度台： 自动编译到app生成目录；
+    /完善调度台： 实现台风数据采集任务；

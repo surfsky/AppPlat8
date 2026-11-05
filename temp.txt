@@ -207,3 +207,13 @@
     </style>
 }
 
+
+        /// <summary>把路径拼接为安全绝对路径</summary>
+        public static string Combine(string root, params string[] parts)
+        {
+            if (parts == null || parts.Length == 0) return root ?? "";
+            var all = new string[parts.Length + 1];
+            all[0] = root;
+            Array.Copy(parts, 0, all, 1, parts.Length);
+            return GetFullPath(Path.Combine(all.Where(s => !string.IsNullOrEmpty(s)).ToArray()));
+        }

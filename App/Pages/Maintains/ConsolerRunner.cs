@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
+using App.Consoler;
 
 namespace App.Pages.Maintains
 {
@@ -19,16 +19,18 @@ namespace App.Pages.Maintains
         public string LastError { get; set; }
         public string CommandLine { get; set; }
         public string ApiBaseUrl { get; set; }
-        public string ProjectPath { get; set; }
+        /// <summary>调度器程序集路径（App.Consoler.dll）。</summary>
+        public string ConsolerDllPath { get; set; }
         public string WorkingDirectory { get; set; }
-        public string DbPath { get; set; }
+        public string ConnectionString { get; set; }
         public string Output { get; set; }
         public int LineCount { get; set; }
-        public bool HasProject { get; set; }
-        public bool HasDatabase { get; set; }
+        /// <summary>调度器程序集是否存在。</summary>
+        public bool HasConsolerDll { get; set; }
+        public bool HasConnectionString { get; set; }
     }
-    
-    /// <summary>控制台调度器进程管理器。</summary>
+
+    /// <summary>控制台调度器进程管理器。调度器以 dotnet App.Consoler.dll 方式运行，程序集随主站点一起发布。</summary>
     public static class ConsolerRunner
     {
         static readonly object SyncRoot = new();
@@ -41,28 +43,22 @@ namespace App.Pages.Maintains
         static string LastError;
         static string LastCommandLine;
         static string LastApiBaseUrl;
-        static string LastProjectPath;
+        static string LastConsolerDllPath;
         static string LastWorkingDirectory;
         static int TotalLineCount;
         const int MaxOutputChars = 200_000;
 
         // 路径硬编码常量：后续如需支持多副本部署，可改为由调用者传入参数
-        /// <summary>调度器项目目录名（相对解决方案根目录）。</summary>
-        const string ConsolerProjectDir = "App.Consoler";
-        /// <summary>调度器项目文件名。</summary>
-        const string ConsolerProjectFile = "App.Consoler.csproj";
-        /// <summary>默认数据库相对路径（相对解决方案根目录）。</summary>
-        const string DatabaseRelativePath = "App/Db/sqlite.db";
-
+        /// <summary>调度器程序集文件名（随主站点一起发布到同目录）。</summary>
+        const string ConsolerDllName = "App.Consoler.dll";
         /// <summary>读取当前运行状态快照。</summary>
         public static ConsolerStatus GetStatus(string apiBaseUrl)
         {
             lock (SyncRoot)
             {
-                var solutionRoot = ResolveSolutionRoot();
-                var projectPath = ResolveProjectPath(solutionRoot);
-                var workingDirectory = ResolveWorkingDirectory(solutionRoot);
-                var dbPath = ResolveDbPath(solutionRoot);
+                var dllPath = GetConsolerDllPath();
+                var workingDirectory = GetWorkingDirectory();
+                var connectionString = GetConnectionString();
                 var isRunning = RunningProcess != null && !RunningProcess.HasExited;
                 return new ConsolerStatus
                 {
@@ -75,13 +71,13 @@ namespace App.Pages.Maintains
                     LastError = LastError,
                     CommandLine = LastCommandLine,
                     ApiBaseUrl = string.IsNullOrWhiteSpace(LastApiBaseUrl) ? apiBaseUrl : LastApiBaseUrl,
-                    ProjectPath = string.IsNullOrWhiteSpace(LastProjectPath) ? projectPath : LastProjectPath,
+                    ConsolerDllPath = string.IsNullOrWhiteSpace(LastConsolerDllPath) ? dllPath : LastConsolerDllPath,
                     WorkingDirectory = string.IsNullOrWhiteSpace(LastWorkingDirectory) ? workingDirectory : LastWorkingDirectory,
-                    DbPath = dbPath,
+                    ConnectionString = connectionString,
                     Output = OutputBuffer.ToString(),
                     LineCount = TotalLineCount,
-                    HasProject = System.IO.File.Exists(projectPath),
-                    HasDatabase = System.IO.File.Exists(dbPath)
+                    HasConsolerDll = File.Exists(dllPath),
+                    HasConnectionString = !string.IsNullOrWhiteSpace(connectionString)
                 };
             }
         }
@@ -92,29 +88,25 @@ namespace App.Pages.Maintains
             error = null;
             Process process = null;
             ProcessStartInfo startInfo = null;
-            string solutionRoot;
-            string projectPath;
+            string dllPath;
             string workingDirectory;
-            string dbPath;
 
             lock (SyncRoot)
             {
                 if (RunningProcess != null && !RunningProcess.HasExited)
                     return GetStatus(apiBaseUrl);
 
-                solutionRoot = ResolveSolutionRoot();
-                projectPath = ResolveProjectPath(solutionRoot);
-                workingDirectory = ResolveWorkingDirectory(solutionRoot);
-                dbPath = ResolveDbPath(solutionRoot);
+                dllPath = GetConsolerDllPath();
+                workingDirectory = GetWorkingDirectory();
 
-                if (!System.IO.File.Exists(projectPath))
+                if (!File.Exists(dllPath))
                 {
-                    error = $"未找到调度器项目：{projectPath}";
+                    error = $"未找到调度器程序集：{dllPath}";
                     LastError = error;
                     return GetStatus(apiBaseUrl);
                 }
 
-                startInfo = BuildStartInfo(projectPath, workingDirectory, dbPath, apiBaseUrl);
+                startInfo = BuildStartInfo(dllPath, workingDirectory, apiBaseUrl);
                 process = new Process
                 {
                     StartInfo = startInfo,
@@ -129,9 +121,9 @@ namespace App.Pages.Maintains
                 LastExitCode = null;
                 LastError = null;
                 LastApiBaseUrl = apiBaseUrl;
-                LastProjectPath = projectPath;
+                LastConsolerDllPath = dllPath;
                 LastWorkingDirectory = workingDirectory;
-                LastCommandLine = BuildCommandLine(projectPath, dbPath, apiBaseUrl);
+                LastCommandLine = BuildCommandLine(dllPath, apiBaseUrl);
                 AppendOutput($"[system] 启动调度器：{LastCommandLine}", false);
             }
 
@@ -214,8 +206,8 @@ namespace App.Pages.Maintains
             return GetStatus(apiBaseUrl);
         }
 
-        /// <summary>构造 dotnet run 启动参数。</summary>
-        static ProcessStartInfo BuildStartInfo(string projectPath, string workingDirectory, string dbPath, string apiBaseUrl)
+        /// <summary>构造 dotnet App.Consoler.dll 启动参数。</summary>
+        static ProcessStartInfo BuildStartInfo(string dllPath, string workingDirectory, string apiBaseUrl)
         {
             var psi = new ProcessStartInfo
             {
@@ -227,30 +219,36 @@ namespace App.Pages.Maintains
                 RedirectStandardInput = false,
                 CreateNoWindow = true
             };
-            psi.ArgumentList.Add("run");
-            psi.ArgumentList.Add("--project");
-            psi.ArgumentList.Add(projectPath);
-            psi.ArgumentList.Add("--");
+            psi.ArgumentList.Add(dllPath);
             if (!string.IsNullOrWhiteSpace(apiBaseUrl))
                 psi.ArgumentList.Add($"--api-base={apiBaseUrl}");
-            if (System.IO.File.Exists(dbPath))
-                psi.ArgumentList.Add($"--conn=Data Source={dbPath};");
+            RemoveProxyEnvironment(psi);
             return psi;
         }
 
+        /// <summary>清理可能干扰外网访问的代理环境变量，避免子进程继承 IDE/壳层代理设置。</summary>
+        static void RemoveProxyEnvironment(ProcessStartInfo psi)
+        {
+            var keys = new[]
+            {
+                "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
+                "http_proxy", "https_proxy", "all_proxy", "no_proxy",
+                "ICUBE_PROXY_HOST"
+            };
+            foreach (var key in keys)
+                psi.Environment.Remove(key);
+        }
+
         /// <summary>拼接人类可读的启动命令文本。</summary>
-        static string BuildCommandLine(string projectPath, string dbPath, string apiBaseUrl)
+        static string BuildCommandLine(string dllPath, string apiBaseUrl)
         {
             var parts = new List<string>
             {
-                "dotnet run",
-                $"--project \"{projectPath}\"",
-                "--"
+                "dotnet",
+                $"\"{dllPath}\""
             };
             if (!string.IsNullOrWhiteSpace(apiBaseUrl))
                 parts.Add($"--api-base={apiBaseUrl}");
-            if (System.IO.File.Exists(dbPath))
-                parts.Add($"--conn=\"Data Source={dbPath};\"");
             return string.Join(" ", parts);
         }
 
@@ -282,7 +280,8 @@ namespace App.Pages.Maintains
 
             lock (SyncRoot)
             {
-                var prefix = DateTime.Now.ToString("HH:mm:ss");
+                //var prefix = DateTime.Now.ToString("HH:mm:ss");
+                var prefix = "";
                 var tag = isError ? "[err]" : "";  // out
                 OutputBuffer.Append(prefix).Append(' ').Append(tag).Append(' ').AppendLine(line);
                 LastOutputAt = DateTime.Now;
@@ -304,60 +303,29 @@ namespace App.Pages.Maintains
             OutputBuffer.Remove(0, Math.Min(removeTo + 1, OutputBuffer.Length));
         }
 
-        /// <summary>定位解决方案根目录。</summary>
-        static string ResolveSolutionRoot()
+        /// <summary>解析调度器程序集路径（与主站点同目录发布）。</summary>
+        static string GetConsolerDllPath()
         {
-            var candidates = new List<string>();
-            AddCandidate(candidates, Directory.GetCurrentDirectory());
-            AddCandidate(candidates, AppContext.BaseDirectory);
-
-            var current = new DirectoryInfo(AppContext.BaseDirectory);
-            for (var i = 0; i < 8 && current != null; i++)
-            {
-                AddCandidate(candidates, current.FullName);
-                current = current.Parent;
-            }
-
-            foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                if (System.IO.File.Exists(Path.Combine(candidate, ConsolerProjectDir, ConsolerProjectFile)))
-                    return candidate;
-            }
-
-            return Directory.GetCurrentDirectory();
+            return Path.Combine(AppContext.BaseDirectory, ConsolerDllName);
         }
 
-        /// <summary>收集可能的根目录候选项。</summary>
-        static void AddCandidate(List<string> candidates, string path)
+        /// <summary>解析调度器工作目录（与主站点程序目录一致）。</summary>
+        static string GetWorkingDirectory()
         {
-            if (string.IsNullOrWhiteSpace(path))
-                return;
+            return AppContext.BaseDirectory;
+        }
+
+        /// <summary>从 App.Consoler 配置文件读取数据库连接字符串。</summary>
+        static string GetConnectionString()
+        {
             try
             {
-                candidates.Add(Path.GetFullPath(path));
+                return ConsolerConfig.Parse(Array.Empty<string>()).Conn ?? string.Empty;
             }
             catch
             {
-                // ignore invalid path
+                return string.Empty;
             }
-        }
-
-        /// <summary>解析调度器项目文件路径。</summary>
-        static string ResolveProjectPath(string solutionRoot)
-        {
-            return Path.Combine(solutionRoot, ConsolerProjectDir, ConsolerProjectFile);
-        }
-
-        /// <summary>解析调度器工作目录。</summary>
-        static string ResolveWorkingDirectory(string solutionRoot)
-        {
-            return solutionRoot;
-        }
-
-        /// <summary>解析默认数据库文件路径。</summary>
-        static string ResolveDbPath(string solutionRoot)
-        {
-            return Path.Combine(solutionRoot, DatabaseRelativePath);
         }
     }
 }

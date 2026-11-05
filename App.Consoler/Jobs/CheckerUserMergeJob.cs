@@ -4,14 +4,15 @@ using App.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.RegularExpressions;
+namespace App.Consoler;
 
 /// <summary>
 /// 分析 & 合并带数字后缀的重复网格员账户
 /// 使用方式：
 ///   1. 先做只读分析，打印+写出计划CSV
-///      cd App.Consoler && dotnet run -- --run=CheckerUserMergeJob --mode=analyze
+///      dotnet App.Consoler.dll --run=CheckerUserMergeJob --mode=analyze
 ///   2. 确认无误后应用（会先做整库 SQLite 备份再单事务更新+删除）
-///      cd App.Consoler && dotnet run -- --run=CheckerUserMergeJob --mode=apply
+///      dotnet App.Consoler.dll --run=CheckerUserMergeJob --mode=apply
 /// </summary>
 public class CheckerUserMergeJob : IJob
 {
@@ -225,7 +226,7 @@ public class CheckerUserMergeJob : IJob
         {
             Console.WriteLine();
             Console.WriteLine("= 当前为 ANALYZE 模式（只读，未改任何数据）。若确认以上计划无误，执行：");
-            Console.WriteLine("    cd App.Consoler && dotnet run -- --run=CheckerUserMergeJob --mode=apply");
+            Console.WriteLine("    dotnet App.Consoler.dll --run=CheckerUserMergeJob --mode=apply");
             Console.WriteLine("==========================================================");
         }
 

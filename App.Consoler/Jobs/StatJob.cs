@@ -1,4 +1,7 @@
 using Quartz;
+namespace App.Consoler;
+
+
 /// <summary>
 /// 报表统计任务
 /// </summary>

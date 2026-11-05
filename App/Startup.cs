@@ -59,6 +59,7 @@ namespace App
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
                 });  // MVC + Razor Runtime Compilation
+            services.AddRazorPages();                         // Razor Pages
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {
                 options.LoginPath = new PathString("/Login");
@@ -73,12 +74,6 @@ namespace App
             services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
             {
                 options.Limits.MaxRequestBodySize = 2147483648; // 2GB
-            });
-            services.AddRazorPages(options =>
-            {
-                // GIS: 新路由语义化，同时兼容旧页面路径
-                //options.Conventions.AddPageRoute("/GIS/Regions", "GIS/Geometries");
-                //options.Conventions.AddPageRoute("/GIS/RegionForm", "GIS/GeometryForm");
             });
             services.AddServerSideBlazor();                     // Blazor
             services.AddBootstrapBlazor();                      // BootstrapBlazor
@@ -96,6 +91,7 @@ namespace App
         {
             // db
             var sqlite = Configuration.GetConnectionString("Sqlite");
+            Paths.ConnectionString = sqlite;
             services.AddDbContext<AppPlatContext>(options =>
             {
                 options.UseSqlite(sqlite, builder => builder.MigrationsAssembly("App"));
@@ -210,7 +206,7 @@ namespace App
             // 允许下载Files目录下的各种静态文件（物理路径从 Paths.FilesRoot 取，允许配置到网站外跨盘目录）
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(Paths.FilesRoot),
+                FileProvider = new PhysicalFileProvider(Paths.FileRoot),
                 RequestPath = "/Files",
                 ContentTypeProvider = GetFileProvider(),
             });

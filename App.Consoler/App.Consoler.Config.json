@@ -1,0 +1,5 @@
+{
+  "apiBase": "http://localhost:6060",
+  "conn": "Data Source=../../../Data/Db/sqlite.db;",
+  "amapKey": "5eaa3c7ad8e09e3fdce1fb4fcf3e02f7"
+}

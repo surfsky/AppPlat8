@@ -3,6 +3,7 @@ using App.DAL;
 using App.DAL.GIS;
 using App.Entities;
 using Microsoft.EntityFrameworkCore;
+namespace App.Consoler;
 
 /// <summary>
 /// 接口检测与菜单统计任务
