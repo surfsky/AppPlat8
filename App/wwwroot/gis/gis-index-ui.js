@@ -34,13 +34,13 @@
         if (!window.Vue || !window.ElementPlus) return;
 
         const items = [
-            { id: 'btn-event-toggle', content: '事件', placement: 'bottom' },
+            { id: 'btn-event-toggle', content: '应急处置', placement: 'bottom' },
             { id: 'btn-info-toggle', content: '信息', placement: 'bottom' },
             { id: 'btn-chat-toggle', content: 'AI 聊天', placement: 'bottom' },
             { id: 'btn-layer-toggle', content: '图层', placement: 'bottom' },
             { id: 'btn-stats-toggle', content: '统计', placement: 'bottom' },
             { id: 'btn-scene-toggle', content: '场景', placement: 'bottom' },
-            { id: 'btn-toolbar-toggle', content: '工具栏', placement: 'bottom' }
+            { id: 'btn-toolbar-toggle', content: '搜索', placement: 'bottom' }
         ];
 
         items.forEach(item => {

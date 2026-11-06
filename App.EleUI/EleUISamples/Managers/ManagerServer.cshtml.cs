@@ -185,6 +185,23 @@ namespace App.Pages.EleUISamples
                 serverCloseHandler: "DrawerClosed");
         }
 
+        public IActionResult OnPostOpenDrawerTabs()
+        {
+            return EleHandler.ShowDrawer(
+                title: "服务端多标签 Drawer",
+                tabs: new List<DrawerTabArgs>
+                {
+                    new DrawerTabArgs(Label: "Theme", Url: "/EleUISamples/Managers/Theme", Key: "theme"),
+                    new DrawerTabArgs(Label: "Manager", Url: "/EleUISamples/Managers/Manager", Key: "manager"),
+                    new DrawerTabArgs(Label: "Open Drawer", Url: "/EleUISamples/Popups/OpenDrawer", Key: "open-drawer"),
+                    new DrawerTabArgs(Label: "Server Drawer", Url: "/EleUISamples/Popups/ServerDrawer", Key: "server-drawer"),
+                },
+                size: "58%",
+                direction: "rtl",
+                showFooter: false,
+                closeAction: DrawerCloseAction.None);
+        }
+
         public IActionResult OnPostCloseDrawer()
         {
             return EleHandler.CloseDrawer();

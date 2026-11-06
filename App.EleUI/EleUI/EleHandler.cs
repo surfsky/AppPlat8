@@ -113,11 +113,19 @@ namespace App.EleUI
         string Action = "close",
         string Handler = null);
 
+    /// <summary>抽屉标签参数</summary>
+    public record DrawerTabArgs(
+        string Label,
+        string Url,
+        string Key = null);
+
     /// <summary>抽屉参数</summary>
     public record DrawerArgs(
         string Title = null,
         string Content = null,
         string Url = null,
+        List<string> Urls = null,
+        List<DrawerTabArgs> Tabs = null,
         string Size = null,
         string Direction = null,
         bool? WithHeader = null,
@@ -371,6 +379,8 @@ namespace App.EleUI
             string title = null,
             string content = null,
             string url = null,
+            List<string> urls = null,
+            List<DrawerTabArgs> tabs = null,
             string size = null,
             string direction = "rtl",
             bool? withHeader = null,
@@ -387,27 +397,45 @@ namespace App.EleUI
             DrawerCloseAction closeAction = DrawerCloseAction.RefreshData,
             bool? html = null)
         {
+            var normalizedTabs = tabs?
+                .Where(t => t != null && !string.IsNullOrWhiteSpace(t.Url))
+                .Select(t => new
+                {
+                    label = t.Label,
+                    url = t.Url,
+                    key = t.Key
+                })
+                .ToList();
+
+            var normalizedUrls = (urls ?? normalizedTabs?.Select(t => t.url).ToList())
+                ?.Where(t => !string.IsNullOrWhiteSpace(t))
+                .ToList();
+
             return BuildCommandResult(
                 ClientCommandType.OpenDrawer,
-                new DrawerArgs(
-                    Title: title,
-                    Content: content,
-                    Url: url,
-                    Size: size,
-                    Direction: direction,
-                    WithHeader: withHeader,
-                    ShowClose: showClose,
-                    Resizable: resizable,
-                    Modal: modal,
-                    CloseOnClickModal: closeOnClickModal,
-                    DestroyOnClose: destroyOnClose,
-                    ShowFooter: showFooter,
-                    FooterAlign: footerAlign,
-                    FooterButtons: footerButtons,
-                    CloseHandler: closeHandler,
-                    ServerCloseHandler: serverCloseHandler,
-                    CloseAction: closeAction,
-                    Html: html)
+                new
+                {
+                    title,
+                    content,
+                    url,
+                    urls = normalizedUrls,
+                    tabs = normalizedTabs,
+                    size,
+                    direction,
+                    withHeader,
+                    showClose,
+                    resizable,
+                    modal,
+                    closeOnClickModal,
+                    destroyOnClose,
+                    showFooter,
+                    footerAlign,
+                    footerButtons,
+                    closeHandler,
+                    serverCloseHandler,
+                    closeAction,
+                    html
+                }
             );
         }
 

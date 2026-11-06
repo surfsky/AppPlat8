@@ -1,0 +1,27 @@
+@page
+@{
+  ViewData["Title"] = "报表";
+}
+@section body {
+  <div class="p-4">
+    <div class="mb-4 text-2xl font-bold text-slate-800">报表</div>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow" href="/Checks/Reports/CheckStat">
+        <div class="text-lg font-semibold text-slate-800">检查统计报表</div>
+        <div class="mt-2 text-sm text-slate-500">按网格区域汇总纳管对象、检查次数、隐患数量和发现率。</div>
+      </a>
+      <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow" href="/Checks/Reports/CheckStat2">
+        <div class="text-lg font-semibold text-slate-800">个人检查统计报表</div>
+        <div class="mt-2 text-sm text-slate-500">按网格员维度汇总纳管对象、检查次数、隐患数量和发现率。</div>
+      </a>
+      <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow" href="/Checks/Reports/CheckObjectStat">
+        <div class="text-lg font-semibold text-slate-800">企业分类统计表</div>
+        <div class="mt-2 text-sm text-slate-500">按组织口径统计企业分类、风险类型和分级管控情况。</div>
+      </a>
+      <a class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow" href="/Checks/Reports/CheckObjectCheckerStat">
+        <div class="text-lg font-semibold text-slate-800">网格员对象统计表</div>
+        <div class="mt-2 text-sm text-slate-500">按网格员维度查看对象分布和风险分类情况。</div>
+      </a>
+    </div>
+  </div>
+}

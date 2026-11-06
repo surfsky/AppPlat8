@@ -23,7 +23,6 @@ namespace App.Pages.EleUISamples
                 ["grid"] = new("Layouts/Grid.cshtml"),
                 ["button"] = new("Controls/Button.cshtml", "Controls/Button.cshtml.cs"),
                 ["forms"] = new("Controls/Form.cshtml", "Controls/Form.cshtml.cs"),
-                ["picker"] = new("Controls/Picker.cshtml", "Controls/Picker.cshtml.cs"),
                 ["tree"] = new("Controls/Tree.cshtml", "Controls/Tree.cshtml.cs"),
                 ["city-select"] = new("Controls/CitySelect.cshtml", "Controls/CitySelect.cshtml.cs"),
                 ["icons"] = new("Controls/Icons.cshtml"),

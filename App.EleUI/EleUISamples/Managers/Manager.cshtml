@@ -27,6 +27,13 @@
                     <EleButton Type="Primary" Click="window.eleManagerDemo.testPrompt()">Prompt/InputBox</EleButton>
                 </HStack>
 
+                <EleLabel Label="Drawer" FillRow="true" />
+                <HStack>
+                    <EleButton Type="Primary" Click="window.eleManagerDemo.openDrawerBasic()">Basic</EleButton>
+                    <EleButton Type="Success" Click="window.eleManagerDemo.openDrawerTabs()">Tabs</EleButton>
+                    <EleButton Type="Info" Click="window.eleManagerDemo.openDrawerUrls()">Urls Short</EleButton>
+                </HStack>
+
                 <EleLabel Label="Misc" FillRow="true" />
                 <HStack Items="center">
                     <ElePopconfirm Title="确定执行这个操作吗？" Confirm="confirmPop">
@@ -79,6 +86,47 @@
                 EleManager.prompt('请输入反馈内容', 'Prompt')
                     .then(({ value }) => EleManager.showSuccess('输入内容: ' + (value || '(空)')))
                     .catch(() => EleManager.showInfo('已取消输入'));
+            },
+
+            openDrawerBasic: () => {
+                EleManager.openDrawer({
+                    title: '基础 Drawer 示例',
+                    content: '这是最基础的抽屉示例。',
+                    size: '50%',
+                    showFooter: true,
+                    footerButtons: [
+                        { text: '关闭', type: 'primary', action: 'close' }
+                    ]
+                });
+            },
+
+            openDrawerTabs: () => {
+                EleManager.openDrawer({
+                    title: '多标签 Drawer',
+                    size: '58%',
+                    tabs: [
+                        { label: 'Theme', url: '/EleUISamples/Managers/Theme' },
+                        { label: 'Manager Server', url: '/EleUISamples/Managers/ManagerServer' },
+                        { label: 'Open Drawer', url: '/EleUISamples/Popups/OpenDrawer' },
+                        { label: 'Server Drawer', url: '/EleUISamples/Popups/ServerDrawer' }
+                    ],
+                    showFooter: false,
+                    closeAction: 'none'
+                });
+            },
+
+            openDrawerUrls: () => {
+                EleManager.openDrawer({
+                    title: '多 URL 简写',
+                    size: '58%',
+                    urls: [
+                        '/EleUISamples/Managers/Theme',
+                        '/EleUISamples/Popups/OpenDrawer',
+                        '/EleUISamples/Popups/ServerDrawer'
+                    ],
+                    showFooter: false,
+                    closeAction: 'none'
+                });
             },
 
             testLoading: () => {

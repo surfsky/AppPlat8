@@ -29,6 +29,12 @@
                 <EleButton Type="Danger"  Handler="CloseDrawer">关闭 Drawer</EleButton>
             </HStack>
 
+            <EleLabel Label="Drawer - 多标签" FillRow="true" />
+            <HStack>
+                <EleButton Type="Success" Handler="OpenDrawerTabs">服务端多标签</EleButton>
+                <EleButton Type="Primary" Click="openDrawerTabs()">客户端多标签</EleButton>
+            </HStack>
+
             <EleLabel Label="Drawer - beforeCloseHandler（关闭前确认）" FillRow="true" />
             <HStack>
                 <EleButton Type="Primary" Click="openDrawerBeforeClose()">Confirm 确认关闭</EleButton>
@@ -97,6 +103,21 @@
                 title: '客户端打开 Drawer (ttb)',
                 content: '这是从顶部向下展开的 Drawer。',
                 showFooter: false
+            });
+        };
+
+        window.openDrawerTabs = function() {
+            EleManager.openDrawer({
+                title: '客户端多标签 Drawer',
+                size: '58%',
+                tabs: [
+                    { label: 'Theme', url: '/EleUISamples/Managers/Theme' },
+                    { label: 'Manager', url: '/EleUISamples/Managers/Manager' },
+                    { label: 'Open Drawer', url: '/EleUISamples/Popups/OpenDrawer' },
+                    { label: 'Server Drawer', url: '/EleUISamples/Popups/ServerDrawer' }
+                ],
+                showFooter: false,
+                closeAction: 'none'
             });
         };
 

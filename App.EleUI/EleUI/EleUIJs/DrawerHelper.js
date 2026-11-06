@@ -101,6 +101,71 @@ export class DrawerHelper {
     line-height: 1.3;
 }
 
+.ele-manager-drawer-header-main {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ele-manager-drawer-header.is-mobile .ele-manager-drawer-header-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.ele-manager-drawer-tabs {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.ele-manager-drawer-tabs .el-tabs__header {
+    margin: 0 !important;
+    padding: 0 16px;
+}
+
+.ele-manager-drawer-tabs .el-tabs__nav-wrap::after {
+    display: none;
+}
+
+.ele-manager-drawer-tabs .el-tabs__item {
+    height: 34px;
+    line-height: 34px;
+    font-size: 13px;
+    padding: 0 14px !important;
+}
+
+.ele-manager-drawer-frame-host {
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.ele-manager-drawer-tab-body {
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ele-manager-drawer-tab-strip {
+    flex: 0 0 auto;
+    border-bottom: 1px solid var(--el-border-color-light, #ebeef5);
+}
+
+.ele-manager-drawer-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    min-height: 280px;
+    flex: 1 1 auto;
+}
+
 .ele-manager-drawer-close-btn {
     border: 0;
     background: transparent;
@@ -217,6 +282,54 @@ export class DrawerHelper {
         };
     }
 
+    buildDrawerTab(item, index) {
+        const raw = item && typeof item === 'object' ? item : { url: item };
+        const url = Utils.safeText(raw?.url || raw?.Url || raw?.src || raw?.Src || raw?.path || raw?.Path || '', 1000);
+        if (!url) return null;
+
+        const label = Utils.safeText(raw?.label || raw?.Label || raw?.title || raw?.Title || raw?.name || raw?.Name || raw?.text || raw?.Text || '', 80);
+        const key = Utils.safeText(raw?.key || raw?.Key || raw?.id || raw?.Id || `tab-${index + 1}`, 80) || `tab-${index + 1}`;
+        return {
+            key,
+            label: label || `标签${index + 1}`,
+            url,
+        };
+    }
+
+    getArraySource(value) {
+        if (Array.isArray(value)) return value;
+        if (value && typeof value === 'object') {
+            if (Array.isArray(value.$values)) return value.$values;
+            if (Array.isArray(value.values)) return value.values;
+        }
+        return [];
+    }
+
+    normalizeUrlTabs(merged = {}) {
+        const source = [];
+        source.push(...this.getArraySource(merged.tabs));
+        source.push(...this.getArraySource(merged.Tabs));
+        source.push(...this.getArraySource(merged.urls));
+        source.push(...this.getArraySource(merged.Urls));
+        if (Array.isArray(merged.url)) source.push(...merged.url);
+        else if (typeof merged.url === 'string' && merged.url.trim()) source.push(merged.url);
+        else if (Array.isArray(merged.Url)) source.push(...merged.Url);
+        else if (typeof merged.Url === 'string' && merged.Url.trim()) source.push(merged.Url);
+
+        const tabs = [];
+        const keySet = new Set();
+        for (let i = 0; i < source.length; i++) {
+            const tab = this.buildDrawerTab(source[i], i);
+            if (!tab) continue;
+            if (keySet.has(tab.key)) {
+                tab.key = `${tab.key}-${i + 1}`;
+            }
+            keySet.add(tab.key);
+            tabs.push(tab);
+        }
+        return tabs;
+    }
+
     open(options = {}) {
         try {
             const hostWindow = this._hostWindow || this.getHostWindow();
@@ -230,6 +343,9 @@ export class DrawerHelper {
                 ...this._defaults,
                 ...(options && typeof options === 'object' ? options : {})
             };
+            const legacyTitle = merged['Title'];
+            const legacyContent = merged['Content'];
+            const legacyUrl = merged['Url'];
             const align = Utils.safeType(merged.footerAlign, ['start', 'center', 'end', 'space-between'], 'end');
             const alignMap = {
                 start: 'justify-start',
@@ -239,6 +355,7 @@ export class DrawerHelper {
             };
 
             const buttons = Array.isArray(merged.footerButtons) ? merged.footerButtons : [];
+            const tabs = this.normalizeUrlTabs(merged);
             const mountEl = hostWindow.document.createElement('div');
             const id = 'ele-manager-drawer-host-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
             mountEl.id = id;
@@ -250,10 +367,12 @@ export class DrawerHelper {
             const bodyId = `ele-manager-drawer-body-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
             const state = reactive({
                 visible: false,
-                title: Utils.safeText(merged.title, 80) || '服务端 Drawer',
-                content: Utils.safeText(merged.content, 2000),
+                title: Utils.safeText(merged.title || legacyTitle, 80) || '服务端 Drawer',
+                content: Utils.safeText(merged.content || legacyContent, 2000),
                 html: Utils.toBool(merged.html, false),
-                url: Utils.safeText(merged.url, 500),
+                url: tabs[0]?.url || Utils.safeText(merged.url || legacyUrl, 1000),
+                tabs,
+                activeTabKey: tabs[0]?.key || '',
                 custom: Utils.toBool(merged.custom, typeof merged.mountHandler === 'function'),
                 bodyClass: Utils.safeText(merged.bodyClass, 200),
                 bodyId,
@@ -301,6 +420,18 @@ export class DrawerHelper {
                     return { state };
                 },
                 methods: {
+                    getActiveTabUrl() {
+                        const target = Array.isArray(state.tabs)
+                            ? state.tabs.find((item) => item.key === state.activeTabKey)
+                            : null;
+                        return target?.url || '';
+                    },
+                    onTabChange(tabKey) {
+                        const nextKey = Utils.safeText(tabKey, 80);
+                        if (nextKey) {
+                            state.activeTabKey = nextKey;
+                        }
+                    },
                     async beforeClose(done) {
                         if (!state.beforeCloseHandler) {
                             done();
@@ -398,7 +529,10 @@ export class DrawerHelper {
                     reloadFrame() {
                         if (!state.url) return;
                         try {
-                            const iframe = hostWindow.document.querySelector(`#${id} iframe[data-ele-drawer-iframe="1"]`);
+                            const selector = state.activeTabKey
+                                ? `#${id} iframe[data-ele-drawer-iframe="1"][data-tab-key="${state.activeTabKey}"]`
+                                : `#${id} iframe[data-ele-drawer-iframe="1"]`;
+                            const iframe = hostWindow.document.querySelector(selector);
                             if (!iframe) return;
                             try {
                                 iframe.contentWindow?.location?.reload();
@@ -433,7 +567,9 @@ export class DrawerHelper {
             <button v-if="state.showClose" class="ele-manager-drawer-close-btn" type="button" @click="handleCloseClick()" aria-label="Close">
                 <span>←</span>
             </button>
-            <span class="ele-manager-drawer-title">{{ state.title }}</span>
+            <div class="ele-manager-drawer-header-main">
+                <span class="ele-manager-drawer-title">{{ state.title }}</span>
+            </div>
             <span class="ele-manager-drawer-actions" v-if="state.url">
                 <button class="ele-manager-drawer-refresh-btn" type="button" @click="reloadFrame()" aria-label="Refresh">
                     <span>↻</span>
@@ -441,7 +577,9 @@ export class DrawerHelper {
             </span>
         </div>
         <div v-else class="ele-manager-drawer-header">
-            <span class="ele-manager-drawer-title">{{ state.title }}</span>
+            <div class="ele-manager-drawer-header-main">
+                <span class="ele-manager-drawer-title">{{ state.title }}</span>
+            </div>
             <span class="ele-manager-drawer-actions">
                 <button v-if="state.url" class="ele-manager-drawer-refresh-btn" type="button" @click="reloadFrame()" aria-label="Refresh">
                     <span>↻</span>
@@ -456,11 +594,35 @@ export class DrawerHelper {
         </div>
     </template>
 
+    <div v-if="state.tabs.length > 1" class="ele-manager-drawer-tab-body">
+        <div class="ele-manager-drawer-tab-strip">
+            <el-tabs
+                v-model="state.activeTabKey"
+                class="ele-manager-drawer-tabs"
+                @update:model-value="onTabChange"
+            >
+                <el-tab-pane
+                    v-for="tab in state.tabs"
+                    :key="tab.key"
+                    :name="tab.key"
+                    :label="tab.label"
+                ></el-tab-pane>
+            </el-tabs>
+        </div>
+        <div class="ele-manager-drawer-frame-host">
+            <iframe
+                :src="getActiveTabUrl()"
+                :data-tab-key="state.activeTabKey"
+                data-ele-drawer-iframe="1"
+                class="ele-manager-drawer-frame"
+            ></iframe>
+        </div>
+    </div>
     <iframe
-        v-if="state.url"
+        v-else-if="state.url"
         :src="state.url"
         data-ele-drawer-iframe="1"
-        style="width:100%;height:100%;border:0;min-height:280px;"
+        class="ele-manager-drawer-frame"
     ></iframe>
     <div v-else-if="state.custom" :id="state.bodyId" :class="['ele-manager-drawer-body-host', state.bodyClass]"></div>
     <div v-else-if="state.html" v-html="state.content"></div>
@@ -567,8 +729,8 @@ export class DrawerHelper {
             try {
                 var topAppRef = null;
                 try { topAppRef = app._instance; } catch (_) { topAppRef = null; }
-                instance.escKeyHandler = function (event) {
-                    var e = event || window.event;
+                instance.escKeyHandler = function (evt) {
+                    var e = evt;
                     if (!e) return;
                     var key = (typeof e.key === 'string') ? e.key : '';
                     var code = (typeof e.code === 'string') ? e.code : '';
@@ -669,31 +831,6 @@ export class DrawerHelper {
                 // 父窗口绑一次（焦点在抽屉非 iframe 部分时生效）
                 hostWindow.addEventListener('keydown', instance.escKeyHandler, true);
 
-                // 若有 iframe（url mode），再给 iframe 内容也绑：
-                // 1) 首次挂载时尝试捕获；2) iframe load 后再绑一次（同域可访问）
-                (function bindIframeEsc() {
-                    if (!state.url) return;
-                    function tryBind(iframeEl) {
-                        if (!iframeEl) return;
-                        var iw = null;
-                        try { iw = iframeEl.contentWindow; } catch (_) { iw = null; }
-                        if (!iw) return;
-                        try { iw.addEventListener('keydown', instance.escKeyHandler, true); } catch (_) { /* cross-origin */ }
-                    }
-                    function findAndBind() {
-                        try {
-                            var el = (hostWindow || window).document.querySelector('#' + instance.id + ' iframe[data-ele-drawer-iframe="1"]');
-                            if (!el) return;
-                            tryBind(el);
-                            el.addEventListener('load', function () { tryBind(el); }, false);
-                        } catch (_) { /* ignore */ }
-                    }
-                    try { findAndBind(); } catch (_) { /* ignore */ }
-                    // 延迟再试一次，确保 iframe DOM 已插入
-                    setTimeout(findAndBind, 0);
-                    setTimeout(findAndBind, 250);
-                    setTimeout(findAndBind, 1000);
-                })();
             } catch (err) {
                 console.warn('attach drawer ESC key handler failed:', err);
             }
@@ -723,26 +860,12 @@ export class DrawerHelper {
             console.error('drawer message listener cleanup failed:', err);
         }
 
-        // 解绑 ESC 键：父窗口 + iframe 内容窗口
+        // 解绑 ESC 键：父窗口
         try {
             if (instance.escKeyHandler) {
                 if (instance.hostWindow) {
                     try { instance.hostWindow.removeEventListener('keydown', instance.escKeyHandler, true); } catch (_) { /* ignore */ }
                 }
-                // 解绑 iframe contentWindow 的 keydown（同源时）
-                try {
-                    if (instance.mountEl && instance.hostWindow) {
-                        var iframes = instance.hostWindow.document.querySelectorAll('#' + instance.id + ' iframe[data-ele-drawer-iframe="1"]');
-                        if (iframes && iframes.length) {
-                            for (var i = 0; i < iframes.length; i++) {
-                                try {
-                                    var ci = iframes[i].contentWindow;
-                                    if (ci) ci.removeEventListener('keydown', instance.escKeyHandler, true);
-                                } catch (_) { /* cross-origin */ }
-                            }
-                        }
-                    }
-                } catch (_) { /* ignore */ }
             }
         } catch (err) {
             console.error('drawer ESC key listener cleanup failed:', err);
