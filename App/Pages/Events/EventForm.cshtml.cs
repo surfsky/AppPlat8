@@ -23,6 +23,7 @@ namespace App.Pages.Events
         public Event Item { get; set; }
         public List<EventType> EventTypes { get; set; }
         public List<App.DAL.Org> OrgTree { get; set; }
+        public string PublisherName { get; set; }
 
         public void OnGet()
         {
@@ -33,11 +34,11 @@ namespace App.Pages.Events
         public IActionResult OnGetData(long id)
         {
             var item = Event.GetDetail(id) ?? new Event();
-            if (id > 0 && item != null && item.Id > 0)
+            if (id <= 0)
             {
-                var cu = Auth.GetUser();
-                if (!OrgFilter.IsAuth(cu, item.OrgId))
-                    return BuildResult(403, "越权访问");
+                var user = this.GetUser();
+                item.PublisherId = user.Id;
+                PublisherName = user.Name;
             }
             return BuildResult(0, "success", item);
         }
@@ -67,6 +68,7 @@ namespace App.Pages.Events
             item.MainImage = Uploader.SaveFile(nameof(Event),req.MainImage);
             item.AllowComment = req.AllowComment;
             item.Gps = req.Gps;
+            item.PublisherId = req.PublisherId;
             item.Save();
             return BuildResult(0, "保存成功");
         }

@@ -192,10 +192,21 @@ namespace App.DAL
         }
 
         /// <summary>搜索检查记录。</summary>
-        public static IQueryable<Check> Search(string objectName, string socialCreditCode, long? objectId, CheckObjectType? objectType, DateTime? checkStartDt, DateTime? checkEndDt)
-        {
+        public static IQueryable<Check> Search(
+            string objectName="", 
+            string socialCreditCode="", 
+            long? objectId=null, 
+            CheckObjectType? objectType=null, 
+            DateTime? checkStartDt=null, 
+            DateTime? checkEndDt=null, 
+            long? orgId=null
+        ){
             IQueryable<Check> q = BuildIncludeQuery();
             if (objectName.IsNotEmpty())        q = q.Where(o => o.CheckObject.Name.Contains(objectName.Trim()));
+            if (orgId.IsNotEmpty())             {
+                var ids = DAL.Org.GetChildIds(orgId.Value);
+                q = q.Where(o => ids.Contains(o.OrgId.Value));
+            }
             if (objectId.IsNotEmpty())          q = q.Where(o => o.CheckObjectId == objectId.Value);
             if (objectType.IsNotEmpty())        q = q.Where(o => o.CheckObject.ObjectType == objectType.Value);
             if (socialCreditCode.IsNotEmpty())  q = q.Where(o => o.CheckObject.SocialCreditId.Contains(socialCreditCode.Trim()));

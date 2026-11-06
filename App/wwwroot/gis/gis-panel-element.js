@@ -127,10 +127,10 @@ class GisPanelElement extends HTMLElement {
 
         this.innerHTML = `
             <div class="gis-panel-root">
-                <img class="gis-panel-corner tl" src="/gis/tl.svg" alt="" onerror="this.style.display='none'" />
-                <img class="gis-panel-corner tr" src="/gis/tr.svg" alt="" onerror="this.style.display='none'" />
-                <img class="gis-panel-corner bl" src="/gis/bl.svg" alt="" onerror="this.style.display='none'" />
-                <img class="gis-panel-corner br" src="/gis/br.svg" alt="" onerror="this.style.display='none'" />
+                <img class="gis-panel-corner tl" src="/gis/images/tl.svg" alt="" onerror="this.style.display='none'" />
+                <img class="gis-panel-corner tr" src="/gis/images/tr.svg" alt="" onerror="this.style.display='none'" />
+                <img class="gis-panel-corner bl" src="/gis/images/bl.svg" alt="" onerror="this.style.display='none'" />
+                <img class="gis-panel-corner br" src="/gis/images/br.svg" alt="" onerror="this.style.display='none'" />
                 <div class="gis-panel-header">
                     <div class="gis-panel-title-wrap">
                         <h3 class="gis-panel-title">${escapedTitle}</h3>

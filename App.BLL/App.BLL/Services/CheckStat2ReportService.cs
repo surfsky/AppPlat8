@@ -17,6 +17,8 @@ namespace App.Services
         [UI("区域Id", Column = ColumnType.None)] public long OrgId { get; set; }
         [UI("排序", Column = ColumnType.None)] public int SortId { get; set; }
         [UI("网格员Id", Column = ColumnType.None)] public long? CheckerId { get; set; }
+        [UI("检查开始时间", Column = ColumnType.None)] public string CheckStartDt { get; set; }
+        [UI("检查结束时间", Column = ColumnType.None)] public string CheckEndDt { get; set; }
         [UI("隐患开始时间", Column = ColumnType.None)] public string HazardStart { get; set; }
         [UI("隐患结束时间", Column = ColumnType.None)] public string HazardEnd { get; set; }
         [UI("区域名称", ColumnWidth = 24)] public string OrgName { get; set; }

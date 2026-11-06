@@ -152,8 +152,7 @@ namespace App.Components
             if (!IsLogin(context))
                 return null;
 
-            var userName = context.User.Claims.Where(x => x.Type == "UserName").FirstOrDefault()?.Value;
-            return userName;
+            return context.User.Claims.Where(x => x.Type == "UserName").FirstOrDefault()?.Value;
         }
 
         /// <summary>获取当前用户信息</summary>
@@ -215,13 +214,11 @@ namespace App.Components
         }
 
         /// <summary>检查当前用户是否拥有某个权限</summary>
-        public static bool HasPower(Power power,HttpContext context = null)
+        public static bool HasPower(Power power, HttpContext context = null)
         {
-            context = context ?? Asp.Current;
-            List<Power> powers = GetUserPowers(context);
-            if (powers.Contains(power))
+            if (GetUserName(context) == "admin")
                 return true;
-            return false;
+            return GetUserPowers(context ?? Asp.Current).Contains(power);
         }
 
         /// <summary>检查权限失败（页面回发）

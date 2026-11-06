@@ -16,30 +16,25 @@ namespace App.Pages.Checks
     [Auth(Power.CheckView)]
     public class ChecksModel : AuthModel
     {
-        [BindProperty(SupportsGet = true)]
         public long? ObjectId { get; set; }
-
-        [BindProperty(SupportsGet = true)]
         public string ObjectName { get; set; }
+        public Check Item { get; set; } = new Check();
 
-        public Check Item { get; set; }
-
-        public void OnGet(long? objectId, string objectName)
+        public void OnGet(long? objectId, string objectName, long? orgId)
         {
             ObjectId = objectId;
             ObjectName = objectName;
-
             if (ObjectId.GetValueOrDefault() > 0 && string.IsNullOrWhiteSpace(ObjectName))
             {
                 ObjectName = CheckObject.Get(ObjectId)?.Name ?? string.Empty;
             }
+            Item.OrgId = orgId;
         }
 
-        public IActionResult OnGetData(Paging pi, string objectName, string socialCreditCode, long? objectId, CheckObjectType? objectType, DateTime? checkStartDt, DateTime? checkEndDt)
+        public IActionResult OnGetData(Paging pi, string objectName, string socialCreditCode, long? objectId, CheckObjectType? objectType, DateTime? checkStartDt, DateTime? checkEndDt, long? orgId=null)
         {
-            var cu = Auth.GetUser();
-            var q = Check.Search(objectName, socialCreditCode, objectId, objectType, checkStartDt, checkEndDt);
-            q = q.FilterByOrg(cu);
+            var q = Check.Search(objectName, socialCreditCode, objectId, objectType, checkStartDt, checkEndDt, orgId);
+            q = q.FilterByOrg(Auth.GetUser());
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }

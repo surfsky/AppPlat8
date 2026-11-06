@@ -138,13 +138,15 @@ namespace App.Pages.Checks.Reports
                 .FirstOrDefault();
         }
 
-        /// <summary>把当前查询的隐患时间范围回填到结果行。</summary>
+        /// <summary>把当前查询的时间范围回填到结果行。</summary>
         void BindHazardRange(IEnumerable<CheckStatReportRow> rows)
         {
             var start = StartDt.ToString("yyyy-MM-ddTHH:mm:ss");
             var end = EndDt.ToString("yyyy-MM-ddTHH:mm:ss");
             foreach (var row in rows)
             {
+                row.CheckStartDt = start;
+                row.CheckEndDt = end;
                 row.HazardStart = start;
                 row.HazardEnd = end;
             }

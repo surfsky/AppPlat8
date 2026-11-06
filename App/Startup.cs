@@ -59,7 +59,6 @@ namespace App
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
                 });  // MVC + Razor Runtime Compilation
-            services.AddRazorPages();                         // Razor Pages
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {
                 options.LoginPath = new PathString("/Login");
@@ -75,6 +74,7 @@ namespace App
             {
                 options.Limits.MaxRequestBodySize = 2147483648; // 2GB
             });
+            services.AddRazorPages();                           // Razor Pages
             services.AddServerSideBlazor();                     // Blazor
             services.AddBootstrapBlazor();                      // BootstrapBlazor
             services.AddSignalR(op =>

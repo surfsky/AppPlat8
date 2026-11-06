@@ -143,6 +143,8 @@ namespace App.Pages.Checks.Reports
             var end = EndDt.ToString("yyyy-MM-ddTHH:mm:ss");
             foreach (var row in rows)
             {
+                row.CheckStartDt = start;
+                row.CheckEndDt = end;
                 row.HazardStart = start;
                 row.HazardEnd = end;
             }

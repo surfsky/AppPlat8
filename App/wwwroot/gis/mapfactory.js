@@ -242,7 +242,7 @@
 
 
     function pickDefaultStyleName() {
-        if (getTiandituKey()) return 'TiandituStreets'; // 默认底图：天地图街道
+        if (getTiandituKey()) return 'TiandituSatellite'; // 默认底图：天地图遥感
         return 'OpenStreetMap';
     }
 

@@ -20,8 +20,8 @@ namespace App.Pages.Checks
         [BindProperty(SupportsGet = true)]    public string ObjectName { get; set; }
         [BindProperty(SupportsGet = true)]    public long? CheckId { get; set; }
         [BindProperty(SupportsGet = true)]    public long? OrgId { get; set; }
-        [BindProperty(SupportsGet = true)]    public DateTime? CreateStartDt { get; set; }
-        [BindProperty(SupportsGet = true)]    public DateTime? CreateEndDt { get; set; }
+        [BindProperty(SupportsGet = true)]    public DateTime? checkStartDt { get; set; }
+        [BindProperty(SupportsGet = true)]    public DateTime? checkEndDt { get; set; }
 
         public long? ScopeCheckerId { get; set; }   // 检查人 Id
         public string ScopeCheckerName { get; set; } // 检查人姓名
@@ -38,8 +38,10 @@ namespace App.Pages.Checks
             ObjectName = objectName;
             CheckId = checkId;
             OrgId = Request.Query["orgId"].FirstOrDefault().ParseLong();
-            CreateStartDt = Request.Query["createStartDt"].FirstOrDefault().Parse<DateTime?>();
-            CreateEndDt = Request.Query["createEndDt"].FirstOrDefault().Parse<DateTime?>();
+            checkStartDt = Request.Query["checkStartDt"].FirstOrDefault().Parse<DateTime?>()
+                ?? Request.Query["createStartDt"].FirstOrDefault().Parse<DateTime?>();
+            checkEndDt = Request.Query["checkEndDt"].FirstOrDefault().Parse<DateTime?>()
+                ?? Request.Query["createEndDt"].FirstOrDefault().Parse<DateTime?>();
 
             if (ObjectId.GetValueOrDefault() > 0 && string.IsNullOrWhiteSpace(ObjectName))
             {
@@ -78,11 +80,13 @@ namespace App.Pages.Checks
             ScopeExcludeArchived = rawExclude.Parse<bool?>() == true;
         }
 
-        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? createStartDt, DateTime? createEndDt, long? orgId = null, List<long> orgIds = null, DateTime? expireTo = null, bool scopeCheckerOrOrg = false, bool scopeOrgOnly = false)
+        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? checkStartDt, DateTime? checkEndDt, long? orgId = null, List<long> orgIds = null, DateTime? expireTo = null, bool scopeCheckerOrOrg = false, bool scopeOrgOnly = false)
         {
             orgId ??= Request.Query["orgId"].FirstOrDefault().ParseLong();
-            createStartDt ??= Request.Query["createStartDt"].FirstOrDefault().Parse<DateTime?>();
-            createEndDt ??= Request.Query["createEndDt"].FirstOrDefault().Parse<DateTime?>();
+            checkStartDt ??= Request.Query["checkStartDt"].FirstOrDefault().Parse<DateTime?>()
+                ?? Request.Query["createStartDt"].FirstOrDefault().Parse<DateTime?>();
+            checkEndDt ??= Request.Query["checkEndDt"].FirstOrDefault().Parse<DateTime?>()
+                ?? Request.Query["createEndDt"].FirstOrDefault().Parse<DateTime?>();
             orgIds = MergeOrgIds(orgIds, Request.Query["orgIds"].ToString());
             // picker 的 checkerName 是 checkerId 的显示文本，不是额外的筛选条件。
             if (checkerId.HasValue) checkerName = null;
@@ -119,7 +123,7 @@ namespace App.Pages.Checks
                         .ToList();
                 }
                 baseQ = App.DAL.CheckHazard.IncludeSet
-                    .Include(t => t.CheckObject).Include(t => t.Checker).Include(t => t.CheckItem)
+                    .Include(t => t.CheckObject).Include(t => t.Checker).Include(t => t.CheckItem).Include(t => t.Check)
                     .AsNoTracking()
                     .Where(h => (h.CheckerId.HasValue && h.CheckerId.Value == uid)
                              || (scopeOrgIds != null && scopeOrgIds.Count > 0
@@ -131,7 +135,7 @@ namespace App.Pages.Checks
             }
             else
             {
-                baseQ = CheckHazard.Search(objectName, objectId, checkerName, checkerId, singleStatus, createStartDt, expireTo, orgId, orgIds);
+                baseQ = CheckHazard.Search(objectName, objectId, checkerName, checkerId, singleStatus, null, expireTo, orgId, orgIds);
             }
 
             var q = baseQ;
@@ -149,8 +153,8 @@ namespace App.Pages.Checks
             else if (multiStatus != null && multiStatus.Count > 0)    q = q.Where(h => h.Status.HasValue && multiStatus.Contains(h.Status.Value));
             else if (singleStatus.HasValue)                 q = q.Where(h => h.Status.HasValue && h.Status.Value == singleStatus.Value);
             if (expireTo.HasValue)                          q = q.Where(h => h.ExpireDt.HasValue && h.ExpireDt.Value <= expireTo.Value.Date);
-            if (createStartDt.HasValue)                     q = q.Where(h => h.CreateDt >= createStartDt.Value.Date);
-            if (createEndDt.HasValue)                       q = q.Where(h => h.CreateDt.HasValue && h.CreateDt.Value < createEndDt.Value.Date.AddDays(1));
+            if (checkStartDt.HasValue)                     q = q.Where(h => h.Check != null && h.Check.CheckDt.HasValue && h.Check.CheckDt.Value >= checkStartDt.Value);
+            if (checkEndDt.HasValue)                       q = q.Where(h => h.Check != null && h.Check.CheckDt.HasValue && h.Check.CheckDt.Value <= checkEndDt.Value);
 
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);

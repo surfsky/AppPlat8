@@ -45,21 +45,25 @@
     <Buttons>
       <EleButton Type="Primary" Command="Search" Icon="Search">搜索</EleButton>
       <EleButton Type="Warning" Command="Export" Icon="Download">导出</EleButton>
-      <EleButton Type="Default" Command="Reset" Icon="Refresh">重置</EleButton>
+      <EleButton Type="Default" Command="Reset" Icon="Refresh" Visible="false">重置</EleButton>
     </Buttons>
   </Toolbar>
   <Columns>
     <EleNumColumn Label="序号" Width="60" Fixed="left" Align="center" Sortable="false" />
     <EleColumn For="Item.OrgName" Label="区域名称" MinWidth="180" Fixed="left" Sortable="false"
-               Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckHazards?orgId={orgId}&amp;scopeOrgOnly=true&amp;createStartDt={hazardStart}&amp;createEndDt={hazardEnd}" />
-    <EleColumn For="Item.CheckerName" Label="网格员" Width="130" Fixed="left" Sortable="false"
-               Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckHazards?checkerId={checkerId}&amp;scopeOrgOnly=true&amp;createStartDt={hazardStart}&amp;createEndDt={hazardEnd}" />
-    <EleColumn For="Item.ObjectCount" Label="纳管对象数" Width="110" Align="right" Sortable="false" />
-    <EleColumn For="Item.CheckCount" Label="检查次数" Width="100" Align="right" Sortable="false" />
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckHazards?orgId={orgId}&amp;scopeOrgOnly=true&amp;checkStartDt={checkStartDt}&amp;checkEndDt={checkEndDt}" />
+    <EleColumn For="Item.CheckerName" Label="网格员" Width="130" Fixed="left" Sortable="false" />
+    <EleColumn For="Item.ObjectCount" Label="纳管对象数" Width="110" Align="right" Sortable="false" 
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?checkerId={checkerId}" 
+               />
+    <EleColumn For="Item.CheckCount" Label="检查次数" Width="100" Align="right" Sortable="false" 
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/Checks?orgId={orgId}&amp;scopeOrgOnly=true&amp;checkStartDt={checkStartDt}&amp;checkEndDt={checkEndDt}" />
     <EleColumn For="Item.NormalHazardText" Label="一般隐患数(已整改数)" Width="165" Align="center" Sortable="false" />
     <EleColumn For="Item.HighHazardText" Label="重大隐患数(已整改数)" Width="165" Align="center" Sortable="false" />
     <EleColumn For="Item.HighProblemText" Label="重点问题数(已整改数)" Width="165" Align="center" Sortable="false" />
-    <EleColumn For="Item.TotalHazardText" Label="隐患总数(已整改数)" Width="150" Align="center" Sortable="false" />
+    <EleColumn For="Item.TotalHazardText" Label="隐患总数(已整改数)" Width="150" Align="center" Sortable="false" 
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckHazards?checkerId={checkerId}&amp;scopeOrgOnly=true&amp;checkStartDt={checkStartDt}&amp;checkEndDt={checkEndDt}"
+              />
     <EleColumn For="Item.HazardPerThousandText" Label="每千次巡查发现隐患数" Width="150" Align="right" Sortable="false" />
     <EleColumn For="Item.MajorProblemRateText" Label="重大隐患、重点问题发现率" Width="180" Align="right" Sortable="false" />
   </Columns>

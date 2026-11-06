@@ -50,18 +50,19 @@
         }
 
         function addMapControls() {
-            map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+            map.addControl(mapApi.createFullscreenControl(), 'top-right');
             map.addControl(new maplibregl.GeolocateControl({
                 positionOptions: { enableHighAccuracy: true },
                 trackUserLocation: true, showUserHeading: true
             }), 'top-right');
+            map.addControl(new maplibregl.NavigationControl({ showZoom: false, visualizePitch: true, visualizeRoll: true }), 'top-right');
             map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+            map.addControl(mapApi.createResetControl(ctx.resetView), 'top-right');
+            map.addControl(viewApi.createTerrainToggleControl(), 'top-right');
 
+            // center coord control
             const centerCoordControl = mapApi.createCenterCoordControl();
             map.addControl(centerCoordControl, 'bottom-right');
-            map.addControl(mapApi.createResetControl(ctx.resetView), 'top-right');
-            map.addControl(mapApi.createFullscreenControl(), 'top-right');
-            map.addControl(viewApi.createTerrainToggleControl(), 'top-right');
             map.on('move', () => centerCoordControl.update());
         }
 

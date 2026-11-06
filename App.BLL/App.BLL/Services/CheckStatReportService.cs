@@ -15,6 +15,8 @@ namespace App.Services
     {
         [UI("区域Id", Column = ColumnType.None)] public long OrgId { get; set; }
         [UI("排序", Column = ColumnType.None)] public int SortId { get; set; }
+        [UI("检查开始时间", Column = ColumnType.None)] public string CheckStartDt { get; set; }
+        [UI("检查结束时间", Column = ColumnType.None)] public string CheckEndDt { get; set; }
         [UI("隐患开始时间", Column = ColumnType.None)] public string HazardStart { get; set; }
         [UI("隐患结束时间", Column = ColumnType.None)] public string HazardEnd { get; set; }
         [UI("区域名称", ColumnWidth = 24)] public string OrgName { get; set; }
@@ -157,8 +159,8 @@ namespace App.Services
             return Check.Set
                 .AsNoTracking()
                 .Where(t => t.CheckDt.HasValue && t.CheckDt.Value >= startDt && t.CheckDt.Value <= endDt)
-                .Where(t => t.CheckObject != null && t.CheckObject.OrgId.HasValue && orgIdList.Contains(t.CheckObject.OrgId.Value))
-                .GroupBy(t => t.CheckObject.OrgId.Value)
+                .Where(t => t.OrgId.HasValue && orgIdList.Contains(t.OrgId.Value))
+                .GroupBy(t => t.OrgId.Value)
                 .Select(g => new { OrgId = g.Key, Count = g.Count() })
                 .ToDictionary(t => t.OrgId, t => t.Count);
         }
@@ -170,10 +172,10 @@ namespace App.Services
             var list = CheckHazard.Set
                 .AsNoTracking()
                 .Where(t => t.Check != null && t.Check.CheckDt.HasValue && t.Check.CheckDt.Value >= startDt && t.Check.CheckDt.Value <= endDt)
-                .Where(t => t.CheckObject != null && t.CheckObject.OrgId.HasValue && orgIdList.Contains(t.CheckObject.OrgId.Value))
+                .Where(t => t.OrgId.HasValue && orgIdList.Contains(t.OrgId.Value))
                 .Select(t => new
                 {
-                    OrgId = t.CheckObject.OrgId.Value,
+                    OrgId = t.OrgId.Value,
                     Level = t.CheckItem.HazardLevel,
                     t.Status,
                 })
@@ -219,9 +221,10 @@ namespace App.Services
                 row.HighHazardFixedCount += agg.HighFixedCount;
                 row.HighProblemCount += agg.ProblemCount;
                 row.HighProblemFixedCount += agg.ProblemFixedCount;
-                row.TotalHazardCount += agg.TotalCount;
-                row.TotalHazardFixedCount += agg.TotalFixedCount;
             }
+
+            row.TotalHazardCount = row.NormalHazardCount + row.HighHazardCount + row.HighProblemCount;
+            row.TotalHazardFixedCount = row.NormalHazardFixedCount + row.HighHazardFixedCount + row.HighProblemFixedCount;
 
             row.HazardPerThousand = CalcRate(row.TotalHazardCount, row.CheckCount, 1000m);
             row.MajorProblemRate = CalcRate(row.HighHazardCount + row.HighProblemCount, row.TotalHazardCount, 100m);

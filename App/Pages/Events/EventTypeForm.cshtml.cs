@@ -7,6 +7,7 @@ using App.DAL;
 using App.DAL.OA;
 using App.HttpApi;
 using App.Utils;
+using App.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,9 @@ namespace App.Pages.Events
         public IActionResult OnGetData(long id)
         {
             var item = EventType.GetDetail(id) ?? new EventType();
+            var selectId = Asp.GetQueryLong("selectId");
+            if (selectId != null)
+                item.ParentId = selectId.Value;
             return BuildResult(0, "success", item);
         }
 

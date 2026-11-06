@@ -12,6 +12,7 @@
         <EleTreePicker For="Item.TypeId" Label="类别" Items="Model.EventTypes" Required="true"></EleTreePicker>
         <EleDatePicker For="Item.HappenDt" Label="时间" Type="@EleDatePickerType.DateTime" Required="true"></EleDatePicker>
         <EleTreePicker For="Item.OrgId" Label="组织" Api="/httpapi/orgs/GetAuthOrgTree"  CheckStrictly="true" Required="true"></EleTreePicker>
+        <EleInput For="Item.Publisher" Label="发布人" Enable="false"></EleInput>
         <EleSwitch For="Item.AllowComment" Label="允许评论" Visible="false"></EleSwitch>
         <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location"></ElePicker>
         <EleInput For="Item.Content" Label="内容" Rows="5" FillRow></EleInput>

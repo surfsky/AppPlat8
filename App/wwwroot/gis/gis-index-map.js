@@ -220,9 +220,9 @@
         }
 
         return {
+            createFullscreenControl,
             createCenterCoordControl,
             createResetControl,
-            createFullscreenControl,
             ensureMapGeometryHelperReady,
             searchAddress() {
                 return addressApi?.searchAddress?.();
