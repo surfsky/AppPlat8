@@ -50,9 +50,10 @@
   </Toolbar>
   <Columns>
     <EleNumColumn Label="序号" Width="60" Fixed="left" Align="center" Sortable="false" />
-    <EleColumn For="Item.OrgName" Label="区域名称" MinWidth="180" Fixed="left" Sortable="false"/>
+    <EleColumn For="Item.OrgName" Label="区域名称" MinWidth="180" Fixed="left" Sortable="false"
+               Link="true" LinkTarget="Self" PopupUrl="CheckStat?orgId={orgId}&amp;scopeOrgOnly=true&amp;checkStartDt={checkStartDt}&amp;checkEndDt={checkEndDt}" />
     <EleColumn For="Item.ObjectCount" Label="纳管对象数" Width="110" Align="right" Sortable="false" 
-               Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&amp;scopeOrgOnly=true" />
+               Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&amp;scopeOrgOnly=true&amp;checkStartDt={checkStartDt}&amp;checkEndDt={checkEndDt}" />
     <EleColumn For="Item.CheckCount" Label="检查次数" Width="100" Align="right" Sortable="false" 
                Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/Checks?orgId={orgId}&amp;scopeOrgOnly=true&amp;checkStartDt={checkStartDt}&amp;checkEndDt={checkEndDt}" />
     <EleColumn For="Item.NormalHazardText" Label="一般隐患数(已整改数)" Width="165" Align="center" Sortable="false" />

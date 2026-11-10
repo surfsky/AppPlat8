@@ -90,6 +90,8 @@ namespace App.API
             var all = App.DAL.Org.All.OrderBy(t => t.SortId).ThenBy(t => t.Id).ToList();
             if (user == null)
                 return new HashSet<long>();
+            
+            // admin => all
             if (Auth.IsAdmin(user))
             {
                 return orgId > 0
@@ -97,6 +99,7 @@ namespace App.API
                     : all.Select(t => t.Id).ToHashSet();
             }
 
+            // visibleOrgIds
             var authRootId = GetAuthOrgRootId(user);
             var visibleIds = authRootId.HasValue
                 ? all.GetDescendants(authRootId).Select(t => t.Id).ToHashSet()

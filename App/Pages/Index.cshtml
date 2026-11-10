@@ -464,7 +464,7 @@
 
             <div id="sidebarOverlay" class="sidebar-overlay md:hidden" @@click="closeSidebar"></div>
 
-            <div class="main-content flex-1 flex flex-col bg-white overflow-hidden h-full box-border px-1 py-1">
+            <div class="main-content flex-1 flex flex-col bg-white overflow-hidden h-full box-border px-0 py-0">
                 <div class="frame-container flex-1 overflow-hidden" :aria-busy="frameLoading">
                     <iframe id="contentFrame" class="w-full h-full" @@load="onFrameLoad"></iframe>
                     <div class="frame-loading" v-show="frameLoading" role="status" aria-live="polite">

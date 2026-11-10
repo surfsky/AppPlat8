@@ -23,6 +23,7 @@ namespace App.EleUI
         [HtmlAttributeName("Multiple")]      public bool Multiple { get; set; } = false;                // 是否支持多选
         [HtmlAttributeName("CollapseTags")]  public bool? CollapseTags { get; set; } = false;           // 是否折叠标签
         [HtmlAttributeName("ExpandLevel")]   public int ExpandLevel { get; set; } = 4;                  // 默认展开层次（0 不展开，-1 全部展开）
+        [HtmlAttributeName("ExpandSelectNode")] public bool ExpandSelectNode { get; set; } = false;  // 打开时自动展开所选节点路径
         [HtmlAttributeName("ShowAllButton")] public bool ShowAllButton { get; set; } = true;           // 是否显示全部展开开关（默认显示）
         [HtmlAttributeName("TagType")]       public EleTagType TagType { get; set; } = EleTagType.Info; // 标签类型
 
@@ -71,6 +72,7 @@ namespace App.EleUI
             output.Attributes.SetAttribute("data-tree-model", propName);
             output.Attributes.SetAttribute("data-tree-id-field", idField);
             output.Attributes.SetAttribute("data-tree-children-field", childrenField);
+            output.Attributes.SetAttribute("data-filter-multiple", Multiple ? "true" : "false");
 
             // Default value (e.g. from URL parameter via page handler).
             // Pre-populates the EleTable filter so the picker shows the right
@@ -115,6 +117,7 @@ namespace App.EleUI
                 chunkSelectable: {(ChunkSelectable ? "true" : "false")},
                 collapseTags: {(collapseTags ? "true" : "false")},
                 expandLevel: {ExpandLevel},
+                expandSelectNode: {(ExpandSelectNode ? "true" : "false")},
                 showAllButton: {(ShowAllButton ? "true" : "false")},
                 placeholder: '关键字',
                 fallbackData: {fallbackExpr},

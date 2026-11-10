@@ -39,7 +39,10 @@ export class EleTable {
                     .filter(v => !!v);
             }
             if (value === null || value === undefined || value === '') return [];
-            return [String(value)];
+            return String(value)
+                .split(/[;,|]/)
+                .map(v => v.trim())
+                .filter(v => !!v);
         }
 
         if (Array.isArray(value)) {
@@ -135,6 +138,7 @@ export class EleTable {
         const fallbackData = Array.isArray(config.fallbackData) ? config.fallbackData : [];
         const placeholder = config.placeholder || '请输入关键字过滤';
         const expandLevel = Number.isFinite(Number(config.expandLevel)) ? Number(config.expandLevel) : 5;
+        const expandSelectNode = !!config.expandSelectNode;
         const showAllButton = !!config.showAllButton;
 
         if (source && !this.options?.value?.[modelKey]) {
@@ -158,9 +162,20 @@ export class EleTable {
             return false;
         };
         const currentValue = this.normalizeTreePickerValue(this.filters.value[modelKey], multiple);
-        const selectedValues = Array.isArray(currentValue)
+        const findNodeById = (nodes, key) => {
+            if (!Array.isArray(nodes)) return null;
+            for (const node of nodes) {
+                if (!node || typeof node !== 'object') continue;
+                if (String(node[idField]) === String(key)) return node;
+                const match = findNodeById(node[childrenField], key);
+                if (match) return match;
+            }
+            return null;
+        };
+        const selectedValues = (Array.isArray(currentValue)
             ? [...currentValue]
-            : (currentValue ? [currentValue] : []);
+            : (currentValue ? [currentValue] : []))
+            .map(value => findNodeById(normalizedTreeData, value)?.[idField] ?? value);
         if (!chunkSelectable) {
             for (let i = selectedValues.length - 1; i >= 0; i -= 1) {
                 if (!isLeafKey(normalizedTreeData, selectedValues[i])) selectedValues.splice(i, 1);
@@ -240,6 +255,27 @@ export class EleTable {
                 const allExpandKeys = collectAllExpandKeys(state.nodes);
                 if (expandLevel < 0) state.baseExpandKeys = [...allExpandKeys];
                 state.expandKeys = [...state.baseExpandKeys];
+                if (expandSelectNode && initialValues.length > 0) {
+                    const selectedIds = new Set(initialValues.map(String));
+                    const collectSelectedPaths = (nodes, ancestors = []) => {
+                        if (!Array.isArray(nodes)) return [];
+                        const keys = [];
+                        for (const node of nodes) {
+                            if (!node || typeof node !== 'object') continue;
+                            const nodeId = String(node[idField]);
+                            const children = node[childrenField];
+                            const hasChildren = Array.isArray(children) && children.length > 0;
+                            if (selectedIds.has(nodeId)) {
+                                keys.push(...ancestors);
+                                if (hasChildren) keys.push(node[idField]);
+                            }
+                            if (hasChildren)
+                                keys.push(...collectSelectedPaths(children, [...ancestors, node[idField]]));
+                        }
+                        return keys;
+                    };
+                    state.expandKeys = [...new Set([...state.expandKeys, ...collectSelectedPaths(state.nodes)])];
+                }
 
                 const app = createApp({
                     data() {

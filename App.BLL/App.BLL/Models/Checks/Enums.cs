@@ -69,14 +69,24 @@ namespace App.DAL
     //-------------------------------------------------------
     // 自有枚举值
     //-------------------------------------------------------
+    // 5、厂房房屋结构填写：①砖木结构，②砖混结构，③钢筋混凝土结构，④钢结构；
+    [UI("检查", "厂房房屋结构")]
+    public enum CheckBuildingStructure
+    {
+        [UI("砖木结构")]      BrickWood = 1,
+        [UI("砖混结构")]      BrickConcrete = 2,
+        [UI("钢筋混凝土结构")] Concrete = 3,
+        [UI("钢结构")]        Steel = 4,
+    }
+
     // 2、企业规模填写：①规下，②规上亿元以下，③规上亿元以上；
     [UI("检查", "检查对象规模")]
     public enum CheckObjectScale
     {
-        [UI("小微")] SmallMicro = 0,
-        [UI("规下")] BelowScale = 1,
-        [UI("规上")] AboveScale = 2,
-        [UI("规上亿元")] AboveScaleYi = 3,
+        [UI("小微")] ScaleMicro = 0,
+        [UI("规下")] ScaleSmall = 1,
+        [UI("规上")] ScaleBelowBillion = 2,
+        [UI("规上亿元")] ScaleAboveBillion = 3,
     }
 
     //3、企业标准化创建情况：①三级，②小微，③未创建；
@@ -104,15 +114,6 @@ namespace App.DAL
     }
 
 
-    // 5、厂房房屋结构填写：①砖木结构，②砖混结构，③钢筋混凝土结构，④钢结构；
-    [UI("检查", "厂房房屋结构")]
-    public enum CheckBuildingStructure
-    {
-        [UI("砖木结构")]      BrickWood = 1,
-        [UI("砖混结构")]      BrickConcrete = 2,
-        [UI("钢筋混凝土结构")] Concrete = 3,
-        [UI("钢结构")]        Steel = 4,
-    }
 
     // 6、风险行业类型填写：  ①胶印，②凹版印刷，③其他印刷， ④纸制品业，⑤珍珠棉，⑥塑编，⑦其他塑料制品业，⑧纺织业，⑨机械行业，⑩金属制品业，⑪商贸行业，⑫木材行业，⑬其他行业； 
     [UI("检查", "风险行业类型")]

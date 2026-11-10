@@ -36,7 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App.BLL.Folder", "App.BLL.F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App.EleUI.Folder", "App.EleUI.Folder", "{804D9F55-78CB-4E88-3076-DE81D71CC7D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EleUISamples", "App.EleUI\EleUISamples\EleUISamples.csproj", "{622E16E9-CB96-40BD-98CE-B2E054846868}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EleUIDemo", "App.EleUI\EleUIDemo\EleUIDemo.csproj", "{622E16E9-CB96-40BD-98CE-B2E054846868}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.Consoler", "App.Consoler\App.Consoler.csproj", "{514B17D1-27B0-4C1A-95D3-62AA1AD1A6F7}"
 EndProject

@@ -54,8 +54,7 @@ App/Db/sqlite.db-shm
 App/Db/sqlite.db-wal
 
 # App runtime/generated content
-App/Files/
-App/Caches/
+App/Data/
 App/.config/
 App/Migrations/
 App/DataProtection/

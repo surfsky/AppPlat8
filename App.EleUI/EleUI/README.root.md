@@ -9,7 +9,7 @@ App.EleUI is a standalone Razor Class Library that provides:
 ## Repository layout (after migration)
 
 - `App.EleUI/EleUI/`: RCL project root (contains `App.EleUI.csproj`, source code, npm build files, and `wwwroot`).
-- `App.EleUI/EleUISamples/`: sample host project.
+- `App.EleUI/EleUIDemo/`: sample host project.
 
 The `App.EleUI` root now keeps only these two folders.
 

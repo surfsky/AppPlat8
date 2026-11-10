@@ -1,0 +1,51 @@
+@page
+@model App.Pages.EleUIDemo.TreePickerModel
+
+@{
+    ViewData["Title"] = "EleTreePicker 示例";
+}
+
+@section body {
+    <div class="p-4 space-y-4 overflow-auto">
+        <EleCard Title="EleTable 筛选器：多选、默认值名称回显、自动展开选中路径" Border="1px solid #e5e7eb" Radius="8px">
+            <EleTable Title="TreePicker Table 测试" DataHandler="?handler=Data" ShowPage="false">
+                <Toolbar>
+                    <Filters Shows="4">
+                        <EleTreePicker For="Item.TagSpecIds" Label="扩展标签（多选）" Api="?handler=Tree"
+                                       Multiple="true" CheckStrictly="true" CollapseTags="true" TagType="Success" ExpandLevel="1"
+                                       ExpandSelectNode="true" ShowAllButton="true"
+                                       Value="@Model.MultiDefault" Width="360px"></EleTreePicker>
+                        <EleTreePicker For="Item.SingleTagId" Label="标签（单选）" Items="Model.TreeNodes"
+                                       ValueField="Id" NameField="Name" ChildrenField="Children"
+                                       Multiple="false" ChunkSelectable="false" TagType="Warning"
+                                       ExpandLevel="0" ExpandSelectNode="true"
+                                       ShowAllButton="true" Value="@Model.SingleDefault" Width="300px"></EleTreePicker>
+                    </Filters>
+                    <Buttons>
+                        <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                    </Buttons>
+                </Toolbar>
+                <Columns>
+                    <EleNumColumn Label="序号" Width="70" />
+                    <EleColumn For="Item.Name" Label="返回说明" MinWidth="360" />
+                    <EleColumn For="Item.SelectedTagIds" Label="服务端收到的 tagSpecIds" MinWidth="220" />
+                    <EleColumn For="Item.SelectedSingleTagId" Label="服务端收到的 singleTagId" MinWidth="220" />
+                </Columns>
+            </EleTable>
+        </EleCard>
+
+        <EleCard Title="EleForm：同一控件属性对照" Border="1px solid #e5e7eb" Radius="8px">
+            <EleForm DataHandler="?handler=FormData" SaveHandler="?handler=Save" LabelPosition="Right">
+                <EleTreePicker For="Item.FormTagSpecIds" Label="扩展标签（多选）" Api="?handler=Tree"
+                               Multiple="true" CheckStrictly="false" CollapseTags="false" TagType="Info" ExpandLevel="1"
+                               ExpandSelectNode="true" ShowAllButton="true" Width="420px"></EleTreePicker>
+                <EleTreePicker For="Item.FormSingleTagId" Label="标签（单选）" Items="Model.TreeNodes"
+                               Multiple="false" ExpandLevel="0" ExpandSelectNode="true"
+                               ShowAllButton="true" Width="360px"></EleTreePicker>
+                <Bottom>
+                    <EleButton Type="Primary" Command="Save" Icon="Check">保存（回显当前值）</EleButton>
+                </Bottom>
+            </EleForm>
+        </EleCard>
+    </div>
+}

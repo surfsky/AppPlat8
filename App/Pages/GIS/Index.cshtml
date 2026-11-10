@@ -224,8 +224,8 @@
             selectedGeometryId: null,
             geometryInteractionBound: false,
             preservedVisibleGeometryIds: new Set(),
-            // 用户需求：默认底图改为"天地图街道"。配置有 TiandituKey 时生效；未配置时降级为 OSM。
-            currentStyle: 'TiandituStreets',
+            // 用户需求：默认底图改为"天地图遥感"。配置有 TiandituKey 时生效；未配置时降级为 OSM。
+            currentStyle: 'TiandituSatellite',
             currentProjection: 'mercator',
             is3D: false,
             isAutoRotate: false,
@@ -304,9 +304,9 @@
             'gis-geometry-line-label-layer'
         ];
 
-        // 默认底图：有天地图 Key → TiandituStreets；否则 OpenStreetMap。
-        const __defaultStyleName = MapFactory.getTiandituKey() ? 'TiandituStreets' : 'OpenStreetMap';
-        // 统一交给 MapFactory.createMap：默认天地图街道底图、统一默认参数、Key 解析、字体/署名等
+        // 默认底图：有天地图遥感 Key → TiandituSatellite；否则 OpenStreetMap。
+        const __defaultStyleName = MapFactory.getTiandituKey() ? 'TiandituSatellite' : 'OpenStreetMap';
+        // 统一交给 MapFactory.createMap：默认天地图遥感底图、统一默认参数、Key 解析、字体/署名等
         var map = MapFactory.createMap({
             container: 'map',
             defaultStyle: __defaultStyleName,

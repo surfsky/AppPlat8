@@ -24,7 +24,7 @@ namespace App.Pages.Checks
         public string DefaultCheckerName { get; set; }  // 默认检查人名称
         public long? OrgId { get; set; }  // 单值，用于 ElePicker/Select 控件单独匹配
         public string TagIds { get; set; }  // 多值，用于标签树控件回显
-        public string TagSpecIds { get; set; }
+        public string TagSpecIds { get; set; } // 多值，用于专有标签树控件回显
 
         
         //-------------------------------------------------------------------------
@@ -115,6 +115,7 @@ namespace App.Pages.Checks
             CheckRiskLevel? riskLevel=null,
             CheckIndustryType? industryType=null,
             List<DateTime> createDt=null,
+            List<DateTime> deleteDt=null,
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
             List<long> tagSpecIds=null,
@@ -123,7 +124,7 @@ namespace App.Pages.Checks
             bool? scopeCheckerOrOrg=null
             )
         {
-            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagSpecIds, tagName, isDel, scopeCheckerOrOrg);
+            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, deleteDt, lastCheckDt, tagIds, tagSpecIds, tagName, isDel, scopeCheckerOrOrg);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
         }
@@ -147,6 +148,7 @@ namespace App.Pages.Checks
             CheckRiskLevel? riskLevel=null,
             CheckIndustryType? industryType=null,
             List<DateTime> createDt=null,
+            List<DateTime> deleteDt=null,
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
             List<long> tagSpecIds=null,
@@ -155,7 +157,7 @@ namespace App.Pages.Checks
             bool? scopeCheckerOrOrg=null
             )
         {
-            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, lastCheckDt, tagIds, tagSpecIds, tagName, isDel, scopeCheckerOrOrg);
+            var q = Query(name, code, socialCreditCode, address, userName, hasHarzard, isChecked, orgId, checkerId, objectType, scope, scale, riskLevel, industryType, createDt, deleteDt, lastCheckDt, tagIds, tagSpecIds, tagName, isDel, scopeCheckerOrOrg);
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var list = q.SortPageExport(exportPi);
             ExcelExporter.Export(list, $"检查对象列表_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
@@ -180,6 +182,7 @@ namespace App.Pages.Checks
             CheckRiskLevel? riskLevel=null,
             CheckIndustryType? industryType=null,
             List<DateTime> createDt=null,
+            List<DateTime> deleteDt=null,
             List<DateTime> lastCheckDt=null,
             List<long> tagIds=null,
             List<long> tagSpecIds=null,
@@ -204,6 +207,8 @@ namespace App.Pages.Checks
             // date
             DateTime? createStartDt = createDt.GetVal(0);
             DateTime? createEndDt = createDt.GetVal(1);
+            DateTime? deleteStartDt = deleteDt.GetVal(0);
+            DateTime? deleteEndDt = deleteDt.GetVal(1);
             DateTime? lastCheckStartDt = lastCheckDt.GetVal(0);
             DateTime? lastCheckEndDt = lastCheckDt.GetVal(1);
             DateTime? nextCheckFrom = null;
@@ -246,6 +251,46 @@ namespace App.Pages.Checks
                 isDel: isDel,
                 includeTags: true
                 );
+
+            // 统计表链接使用扩展标签精确筛选参数，不展开标签树，保证清单与统计计数一致。
+            var statTagSpecAny = ParseTagIds(null, Request.Query["statTagSpecAny"]);
+            var statTagSpecAll = ParseTagIds(null, Request.Query["statTagSpecAll"]);
+            if (statTagSpecAny.Count > 0)
+                q = q.Where(o => CheckObjectTagSpec.IncludeSet.Any(t => t.CheckObjectId == o.Id && statTagSpecAny.Contains(t.TagId)));
+            foreach (var tagId in statTagSpecAll)
+                q = q.Where(o => CheckObjectTagSpec.IncludeSet.Any(t => t.CheckObjectId == o.Id && t.TagId == tagId));
+
+            // 统计中的规模字段优先使用对象规模枚举，未填写时回退至历史扩展标签。
+            var rawScaleTag = Request.Query["statScaleOrTagSpec"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(rawScaleTag))
+            {
+                var parts = rawScaleTag.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length == 2
+                    && int.TryParse(parts[0], out var scaleValue)
+                    && Enum.IsDefined(typeof(CheckObjectScale), scaleValue)
+                    && long.TryParse(parts[1], out var fallbackTagId))
+                {
+                    var targetScale = (CheckObjectScale)scaleValue;
+                    q = q.Where(o => o.Scale == targetScale
+                        || (!o.Scale.HasValue && CheckObjectTagSpec.IncludeSet.Any(t => t.CheckObjectId == o.Id && t.TagId == fallbackTagId)));
+                }
+            }
+
+            var rawIndustryRisk = Request.Query["industryRisk"].FirstOrDefault();
+            if (int.TryParse(rawIndustryRisk, out var industryRiskValue)
+                && Enum.IsDefined(typeof(CheckIndustryRiskType), industryRiskValue))
+            {
+                var targetIndustryRisk = (CheckIndustryRiskType)industryRiskValue;
+                q = q.Where(o => o.IndustryRisk == targetIndustryRisk);
+            }
+
+            if (string.Equals(Request.Query["statActiveOnly"], "true", StringComparison.OrdinalIgnoreCase))
+                q = q.Where(o => o.IsDel == false || o.IsDel == null);
+            if (string.Equals(Request.Query["statColor"], "none", StringComparison.OrdinalIgnoreCase))
+                q = q.Where(o => o.RiskLevel == null || o.RiskLevel == CheckRiskLevel.None);
+
+            if (deleteStartDt.HasValue) q = q.Where(o => o.DeleteDt >= deleteStartDt.Value.Date);
+            if (deleteEndDt.HasValue) q = q.Where(o => o.DeleteDt <= deleteEndDt.Value.Date.AddDays(1).AddTicks(-1));
 
 
             // 应用组织过滤

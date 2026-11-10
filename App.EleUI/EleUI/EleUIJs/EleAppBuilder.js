@@ -59,7 +59,8 @@ export class EleAppBuilder {
             if (!key) return;
 
             const raw = (el.getAttribute('data-filter-default') || '').trim();
-            const isMultiple = el.hasAttribute('multiple');
+            const isMultiple = el.hasAttribute('multiple')
+                || (el.getAttribute('data-filter-multiple') || '').toLowerCase() === 'true';
             if (raw === 'true' || raw === 'false') {
                 defaults[key] = raw === 'true';
             } else if (isMultiple && raw.indexOf(',') >= 0) {

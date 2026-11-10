@@ -350,30 +350,11 @@ namespace App.DAL
                             Children = new List<Menu> {
                                 new Menu
                                 {
-                                    Name = "图标",
-                                    SortId = 0,
-                                    NavigateUrl = "EleUISamples/Controls/Icons",
-                                    ImageUrl = "fas fa-lightbulb",
-                                    Power = (Power?)6,
-                                    Fixed = false,
-                                },
-                                new Menu
-                                {
                                     Name = "图标2",
                                     SortId = 20,
                                     NavigateUrl = "Dev/IconFas",
                                     ImageUrl = "fas fa-sliders-h",
                                     Power = (Power?)6,
-                                },
-                                new Menu
-                                {
-                                    Name = "控件",
-                                    SortId = 30,
-                                    NavigateUrl = "EleUISamples/index",
-                                    ImageUrl = "fas fa-file",
-                                    Power = (Power?)6,
-                                    Target = "_blank",
-                                    Fixed = false,
                                 },
                                 new Menu
                                 {

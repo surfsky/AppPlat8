@@ -61,7 +61,8 @@ namespace App.Middlewares
             var key = pathAndQuery.ToLower().MD5();
 
             // 缩略图缓存策略
-            var cachePath = Asp.MapPath($"/Caches/{key}.cache");
+            var cacheRoot = Paths.CacheRoot;
+            var cachePath = Path.Combine(cacheRoot, $"{key}.cache");
             if (!File.Exists(cachePath))
             {
                 IO.PrepareDirectory(cachePath);

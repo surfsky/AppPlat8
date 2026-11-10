@@ -610,15 +610,33 @@ Done
 
 
 2026/11/7
+    剥离EleUI项目库
+    处理warning
+        [11:15:51 INF] [PAGE] http://localhost:6001/GIS/Index?handler=GeometryLayerData from ::1 use 2.829s
+        warn: Microsoft.EntityFrameworkCore.Query[20504]
+        Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. 
+        By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. 
+        See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. 
+        To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+
+    /对象统计报表：网格列可下挖，所有数据都加上超链接；
+    /排查统计报表》网格列可下挖
     实现专项检查任务统计报表
+
+    EleUI：将示例项目名称给名为 EleUIDemo
+    EleUI：EleTreePicker支持值逗号表达式，弹窗选中节点自动展开
+    
     文档
         写帮助文档、培训文档
         写汇报稿：建设必要性、完成任务、后继任务（驾驶舱完善、物联网、立项、信创改造和部署）；
     Gis
         Gis/index：做几个资源类的统计面板
         Gis/Index: 重构闭包模式，全部用class重构
+        Gis/Index：解决三维地形情况下的卡顿问题（index3不会卡顿，所以index页面哪里有复杂逻辑导致卡顿）；
+        Gis/index：页面中的js调度方案看是否需要取消；主要是不实时；
         Gis/Index: 基于某个点位周边的查询过滤
         GisGeometry: 看是否需要增加一个UrlDataCnt属性，表示url的数据个数；比较困难，URL要改为api接口才行
+        Gis/3d: 三维模型设置和渲染
     2026/10/24 进度会需求
         /1、菜单调整为：工作台、安全生产、应急指挥、知识库。。。
         /2、工作台页面：拆分对象分类：我的对象、监管对象、高风险对象；

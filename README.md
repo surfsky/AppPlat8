@@ -54,8 +54,8 @@ lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
 dotnet run --project app.consoler
 
 // 编译及运行 EleUI 示例项目 # 编译EleUI示例项目
-dotnet build App.EleUI/EleUISamples/EleUISamples.csproj
-dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
+dotnet build App.EleUI/EleUIDemo/EleUIDemo.csproj
+dotnet run --project App.EleUI/EleUIDemo/EleUIDemo.csproj
 lsof -nP -iTCP:6002 -sTCP:LISTEN && lsof -ti tcp:6002 | xargs -n 1 kill -9  
 
 // 编译及运行控制台项目 # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db

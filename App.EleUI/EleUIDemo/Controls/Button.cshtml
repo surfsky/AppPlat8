@@ -1,0 +1,70 @@
+@page
+@model App.Pages.EleUIDemo.ButtonModel
+
+
+@section body {
+    <div id="app" class="p-4 space-y-4">
+        <div class="flex gap-2">
+            <EleButton Type="Primary" Handler="Switch">Primary</EleButton>
+            <EleButton Type="Success">Success</EleButton>
+            <EleButton Type="Danger">Danger</EleButton>
+            <EleButton Type="Info">Info</EleButton>
+            <EleButton Type="Warning">Warning</EleButton>
+            <EleButton Type="Default">Default</EleButton>
+        </div>
+        <div class="flex gap-2">
+            <EleButton Look="Text" Type="Primary">Primary</EleButton>
+            <EleButton Look="Text" Type="Success">Success</EleButton>
+            <EleButton Look="Text" Type="Danger">Danger</EleButton>
+            <EleButton Look="Text" Type="Info">Info</EleButton>
+            <EleButton Look="Text" Type="Warning">Warning</EleButton>
+            <EleButton Look="Text" Type="Default">Default</EleButton>
+        </div>
+        <div class="flex gap-2">
+            <EleButton Look="Dashed" Type="Primary">Primary</EleButton>
+            <EleButton Look="Dashed" Type="Success">Success</EleButton>
+            <EleButton Look="Dashed" Type="Danger">Danger</EleButton>
+            <EleButton Look="Dashed" Type="Info">Info</EleButton>
+            <EleButton Look="Dashed" Type="Warning">Warning</EleButton>
+            <EleButton Look="Dashed" Type="Default">Default</EleButton>
+        </div>
+        <div class="flex gap-2">
+            <EleButton Look="Round" Type="Primary">Primary</EleButton>
+            <EleButton Look="Round" Type="Success">Success</EleButton>
+            <EleButton Look="Round" Type="Danger">Danger</EleButton>
+            <EleButton Look="Round" Type="Info">Info</EleButton>
+            <EleButton Look="Round" Type="Warning">Warning</EleButton>
+            <EleButton Look="Round" Type="Default">Default</EleButton>
+        </div>
+        <div class="flex gap-2">
+            <EleButton Look="Circle" Icon="Edit"    Type="Primary"></EleButton>
+            <EleButton Look="Circle" Icon="Check"   Type="Success"></EleButton>
+            <EleButton Look="Circle" Icon="Message" Type="Danger"></EleButton>
+            <EleButton Look="Circle" Icon="Star"    Type="Info"></EleButton>
+            <EleButton Look="Circle" Icon="Delete"  Type="Warning"></EleButton>
+            <EleButton Look="Circle" Icon="Search"  Type="Default" ConfirmText="确认查询吗？" ConfirmTitle="查询确认"></EleButton>
+        </div>
+
+        <!-- AutoLoading（方案 A）：点击后自动锁定按钮并显示 loading，服务端返回后恢复，后端无需改动 -->
+        <div class="pt-4 border-t border-slate-200">
+            <div class="mb-2 text-sm text-slate-500">自动 loading（AutoLoading）：点击后按钮进入 loading 并禁止重复点击，服务端返回后自动恢复</div>
+            <div class="flex gap-2 items-center">
+                <EleButton Type="Default" Handler="LongTask">对照：无自动 loading</EleButton>
+                <EleButton Type="Primary" Handler="LongTask" AutoLoading="true">模拟耗时操作（自动 loading）</EleButton>
+                <EleButton Type="Success" Handler="LongTask" AutoLoading="true" ConfirmText="该操作较为费时，确认操作吗？">带确认框的耗时操作</EleButton>
+                <EleButton Type="Success" Handler="FixData" Stream="true" StreamTitle="修正数据" ConfirmText="该操作较为费时，确认操作吗？">带确认框和进度的长时间操作</EleButton>
+            </div>
+        </div>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="TopLeft" PopupText="https://www.baidu.com"></EleButton>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="TopCenter" PopupText="https://www.baidu.com"></EleButton>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="TopRight" PopupText="https://www.baidu.com"></EleButton>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="MiddleLeft" PopupText="https://www.baidu.com"></EleButton>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="MiddleCenter" PopupText="https://www.baidu.com"></EleButton>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="MiddleRight" PopupText="https://www.baidu.com"></EleButton>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="BottomLeft" PopupText="https://www.baidu.com"></EleButton>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="BottomCenter" PopupText="https://www.baidu.com"></EleButton>
+        <EleButton Type="Default" Look="Circle" Icon="Opportunity" FixPosition="BottomRight" PopupText="https://www.baidu.com"></EleButton>
+    </div>
+    <EleApp />
+}
+ 

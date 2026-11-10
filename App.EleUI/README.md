@@ -36,7 +36,7 @@ dotnet build AppPlat.sln
 dotnet build App.EleUI/EleUI/App.EleUI.csproj
 
 # 运行 EleUI 示例站：
-dotnet run --project App.EleUI/EleUISamples/EleUISamples.csproj
+dotnet run --project App.EleUI/EleUIDemo/EleUIDemo.csproj
 
 
 # 若端口被占用，查找占用 6070 的进程，然后kill
@@ -63,7 +63,7 @@ dotnet nuget push ./nupkgs/App.EleUI.*.nupkg --source https://api.nuget.org/v3/i
   - `Layouts/`: 纯布局组件（`Row`/`Column`/`Grid`）
   - `Popups/`: 弹层组件（`EleDialog`、`EleDrawer`、`ElePopover`）
   - `EleUIJs/`: 前端运行时与构建器（`EleForm`、`EleTable`、`EleManager`）
-- `App.EleUI/EleUISamples`：示例网站项目。
+- `App.EleUI/EleUIDemo`：示例网站项目。
 
 ## 关键基类职责
 

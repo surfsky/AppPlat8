@@ -91,9 +91,17 @@ namespace App.Pages.GIS
                 });
             }
 
-            return new JsonResult(new { code = 0, data = list });
+            return BuildResult(0, "success", list);
         }
 
+        /**
+        TODO: 解决 warning： http://localhost:6001/GIS/Index?handler=GeometryLayerData 
+        warn: Microsoft.EntityFrameworkCore.Query[20504]
+        Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. 
+        By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. 
+        See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. 
+        To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+         */
         public JsonResult OnGetGeometryLayerData(long? menuId, bool? isVisible = null)
         {
             var visibleMenuIds = GetCurrentUserVisibleGisMenuIds();
@@ -118,7 +126,7 @@ namespace App.Pages.GIS
                 }
             }
 
-            return new JsonResult(new { code = 0, data = list.OrderBy(t => GetSortId(t)).ThenBy(t => GetId(t)).ToList() });
+            return BuildResult(0, "success", list.OrderBy(t => GetSortId(t)).ThenBy(t => GetId(t)).ToList());
         }
 
         public JsonResult OnGetMenuItems(long menuId, string keyword = null, bool? isVisible = null, int pageIndex = 0, int pageSize = 20)

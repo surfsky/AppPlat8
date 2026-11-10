@@ -1,0 +1,47 @@
+@page
+@model App.Pages.EleUIDemo.UserFormModel
+
+@{
+    ViewData["Title"] = "用户表单示例";
+    var userId = Request.Query["id"].ToString();
+}
+
+@section body {
+    <EleForm LabelWidth="120px">
+        <EleInput For="Item.Name" Label="账号" Required="true"></EleInput>
+        <EleInput For="Item.ChineseName" Label="中文名" Required="true"></EleInput>
+        <EleSelect For="Item.RoleIds" Label="角色" Items="Model.RoleList" Multiple="true"></EleSelect>
+        <EleNumber For="Item.Age" Label="年龄"></EleNumber>
+        <EleNumber For="Item.Score" Label="分数" Precision="2" Step="0.1"></EleNumber>
+        <EleDatePicker For="Item.Birthday" Label="生日"></EleDatePicker>
+        <EleSwitch For="Item.IsEnabled" Label="启用"></EleSwitch>
+        <EleRadio For="Item.Gender" Label="性别" Items="男, 女, 未知"></EleRadio>
+        <EleSelect For="Item.City" Label="城市" Items="Model.CityList"></EleSelect>
+        <EleSelect For="Item.Types" Label="类型" Items="Model.TypeList" Multiple="true"></EleSelect>
+        <EleImageUpload For="Item.Photo" Label="头像" ItemWidth="140" CropWidth="1024"></EleImageUpload>
+        <EleImageUpload For="Item.Photos" Label="相册" Limit="5" ItemWidth="140" CropWidth="1024"></EleImageUpload>
+        <EleInput For="Item.Description" Label="备注" Type="TextArea" Rows="3" FillRow="true"></EleInput>
+        <EleList Label="附件列表" FillRow="true" DataHandler="?handler=AttData&id=@userId" PageSize="5" SortField="Id" SortDirection="DESC" Height="300px" ScrollClass="flex-1 overflow-auto" ItemsClass="space-y-2" ItemClass="py-2 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
+            <ItemTemplate>
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <Text For="Item.Name" class="text-sm font-medium text-gray-800" />
+                        <div class="text-xs text-gray-500 mt-1">大小：<Text For="Item.SizeText" Wrapper="" /> | 上传时间：<Text For="Item.CreateDtText" Wrapper="" /></div>
+                    </div>
+                    <Link For="Item.Url" Target="Drawer" Icon="View" class="text-xs text-blue-600" />
+                </div>
+            </ItemTemplate>
+            <Header>
+                <div class="flex items-center justify-between gap-3 px-2 py-1.5 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <span class="flex-1">名称</span>
+                    <span class="shrink-0 text-center">操作</span>
+                </div>
+            </Header>
+        </EleList>
+
+        <Bottom>
+            <EleButton Type="Primary" Command="Save" IconCls="fas fa-floppy-disk">保存</EleButton>
+            <EleButton Type="Info"    Command="Close" Icon="Close">关闭</EleButton>
+        </Bottom>
+    </EleForm>
+}
