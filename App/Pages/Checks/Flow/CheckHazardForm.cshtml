@@ -94,8 +94,8 @@
             {
                 <EleButton Type="Success" Handler="Log"        Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Waiting || Model.Item.Status == CheckHazardStatus.Processing)" >复查</EleButton>
                 <EleButton Type="Success" Handler="Finish"     Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Processing)"  ConfirmText="确定整改完成吗？">整改完成</EleButton>
-                <EleButton Type="Success" Handler="Monitor"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)">督查</EleButton>
-                <EleButton Type="Warning" Handler="Archive"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Finished || Model.Item.Status == CheckHazardStatus.Monitor)"  ConfirmText="确认归档吗？归档后流程将无法操作，数据将无法修改。">归档</EleButton>
+                <EleButton Type="Success" Handler="Monitor"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Fixed || Model.Item.Status == CheckHazardStatus.Monitor)">督查</EleButton>
+                <EleButton Type="Warning" Handler="Archive"    Icon="ZoomIn" Visible="@(Model.Item.Status == CheckHazardStatus.Fixed || Model.Item.Status == CheckHazardStatus.Monitor)"  ConfirmText="确认归档吗？归档后流程将无法操作，数据将无法修改。">归档</EleButton>
             }
         </Bottom>
     </EleForm>

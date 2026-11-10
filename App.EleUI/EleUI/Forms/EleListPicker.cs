@@ -114,12 +114,19 @@ namespace App.EleUI
                 onChange: '{onChangeName}'
             }})";
 
-            bool isEleFormCtx = context.Items.ContainsKey("IsEleForm");
-            if (isEleFormCtx)
-                await RenderWrapper(output);
+            await RenderWrapper(output);
             output.TagMode = TagMode.StartTagAndEndTag;
             output.Attributes.SetAttribute("v-show", visibleExpr);
 
+            if (!string.IsNullOrWhiteSpace(Width))
+            {
+                var width = System.Net.WebUtility.HtmlEncode(Width.Trim());
+                var wrapperHtml = output.PreElement.GetContent();
+                output.PreElement.SetHtmlContent(wrapperHtml.Replace(
+                    "<el-form-item ",
+                    $"<el-form-item style=\"width:{width};max-width:{width};flex:0 0 {width};\" ",
+                    StringComparison.Ordinal));
+            }
             var tagTypeName = TagType.ToString().ToLower();
             var content = $@"
 <div class=""el-select w-full"" :class=""{{ 'is-disabled': ({disabledExpr}) }}"" @click=""!({disabledExpr}) && {openExpr}"">
@@ -142,7 +149,9 @@ namespace App.EleUI
                         </el-tag>
                     </div>
                 </template>
-                <span v-else class=""el-select__selected-item truncate"">{{{{ {viewExpr}.text }}}}</span>
+                <el-tag v-else type=""{tagTypeName}"" disable-transitions class=""max-w-full overflow-hidden text-ellipsis whitespace-nowrap"">
+                    {{{{ {viewExpr}.text }}}}
+                </el-tag>
             </template>
             <span v-else class=""el-select__placeholder is-transparent"">{Placeholder}</span>
         </div>

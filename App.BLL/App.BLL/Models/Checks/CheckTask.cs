@@ -96,7 +96,7 @@ namespace App.DAL
         {
             var objs = CheckTaskObject.Search(taskId:this.Id).ToList();
             TotalCount = objs.Count;
-            FinishCount = objs.Count(o => o.IsFinished);
+            FinishCount = objs.Count(o => o.Status.HasValue && o.Status.Value != CheckTaskObjectStatus.Unchecked);
             Progress = TotalCount > 0 ? (float)FinishCount / TotalCount * 100 : 0;
         }
     }

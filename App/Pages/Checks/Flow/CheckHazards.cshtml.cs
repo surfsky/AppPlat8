@@ -80,8 +80,9 @@ namespace App.Pages.Checks
             ScopeExcludeArchived = rawExclude.Parse<bool?>() == true;
         }
 
-        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? checkStartDt, DateTime? checkEndDt, long? orgId = null, List<long> orgIds = null, DateTime? expireTo = null, bool scopeCheckerOrOrg = false, bool scopeOrgOnly = false)
+        public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? checkStartDt, DateTime? checkEndDt, long? orgId = null, List<long> orgIds = null, DateTime? expireTo = null, bool scopeCheckerOrOrg = false, bool scopeOrgOnly = false, long? taskId = null)
         {
+            taskId ??= Request.Query["taskId"].FirstOrDefault().ParseLong();
             orgId ??= Request.Query["orgId"].FirstOrDefault().ParseLong();
             checkStartDt ??= Request.Query["checkStartDt"].FirstOrDefault().Parse<DateTime?>()
                 ?? Request.Query["createStartDt"].FirstOrDefault().Parse<DateTime?>();
@@ -139,6 +140,18 @@ namespace App.Pages.Checks
             }
 
             var q = baseQ;
+            if (taskId.GetValueOrDefault() > 0)
+            {
+                var taskObjectIds = CheckTaskObject.Set
+                    .AsNoTracking()
+                    .Where(t => t.TaskId == taskId.Value && t.CheckObjectId.HasValue)
+                    .Select(t => t.CheckObjectId.Value)
+                    .Distinct()
+                    .ToList();
+                q = taskObjectIds.Count == 0
+                    ? q.Where(_ => false)
+                    : q.Where(h => h.CheckObjectId.HasValue && taskObjectIds.Contains(h.CheckObjectId.Value));
+            }
             if (scopeCheckerOrOrg || scopeOrgOnly)
             {
                 var user = Auth.GetUser();
@@ -176,7 +189,12 @@ namespace App.Pages.Checks
             if (!HasPower(Power.CheckHazardDelete))
                 return BuildResult(403, "无权操作");
             foreach (var id in ids)
+            {
+                var hazard = CheckHazard.Get(id);
                 CheckHazard.Delete(id);
+                if (hazard?.CheckObjectId.HasValue == true)
+                    CheckTaskObject.RefreshHazardCounts(hazard.CheckObjectId.Value);
+            }
             return BuildResult(0, "删除成功");
         }
 

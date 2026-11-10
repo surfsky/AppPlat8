@@ -51,7 +51,7 @@
   <Columns>
     <EleNumColumn Label="序号"    Width="60"  Fixed="left" Align="center" Sortable="false" />
     <EleColumn For="Item.SectionName"   Label="组织" Width="200" Fixed="left" Sortable="false"
-               Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&statActiveOnly=true" />
+               Link="true" LinkTarget="Self" PopupUrl="CheckObjectStat?orgId={orgId}&startDt={startDt}&endDt={endDt}" />
     <EleColumnGroup Label="企业数" HAlign="center" Sortable="false">
       <EleColumn For="Item.BaseCount"   Label="个数"     Width="80" Align="right" Sortable="false"
            Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&statActiveOnly=true" />
@@ -101,13 +101,13 @@
     </EleColumnGroup>
 
     <EleColumnGroup Label="八类危险性较高工业企业" HAlign="center" Sortable="false">
-      <EleColumn For="Item.RiskHomeAppliance"      Label="家电制造" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=21" />
-      <EleColumn For="Item.RiskElectroplating" Label="电镀类"     Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=148" />
-      <EleColumn For="Item.RiskBamboo"         Label="竹木加工类" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=149" />
+      <EleColumn For="Item.RiskHomeAppliance"      Label="家电制造" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=148" />
+      <EleColumn For="Item.RiskElectroplating" Label="电镀类"     Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=149" />
+      <EleColumn For="Item.RiskBamboo"         Label="竹木加工类" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=115" />
       <EleColumn For="Item.RiskShoe"           Label="制鞋类"     Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=150" />
-      <EleColumn For="Item.RiskSponge"         Label="海绵生产类" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=117,151" />
-      <EleColumn For="Item.RiskTextile"        Label="纺织印染类" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=111,117" />
-      <EleColumn For="Item.RiskSprayPaint"     Label="喷漆作业（非水性漆）"   Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=111" />
+      <EleColumn For="Item.RiskSponge"         Label="海绵生产类" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=117" />
+      <EleColumn For="Item.RiskTextile"        Label="纺织印染类" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=111" />
+      <EleColumn For="Item.RiskSprayPaint"     Label="喷漆作业（非水性漆）"   Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=151" />
       <EleColumn For="Item.RiskInkPrint"       Label="油墨印刷（非水性油墨）" Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=152" />
     </EleColumnGroup>
 
@@ -124,7 +124,7 @@
       <EleColumn For="Item.FocusChemical"      Label="危化品使用企业"  Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=126" />
       <EleColumn For="Item.FocusInflammable"   Label="易燃企业"       Width="80"  Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=127" />
       <EleColumn For="Item.FocusEnvProtection" Label="有环保设备"     Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=86" />
-      <EleColumn For="Item.FocusMine"          Label="非煤矿山"       Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=8" />
+      <EleColumn For="Item.FocusMine"          Label="非煤矿山"       Width="80" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/CheckObjects?orgId={orgId}&tagSpecIds=172" />
     </EleColumnGroup>
 
     <EleColumnGroup Label="分级管控四色等级" HAlign="center" Sortable="false">

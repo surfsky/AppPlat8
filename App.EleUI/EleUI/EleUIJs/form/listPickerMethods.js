@@ -1,3 +1,7 @@
+function getListPickerModel(ctx) {
+    return ctx?.filters?.value || ctx?.form?.value || null;
+}
+
 export const listPickerMethods = {
     /**Pick better option when duplicate values exist */
     preferListPickerOption(current, next) {
@@ -68,7 +72,10 @@ export const listPickerMethods = {
                     .filter(v => !!v);
             }
             if (value === null || value === undefined || value === '') return [];
-            return [String(value)];
+            return String(value)
+                .split(/[;,|]/)
+                .map(v => v.trim())
+                .filter(v => !!v);
         }
 
         if (Array.isArray(value)) {
@@ -80,7 +87,7 @@ export const listPickerMethods = {
 
     /**Build list picker display payload */
     getListPickerView(modelKey, target, fallbackOptions = [], multiple = false, collapseTags = false) {
-        const model = this.form?.value ? this.form.value[modelKey] : null;
+        const model = getListPickerModel(this)?.[modelKey] ?? null;
         const normalized = this.normalizeListPickerValue(model, multiple);
         const values = Array.isArray(normalized) ? normalized : (normalized ? [normalized] : []);
         const fallback = Array.isArray(fallbackOptions) && fallbackOptions.length > 0
@@ -110,9 +117,10 @@ export const listPickerMethods = {
 
     /**Clear list picker selection */
     clearListPicker(modelKey, multiple = false, onChange = '') {
-        if (!this.form?.value) return;
-        this.form.value[modelKey] = multiple ? [] : null;
-        this.notifyListPickerChanged(modelKey, this.form.value[modelKey], multiple, onChange);
+        const model = getListPickerModel(this);
+        if (!model) return;
+        model[modelKey] = multiple ? [] : null;
+        this.notifyListPickerChanged(modelKey, model[modelKey], multiple, onChange);
     },
 
     /**Post list picker change callback */
@@ -124,7 +132,7 @@ export const listPickerMethods = {
             controlId: `field:${modelKey}`,
             fieldExpress: modelKey,
             value,
-            form: this.form?.value || {},
+            form: getListPickerModel(this) || {},
             controlType: 'EleListPicker',
             multiple: !!multiple
         });
@@ -132,7 +140,8 @@ export const listPickerMethods = {
 
     /**Open root drawer list picker */
     async openListPicker(config = {}) {
-        if (!config || !config.modelKey || !this.form?.value) return;
+        const model = getListPickerModel(this);
+        if (!config || !config.modelKey || !model) return;
         if (!window.EleManager || typeof EleManager.openDrawer !== 'function') return;
 
         const modelKey = config.modelKey;
@@ -147,7 +156,7 @@ export const listPickerMethods = {
         const fallbackOptions = Array.isArray(config.fallbackOptions) && config.fallbackOptions.length > 0
             ? config.fallbackOptions
             : this.getListPickerFallbackOptions(modelKey, target);
-        const currentValue = this.normalizeListPickerValue(this.form.value[modelKey], multiple);
+        const currentValue = this.normalizeListPickerValue(model[modelKey], multiple);
         const selectedValues = Array.isArray(currentValue)
             ? [...currentValue]
             : (currentValue ? [currentValue] : []);
@@ -326,13 +335,14 @@ export const listPickerMethods = {
                         icon: 'Check',
                         type: 'primary',
                         handler: (_action, _btn, drawerCtx) => {
+                            const model = getListPickerModel(form);
                             if (multiple) {
-                                form.form.value[modelKey] = state.values.map(v => getRawValue(v));
+                                model[modelKey] = state.values.map(v => getRawValue(v));
                             } else {
-                                form.form.value[modelKey] = state.current ? getRawValue(state.current) : null;
+                                model[modelKey] = state.current ? getRawValue(state.current) : null;
                             }
-                            form.notifyListPickerChanged(modelKey, form.form.value[modelKey], multiple, config.onChange || '');
-                            drawerCtx.close({ message: 'selected', data: { type: 'EleListPicker', value: form.form.value[modelKey] } });
+                            form.notifyListPickerChanged(modelKey, model[modelKey], multiple, config.onChange || '');
+                            drawerCtx.close({ message: 'selected', data: { type: 'EleListPicker', value: model[modelKey] } });
                         }
                     },
                     { text: '取消', icon: 'Close', action: 'close' }

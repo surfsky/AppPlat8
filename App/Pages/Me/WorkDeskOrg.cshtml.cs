@@ -159,7 +159,7 @@ namespace App.Pages.Me
 
             taskObjTab = taskObjTab ?? "unfinished";
             if (taskObjTab == "unfinished")
-                q = q.Where(t => !t.IsFinished);
+                q = q.Where(t => t.Status == CheckTaskObjectStatus.Unchecked || t.Status == null);
 
             if (pi == null) pi = new Paging();
             if (pi.SortField.IsEmpty()) { pi.SortField = "TaskId"; pi.SortDirection = "ASC"; }
@@ -177,7 +177,9 @@ namespace App.Pages.Me
                 ObjectName = t.CheckObject?.Name ?? "",
                 DutyOrgName = t.CheckObject?.OrgName ?? t.CheckObject?.Org?.Name ?? "",
                 CheckerName = t.Checker?.Name ?? t.CheckObject?.CheckerName ?? "",
-                IsFinished = t.IsFinished,
+                Status = t.Status,
+                HazardCnt = t.HazardCnt,
+                FixHazardCnt = t.FixHazardCnt,
                 TaskStartDt = t.Task?.StartDt,
                 TaskExpireDt = t.Task?.ExpireDt,
                 DetailUrl = t.TaskId.HasValue ? $"/Checks/Flow/CheckTaskForm?id={t.TaskId.Value}" : "",

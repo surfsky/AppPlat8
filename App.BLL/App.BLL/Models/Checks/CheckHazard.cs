@@ -19,7 +19,7 @@ namespace App.DAL
     {
         [UI("新建")] Waiting = 0,
         [UI("整改中")] Processing = 1,
-        [UI("已整改")] Finished = 2,
+        [UI("已整改")] Fixed = 2,
         [UI("督查中")] Monitor = 3,
         [UI("已归档")] Archived = 9,
     }
@@ -126,6 +126,13 @@ namespace App.DAL
                 if (CheckObject != null)
                     OrgId = CheckObject.OrgId;
             }
+        }
+
+        public override void AfterChange(EntityOp op)
+        {
+            base.AfterChange(op);
+            if (CheckObjectId.HasValue)
+                CheckTaskObject.RefreshHazardCounts(CheckObjectId.Value);
         }
 
         public static IQueryable<CheckHazard> Search(

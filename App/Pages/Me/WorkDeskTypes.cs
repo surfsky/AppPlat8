@@ -81,8 +81,10 @@ namespace App.Pages.Me
         public string ObjectName { get; set; }
         public string DutyOrgName { get; set; }
         public string CheckerName { get; set; }
-        public bool IsFinished { get; set; }
-        public string StatusName => IsFinished ? "已完成" : "未完成";
+        public CheckTaskObjectStatus? Status { get; set; }
+        public string StatusName => Status.GetTitle();
+        public long? HazardCnt { get; set; }
+        public long? FixHazardCnt { get; set; }
         public DateTime? TaskStartDt { get; set; }
         public DateTime? TaskExpireDt { get; set; }
         public string DetailUrl { get; set; }
@@ -92,7 +94,7 @@ namespace App.Pages.Me
             return new
             {
                 Id, TaskId, TaskName, CheckObjectId, ObjectName,
-                DutyOrgName, CheckerName, IsFinished, StatusName,
+                DutyOrgName, CheckerName, Status, StatusName, HazardCnt, FixHazardCnt,
                 TaskStartDt, TaskExpireDt, DetailUrl,
             };
         }

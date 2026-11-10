@@ -1,0 +1,47 @@
+@page
+@model App.Pages.EleUIDemo.ListPickerModel
+@{
+    ViewData["Title"] = "EleListPicker 示例";
+}
+
+@section body {
+    <div class="p-4 space-y-4 overflow-auto">
+        <EleCard Title="EleTable 筛选器：单选、多选及默认值回显" Border="1px solid #e5e7eb" Radius="8px">
+            <EleTable Title="ListPicker Table 测试" DataHandler="?handler=Data" ShowPage="false">
+                <Toolbar>
+                    <Filters Shows="4">
+                        <EleListPicker For="Item.TaskIds" Label="专项任务（多选）" LabelWidth="140px" Items="Model.TaskOptions"
+                                       Multiple="true" CollapseTags="true" TagType="Warning"
+                                       Value="@Model.MultiDefault" Width="360px"></EleListPicker>
+                        <EleListPicker For="Item.TaskId" Label="专项任务（单选）" LabelWidth="140px" Items="Model.TaskOptions"
+                                       Multiple="false" TagType="Warning"
+                                       Value="@Model.SingleDefault" Width="320px"></EleListPicker>
+                    </Filters>
+                    <Buttons>
+                        <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+                    </Buttons>
+                </Toolbar>
+                <Columns>
+                    <EleNumColumn Label="序号" Width="70" />
+                    <EleColumn For="Item.Name" Label="返回说明" MinWidth="260" />
+                    <EleColumn For="Item.SelectedTaskIds" Label="多选参数" MinWidth="220" />
+                    <EleColumn For="Item.SelectedTaskId" Label="单选参数" MinWidth="180" />
+                </Columns>
+            </EleTable>
+        </EleCard>
+
+        <EleCard Title="EleForm：同一控件属性对照" Border="1px solid #e5e7eb" Radius="8px">
+            <EleForm DataHandler="?handler=FormData" SaveHandler="?handler=Save" LabelPosition="Right">
+                <EleListPicker For="Item.FormTaskIds" Label="专项任务（多选）" LabelWidth="140px" Items="Model.TaskOptions"
+                               Multiple="true" CollapseTags="false" TagType="Info"
+                               Width="420px"></EleListPicker>
+                <EleListPicker For="Item.FormTaskId" Label="专项任务（单选）" LabelWidth="140px" Items="Model.TaskOptions"
+                               Multiple="false" TagType="Primary"
+                               Width="360px"></EleListPicker>
+                <Bottom>
+                    <EleButton Type="Primary" Command="Save" Icon="Check">保存（回显当前值）</EleButton>
+                </Bottom>
+            </EleForm>
+        </EleCard>
+    </div>
+}

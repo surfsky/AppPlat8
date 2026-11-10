@@ -35,17 +35,19 @@
                 ItemsClass="space-y-0"
                 ItemClass="py-1.5 px-0 border-b border-gray-100 rounded-none bg-transparent shadow-none">
             <Header>
-                <div class="grid grid-cols-[40px_1.8fr_1.4fr_1.2fr_90px] gap-2 px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
+                <div class="grid grid-cols-[40px_1.7fr_1.2fr_1fr_80px_70px_90px] gap-2 px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-200 bg-gray-50">
                     <span class="text-center">序号</span>
                     <span>企业名称</span>
                     <span>组织</span>
                     <span>网格员</span>
                     <span class="text-center">状态</span>
+                    <span class="text-center">发现隐患</span>
+                    <span class="text-center">已整改</span>
                 </div>
             </Header>
             <ItemTemplate>
                 <!-- 数据行 -->
-                <div class="grid grid-cols-[40px_1.8fr_1.4fr_1.2fr_90px] gap-2 px-3 py-2 text-sm items-center">
+                <div class="grid grid-cols-[40px_1.7fr_1.2fr_1fr_80px_70px_90px] gap-2 px-3 py-2 text-sm items-center">
                     <span class="inline-flex items-center justify-center h-[20px] rounded bg-gray-100 text-gray-600 text-xs shrink-0 text-center">{{ idx + 1 }}</span>
                     <a href="javascript:void(0)" class="truncate text-[#007bff] font-medium hover:underline "
                        :title="item.objectName"
@@ -53,10 +55,12 @@
                     <span class="truncate text-gray-700" :title="item.dutyOrgName">{{ item.dutyOrgName }}</span>
                     <span class="truncate text-gray-700" :title="item.checkerName">{{ item.checkerName }}</span>
                     <span class="inline-flex items-center justify-center h-[22px] px-2 rounded-full text-xs whitespace-nowrap shrink-0 text-center mx-auto cursor-pointer hover:opacity-80"
-                          :class="item.isFinished ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'"
+                          :class="item.status === 2 ? 'bg-green-50 text-green-700 border border-green-200' : (item.status === 1 ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-amber-50 text-amber-700 border border-amber-200')"
                           v-on:click="openLinkInDrawer(`/Checks/flow/Checks?objectId=${item.objectId}&objectName=${encodeURIComponent(item.objectName)}`, item.objectName + ' - 检查记录')">
                         {{ item.statusName }}
                     </span>
+                    <span class="text-center text-gray-600">{{ item.hazardCnt ?? 0 }}</span>
+                    <span class="text-center text-gray-600">{{ item.fixHazardCnt ?? 0 }}</span>
                 </div>
             </ItemTemplate>
             <Footer>

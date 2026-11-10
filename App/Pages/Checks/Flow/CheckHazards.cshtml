@@ -10,6 +10,8 @@
     var scopeCheckerOrOrg = Request.Query["scopeCheckerOrOrg"].FirstOrDefault();
     var checkStartDt = Request.Query["checkStartDt"].FirstOrDefault();
     var checkEndDt = Request.Query["checkEndDt"].FirstOrDefault();
+    var taskId = Request.Query["taskId"].FirstOrDefault();
+    var status = Request.Query["status"].FirstOrDefault();
     var selectedOrgId = !string.IsNullOrWhiteSpace(orgId) ? orgId : (Model.OrgId?.ToString() ?? string.Empty);
     if (Model.CheckId.GetValueOrDefault() > 0)         dataHandler += $"&checkId={Model.CheckId.Value}";
     if (Model.ScopeExcludeArchived)                    dataHandler += "&excludeArchived=true";
@@ -18,6 +20,8 @@
     if (!string.IsNullOrWhiteSpace(scopeCheckerOrOrg)) dataHandler += $"&scopeCheckerOrOrg={scopeCheckerOrOrg}";
     if (!string.IsNullOrWhiteSpace(checkStartDt))      dataHandler += $"&checkStartDt={Uri.EscapeDataString(checkStartDt)}";
     if (!string.IsNullOrWhiteSpace(checkEndDt))        dataHandler += $"&checkEndDt={Uri.EscapeDataString(checkEndDt)}";
+    if (!string.IsNullOrWhiteSpace(taskId))            dataHandler += $"&taskId={Uri.EscapeDataString(taskId)}";
+    if (!string.IsNullOrWhiteSpace(status))            dataHandler += $"&status={Uri.EscapeDataString(status)}";
 }
 
 @section body {

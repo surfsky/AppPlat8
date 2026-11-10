@@ -172,10 +172,11 @@
             <el-table-column prop="checkerName"   label="检查人"     min-width="120" show-overflow-tooltip></el-table-column>
             <el-table-column label="状态" width="100" align="center">
               <template v-slot:default="{ row }">
-                <el-tag v-if="row && row.isFinished" type="success" size="small">已完成</el-tag>
-                <el-tag v-else type="warning" size="small">未完成</el-tag>
+                <el-tag size="small" :type="row.status === 2 ? 'success' : (row.status === 1 ? 'primary' : 'warning')">{{ row.statusName }}</el-tag>
               </template>
             </el-table-column>
+            <el-table-column prop="hazardCnt" label="发现隐患" width="90" align="center"></el-table-column>
+            <el-table-column prop="fixHazardCnt" label="已整改" width="90" align="center"></el-table-column>
             <el-table-column label="任务开始" width="120">
               <template v-slot:default="{ row }"><span>{{ fmtDate(row && row.taskStartDt) }}</span></template>
             </el-table-column>

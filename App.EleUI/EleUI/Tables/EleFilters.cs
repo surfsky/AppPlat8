@@ -17,7 +17,7 @@ namespace App.EleUI
         /// <summary>默认显示的过滤条件数量（仅桌面端生效）。
         /// - 0 或负数：不启用折叠，全部显示（兼容历史）
         /// - 正整数 N：仅默认显示前 N 个过滤条件，多余的收起，右侧显示『展开/收起』按钮</summary>
-        [HtmlAttributeName("Shows")]        public int Shows { get; set; } = 0;
+        [HtmlAttributeName("Shows")]        public int Shows { get; set; } = 4;
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {

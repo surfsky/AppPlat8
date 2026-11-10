@@ -294,7 +294,7 @@ namespace App.Services
             /// <summary>判断是否已整改。</summary>
             static bool IsFixed(CheckHazardStatus? status)
             {
-                return status == CheckHazardStatus.Finished || status == CheckHazardStatus.Archived;
+                return status == CheckHazardStatus.Fixed || status == CheckHazardStatus.Archived;
             }
         }
     }

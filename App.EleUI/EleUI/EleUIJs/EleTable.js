@@ -3,6 +3,7 @@ import { commandMethods } from './table/commandMethods.js';
 import { initDrawerState, drawerMethods } from './table/drawerMethods.js';
 import { messageMethods } from './table/messageMethods.js';
 import { initPickerState, pickerMethods } from './form/pickerMethods.js';
+import { listPickerMethods } from './form/listPickerMethods.js';
 
 // Encapsulates common logic for List pages using Vue 3 + Element Plus
 export class EleTable {
@@ -591,5 +592,6 @@ Object.assign(
     commandMethods,
     drawerMethods,
     messageMethods,
-    pickerMethods
+    pickerMethods,
+    listPickerMethods
 );

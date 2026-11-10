@@ -164,10 +164,11 @@ namespace App.DAL
                     TaskId = taskId,
                     CheckObjectId = objectId,
                     SortId = maxSortId + 10,
-                    IsFinished = true,          // 已保存排查记录，视为该对象排查完成
+                    Status = CheckTaskObjectStatus.Checked, // 已保存排查记录，视为对象已检查
                     CreateDt = now,
                     CreatorId = CreatorId,
                 }.Save();
+                CheckTaskObject.RefreshHazardCounts(objectId);
             }
 
             // 刷新受影响任务的进度统计
@@ -216,7 +217,7 @@ namespace App.DAL
         }
 
         /// <summary>
-        /// 检查记录保存后，将关联对象在所有包含它的任务中标记为已完成，并重算任务进度。
+        /// 检查记录保存后，将关联对象在所有包含它的任务中标记为已检查，并重算任务进度。
         /// </summary>
         public override void AfterChange(EntityOp op)
         {
@@ -225,14 +226,14 @@ namespace App.DAL
             if (!CheckObjectId.HasValue) return;
 
             // 仅查找包含该对象的任务关联记录，避免全表扫描
-            // 标记对象为已完成（仅在未完成时更新，减少写库）
+            // 标记对象为已检查；不覆盖后续的已完成整改状态。
             var taskObjects = CheckTaskObject.Search(null, null, CheckObjectId.Value).ToList();
             if (taskObjects.Count == 0) return;
             foreach (var to in taskObjects)
             {
-                if (!to.IsFinished)
+                if (!to.Status.HasValue || to.Status == CheckTaskObjectStatus.Unchecked)
                 {
-                    to.IsFinished = true;
+                    to.Status = CheckTaskObjectStatus.Checked;
                     to.Save();
                 }
             }
@@ -250,6 +251,7 @@ namespace App.DAL
                 task.UpdateProgress();
                 task.Save();
             }
+            CheckTaskObject.RefreshHazardCounts(CheckObjectId.Value);
         }
     }
 }

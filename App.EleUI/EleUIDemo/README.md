@@ -52,6 +52,7 @@ dotnet run --project App.EleUI/EleUIDemo/EleUIDemo.csproj
 - /EleUIDemo/Controls/Button
 - /EleUIDemo/Controls/Form
 - /EleUIDemo/Controls/TreePicker: EleForm / EleTable 默认值名称回显与选中路径展开
+- /EleUIDemo/Controls/ListPicker: EleForm / EleTable 列表选择器单选、多选及默认值回显
 - /EleUIDemo/Controls/Icons
 - /EleUIDemo/Controls/ImageViewer
 - /EleUIDemo/Controls/CitySelect: OnChange + SetControl 联动示例

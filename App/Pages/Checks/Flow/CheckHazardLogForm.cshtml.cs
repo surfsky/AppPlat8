@@ -74,7 +74,7 @@ namespace App.Pages.Checks
             item.Save();
 
             hazard.Status = req.Status ?? hazard.Status;
-            hazard.RectifyDt = req.Status == CheckHazardStatus.Finished
+            hazard.RectifyDt = req.Status == CheckHazardStatus.Fixed
                 ? (req.ReviewDt ?? DateTime.Now)
                 : hazard.RectifyDt;
             hazard.Save();

@@ -97,7 +97,9 @@ namespace App.Pages.Checks
                 t.Id,
                 t.TaskId,
                 t.CheckObjectId,
-                t.IsFinished,
+                t.Status,
+                t.HazardCnt,
+                t.FixHazardCnt,
                 SortId = t.SortId,
                 ObjectName = t.CheckObject != null ? t.CheckObject.Name : "",
                 DutyOrgName = t.CheckObject != null
@@ -109,7 +111,7 @@ namespace App.Pages.Checks
                 CheckerName = t.CheckObject != null
                     ? (t.CheckObject.CheckerName ?? BuildCheckerName(t.CheckObject.Checker))
                     : "",
-                StatusName = t.IsFinished ? "已完成" : "未完成",
+                StatusName = t.Status.GetTitle(),
             }).ToList();
 
             return BuildResult(0, "success", list, pi);
@@ -127,7 +129,7 @@ namespace App.Pages.Checks
 
             var task = CheckTask.Get(taskId);
             var name = Uri.EscapeDataString(task?.Name ?? "检查任务对象选取");
-            var url = $"/Checks/Flow/CheckTaskObjects?taskId={taskId}&taskName={name}&md={this.Mode}";
+            var url = $"/Checks/Flow/CheckTaskObjectPicker?taskId={taskId}&taskName={name}&md={this.Mode}";
             return EleHandler.ShowDrawer(
                 title: "检查对象",
                 url: url,

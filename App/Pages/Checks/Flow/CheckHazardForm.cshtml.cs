@@ -132,7 +132,7 @@ namespace App.Pages.Checks
             if (isDirect)
             {
                 var content = CheckHazardRectifyType.Direct.GetTitle();
-                var url = $"/Checks/Flow/CheckHazardLogForm?hazardId={item.Id}&status={(int)CheckHazardStatus.Finished}&content={Uri.EscapeDataString(content)}";
+                var url = $"/Checks/Flow/CheckHazardLogForm?hazardId={item.Id}&status={(int)CheckHazardStatus.Fixed}&content={Uri.EscapeDataString(content)}";
                 return EleHandler.BuildCommandsResult(
                     toast,
                     new ClientCommand(ClientCommandType.CloseDrawer, new { }),
@@ -238,7 +238,7 @@ namespace App.Pages.Checks
         // 处理流程按钮（自动写处理日志 + 更新状态 + 刷新父级）
         //-------------------------------------------------------
         public IActionResult OnPostLog([FromBody] CheckHazard req)      => ProcessForm(req, CheckHazardStatus.Processing, "复查");
-        public IActionResult OnPostFinish([FromBody] CheckHazard req)   => Process(req, CheckHazardStatus.Finished, "整改完成");
+        public IActionResult OnPostFinish([FromBody] CheckHazard req)   => Process(req, CheckHazardStatus.Fixed, "整改完成");
         public IActionResult OnPostMonitor([FromBody] CheckHazard req)  => ProcessForm(req, CheckHazardStatus.Monitor, "督查");
         public IActionResult OnPostArchive([FromBody] CheckHazard req)  => Process(req, CheckHazardStatus.Archived, "归档");
 
@@ -278,7 +278,7 @@ namespace App.Pages.Checks
 
             // 更新主表状态
             hazard.Status = target;
-            if (target == CheckHazardStatus.Finished) hazard.RectifyDt = now;
+            if (target == CheckHazardStatus.Fixed) hazard.RectifyDt = now;
             if (target == CheckHazardStatus.Processing && hazard.RectifyDt == null) hazard.RectifyDt = null;
             hazard.Save();
 

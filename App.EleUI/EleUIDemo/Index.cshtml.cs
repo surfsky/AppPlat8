@@ -25,6 +25,7 @@ namespace App.Pages.EleUIDemo
                 ["forms"] = new("Controls/Form.cshtml", "Controls/Form.cshtml.cs"),
                 ["tree"] = new("Controls/Tree.cshtml", "Controls/Tree.cshtml.cs"),
                 ["tree-picker"] = new("Controls/TreePicker.cshtml", "Controls/TreePicker.cshtml.cs"),
+                ["list-picker"] = new("Controls/ListPicker.cshtml", "Controls/ListPicker.cshtml.cs"),
                 ["city-select"] = new("Controls/CitySelect.cshtml", "Controls/CitySelect.cshtml.cs"),
                 ["icons"] = new("Controls/Icons.cshtml"),
                 ["image-viewer"] = new("Controls/ImageViewer.cshtml", "Controls/ImageViewer.cshtml.cs"),

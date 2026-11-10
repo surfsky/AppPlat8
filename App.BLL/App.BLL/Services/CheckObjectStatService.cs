@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using App.DAL;
 using App.Entities;
 using App.Utils;
@@ -8,71 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Services
 {
-    /// <summary>企业分类统计使用的扩展标签 ID。</summary>
-    public enum CheckObjectStatTagId : long
-    {
-        // 产值规模
-        [UI("产值规模", "规上企业(亿元以上)")] ScaleAboveBillion = 79,
-        [UI("产值规模", "规下企业(亿元以下)")] ScaleBelowBillion = 88,
-        [UI("产值规模", "小企业(以下)")] ScaleSmall = 99,
-        [UI("产值规模", "微型企业(以下)")] ScaleMicro = 145,
-
-
-        // 厂房类型：独立厂房、厂中厂、园中园
-        [UI("厂房类型", "独立厂房")] FactoryIndependent = 93,
-        [UI("厂房类型", "厂中厂")] FactoryWorkshop = 95,
-        [UI("厂房类型", "园区")] FactoryPark = 94,
-
-
-        // 集聚区内、集聚区外
-        [UI("厂房类型", "内部厂房")] FactoryInsideArea = 97,
-        [UI("厂房类型", "外部厂房")] FactoryOutsideArea = 98,
-
-
-        // 行业分类/印刷行业
-        [UI("行业分类/印刷行业", "胶印")] IndPrintJiaoYin = 153,
-        [UI("行业分类/印刷行业", "凹版")] IndPrintAoBan = 154,
-        [UI("行业分类/印刷行业", "其他印刷业")] IndPrintOther = 108,
-
-        // 行业分类/塑料制品行业
-        [UI("行业分类/塑料制品行业", "塑料制品行业")] IndPlastic = 110,
-        [UI("行业分类/塑料制品行业", "塑料制品行业")] IndPlasticWoven = 118,
-        [UI("行业分类/塑料制品行业", "其他塑料制品行业")] IndPlasticOther = 119,
-
-        // 行业分类/其他行业
-        [UI("行业分类/其他行业", "纸制品业")] IndPaper = 109,
-        [UI("行业分类/其他行业", "机械行业")] IndMechanic = 112,
-        [UI("行业分类/其他行业", "金属行业")] IndMetal = 113,
-        [UI("行业分类/其他行业", "商贸行业")] IndTrade = 114,
-        [UI("行业分类/其他行业", "其他行业")] IndOther = 116,
-
-
-        // 八类危险性较高工业企业
-        [UI("八类危险性较高工业企业", "家电制造")] RiskHomeAppliance = 148,
-        [UI("八类危险性较高工业企业", "电镀作业")] RiskElectroplating = 148,
-        [UI("八类危险性较高工业企业", "竹业作业")] RiskBamboo = 149,
-        [UI("八类危险性较高工业企业", "鞋业作业")] RiskShoe = 150,
-        [UI("八类危险性较高工业企业", "海绵作业")] RiskSponge = 151,
-        [UI("八类危险性较高工业企业", "油墨作业")] RiskInkPrint = 152,
-        [UI("八类危险性较高工业企业", "喷漆作业（非水性漆）")] RiskSprayPaint = 111,
-        [UI("行业分类/塑料制品行业", "EPE")] FocusEpe = 117,
-
-        // 三场所三企业
-        [UI("三场所三企业", "受限空间作业")] ThreeLimitSpace = 120,
-        [UI("三场所三企业", "粉尘作业")] ThreeDust = 121,
-        [UI("三场所三企业", "喷漆作业")] ThreePainting = 122,
-        [UI("三场所三企业", "金属冶炼作业")] ThreeMetalSmelt = 123,
-        [UI("三场所三企业", "氨作业")] ThreeAmmonia = 124,
-        [UI("三场所三企业", "造船作业")] ThreeShipBuilding = 125,
-
-        // 关注
-        [UI("关注风险", "化学作业")] FocusChemical = 126,
-        [UI("关注风险", "易燃作业")] FocusInflammable = 127,
-        [UI("关注风险", "环境保护")] FocusEnvProtection = 86,
-        [UI("关注风险", "矿山")] FocusMine = 8,
-    }
-
-    /// <summary>企业分类统计行（对应截图 6 行：应急局/新城/城北/城西/城中/协调）</summary>
+    //----------------------------------------------------------------------
+    // 企业分类统计行
+    //----------------------------------------------------------------------
+    /// <summary>企业分类统计行</summary>
     public class CheckObjectStatRow : IExport
     {
         [UI("序号")]                                    public int    Index            { get; set; }
@@ -111,7 +51,7 @@ namespace App.Services
         [UI("行业分类/塑料制品行业", "塑编行业", Tag ="118")]               public int IndPlasticWoven        { get; set; }
         [UI("行业分类/塑料制品行业", "其他塑料制品行业", Tag ="119")]       public int IndPlasticOther        { get; set; }
         [UI("行业分类/其他行业", "塑料制品业合计", Tag ="118,119")]             public int IndPlastic           { get; set; }
-        [UI("行业分类/其他行业", "珍珠棉")]                     public int FocusEpe               { get; set; }
+        [UI("行业分类/其他行业", "珍珠棉", Tag ="117")]         public int FocusEpe               { get; set; }
 
         // --- 行业分类/其他行业 ---
         [UI("行业分类/其他行业", "纸制品业", Tag ="109")]                   public int IndPaper            { get; set; }
@@ -142,7 +82,7 @@ namespace App.Services
         [UI("关注风险", "危化品使用企业", Tag="126")]                      public int FocusChemical        { get; set; }
         [UI("关注风险", "易燃企业", Tag="181")]                             public int FocusInflammable     { get; set; }
         [UI("关注风险", "有环保设备", Tag="86")]                           public int FocusEnvProtection   { get; set; }
-        [UI("关注风险", "非煤矿山", Tag="")]                             public int FocusMine            { get; set; }
+        [UI("关注风险", "非煤矿山", Tag="172")]                             public int FocusMine            { get; set; }
 
         // --- 分级管控四色等级 ---
         [UI("分级管控四色等级", "白名单数")]                     public int ColorNone   { get; set; }
@@ -179,6 +119,9 @@ namespace App.Services
         }
     }
 
+    //----------------------------------------------------------------------
+    // 网格员企业分类统计行
+    //----------------------------------------------------------------------
     /// <summary>网格员对象统计行（在 CheckObjectStatRow 基础上增加网格员两列）</summary>
     public class CheckObjectCheckerStatRow : CheckObjectStatRow
     {
@@ -216,9 +159,23 @@ namespace App.Services
         }
     }
 
+
+    //----------------------------------------------------------------------
+    // 企业分类统计服务
+    //----------------------------------------------------------------------
     /// <summary>企业分类统计服务（对应「工矿企业分类统计表」截图）</summary>
     public static class CheckObjectStatService
     {
+        sealed class TagStatField
+        {
+            public PropertyInfo Field;
+            public long[] TagIds;
+            public bool MatchAny;
+        }
+
+        // 多个标签默认要求全部匹配（如厂房类型 + 集聚区）；“合计”列则匹配任一标签。
+        static readonly List<TagStatField> _tagStatFields = BuildTagStatFields();
+
         // 网格员报表：只统计 5 个科室（不包含应急局汇总行）
         static readonly (long OrgId, string Name, string Remark, bool IncludeSub)[] _checkerSections = new[]
         {
@@ -228,6 +185,25 @@ namespace App.Services
             ( 73L, "城中",   "(OrgId=73)",   true ),
             (327L, "协调",   "(OrgId=327)",  true ),
         };
+
+        static List<TagStatField> BuildTagStatFields()
+        {
+            return new UISetting(typeof(CheckObjectStatRow)).Items
+                .Where(item => !string.IsNullOrWhiteSpace(item.Tag) && item.Field?.PropertyType == typeof(int))
+                .Select(item => new TagStatField
+                {
+                    Field = item.Field,
+                    TagIds = item.Tag.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(tag => long.TryParse(tag.Trim(), out var tagId) ? (long?)tagId : null)
+                        .Where(tagId => tagId.HasValue)
+                        .Select(tagId => tagId.Value)
+                        .Distinct()
+                        .ToArray(),
+                    MatchAny = item.Title?.Contains("合计", StringComparison.Ordinal) == true,
+                })
+                .Where(item => item.TagIds.Length > 0)
+                .ToList();
+        }
 
         // ---------- 公共缓存入口（60 秒滑动窗口）----------
         public static List<CheckObjectStatRow> GetStat(long orgId, DateTime startDt, DateTime endDt)
@@ -383,20 +359,6 @@ namespace App.Services
 
         static void AccumulateRow(CheckObjectStatRow row, StatContext ctx, HashSet<long> orgSet, Func<DateTime?, bool> inRange, Func<ObjLite, bool> extraWhere)
         {
-            static bool HasTag(IDictionary<long, HashSet<long>> dict, long oid, CheckObjectStatTagId tagId)
-                => dict.TryGetValue(oid, out var s) && s.Contains((long)tagId);
-            static bool HasAny(IDictionary<long, HashSet<long>> dict, long oid, params CheckObjectStatTagId[] tagIds)
-            {
-                if (!dict.TryGetValue(oid, out var s)) return false;
-                foreach (var tagId in tagIds) if (s.Contains((long)tagId)) return true;
-                return false;
-            }
-
-            var setting = new UISetting(typeof(CheckObjectStatRow));
-
-
-
-
             foreach (var o in ctx.Objects)
             {
                 var inThis = o.OrgId.HasValue && orgSet.Contains(o.OrgId.Value);
@@ -408,64 +370,21 @@ namespace App.Services
                 if (inRange(o.CreateDt))          row.NewCount++;
                 if (inRange(o.DeleteDt))          row.CloseCount++;
 
-                // TODO: 根据 settings items 属性来获取字段对应的tag值，如果该对象包含这个值则增加对应的统计值
-
-                // 厂房类型
+                // 标签统计
                 var oid = o.Id;
-                var isInArea  = HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FactoryInsideArea);
-                var isOutArea = HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FactoryOutsideArea);
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FactoryIndependent)) { if (isInArea) row.FactoryIndependentInside++;  else if (isOutArea) row.FactoryIndependentOutside++;  }
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FactoryWorkshop)) { if (isInArea) row.FactoryWorkshopInside++;     else if (isOutArea) row.FactoryWorkshopOutside++;     }
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FactoryPark)) { if (isInArea) row.FactoryParkInside++;         else if (isOutArea) row.FactoryParkOutside++;         }
+                if (ctx.ObjTags.TryGetValue(oid, out var objectTags))
+                {
+                    foreach (var statField in _tagStatFields)
+                    {
+                        bool matched = statField.MatchAny
+                            ? statField.TagIds.Any(objectTags.Contains)
+                            : statField.TagIds.All(objectTags.Contains);
+                        if (!matched) continue;
 
-                // 规模
-                if      (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ScaleAboveBillion)) row.ScaleAboveBillion++;
-                else if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ScaleBelowBillion)) row.ScaleBelowBillion++;
-                else if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ScaleSmall))        row.ScaleSmall++;
-                else if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ScaleMicro))        row.ScaleMicro++;
-
-                // 行业分类
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndPrintJiaoYin)) row.IndPrintJiaoYin++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndPrintAoBan))   row.IndPrintAoBan++;
-                if (HasAny(ctx.ObjTags, oid, CheckObjectStatTagId.IndPrintOther))   row.IndPrintOther++;
-                if (HasAny(ctx.ObjTags, oid, CheckObjectStatTagId.IndPrintJiaoYin, CheckObjectStatTagId.IndPrintAoBan, CheckObjectStatTagId.IndPrintOther))
-                    row.IndPrint++;
-
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndPlasticWoven)) row.IndPlasticWoven++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndPlasticOther)) row.IndPlasticOther++;
-                if (HasAny(ctx.ObjTags, oid, CheckObjectStatTagId.IndPlastic, CheckObjectStatTagId.IndPlasticWoven, CheckObjectStatTagId.IndPlasticOther))
-                    row.IndPlastic++;
-
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndPaper))    row.IndPaper++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndMechanic)) row.IndMechanic++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndMetal))    row.IndMetal++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndTrade))    row.IndTrade++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.IndOther))    row.IndOther++;
-
-                // 八类风险性较高工业企业
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.RiskHomeAppliance)) row.RiskHomeAppliance++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.RiskElectroplating)) row.RiskElectroplating++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.RiskBamboo))         row.RiskBamboo++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.RiskShoe))           row.RiskShoe++;
-                if (HasAny(ctx.ObjTags, oid, CheckObjectStatTagId.RiskSponge))         row.RiskSponge++;
-                if (HasAny(ctx.ObjTags, oid, CheckObjectStatTagId.RiskSprayPaint))     row.RiskTextile++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.RiskSprayPaint))     row.RiskSprayPaint++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.RiskInkPrint))       row.RiskInkPrint++;
-
-                // 三场所三企业
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ThreeLimitSpace))    row.ThreeLimitSpace++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ThreeDust))          row.ThreeDust++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ThreePainting))      row.ThreePainting++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ThreeMetalSmelt))    row.ThreeMetalSmelt++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ThreeAmmonia))       row.ThreeAmmonia++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.ThreeShipBuilding))  row.ThreeShipBuilding++;
-
-                // 重点关注企业
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FocusChemical))      row.FocusChemical++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FocusInflammable))   row.FocusInflammable++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FocusEnvProtection)) row.FocusEnvProtection++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FocusMine))          row.FocusMine++;
-                if (HasTag(ctx.ObjTags, oid, CheckObjectStatTagId.FocusEpe))           row.FocusEpe++;
+                        var count = (int)statField.Field.GetValue(row);
+                        statField.Field.SetValue(row, count + 1);
+                    }
+                }
 
                 // 风险等级四色
                 switch (o.RiskLevel)
