@@ -621,13 +621,12 @@ Done
 
     /对象统计报表：网格列可下挖，所有数据都加上超链接；
     /排查统计报表》网格列可下挖
+    /EleUI：将示例项目名称给名为 EleUIDemo
+    /EleUI/EleListPicker: 支持values多id文本
+    /EleUI/EleTable.Fitlers 支持 LabelPosition 属性
+    /EleUI/EleTreePicker: 支持值逗号表达式，弹窗选中节点自动展开
     实现专项检查任务统计报表
-        查询条件：专项任务列表（用EleListPicker）
-        报表结构：
-            部门科室。    企业家数
 
-    EleUI：将示例项目名称给名为 EleUIDemo
-    EleUI：EleTreePicker支持值逗号表达式，弹窗选中节点自动展开
     
     文档
         写帮助文档、培训文档

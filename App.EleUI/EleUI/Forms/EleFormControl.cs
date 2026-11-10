@@ -349,11 +349,18 @@ namespace App.EleUI
             // TryAutoSetLabel has been called in AddCommonAttributes, but RenderWrapper might be called later?
             // Actually ProcessAsync calls AddCommonAttributes then RenderWrapper. So Label should be set.
 
-            // 解析 LabelPosition：控件级 > 父 EleForm 全局（ViewData["EleFormLabelPosition"]）> 默认 Left
+            // 解析 LabelPosition：控件级 > 父 EleForm > 父 Filters > 默认 Left
             var pos = LabelPosition;
+            var fromFilters = false;
             if (!pos.HasValue && ViewContext != null
-                && ViewContext.ViewData["EleFormLabelPosition"] is EleLabelPosition parent)
-                pos = parent;
+                && ViewContext.ViewData["EleFormLabelPosition"] is EleLabelPosition formParent)
+                pos = formParent;
+            else if (!pos.HasValue && ViewContext != null
+                && ViewContext.ViewData["EleFiltersLabelPosition"] is EleLabelPosition filtersParent)
+            {
+                pos = filtersParent;
+                fromFilters = true;
+            }
             if (!pos.HasValue) pos = EleLabelPosition.Left;
 
             // 1) LabelPosition = None：不渲染外层 el-form-item，也不显示 Label
@@ -384,9 +391,9 @@ namespace App.EleUI
             //    - 如果控件用户显式设置了 LabelPosition != None，就写该控件上；
             //    - 如果是从父 EleForm 继承来的位置，只在 Left/Right/Top 差异时才写（避免在 Left 时写入 Left Left 重复，Right 或 Top 会正确覆盖全局）
             var lpAttr = "";
-            if (LabelPosition.HasValue && LabelPosition.Value != EleLabelPosition.None)
+            if ((LabelPosition.HasValue || fromFilters) && pos.Value != EleLabelPosition.None)
             {
-                lpAttr = $" label-position=\"{LabelPosition.Value.ToString().ToLowerInvariant()}\"";
+                lpAttr = $" label-position=\"{pos.Value.ToString().ToLowerInvariant()}\"";
             }
 
             // Column logic

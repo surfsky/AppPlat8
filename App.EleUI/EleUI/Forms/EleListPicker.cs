@@ -122,10 +122,17 @@ namespace App.EleUI
             {
                 var width = System.Net.WebUtility.HtmlEncode(Width.Trim());
                 var wrapperHtml = output.PreElement.GetContent();
-                output.PreElement.SetHtmlContent(wrapperHtml.Replace(
-                    "<el-form-item ",
-                    $"<el-form-item style=\"width:{width};max-width:{width};flex:0 0 {width};\" ",
-                    StringComparison.Ordinal));
+                if (wrapperHtml.Contains("<el-form-item ", StringComparison.Ordinal))
+                {
+                    output.PreElement.SetHtmlContent(wrapperHtml.Replace(
+                        "<el-form-item ",
+                        $"<el-form-item style=\"width:{width};max-width:{width};flex:0 0 {width};\" ",
+                        StringComparison.Ordinal));
+                }
+                else
+                {
+                    output.Attributes.SetAttribute("style", $"width:{width};");
+                }
             }
             var tagTypeName = TagType.ToString().ToLower();
             var content = $@"

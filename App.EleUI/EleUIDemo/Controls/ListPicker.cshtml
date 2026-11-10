@@ -9,10 +9,10 @@
         <EleCard Title="EleTable 筛选器：单选、多选及默认值回显" Border="1px solid #e5e7eb" Radius="8px">
             <EleTable Title="ListPicker Table 测试" DataHandler="?handler=Data" ShowPage="false">
                 <Toolbar>
-                    <Filters Shows="4">
+                    <Filters Shows="4" LabelPosition="Top">
                         <EleListPicker For="Item.TaskIds" Label="专项任务（多选）" LabelWidth="140px" Items="Model.TaskOptions"
                                        Multiple="true" CollapseTags="true" TagType="Warning"
-                                       Value="@Model.MultiDefault" Width="360px"></EleListPicker>
+                                       Value="@Model.MultiDefault" Width="320px"></EleListPicker>
                         <EleListPicker For="Item.TaskId" Label="专项任务（单选）" LabelWidth="140px" Items="Model.TaskOptions"
                                        Multiple="false" TagType="Warning"
                                        Value="@Model.SingleDefault" Width="320px"></EleListPicker>

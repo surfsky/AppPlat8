@@ -3,12 +3,15 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
 namespace App.EleUI
 {
     [HtmlTargetElement("Filters", ParentTag = "Toolbar")]
     public class EleFilters : TagHelper
     {
+        [HtmlAttributeNotBound, ViewContext] public ViewContext ViewContext { get; set; }
         [HtmlAttributeName("Icon")]         public string Icon { get; set; } = "Filter";
         [HtmlAttributeName("Title")]        public string Title { get; set; } = null;
         [HtmlAttributeName("DrawerTitle")]  public string DrawerTitle { get; set; } = null;
@@ -17,11 +20,33 @@ namespace App.EleUI
         /// <summary>默认显示的过滤条件数量（仅桌面端生效）。
         /// - 0 或负数：不启用折叠，全部显示（兼容历史）
         /// - 正整数 N：仅默认显示前 N 个过滤条件，多余的收起，右侧显示『展开/收起』按钮</summary>
-        [HtmlAttributeName("Shows")]        public int Shows { get; set; } = 4;
+        [HtmlAttributeName("Shows")]        public int Shows { get; set; } = 4;   //
+        [HtmlAttributeName("LabelPosition")] public EleLabelPosition LabelPosition { get; set; } = EleLabelPosition.Left;
+        
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
-            var childContent = await output.GetChildContentAsync();
+            const string labelPositionKey = "EleFiltersLabelPosition";
+            var hadParentLabelPosition = ViewContext?.ViewData.ContainsKey(labelPositionKey) == true;
+            var parentLabelPosition = hadParentLabelPosition ? ViewContext.ViewData[labelPositionKey] : null;
+            if (ViewContext != null)
+                ViewContext.ViewData[labelPositionKey] = LabelPosition;
+
+            TagHelperContent childContent;
+            try
+            {
+                childContent = await output.GetChildContentAsync();
+            }
+            finally
+            {
+                if (ViewContext != null)
+                {
+                    if (hadParentLabelPosition)
+                        ViewContext.ViewData[labelPositionKey] = parentLabelPosition;
+                    else
+                        ViewContext.ViewData.Remove(labelPositionKey);
+                }
+            }
             var content = childContent.GetContent();
 
             var icon = string.IsNullOrWhiteSpace(Icon) ? "Filter" : Icon.Trim();
@@ -31,7 +56,9 @@ namespace App.EleUI
             var cancelText = WebUtility.HtmlEncode(Texts.Current.Cancel);
 
             int shows = Shows;
-            bool useCollapse = shows > 0;
+            var wrappedItems = WrapFilterChildren(content);
+            var filterCount = wrappedItems.Split("ele-filter-desktop-item", StringSplitOptions.None).Length - 1;
+            bool useCollapse = shows > 0 && filterCount > shows;
             string desktopHtml;
             if (!useCollapse)
             {
@@ -42,7 +69,6 @@ namespace App.EleUI
             }
             else
             {
-                var wrappedItems = WrapFilterChildren(content);
                 var clsId = "fd_" + Math.Abs(Guid.NewGuid().GetHashCode()).ToString("x8");
                 var caretHtml = "<i class='fas fa-chevron-down text-sm transition-transform' data-ele-filter-caret aria-hidden='true'></i>";
                 var showN = shows.ToString();
