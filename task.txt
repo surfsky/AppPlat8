@@ -610,6 +610,9 @@ Done
 
 
 2026/11/7
+    文档
+        写帮助文档、培训文档
+        写汇报稿：建设必要性、完成任务、后继任务（驾驶舱完善、物联网、立项、信创改造和部署）；
     剥离EleUI项目库
     处理warning
         [11:15:51 INF] [PAGE] http://localhost:6001/GIS/Index?handler=GeometryLayerData from ::1 use 2.829s
@@ -618,19 +621,6 @@ Done
         By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. 
         See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. 
         To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
-
-    /对象统计报表：网格列可下挖，所有数据都加上超链接；
-    /排查统计报表》网格列可下挖
-    /EleUI：将示例项目名称给名为 EleUIDemo
-    /EleUI/EleListPicker: 支持values多id文本
-    /EleUI/EleTable.Fitlers 支持 LabelPosition 属性
-    /EleUI/EleTreePicker: 支持值逗号表达式，弹窗选中节点自动展开
-    实现专项检查任务统计报表
-
-    
-    文档
-        写帮助文档、培训文档
-        写汇报稿：建设必要性、完成任务、后继任务（驾驶舱完善、物联网、立项、信创改造和部署）；
     Gis
         Gis/index：做几个资源类的统计面板
         Gis/Index: 重构闭包模式，全部用class重构
@@ -670,6 +660,19 @@ Done
         龙港市新城
     更换用户登录后会遇到奇奇怪怪的事情：
         陈慧左侧的菜单消失，已经设置为“员工”、“科室管理员”，测试一下菜单接口
+
+
+2026/11/10
+    /对象统计报表：网格列可下挖，所有数据都加上超链接；
+    /排查统计报表》网格列可下挖
+    /EleUI：将示例项目名称给名为 EleUIDemo
+    /EleUI/EleListPicker: 支持values多id文本
+    /EleUI/EleTable.Fitlers 支持 LabelPosition 属性
+    /EleUI/EleTreePicker: 支持值逗号表达式，弹窗选中节点自动展开
+    /EleUI/EleTable 解决表头不能实时跟随的问题
+    /实现专项检查任务统计报表
+    /实现专项检查任务统计报表（个人）
+
 
 2026/11/06
     /Gis：优化搜索框外观，去掉重复的框线；

@@ -1,0 +1,70 @@
+@page
+@model App.Pages.Checks.Reports.CheckTaskStat2Model
+@{
+    ViewData["Title"] = "专项任务统计报表（网格员）";
+}
+
+@section body {
+<div class="w-full bg-white border border-gray-200 shadow-sm" style="min-height:calc(100vh - 10px);">
+<EleTable
+    Id="tblCheckTaskStat2"
+    DataHandler="?handler=Data"
+    Title="专项任务统计报表"
+    RowKey="rowKey"
+    SortField="SortId"
+    SortDirection="ASC"
+    ShowPage="false"
+    HeadHAlign="Center"
+    HeadWrap="true"
+    Height="calc(100vh - 10px)"
+    LineColor="#c0c0c0"
+    >
+  <Toolbar>
+    <Filters>
+      <EleListPicker For="TaskId" Label="专项任务" Width="320px" Items="Model.TaskOptions"
+                     Value="@(Model.TaskId?.ToString() ?? string.Empty)" Clearable="true"
+                     DrawerTitle="选择专项任务" TagType="Warning"></EleListPicker>
+      <EleTreePicker For="OrgId" Label="组织科室" Width="320px"
+                     Api="/httpapi/orgs/GetAuthOrgTree?selectedId=@Model.OrgId"
+                     ExpandLevel="3" CheckStrictly="true"
+                     Value="@(Model.OrgId?.ToString() ?? string.Empty)"></EleTreePicker>
+      <ElePicker For="CheckerId" TextFor="CheckerName" Label="网格员" Width="220px"
+                 PopupUrl="/Shared/UserSelector?multi=0" Multi="false"
+                 Value="@(Model.CheckerId?.ToString() ?? string.Empty)"
+                 TextValue="@Model.CheckerName"></ElePicker>
+    </Filters>
+    <Buttons>
+      <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
+      <EleButton Type="Warning" Command="Export" Icon="Download">导出</EleButton>
+    </Buttons>
+  </Toolbar>
+  <Columns>
+    <EleNumColumn Label="序号" Width="60" Fixed="left" Align="center" Sortable="false" />
+    <EleColumn For="Item.OrgName" Label="组织科室" MinWidth="200" Fixed="left" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="CheckTaskStat2?taskId={taskId}&amp;orgId={orgId}&amp;checkerId={checkerId}" />
+    <EleColumn For="Item.CheckerName" Label="网格员" Width="130" Fixed="left" Sortable="false" />
+    <EleColumnGroup Label="企业" HAlign="center" Sortable="false">
+      <EleColumn For="Item.RequiredCompanyCount" Label="应排查企业数" Width="120" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckTaskObjects?taskId={taskId}&amp;orgId={orgId}&amp;checkerId={checkerId}" />
+      <EleColumn For="Item.CheckedCompanyCount" Label="已排查企业数" Width="120" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckTaskObjects?taskId={taskId}&amp;orgId={orgId}&amp;checkerId={checkerId}&amp;status=checked" />
+      <EleColumn For="Item.FixedCompanyCount" Label="已整改企业数" Width="120" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckTaskObjects?taskId={taskId}&amp;orgId={orgId}&amp;checkerId={checkerId}&amp;status=fixed" />
+      <EleColumn For="Item.CheckProgress" Label="排查进度（%）" Width="120" Align="right" Sortable="false">
+        <template #default="{ row }">{{ row.checkProgress }}%</template>
+      </EleColumn>
+    </EleColumnGroup>
+    <EleColumnGroup Label="隐患" HAlign="center" Sortable="false">
+      <EleColumn For="Item.FoundHazardCount" Label="发现隐患数" Width="110" Align="right" Sortable="false"
+                 Link="true" LinkTarget="Self"
+                 PopupUrl="/Checks/Flow/CheckHazards?taskId={taskId}&amp;orgId={orgId}&amp;checkerId={checkerId}" />
+      <EleColumn For="Item.FixedHazardCount" Label="已整改隐患数" Width="120" Align="right" Sortable="false"
+                 Link="true" LinkTarget="Self"
+                 PopupUrl="/Checks/Flow/CheckHazards?taskId={taskId}&amp;orgId={orgId}&amp;checkerId={checkerId}&amp;status=fixed" />
+      <EleColumn For="Item.HazardFoundRate" Label="隐患发现率" Width="110" Align="right" Sortable="false">
+        <template #default="{ row }">{{ row.hazardFoundRate }}%</template>
+      </EleColumn>
+      <EleColumn For="Item.HazardFixedRate" Label="隐患整改率" Width="110" Align="right" Sortable="false">
+        <template #default="{ row }">{{ row.hazardFixedRate }}%</template>
+      </EleColumn>
+    </EleColumnGroup>
+  </Columns>
+</EleTable>
+</div>
+}

@@ -36,7 +36,7 @@
   </Toolbar>
   <Columns>
     <EleNumColumn Label="序号" Width="60" Fixed="left" Align="center" Sortable="false" />
-    <EleColumn For="Item.OrgName" Label="组织科室" Width="200" Fixed="left" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="CheckTaskStat?taskId={taskId}&amp;orgId={orgId}" />
+    <EleColumn For="Item.OrgName" Label="组织科室" MinWidth="200" Fixed="left" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="CheckTaskStat?taskId={taskId}&amp;orgId={orgId}" />
     <EleColumnGroup Label="企业" HAlign="center" Sortable="false">
       <EleColumn For="Item.RequiredCompanyCount" Label="应排查企业数" Width="120" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckTaskObjects?taskId={taskId}&amp;orgId={orgId}" />
       <EleColumn For="Item.CheckedCompanyCount"  Label="已排查企业数" Width="120" Align="right" Sortable="false" Link="true" LinkTarget="Self" PopupUrl="/Checks/Flow/CheckTaskObjects?taskId={taskId}&amp;orgId={orgId}&amp;status=checked" />

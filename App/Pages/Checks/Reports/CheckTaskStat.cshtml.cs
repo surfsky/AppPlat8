@@ -28,12 +28,65 @@ namespace App.Pages.Checks.Reports
 
         public void OnGet(long? taskId, long? orgId)
         {
-            NormalizeFilters(taskId, orgId);
+            SetFilters(taskId, orgId);
         }
 
+        //---------------------------------------------------------------------
+        // 设置筛选条件
+        //---------------------------------------------------------------------
+        void SetFilters(long? taskId = null, long? orgId = null)
+        {
+            var user = GetUser();
+            var visibleOrgIds = Orgs.GetAuthVisibleOrgIds(user);
+            TaskId = taskId ?? TaskId;
+            OrgId = orgId ?? OrgId;
+            if (!OrgId.HasValue || !visibleOrgIds.Contains(OrgId.Value))
+                OrgId = ResolveDefaultOrgId(user, visibleOrgIds);
+
+            TaskOptions = BuildTaskOptions(visibleOrgIds);
+            if (TaskId.HasValue && !TaskOptions.Any(t => t.Value == TaskId.Value.ToString()))
+                TaskId = null;
+        }
+
+        static long? ResolveDefaultOrgId(User user, HashSet<long> visibleOrgIds)
+        {
+            if (user?.AuthOrgId.HasValue == true && visibleOrgIds.Contains(user.AuthOrgId.Value))
+                return user.AuthOrgId.Value;
+            if (user?.OrgId.HasValue == true && visibleOrgIds.Contains(user.OrgId.Value))
+                return user.OrgId.Value;
+            return App.DAL.Org.All
+                .Where(t => visibleOrgIds.Contains(t.Id))
+                .OrderBy(t => t.SortId)
+                .ThenBy(t => t.Id)
+                .Select(t => (long?)t.Id)
+                .FirstOrDefault();
+        }
+
+        static List<SelectListItem> BuildTaskOptions(HashSet<long> visibleOrgIds)
+        {
+            var ids = visibleOrgIds.ToList();
+            if (ids.Count == 0)
+                return new List<SelectListItem>();
+
+            return CheckTask.Set
+                .AsNoTracking()
+                //.Where(t => t.Type == CheckTaskType.Special)
+                //.Where(t => (t.OrgId.HasValue && ids.Contains(t.OrgId.Value))
+                //    || t.CheckObjects.Any(o => (o.OrgId.HasValue && ids.Contains(o.OrgId.Value))
+                //        || (o.CheckObject != null && o.CheckObject.OrgId.HasValue && ids.Contains(o.CheckObject.OrgId.Value))))
+                .OrderByDescending(t => t.StartDt)
+                .ThenByDescending(t => t.Id)
+                .Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.Name })
+                .ToList();
+        }
+
+
+        //---------------------------------------------------------------------
+        // 获取数据及导出
+        //---------------------------------------------------------------------
         public IActionResult OnGetData(long? taskId, long? orgId)
         {
-            NormalizeFilters(taskId, orgId);
+            SetFilters(taskId, orgId);
             Rows = TaskId.HasValue
                 ? CheckTaskStatReportService.GetRows(TaskId.Value, OrgId.GetValueOrDefault(), Orgs.GetAuthVisibleOrgIds(GetUser()))
                 : new List<CheckTaskStatReportRow>();
@@ -52,7 +105,7 @@ namespace App.Pages.Checks.Reports
 
         public IActionResult OnPostExport(long? taskId, long? orgId)
         {
-            NormalizeFilters(taskId, orgId);
+            SetFilters(taskId, orgId);
             Rows = TaskId.HasValue
                 ? CheckTaskStatReportService.GetRows(TaskId.Value, OrgId.GetValueOrDefault(), Orgs.GetAuthVisibleOrgIds(GetUser()))
                 : new List<CheckTaskStatReportRow>();
@@ -65,50 +118,6 @@ namespace App.Pages.Checks.Reports
             return new EmptyResult();
         }
 
-        void NormalizeFilters(long? taskId = null, long? orgId = null)
-        {
-            var user = GetUser();
-            var visibleOrgIds = Orgs.GetAuthVisibleOrgIds(user);
-            TaskId = taskId ?? TaskId;
-            OrgId = orgId ?? OrgId;
-            if (!OrgId.HasValue || !visibleOrgIds.Contains(OrgId.Value))
-                OrgId = ResolveDefaultOrgId(user, visibleOrgIds);
 
-            TaskOptions = BuildTaskOptions(visibleOrgIds);
-            if (TaskId.HasValue && !TaskOptions.Any(t => t.Value == TaskId.Value.ToString()))
-                TaskId = null;
-        }
-
-        static List<SelectListItem> BuildTaskOptions(HashSet<long> visibleOrgIds)
-        {
-            var ids = visibleOrgIds.ToList();
-            if (ids.Count == 0)
-                return new List<SelectListItem>();
-
-            return CheckTask.Set
-                .AsNoTracking()
-                .Where(t => t.Type == CheckTaskType.Special)
-                .Where(t => (t.OrgId.HasValue && ids.Contains(t.OrgId.Value))
-                    || t.CheckObjects.Any(o => (o.OrgId.HasValue && ids.Contains(o.OrgId.Value))
-                        || (o.CheckObject != null && o.CheckObject.OrgId.HasValue && ids.Contains(o.CheckObject.OrgId.Value))))
-                .OrderByDescending(t => t.StartDt)
-                .ThenByDescending(t => t.Id)
-                .Select(t => new SelectListItem { Value = t.Id.ToString(), Text = t.Name })
-                .ToList();
-        }
-
-        static long? ResolveDefaultOrgId(User user, HashSet<long> visibleOrgIds)
-        {
-            if (user?.AuthOrgId.HasValue == true && visibleOrgIds.Contains(user.AuthOrgId.Value))
-                return user.AuthOrgId.Value;
-            if (user?.OrgId.HasValue == true && visibleOrgIds.Contains(user.OrgId.Value))
-                return user.OrgId.Value;
-            return App.DAL.Org.All
-                .Where(t => visibleOrgIds.Contains(t.Id))
-                .OrderBy(t => t.SortId)
-                .ThenBy(t => t.Id)
-                .Select(t => (long?)t.Id)
-                .FirstOrDefault();
-        }
     }
 }

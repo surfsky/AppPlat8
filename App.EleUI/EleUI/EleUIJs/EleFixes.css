@@ -4,6 +4,17 @@
     border-collapse: separate !important; 
 }
 
+/* Element Plus mirrors body scrollLeft to the separate header/footer wrappers.
+ * app-global.css sets scroll-behavior:smooth on scrollbar wraps, which animates
+ * those programmatic scrollLeft updates and makes the header lag behind touch/mouse scrolling.
+ * Table header/body/footer synchronization must remain immediate. */
+.el-table .el-table__header-wrapper,
+.el-table .el-table__body-wrapper,
+.el-table .el-table__body-wrapper .el-scrollbar__wrap,
+.el-table .el-table__footer-wrapper {
+    scroll-behavior: auto !important;
+}
+
 /* Reset Body for Full Screen Layout
  * 仅当页面显式标记 class="ele-fullscreen-page"（例如 GIS/GeometryManager 这类左右分栏 + iframe 全屏
  * 的 splitter 页面）时，才把 html/body 设为 overflow:hidden；普通内容页（WorkDesk / Maintains/* 列表页等）
