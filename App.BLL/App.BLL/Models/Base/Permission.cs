@@ -64,10 +64,12 @@ namespace App.DAL
         [UI("配置", "站点配置")]             ConfigSite = 21,
         [UI("配置", "菜单管理")]             ConfigMenu = 22,
         [UI("配置", "IP黑名单维护")]         ConfigBlackIP = 24,
-        [UI("配置", "参考网站查看")]          RefSiteView = 25,
-        [UI("配置", "参考网站新增")]          RefSiteNew = 26,
-        [UI("配置", "参考网站修改")]          RefSiteEdit = 27,
-        [UI("配置", "参考网站删除")]          RefSiteDelete = 28,
+
+        
+        [UI("参考网站", "参考网站查看")]          RefSiteView = 25,
+        [UI("参考网站", "参考网站新增")]          RefSiteNew = 26,
+        [UI("参考网站", "参考网站修改")]          RefSiteEdit = 27,
+        [UI("参考网站", "参考网站删除")]          RefSiteDelete = 28,
 
 
         //---------------------------------------------
@@ -192,36 +194,36 @@ namespace App.DAL
         //---------------------------------------------
         // 检查 (300)
         //---------------------------------------------
-        [UI("安全生产", "检查对象查看")]           CheckObjectView = 300,
-        [UI("安全生产", "检查对象新增")]           CheckObjectNew = 301,
-        [UI("安全生产", "检查对象修改")]           CheckObjectEdit = 302,
-        [UI("安全生产", "检查对象删除")]           CheckObjectDelete = 304,
-        [UI("安全生产", "检查对象导出")]           CheckObjectExport = 305,
-        [UI("安全生产", "检查对象导入")]           CheckObjectImport = 306,
+        [UI("安全生产/检查对象", "检查对象查看")]           CheckObjectView = 300,
+        [UI("安全生产/检查对象", "检查对象新增")]           CheckObjectNew = 301,
+        [UI("安全生产/检查对象", "检查对象修改")]           CheckObjectEdit = 302,
+        [UI("安全生产/检查对象", "检查对象删除")]           CheckObjectDelete = 304,
+        [UI("安全生产/检查对象", "检查对象导出")]           CheckObjectExport = 305,
+        [UI("安全生产/检查对象", "检查对象导入")]           CheckObjectImport = 306,
     
-        [UI("安全生产", "检查任务查看")]           CheckTaskView = 310,
-        [UI("安全生产", "检查任务新增")]           CheckTaskNew = 311,
-        [UI("安全生产", "检查任务修改")]           CheckTaskEdit = 312,
-        [UI("安全生产", "检查任务删除")]           CheckTaskDelete = 313,
+        [UI("安全生产/检查任务", "检查任务查看")]           CheckTaskView = 310,
+        [UI("安全生产/检查任务", "检查任务新增")]           CheckTaskNew = 311,
+        [UI("安全生产/检查任务", "检查任务修改")]           CheckTaskEdit = 312,
+        [UI("安全生产/检查任务", "检查任务删除")]           CheckTaskDelete = 313,
 
-        [UI("安全生产", "检查记录查看")]           CheckView = 320,
-        [UI("安全生产", "检查记录新增")]           CheckNew = 321,
-        [UI("安全生产", "检查记录修改")]           CheckEdit = 322,
-        [UI("安全生产", "检查记录删除")]           CheckDelete = 323,
+        [UI("安全生产/检查记录", "检查记录查看")]           CheckView = 320,
+        [UI("安全生产/检查记录", "检查记录新增")]           CheckNew = 321,
+        [UI("安全生产/检查记录", "检查记录修改")]           CheckEdit = 322,
+        [UI("安全生产/检查记录", "检查记录删除")]           CheckDelete = 323,
 
-        [UI("安全生产", "隐患查看")]               CheckHazardView = 330,
-        [UI("安全生产", "隐患修改")]               CheckHazardEdit = 331,
-        [UI("安全生产", "隐患删除")]               CheckHazardDelete = 332,
+        [UI("安全生产/隐患", "隐患查看")]               CheckHazardView = 330,
+        [UI("安全生产/隐患", "隐患修改")]               CheckHazardEdit = 331,
+        [UI("安全生产/隐患", "隐患删除")]               CheckHazardDelete = 332,
 
-        [UI("安全生产", "检查表查看")]           CheckSheetView = 340,
-        [UI("安全生产", "检查表新增")]           CheckSheetNew = 341,
-        [UI("安全生产", "检查表修改")]           CheckSheetEdit = 342,
-        [UI("安全生产", "检查表删除")]           CheckSheetDelete = 343,
+        [UI("安全生产/检查表", "检查表查看")]           CheckSheetView = 340,
+        [UI("安全生产/检查表", "检查表新增")]           CheckSheetNew = 341,
+        [UI("安全生产/检查表", "检查表修改")]           CheckSheetEdit = 342,
+        [UI("安全生产/检查表", "检查表删除")]           CheckSheetDelete = 343,
 
-        [UI("安全生产", "检查点查看")]           CheckPointView = 350,
-        [UI("安全生产", "检查点新增")]           CheckPointNew = 351,
-        [UI("安全生产", "检查点修改")]           CheckPointEdit = 352,
-        [UI("安全生产", "检查点删除")]           CheckPointDelete = 353,
+        [UI("安全生产/检查点", "检查点查看")]           CheckPointView = 350,
+        [UI("安全生产/检查点", "检查点新增")]           CheckPointNew = 351,
+        [UI("安全生产/检查点", "检查点修改")]           CheckPointEdit = 352,
+        [UI("安全生产/检查点", "检查点删除")]           CheckPointDelete = 353,
 
 
 
@@ -271,11 +273,14 @@ namespace App.DAL
         [UI("交办任务", "任务删除")]               TaskDelete = 803,
 
 
-        [UI("交办任务", "事件查看")]               EventView = 810,
-        [UI("交办任务", "事件新增")]               EventNew = 811,
-        [UI("交办任务", "事件修改")]               EventEdit = 812,
-        [UI("交办任务", "事件删除")]               EventDelete = 813,
-        [UI("交办任务", "事件类别管理")]           EventTypeEdit = 815,
+        //---------------------------------------------
+        // 事件动态
+        //---------------------------------------------
+        [UI("动态", "事件查看")]               EventView = 810,
+        [UI("动态", "事件新增")]               EventNew = 811,
+        [UI("动态", "事件修改")]               EventEdit = 812,
+        [UI("动态", "事件删除")]               EventDelete = 813,
+        [UI("动态", "事件类别管理")]           EventTypeEdit = 815,
 
 
         //---------------------------------------------
