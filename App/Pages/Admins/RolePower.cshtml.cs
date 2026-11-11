@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace App.Pages.Admins
 {
-    [Auth(Power.RoleEdit)]
+    [Auth(Permission.RoleEdit)]
     public class RolePowerModel : AuthModel
     {
         public long RoleId { get; set; }
@@ -19,8 +19,8 @@ namespace App.Pages.Admins
 
         public IActionResult OnGetGroupPowers()
         {
-            var groupNames = typeof(Power).GetEnumGroups();
-            var infos = typeof(Power).GetEnumInfos();
+            var groupNames = typeof(Permission).GetEnumGroups();
+            var infos = typeof(Permission).GetEnumInfos();
             var result = new List<object>();
 
             foreach (var groupName in groupNames)

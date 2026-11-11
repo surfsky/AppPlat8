@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.DAL
 {
     [UI("检查", "检查表")]
-    public class CheckSheet : EntityBase<CheckSheet>, ISort
+    public class CheckSheet : Entity<CheckSheet>, ISort
     {
         [UI("名称")]     public string Name { get; set; }
         [UI("排序ID")]   public int SortId {get; set;}

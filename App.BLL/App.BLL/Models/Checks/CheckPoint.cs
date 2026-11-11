@@ -9,7 +9,7 @@ namespace App.DAL
 {
     /// <summary>检查点，可存储风险点，也可存储巡检地点</summary>
     [UI("检查", "检查点")]
-    public class CheckPoint : EntityBase<CheckPoint>
+    public class CheckPoint : Entity<CheckPoint>
     {
         [UI("检查对象")] public long? CheckObjectId { get; set; }
         [UI("风险等级")] public CheckRiskLevel? RiskLevel { get; set; }

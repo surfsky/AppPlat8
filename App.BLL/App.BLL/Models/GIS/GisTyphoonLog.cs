@@ -9,7 +9,7 @@ namespace App.DAL.GIS
 {
     /// <summary>GIS 台风轨迹</summary>
     [UI("GIS", "GIS台风轨迹")]
-    public class GisTyphoonLog : EntityBase<GisTyphoonLog>
+    public class GisTyphoonLog : Entity<GisTyphoonLog>
     {
         [UI("台风编号")] public string Code { get; set; }
         [UI("时间")] public DateTime? TimeUtc { get; set; }

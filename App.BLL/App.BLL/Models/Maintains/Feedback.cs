@@ -45,7 +45,7 @@ namespace App.DAL
     /// 反馈
     /// </summary>
     [UI("基础", "反馈建议")]
-    public class Feedback : EntityBase<Feedback>, IDeleteLogic
+    public class Feedback : Entity<Feedback>, IDeleteLogic
     {
         // 分类
         [UI("类型")]        public FeedType? Type { get; set; }
@@ -116,8 +116,8 @@ namespace App.DAL
             var stepCreate = WFStep.Create(FeedStatus.Create, null, WFStepType.Start);
             var stepCancel = WFStep.Create(FeedStatus.Cancel, null, WFStepType.End);
             var stepFinish = WFStep.Create(FeedStatus.Finish, null, WFStepType.End);
-            var stepDispatch = WFStep.Create(FeedStatus.Dispatched, Power.FeedBackDispatch);
-            var stepHandle = WFStep.Create(FeedStatus.Handling, Power.FeedBackHandle);
+            var stepDispatch = WFStep.Create(FeedStatus.Dispatched, Permission.FeedBackDispatch);
+            var stepHandle = WFStep.Create(FeedStatus.Handling, Permission.FeedBackHandle);
             var stepSuspend = WFStep.Create(FeedStatus.Suspend, null, WFStepType.End);
 
             // 关系

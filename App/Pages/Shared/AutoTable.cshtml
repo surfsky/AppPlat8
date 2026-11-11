@@ -3,35 +3,46 @@
 @using System.Text.Json
 @{
     ViewData["Title"] = "智能表格";
-    var fileJson = JsonSerializer.Serialize(Model.File ?? string.Empty);
+    var attIdJson = JsonSerializer.Serialize(Model.AttId);
     var labelPositionJson = JsonSerializer.Serialize(Model.LabelPosition ?? "left");
 }
 
 @section body {
     <div id="app" class="h-screen overflow-hidden bg-slate-50">
         <div class="h-full flex flex-col p-4 gap-4 box-border">
-            <div class="px-0 py-0">
+            <div class="px-0 py-0 overflow-y-auto" style="max-height: 50vh;">
                 <el-form :label-position="formLabelPosition"
                          :label-width="formLabelWidth"
                          class="auto-search-form">
-                    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        <div v-for="col in meta.columns" :key="col.key">
-                            <el-form-item :label="col.title" class="mb-0">
-                                <el-select v-if="hasOptions(col)"
-                                           v-model="filters[col.key]"
-                                           clearable
-                                           filterable
-                                           placeholder="请选择"
-                                           class="w-full">
-                                    <el-option v-for="opt in col.options" :key="opt" :label="opt" :value="opt"></el-option>
-                                </el-select>
-                                <el-input v-else
-                                          v-model="filters[col.key]"
-                                          clearable
-                                          placeholder="请输入"
-                                          @@keyup.enter="search"></el-input>
-                            </el-form-item>
+                    <div class="flex items-start gap-2">
+                        <div id="auto-search-fields" class="grid flex-1 min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                            <div v-for="col in visibleColumns" :key="col.key">
+                                <el-form-item :label="col.title" class="mb-0">
+                                    <el-select v-if="hasOptions(col)"
+                                               v-model="filters[col.key]"
+                                               clearable
+                                               filterable
+                                               placeholder="请选择"
+                                               class="w-full">
+                                        <el-option v-for="opt in col.options" :key="opt" :label="opt" :value="opt"></el-option>
+                                    </el-select>
+                                    <el-input v-else
+                                              v-model="filters[col.key]"
+                                              clearable
+                                              placeholder="请输入"
+                                              @@keyup.enter="search"></el-input>
+                                </el-form-item>
+                            </div>
                         </div>
+                        <button v-if="canCollapseFilters"
+                                type="button"
+                                class="shrink-0 whitespace-nowrap text-sm text-blue-600 hover:text-blue-700"
+                                aria-controls="auto-search-fields"
+                                :aria-expanded="filtersExpanded"
+                                @@click="filtersExpanded = !filtersExpanded">
+                            {{ filtersExpanded ? '收起' : '展开' }}
+                            <i class="fas fa-chevron-down transition-transform" :class="{ 'rotate-180': filtersExpanded }" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </el-form>
                 <div class="mt-4 flex flex-wrap justify-start gap-2">
@@ -109,8 +120,10 @@
 
         createApp({
             setup() {
-                const file = @Html.Raw(fileJson);
+                const attId = @Html.Raw(attIdJson);
                 const labelPosition = @Html.Raw(labelPositionJson);
+                const shows = @Model.Shows;
+                const filtersExpanded = ref(false);
                 const loading = ref(false);
                 const pageIndex = ref(1);
                 const pageSize = ref(20);
@@ -124,10 +137,13 @@
                     columns: []
                 });
                 const filters = reactive({});
+                const canCollapseFilters = Vue.computed(() => shows > 0 && meta.columns.length > shows);
+                const visibleColumns = Vue.computed(() =>
+                    canCollapseFilters.value && !filtersExpanded.value ? meta.columns.slice(0, shows) : meta.columns);
 
                 /**读取元数据 */
                 const loadMeta = async () => {
-                    const res = await axios.get('?handler=Meta', { params: { file } });
+                    const res = await axios.get('?handler=Meta', { params: { attId } });
                     const body = res.data || {};
                     if (body.code !== 0) {
                         throw new Error(body.msg || body.info || '读取元数据失败');
@@ -147,15 +163,22 @@
                 const loadData = async () => {
                     loading.value = true;
                     try {
-                        const res = await axios.get('?handler=Data', {
-                            params: {
-                                file,
-                                filters: JSON.stringify(filters),
-                                pageIndex: pageIndex.value - 1,
-                                pageSize: pageSize.value,
-                                sortKey: sortKey.value,
-                                sortOrder: sortOrder.value
+                        const params = new URLSearchParams({
+                            attId,
+                            pageIndex: pageIndex.value - 1,
+                            pageSize: pageSize.value
+                        });
+                        Object.entries(filters).forEach(([key, value]) => {
+                            if (value != null && String(value).trim() !== '') {
+                                params.append(`filter.${key}`, String(value));
                             }
+                        });
+                        if (sortKey.value && sortOrder.value) {
+                            params.append('sortKey', sortKey.value);
+                            params.append('sortOrder', sortOrder.value);
+                        }
+                        const res = await axios.get('?handler=Data', {
+                            params
                         });
                         const body = res.data || {};
                         if (body.code !== 0) {
@@ -195,7 +218,7 @@
 
                 /**打开表单 */
                 const openForm = (id) => {
-                    const url = `/Shared/AutoForm?file=${encodeURIComponent(file)}${id ? `&id=${id}` : '&md=new'}`;
+                    const url = `/Shared/AutoForm?attId=${encodeURIComponent(attId)}${id ? `&id=${id}` : '&md=new'}`;
                     const title = id ? '编辑数据' : '新增数据';
                     if (window.EleManager && typeof EleManager.openDrawer === 'function') {
                         EleManager.openDrawer({
@@ -212,7 +235,7 @@
 
                 /**下载文件 */
                 const downloadFile = () => {
-                    window.location.href = `?handler=Download&file=${encodeURIComponent(file)}`;
+                    window.location.href = `?handler=Download&attId=${encodeURIComponent(attId)}`;
                 };
 
                 /**删除数据 */
@@ -226,7 +249,7 @@
                         }
 
                         const res = await axios.post('?handler=Delete', {
-                            file,
+                            attId,
                             id: row.id
                         }, {
                             headers: {
@@ -333,7 +356,7 @@
                 });
 
                 return {
-                    file,
+                    attId,
                     formLabelPosition,
                     formLabelWidth,
                     loading,
@@ -345,6 +368,9 @@
                     rows,
                     meta,
                     filters,
+                    filtersExpanded,
+                    canCollapseFilters,
+                    visibleColumns,
                     hasOptions,
                     loadData,
                     search,

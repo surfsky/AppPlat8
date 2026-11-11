@@ -18,7 +18,7 @@ namespace App.Entities
 
     /// <summary>UI 配置信息，可用于UI自动生成。</summary>
     [UI("系统", "UI配置")]
-    public class XUI : EntityBase<XUI>, ICacheAll
+    public class XUI : Entity<XUI>, ICacheAll
     {
         [UI("名称")]       public string Name { get; set; }
         [UI("类型")]       public XUIType? Type { get; set; }

@@ -17,7 +17,7 @@ namespace App.DAL.OA
     }
 
     [UI("OA", "会议表")]
-    public class Meeting : EntityBase<Meeting>
+    public class Meeting : Entity<Meeting>
     {
         [UI("日期")]   public DateTime Day { get; set; }
         [UI("类型")]   public MeetingType? Type { get; set; }

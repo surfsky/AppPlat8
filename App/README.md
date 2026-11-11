@@ -37,6 +37,10 @@
 - Files: 项目文档存储目录，需定期备份
 - Logs：日志目录，用于存储应用程序运行时的日志文件，可定期删除；
 
+## 智能表格
+
+共享页面 `/Shared/AutoTable` 的 `attId` 参数指定附件表中的 Excel 附件 ID（例如 `/Shared/AutoTable?attId=123`）；不接受文件路径。`shows` 控制默认显示的查询条件数量（默认 4；0 或负数表示全部显示、不折叠），`labelPosition` 可设置为 `left`、`right` 或 `top`。收起条件不会清除已填写的值。
+
 
 ## 项目相关文件
 

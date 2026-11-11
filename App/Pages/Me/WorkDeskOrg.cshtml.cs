@@ -21,7 +21,7 @@ namespace App.Pages.Me
         public List<long> CurrRootOrgIds => _currRootOrgIds ??= ResolveCurrRootOrgIds();   // 当前生效的组织根节点列表。
         public List<long> CurrOrgIds => _currOrgIds ??= ResolveCurrOrgIds();   // 当前生效的组织范围（含子孙）。
         public string OrgDisplay { get; private set; }  // 当前组织显示名。
-        public bool CanChangeScope => Auth.HasPower(Power.AdminLeader);  // 是否允许切换组织范围。
+        public bool CanChangeScope => Auth.HasPermission(Permission.AdminLeader);  // 是否允许切换组织范围。
         public List<WorkDeskStatCard> ObjectStatCards { get; set; } = new List<WorkDeskStatCard>();     // 页面统计卡片：对象。
         public List<WorkDeskStatCard> SuperviseStatCards { get; set; } = new List<WorkDeskStatCard>();     // 页面统计卡片：监管对象。
         public List<WorkDeskStatCard> RiskStatCards { get; set; } = new List<WorkDeskStatCard>();     // 页面统计卡片：高风险对象。

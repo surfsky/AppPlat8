@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryEdit)]
+    [Auth(Permission.GisGeometryEdit)]
     public class GeometryCoordBatchModel : AuthModel
     {
         public List<long> SelectedIds { get; set; } = new();

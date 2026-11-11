@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckHazardView)]
+    [Auth(Permission.CheckHazardView)]
     public class CheckHazardsModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]    public long? ObjectId { get; set; }
@@ -186,7 +186,7 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.CheckHazardDelete))
+            if (!HasPermission(Permission.CheckHazardDelete))
                 return BuildResult(403, "无权操作");
             foreach (var id in ids)
             {
@@ -202,7 +202,7 @@ namespace App.Pages.Checks
         {
             if (req == null)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.CheckHazardEdit))
+            if (!HasPermission(Permission.CheckHazardEdit))
                 return BuildResult(403, "无权操作");
 
             CheckHazard item = req.Id == 0 ? new CheckHazard() : CheckHazard.Get(req.Id);

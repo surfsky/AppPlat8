@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckSheetView)]
+    [Auth(Permission.CheckSheetView)]
     public class CheckSheetItemsModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
@@ -41,7 +41,7 @@ namespace App.Pages.Checks
                 return BuildResult(400, "参数错误");
             if (sheetId <= 0)
                 return BuildResult(400, "参数错误：缺少检查表ID");
-            if (!HasPower(Power.CheckSheetEdit))
+            if (!HasPermission(Permission.CheckSheetEdit))
                 return BuildResult(403, "无权操作");
 
             var items = CheckSheetItem.Set

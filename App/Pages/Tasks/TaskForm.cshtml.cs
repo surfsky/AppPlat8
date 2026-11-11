@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.TaskEdit)]
+    [Auth(Permission.TaskEdit)]
     public class TaskFormModel : AuthModel
     {
         public AssignTask Item { get; set; }

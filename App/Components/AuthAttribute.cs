@@ -8,8 +8,8 @@ namespace App.Components
 {
     /// <summary>访问鉴权</summary>
     /// <example>
-    /// [Auth(Power.UserView)]
-    /// [Auth(Power.UserView, Power.UserEdit, Power.UserNew, Power.UserDelete)]
+    /// [Auth(Permission.UserView)]
+    /// [Auth(Permission.UserView, Permission.UserEdit, Permission.UserNew, Permission.UserDelete)]
     /// [Auth(AuthLogin=true, AuthSign=true)]
     /// public class UserPage : Page {...}
     /// </example>
@@ -24,41 +24,41 @@ namespace App.Components
 
         
         /// <summary>查看权限</summary>
-        public Power? ViewPower { get; set; }
+        public Permission? ViewPermission { get; set; }
         /// <summary>新建权限</summary>
-        public Power? NewPower { get; set; }
+        public Permission? NewPermission { get; set; }
         /// <summary>编辑权限</summary>
-        public Power? EditPower { get; set; }
+        public Permission? EditPermission { get; set; }
         /// <summary>删除权限</summary>
-        public Power? DeletePower { get; set; }
+        public Permission? DeletePermission { get; set; }
 
 
         /// <summary>是否安全（有查看、登录、签名鉴权；或忽略）</summary>
-        public bool IsSafe =>  Ignore || AuthLogin || AuthSign || ViewPower != null;
+        public bool IsSafe =>  Ignore || AuthLogin || AuthSign || ViewPermission != null;
 
         
         // 构造方法。注：dotnet 8 Attribute 构造函数不支持参数默认值和可空类型，只能写多个构造函数，若没有匹配的构造函数可以这么写：Auth(AuthLogin = true)
         public AuthAttribute() { }
-        public AuthAttribute(Power viewPower)
+        public AuthAttribute(Permission viewPermission)
         {
-            ViewPower = viewPower;
-            NewPower = viewPower;
-            EditPower = viewPower;
-            DeletePower = viewPower;
+            ViewPermission = viewPermission;
+            NewPermission = viewPermission;
+            EditPermission = viewPermission;
+            DeletePermission = viewPermission;
         }
-        public AuthAttribute(Power viewPower, Power editPower)
+        public AuthAttribute(Permission viewPermission, Permission editPermission)
         {
-            ViewPower = viewPower;
-            NewPower = editPower;
-            EditPower = editPower;
-            DeletePower = editPower;
+            ViewPermission = viewPermission;
+            NewPermission = editPermission;
+            EditPermission = editPermission;
+            DeletePermission = editPermission;
         }
-        public AuthAttribute(Power viewPower, Power newPower, Power editPower, Power deletePower)
+        public AuthAttribute(Permission viewPermission, Permission newPermission, Permission editPermission, Permission deletePermission)
         {
-            ViewPower = viewPower;
-            NewPower = newPower;
-            EditPower = editPower;
-            DeletePower = deletePower;
+            ViewPermission = viewPermission;
+            NewPermission = newPermission;
+            EditPermission = editPermission;
+            DeletePermission = deletePermission;
         }
 
         // 页面权限校验
@@ -69,13 +69,13 @@ namespace App.Components
                 return;
             if (AuthLogin && Auth.IsLogin(context))
                 return;
-            if (ViewPower != null && Auth.HasPower(ViewPower.Value, context))
+            if (ViewPermission != null && Auth.HasPermission(ViewPermission.Value, context))
                 return;
 
             //  校验失败的情况，根据请求方法返回不同的结果，GET 请求返回页面，POST 请求返回 JSON 错误结果
             if (context.Request.Method == "GET")
             {
-                Auth.WritePowerFailPage(context);
+                Auth.WriteFailPage(context);
                 filterContext.Result = new EmptyResult();
             }
             else if (context.Request.Method == "POST")

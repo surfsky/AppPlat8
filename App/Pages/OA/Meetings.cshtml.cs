@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.MeetingView)]
+    [Auth(Permission.MeetingView)]
     public class MeetingsModel : AuthModel
     {
         public Meeting Item { get; set; } = new Meeting();
@@ -33,7 +33,7 @@ namespace App.Pages.OA
 
         public IActionResult OnPostExport(Paging pi, List<DateTime> day, long? orgId, MeetingType? type, string keyword = "")
         {
-            if (!HasPower(Power.MeetingExport)) return BuildResult(403, "无权导出");
+            if (!HasPermission(Permission.MeetingExport)) return BuildResult(403, "无权导出");
             var exportPaging = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection };
             var cu = Auth.GetUser();
             var q = Meeting.Search(day.GetVal(0), day.GetVal(1), orgId, type, keyword);
@@ -48,7 +48,7 @@ namespace App.Pages.OA
 
         public IActionResult OnPostImport()
         {
-            if (!HasPower(Power.MeetingImport)) return BuildResult(403, "无权导入");
+            if (!HasPermission(Permission.MeetingImport)) return BuildResult(403, "无权导入");
             return EleHandler.ShowDrawer(
                 title:"导入会议记录", 
                 url: "/OA/MeetingImport", 
@@ -61,7 +61,7 @@ namespace App.Pages.OA
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
             if (ids == null || ids.Length == 0) return BuildResult(400, "参数错误");
-            if (!HasPower(Power.MeetingDelete)) return BuildResult(403, "无权删除");
+            if (!HasPermission(Permission.MeetingDelete)) return BuildResult(403, "无权删除");
             var cu = Auth.GetUser();
             var count = 0;
             foreach (var id in ids)

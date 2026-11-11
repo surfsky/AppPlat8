@@ -17,7 +17,7 @@ namespace App.Pages.Events
     using App.EleUI;
     using App.Entities;
 
-    [Auth(Power.EventEdit)]
+    [Auth(Permission.EventEdit)]
     public class EventFormModel : AuthModel
     {
         public Event Item { get; set; }

@@ -9,7 +9,7 @@ namespace App.DAL
 {
     /// <summary>对象拥有的标签</summary>
     [UI("检查", "对象拥有的标签")]
-    public class CheckObjectTag : EntityBase<CheckObjectTag>
+    public class CheckObjectTag : Entity<CheckObjectTag>
     {
         [UI("检查对象")] public long CheckObjectId { get; set; }
         [UI("标签Id")] public long TagId { get; set; }

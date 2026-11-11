@@ -9,7 +9,7 @@ namespace App.DAL
     /// AI 接口配置（OpenAI 兼容）
     /// </summary>
     [UI("配置", "AI配置")]
-    public class AIConfig : EntityBase<AIConfig>
+    public class AIConfig : Entity<AIConfig>
     {
         [UI("名称")] public string Name { get; set; }
         [UI("接口地址")] public string BaseUrl { get; set; }

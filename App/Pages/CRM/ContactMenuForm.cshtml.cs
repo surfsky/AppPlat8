@@ -32,8 +32,8 @@ namespace App.Pages.OA
             if (req == null)
                 return BuildResult(400, "参数错误");
 
-            var needPower = req.Id > 0 ? Power.ContactMenuEdit : Power.ContactMenuNew;
-            if (!HasPower(needPower))
+            var needPower = req.Id > 0 ? Permission.ContactMenuEdit : Permission.ContactMenuNew;
+            if (!HasPermission(needPower))
                 return BuildResult(403, "无权操作");
 
             ContactMenu item;

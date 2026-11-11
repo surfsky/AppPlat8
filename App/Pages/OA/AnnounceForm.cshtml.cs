@@ -12,7 +12,7 @@ using App.HttpApi;
 
 namespace App.Pages.Admin
 {
-    [Auth(Power.AnnounceView)]
+    [Auth(Permission.AnnounceView)]
     public class AnnounceFormModel : AuthModel
     {
         [BindProperty]
@@ -26,7 +26,7 @@ namespace App.Pages.Admin
             var user = GetUser();
             if (id == 0)
             {
-                if (!HasPower(Power.AnnounceNew))
+                if (!HasPermission(Permission.AnnounceNew))
                     return BuildResult(403, "无权新增");
                 var a = new Announce
                 {
@@ -58,8 +58,8 @@ namespace App.Pages.Admin
             var user = Auth.GetUser();
             if (req == null || String.IsNullOrWhiteSpace(req.Title))
                 return BuildResult(400, "标题不能为空");
-            var needPower = (req.Id == 0) ? Power.AnnounceNew : Power.AnnounceEdit;
-            if (!HasPower(needPower))
+            var needPower = (req.Id == 0) ? Permission.AnnounceNew : Permission.AnnounceEdit;
+            if (!HasPermission(needPower))
                 return BuildResult(403, "无权操作");
 
 

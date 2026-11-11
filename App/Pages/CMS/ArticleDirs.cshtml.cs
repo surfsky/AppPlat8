@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.ArticleView)]
+    [Auth(Permission.ArticleView)]
     public class ArticleDirsModel : AuthModel
     {
         public ArticleMenu Item { get; set; }
@@ -31,7 +31,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.ArticleDelete))
+            if (!HasPermission(Permission.ArticleDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

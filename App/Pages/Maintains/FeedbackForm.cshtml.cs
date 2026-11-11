@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Maintains
 {
-    [Auth(Power.FeedBackView)]
+    [Auth(Permission.FeedBackView)]
     public class FeedbackFormModel : AuthModel
     {
         public Feedback Item { get; set; }
@@ -38,8 +38,8 @@ namespace App.Pages.Maintains
             if (string.IsNullOrWhiteSpace(req.Title))
                 return BuildResult(400, "概述不能为空");
 
-            var needPower = req.Id > 0 ? Power.FeedBackEdit : Power.FeedBackNew;
-            if (!HasPower(needPower))
+            var needPower = req.Id > 0 ? Permission.FeedBackEdit : Permission.FeedBackNew;
+            if (!HasPermission(needPower))
                 return BuildResult(403, "无权操作");
 
             Feedback item;

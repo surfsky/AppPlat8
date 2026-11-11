@@ -18,7 +18,7 @@ namespace App.Pages.Admins
 {
     using User = App.DAL.User; // Fix conflict with PageModel.User
 
-    [Auth(Power.UserView)]
+    [Auth(Permission.UserView)]
     public class UsersModel : AuthModel
     {
         public App.DAL.User Item { get; set; } = new App.DAL.User();
@@ -40,7 +40,7 @@ namespace App.Pages.Admins
                 .Select(r => new SelectListItem(r.Name, r.Id.ToString()))
                 .ToList();
             // 获取当前登录用户是否可以重置密码权限
-            CanResetPassword = this.HasPower(Power.UserResetPassword);
+            CanResetPassword = this.HasPermission(Permission.UserResetPassword);
             //CanResetPassword = string.Equals(GetUserName(), "admin", StringComparison.OrdinalIgnoreCase);
         }
 
@@ -95,7 +95,7 @@ namespace App.Pages.Admins
 
         public IActionResult OnPostImport()
         {
-            if (!HasPower(Power.UserNew))
+            if (!HasPermission(Permission.UserNew))
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.User");

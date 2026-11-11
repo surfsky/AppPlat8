@@ -13,7 +13,7 @@ using App.EleUI;
 
 namespace App.Pages.Admins
 {
-    [Auth(Power.OrgView)]
+    [Auth(Permission.OrgView)]
     public class OrgFormModel : AuthModel
     {
         public App.DAL.Org Item { get; set; }
@@ -42,13 +42,13 @@ namespace App.Pages.Admins
             App.DAL.Org item;
             if (req.Id == 0)
             {
-                if (!HasPower(Power.OrgNew)) 
+                if (!HasPermission(Permission.OrgNew)) 
                     return BuildResult(403, "无权新增");
                 item = new App.DAL.Org();
             }
             else
             {
-                if (!HasPower(Power.OrgEdit)) 
+                if (!HasPermission(Permission.OrgEdit)) 
                     return BuildResult(403, "无权编辑");
                 item = App.DAL.Org.Get(req.Id);
                 if (req.ParentId == req.Id)

@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.Checks.Reports
 {
     /// <summary>专项任务统计报表页。</summary>
-    [Auth(Power.CheckTaskView)]
+    [Auth(Permission.CheckTaskView)]
     public class CheckTaskStatModel : AuthModel
     {
         public CheckTaskStatReportRow Item { get; set; } = new();

@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.BudgetView)]
+    [Auth(Permission.BudgetView)]
     public class BudgetTypesModel : AuthModel
     {
         public BudgetType Item { get; set; }
@@ -31,7 +31,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.BudgetDelete))
+            if (!HasPermission(Permission.BudgetDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

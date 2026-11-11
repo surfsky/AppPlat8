@@ -18,7 +18,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryEdit)]
+    [Auth(Permission.GisGeometryEdit)]
     public class GeometryFormModel : AuthModel
     {
         public GisGeometry Item { get; set; }

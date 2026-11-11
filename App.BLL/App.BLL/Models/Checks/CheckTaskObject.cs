@@ -16,7 +16,7 @@ namespace App.DAL
     // CheckTask ---(1:n)--- CheckTaskObject
     //==================================================================
     /// <summary>检查任务-要检查的对象</summary>
-    public class CheckTaskObject : EntityBase<CheckTaskObject>, ISort, IFix<CheckTaskObject>
+    public class CheckTaskObject : Entity<CheckTaskObject>, ISort, IFix<CheckTaskObject>
     {
         [UI("任务")] public long? TaskId { get; set; }
         [UI("检查对象")] public long? CheckObjectId { get; set; }

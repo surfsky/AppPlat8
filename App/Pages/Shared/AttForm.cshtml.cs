@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Shared
 {
-    [Auth(Power.CheckObjectEdit)]
+    [Auth(Permission.CheckObjectEdit)]
     public class AttFormModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]

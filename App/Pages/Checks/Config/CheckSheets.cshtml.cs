@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckSheetView)]
+    [Auth(Permission.CheckSheetView)]
     public class CheckSheetsModel : AuthModel
     {
         public CheckSheet Item { get; set; }
@@ -84,7 +84,7 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.CheckSheetDelete))
+            if (!HasPermission(Permission.CheckSheetDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

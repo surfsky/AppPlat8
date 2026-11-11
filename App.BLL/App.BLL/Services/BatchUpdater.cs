@@ -62,7 +62,7 @@ namespace App.BLL
         }
 
         /// <summary>尝试通过上层 App 程序集的 App.Components.Auth.CheckPower(Power) 解析权限（无循环依赖，通过反射解耦）</summary>
-        private static bool ResolvePower(Power power)
+        private static bool ResolvePower(Permission power)
         {
             try
             {
@@ -72,7 +72,7 @@ namespace App.BLL
                     if (name != "App" && name != "App.Components" && name != "App.Web") continue;
                     var t = asm.GetType("App.Components.Auth", throwOnError: false);
                     if (t == null) continue;
-                    var mi = t.GetMethod("CheckPower", new[] { typeof(Power) });
+                    var mi = t.GetMethod("CheckPower", new[] { typeof(Permission) });
                     if (mi == null) continue;
                     var obj = mi.Invoke(null, new object[] { power });
                     if (obj is bool b) return b;
@@ -92,13 +92,13 @@ namespace App.BLL
         public static BatchResult Update<T>(
             IEnumerable<long> ids,
             IDictionary<string, object> fields,
-            Power? requirePower = null,
+            Permission? requirePower = null,
             string logTitle = null,
             bool skipNullOrEmpty = true,
-            Func<Power, bool> checkPower = null)
-            where T : EntityBase<T>, new()
+            Func<Permission, bool> checkPower = null)
+            where T : Entity<T>, new()
         {
-            bool PowerPass(Power p) => checkPower?.Invoke(p) ?? ResolvePower(p);
+            bool PowerPass(Permission p) => checkPower?.Invoke(p) ?? ResolvePower(p);
             if (requirePower.HasValue && !PowerPass(requirePower.Value))
                 return new BatchResult(403, "无权批量修改", null);
 
@@ -148,7 +148,7 @@ namespace App.BLL
             {
                 var id = idList[i];
                 T item;
-                try { item = EntityBase<T>.Get(id); }
+                try { item = Entity<T>.Get(id); }
                 catch (Exception ex) { errors.Add($"Id={id}: 加载失败:{ex.Message}"); skipped++; continue; }
                 if (item == null) { errors.Add($"Id={id}: 记录不存在"); skipped++; continue; }
 

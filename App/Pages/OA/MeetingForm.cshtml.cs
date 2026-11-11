@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.MeetingView)]
+    [Auth(Permission.MeetingView)]
     public class MeetingFormModel : AuthModel
     {
         public Meeting Item { get; set; } = new Meeting();
@@ -31,14 +31,14 @@ namespace App.Pages.OA
             Meeting item;
             if (req.Id <= 0)
             {
-                if (!HasPower(Power.MeetingNew)) return BuildResult(403, "无权新增");
+                if (!HasPermission(Permission.MeetingNew)) return BuildResult(403, "无权新增");
                 item = new Meeting();
             }
             else
             {
                 var cu = Auth.GetUser();
                 item = Meeting.Get(req.Id);
-                if (!HasPower(Power.MeetingEdit))      return BuildResult(403, "无权修改");
+                if (!HasPermission(Permission.MeetingEdit))      return BuildResult(403, "无权修改");
                 if (item == null)                      return BuildResult(404, "会议记录不存在");
                 if (!OrgFilter.IsAuth(cu, item.OrgId)) return BuildResult(403, "越权修改");
             }

@@ -9,7 +9,7 @@ using App.Utils;
 
 namespace App.Pages.Maintains
 {
-    [Auth(Power.ConfigSite)]
+    [Auth(Permission.ConfigSite)]
     public class SiteConfigFormModel : AuthModel
     {
         [BindProperty]
@@ -24,7 +24,7 @@ namespace App.Pages.Maintains
 
         public IActionResult OnPostSave([FromBody] SiteConfig req)
         {
-            if (!HasPower(Power.ConfigSite))
+            if (!HasPermission(Permission.ConfigSite))
                 return BuildResult(403, "无权操作");
 
             var cfg = SiteConfig.Set.FirstOrDefault();

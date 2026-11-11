@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckTaskView)]
+    [Auth(Permission.CheckTaskView)]
     public class CheckTaskObjectsModel : AuthModel
     {
         public CheckTaskObject Item { get; set; } = new CheckTaskObject();

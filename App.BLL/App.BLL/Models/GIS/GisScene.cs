@@ -36,7 +36,7 @@ namespace App.DAL.GIS
     //==========================================================================
     /// <summary>GIS 场景</summary>
     [UI("GIS", "GIS场景")]
-    public class GisScene : EntityBase<GisScene>, ISort
+    public class GisScene : Entity<GisScene>, ISort
     {
         /// <summary>地图样式</summary>
         public static List<GisMapStyle> Styles = new List<GisMapStyle>

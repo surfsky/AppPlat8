@@ -36,7 +36,7 @@ namespace App.DAL
     /// 隐患表(CheckHazard----(1:n)----CheckHazardLog)
     //-------------------------------------------------------
     [UI("检查", "隐患")]
-    public class CheckHazard : EntityBase<CheckHazard>, IFixAll
+    public class CheckHazard : Entity<CheckHazard>, IFixAll
     {
         [UI("区域")] public long? OrgId { get; set; } // 冗余存储
         [UI("检查对象")] public long? CheckObjectId { get; set; }    // 冗余存储，方便查询

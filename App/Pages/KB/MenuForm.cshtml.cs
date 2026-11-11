@@ -10,7 +10,7 @@ using App.EleUI;
 
 namespace App.Pages.KB
 {
-    [Auth(Power.KbMenuView, Power.KbMenuEdit)]
+    [Auth(Permission.KbMenuView, Permission.KbMenuEdit)]
     public class MenuFormModel : AuthModel
     {
         public KbMenu Item { get; set; }

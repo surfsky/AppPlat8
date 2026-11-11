@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisSceneEdit)]
+    [Auth(Permission.GisSceneEdit)]
     public class SceneLayersModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]

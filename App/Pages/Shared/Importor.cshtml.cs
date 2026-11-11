@@ -270,7 +270,7 @@ namespace App.Pages.Shared
                 return false;
             }
 
-            if (!typeof(EntityBase).IsAssignableFrom(type))
+            if (!typeof(Entity).IsAssignableFrom(type))
             {
                 error = "仅支持实体类型导入";
                 return false;

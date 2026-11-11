@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryView)]
+    [Auth(Permission.GisGeometryView)]
     public class PanelsModel : AuthModel
     {
         public GisPanel Item { get; set; }
@@ -30,7 +30,7 @@ namespace App.Pages.GIS
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.GisGeometryDelete))
+            if (!HasPermission(Permission.GisGeometryDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

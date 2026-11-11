@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Maintains
 {
-    [Auth(Power.MonitorIPFilter)]
+    [Auth(Permission.MonitorIPFilter)]
     public class IPFiltersModel : AuthModel
     {
         public IPFilter Item { get; set; }

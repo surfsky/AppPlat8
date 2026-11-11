@@ -16,10 +16,10 @@
             </Filters>
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
-                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@HasPower(Power.ContactNew)">新增</EleButton>
-                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@HasPower(Power.ContactNew)">导入</EleButton>
-                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@HasPower(Power.ContactDelete)">删除</EleButton>
-                <EleButton Type="Info" PopupUrl="ContactMenus" Icon="FolderOpened" Visible="@HasPower(Power.ContactMenuEdit)">目录管理</EleButton>
+                <EleButton Type="Primary" Command="Add" Icon="Plus" Visible="@HasPermission(Permission.ContactNew)">新增</EleButton>
+                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@HasPermission(Permission.ContactNew)">导入</EleButton>
+                <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="@HasPermission(Permission.ContactDelete)">删除</EleButton>
+                <EleButton Type="Info" PopupUrl="ContactMenus" Icon="FolderOpened" Visible="@HasPermission(Permission.ContactMenuEdit)">目录管理</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
@@ -31,8 +31,8 @@
             <EleColumn For="Item.DataJson" Label="属性" Width="240" MinWidth="200" Visible="false"></EleColumn>
             <EleColumn For="Item.CreateDt" Label="创建时间" Width="180" FormatString="yyyy-MM-dd HH:mm"></EleColumn>
             <EleOpColumn Width="100" Fixed="right">
-                <Op Command="Edit" Icon="Edit" Tooltip="编辑" Visible="@HasPower(Power.ContactEdit)"></Op>
-                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@HasPower(Power.ContactDelete)"></Op>
+                <Op Command="Edit" Icon="Edit" Tooltip="编辑" Visible="@HasPermission(Permission.ContactEdit)"></Op>
+                <Op Command="Delete" Icon="Delete" Tooltip="删除" Visible="@HasPermission(Permission.ContactDelete)"></Op>
             </EleOpColumn>
         </Columns>
     </EleTable>

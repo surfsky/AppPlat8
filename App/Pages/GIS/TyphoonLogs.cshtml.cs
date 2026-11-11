@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryView)]
+    [Auth(Permission.GisGeometryView)]
     public class TyphoonLogsModel : AuthModel
     {
         public TyphoonLogGridItem Item { get; set; }

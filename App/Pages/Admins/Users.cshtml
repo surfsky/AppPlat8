@@ -14,7 +14,7 @@
                 <EleInput For="Item.Name" Label="账号" Width="260px" Visible="false"></EleInput>
                 <EleInput For="Item.RealName" Label="姓名" Width="260px"></EleInput>
                 <EleInput For="Item.Mobile" Label="手机号" Width="260px"></EleInput>
-                <EleSelect For="RoleId" Label="角色" Items="Model.RoleList" Clearable="true" Width="220px" Visible="@Auth.HasPower(Power.AdminMaintain)"></EleSelect>
+                <EleSelect For="RoleId" Label="角色" Items="Model.RoleList" Clearable="true" Width="220px" Visible="@Auth.HasPermission(Permission.AdminMaintain)"></EleSelect>
                 <EleSelect For="Item.IsDel" Label="是否失效" Value="false"></EleSelect>
             </Filters>
             <Buttons>
@@ -23,16 +23,16 @@
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="false">删除</EleButton>
                 <EleButton Type="Success" PopupUrl="Orgs" PopupTitle="组织管理" IconCls="fas fa-sitemap" Visible="false">组织管理</EleButton>
                 <EleButton Type="Success" Command="Export" Icon="Download" Visible="false">导出</EleButton>
-                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.HasPower(Power.UserNew)">导入</EleButton>
+                <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.HasPermission(Permission.UserNew)">导入</EleButton>
                 <EleButton Type="Success" Command="Select" Icon="Check" Visible="Model.Mode==PageMode.Select">选择</EleButton>
-                <EleButton Type="Success" Handler="FixAll" Icon="Edit" Visible="@Auth.HasPower(Power.AdminMaintain)" Confirm="确认修复所有用户的错误数据吗？">修复所有用户</EleButton>
+                <EleButton Type="Success" Handler="FixAll" Icon="Edit" Visible="@Auth.HasPermission(Permission.AdminMaintain)" Confirm="确认修复所有用户的错误数据吗？">修复所有用户</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
             <EleOpColumn Width="100" Fixed="right" Shows="3">
-                <Op Command="Edit" Tooltip="编辑" Icon="Edit" Visible="@Auth.HasPower(Power.UserEdit)"></Op>
-                <Op Command="Delete" Tooltip="删除" Icon="Delete" Visible="@Auth.HasPower(Power.UserDelete)"></Op>
+                <Op Command="Edit" Tooltip="编辑" Icon="Edit" Visible="@Auth.HasPermission(Permission.UserEdit)"></Op>
+                <Op Command="Delete" Tooltip="删除" Icon="Delete" Visible="@Auth.HasPermission(Permission.UserDelete)"></Op>
                 <Op Handler="resetPasswordToDefault(scope.row)" Tooltip="修改密码" Icon="Key" Visible="@Model.CanResetPassword"></Op>
             </EleOpColumn>
             <EleImageColumn For="Item.Photo" Label="头像" Width="60" Sortable="false"></EleImageColumn>

@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.KB
 {
-    [Auth(Power.KbMenuView)]
+    [Auth(Permission.KbMenuView)]
     public class MenusModel : AuthModel
     {
         public KbMenu Item { get; set; }
@@ -31,7 +31,7 @@ namespace App.Pages.KB
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.KbMenuDelete))
+            if (!HasPermission(Permission.KbMenuDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

@@ -16,7 +16,7 @@ namespace App.DAL
 
     /// <summary>公告</summary>
     [UI("系统", "公告")]
-    public class Announce : EntityBase<Announce>
+    public class Announce : Entity<Announce>
     {
         [UI("组织")]                                   public long? OrgId { get; set; }
         [UI("标题")]                                   public string Title { get; set; }

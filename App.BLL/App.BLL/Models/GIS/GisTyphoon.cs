@@ -9,7 +9,7 @@ namespace App.DAL.GIS
 {
     /// <summary>GIS 台风</summary>
     [UI("GIS", "GIS台风")]
-    public class GisTyphoon : EntityBase<GisTyphoon>
+    public class GisTyphoon : Entity<GisTyphoon>
     {
         [UI("编号")] public string Code { get; set; }
         [UI("英文名")] public string Name { get; set; }

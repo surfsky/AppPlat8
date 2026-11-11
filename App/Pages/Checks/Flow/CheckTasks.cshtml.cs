@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckTaskView)]
+    [Auth(Permission.CheckTaskView)]
     public class CheckTasksModel : AuthModel
     {
         public CheckTask Item { get; set; }
@@ -32,7 +32,7 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.CheckTaskDelete))
+            if (!HasPermission(Permission.CheckTaskDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

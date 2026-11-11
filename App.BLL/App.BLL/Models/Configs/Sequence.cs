@@ -31,7 +31,7 @@ namespace App.DAL
 
     /// <summary>序列号</summary>
     [UI("系统", "序列号生成器配置")]
-    public class Sequence : EntityBase<Sequence>
+    public class Sequence : Entity<Sequence>
     {
         [UI("类别")]          public SequenceType? Type { get; set; }
         [UI("循环方式")]      public LoopType? Loop { get; set; }

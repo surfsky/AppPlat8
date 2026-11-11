@@ -21,20 +21,15 @@ namespace App.Components
         //-----------------------------------------------------------
         /// <summary>获取上传文件要保存的虚拟路径</summary>
         /// <param name="folderName">文件夹名称</param>
-        /// <return>返回虚拟路径，如/Files/User/1234567890.png</return>
-        public static string GetSavePath(string folderName, string fileName = ".png")
+        /// <return>返回虚拟路径，如 User/1234567890.png</return>
+        public static string GetSaveVirtualPath(string folderName, string fileName = ".png")
         {
-            // 默认保存在 /Files/ 目录下
-            // 如果 folderName 以/开头，则保存在 folderName 目录下
-            string folder = string.Format("~/Files/{0}", folderName);
-            if (folderName != null && folderName.StartsWith("/"))
-                folder = folderName;
+            string folder = Path.Combine(Paths.FileFolder, folderName.TrimStart('/'));
 
             // 合并目录和文件名
-            string extension = fileName.GetFileExtension();
-            string path = string.Format("{0}/{1}{2}", folder, new SnowflakeId().NewId(), extension);
+            string ext = fileName.GetFileExtension();
+            string path = Path.Combine(folder, new SnowflakeId().NewId() + ext);
             return path.TrimStart("~");
-            //return Asp.ResolveUrl(path);
         }
 
         //-----------------------------------------------------------
@@ -96,19 +91,20 @@ namespace App.Components
                 return "";
             }
 
+            // 尝试从文件名或 data URL 头部解析文件扩展名
             var ext = fileName.GetFileExtension();
             if (ext.IsEmpty())
                 ext = ResolveExtensionFromDataUrlHeader(header);
             if (ext.IsEmpty())
                 ext = ".bin";
 
-            var safeName = fileName.IsEmpty()
-                ? $"file{ext}"
-                : Path.GetFileName(fileName);
+            // 确保文件名安全，避免路径遍历
+            var safeName = fileName.IsEmpty() ? $"file{ext}" : Path.GetFileName(fileName);
             if (safeName.GetFileExtension().IsEmpty())
                 safeName += ext;
 
-            var url = GetSavePath(folderName, safeName);
+            //
+            var url = GetSaveVirtualPath(folderName, safeName);
             var path = Asp.MapPath(url);
             IO.PrepareDirectory(path);
             File.WriteAllBytes(path, bytes);
@@ -206,7 +202,7 @@ namespace App.Components
             {
                 if (image != null)
                 {
-                    var url = GetSavePath(folderName);
+                    var url = GetSaveVirtualPath(folderName);
                     var path = Asp.MapPath(url);
                     IO.PrepareDirectory(path);
                     using (var data = image.Encode(SKEncodedImageFormat.Png, 100))

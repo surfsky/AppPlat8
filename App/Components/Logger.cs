@@ -19,7 +19,6 @@ namespace App.Components
         static Serilog.Core.Logger _log = new Lazy<Serilog.Core.Logger>(() => CreateLogger()).Value;
         static Serilog.Core.Logger CreateLogger()
         {
-            // 日志路径统一从 Paths 取，允许配置外部目录；启动期 Paths 不依赖任何 Web/DAL
             var logDir = Paths.LogRoot;
             IO.PrepareDirectory(Path.Combine(logDir, "_.txt"));
             var logFile = Path.Combine(logDir, "log.txt");
@@ -30,7 +29,9 @@ namespace App.Components
                 ;
         }
 
-        // 记录日志
+        //------------------------------------------------------
+        // 文本日志（量大、可靠、分日期存储文件）
+        //------------------------------------------------------
         public static void Info(string format, params object[] ps) => _log.Information(format, ps);
         public static void Error(string format, params object[] ps) => _log.Error(format, ps);
         public static void Fatal(string format, params object[] ps) => _log.Fatal(format, ps);
@@ -38,7 +39,7 @@ namespace App.Components
 
 
         //------------------------------------------------------
-        // 数据库日志
+        // 数据库日志（量小、重要事件）
         //------------------------------------------------------
         /// <summary>保存到数据库（完整参数）</summary>
         public static void LogDb(LogLevel level, string user, string message, string from, string ip = null)

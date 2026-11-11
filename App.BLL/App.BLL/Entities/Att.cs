@@ -23,11 +23,11 @@ namespace App.Entities
     /// 附件表（可记录文件、图片等信息）
     /// </summary>
     [UI("系统", "附件")]
-    public class Att : EntityBase<Att>, ISort
+    public class Att : Entity<Att>, ISort
     {
         [UI("类型")]                       public AttType? Type { get; set; }  // 如 Text|Image|Others
         [UI("键")]                         public string Key { get; set; }     // 如 Order-3
-        [UI("内容")]                       public string Content { get; set; } // 如 /Files/Users/a.jpg, 或base64编码的图片字符串
+        [UI("内容")]                       public string Content { get; set; } // 如 /Data/Files/Users/a.jpg, 或base64编码的图片字符串
         [UI("备注")]                       public string Remark { get; set; }  // 如 超美的图片
 
         // 基础属性

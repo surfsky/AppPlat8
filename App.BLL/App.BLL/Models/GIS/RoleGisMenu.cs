@@ -13,7 +13,7 @@ namespace App.DAL.GIS
     /// 角色GIS菜单授权
     /// </summary>
     [UI("GIS", "角色GIS菜单")]
-    public class RoleGisMenu : EntityBase<RoleGisMenu>
+    public class RoleGisMenu : Entity<RoleGisMenu>
     {
         public long RoleId { get; set; }
         public long MenuId { get; set; }

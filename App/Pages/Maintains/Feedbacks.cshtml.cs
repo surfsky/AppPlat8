@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Maintains
 {
-    [Auth(Power.FeedBackView)]
+    [Auth(Permission.FeedBackView)]
     public class FeedbacksModel : AuthModel
     {
         public Feedback Item { get; set; }
@@ -35,7 +35,7 @@ namespace App.Pages.Maintains
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.FeedBackDelete))
+            if (!HasPermission(Permission.FeedBackDelete))
                 return BuildResult(403, "无权操作");
 
             var items = Feedback.Set.Where(t => ids.Contains(t.Id)).ToList();

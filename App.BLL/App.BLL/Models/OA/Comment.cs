@@ -16,7 +16,7 @@ namespace App.DAL.OA
 
     /// <summary>评论</summary>
     [UI("OA", "评论")]
-    public class Comment : EntityBase<Comment>
+    public class Comment : Entity<Comment>
     {
         [UI("组织")]        public long? OrgId { get; set; }
         [UI("评论内容Id")]   public long? TargetId { get; set; }

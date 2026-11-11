@@ -54,7 +54,7 @@ namespace App.Pages.Events
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.EventDelete))
+            if (!HasPermission(Permission.EventDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();

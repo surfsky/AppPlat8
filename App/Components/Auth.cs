@@ -214,24 +214,24 @@ namespace App.Components
         }
 
         /// <summary>检查当前用户是否拥有某个权限</summary>
-        public static bool HasPower(Power power, HttpContext context = null)
+        public static bool HasPermission(Permission p, HttpContext context = null)
         {
             if (GetUserName(context) == "admin")
                 return true;
-            return GetUserPowers(context ?? Asp.Current).Contains(power);
+            return GetUserPermissions(context ?? Asp.Current).Contains(p);
         }
 
         /// <summary>检查权限失败（页面回发）
         /// 把错误发到客户端，客户端弹出提示框
         /// </summary>
-        public static void WritePowerFailAlert()
+        public static void WriteFailAlert()
         {
             var script = $"<script>alert('{MSG_CHECK_POWER_FAIL_ACTION}');</script>";
             Asp.Current.Response.WriteAsync(script); // 考虑改成 EleManager.Alert
         }
 
         /// <summary>检查权限失败（页面第一次加载）</summary>
-        public static void WritePowerFailPage(HttpContext context)
+        public static void WriteFailPage(HttpContext context)
         {
             string PageTemplate = "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"/><head><body>{0}</body></html>";
             context.Response.WriteAsync(string.Format(PageTemplate, MSG_CHECK_POWER_FAIL_PAGE));
@@ -260,23 +260,24 @@ namespace App.Components
         }
 
         /// <summary>获取当前登录用户拥有的全部权限列表</summary>
-        public static List<Power> GetUserPowers(HttpContext context)
+        public static List<Permission> GetUserPermissions(HttpContext context)
         {
-            return Asp.GetSessionData<List<Power>>("UserPowers", () =>
+            // TODO: 该方法太复杂了看不懂
+            return Asp.GetSessionData<List<Permission>>("UserPowers", () =>
             {
                 var name = GetUserName(context);
                 if (name.IsEmpty())
-                    return new List<Power>();
+                    return new List<Permission>();
                 if (name == "admin")
-                    return Enum.GetValues(typeof(Power)).Cast<Power>().ToList();
+                    return Enum.GetValues(typeof(Permission)).Cast<Permission>().ToList();
                 var user = User.Set.FirstOrDefault(t => t.Name == name);
                 if (user == null)
-                    return new List<Power>();
+                    return new List<Permission>();
 
                 // 版本号（long/秒级ticks）写入 Session：下次请求对比DB版本，不同则缓存失效
                 var ver = user.GetPermissionVersion();
                 Asp.SetSession("UserPowersVer", ver);
-                return user.GetPowers();
+                return user.GetPermissions();
             },
             // 版本检查器：每次命中缓存前先判断版本是否变化，变化则重取权限
             validate: () =>

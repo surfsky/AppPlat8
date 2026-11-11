@@ -11,7 +11,7 @@ namespace App.DAL
     /// <summary>
     /// 站点配置
     /// </summary>
-    public class SiteConfig : EntityBase<SiteConfig>
+    public class SiteConfig : Entity<SiteConfig>
     {
         //--------------------------------------
         // 字段默认值兜底

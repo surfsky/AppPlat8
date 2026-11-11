@@ -21,7 +21,7 @@ namespace App.DAL
         [UI("是否展开")]  public bool? Expanded { get; set; } = false;
         [UI("是否可见")]  public bool? Visible { get; set; } = true;
         [UI("是否固定")]  public bool? Fixed { get; set; } = false;
-        [UI("浏览权限")]  public Power? Power { get; set; }
+        [UI("浏览权限")]  public Permission? Power { get; set; }
 
         [NotMapped]   public string PowerName => Power?.GetEnumInfo()?.ToString();
 

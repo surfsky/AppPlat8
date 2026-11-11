@@ -6,7 +6,7 @@ namespace App.DAL
 {
     /// <summary>参考网站</summary>
     [UI("开放平台", "参考网站")]
-    public class Site : EntityBase<Site>
+    public class Site : Entity<Site>
     {
         [UI("分组")] public string Type { get; set; }
         [UI("名称")] public string Name { get; set; }

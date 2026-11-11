@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryEdit)]
+    [Auth(Permission.GisGeometryEdit)]
     public class MenuFormModel : AuthModel
     {
         public GisMenu Item { get; set; }

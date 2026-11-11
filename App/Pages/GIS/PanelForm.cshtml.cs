@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryEdit)]
+    [Auth(Permission.GisGeometryEdit)]
     public class PanelFormModel : AuthModel
     {
         public GisPanel Item { get; set; }

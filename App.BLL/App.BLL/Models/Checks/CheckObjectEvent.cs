@@ -17,7 +17,7 @@ namespace App.DAL.OA
 
 
     [UI("检查", "检查对象事件")]
-    public class CheckObjectEvent : EntityBase<CheckObjectEvent>
+    public class CheckObjectEvent : Entity<CheckObjectEvent>
     {
         [UI("检查对象")]    public long CheckObjectId { get; set; }
         [UI("事件类别")]    public CheckObjectEventType? Type { get; set; }

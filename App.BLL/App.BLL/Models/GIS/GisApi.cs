@@ -13,7 +13,7 @@ namespace App.DAL.GIS
 {
     /// <summary>GIS 数据接口</summary>
     [UI("GIS", "GIS数据接口")]
-    public class GisApi : EntityBase<GisApi>
+    public class GisApi : Entity<GisApi>
     {
         [UI("菜单ID")] public long? MenuId { get; set; }
         [UI("名称")] public string Name { get; set; }

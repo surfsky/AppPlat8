@@ -9,7 +9,7 @@ namespace App.DAL
 {
     /// <summary>检查表项</summary>
     [UI("检查", "检查表项")]
-    public class CheckSheetItem : EntityBase<CheckSheetItem>, ISort
+    public class CheckSheetItem : Entity<CheckSheetItem>, ISort
     {
         [UI("检查表")] public long SheetId { get; set; }
         [UI("层级")]   public CheckHazardLevel? HazardLevel { get; set; }

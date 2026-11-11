@@ -14,7 +14,7 @@ namespace App.DAL
 {
     /// <summary>检查记录</summary>
     [UI("检查", "检查记录")]
-    public class Check : EntityBase<Check>
+    public class Check : Entity<Check>
     {
         [UI("ID"), SnowflakeId]     public override long Id { get; set; }
         [UI("检查科室")] public long? OrgId { get; set; }

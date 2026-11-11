@@ -8,7 +8,7 @@ namespace App.DAL.GIS
 {
     /// <summary>GIS统计面板配置</summary>
     [UI("GIS", "GIS统计面板")]
-    public class GisPanel : EntityBase<GisPanel>
+    public class GisPanel : Entity<GisPanel>
     {
         [UI("标题")] public string Title { get; set; }
         [UI("提示信息")] public string Info { get; set; }

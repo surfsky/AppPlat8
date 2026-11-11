@@ -12,7 +12,7 @@ using System.Collections.Generic;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.DutyScheduleView)]
+    [Auth(Permission.DutyScheduleView)]
     public class DutySchedulesModel : AuthModel
     {
         public DutySchedule Item { get; set; } = new DutySchedule();
@@ -38,7 +38,7 @@ namespace App.Pages.OA
             List<DateTime> day,
             string keyword = "")
         {
-            if (!HasPower(Power.DutyScheduleExport))
+            if (!HasPermission(Permission.DutyScheduleExport))
                 return BuildResult(403, "无权导出");
 
             DateTime? startDay = day.GetVal(0);
@@ -56,7 +56,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.DutyScheduleDelete))
+            if (!HasPermission(Permission.DutyScheduleDelete))
                 return BuildResult(403, "无权操作");
             int n = 0;
             foreach (var id in ids)

@@ -29,7 +29,7 @@ namespace App.DAL
     /// <summary>
     /// 接入应用
     /// </summary>
-    public class Application : EntityBase<Application>
+    public class Application : Entity<Application>
     {
         // 基础
         [UI("用户")]           public long? UserId { get; set; }

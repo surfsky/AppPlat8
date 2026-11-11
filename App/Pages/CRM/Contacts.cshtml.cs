@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.OA
 {
     /// <summary>联系人（通讯录）管理页</summary>
-    [Auth(Power.ContactView)]
+    [Auth(Permission.ContactView)]
     public class ContactsModel : AuthModel
     {
         public Contact Item { get; set; }
@@ -31,7 +31,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.ContactDelete))
+            if (!HasPermission(Permission.ContactDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
@@ -45,7 +45,7 @@ namespace App.Pages.OA
         /// <summary>打开导入窗口</summary>
         public IActionResult OnPostImport()
         {
-            if (!HasPower(Power.ContactNew))
+            if (!HasPermission(Permission.ContactNew))
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.OA.Contact") + "&ignoreId=true";

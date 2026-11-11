@@ -113,18 +113,18 @@ namespace App.API
         }
 
         [HttpApi("获取登录用户权限", true)]
-        public static APIResult GetLoginUserPower()
+        public static APIResult GetLoginUserPermission()
         {
             var id = Auth.GetUserId(Asp.Current);
             if (id == null)
                 return new APIResult(-2, "用户未登录");
-            return Auth.GetUserPowers(Asp.Current).ToResult();
+            return Auth.GetUserPermissions(Asp.Current).ToResult();
         }
 
         [HttpApi("获取所有权限", true)]
-        public static APIResult GetPowers()
+        public static APIResult GetPermissions()
         {
-            return EnumHelper.GetEnumInfos(typeof(Power)).ToResult();
+            return EnumHelper.GetEnumInfos(typeof(Permission)).ToResult();
         }
 
         [HttpApi("获取所有组织", true)]

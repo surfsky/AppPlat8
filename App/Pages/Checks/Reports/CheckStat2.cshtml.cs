@@ -14,7 +14,7 @@ using OrgEntity = App.DAL.Org;
 namespace App.Pages.Checks.Reports
 {
     /// <summary>个人检查统计报表页。</summary>
-    [Auth(Power.CheckHazardView)]
+    [Auth(Permission.CheckHazardView)]
     public class CheckStat2Model : AuthModel
     {
         public CheckStat2ReportRow Item { get; set; } = new();

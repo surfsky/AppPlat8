@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.CommentView)]
+    [Auth(Permission.CommentView)]
     public class CommentsModel : AuthModel
     {
         public Comment Item { get; set; }
@@ -34,7 +34,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.CommentDelete))
+            if (!HasPermission(Permission.CommentDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();

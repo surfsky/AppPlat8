@@ -8,7 +8,7 @@ namespace App.Entities
 {
     /// <summary>处理历史，可用于流程的流转</summary>
     [UI("系统", "处理历史")]
-    public class History : EntityBase<History>
+    public class History : Entity<History>
     {
         [UI("健值")]           public string Key { get; set; }                // 如Order-123
         [UI("状态Id")]         public int? StatusId { get; set; }

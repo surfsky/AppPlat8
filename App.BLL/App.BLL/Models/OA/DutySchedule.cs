@@ -10,7 +10,7 @@ namespace App.DAL.OA
     /// <summary>值班表</summary>
     [UI("OA", "值班表")]
     [Index(nameof(Day), IsUnique = true)]
-    public class DutySchedule : EntityBase<DutySchedule>
+    public class DutySchedule : Entity<DutySchedule>
     {
         [UI("基础", "日期")]      public DateTime Day { get; set; }
         [UI("人员", "值班领导")]   public string Leader { get; set; }    // 格式：张三/18900000000

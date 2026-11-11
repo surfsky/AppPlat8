@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Checks.Reports
 {
     /// <summary>网格检查统计报表页。</summary>
-    [Auth(Power.CheckHazardView)]
+    [Auth(Permission.CheckHazardView)]
     public class CheckStatModel : AuthModel
     {
         public CheckStatReportRow Item { get; set; } = new();

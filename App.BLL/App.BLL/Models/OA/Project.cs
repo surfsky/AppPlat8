@@ -9,7 +9,7 @@ namespace App.DAL
 {
     /// <summary>项目管理</summary>
     [UI("OA", "项目")]
-    public class Project : EntityBase<Project>
+    public class Project : Entity<Project>
     {
         [UI("名称")]        public string Name { get; set; }
         [UI("简称别称")]     public string Alias { get; set; }
@@ -51,7 +51,7 @@ namespace App.DAL
 
     /// <summary>项目进度历史</summary>
     [UI("OA", "项目进度历史")]
-    public class ProjectLog : EntityBase<ProjectLog>
+    public class ProjectLog : Entity<ProjectLog>
     {
         [UI("项目Id")]      public long? ProjectId { get; set; }
         [UI("时间")]        public DateTime LogDt { get; set; }

@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.AI
 {
     [IgnoreAntiforgeryToken]
-    [Auth(Power.AIChat)]
+    [Auth(Permission.AIChat)]
     public class VoiceAPIModel : AuthModel
     {
         public void OnGet()

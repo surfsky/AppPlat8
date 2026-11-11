@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace App.Pages.Shared
 {
-    [Auth(Power.CheckObjectView)]
+    [Auth(Permission.CheckObjectView)]
     public class LocatorModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]

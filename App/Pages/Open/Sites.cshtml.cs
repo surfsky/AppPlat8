@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Open
 {
     /// <summary>参考网站管理</summary>
-    [Auth(Power.RefSiteView)]
+    [Auth(Permission.RefSiteView)]
     public class SitesModel : AuthModel
     {
         [BindProperty]
@@ -27,7 +27,7 @@ namespace App.Pages.Open
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
             if (ids == null || ids.Length == 0)     return BuildResult(400, "参数错误");
-            if (!HasPower(Power.RefSiteDelete))   return BuildResult(403, "无权操作");
+            if (!HasPermission(Permission.RefSiteDelete))   return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
                 Site.Delete(id);

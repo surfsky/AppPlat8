@@ -30,12 +30,12 @@ namespace App.Pages.OA
             DutySchedule item;
             if (req.Id <= 0)
             {
-                if (!HasPower(Power.DutyScheduleNew))  return BuildResult(403, "无权新增");
+                if (!HasPermission(Permission.DutyScheduleNew))  return BuildResult(403, "无权新增");
                 item = new DutySchedule();
             }
             else
             {
-                if (!HasPower(Power.DutyScheduleEdit)) return BuildResult(403, "无权编辑");
+                if (!HasPermission(Permission.DutyScheduleEdit)) return BuildResult(403, "无权编辑");
                 item = DutySchedule.Get(req.Id);
                 if (item == null) return BuildResult(404, $"未找到 Id={req.Id} 的值班记录");
             }

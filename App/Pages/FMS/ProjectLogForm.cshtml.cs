@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.ProjectEdit)]
+    [Auth(Permission.ProjectEdit)]
     public class ProjectLogFormModel : AuthModel
     {
         public ProjectLog Item { get; set; }

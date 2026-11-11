@@ -14,7 +14,7 @@ namespace App.DAL
     /// 微信有个 token 替换时间段的概念，在此替换时间内，新旧token都有效。
     /// </summary>
     [UI("开放平台", "应用及验票")]
-    public class OpenApp : EntityBase<OpenApp>
+    public class OpenApp : Entity<OpenApp>
     {
         [UI("组织")]           public long? OrgID { get; set; }
         [UI("组织名称")]       public string OrgName { get; set; }

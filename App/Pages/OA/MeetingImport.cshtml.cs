@@ -16,7 +16,7 @@ using NPOI.XSSF.UserModel;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.MeetingImport)]
+    [Auth(Permission.MeetingImport)]
     public class MeetingImportModel : AuthModel
     {
         private static readonly Dictionary<string, MeetingType> TypeMap = new(StringComparer.OrdinalIgnoreCase)
@@ -32,7 +32,7 @@ namespace App.Pages.OA
 
         public IActionResult OnPostImport()
         {
-            if (!HasPower(Power.MeetingImport)) return BuildResult(403, "无权导入");
+            if (!HasPermission(Permission.MeetingImport)) return BuildResult(403, "无权导入");
             var file = Request.Form.Files.FirstOrDefault();
             if (file == null || file.Length == 0) return BuildResult(400, "请选择 Excel 文件");
             if (!string.Equals(Path.GetExtension(file.FileName), ".xlsx", StringComparison.OrdinalIgnoreCase))

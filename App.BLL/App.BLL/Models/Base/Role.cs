@@ -9,7 +9,7 @@ using App.Utils;
 
 namespace App.DAL
 {
-    public class Role : EntityBase<Role>, ISort
+    public class Role : Entity<Role>, ISort
     {
         [UI("名称")]    public string Name { get; set; }
         [UI("备注")]    public string Remark { get; set; }

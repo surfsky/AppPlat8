@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.AI
 {
-    [Auth(Power.AIConfig)]
+    [Auth(Permission.AIConfig)]
     public class AIConfigsModel : AuthModel
     {
         public AIConfig Item { get; set; }
@@ -21,7 +21,7 @@ namespace App.Pages.AI
 
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
-            if (!HasPower(Power.AIConfig))
+            if (!HasPermission(Permission.AIConfig))
                 return BuildResult(403, "无权操作");
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");

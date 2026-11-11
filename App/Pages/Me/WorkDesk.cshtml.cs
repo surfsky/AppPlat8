@@ -25,7 +25,7 @@ namespace App.Pages.Me
         [BindProperty(SupportsGet = true)] public long? UserId { get; set; }
         [BindProperty(SupportsGet = true)] public string UserName { get; set; }
         public string UserRealName { get; private set; }  // 用户真实姓名
-        public bool CanChangeScope => Auth.HasPower(Power.AdminLeader);  // 是否可切换用户名
+        public bool CanChangeScope => Auth.HasPermission(Permission.AdminLeader);  // 是否可切换用户名
         private List<long> _currOrgIds;
         private List<long> _currRootOrgIds;
         public List<long> CurrOrgIds => _currOrgIds ??= ResolveCurrOrgIds();   // 实际责任网格范围（含子孙）

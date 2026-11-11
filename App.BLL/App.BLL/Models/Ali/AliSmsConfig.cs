@@ -20,7 +20,7 @@ namespace App.DAL
     }
 
     [UI("系统", "阿里配置")]
-    public class AliSmsConfig : EntityBase<AliSmsConfig>
+    public class AliSmsConfig : Entity<AliSmsConfig>
     {
         [UI("阿里短信", "签名")]            public string SmsSignName        { get; set; }
         [UI("阿里短信", "Key")]             public string SmsAccessKeyId     { get; set; }

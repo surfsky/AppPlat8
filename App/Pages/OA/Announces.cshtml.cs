@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Admin
 {
-    [Auth(Power.AnnounceView)]
+    [Auth(Permission.AnnounceView)]
     public class AnnouncesModel : AuthModel
     {
         // 辅助属性，用于 Razor 页面 TagHelper 绑定列元数据
@@ -34,7 +34,7 @@ namespace App.Pages.Admin
         public IActionResult OnPostDelete([FromBody]long[] ids)
         {
             if (ids == null || ids.Length == 0)   return BuildResult(400, "参数错误");
-            if (!HasPower(Power.AnnounceDelete))  return BuildResult(403, "无权操作");
+            if (!HasPermission(Permission.AnnounceDelete))  return BuildResult(403, "无权操作");
             var cu = Auth.GetUser();
             foreach (var id in ids)
             {

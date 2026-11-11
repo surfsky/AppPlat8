@@ -18,7 +18,7 @@ namespace App.DAL
 
     /// <summary>日志</summary>
     [UI("系统", "日志")]
-    public class Log : EntityBase<Log>
+    public class Log : Entity<Log>
     {
         [UI("记录时间")]                           public DateTime? LogDt { get; set; }
         [UI("级别")]                               public LogLevel? Level { get; set; }

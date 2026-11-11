@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using App.Web;
 using Microsoft.AspNetCore.Builder;
+using App.Components;
 
 namespace App.Middlewares
 {

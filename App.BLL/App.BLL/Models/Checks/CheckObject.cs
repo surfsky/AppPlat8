@@ -19,7 +19,7 @@ namespace App.DAL
 {
     /// <summary>检查对象</summary>
     [UI("检查", "检查对象")]
-    public class CheckObject : EntityBase<CheckObject>, IDeleteLogic, IFixAll
+    public class CheckObject : Entity<CheckObject>, IDeleteLogic, IFixAll
     {
         private static readonly JsonSerializerOptions JsonOptions = new() { Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)};
 

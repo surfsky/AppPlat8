@@ -30,7 +30,10 @@ Tech/
 notebooks/
 Library/
 Data/
-WebTest/
+WebTest/*
+!WebTest/tests/
+WebTest/tests/*
+!WebTest/tests/testAutoTable.js
 App/wwwroot/tiles/
 
 

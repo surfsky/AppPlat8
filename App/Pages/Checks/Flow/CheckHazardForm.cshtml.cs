@@ -15,7 +15,7 @@ using App.Utils;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckHazardEdit)]
+    [Auth(Permission.CheckHazardEdit)]
     public class CheckHazardFormModel : AuthModel
     {
         /// <summary>隐患保存请求，显式承接图片 URL/Base64 列表。</summary>

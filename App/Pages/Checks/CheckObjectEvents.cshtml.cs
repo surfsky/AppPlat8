@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckObjectView)]
+    [Auth(Permission.CheckObjectView)]
     public class CheckObjectEventsModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]
@@ -48,7 +48,7 @@ namespace App.Pages.Checks
                 return BuildResult(400, "参数错误");
             if (objectId <= 0)
                 return BuildResult(400, "参数错误：缺少检查对象ID");
-            if (!HasPower(Power.CheckObjectEdit))
+            if (!HasPermission(Permission.CheckObjectEdit))
                 return BuildResult(403, "无权操作");
 
             var items = CheckObjectEvent.IncludeSet

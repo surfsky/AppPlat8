@@ -52,7 +52,7 @@ namespace App.Pages.Checks
     //-----------------------------------------------------------------------
     //
     //-----------------------------------------------------------------------
-    [Auth(Power.CheckNew)]
+    [Auth(Permission.CheckNew)]
     public class CheckFlowModel : AuthModel
     {
         [BindProperty(SupportsGet = true)]

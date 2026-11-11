@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryView)]
+    [Auth(Permission.GisGeometryView)]
     public class GeometryMapModel : AuthModel
     {
         public void OnGet() { }
@@ -63,7 +63,7 @@ namespace App.Pages.GIS
         {
             if (req == null || req.Id <= 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.GisGeometryDelete))
+            if (!HasPermission(Permission.GisGeometryDelete))
                 return BuildResult(403, "无权操作");
 
             GisGeometry.Delete(req.Id);
@@ -74,7 +74,7 @@ namespace App.Pages.GIS
         {
             if (req == null || req.Id <= 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.GisGeometryEdit))
+            if (!HasPermission(Permission.GisGeometryEdit))
                 return BuildResult(403, "无权操作");
 
             var item = GisGeometry.Get(req.Id);

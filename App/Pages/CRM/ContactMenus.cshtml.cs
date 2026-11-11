@@ -29,7 +29,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "请选择要删除的记录");
-            if (!HasPower(Power.ContactMenuDelete))
+            if (!HasPermission(Permission.ContactMenuDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)

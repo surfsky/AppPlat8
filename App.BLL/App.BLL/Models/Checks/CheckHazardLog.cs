@@ -13,7 +13,7 @@ namespace App.DAL
     // 隐患处理记录
     //-------------------------------------------------------
     [UI("检查", "处理记录")]
-    public class CheckHazardLog : EntityBase<CheckHazardLog>
+    public class CheckHazardLog : Entity<CheckHazardLog>
     {
         [UI("隐患")] public long HazardId { get; set; }
         [UI("记录人")] public long? ReviewerId { get; set; }

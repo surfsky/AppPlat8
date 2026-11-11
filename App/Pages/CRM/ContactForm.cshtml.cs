@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.OA
 {
     /// <summary>联系人表单页</summary>
-    [Auth(Power.ContactView)]
+    [Auth(Permission.ContactView)]
     public class ContactFormModel : AuthModel
     {
         public Contact Item { get; set; }
@@ -34,8 +34,8 @@ namespace App.Pages.OA
             if (string.IsNullOrWhiteSpace(req.Name))
                 return BuildResult(400, "姓名不能为空");
 
-            var needPower = req.Id > 0 ? Power.ContactEdit : Power.ContactNew;
-            if (!HasPower(needPower))
+            var needPower = req.Id > 0 ? Permission.ContactEdit : Permission.ContactNew;
+            if (!HasPermission(needPower))
                 return BuildResult(403, "无权操作");
 
             Contact item;

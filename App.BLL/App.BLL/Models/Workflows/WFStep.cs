@@ -23,7 +23,7 @@ namespace App.DAL
     /// <summary>
     /// 工作流步骤
     /// </summary>
-    public class WFStep : EntityBase<WFStep>
+    public class WFStep : Entity<WFStep>
     {
         // 配置信息
         [UI("节点类别")]           public WFStepType? Type { get; set; }
@@ -32,7 +32,7 @@ namespace App.DAL
         [UI("路由", Column=ColumnType.None)]  public virtual List<WFRoute> Routes { get; set; }
 
         // 权限
-        [UI("权限")]               public Power? Power { get; set; }
+        [UI("权限")]               public Permission? Power { get; set; }
         [UI("权限名")]             public string PowerName { get { return this.Power.GetTitle(); } }
 
         // 便利属性，可作为导出用
@@ -43,7 +43,7 @@ namespace App.DAL
         /// <summary>请使用 Create 泛型方法</summary>
         public WFStep() { }
         /// <summary>创建步骤</summary>
-        public static WFStep Create<T>(T status, Power? power = null, WFStepType type = WFStepType.Normal)
+        public static WFStep Create<T>(T status, Permission? power = null, WFStepType type = WFStepType.Normal)
             where T : struct
         {
             var step = new WFStep();
@@ -85,7 +85,7 @@ namespace App.DAL
 
             // 检测角色
             if (this.Power != null)
-                if (!user.HasPower(this.Power.Value))
+                if (!user.HasPermission(this.Power.Value))
                     return false;
 
             return true;

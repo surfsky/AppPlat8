@@ -64,7 +64,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Icon="Edit" Handler="ShowCheckObjects" EnabledFor="Item.Id" Visible="@Auth.HasPower(Power.AdminOrg)">管理</EleButton>
+                <EleButton Type="Primary" Icon="Edit" Handler="ShowCheckObjects" EnabledFor="Item.Id" Visible="@Auth.HasPermission(Permission.AdminOrg)">管理</EleButton>
             </Footer>
         </EleList>
 
@@ -103,7 +103,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Icon="Edit" Handler="ShowAtts" EnabledFor="Item.Id" Visible="@Auth.HasPower(Power.AdminOrg)">管理</EleButton>
+                <EleButton Type="Primary" Icon="Edit" Handler="ShowAtts" EnabledFor="Item.Id" Visible="@Auth.HasPermission(Permission.AdminOrg)">管理</EleButton>
             </Footer>
         </EleList>
     

@@ -5,7 +5,7 @@ using App.Entities;
 namespace App.DAL.GIS
 {
     /// <summary>场景图层关联</summary>
-    public class GisSceneMenu : EntityBase<GisSceneMenu>
+    public class GisSceneMenu : Entity<GisSceneMenu>
     {
         public long SceneId { get; set; }
         public long MenuId { get; set; }

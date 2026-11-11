@@ -5,7 +5,7 @@ using App.Utils;
 namespace App.DAL
 {
     [UI("检查", "对象应急专用标签")]
-    public class CheckObjectTagSpec : EntityBase<CheckObjectTagSpec>
+    public class CheckObjectTagSpec : Entity<CheckObjectTagSpec>
     {
         [UI("检查对象")] public long CheckObjectId { get; set; }
         [UI("标签Id")] public long TagId { get; set; }

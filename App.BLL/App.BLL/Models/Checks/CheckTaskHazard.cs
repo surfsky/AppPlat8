@@ -8,7 +8,7 @@ namespace App.DAL
     // CheckTask ---(1:n)--- CheckTaskHazard
     //==================================================================
     /// <summary>检查任务-要检查的隐患（尚未启用）</summary>
-    public class CheckTaskHazard : EntityBase<CheckTaskHazard>, ISort
+    public class CheckTaskHazard : Entity<CheckTaskHazard>, ISort
     {
         [UI("任务")] public long? TaskId { get; set; }
         [UI("检查隐患")] public long? HazardId { get; set; }

@@ -13,7 +13,7 @@ using App.EleUI;
 
 namespace App.Pages.Admins
 {
-    [Auth(Power.OrgView)]
+    [Auth(Permission.OrgView)]
     public class OrgsModel : AuthModel
     {
         public App.DAL.Org Item { get; set; }
@@ -38,7 +38,7 @@ namespace App.Pages.Admins
             Logger.Info($"尝试删除组织: {string.Join(",", ids)}");
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.OrgDelete))
+            if (!HasPermission(Permission.OrgDelete))
                 return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
@@ -66,7 +66,7 @@ namespace App.Pages.Admins
         /// <summary>补全所有组织全称</summary>
         public IActionResult OnPostFixAll()
         {
-            if (!HasPower(Power.OrgEdit))
+            if (!HasPermission(Permission.OrgEdit))
                 return BuildResult(403, "无权操作");
 
             var cnt = App.DAL.Org.FixAll();

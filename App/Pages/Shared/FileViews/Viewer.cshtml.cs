@@ -14,20 +14,11 @@ namespace App.Pages.Shared.FileViews
     [Auth(AuthLogin = true)]
     public class FileViewerModel : AuthModel
     {
-        [BindProperty(SupportsGet = true)]
-        public string UniId { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public long Id { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public string FilePath { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public string Source { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public string Name { get; set; }
+        [BindProperty(SupportsGet = true)] public string UniId { get; set; }
+        [BindProperty(SupportsGet = true)] public long Id { get; set; }
+        [BindProperty(SupportsGet = true)] public string FilePath { get; set; }
+        [BindProperty(SupportsGet = true)] public string Source { get; set; }
+        [BindProperty(SupportsGet = true)] public string Name { get; set; }
 
         public string FileName { get; set; }
         public string FileExt { get; set; }
@@ -78,7 +69,7 @@ namespace App.Pages.Shared.FileViews
             if (item == null)
                 return BuildResult(404, err);
 
-            var path = App.Web.Asp.MapPath(item.Content);
+            var path = Paths.GetFilePath(item.Content);
             if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
                 return BuildResult(404, "文件不存在或已被删除");
 

@@ -12,7 +12,7 @@ namespace App.DAL
 {
     /// <summary>IP 黑白名单设置</summary>
     [UI("系统", "IP 黑白名单设置")]
-    public class IPFilter : EntityBase<IPFilter>, ICacheAll
+    public class IPFilter : Entity<IPFilter>, ICacheAll
     {
         [UI("名称")]     public string IP { get; set; }
         [UI("封禁时间")] public DateTime? StartDt { get; set; }

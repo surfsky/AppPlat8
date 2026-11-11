@@ -12,7 +12,7 @@ namespace App.Entities
     /// <summary>
     /// 树实体基类
     /// </summary>
-    public class TreeEntity<T> : EntityBase<T>, ITree<T>
+    public class TreeEntity<T> : Entity<T>, ITree<T>
         where T : TreeEntity<T>, new()
     {
         [UI("上级部门")] public long? ParentId { get; set; }

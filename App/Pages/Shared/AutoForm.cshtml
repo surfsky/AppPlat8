@@ -3,7 +3,7 @@
 @using System.Text.Json
 @{
     ViewData["Title"] = "智能表单";
-    var fileJson = JsonSerializer.Serialize(Model.File ?? string.Empty);
+    var attIdJson = JsonSerializer.Serialize(Model.AttId ?? string.Empty);
     var idJson = JsonSerializer.Serialize(Model.Id);
     var modeJson = JsonSerializer.Serialize(Request.Query["md"].ToString());
 }
@@ -63,7 +63,7 @@
 
         createApp({
             setup() {
-                const file = @Html.Raw(fileJson);
+                const attId = @Html.Raw(attIdJson);
                 const rowId = ref(@Html.Raw(idJson));
                 const mode = @Html.Raw(modeJson);
                 const saving = ref(false);
@@ -77,7 +77,7 @@
 
                 /**读取元数据 */
                 const loadMeta = async () => {
-                    const res = await axios.get('?handler=Meta', { params: { file } });
+                    const res = await axios.get('?handler=Meta', { params: { attId } });
                     const body = res.data || {};
                     if (body.code !== 0) {
                         throw new Error(body.message || body.msg || body.info || '读取元数据失败');
@@ -94,7 +94,7 @@
                 /**读取单行 */
                 const loadRow = async () => {
                     if (isNew.value) return;
-                    const res = await axios.get('?handler=Row', { params: { file, id: rowId.value } });
+                    const res = await axios.get('?handler=Row', { params: { attId, id: rowId.value } });
                     const body = res.data || {};
                     if (body.code !== 0) {
                         throw new Error(body.message || body.msg || body.info || '读取数据失败');
@@ -112,7 +112,7 @@
                     saving.value = true;
                     try {
                         const res = await axios.post('?handler=Save', {
-                            file,
+                            attId,
                             id: isNew.value ? null : rowId.value,
                             values: form
                         }, {
@@ -140,7 +140,7 @@
 
                 /**返回列表 */
                 const goBack = () => {
-                    window.location.href = `/Shared/AutoTable?file=${encodeURIComponent(file)}`;
+                    window.location.href = `/Shared/AutoTable?attId=${encodeURIComponent(attId)}`;
                 };
 
                 /**关闭表单 */
@@ -191,7 +191,7 @@
                 });
 
                 return {
-                    file,
+                    attId,
                     rowId,
                     saving,
                     meta,

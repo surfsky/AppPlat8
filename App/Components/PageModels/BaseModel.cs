@@ -96,7 +96,7 @@ namespace App
         protected long? GetUserId() => Auth.GetUserId(HttpContext);
 
         /// <summary>检查当前用户是否拥有某个权限</summary>
-        protected bool HasPower(Power power) => Auth.HasPower(power, HttpContext);
+        protected bool HasPermission(Permission p) => Auth.HasPermission(p, HttpContext);
 
 
 

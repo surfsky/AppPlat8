@@ -21,7 +21,7 @@ namespace App.DAL
 
     /// <summary>对象拥有的人员</summary>
     [UI("检查", "对象拥有的人员清单")]
-    public class CheckObjectContact : EntityBase<CheckObjectContact>
+    public class CheckObjectContact : Entity<CheckObjectContact>
     {
         [UI("检查对象Id")] public long? CheckObjectId { get; set; }
         [UI("联系人类型")] public ContactType? ContactType { get; set; }

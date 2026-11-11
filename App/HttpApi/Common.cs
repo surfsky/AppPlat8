@@ -45,8 +45,7 @@ namespace App.API
         {
             // 尝试从缓存文件中获取文件
             var cacheCode = string.Format("{0}-{1}-{2}", u, w, h).MD5();
-            string cacheFile = $"/Caches/{cacheCode}.cache";
-            string path = Asp.MapPath(cacheFile);
+            var path = Path.Combine(Paths.CacheRoot, cacheCode + ".cache");
             if (File.Exists(path))
                 return Painter.LoadImage(path);
 
@@ -78,7 +77,7 @@ namespace App.API
                 return new APIResult(-1, "File deny", 13);
 
             // 构造存储路径
-            var url = Uploader.GetSavePath(folder, fileName);
+            var url = Uploader.GetSaveVirtualPath(folder, fileName);
             var path = Asp.MapPath(url);
             var fi = new FileInfo(path);
             if (!fi.Directory.Exists)

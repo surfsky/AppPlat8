@@ -11,7 +11,7 @@ using UserEntity = App.DAL.User;
 
 namespace App.Pages.Admins
 {
-    [Auth(Power.UserView)]
+    [Auth(Permission.UserView)]
     public class UserFormModel : AuthModel
     {
         public List<SelectListItem> RoleList { get; set; }  // 角色列表

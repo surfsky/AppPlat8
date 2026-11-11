@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckSheetNew)]
+    [Auth(Permission.CheckSheetNew)]
     public class CheckTagFormModel : AuthModel
     {
         public CheckTag Item { get; set; }

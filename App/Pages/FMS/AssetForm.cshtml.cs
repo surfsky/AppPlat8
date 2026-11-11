@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.AssetView)]
+    [Auth(Permission.AssetView)]
     [IgnoreAntiforgeryToken]
     public class AssetFormModel : AuthModel
     {
@@ -52,14 +52,14 @@ namespace App.Pages.OA
         {
             if (id == 0)
             {
-                if (!HasPower(Power.AssetNew) && !HasPower(Power.AssetEdit) && !HasPower(Power.AssetView))
+                if (!HasPermission(Permission.AssetNew) && !HasPermission(Permission.AssetEdit) && !HasPermission(Permission.AssetView))
                     return BuildResult(403, "无权查看");
                 
                 return BuildResult(0, "success", new Asset());
             }
             else
             {
-                if (!HasPower(Power.AssetView) && !HasPower(Power.AssetEdit))
+                if (!HasPermission(Permission.AssetView) && !HasPermission(Permission.AssetEdit))
                     return BuildResult(403, "无权查看");
                 
                 var item = Asset.Get(id);
@@ -82,8 +82,8 @@ namespace App.Pages.OA
         {
             if (req == null || string.IsNullOrWhiteSpace(req.Name))
                 return BuildResult(400, "名称不能为空");
-            var needPower = (req.Id == 0) ? Power.AssetNew : Power.AssetEdit;
-            if (!HasPower(needPower))
+            var needPower = (req.Id == 0) ? Permission.AssetNew : Permission.AssetEdit;
+            if (!HasPermission(needPower))
                 return BuildResult(403, "无权操作");
 
             Asset item = req.Id > 0 ? Asset.Get(req.Id) : new Asset();

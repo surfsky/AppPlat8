@@ -26,7 +26,7 @@ namespace App.DAL
     */
 
     //public class User : IKeyId
-    public class User : EntityBase<User>, IDeleteLogic, IFixAll
+    public class User : Entity<User>, IDeleteLogic, IFixAll
     {
         [UI("是否失效")]    public bool? IsDel { get; set; } = false;
         [UI("失效时间")]    public DateTime? DeleteDt { get; set; }
@@ -135,11 +135,11 @@ namespace App.DAL
         // 权限（用RolePower表存储）
         //------------------------------------------------------
         /// <summary>获取用户权限（admin拥有所有权限、普通用户根据角色来获取权限）</summary>
-        public List<Power> GetPowers()
+        public List<Permission> GetPermissions()
         {
-            var powers = new List<Power>();
+            var ps = new List<Permission>();
             if (this.Name == "admin")
-                powers = typeof(Power).GetEnums<Power>();
+                ps = typeof(Permission).GetEnums<Permission>();
             else
             {
                 var roleIds = this.Roles.Select(t => t.Id).ToList();
@@ -151,11 +151,11 @@ namespace App.DAL
                 if (roleIds.Count > 0)
                 {
                     RolePower.Search(t => roleIds.Contains(t.RoleId))
-                        .ToList().ForEach(t => powers.Add(t.PowerId));
+                        .ToList().ForEach(t => ps.Add(t.PowerId));
                 }
-                powers = powers.Distinct().ToList();
+                ps = ps.Distinct().ToList();
             }
-            return powers;
+            return ps;
         }
 
         /// <summary>
@@ -208,11 +208,11 @@ namespace App.DAL
         }
 
         /// <summary>用户是否拥有指定权限</summary>
-        public bool HasPower(Power power)
+        public bool HasPermission(Permission p)
         {
             if (this.Name == "admin") return true;
-            var powers = this.GetPowers();
-            return powers.Contains(power);
+            var powers = this.GetPermissions();
+            return powers.Contains(p);
         }
 
         //------------------------------------------------------

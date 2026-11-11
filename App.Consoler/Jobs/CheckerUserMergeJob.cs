@@ -148,7 +148,7 @@ public class CheckerUserMergeJob : IJob
             Console.WriteLine("==========================================================");
             Console.WriteLine("= APPLY 模式开始执行（先整库备份，再单事务）");
             Console.WriteLine("==========================================================");
-            var db = (AppPlatContext)EntityBase.Db;
+            var db = (AppPlatContext)Entity.Db;
             var dbFile = db.Database.GetDbConnection().DataSource;
             var backupPath = dbFile + ".bak_merge_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
             if (File.Exists(dbFile))

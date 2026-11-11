@@ -7,7 +7,7 @@ namespace App.DAL
 
     /// <summary>文档库管理</summary>
     [UI("OA", "文档")]
-    public class Article : EntityBase<Article>
+    public class Article : Entity<Article>
     {
         [UI("文档目录Id")]         public long? MenuId { get; set; }
         [UI("名称")]              public string Name { get; set; }

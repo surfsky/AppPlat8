@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace App.Pages.Admins
 {
-    [Auth(Power.UserEdit)]
+    [Auth(Permission.UserEdit)]
     public class UserPasswordFormModel : AuthModel
     {
         public class SavePasswordRequest

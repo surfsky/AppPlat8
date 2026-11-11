@@ -18,7 +18,7 @@ namespace App.DAL.OA
 
     /// <summary>固定资产</summary>
     [UI("OA", "固定资产")]
-    public class Asset : EntityBase<Asset>
+    public class Asset : Entity<Asset>
     {
         [UI("名称")]        public string Name { get; set; }
         [UI("类别")]        public AssetMenu? Menu { get; set; }

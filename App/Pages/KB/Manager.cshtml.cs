@@ -14,7 +14,6 @@ using System.Text.Json;
 
 namespace App.Pages.KB
 {
-    //[Auth(Power.KbMenuView)]
     [RequestSizeLimit(2147483648)]        // 2GB
     [RequestFormLimits(MultipartBodyLengthLimit = 2147483648, ValueCountLimit = 4096)]
     public class ManagerModel : AuthModel
@@ -100,7 +99,7 @@ namespace App.Pages.KB
         /// <summary>删除目录（递归删除所有子目录和关联附件）</summary>
         public IActionResult OnPostDeleteMenu([FromBody] JsonElement payload)
         {
-            if (!HasPower(Power.KbMenuDelete))
+            if (!HasPermission(Permission.KbMenuDelete))
                 return OkBuildResult(403, "无权操作");
 
             long id = ExtractId(payload, 0);
@@ -169,7 +168,7 @@ namespace App.Pages.KB
         /// <summary>移动目录上</summary>
         public IActionResult OnPostMenuMoveUp([FromBody] JsonElement payload)
         {
-            if (!HasPower(Power.KbMenuEdit))
+            if (!HasPermission(Permission.KbMenuEdit))
                 return OkBuildResult(403, "无权操作");
 
             long id = ExtractId(payload, 0);
@@ -238,7 +237,7 @@ namespace App.Pages.KB
         /// <summary>移动目录下</summary>
         public IActionResult OnPostMenuMoveDown([FromBody] JsonElement payload)
         {
-            if (!HasPower(Power.KbMenuEdit))
+            if (!HasPermission(Permission.KbMenuEdit))
                 return OkBuildResult(403, "无权操作");
 
             long id = ExtractId(payload, 0);
@@ -311,7 +310,7 @@ namespace App.Pages.KB
         /// <summary>按本地目录结构批量导入知识库目录和附件。</summary>
         public IActionResult OnPostUploadDirectory(long? menuId)
         {
-            if (!HasPower(Power.KbMenuEdit) && !HasPower(Power.KbMenuNew))
+            if (!HasPermission(Permission.KbMenuEdit) && !HasPermission(Permission.KbMenuNew))
                 return OkBuildResult(403, "无权操作");
 
             var files = Request?.Form?.Files;

@@ -23,7 +23,7 @@ namespace App.DAL.GIS
 
     /// <summary>GIS点位（包括点、几何、文字、图片、视频、文件等）</summary>
     [UI("GIS", "GIS点位")]
-    public class GisGeometry : EntityBase<GisGeometry>, IGeometry
+    public class GisGeometry : Entity<GisGeometry>, IGeometry
     {
         [UI("类型")]        public GeometryType? Type { get; set; } = GeometryType.Point;
         [UI("名称")]        public string Name { get; set; }

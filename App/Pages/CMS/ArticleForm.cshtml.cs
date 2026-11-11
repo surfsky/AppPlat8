@@ -18,7 +18,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.ArticleEdit)]
+    [Auth(Permission.ArticleEdit)]
     public class ArticleFormModel : AuthModel
     {
         public Article Item { get; set; }

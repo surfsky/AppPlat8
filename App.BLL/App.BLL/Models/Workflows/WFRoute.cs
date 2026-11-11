@@ -45,7 +45,7 @@ namespace App.DAL
     /// <summary>
     /// 工作流路由
     /// </summary>
-    public class WFRoute : EntityBase<WFRoute>
+    public class WFRoute : Entity<WFRoute>
     {
         [UI("路由类型")] public WFRouteType? Type { get; set; }
         [UI("当前步骤")] public int? Status { get; set; }

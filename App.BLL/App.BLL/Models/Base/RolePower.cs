@@ -10,10 +10,10 @@ namespace App.DAL
     /// 角色拥有的权限
     /// </summary>
     [UI("系统", "角色拥有的权限")]
-    public class RolePower : EntityBase<RolePower>
+    public class RolePower : Entity<RolePower>
     {
         public long RoleId { get; set; }
-        public Power PowerId { get; set; }
+        public Permission PowerId { get; set; }
         public virtual Role Role{get;set;}
 
 
@@ -23,7 +23,7 @@ namespace App.DAL
             RolePower.Set.Where(t => t.RoleId == roleId).Delete();
             foreach (var powerId in powerIds)
             {
-                var item = new RolePower() { RoleId = roleId, PowerId = (Power)powerId };
+                var item = new RolePower() { RoleId = roleId, PowerId = (Permission)powerId };
                 item.Save();
             }
         }

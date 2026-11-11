@@ -23,7 +23,7 @@ namespace App.DAL
     /// <summary>
     /// 工作流
     /// </summary>
-    public class Workflow : EntityBase<Workflow>
+    public class Workflow : Entity<Workflow>
     {
         // 配置信息
         //[UI("类别")]     public WFType? Type { get; set; }

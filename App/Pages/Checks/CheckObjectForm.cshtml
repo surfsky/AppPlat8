@@ -83,7 +83,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowContacts" EnabledFor="Item.Id" Visible="@HasPower(Power.CheckObjectEdit)">管理</EleButton>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowContacts" EnabledFor="Item.Id" Visible="@HasPermission(Permission.CheckObjectEdit)">管理</EleButton>
             </Footer>
         </EleList>
 
@@ -109,7 +109,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowHazards" Visible="@HasPower(Power.CheckObjectEdit)">管理</EleButton>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowHazards" Visible="@HasPermission(Permission.CheckObjectEdit)">管理</EleButton>
             </Footer>
         </EleList>
 
@@ -133,7 +133,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Look="Plain" Icon="Edit"  Handler="ShowCheckLogs" EnabledFor="Item.Id" Visible="@HasPower(Power.CheckObjectEdit)">管理</EleButton>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit"  Handler="ShowCheckLogs" EnabledFor="Item.Id" Visible="@HasPermission(Permission.CheckObjectEdit)">管理</EleButton>
             </Footer>
         </EleList>
         
@@ -161,7 +161,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowCheckPoints" EnabledFor="Item.Id" Visible="@HasPower(Power.CheckObjectEdit)">管理</EleButton>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowCheckPoints" EnabledFor="Item.Id" Visible="@HasPermission(Permission.CheckObjectEdit)">管理</EleButton>
             </Footer>
         </EleList>
         
@@ -184,7 +184,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowObjectEvents" EnabledFor="Item.Id" Visible="@HasPower(Power.CheckObjectEdit)">管理</EleButton>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowObjectEvents" EnabledFor="Item.Id" Visible="@HasPermission(Permission.CheckObjectEdit)">管理</EleButton>
             </Footer>
         </EleList>
 
@@ -206,7 +206,7 @@
                 </div>
             </ItemTemplate>
             <Footer>
-                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowFiles" EnabledFor="Item.Id" Visible="@HasPower(Power.CheckObjectEdit)">管理</EleButton>
+                <EleButton Type="Primary" Look="Plain" Icon="Edit" Handler="ShowFiles" EnabledFor="Item.Id" Visible="@HasPermission(Permission.CheckObjectEdit)">管理</EleButton>
             </Footer>
         </EleList>
 
@@ -217,7 +217,7 @@
     
         <Bottom>
             <EleButton Type="Primary" Icon="Select" Command="SaveClose" Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
-            <EleButton Type="Success" Icon="Search" PopupUrl="/Checks/flow/CheckFlow?objectId=@Model.Item.Id&objectName=@UrlEncode(Model.Item.Name ?? string.Empty)" EnabledFor="Item.Id" Visible="@Auth.HasPower(Power.CheckNew)" PopupTitle="隐患排查">开始排查</EleButton>
+            <EleButton Type="Success" Icon="Search" PopupUrl="/Checks/flow/CheckFlow?objectId=@Model.Item.Id&objectName=@UrlEncode(Model.Item.Name ?? string.Empty)" EnabledFor="Item.Id" Visible="@Auth.HasPermission(Permission.CheckNew)" PopupTitle="隐患排查">开始排查</EleButton>
             <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>

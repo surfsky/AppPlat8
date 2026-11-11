@@ -19,7 +19,7 @@ using NPOI.XSSF.UserModel;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryEdit)]
+    [Auth(Permission.GisGeometryEdit)]
     public class GeometryImporterModel : AuthModel
     {
         public string TypeTitle { get; set; } = "GIS简单点位";

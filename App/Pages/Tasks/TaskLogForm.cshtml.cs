@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.TaskEdit)]
+    [Auth(Permission.TaskEdit)]
     public class TaskLogFormModel : AuthModel
     {
         public AssignTaskLog Item { get; set; }

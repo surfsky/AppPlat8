@@ -44,7 +44,7 @@ namespace App.Entities
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         public static List<StatItem> StatDayNew<T>(DateTime startDt, DateTime? endDt, Expression<Func<T, bool>> whereExpression = null)
-            where T : EntityBase<T>, new()
+            where T : Entity<T>, new()
         {
             var q = EntityConfig.Db.Set<T>().Where(t => t.CreateDt >= startDt);
             if (endDt != null) q = q.Where(t => t.CreateDt <= endDt);
@@ -74,7 +74,7 @@ namespace App.Entities
 
         /// <summary>日存量统计</summary>
         public static List<StatItem> StatDayAmount<T>(DateTime startDt, DateTime? endDt, Expression<Func<T, bool>> whereExpression = null)
-            where T : EntityBase<T>, new()
+            where T : Entity<T>, new()
         {
             var n = EntityConfig.Db.Set<T>().Where(t => t.CreateDt < startDt).Where(whereExpression).Count();    // 初始数据
             var items = StatDayNew(startDt, endDt, whereExpression); // 每日新增数据

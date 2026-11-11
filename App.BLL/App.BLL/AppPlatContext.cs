@@ -186,7 +186,7 @@ namespace App.DAL
 
         private static void ConfigureCreatorNavigation(ModelBuilder modelBuilder)
         {
-            var entityBaseType = typeof(EntityBase);
+            var entityBaseType = typeof(Entity);
             var userType = typeof(User);
             var nullableLongType = typeof(long?);
 
@@ -262,7 +262,7 @@ namespace App.DAL
             var scope = EntityConfig.DataAuditScope;
             var hasScope = scope != null && scope.Enabled;
 
-            foreach (var entry in ChangeTracker.Entries<EntityBase>())
+            foreach (var entry in ChangeTracker.Entries<Entity>())
             {
                 if (entry.State == EntityState.Added)
                 {
@@ -272,8 +272,8 @@ namespace App.DAL
                     if (hasScope)
                     {
                         // 新增数据默认记录创建人/责任人/组织/作者，若业务已显式赋值则不覆盖。
-                        SetNullableLongIfEmpty(entry, nameof(EntityBase.CreatorId), scope.UserId);
-                        SetNullableLongIfEmpty(entry, nameof(EntityBase.OwnerId), scope.UserId);
+                        SetNullableLongIfEmpty(entry, nameof(Entity.CreatorId), scope.UserId);
+                        SetNullableLongIfEmpty(entry, nameof(Entity.OwnerId), scope.UserId);
                         SetNullableLongIfEmpty(entry, "OrgId", scope.OrgId);
                         SetNullableLongIfEmpty(entry, "AuthorId", scope.UserId);
                     }

@@ -12,7 +12,7 @@ namespace App.DAL
     /// 角色菜单授权（系统菜单）
     /// </summary>
     [UI("系统", "角色菜单")]
-    public class RoleMenu : EntityBase<RoleMenu>
+    public class RoleMenu : Entity<RoleMenu>
     {
         public long RoleId { get; set; }
         public long MenuId { get; set; }

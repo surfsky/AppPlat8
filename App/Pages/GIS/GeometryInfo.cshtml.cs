@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.GIS
 {
-    [Auth(Power.GisGeometryView)]
+    [Auth(Permission.GisGeometryView)]
     public class GeometryInfoModel : AuthModel
     {
         public GisGeometry Item { get; set; } = new GisGeometry();

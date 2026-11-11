@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.Events
 {
-    [Auth(Power.EventView)]
+    [Auth(Permission.EventView)]
     public class EventTypesModel : AuthModel
     {
         public EventType Item { get; set; }
@@ -30,7 +30,7 @@ namespace App.Pages.Events
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
             if (ids == null || ids.Length == 0)      return BuildResult(400, "参数错误");
-            if (!HasPower(Power.EventDelete))        return BuildResult(403, "无权操作");
+            if (!HasPermission(Permission.EventDelete))        return BuildResult(403, "无权操作");
 
             foreach (var id in ids)
             {

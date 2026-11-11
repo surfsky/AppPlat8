@@ -7,7 +7,7 @@ namespace App.DAL.OA
 {
     /// <summary>通用联系人</summary>
     [UI("OA", "联系人")]
-    public class Contact : EntityBase<Contact>
+    public class Contact : Entity<Contact>
     {
         [UI("联系人目录")] public long? MenuId { get; set; }
         [UI("姓名")] public string Name { get; set; }

@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.ProjectView)]
+    [Auth(Permission.ProjectView)]
     public class ProjectsModel : AuthModel
     {
         public Project Item { get; set; }
@@ -34,7 +34,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.ProjectDelete))
+            if (!HasPermission(Permission.ProjectDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();

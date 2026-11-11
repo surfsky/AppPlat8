@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.TaskView)]
+    [Auth(Permission.TaskView)]
     public class TasksModel : AuthModel
     {
         public AssignTask Item { get; set; }
@@ -34,7 +34,7 @@ namespace App.Pages.OA
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.TaskDelete))
+            if (!HasPermission(Permission.TaskDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();

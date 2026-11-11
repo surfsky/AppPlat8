@@ -33,7 +33,7 @@ namespace App.DAL
 
     /// <summary>非即时性、数据量不大、通知性质的消息</summary>
     [UI("系统", "非即时性消息")]
-    public class Message : EntityBase<Message>
+    public class Message : Entity<Message>
     {
         [UI("消息类别")]  public MessageType? Type { get; set; }
         [UI("消息通道")]  public MessageWay? Way { get; set; }

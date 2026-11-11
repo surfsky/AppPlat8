@@ -8,7 +8,7 @@ namespace App.DAL
 {
     /// <summary>短信验证码</summary>
     [UI("基础", "短信验证码")]
-    public class VerifyCode : EntityBase<VerifyCode>
+    public class VerifyCode : Entity<VerifyCode>
     {
         [UI("验证码")]   public string Code { get; set; }
         [UI("手机号")]   public string Mobile { get; set; }

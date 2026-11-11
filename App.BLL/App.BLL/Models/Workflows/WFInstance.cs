@@ -12,7 +12,7 @@ namespace App.DAL
     /// <summary>
     /// 工作流实例（启动、变状态、处理、事件等）（尚未启用）
     /// </summary>
-    public class WFInstance : EntityBase<WFInstance>
+    public class WFInstance : Entity<WFInstance>
     {
         [UI("工作流")]   public long WorkflowId { get; set; }
         [UI("当前步骤")] public List<int> CurrentStatus { get; set; }

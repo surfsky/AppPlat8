@@ -10,7 +10,7 @@ using BootstrapBlazor.Components;
 
 namespace App.Pages.Shared
 {
-    [Auth(Power.CheckObjectView)]
+    [Auth(Permission.CheckObjectView)]
     public class AttsMoveToModel : AuthModel
     {
         public long[] SelectedIds { get; set; } = Array.Empty<long>();
@@ -61,7 +61,7 @@ namespace App.Pages.Shared
                 return OkBuildResult(400, "缺少源目录Key");
             if (req.TargetMenuId <= 0)
                 return OkBuildResult(400, "请选择目标目录");
-            if (!HasPower(Power.CheckObjectEdit))
+            if (!HasPermission(Permission.CheckObjectEdit))
                 return OkBuildResult(403, "无权移动附件");
 
             if (!req.UniId.StartsWith("KbMenu-", StringComparison.OrdinalIgnoreCase))

@@ -13,7 +13,7 @@ namespace App.DAL.OA
     /// 角色通讯录目录授权（角色可授权某个通讯录目录的查看和编辑权限）
     /// </summary>
     [UI("OA", "角色通讯录目录")]
-    public class RoleContactMenu : EntityBase<RoleContactMenu>
+    public class RoleContactMenu : Entity<RoleContactMenu>
     {
         public long RoleId { get; set; }
         public long MenuId { get; set; }

@@ -5,7 +5,6 @@ using System;
 
 namespace App.Pages.Shared
 {
-    //[Auth(Power.GisGeometryView)]
     public class GeometryEditorModel : BaseModel // AuthModel
     {
         [BindProperty(SupportsGet = true)]

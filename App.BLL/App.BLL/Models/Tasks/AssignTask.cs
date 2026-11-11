@@ -20,7 +20,7 @@ namespace App.DAL
 
     /// <summary>交办任务管理</summary>
     [UI("OA", "任务")]
-    public class AssignTask : EntityBase<AssignTask>
+    public class AssignTask : Entity<AssignTask>
     {
         [UI("父Id")]        public long? ParentId { get; set; }
         [UI("名称")]        public string Name { get; set; }
@@ -70,7 +70,7 @@ namespace App.DAL
 
     /// <summary>任务处理历史</summary>
     [UI("OA", "任务处理历史")]
-    public class AssignTaskLog : EntityBase<AssignTaskLog>
+    public class AssignTaskLog : Entity<AssignTaskLog>
     {
         [UI("任务Id")]       public long? TaskId { get; set; }
         [UI("处理人")]       public string Handler { get; set; }

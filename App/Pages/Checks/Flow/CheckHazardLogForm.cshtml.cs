@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckHazardEdit)]
+    [Auth(Permission.CheckHazardEdit)]
     public class CheckHazardLogFormModel : AuthModel
     {
         public CheckHazardLog Item { get; set; }

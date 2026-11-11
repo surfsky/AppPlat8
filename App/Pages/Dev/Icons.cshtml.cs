@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace App.Pages.Dev
 {
-    // [Auth(Power.Backend)]
     public class IconsModel : AuthModel
     {
         public void OnGet()

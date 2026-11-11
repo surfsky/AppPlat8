@@ -8,13 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace App.Pages.Shared
 {
     /// <summary>Excel 智能表单</summary>
-    [Auth(Power.CheckObjectEdit)]
     public class AutoFormModel : AuthModel
     {
-        private readonly AutoExcelStore _store = new();
+        private readonly ExcelStore _store = new();
 
         [BindProperty(SupportsGet = true)]
-        public new string File { get; set; }
+        public string AttId { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public int Id { get; set; }
@@ -25,14 +24,13 @@ namespace App.Pages.Shared
         }
 
         /**读取表单元数据 */
-        public IActionResult OnGetMeta(string file)
+        public IActionResult OnGetMeta(long attId)
         {
             try
             {
-                var model = _store.ReadSheet(file);
+                var model = _store.ReadSheet(attId);
                 return BuildResult(0, "ok", new
                 {
-                    file = model.File,
                     fileName = model.FileName,
                     sheetName = model.SheetName,
                     columns = model.Columns
@@ -45,11 +43,11 @@ namespace App.Pages.Shared
         }
 
         /**读取单行 */
-        public IActionResult OnGetRow(string file, int id)
+        public IActionResult OnGetRow(long attId, int id)
         {
             try
             {
-                var row = _store.GetRow(file, id);
+                var row = _store.GetRow(attId, id);
                 if (row == null)
                     return BuildResult(404, "数据不存在");
 
@@ -72,7 +70,7 @@ namespace App.Pages.Shared
                     vals[item.Key] = GetReqValue(item.Value);
                 }
 
-                var row = _store.SaveRow(req?.File, req?.Id > 0 ? req.Id : null, vals);
+                var row = _store.SaveRow(req.AttId, req.Id > 0 ? req.Id : null, vals);
                 return BuildResult(0, "保存成功", row);
             }
             catch (Exception ex)
@@ -106,10 +104,8 @@ namespace App.Pages.Shared
 
         public class AutoFormSaveReq
         {
-            public string File { get; set; }
-
+            public long AttId { get; set; }
             public int? Id { get; set; }
-
             public Dictionary<string, object> Values { get; set; }
         }
     }

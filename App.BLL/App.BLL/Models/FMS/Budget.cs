@@ -17,7 +17,7 @@ namespace App.DAL.OA
     }
 
     [UI("OA", "预算分类")]
-    public class BudgetType : EntityBase<BudgetType>
+    public class BudgetType : Entity<BudgetType>
     {
         [UI("名称")]    public string Name { get; set; }
 
@@ -31,7 +31,7 @@ namespace App.DAL.OA
 
     /// <summary>预算</summary>
     [UI("OA", "预算")]
-    public class Budget : EntityBase<Budget>
+    public class Budget : Entity<Budget>
     {
         [UI("预算年份")]        public int Year { get; set; }
         [UI("组织")]           public long? OrgId { get; set; }

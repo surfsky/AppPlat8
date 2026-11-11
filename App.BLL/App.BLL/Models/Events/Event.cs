@@ -23,7 +23,7 @@ namespace App.DAL
 
     /// <summary>事件管理（Event log）</summary>
     [UI("OA", "事件")]
-    public class Event : EntityBase<Event>
+    public class Event : Entity<Event>
     {
         [UI("发生时间")]     public DateTime? HappenDt { get; set; }
         [UI("类别")]        public long? TypeId { get; set; }

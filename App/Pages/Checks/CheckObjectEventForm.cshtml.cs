@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckObjectEdit)]
+    [Auth(Permission.CheckObjectEdit)]
     public class CheckObjectEventFormModel : AuthModel
     {
         public long ObjectId { get; set; }

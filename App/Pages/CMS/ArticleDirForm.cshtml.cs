@@ -15,7 +15,7 @@ using App.EleUI;
 
 namespace App.Pages.OA
 {
-    [Auth(Power.ArticleEdit)]
+    [Auth(Permission.ArticleEdit)]
     public class ArticleDirFormModel : AuthModel
     {
         public ArticleMenu Item { get; set; }

@@ -16,7 +16,7 @@ using App.HttpApi;
 
 namespace App.Pages.Checks
 {
-    [Auth(Power.CheckObjectView)]
+    [Auth(Permission.CheckObjectView)]
     public class CheckObjectsModel : AuthModel
     {
         public CheckObject Item { get; set; } = new CheckObject();         // 检查对象实体（用于页面数据绑定）
@@ -306,7 +306,7 @@ namespace App.Pages.Checks
         {
             if (ids == null || ids.Length == 0)
                 return BuildResult(400, "参数错误");
-            if (!HasPower(Power.CheckObjectDelete))
+            if (!HasPermission(Permission.CheckObjectDelete))
                 return BuildResult(403, "无权操作");
 
             var cu = Auth.GetUser();
@@ -326,7 +326,7 @@ namespace App.Pages.Checks
         //-------------------------------------------------------------------------
         public IActionResult OnPostImport()
         {
-            if (!HasPower(Power.CheckObjectEdit))
+            if (!HasPermission(Permission.CheckObjectEdit))
                 return BuildResult(403, "无权操作");
 
             var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckObject");
@@ -350,7 +350,7 @@ namespace App.Pages.Checks
             var r = BatchUpdater.Update<CheckObject>(
                 ids: ids,
                 fields: fields,
-                requirePower: Power.CheckObjectEdit,
+                requirePower: Permission.CheckObjectEdit,
                 logTitle: "检查对象批量修改");
             return BuildResult(r.Code, r.Message, r.Data);
         }
@@ -360,7 +360,7 @@ namespace App.Pages.Checks
         //-------------------------------------------------------------------------
         public IActionResult OnPostFixData()
         {
-            if (!HasPower(Power.AdminMaintain))
+            if (!HasPermission(Permission.AdminMaintain))
                 return BuildResult(403, "无权操作");
             
             var cnt = CheckObject.FixAll();

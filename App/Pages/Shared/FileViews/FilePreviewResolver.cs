@@ -3,6 +3,7 @@ using System.IO;
 using App.DAL;
 using App.Entities;
 using App.Utils;
+using App.Components;
 
 namespace App.Pages.Shared.FileViews
 {
@@ -36,7 +37,7 @@ namespace App.Pages.Shared.FileViews
                         : item.FileName.Trim();
                     info.FileName = rawName;
                     info.SourceUrl = $"/Shared/FileViews/Viewer?handler=Content&id={id}";
-                    info.PhysicalPath = App.Web.Asp.MapPath(item.Content);
+                    info.PhysicalPath = Paths.GetFilePath(item.Content);
                 }
             }
 

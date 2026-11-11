@@ -12,7 +12,7 @@ namespace App.DAL
     /// <summary>
     /// 用户最后活动时间记录表，一个用户一条记录（用户扩展表）。可以合并到 User 表。
     /// </summary>
-    public class Online : EntityBase<Online>
+    public class Online : Entity<Online>
     {
         [UI("用户")]        public long UserId { get; set; }
         [UI("最后登陆IP")]   public string LastIP { get; set; }
