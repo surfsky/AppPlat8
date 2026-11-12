@@ -636,16 +636,14 @@ Done
     更换用户登录后会遇到奇奇怪怪的事情：
         陈慧左侧的菜单消失，已经设置为“员工”、“科室管理员”，测试一下菜单接口
 
-2026/11/12
-    BUG：上传的图片无法预览 http://localhost:5000/Shared/FileViews/Image?id=1853
-    专项报表中的责任组织似乎有点问题，都设置为应急管理局了，应该默认是原有网格以及网格员
+
+2026/11/13
     文档
         写帮助文档、培训文档
         写汇报稿：建设必要性、系统功能、完成任务、后继任务（驾驶舱完善、物联网、立项、信创改造和部署）；
-
-
-    要迁移到dotnet10了，dotnet8只支持到2026年11月
     解决遗留问题： 删除checkobject和标签重复的字段
+    专项报表中的责任组织似乎有点问题，都设置为应急管理局了，应该默认是原有网格以及网格员
+    要迁移到dotnet10了，dotnet8只支持到2026年11月
     实现短信服务
     剥离EleUI项目库
     创建网站授权方案（离线方案，适合内网）
@@ -659,7 +657,11 @@ Done
         - 自动化流程都停止：如告警、后台统计、推送等（自动化流程限制）；
         - 只允许用sqlite，不允许迁移到其他数据库（开源限制）；
         - 各种拖慢系统运行的策略；
-    写通用的调整排序扩展方法
+
+
+2026/11/12
+    /BUG：上传的图片无法预览 http://localhost:5000/Shared/FileViews/Image?id=1853
+    /写通用的调整排序扩展方法
         public static class EntityHelper
         {
             T MoveUp<T>(this T t) where T : Entity, ISort
@@ -667,7 +669,6 @@ Done
             T MoveUp<T>(this T t) where T : TreeEntity, ISort
             T MoveDown<T>(this T t) where T : TreeEntity, ISort
         }
-
     /优化menus页面，增加上移下移按钮；        
     /Gis/index 修正性能问题，有个接口GeometryLayerData进行了全数据获取
     /缩减一些权限，一些目录管理类的也同清单
@@ -690,7 +691,6 @@ Done
             日志为什么会记到根目录 /logs 下面？
             ConsolerConfig 改为单例模式
     /搞懂发布流程
-
 
 
 2026/11/11

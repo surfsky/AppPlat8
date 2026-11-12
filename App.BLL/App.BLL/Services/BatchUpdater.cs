@@ -86,20 +86,20 @@ namespace App.BLL
         /// <typeparam name="T">实体类型，继承 EntityBase<T></typeparam>
         /// <param name="ids">目标实体主键列表</param>
         /// <param name="fields">字段名→目标值（object）；目标值类型自动通过 Convertor.ToType 适配</param>
-        /// <param name="requirePower">需要的权限，无权限直接返回 403</param>
+        /// <param name="requirePermission">需要的权限，无权限直接返回 403</param>
         /// <param name="logTitle">审计日志前缀（可为空）</param>
         /// <param name="skipNullOrEmpty">空字符串/null 跳过不更新（推荐 true）</param>
         public static BatchResult Update<T>(
             IEnumerable<long> ids,
             IDictionary<string, object> fields,
-            Permission? requirePower = null,
+            Permission? requirePermission = null,
             string logTitle = null,
             bool skipNullOrEmpty = true,
-            Func<Permission, bool> checkPower = null)
+            Func<Permission, bool> onCheck = null)
             where T : Entity<T>, new()
         {
-            bool PowerPass(Permission p) => checkPower?.Invoke(p) ?? ResolvePower(p);
-            if (requirePower.HasValue && !PowerPass(requirePower.Value))
+            bool PowerPass(Permission p) => onCheck?.Invoke(p) ?? ResolvePower(p);
+            if (requirePermission.HasValue && !PowerPass(requirePermission.Value))
                 return new BatchResult(403, "无权批量修改", null);
 
             var idList = (ids ?? Array.Empty<long>()).Where(i => i > 0).Distinct().ToList();

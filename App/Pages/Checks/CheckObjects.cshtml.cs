@@ -17,7 +17,7 @@ using App.HttpApi;
 namespace App.Pages.Checks
 {
     [Auth(Permission.CheckObjectView)]
-    public class CheckObjectsModel : AuthModel
+    public class CheckObjectsModel : BaseModel // AuthModel
     {
         public CheckObject Item { get; set; } = new CheckObject();         // 检查对象实体（用于页面数据绑定）
         public long? DefaultCheckerId { get; set; }      // 默认检查人ID
@@ -350,8 +350,9 @@ namespace App.Pages.Checks
             var r = BatchUpdater.Update<CheckObject>(
                 ids: ids,
                 fields: fields,
-                requirePower: Permission.CheckObjectEdit,
-                logTitle: "检查对象批量修改");
+                logTitle: "检查对象批量修改",
+                requirePermission: Permission.CheckObjectEdit,
+                onCheck: permission => Auth.HasPermission(permission));
             return BuildResult(r.Code, r.Message, r.Data);
         }
 

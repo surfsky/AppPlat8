@@ -280,6 +280,18 @@ namespace App.DAL
                 .FirstOrDefault(o => o.Id == id);
         }
 
+        /// <summary>获取编辑详情，包含逻辑失效记录及其表单所需关联数据。</summary>
+        public static CheckObject GetDetailIncludingDeleted(long id)
+        {
+            return Set
+                .Include(o => o.Org)
+                .Include(o => o.Checker)
+                .Include(o => o.Tags).ThenInclude(t => t.Tag)
+                .Include(o => o.TagSpecs).ThenInclude(t => t.Tag)
+                .Include(o => o.Contacts)
+                .FirstOrDefault(o => o.Id == id);
+        }
+
         public static IQueryable<CheckObject> Search(
             string name = "",
             string code = "",

@@ -52,6 +52,7 @@
                 <EleButton Type="Warning" Command="Export" Icon="Download" Visible="@Auth.HasPermission(Permission.CheckObjectExport)">导出</EleButton>
                 <EleButton Type="Warning" Command="EditBatch" Icon="Edit" Visible="@Auth.HasPermission(Permission.CheckObjectEdit)">批量修改
                     <BatchFields>
+                        <BatchField Control="Picker"  Field="OrgId"     TextFor="OrgName" Label="所属网格" PopupUrl="/admins/Orgs?multi=false&md=Select" />
                         <BatchField Control="Picker"  Field="CheckerId" TextFor="CheckerName" Label="网格员" PopupUrl="/Admins/Users?multi=false&md=Select" />
                         <BatchField Control="Input"   Field="DutyMan"   Label="企业负责人" Placeholder="留空则不更新" />
                         <BatchField Control="Input"   Field="SafeMan"   Label="安全管理员" Placeholder="留空则不更新" />

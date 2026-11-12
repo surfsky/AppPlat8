@@ -44,7 +44,7 @@
 
         <EleLabel Label="责任信息" Color="#0A79C4" FillRow="true"></EleLabel>
         <EleTreePicker For="Item.OrgId" Label="责任网格" Api="/httpapi/orgs/GetAuthOrgTree" Required="true" ExpandLevel="3"></EleTreePicker>
-        <ElePicker For="Item.CheckerId" TextFor="CheckerName" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0" Required="true" ></ElePicker>
+        <ElePicker For="Item.CheckerId" TextFor="CheckerName" Label="网格员" PopupUrl="/Shared/UserSelector?multi=0" Required="false" ></ElePicker>
         <EleInput For="Item.DutyMan" Label="企业负责人"></EleInput>
         <EleInput For="Item.SafeMan" Label="安全管理员"></EleInput>
         <EleInput For="Item.SafeSteward" Label="安全管家"></EleInput>

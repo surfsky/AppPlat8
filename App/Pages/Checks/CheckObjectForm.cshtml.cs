@@ -20,13 +20,13 @@ namespace App.Pages.Checks
 
         public void OnGet(long id = 0)
         {
-            Item = CheckObject.GetDetail(id) ?? new CheckObject();
+            Item = CheckObject.GetDetailIncludingDeleted(id) ?? new CheckObject();
         }
 
         public IActionResult OnGetData(long id)
         {
             var cu = Auth.GetUser();
-            var item = (id > 0) ? CheckObject.GetDetail(id) : new CheckObject();
+            var item = (id > 0) ? CheckObject.GetDetailIncludingDeleted(id) : new CheckObject();
             if (id == 0)
             {
                 item.OrgId = cu.AuthOrgId;
