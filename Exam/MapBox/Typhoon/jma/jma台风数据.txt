@@ -1,0 +1,3 @@
+https://www.data.jma.go.jp/typhoon/position_table/index.html
+
+有历年台风数据，日本气象厅存档的

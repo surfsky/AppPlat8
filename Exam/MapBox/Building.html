@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapbox 3D 模型 - Building</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #0b1020; }
+    #map { width: 100vw; height: 100vh; }
+    .hud {
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      z-index: 10;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(2, 6, 23, 0.62);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      color: #e2e8f0;
+      font: 12px/1.35 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      backdrop-filter: blur(6px);
+      max-width: min(420px, calc(100vw - 24px));
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="hud" class="hud"></div>
+  <script type="module">
+    import * as THREE from "./vendor/three/three.module.js";
+    import { DRACOLoader } from "./vendor/three/examples/jsm/loaders/DRACOLoader.js";
+    import { GLTFLoader } from "./vendor/three/examples/jsm/loaders/GLTFLoader.js";
+
+    const qs = new URLSearchParams(location.search);
+    const modelUrl = qs.get("model") || "building.glb";
+    const lng = Number(qs.get("lng") || 120.551806);
+    const lat = Number(qs.get("lat") || 27.595611);
+    const altitude = Number(qs.get("alt") || 0);
+    const scaleMeters = Number(qs.get("scale") || 20);
+    const rotateZDeg = Number(qs.get("rz") || 0);
+    const zoom = Number(qs.get("z") || 17.2);
+    const pitch = Number(qs.get("p") || 65);
+    const bearing = Number(qs.get("b") || -20);
+
+    const hud = document.getElementById("hud");
+    hud.textContent = `模型: ${modelUrl} | 坐标: ${lng.toFixed(6)}, ${lat.toFixed(6)} | 高度: ${altitude}m | 目标尺寸: ${scaleMeters}m`;
+
+    mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/satellite-streets-v12",
+      center: [lng, lat],
+      zoom,
+      pitch,
+      bearing,
+      antialias: true,
+      projection: "mercator"
+    });
+    map.addControl(new mapboxgl.NavigationControl());
+    map.addControl(new mapboxgl.FullscreenControl());
+
+    /**Show load error */
+    function showLoadErr(err) {
+      const msg = err?.message || err?.target?.statusText || err?.target?.responseURL || String(err || "");
+      console.error("GLTF load failed", err);
+      hud.textContent = `模型加载失败: ${msg || modelUrl}`;
+    }
+
+    /**Fit model */
+    function fitModel(model, targetSize) {
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const maxSize = Math.max(size.x, size.y, size.z, 0.0001);
+      const factor = targetSize / maxSize;
+      model.scale.setScalar(factor);
+      model.position.set(-center.x * factor, -box.min.y * factor, -center.z * factor);
+    }
+
+    function metersToDegrees(latDeg, meters) {
+      const latRad = latDeg * Math.PI / 180;
+      const dLat = meters / 110540;
+      const dLon = meters / (111320 * Math.cos(latRad));
+      return { dLon, dLat };
+    }
+
+    map.on("load", () => {
+      const half = metersToDegrees(lat, 80);
+      const polygon = {
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [[
+            [lng - half.dLon, lat - half.dLat],
+            [lng + half.dLon, lat - half.dLat],
+            [lng + half.dLon, lat + half.dLat],
+            [lng - half.dLon, lat + half.dLat],
+            [lng - half.dLon, lat - half.dLat]
+          ]]
+        },
+        properties: {}
+      };
+      map.addSource("model-area", { type: "geojson", data: polygon });
+      map.addLayer({
+        id: "model-area-fill",
+        type: "fill",
+        source: "model-area",
+        paint: { "fill-color": "#38bdf8", "fill-opacity": 0.10 }
+      });
+      map.addLayer({
+        id: "model-area-line",
+        type: "line",
+        source: "model-area",
+        paint: { "line-color": "#38bdf8", "line-width": 2, "line-opacity": 0.7 }
+      });
+
+      const mc = mapboxgl.MercatorCoordinate.fromLngLat([lng, lat], altitude);
+      const meterScale = mc.meterInMercatorCoordinateUnits();
+      const rotX = Math.PI / 2;
+      const rotY = 0;
+      const rotZ = rotateZDeg * Math.PI / 180;
+
+      const customLayer = {
+        id: "building-glb-layer",
+        type: "custom",
+        renderingMode: "3d",
+        onAdd: function (map, gl) {
+          this.camera = new THREE.Camera();
+          this.scene = new THREE.Scene();
+
+          const hemi = new THREE.HemisphereLight(0xffffff, 0x0b1020, 1.1);
+          hemi.position.set(0, 50, 0);
+          this.scene.add(hemi);
+          const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+          dir.position.set(30, 80, 40);
+          this.scene.add(dir);
+
+          this.renderer = new THREE.WebGLRenderer({
+            canvas: map.getCanvas(),
+            context: gl,
+            antialias: true
+          });
+          this.renderer.autoClear = false;
+
+          this.model = null;
+          this.dracoLoader = new DRACOLoader();
+          this.dracoLoader.setDecoderPath("./vendor/three/examples/jsm/libs/draco/");
+          this.loader = new GLTFLoader();
+          this.loader.setDRACOLoader(this.dracoLoader);
+          this.loader.load(
+            modelUrl,
+            (gltf) => {
+              this.model = gltf.scene;
+              fitModel(this.model, scaleMeters);
+              this.model.traverse((obj) => {
+                if (obj && obj.isMesh) {
+                  obj.castShadow = false;
+                  obj.receiveShadow = false;
+                }
+              });
+              this.scene.add(this.model);
+              map.triggerRepaint();
+            },
+            undefined,
+            (err) => showLoadErr(err)
+          );
+        },
+        render: function (gl, matrix) {
+          const m = new THREE.Matrix4().fromArray(matrix);
+          const l = new THREE.Matrix4()
+            .makeTranslation(mc.x, mc.y, mc.z)
+            .scale(new THREE.Vector3(meterScale, -meterScale, meterScale))
+            .multiply(new THREE.Matrix4().makeRotationX(rotX))
+            .multiply(new THREE.Matrix4().makeRotationY(rotY))
+            .multiply(new THREE.Matrix4().makeRotationZ(rotZ));
+
+          this.camera.projectionMatrix = m.multiply(l);
+          this.renderer.resetState();
+          this.renderer.render(this.scene, this.camera);
+          map.triggerRepaint();
+        }
+      };
+
+      map.addLayer(customLayer);
+    });
+  </script>
+</body>
+</html>

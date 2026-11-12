@@ -13,6 +13,68 @@ namespace App.Entities
     /// </summary>
     public static class EntityHelper
     {
+        /// <summary>将实体上移一位；树实体只在同级节点中移动，普通实体在本表全体记录中移动。</summary>
+        public static T MoveUp<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, -1);
+
+        /// <summary>将实体下移一位；树实体只在同级节点中移动，普通实体在本表全体记录中移动。</summary>
+        public static T MoveDown<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, 1);
+
+        private static T Move<T>(T entity, int direction) where T : Entity<T>, ISort, new()
+        {
+            ArgumentNullException.ThrowIfNull(entity);
+            if (entity.Id <= 0)
+                throw new ArgumentException("未保存的实体不能调整排序。", nameof(entity));
+
+            // C# 不能仅凭泛型约束重载相同参数签名；通过 ITree<T> 自动识别树实体，
+            // 因而调用方使用同一组扩展方法即可获得普通表或同级树节点的对应行为。
+            var treeEntity = entity as ITree<T>;
+            var rows = Entity.Db.Set<T>().ToList();
+
+            // 筛选出当前实体的同级节点
+            // 按排序号和 ID 对同级列表进行排序
+            var siblings = treeEntity == null
+                ? rows
+                : rows.Where(row => row is ITree<T> treeRow && treeRow.ParentId == treeEntity.ParentId).ToList();
+            siblings = siblings
+                .OrderBy(row => row.SortId)
+                .ThenBy(row => row.Id)
+                .ToList();
+
+            // 找到当前实体在同级列表中的索引
+            var index = siblings.FindIndex(row => row.Id == entity.Id);
+            if (index < 0)
+                throw new InvalidOperationException($"排序实体 {typeof(T).Name}({entity.Id}) 不存在于当前数据集中。");
+
+            // 如果目标索引超出范围，则不做任何调整
+            var targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= siblings.Count)
+                return entity;
+
+            // 交换目标索引的元素与当前元素的位置
+            var moved = siblings[index];
+            siblings.RemoveAt(index);
+            siblings.Insert(targetIndex, moved);
+
+            // 更新排序号
+            var changedRows = new List<T>();
+            for (var i = 0; i < siblings.Count; i++)
+            {
+                var row = siblings[i];
+                var sortId = checked((i + 1) * 10);
+                if (row.SortId == sortId)
+                    continue;
+
+                row.SortId = sortId;
+                changedRows.Add(row);
+            }
+
+            // 保存所有变更的记录
+            foreach (var row in changedRows)
+                row.Save();
+            entity.SortId = moved.SortId;
+            return entity;
+        }
+
         /// <summary>导出实体列表为匿名对象列表</summary>
         public static List<object> Export<T>(this List<T> list, ExportMode type = ExportMode.Normal) where T : IExport
         {

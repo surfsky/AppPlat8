@@ -246,11 +246,7 @@ export class EleTableAppBuilder extends EleAppBuilder {
                 }
 
                 // Inherited postHandler with additional context
-                // 为了最大化向后兼容 + 新 Payload 机制工作可靠：
-                //   (1) 如果 payload 是 "FilterInfo|PageInfo|SelectInfo|ContextInfo" 种类字符串：按 kinds 收集结构化 envelope {Filter, Page, Select, Context}
-                //   (2) 无论 (1) 是否触发，始终再收集一份扁平标准字段 {selectedIds, filters, pageIndex, pageSize, sortField, sortDirection, uniId}
-                //   (3) 最终发送两者的合并对象，让后端 ElePayloadEnvelope 永远能反序列化出非 null
-                // 注意：故意不发送 rows/Rows，避免与后端 STJ CamelCase 属性命名冲突。
+                // 根据 Payload kinds 只构造对应的结构化 envelope，不再重复发送扁平字段。
                 const KIND_TO_KEYS = {
                     FilterInfo: 'Filter',
                     PageInfo:   'Page',
@@ -306,36 +302,11 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     }
                     return Object.keys(envelope).length > 0 ? envelope : null;
                 };
-                // 收集扁平标准字段（EleTable 默认 postHandler 约定形态，任何情况下都带）
-                const collectFlatPayload = () => {
-                    const url = getCurrentUrl();
-                    return {
-                        selectedIds:   getCurrentSelectedIds(),
-                        filters:       (table.filters && table.filters.value) ? table.filters.value : {},
-                        pageIndex:     (table.pageIndex && table.pageIndex.value) || 0,
-                        pageSize:      (table.pageSize && table.pageSize.value) || 50,
-                        sortField:     (table.sortField && table.sortField.value) || '',
-                        sortDirection: (table.sortDirection && table.sortDirection.value) || '',
-                        uniId:         (url.searchParams && url.searchParams.get('uniId')) ? url.searchParams.get('uniId') : ''
-                    };
-                };
                 const inheritedPostHandler = async (name, payload) => {
-                    let structuredEnv = null;
-                    let flatBase = collectFlatPayload();
-
-                    // 约定：当 payload 是字符串且命中 PayloadKinds 关键字时，按 kinds 收集结构化
-                    if (typeof payload === 'string' && /FilterInfo|PageInfo|SelectInfo|ContextInfo/i.test(payload)) {
-                        structuredEnv = collectPayloadEnvelope(payload);
-                    }
-
-                    let finalData;
-                    if (typeof payload === 'string') {
-                        finalData = structuredEnv ? { ...structuredEnv, ...flatBase } : flatBase;
-                    } else if (payload && typeof payload === 'object') {
-                        finalData = { ...payload, ...flatBase };
-                    } else {
-                        finalData = flatBase;
-                    }
+                    const hasKinds = typeof payload === 'string' && /FilterInfo|PageInfo|SelectInfo|ContextInfo/i.test(payload);
+                    const finalData = hasKinds
+                        ? (collectPayloadEnvelope(payload) || {})
+                        : (payload && typeof payload === 'object' ? payload : {});
                     const resp = await builder.postHandler(name, finalData, null);
                     // ---------- Test 按钮：完整 data 宽度占满窗口（88vw + pre 自动换行）----------
                     if (name && String(name).toLowerCase() === 'test') {
@@ -447,26 +418,18 @@ export class EleTableAppBuilder extends EleAppBuilder {
                                     try { restoreSelectedByIds(snapshotIds, snapshotRows); } catch (err) { console.warn('[EleTable.MoveResult] 恢复选中失败', err); }
                                 }
                             }
+                            if (data.reload === true && table && typeof table.loadData === 'function') {
+                                await table.loadData();
+                            }
                         }
                     }
                     return resp;
                 };
                 const inheritedPostStreamHandler = async (name, payload, stateArg = null, streamApi = null) => {
-                    let structuredEnv = null;
-                    let flatBase = collectFlatPayload();
-
-                    if (typeof payload === 'string' && /FilterInfo|PageInfo|SelectInfo|ContextInfo/i.test(payload)) {
-                        structuredEnv = collectPayloadEnvelope(payload);
-                    }
-
-                    let finalData;
-                    if (typeof payload === 'string') {
-                        finalData = structuredEnv ? { ...structuredEnv, ...flatBase } : flatBase;
-                    } else if (payload && typeof payload === 'object') {
-                        finalData = { ...payload, ...flatBase };
-                    } else {
-                        finalData = flatBase;
-                    }
+                    const hasKinds = typeof payload === 'string' && /FilterInfo|PageInfo|SelectInfo|ContextInfo/i.test(payload);
+                    const finalData = hasKinds
+                        ? (collectPayloadEnvelope(payload) || {})
+                        : (payload && typeof payload === 'object' ? payload : {});
                     return builder.postStreamHandler(name, finalData, stateArg, streamApi);
                 };
 

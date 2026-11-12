@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <script src="/Design/tailwindConfig.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100">
+    <div class="p-6 overflow-auto h-screen">
+        <div class="w-full">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-900">设置</h1>
+                <p class="text-slate-600 mt-2">管理您的应用设置和偏好</p>
+            </div>
+
+            <!-- Display Settings -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-6 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h2 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="fas fa-palette text-blue-600"></i>
+                        显示设置
+                    </h2>
+                </div>
+                <div class="divide-y divide-slate-200">
+                    <div class="px-6 py-4">
+                        <h3 class="font-semibold text-slate-900 mb-2">主题</h3>
+                        <div class="flex gap-3">
+                            <button class="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-medium border-2 border-slate-200 transition" onclick="setBlueTheme()">蓝色</button>
+                            <button class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium border-2 border-slate-200 transition" onclick="setPurpleTheme()">紫色</button>
+                            <button class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-800 text-white font-medium border-2 border-slate-200 transition" onclick="setDarkTheme()">暗色</button>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">点击按钮切换应用主题色彩</p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <h3 class="font-semibold text-slate-900 mb-3">字体大小</h3>
+                        <input type="range" min="12" max="18" value="14" class="w-full">
+                        <div class="flex justify-between text-xs text-slate-600 mt-2">
+                            <span>小</span>
+                            <span>中</span>
+                            <span>大</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy & Security -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-6 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h2 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="fas fa-shield-alt text-green-600"></i>
+                        隐私与安全
+                    </h2>
+                </div>
+                <div class="divide-y divide-slate-200">
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-slate-900">两步验证</h3>
+                            <p class="text-slate-600 text-sm">增强账户安全</p>
+                        </div>
+                        <input type="checkbox" checked
+                            class="appearance-none relative w-11 h-6 bg-gray-200 rounded-full
+                                    focus:ring-4 focus:ring-primary-300 transition-all
+                                    checked:bg-primary-600
+                                    before:content-[''] before:absolute before:top-0.5 before:left-0.5
+                                    before:size-5 before:rounded-full before:bg-white before:transition-transform
+                                    checked:before:translate-x-5 cursor-pointer" />
+                    </div>
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-slate-900">数据加密</h3>
+                            <p class="text-slate-600 text-sm">加密您的数据</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        </label>
+                    </div>
+                    <div class="px-6 py-4">
+                        <button class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition">
+                            <i class="fas fa-lock mr-2"></i>修改密码
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Danger Zone -->
+            <div class="bg-red-50 rounded-lg border border-red-200 p-6 mb-6">
+                <h2 class="text-lg font-semibold text-red-900 flex items-center gap-2 mb-4">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    危险操作
+                </h2>
+                <div class="space-y-2">
+                    <button class="px-4 py-2 bg-danger hover:opacity-90 text-white rounded-lg font-medium transition w-full">
+                        清除缓存
+                    </button>
+                    <button class="px-4 py-2 bg-danger hover:opacity-90 text-white rounded-lg font-medium transition w-full">
+                        退出登录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

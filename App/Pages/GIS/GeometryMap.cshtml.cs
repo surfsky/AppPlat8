@@ -88,6 +88,52 @@ namespace App.Pages.GIS
             return BuildResult(0, "保存成功");
         }
 
+        public IActionResult OnPostCopyGeometry([FromBody] CopyReq req)
+        {
+            if (!HasPermission(Permission.GisGeometryEdit))
+                return BuildResult(403, "无权操作");
+            if (req == null || req.Id <= 0)
+                return BuildResult(400, "参数错误");
+
+            try
+            {
+                var item = GisGeometry.Copy(req.Id);
+                return BuildResult(0, "复制成功", new { item.Id, item.Name });
+            }
+            catch (ArgumentException ex)
+            {
+                return BuildResult(400, ex.Message);
+            }
+        }
+
+        public IActionResult OnPostCombineGeometry([FromBody] CombineReq req)
+        {
+            if (!HasPermission(Permission.GisGeometryEdit))
+                return BuildResult(403, "无权操作");
+            if (req?.Ids == null || req.Ids.Length < 2 || req.Ids.Any(id => id <= 0))
+                return BuildResult(400, "合并至少需要选择两个形状点位");
+
+            try
+            {
+                var item = GisGeometry.Combine(req.Ids);
+                return BuildResult(0, "合并成功", new { item.Id, item.Name });
+            }
+            catch (ArgumentException ex)
+            {
+                return BuildResult(400, ex.Message);
+            }
+        }
+
+        public class CopyReq
+        {
+            public long Id { get; set; }
+        }
+
+        public class CombineReq
+        {
+            public long[] Ids { get; set; }
+        }
+
         public class DeleteReq
         {
             public long Id { get; set; }

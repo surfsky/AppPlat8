@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>多面板差异化Cron定时刷新（类封装版）</title>
+  <style>
+    .panel-wrap {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      flex-wrap: wrap;
+    }
+    .panel {
+      border: 1px solid #ccc;
+      padding: 16px;
+      width: 280px;
+      border-radius: 8px;
+    }
+    .cron-desc {
+      color: #666;
+      font-size: 13px;
+      margin: 8px 0;
+    }
+    .time-text {
+      color: #222;
+      font-weight: bold;
+    }
+    .refresh-log {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #096;
+      max-height: 120px;
+      overflow: auto;
+    }
+    .clock-panel {
+      background: #0f172a;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+    .clock-time {
+      font-size: 32px;
+      text-align: center;
+      margin: 12px 0;
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel-wrap">
+    <!-- 1. 每秒刷新时钟面板 -->
+    <div class="panel clock-panel" data-id="clock-panel">
+      <h3>系统实时时钟面板</h3>
+      <div class="cron-desc">刷新规则：每秒刷新（独立高频定时器）</div>
+      <div class="clock-time" id="clockShow">00:00:00</div>
+      <div class="time-text">当前系统时间实时同步</div>
+    </div>
+
+    <!-- 2. 每5秒刷新面板 cron: */5 * * * * ? -->
+    <div class="panel" data-cron="*/5 * * * * ?" data-id="panel5s">
+      <h3>实时预警推送面板</h3>
+      <div class="cron-desc">刷新规则：每5秒执行一次 | Cron: */5 * * * * ?</div>
+      <div class="time-text">上次刷新：<span class="last-time">无</span></div>
+      <div class="refresh-log"></div>
+    </div>
+
+    <!-- 3. 每分钟刷新 cron: 0 */1 * * * ? -->
+    <div class="panel" data-cron="0 */1 * * * ?" data-id="panel2">
+      <h3>实时监控告警面板</h3>
+      <div class="cron-desc">刷新规则：每分钟执行一次 | Cron: 0 */1 * * * ?</div>
+      <div class="time-text">上次刷新：<span class="last-time">无</span></div>
+      <div class="refresh-log"></div>
+    </div>
+
+    <!-- 4. 每5分钟刷新 cron: 0 */5 * * * ? -->
+    <div class="panel" data-cron="0 */5 * * * ?" data-id="panel1">
+      <h3>应急资源总览面板</h3>
+      <div class="cron-desc">刷新规则：每5分钟执行一次 | Cron: 0 */5 * * * ?</div>
+      <div class="time-text">上次刷新：<span class="last-time">无</span></div>
+      <div class="refresh-log"></div>
+    </div>
+
+    <!-- 5. 每日8点刷新 cron: 0 0 8 * * ? -->
+    <div class="panel" data-cron="0 0 8 * * ?" data-id="panel3">
+      <h3>每日值班报表面板</h3>
+      <div class="cron-desc">刷新规则：每日早上8点 | Cron: 0 0 8 * * ?</div>
+      <div class="time-text">上次刷新：<span class="last-time">无</span></div>
+      <div class="refresh-log"></div>
+    </div>
+  </div>
+
+  <script>
+    // ====================== CronParser 独立解析类 ======================
+    class CronParser {
+      /**
+       * 构造函数，传入cron表达式
+       * @param {string} cronStr 6位cron 秒 分 时 日 月 星期
+       */
+      constructor(cronStr) {
+        this.cronStr = cronStr.trim();
+        this.parts = this.cronStr.split(' ');
+        this.secRule = this.parts[0];
+        this.minRule = this.parts[1];
+        this.hourRule = this.parts[2];
+      }
+
+      /**
+       * 获取下一次执行时间
+       * @returns {Date} 下次触发时间
+       */
+      next() {
+        const now = new Date();
+        let nextTime = new Date(now.getTime() + 1000);
+
+        // 规则1：秒级间隔 */10
+        if (this.secRule.startsWith('*/')) {
+          const step = Number(this.secRule.split('/')[1]);
+          const currentSec = nextTime.getSeconds();
+          const offset = step - (currentSec % step);
+          nextTime.setSeconds(nextTime.getSeconds() + offset);
+        }
+
+        // 规则2：分钟间隔 0 */1 / 0 */5
+        if (this.secRule === '0' && this.minRule.startsWith('*/')) {
+          const step = Number(this.minRule.split('/')[1]);
+          const currentMin = nextTime.getMinutes();
+          const offset = step - (currentMin % step);
+          nextTime.setMinutes(nextTime.getMinutes() + offset);
+          nextTime.setSeconds(0);
+        }
+
+        // 规则3：定点每日8点 0 0 8
+        if (this.secRule === '0' && this.minRule === '0' && this.hourRule === '8') {
+          nextTime.setHours(8, 0, 0, 0);
+          // 今日8点已过则取次日8点
+          if (nextTime <= now) {
+            nextTime.setDate(nextTime.getDate() + 1);
+          }
+        }
+
+        return nextTime;
+      }
+    }
+
+    // CronParser 标准调用示例
+    // const cron = new CronParser("*/10 * * * * ?");
+    // const next = cron.next();
+
+    // ====================== 多面板Cron调度管理器 ======================
+    class PanelCronScheduler {
+      constructor() {
+        this.taskMap = new Map();
+      }
+
+      /**
+       * 初始化单块面板定时任务
+       * @param {HTMLElement} panelDom 面板DOM
+       * @param {string} cronStr cron表达式
+       * @param {Function} refreshCallback 刷新回调
+       */
+      initPanelTask(panelDom, cronStr, refreshCallback) {
+        const panelId = panelDom.dataset.id;
+        // 清除该面板旧定时器
+        if (this.taskMap.has(panelId)) {
+          clearTimeout(this.taskMap.get(panelId).timer);
+        }
+
+        try {
+          // 使用 CronParser 类解析
+          const cronInstance = new CronParser(cronStr);
+          const nextExecuteTime = cronInstance.next();
+          const now = new Date();
+          const delayMs = nextExecuteTime.getTime() - now.getTime();
+
+          console.log(`面板${panelId}：下次刷新 ${nextExecuteTime.toLocaleString()}，等待${Math.round(delayMs / 1000)}秒`);
+
+          const timer = setTimeout(() => {
+            refreshCallback(panelDom);
+            // 递归重新计算下一次定时
+            this.initPanelTask(panelDom, cronStr, refreshCallback);
+          }, delayMs);
+
+          this.taskMap.set(panelId, {
+            timer,
+            cronStr,
+            nextExecuteTime
+          })
+        } catch (err) {
+          console.error(`面板${panelId} Cron解析异常：`, err);
+        }
+      }
+
+      // 销毁全部定时任务，释放内存
+      destroyAll() {
+        for (const task of this.taskMap.values()) {
+          clearTimeout(task.timer);
+        }
+        this.taskMap.clear();
+      }
+    }
+
+    // ====================== 业务初始化逻辑 ======================
+    const scheduler = new PanelCronScheduler();
+    let clockTimer = null;
+
+    // 通用面板刷新回调（可替换为后端接口请求）
+    function refreshPanel(panelDom) {
+      const nowStr = new Date().toLocaleString();
+      panelDom.querySelector('.last-time').innerText = nowStr;
+      const logBox = panelDom.querySelector('.refresh-log');
+      logBox.innerHTML += `<div>[${nowStr}] 面板数据自动刷新完成</div>`;
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // 每秒实时时钟更新
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('clockShow').innerText = `${h}:${m}:${s}`;
+    }
+
+    // 批量初始化所有带cron属性的面板
+    document.querySelectorAll('.panel[data-cron]').forEach(panel => {
+      const cronRule = panel.dataset.cron;
+      scheduler.initPanelTask(panel, cronRule, refreshPanel);
+    })
+
+    // 启动时钟定时器
+    updateClock();
+    clockTimer = setInterval(updateClock, 1000);
+
+    // 页面关闭/切换路由，清空所有定时器，防止后台轮询
+    window.addEventListener('beforeunload', () => {
+      scheduler.destroyAll();
+      if (clockTimer) clearInterval(clockTimer);
+    })
+  </script>
+</body>
+</html>

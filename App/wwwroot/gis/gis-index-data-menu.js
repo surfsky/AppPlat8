@@ -3,6 +3,7 @@
         const state = ctx.state;
         const map = ctx.map;
         const onMenuBadgeClick = ctx.onMenuBadgeClick || (() => {});
+        const ensureGeometryMenus = ctx.ensureGeometryMenus || (() => Promise.resolve());
         const applyGeometryVisibility = ctx.applyGeometryVisibility || (() => {});
         const getGeometryCenter = ctx.getGeometryCenter;
         const getGeometryKind = ctx.getGeometryKind;
@@ -114,16 +115,31 @@
                 });
         }
 
-        function setMenuChecked(node, checked, cache = new Map()) {
+        function collectMenuIds(node, includeDescendants = true, result = []) {
+            if (!node) return result;
+            result.push(node.id);
+            if (includeDescendants) (node.children || []).forEach(child => collectMenuIds(child, true, result));
+            return result;
+        }
+
+        async function setMenuChecked(node, checked, cache = new Map()) {
+            if (checked && await ensureGeometryMenus(collectMenuIds(node)) === false) return;
             const ids = getMenuGeometryIds(node, cache);
             ids.forEach(id => state.geometryVisibleMap.set(id, !!checked));
             applyGeometryVisibility();
         }
 
-        function setBatchMenusChecked(menuIds, options = {}) {
+        async function setBatchMenusChecked(menuIds, options = {}) {
             const includeDescendants = options.includeDescendants === true;
             const cache = new Map();
             const checkedSet = new Set((Array.isArray(menuIds) ? menuIds : []).map(Number).filter(Number.isFinite));
+
+            const requestedIds = [];
+            checkedSet.forEach(menuId => {
+                const node = state.menuNodeMap.get(menuId);
+                if (node) requestedIds.push(...collectMenuIds(node, includeDescendants));
+            });
+            if (requestedIds.length > 0 && await ensureGeometryMenus([...new Set(requestedIds)]) === false) return;
 
             if (state.geometries) {
                 state.geometries.forEach(g => state.geometryVisibleMap.set(g.id, false));
@@ -360,11 +376,37 @@
             return false;
         }
 
+        function getDefaultVisibleMenuIds() {
+            return state.menus
+                .filter(menu => isGeometryDefaultVisible(menu.id))
+                .map(menu => menu.id);
+        }
+
+        function getGeometryMenuRoots(menuIds) {
+            const ids = [...new Set((menuIds || []).map(Number).filter(Number.isFinite))];
+            const requested = new Set(ids);
+            return ids.filter(id => {
+                let parentId = state.menuNodeMap.get(id)?.parentId;
+                while (parentId) {
+                    if (requested.has(parentId)) return false;
+                    parentId = state.menuNodeMap.get(parentId)?.parentId;
+                }
+                return true;
+            });
+        }
+
+        function expandGeometryMenuIds(menuIds) {
+            return [...new Set((menuIds || []).flatMap(id => collectMenuIds(state.menuNodeMap.get(Number(id)))))];
+        }
+
         return {
             buildMenuNodes,
             renderMenuTree,
             loadMenus,
             setBatchMenusChecked,
+            getDefaultVisibleMenuIds,
+            getGeometryMenuRoots,
+            expandGeometryMenuIds,
             isGeometryDefaultVisible,
             isMenuZoomVisible,
             isGeometrySelectable

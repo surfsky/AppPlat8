@@ -153,7 +153,6 @@
                     if (!alreadyHasCurrent && defScene) {
                         try {
                             await ctx.loadMenus();
-                            await ctx.loadGeometries();
                             const toSwitch = { id: defScene.id ?? defScene.Id, name: defScene.name ?? defScene.Name };
                             await switchSceneInternal(toSwitch);
                         } catch (e) {
@@ -205,10 +204,6 @@
                     }
 
                     await runFullInit();
-
-                    if (state.menuNodeMap && state.menuNodeMap.size > 0) {
-                        await ctx.loadGeometries();
-                    }
 
                     console.log('[boot] depth=1, 执行 applyProjection(' + state.currentProjection + ')');
                     viewApi.applyProjection(state.currentProjection, { closeMenu: false });

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About AppPlat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./tailwindConfig.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100">
+    <div class="p-6 overflow-auto h-screen">
+        <div class="w-full">
+            <!-- Header -->
+            <div class="flex flex-col items-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-br from-primary-600 to-primary-900 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-rocket text-white text-4xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900">AppPlat</h1>
+                <p class="text-slate-600 mt-2">版本 2.5.0</p>
+                <button onclick="if(window.parent && window.parent.navigateToFromIframe) { window.parent.navigateToFromIframe('setting-general', '设置 - 常规'); } else { alert('无法调用父页面导航方法'); }" class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded cursor-pointer">
+                    <i class="fas fa-arrow-right"></i>
+                    前往设置 (父页面)
+                </button>
+            </div>
+
+            <!-- About Section -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200 mb-6">
+                <h2 class="text-xl font-semibold text-slate-900 mb-4">关于 AppPlat</h2>
+                <p class="text-slate-600 mb-4">
+                    AppPlat 是一个现代化的应用管理和数据分析平台，专为企业用户设计。我们致力于提供直观、高效的用户体验。
+                </p>
+                <p class="text-slate-600">
+                    通过先进的技术栈和优秀的设计，AppPlat 帮助团队更好地协作、更高效地管理数据和业务流程。
+                </p>
+            </div>
+
+            <!-- Features Section -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200 mb-6">
+                <h2 class="text-xl font-semibold text-slate-900 mb-4">主要功能</h2>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-600 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">实时仪表板</h3>
+                            <p class="text-slate-600 text-sm">实时数据展示和业务指标监控</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-600 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">数据分析</h3>
+                            <p class="text-slate-600 text-sm">深度数据分析和趋势预测</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-600 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">团队协作</h3>
+                            <p class="text-slate-600 text-sm">便捷的团队沟通和协作工具</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-600 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">安全保障</h3>
+                            <p class="text-slate-600 text-sm">企业级安全和数据保护</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Section -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200 mb-6">
+                <h2 class="text-xl font-semibold text-slate-900 mb-4">开发团队</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user-tie text-purple-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">张三</h3>
+                            <p class="text-slate-600 text-sm">产品经理</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-code text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">李四</h3>
+                            <p class="text-slate-600 text-sm">技术负责人</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-palette text-pink-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">王五</h3>
+                            <p class="text-slate-600 text-sm">UI/UX 设计师</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-flask text-green-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-900">赵六</h3>
+                            <p class="text-slate-600 text-sm">QA 工程师</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Section -->
+            <div class="bg-gradient-to-r from-primary-500 to-primary-700 rounded-lg p-6 text-white mb-6">
+                <h2 class="text-xl font-semibold mb-4">联系我们</h2>
+                <div class="space-y-2">
+                    <p><i class="fas fa-envelope mr-2"></i>support@appplat.com</p>
+                    <p><i class="fas fa-phone mr-2"></i>+86 010-8888-8888</p>
+                    <p><i class="fas fa-globe mr-2"></i>www.appplat.com</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center py-6">
+                <p class="text-slate-600 text-sm">
+                    © 2024 AppPlat Team. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

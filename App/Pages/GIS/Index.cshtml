@@ -324,7 +324,10 @@
             map,
             getGeometryLayerManager: () => geometryLayerManager,
             onGeometryMarkerClick: (id, evt) => showGeometryDetail(id, evt),
-            onMenuBadgeClick: (menuNode, geometryItems) => openPointListPanel(menuNode, geometryItems)
+            onMenuBadgeClick: async (menuNode, geometryItems) => {
+                await dataApi.loadGeometries([menuNode.id]);
+                return openPointListPanel(menuNode, geometryItems);
+            }
         });
         const actionApi = GisIndexAction.create({
             map,
@@ -418,7 +421,7 @@
                 }
 
                 await loadMenus();
-                await loadGeometries();
+                await loadGeometries([menuId], true);
 
                 if (window.EleManager && typeof window.EleManager.showSuccess === 'function') {
                     const data = res?.data || res?.Data || {};
@@ -528,7 +531,7 @@
         bootstrapApi.initialize();
 
         async function refreshGeometryViews() {
-            await loadGeometries();
+            await loadGeometries(null, true);
             rebuildGeometryPointMarkers();
             applyGeometryVisibility();
             syncGeometryPointMarkerVisibility();
@@ -621,7 +624,7 @@
         function rebuildGeometryPointMarkers() { return dataApi.rebuildGeometryPointMarkers(); }
         function syncGeometryPointMarkerVisibility() { return dataApi.syncGeometryPointMarkerVisibility(); }
         function getActiveGeometryDisplayLayerIds() { return actionApi.getActiveGeometryDisplayLayerIds(); }
-        async function loadGeometries() { return dataApi.loadGeometries(); }
+        async function loadGeometries(menuIds = null, force = false) { return dataApi.loadGeometries(menuIds, force); }
         function bindGeometryMapInteractions() { actionApi.bindGeometryMapInteractions(); }
         function showGeometryDetail(id, evt) { actionApi.openGeometryDetailDrawer(id, evt); }
         function openGeometryDetailDrawer(id) {

@@ -320,7 +320,7 @@
                     state.preservedVisibleGeometryIds = new Set();
                     closeGeometryDetailPanel();
                     closePointListPanel();
-                    dataApi.setBatchMenusChecked(menuIds, { includeDescendants: false });
+                    await dataApi.setBatchMenusChecked(menuIds, { includeDescendants: false });
 
                     await sceneViewPromise;
 

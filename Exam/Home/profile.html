@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./tailwindConfig.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100">
+    <div class="p-6 overflow-auto h-screen">
+        <div class="w-full">
+            <!-- Account Information -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-6 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="fas fa-user text-primary-600"></i>
+                        账户信息
+                    </h3>
+                </div>
+                <div class="divide-y divide-slate-200">
+                    <div class="px-6 py-4">
+                        <p class="text-slate-600 text-sm mb-1">用户名</p>
+                        <p class="text-slate-900 font-medium">zhangsan</p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <p class="text-slate-600 text-sm mb-1">电子邮箱</p>
+                        <p class="text-slate-900 font-medium">zhangsan@appplat.com</p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <p class="text-slate-600 text-sm mb-1">手机号码</p>
+                        <p class="text-slate-900 font-medium">158****0123</p>
+                    </div>
+                    <div class="px-6 py-4">
+                        <p class="text-slate-600 text-sm mb-1">加入时间</p>
+                        <p class="text-slate-900 font-medium">2023年3月15日</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-slate-600 text-sm font-semibold">账户等级</h3>
+                        <i class="fas fa-crown text-yellow-500"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-slate-900">VIP 2</p>
+                </div>
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-slate-600 text-sm font-semibold">累计积分</h3>
+                        <i class="fas fa-coin text-orange-500"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-slate-900">8,520</p>
+                </div>
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-slate-600 text-sm font-semibold">成就徽章</h3>
+                        <i class="fas fa-medal text-blue-500"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-slate-900">23</p>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-6 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="fas fa-trophy text-yellow-600"></i>
+                        最近成就
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-2">
+                                <i class="fas fa-rocket text-2xl text-blue-600"></i>
+                            </div>
+                            <p class="text-xs text-slate-600">快速开始</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-2">
+                                <i class="fas fa-fire text-2xl text-green-600"></i>
+                            </div>
+                            <p class="text-xs text-slate-600">连续登录</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-2">
+                                <i class="fas fa-checked text-2xl text-primary-600"></i>
+                            </div>
+                            <p class="text-xs text-slate-600">完成任务</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-2">
+                                <i class="fas fa-user-team text-2xl text-yellow-600"></i>
+                            </div>
+                            <p class="text-xs text-slate-600">邀请好友</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-6 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h3 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                        <i class="fas fa-history text-gray-600"></i>
+                        最近活动
+                    </h3>
+                </div>
+                <div class="divide-y divide-slate-200">
+                    <div class="px-6 py-4">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-sign-in-alt text-green-600 mt-1"></i>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-slate-900">登录</h4>
+                                <p class="text-slate-600 text-sm">今天 09:30</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-file-upload text-blue-600 mt-1"></i>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-slate-900">上传文件</h4>
+                                <p class="text-slate-600 text-sm">昨天 14:20</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-certificate text-primary-600 mt-1"></i>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-slate-900">获得成就</h4>
+                                <p class="text-slate-600 text-sm">2024-02-08</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3 pb-6">
+                <button class="flex-1 px-4 py-3 bg-primary-600 hover:opacity-80 text-white rounded-lg font-medium transition">
+                    <i class="fas fa-edit mr-2"></i>编辑资料
+                </button>
+                <button class="flex-1 px-4 py-3 bg-secondary-500 hover:opacity-80 text-white rounded-lg font-medium transition">
+                    <i class="fas fa-download mr-2"></i>导出数据
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

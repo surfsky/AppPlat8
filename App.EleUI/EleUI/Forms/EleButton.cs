@@ -108,7 +108,8 @@ namespace App.EleUI
         [HtmlAttributeName("Handler")]         public string Handler { get; set; }
 
         /// <summary>
-        /// 按钮请求时要带上的结构体数据类型（可枚举，可多个逗号分隔）。
+        /// 按钮请求时要带上的结构体数据类型。以 string 接收是为了让 Razor TagHelper
+        /// 原样支持 Flags 枚举的逗号分隔属性写法；随后由 NormalizePayloadKinds 解析为 ElePayloadKinds。
         /// 取值：FilterInfo | PageInfo | SelectInfo | RowsInfo | ContextInfo，
         /// 或预设字符串 "All"、"StandardPaging"、"Move"。
         /// <example>

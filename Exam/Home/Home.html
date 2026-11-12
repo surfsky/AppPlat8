@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppPlat Home - Integrated Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./tailwindConfig.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- colors are loaded from /Design/colors.js -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.hidden-mobile {
+            transform: translateX(-100%);
+        }
+
+        .main-content {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* inset shadow on sidebar right edge for depth */
+        #sidebar {
+            /*box-shadow: inset -4px 0 12px rgba(0, 0, 0, 0.15);*/
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 30;
+            display: none;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .navbar-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .nav-group {
+            margin-bottom: 8px;
+        }
+
+        .nav-sub-items {
+            transition: all 0.3s ease;
+            max-height: 200px;
+            overflow: hidden;
+        }
+
+        .nav-sub-items.hidden {
+            max-height: 0;
+            opacity: 0;
+        }
+        /* slide animation for mobile top nav */
+        #topNav {
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+        }
+        #topNav.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="app" class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar w-60 h-screen bg-gradient-to-b from-purple-500 via-purple-700 to-purple-900 fixed left-0 top-0 -translate-x-full md:relative md:translate-x-0 z-40 flex flex-col overflow-y-auto shadow-lg">
+            <!-- Logo Area -->
+            <div class="flex flex-col items-center justify-center h-15 mb-3 pb-3 p-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                        <i class="fas fa-rocket text-purple-600 text-base"></i>
+                    </div>
+                    <div class="text-white text-xl font-bold">AppPlat</div>
+                </div>
+            </div>
+
+            <!-- Navigation Items -->
+            <div class="flex-1 flex flex-col gap-1 pt-5 px-3">
+                <div data-page="dashboard" class="nav-item nav-dashboard flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 text-slate-300 hover:bg-white hover:bg-opacity-10" @click="navigateTo('dashboard', '仪表板')">
+                    <i class="fas fa-th-large w-5"></i>
+                    <span class="text-sm">Dashboard</span>
+                </div>
+
+                <!-- Analytics Group -->
+                <div class="nav-group">
+                    <div class="nav-item-parent flex items-center justify-between h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300" @click="toggleAnalyticsGroup">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-chart-line w-5"></i>
+                            <span class="text-sm">Analytics</span>
+                        </div>
+                        <i class="fas fa-chevron-right w-4 transition-transform" style="display: inline-block; transform: rotate(0deg);" id="analyticsChevron"></i>
+                    </div>
+                    <div class="nav-sub-items hidden" id="analyticsSubs">
+                        <div data-page="analytics" class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs ml-3" @click="navigateTo('analytics', 'Analytics - 报告')">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>Reports</span>
+                        </div>
+                        <div data-page="analytics" class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs ml-3" @click="navigateTo('analytics', 'Analytics - 趋势')">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>Trends</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div data-page="about" class="nav-item flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300" @click="navigateTo('about', '关于应用')">
+                    <i class="fas fa-info-circle w-5"></i>
+                    <span class="text-sm">About</span>
+                </div>
+
+                <!-- Settings Group -->
+                <div class="nav-group">
+                    <div class="nav-item-parent flex items-center justify-between h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300" @click="toggleSettingsGroup">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-cog w-5"></i>
+                            <span class="text-sm">Settings</span>
+                        </div>
+                        <i class="fas fa-chevron-right w-4 transition-transform" style="display: inline-block; transform: rotate(0deg);" id="settingsChevron"></i>
+                    </div>
+                    <div class="nav-sub-items hidden" id="settingsSubs">
+                        <div data-page="setting" class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs ml-3" @click="navigateTo('setting', '设置 - 常规')">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>General</span>
+                        </div>
+                        <div data-page="setting" class="nav-item flex items-center gap-2 h-8 px-2 py-1 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300 text-xs ml-3" @click="navigateTo('setting', '设置 - 隐私')">
+                            <i class="fas fa-arrow-right w-3"></i>
+                            <span>Privacy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div data-page="profile" class="nav-item flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300" @click="navigateTo('profile', '个人资料')">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="text-sm">Profile</span>
+                </div>
+            </div>
+
+            <!-- Footer Navigation -->
+            <div class="flex flex-col gap-2 px-3 py-3">
+                <div class="nav-item flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300">
+                    <i class="fas fa-user w-5"></i>
+                    <span class="text-sm">Account</span>
+                </div>
+                <div class="nav-item flex items-center gap-3 h-10 px-2 py-2 rounded-md cursor-pointer transition-all duration-300 hover:bg-white hover:bg-opacity-10 text-slate-300">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span class="text-sm">Logout</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div id="sidebarOverlay" class="sidebar-overlay" @click="closeSidebar"></div>
+
+        <!-- Main Content Area -->
+        <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden">
+            <!-- Top Navigation Bar (Mobile) -->
+            <div id="topNav" class="flex md:hidden bg-white border-b border-slate-200 px-4 py-3 items-center justify-between h-16">
+                <button id="backBtn" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all" @click="navigateBack">
+                    <i class="fas fa-arrow-left text-lg text-slate-900"></i>
+                </button>
+                <div id="navTitle" class="flex-1 text-center px-4">
+                    <h2 class="text-lg font-semibold text-slate-900 navbar-title">仪表板</h2>
+                </div>
+                <button id="menuBtn" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-all" @click="toggleSidebar">
+                    <i class="fas fa-bars text-lg text-slate-900"></i>
+                </button>
+            </div>
+
+            <!-- Content Container with iframe -->
+            <div class="flex-1 overflow-hidden">
+                <iframe id="contentFrame" src="/Design/dashboard-content.html" class="w-full h-full"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const currentPage = ref('dashboard');
+                const currentTitle = ref('仪表板');
+                const sidebarOpen = ref(false);
+                const navigationHistory = ref([]);
+
+                const pageMap = {
+                    'dashboard': { url: '/Design/dashboard-content.html', title: '仪表板' },
+                    'analytics': { url: '/Design/analytics.html', title: 'Analytics' },
+                    'about': { url: '/Design/about.html', title: '关于应用' },
+                    'setting': { url: '/Design/setting.html', title: '设置' },
+                    'profile': { url: '/Design/profile.html', title: '个人资料' }
+                };
+
+                const navigateTo = (page, title = '', pushHistory = true) => {
+                    if (pushHistory) navigationHistory.value.push(currentPage.value);
+                    currentPage.value = page;
+                    currentTitle.value = title || pageMap[page]?.title || page;
+                    
+                    const iframe = document.getElementById('contentFrame');
+                    const pageConfig = pageMap[page];
+                    if (pageConfig) {
+                        iframe.src = pageConfig.url;
+                    }
+
+                    // Update active nav item (use data-page attributes)
+                    document.querySelectorAll('[data-page]').forEach(item => item.classList.remove('active'));
+                    const activeEl = document.querySelector(`[data-page="${page}"]`);
+                    if (activeEl) activeEl.classList.add('active');
+
+                    // set location hash so direct links work
+                    try { location.hash = page; } catch (e) { /* ignore */ }
+
+                    // Close sidebar on mobile
+                    closeSidebar();
+
+                    // Update title on mobile
+                    const navTitle = document.getElementById('navTitle');
+                    if (navTitle) {
+                        navTitle.innerHTML = `<h2 class="text-lg font-semibold text-slate-900 navbar-title">${currentTitle.value}</h2>`;
+                    }
+
+                    // Update back button visibility
+                    updateBackButtonVisibility();
+                };
+
+                // Expose a helper for iframe pages to request navigation on the parent
+                // Usage from iframe: window.parent.navigateToFromIframe('setting', '设置')
+                window.navigateToFromIframe = (page, title) => {
+                    navigateTo(page, title);
+                };
+
+                // Update back button visibility based on history
+                const updateBackButtonVisibility = () => {
+                    const backBtn = document.getElementById('backBtn');
+                    if (backBtn) {
+                        if (navigationHistory.value.length > 0) {
+                            backBtn.style.opacity = '1';
+                            backBtn.style.pointerEvents = 'auto';
+                        } else {
+                            backBtn.style.opacity = '0.3';
+                            backBtn.style.pointerEvents = 'none';
+                        }
+                    }
+                };
+
+                // on mount, check location.hash for direct navigation and initialize UI
+                onMounted(() => {
+                    const topNav = document.getElementById('topNav');
+
+                    // initialize topNav visibility with smooth slide animation on breakpoint
+                    const handleTopNavResize = () => {
+                        try {
+                            if (window.innerWidth < 768) {
+                                // ensure visible element for small screens
+                                topNav.style.display = 'flex';
+                                requestAnimationFrame(() => topNav.classList.add('visible'));
+                            } else {
+                                // hide with animation then allow CSS to take over
+                                topNav.classList.remove('visible');
+                                setTimeout(() => { topNav.style.display = ''; }, 260);
+                            }
+                        } catch (e) { /* ignore */ }
+                    };
+
+                    window.addEventListener('resize', handleTopNavResize);
+                    handleTopNavResize();
+
+                    // Initialize back button visibility
+                    updateBackButtonVisibility();
+
+                    // Check for direct hash navigation
+                    const hash = (location.hash || '').replace('#', '').trim();
+                    if (hash && pageMap[hash]) {
+                        // navigate without polluting history
+                        navigateTo(hash, pageMap[hash].title, false);
+                    } else {
+                        // load default page content but don't mark as active
+                        const iframe = document.getElementById('contentFrame');
+                        const defaultPageConfig = pageMap['dashboard'];
+                        if (defaultPageConfig) {
+                            iframe.src = defaultPageConfig.url;
+                        }
+                    }
+                });
+
+                const navigateBack = () => {
+                    if (navigationHistory.value.length > 0) {
+                        const prevPage = navigationHistory.value.pop();
+                        currentPage.value = prevPage;
+                        currentTitle.value = pageMap[prevPage]?.title || prevPage;
+                        
+                        const iframe = document.getElementById('contentFrame');
+                        const pageConfig = pageMap[prevPage];
+                        if (pageConfig) {
+                            iframe.src = pageConfig.url;
+                        }
+
+                        // Update title
+                        const navTitle = document.getElementById('navTitle');
+                        if (navTitle) {
+                            navTitle.innerHTML = `<h2 class="text-lg font-semibold text-slate-900 navbar-title">${currentTitle.value}</h2>`;
+                        }
+
+                        // Update back button visibility
+                        updateBackButtonVisibility();
+                    }
+                };
+
+                const toggleSidebar = () => {
+                    sidebarOpen.value = !sidebarOpen.value;
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+                    
+                    if (sidebarOpen.value) {
+                        sidebar.classList.remove('-translate-x-full');
+                        sidebar.classList.add('translate-x-0');
+                        overlay.classList.add('active');
+                    } else {
+                        sidebar.classList.add('-translate-x-full');
+                        sidebar.classList.remove('translate-x-0');
+                        overlay.classList.remove('active');
+                    }
+                };
+
+                const closeSidebar = () => {
+                    sidebarOpen.value = false;
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+                    sidebar.classList.add('-translate-x-full');
+                    sidebar.classList.remove('translate-x-0');
+                    overlay.classList.remove('active');
+                };
+
+                const toggleAnalyticsGroup = () => {
+                    const subs = document.getElementById('analyticsSubs');
+                    const chevron = document.getElementById('analyticsChevron');
+                    subs.classList.toggle('hidden');
+                    const isHidden = subs.classList.contains('hidden');
+                    chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(90deg)';
+                };
+
+                const toggleSettingsGroup = () => {
+                    const subs = document.getElementById('settingsSubs');
+                    const chevron = document.getElementById('settingsChevron');
+                    subs.classList.toggle('hidden');
+                    const isHidden = subs.classList.contains('hidden');
+                    chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(90deg)';
+                };
+
+                return {
+                    currentPage,
+                    currentTitle,
+                    sidebarOpen,
+                    navigateTo,
+                    navigateBack,
+                    toggleSidebar,
+                    closeSidebar,
+                    toggleAnalyticsGroup,
+                    toggleSettingsGroup
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

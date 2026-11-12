@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapbox 卫星云图 + 气象雷达（国内可用版）</title>
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; }
+    #map { width: 100vw; height: 100vh; }
+    .layer-control {
+      position: fixed; top: 20px; right: 20px;
+      background: white; padding: 15px; border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 999;
+    }
+    .layer-control label { display: block; margin: 8px 0; cursor: pointer; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="layer-control">
+    <label><input type="checkbox" id="radar" checked> 气象雷达</label>
+    <label><input type="checkbox" id="cloud"> 卫星云图（FY-4A）</label>
+  </div>
+
+  <script>
+    // 替换成你自己的 Mapbox Token（必须）
+    mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/light-v10', // 用浅色底图，气象图层更清晰
+      center: [116.4, 39.9], // 默认北京
+      zoom: 5,
+      projection: 'mercator' // 改用墨卡托投影，避免瓦片偏移
+    });
+
+    map.addControl(new mapboxgl.NavigationControl());
+    map.addControl(new mapboxgl.FullscreenControl());
+
+    // 获取RainViewer最新雷达瓦片URL（官方正确格式）
+    async function getRainViewerRadarURL() {
+      try {
+        const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+        const data = await res.json();
+        const latestRadar = data.radar.past[data.radar.past.length - 1];
+        // 新版瓦片格式：https://tilecache.rainviewer.com/v2/radar/{time}/256/{z}/{x}/{y}/5/1_1.png
+        return `https://tilecache.rainviewer.com/v2/radar/${latestRadar.time}/256/{z}/{x}/{y}/5/1_1.png`;
+      } catch (err) {
+        console.error('获取雷达数据失败', err);
+        return null;
+      }
+    }
+
+    map.on('load', async () => {
+      // 1. 加载气象雷达图层
+      const radarURL = await getRainViewerRadarURL();
+      if (radarURL) {
+        map.addSource('radar-source', {
+          type: 'raster',
+          tiles: [radarURL],
+          tileSize: 256
+        });
+        map.addLayer({
+          id: 'radar-layer',
+          type: 'raster',
+          source: 'radar-source',
+          paint: { 'raster-opacity': 0.7 }
+        });
+      }
+
+      // 2. 加载风云四号卫星云图（国内数据源，稳定无跨域）
+      map.addSource('cloud-source', {
+        type: 'raster',
+        tiles: [
+          'https://api.tianditu.gov.cn/imgserver/imgservice?T=img_w&x={x}&y={y}&l={z}&tk=2c71689b0e3d5d72314d4bfe1102d5c0'
+        ],
+        tileSize: 256
+      });
+      map.addLayer({
+        id: 'cloud-layer',
+        type: 'raster',
+        source: 'cloud-source',
+        paint: { 'raster-opacity': 0.5 }
+      });
+      map.setLayoutProperty('cloud-layer', 'visibility', 'none');
+
+      // 绑定开关事件
+      document.getElementById('cloud').addEventListener('change', e => {
+        map.setLayoutProperty('cloud-layer', 'visibility', e.target.checked ? 'visible' : 'none');
+      });
+      document.getElementById('radar').addEventListener('change', e => {
+        map.setLayoutProperty('radar-layer', 'visibility', e.target.checked ? 'visible' : 'none');
+      });
+    });
+  </script>
+</body>
+</html>

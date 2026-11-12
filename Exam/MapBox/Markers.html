@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapbox 点位挂图实验 - Markers</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      overflow: hidden;
+      background: #07111f;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #07111f;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="map"></div>
+  </div>
+
+  <script type="module">
+    import { MapMarkerRender } from "./js/core/MapMarkerRender.js?v=7";
+
+    //------------------------------------------------------
+    // 基础配置
+    //------------------------------------------------------
+    mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
+
+    const points = [
+      { id: 1, name: "应急指挥中心", type: "核心站点", area: "龙湾中心", icon: "./icons/rescue@2x.png", scale: 1.18, coords: [120.8481, 27.9327] },
+      { id: 2, name: "永中街道服务站", type: "社区联络", area: "永中", icon: "./icons/mobile@2x.png", scale: 0.96, coords: [120.8189, 27.9408] },
+      { id: 3, name: "机场片区值守点", type: "交通保障", area: "滨海", icon: "./icons/camera-dome@2x.png", scale: 1.08, coords: [120.8588, 27.9151] },
+      { id: 4, name: "瑶溪巡查点", type: "山洪监测", area: "瑶溪", icon: "./icons/landslide@2x.png", scale: 1.04, coords: [120.7915, 27.9827] },
+      { id: 5, name: "海滨堤防点", type: "防汛防台", area: "海滨", icon: "./icons/shieldcross@2x.png", scale: 1.12, coords: [120.8862, 27.9381] },
+      { id: 6, name: "永兴港区点", type: "港区保障", area: "永兴", icon: "./icons/ship@2x.png", scale: 1.08, coords: [120.8669, 27.9638] },
+      { id: 7, name: "状元物流点", type: "物资储备", area: "状元", icon: "./icons/cargo@2x.png", scale: 1.14, coords: [120.7443, 27.9536] },
+      { id: 8, name: "沙城避灾点", type: "避灾安置", area: "沙城", icon: "./icons/hospital@2x.png", scale: 1.1, coords: [120.8916, 27.9726] },
+      { id: 9, name: "天河社区点", type: "群众转移", area: "天河", icon: "./icons/police@2x.png", scale: 1, coords: [120.8842, 27.9955] },
+      { id: 10, name: "灵昆岛东侧点", type: "海塘巡查", area: "灵昆", icon: "./icons/camera-bullet@2x.png", scale: 1.02, coords: [120.9687, 27.9907] },
+      { id: 11, name: "灵昆岛西侧点", type: "桥梁监测", area: "灵昆", icon: "./icons/drone@2x.png", scale: 1.02, coords: [120.9301, 27.9725] },
+      { id: 12, name: "高新区北侧点", type: "园区值守", area: "高新", icon: "./icons/factory@2x.png", scale: 1.06, coords: [120.7847, 27.9724] },
+      { id: 13, name: "永昌堡遗址点", type: "文化保护", area: "永昌", icon: "./icons/building@2x.png", scale: 2, coords: [120.8327, 27.9557] },
+      { id: 14, name: "滨海大道联络点", type: "路网监控", area: "滨海", icon: "./icons/electry@2x.png", scale: 4, coords: [120.9079, 27.9528] }
+    ];
+
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/light-v11",
+      center: [120.8539, 27.9582],
+      zoom: 11.35,
+      pitch: 0,
+      bearing: 0,
+      attributionControl: true
+    });
+
+    map.addControl(new mapboxgl.NavigationControl(), "top-right");
+    map.addControl(new mapboxgl.FullscreenControl(), "top-right");
+
+    //------------------------------------------------------
+    // 渲染配置
+    //------------------------------------------------------
+    const markerRender = new MapMarkerRender({
+      dock: [
+        { position: "top", margin: "20px" },
+        { position: "bottom", margin: "20px" },
+        { position: "left", margin: "16px" },
+        { position: "right", margin: "16px" }
+      ],
+      dockStyle: {
+        labelBg: "rgba(8, 18, 36, 0.84)",
+        lineColor: "rgba(96, 165, 250, 0.94)",
+        guideColor: "rgba(148, 163, 184, 0.34)",
+        labelWidth: 170,
+        cardHeight: 56,
+        fields: {
+          no: "id",
+          title: "name",
+          sub: ["type", "area"]
+        }
+      },
+      normalStyle: {
+        labelBg: "rgba(8, 18, 36, 0.84)",
+        content: "{id}.{name}"
+      },
+      pointClick: (item) => {
+        alert("pointClick：" + item.name);
+      }
+    });
+    map.addControl(markerRender.RenderControl(), "top-right");
+
+    //------------------------------------------------------
+    // 生命周期
+    //------------------------------------------------------
+    map.on("load", () => {
+      map.setFog({
+        range: [0.6, 8],
+        color: "#f8fbff",
+        "horizon-blend": 0.08,
+        "high-color": "#eef6ff",
+        "space-color": "#dcefff",
+        "star-intensity": 0
+      });
+
+      markerRender.render({
+        map,
+        points,
+        renderMode: "dock",
+        renderMarker: true,
+        renderLabel: true,
+        renderLine: true
+      });
+    });
+  </script>
+</body>
+</html>

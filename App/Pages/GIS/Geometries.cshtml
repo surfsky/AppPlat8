@@ -32,6 +32,8 @@
                 <EleButton Type="Primary" Command="Search" Icon="Search">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete">删除</EleButton>
+                <EleButton Type="Primary" Icon="CopyDocument" VClick="copySelected" Visible="@Auth.HasPermission(Permission.GisGeometryEdit)">复制</EleButton>
+                <EleButton Type="Warning" Icon="Connection" VClick="combineSelected" Visible="@Auth.HasPermission(Permission.GisGeometryEdit)">合并</EleButton>
                 <EleButton Type="Warning" Icon="Refresh" VClick="openCoordBatchDrawer" Visible="@Auth.HasPermission(Permission.GisGeometryEdit)">批量修改坐标系</EleButton>
                 <EleButton Type="Success" Icon="Location" NavigateUrl="@mapUrl" Visible="false">地图编辑</EleButton>
                 <EleButton Type="Warning" Icon="Upload" PopupTitle="导入点位" PopupUrl="@(queryMenuId.IsEmpty() ? "/GIS/GeometryImporter" : $"/GIS/GeometryImporter?menuId={queryMenuId}")" >导入</EleButton>
@@ -61,8 +63,38 @@
 
 @section script {
     <script>
+        const getCsrfToken = () => document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        const runGeometryOperation = async (vm, handler, ids) => {
+            try {
+                const res = await axios.post('?handler=' + handler, ids, {
+                    headers: { 'RequestVerificationToken': getCsrfToken() }
+                });
+                if (res.data?.code !== 0) throw new Error(res.data?.msg || '操作失败');
+                EleManager.showSuccess(handler === 'Copy' ? '复制成功' : '合并成功');
+                await vm.loadData();
+            } catch (err) {
+                EleManager.showError(err.message || '操作失败');
+            }
+        };
         const userMixin = {
             methods: {
+                async copySelected() {
+                    const ids = Array.isArray(this.selectedIds?.value) ? this.selectedIds.value : [];
+                    if (ids.length !== 1) {
+                        EleManager.showWarning('复制时请只选择一个点位');
+                        return;
+                    }
+                    await runGeometryOperation(this, 'Copy', ids);
+                },
+                async combineSelected() {
+                    const ids = Array.isArray(this.selectedIds?.value) ? this.selectedIds.value : [];
+                    if (ids.length < 2) {
+                        EleManager.showWarning('合并至少需要选择两个形状点位');
+                        return;
+                    }
+                    try { await EleManager.confirm('将所选形状合并为一个新点位，原点位会保留。继续吗？'); } catch { return; }
+                    await runGeometryOperation(this, 'Combine', ids);
+                },
                 openCoordBatchDrawer() {
                     const ids = Array.isArray(this.selectedIds?.value) ? this.selectedIds.value : [];
                     if (ids.length === 0) {

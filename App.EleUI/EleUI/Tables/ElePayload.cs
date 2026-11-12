@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace App.EleUI
@@ -67,17 +66,12 @@ namespace App.EleUI
 
 
     /// <summary>
-    /// EleButton Payload 请求容器：后端统一模型就绑这一个。
-    /// 同时兼容两种 payload 形态：
-    ///   (1) 结构化新形态：{ Filter, Page, Select, Context }
-    ///   (2) EleTable 默认扁平形态：{ selectedIds, filters, pageIndex, pageSize, sortField, sortDirection, uniId }
-    /// 注意：故意不再提供 Rows/rows 结构，避免 STJ CamelCase 策略下"Rows" 与 "rows" 属性名冲突导致的 500。
-    ///       若业务确实需要当前页数据，可从后端用相同过滤+分页条件重新查询一次即可。
+    /// EleButton Payload 请求容器，仅使用结构化的 Filter、Page、Select、Context 字段。
     /// </summary>
     public class ElePayload
     {
         //========================================
-        // 第 1 部分：结构化新 DTO（Payload="All/Move/..." 时使用）
+        // 结构化 Payload（Payload="All/Move/..." 时使用）
         //========================================
         public FilterInfo   Filter  { get; set; }
         public PageInfo     Page    { get; set; }
@@ -85,69 +79,15 @@ namespace App.EleUI
         public ContextInfo  Context { get; set; }
 
         //========================================
-        // 第 2 部分：扁平兼容字段（EleTable 默认 postHandler payload 或旧链路使用）
+        // 便利属性，避免业务代码到处判空。
         //========================================
-        [JsonPropertyName("selectedIds")]   public List<long>                 SelectedIds_Flat { get; set; }
-        [JsonPropertyName("filters")]       public Dictionary<string, object> Filters_Flat { get; set; }
-        [JsonPropertyName("pageIndex")]     public int?                       PageIndex_Flat { get; set; }
-        [JsonPropertyName("pageSize")]      public int?                       PageSize_Flat { get; set; }
-        [JsonPropertyName("sortField")]     public string                     SortField_Flat { get; set; }
-        [JsonPropertyName("sortDirection")] public string                     SortDirection_Flat { get; set; }
-        [JsonPropertyName("uniId")]         public string                     UniId_Flat { get; set; }
+        [JsonIgnore] public string UniId => Context?.UniId ?? string.Empty;
+        [JsonIgnore] public List<long> SelectedIds => Select?.Ids ?? new List<long>();
+        [JsonIgnore] public int   SelectedCount   => SelectedIds?.Count ?? 0;
+        [JsonIgnore] public long? FirstSelectedId => SelectedCount > 0 ? SelectedIds[0] : null;
+        [JsonIgnore] public Dictionary<string, object> FilterItems => Filter?.Items ?? new Dictionary<string, object>();
+        [JsonIgnore] public string FilterKeys => FilterItems != null ? string.Join(",", FilterItems.Keys) : string.Empty;
+        [JsonIgnore] public (int PageIndex, int PageSize, string SortField, string SortDirection) Pager => (Page?.PageIndex ?? 0, Page?.PageSize ?? 0, Page?.SortField ?? string.Empty, Page?.SortDirection ?? string.Empty);
 
-        //========================================
-        // 第 3 部分：便利属性：结构化优先，扁平兜底（避免业务代码到处判空）
-        //========================================
-        [JsonIgnore]
-        public List<long> SafeSelectedIds
-        {
-            get
-            {
-                if (Select?.Ids?.Count > 0) return Select.Ids;
-                if (SelectedIds_Flat?.Count > 0) return SelectedIds_Flat;
-                return new List<long>();
-            }
-        }
-
-        [JsonIgnore] public int   SafeSelectedCount   => SafeSelectedIds?.Count ?? 0;
-        [JsonIgnore] public long? SafeFirstSelectedId => SafeSelectedCount > 0 ? SafeSelectedIds[0] : null;
-
-        [JsonIgnore]
-        public Dictionary<string, object> SafeFilterItems
-        {
-            get
-            {
-                if (Filter?.Items != null && Filter.Items.Count > 0) return Filter.Items;
-                if (Filters_Flat?.Count > 0) return Filters_Flat;
-                return new Dictionary<string, object>();
-            }
-        }
-
-        [JsonIgnore] public string SafeFilterKeys => SafeFilterItems != null ? string.Join(",", SafeFilterItems.Keys) : string.Empty;
-
-        [JsonIgnore]
-        public (int PageIndex, int PageSize, string SortField, string SortDirection) SafePage
-        {
-            get
-            {
-                if (Page != null)
-                    return (Page.PageIndex, Page.PageSize, Page.SortField ?? string.Empty, Page.SortDirection ?? string.Empty);
-                return (
-                    PageIndex_Flat ?? 0,
-                    PageSize_Flat ?? 0,
-                    SortField_Flat ?? string.Empty,
-                    SortDirection_Flat ?? string.Empty
-                );
-            }
-        }
-
-        [JsonIgnore]
-        public string SafeUniId => !string.IsNullOrWhiteSpace(Context?.UniId) ? Context.UniId : (UniId_Flat ?? string.Empty);
-
-        //========================================
-        // 第 4 部分：兜底：任何不匹配字段都保留，保证 env 永远不为 null
-        //========================================
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement> ExtensionData { get; set; } = new();
     }
 }

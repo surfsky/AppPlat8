@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tailwind 主题切换（JS 定义 CSS 变量）</title>
+  <!-- 引入 Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 基础样式（仅保留过渡动画，背景色和文本色由JS设置） -->
+  <style type="text/css">
+    /* 全局样式 + 过渡动画（仅保留过渡效果） */
+    body {
+      transition: all 0.2s ease; /* 只保留过渡动画 */
+      margin: 0; /* 新增：清除默认边距 */
+    }
+
+    /* 聚焦样式 */
+    .focus-primary {
+      outline: none !important;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.7) !important;
+      border-color: var(--color-primary) !important;
+    }
+
+    /* Switch 开关样式（暗色/亮色模式） */
+    .theme-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 26px;
+    }
+    .theme-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--color-switch-off);
+      transition: .2s;
+      border-radius: 26px;
+    }
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    /* 直接使用 primary 颜色作为开关选中背景 */
+    input:checked + .switch-slider {
+      background-color: var(--color-primary);
+    }
+    input:checked + .switch-slider:before {
+      transform: translateX(24px);
+    }
+
+    /* Groupbox 分组按钮样式（颜色主题） */
+    .theme-groupbox {
+      display: inline-flex;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--color-primary);
+    }
+    .theme-groupbox button {
+      padding: 8px 16px;
+      background-color: transparent;
+      color: var(--color-text);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .theme-groupbox button.active {
+      background-color: var(--color-primary);
+      color: white;
+    }
+    /* 移除 rgba 依赖，改用 opacity 实现 hover 效果 */
+    .theme-groupbox button:hover:not(.active) {
+      background-color: var(--color-primary);
+      opacity: 0.1;
+    }
+  </style>
+
+
+</head>
+<body class="min-h-screen p-6 md:p-10">
+  <div class="max-w-3xl mx-auto">
+    <!-- 控件区域：Switch + Groupbox -->
+    <div class="flex flex-wrap items-center gap-6 mb-10">
+      <!-- 暗色/亮色模式：Switch 开关（修改文字为“暗色模式”） -->
+      <div class="flex items-center gap-2">
+        <span>暗色模式：</span>
+        <label class="theme-switch">
+          <input type="checkbox" id="darkModeSwitch">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+
+      <!-- 颜色主题：Groupbox 分组按钮 -->
+      <div class="flex items-center gap-2">
+        <span>颜色主题：</span>
+        <div class="theme-groupbox" id="colorThemeGroup">
+          <button data-theme="blue" class="active">蓝色</button>
+          <button data-theme="purple">紫色</button>
+          <button data-theme="green">绿色</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 测试内容区 -->
+    <div class="grid grid-cols-1 gap-6">
+      <!-- 卡片 1 -->
+      <div class="bg-card rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+        <h3 class="text-xl font-semibold text-primary mb-3">主色文字</h3>
+        <h3 class="text-xl font-semibold text-secondary mb-3">次色文字</h3>
+        <button class="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:opacity-90 transition-colors mr-4">
+          主色按钮
+        </button>
+        <button class="mt-4 px-4 py-2 bg-secondary text-white rounded-md hover:opacity-90 transition-colors">
+          次色按钮
+        </button>
+        <input type="text" placeholder="输入框聚焦显主色" class="my-4 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg transition-all" onfocus="this.classList.add('focus-primary')" onblur="this.classList.remove('focus-primary')">
+      </div>
+    </div>
+  </div>
+
+  <!-- Tailwind 配置 -->
+  <script>
+    // 配置 Tailwind 主题（仅保留基础颜色）
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: 'var(--color-primary)',
+            secondary: 'var(--color-secondary)',
+            bg: 'var(--color-bg)',
+            text: 'var(--color-text)',
+            card: 'var(--color-card)',
+          },
+        },
+      }
+    }
+
+    /**
+     * 主题管理器类
+     * 负责处理主题切换、存储和初始化
+     */
+    class ThemeManager {
+      constructor() {
+        // 1. 定义所有主题的颜色变量
+        this.themeConfigs = {
+          // 基础模式（亮色/暗色）
+          light: {
+            '--color-primary': '#3b82f6',
+            '--color-secondary': '#8b5cf6',
+            '--color-bg': '#ffffff',
+            '--color-text': '#1f2937',
+            '--color-card': '#f3f4f6',
+            '--color-switch-off': '#e5e7eb'
+          },
+          dark: {
+            '--color-primary': '#60a5fa',
+            '--color-secondary': '#a78bfa',
+            '--color-bg': '#1f2937',
+            '--color-text': '#f9fafb',
+            '--color-card': '#374151',
+            '--color-switch-off': '#4b5563'
+          },
+          // 颜色主题（覆盖主色和次色）
+          blue: {
+            '--color-primary': '#3b82f6',
+            '--color-secondary': '#8b5cf6'
+          },
+          purple: {
+            '--color-primary': '#8b5cf6',
+            '--color-secondary': '#ec4899'
+          },
+          green: {
+            '--color-primary': '#10b981',
+            '--color-secondary': '#f59e0b'
+          }
+        };
+
+        // 2. 本地存储key
+        this.storageKeys = {
+          darkMode: 'darkMode',
+          colorTheme: 'colorTheme'
+        };
+
+        // 初始化主题（仅设置变量，不处理控件）
+        this.initTheme();
+      }
+
+      // 私有方法：设置CSS变量
+      #setCssVariables(variables) {
+        const root = document.documentElement;
+        Object.entries(variables).forEach(([key, value]) => {
+          root.style.setProperty(key, value);
+        });
+      }
+
+      // 新增私有方法：设置body样式
+      #setBodyStyles() {
+        const body = document.body;
+        // 从CSS变量中获取当前的背景色和文本色
+        const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--color-bg');
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--color-text');
+        
+        // 动态设置body的背景色和文本色
+        body.style.backgroundColor = bgColor;
+        body.style.color = textColor;
+      }
+
+      // 核心方法1：设置颜色主题
+      setTheme(themeName) {
+        // 验证主题名称是否合法
+        if (!['blue', 'purple', 'green'].includes(themeName)) {
+          console.warn(`无效的主题名称: ${themeName}，默认使用blue`);
+          themeName = 'blue';
+        }
+
+        // 1. 获取当前暗色模式状态
+        const isDark = this.getDarkMode();
+        
+        // 2. 先设置基础模式变量（亮色/暗色）
+        this.#setCssVariables(this.themeConfigs[isDark ? 'dark' : 'light']);
+        
+        // 3. 覆盖颜色主题变量
+        this.#setCssVariables(this.themeConfigs[themeName]);
+        
+        // 4. 同步设置body样式（新增）
+        this.#setBodyStyles();
+        
+        // 5. 保存到本地存储
+        localStorage.setItem(this.storageKeys.colorTheme, themeName);
+      }
+
+      // 核心方法2：获取当前颜色主题名称
+      getThemeName() {
+        const themeName = localStorage.getItem(this.storageKeys.colorTheme);
+        // 验证有效性，无效则返回默认值
+        return ['blue', 'purple', 'green'].includes(themeName) ? themeName : 'blue';
+      }
+
+      // 核心方法3：设置暗色模式（修复bug：立即更新变量，不依赖setTheme）
+      setDarkMode(isDark) {
+        // 1. 更新HTML类名
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(isDark ? 'dark' : 'light');
+        
+        // 2. 直接设置当前模式的基础变量（修复不立即生效的bug）
+        this.#setCssVariables(this.themeConfigs[isDark ? 'dark' : 'light']);
+        
+        // 3. 再应用颜色主题（保持主题一致性）
+        this.#setCssVariables(this.themeConfigs[this.getThemeName()]);
+        
+        // 4. 同步设置body样式（新增）
+        this.#setBodyStyles();
+        
+        // 5. 保存到本地存储
+        localStorage.setItem(this.storageKeys.darkMode, isDark);
+      }
+
+      // 核心方法4：获取当前暗色模式状态
+      getDarkMode() {
+        return localStorage.getItem(this.storageKeys.darkMode) === 'true';
+      }
+
+      // 初始化主题（仅设置变量，不处理控件）
+      initTheme() {
+        this.setDarkMode(this.getDarkMode());
+        this.setTheme(this.getThemeName());
+      }
+    }
+    // 初始化主题管理器
+    window.themeManager = new ThemeManager();
+    
+  </script>  
+
+  <!-- 精简版主题管理类（仅保留核心方法） -->
+  <script>
+    // --------------------------
+    // 页面控件绑定（独立分离）
+    // --------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      // 获取控件元素
+      const darkModeSwitch = document.getElementById('darkModeSwitch');
+      const colorThemeGroup = document.getElementById('colorThemeGroup');
+
+      // 初始化控件状态
+      // 1. 暗色模式开关
+      darkModeSwitch.checked = themeManager.getDarkMode();
+      // 2. 颜色主题按钮
+      const activeTheme = themeManager.getThemeName();
+      Array.from(colorThemeGroup.children).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === activeTheme);
+      });
+
+      // 绑定控件事件
+      // 1. 暗色模式切换
+      darkModeSwitch.addEventListener('change', (e) => {
+        themeManager.setDarkMode(e.target.checked);
+        // 更新主题按钮样式（主色变化）
+        const activeTheme = themeManager.getThemeName();
+        Array.from(colorThemeGroup.children).forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.theme === activeTheme);
+        });
+      });
+
+      // 2. 颜色主题切换
+      colorThemeGroup.addEventListener('click', (e) => {
+        const themeBtn = e.target.closest('[data-theme]');
+        if (themeBtn) {
+          const themeName = themeBtn.dataset.theme;
+          themeManager.setTheme(themeName);
+          // 更新按钮激活状态
+          Array.from(colorThemeGroup.children).forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.theme === themeName);
+          });
+        }
+      });
+    });
+
+    // --------------------------
+    // 调用示例
+    // --------------------------
+    // themeManager.setTheme('purple'); // 设置紫色主题
+    // themeManager.setDarkMode(true);  // 开启暗色模式
+    // console.log(themeManager.getThemeName()); // 获取当前主题名称
+    // console.log(themeManager.getDarkMode());  // 获取当前暗色模式状态
+  </script>
+</body>
+</html>

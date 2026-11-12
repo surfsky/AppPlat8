@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapbox 卫星云图 + 免费雷达图</title>
+  <!-- Mapbox CSS & JS -->
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; }
+    #map {
+      width: 100vw;
+      height: 100vh;
+    }
+    .layer-control {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 999;
+    }
+    .layer-control label {
+      display: block;
+      margin: 8px 0;
+      cursor: pointer;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="layer-control">
+    <label><input type="checkbox" id="radar" checked> 气象雷达</label>
+    <label><input type="checkbox" id="cloud"> 卫星云图（备用）</label>
+  </div>
+
+  <script>
+    // 替换成你自己的Mapbox Token
+    mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/satellite-v9',
+      center: [116.4, 39.9],
+      zoom: 5,
+      projection: 'globe'
+    });
+
+    map.addControl(new mapboxgl.NavigationControl());
+    map.addControl(new mapboxgl.FullscreenControl());
+
+    // RainViewer 雷达瓦片（免费，无Key）
+    function getRainViewerTileURL() {
+      // 获取最新雷达数据时间戳
+      return fetch('https://api.rainviewer.com/public/weather-maps.json')
+        .then(res => res.json())
+        .then(data => {
+          const latest = data.radar.past[data.radar.past.length - 1];
+          return `https://tilecache.rainviewer.com/v2/radar/${latest.time}/256/{z}/{x}/{y}/3/0_0.png`;
+        });
+    }
+
+    map.on('load', async () => {
+      // 加载雷达图层
+      const radarTileURL = await getRainViewerTileURL();
+      map.addSource('radar-source', {
+        type: 'raster',
+        tiles: [radarTileURL],
+        tileSize: 256
+      });
+      map.addLayer({
+        id: 'radar-layer',
+        type: 'raster',
+        source: 'radar-source',
+        paint: { 'raster-opacity': 0.7 }
+      });
+
+      // 备用云图层（OpenStreetMap的云图瓦片，免费）
+      map.addSource('cloud-source', {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], // 这里可以替换成其他免费云图瓦片
+        tileSize: 256
+      });
+      map.addLayer({
+        id: 'cloud-layer',
+        type: 'raster',
+        source: 'cloud-source',
+        paint: { 'raster-opacity': 0.5 }
+      });
+      map.setLayoutProperty('cloud-layer', 'visibility', 'none');
+
+      // 绑定开关事件
+      document.getElementById('cloud').addEventListener('change', e => {
+        map.setLayoutProperty('cloud-layer', 'visibility', e.target.checked ? 'visible' : 'none');
+      });
+      document.getElementById('radar').addEventListener('change', e => {
+        map.setLayoutProperty('radar-layer', 'visibility', e.target.checked ? 'visible' : 'none');
+      });
+    });
+  </script>
+</body>
+</html>

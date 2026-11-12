@@ -95,12 +95,41 @@ namespace App.Pages.GIS
         }
 
         /// <summary>获取菜单几何数据</summary>
-        public JsonResult OnGetGeometryLayerData(long? menuId, bool? isVisible = null)
+        public JsonResult OnGetGeometryLayerData(long? menuId, bool? isVisible = null, string menuIds = null)
         {
             var visibleMenuIds = GetCurrentUserVisibleGisMenuIds();
-            var menus = GetTargetMenus(menuId)
-                .Where(t => visibleMenuIds.Contains(t.Id))
-                .ToList();
+            List<GisMenu> targetMenus;
+            var requestedMenuIds = ParseMenuIds(menuIds);
+            if (!string.IsNullOrWhiteSpace(menuIds) && requestedMenuIds.Count == 0)
+                return BuildResult(400, "图层参数无效");
+            if (requestedMenuIds.Count > 0)
+            {
+                if (menuId.HasValue && menuId.Value > 0)
+                    requestedMenuIds.Add(menuId.Value);
+
+                var existingMenus = GisMenu.Set.AsNoTracking()
+                    .Where(t => requestedMenuIds.Contains(t.Id))
+                    .ToList();
+                if (existingMenus.Count != requestedMenuIds.Count)
+                    return BuildResult(404, "部分图层不存在");
+                if (existingMenus.Any(t => !visibleMenuIds.Contains(t.Id)))
+                    return BuildResult(403, "当前角色无权访问所选图层");
+
+                var parentById = GisMenu.Set.AsNoTracking()
+                    .Select(t => new { t.Id, t.ParentId })
+                    .ToDictionary(t => t.Id, t => t.ParentId);
+                targetMenus = existingMenus
+                    .Where(menu => !HasRequestedAncestor(menu.ParentId, requestedMenuIds, parentById))
+                    .ToList();
+            }
+            else
+            {
+                targetMenus = GetTargetMenus(menuId)
+                    .Where(t => visibleMenuIds.Contains(t.Id))
+                    .ToList();
+            }
+
+            var menus = targetMenus;
 
             if (menuId.HasValue && menuId.Value > 0 && menus.Count == 0)
                 return BuildResult(403, "当前角色无权访问该图层");
@@ -365,6 +394,29 @@ namespace App.Pages.GIS
                 .ToList();
             var parentIds = all.Where(t => t.ParentId.HasValue).Select(t => t.ParentId.Value).ToHashSet();
             return all.Where(t => !parentIds.Contains(t.Id)).ToList();
+        }
+
+        static HashSet<long> ParseMenuIds(string menuIds)
+        {
+            if (string.IsNullOrWhiteSpace(menuIds))
+                return new HashSet<long>();
+
+            return menuIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(value => long.TryParse(value, out var id) ? id : 0)
+                .Where(id => id > 0)
+                .ToHashSet();
+        }
+
+        static bool HasRequestedAncestor(long? parentId, HashSet<long> requestedIds, Dictionary<long, long?> parentById)
+        {
+            while (parentId.HasValue && parentById.TryGetValue(parentId.Value, out var nextParentId))
+            {
+                if (requestedIds.Contains(parentId.Value))
+                    return true;
+                parentId = nextParentId;
+            }
+            return false;
         }
 
         static object BuildGeometryRow(GeometryItem item)

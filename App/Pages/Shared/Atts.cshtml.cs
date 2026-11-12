@@ -273,14 +273,14 @@ namespace App.Pages.Shared
             if (direction != "up" && direction != "down")
                 return OkResult(400, "移动方向错误");
 
-            // 结构化优先，扁平兜底：保证无论 EleTable 走新 Payload kinks 还是旧默认扁平链路，都能拿到
-            string uniId = env.SafeUniId?.Trim();
+            // 从结构化 Context 中读取附件目录标识，缺失时再从页面查询参数兜底。
+            string uniId = env.UniId?.Trim();
             if (string.IsNullOrWhiteSpace(uniId))
                 uniId = Request.Query["uniId"].ToString().Trim();
             if (string.IsNullOrWhiteSpace(uniId))
                 return OkResult(400, "缺少 uniId，Payload 必须包含 ContextInfo 或 URL 中带 uniId");
 
-            long moveId = env.SafeSelectedCount > 0 ? env.SafeFirstSelectedId ?? 0L : 0L;
+            long moveId = env.SelectedCount > 0 ? env.FirstSelectedId ?? 0L : 0L;
             if (moveId <= 0)
                 return OkResult(400, "请先勾选一个附件再调整顺序");
             if (!HasPermission(Permission.CheckObjectEdit))
@@ -288,8 +288,8 @@ namespace App.Pages.Shared
 
             // ============ 关键修复：idx 判断基准和 EleTable 展示排序完全对齐 ============
             // 读取 EleTable 当前真实请求的 sortField/sortDirection（用户视觉看到的展示顺序）
-            // env.SafePage 已经做了"结构化 Page 优先 → 扁平 *_Flat 兜底"，这里直接取；再兜底 Request.Query
-            var safePage = env.SafePage;
+            // 使用结构化 Page 排序信息；缺失时再回退到请求查询参数。
+            var safePage = env.Pager;
             string sortField = safePage.SortField?.Trim();
             if (string.IsNullOrWhiteSpace(sortField)) sortField = Request.Query["sortField"].ToString().Trim();
             if (string.IsNullOrWhiteSpace(sortField)) sortField = "SortId";

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>矩形边缘环绕光效</title>
+<style>
+body {
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 50px;
+  margin: 0;
+}
+svg {
+  width: 400px;
+  height: 240px;
+  overflow: visible;
+}
+</style>
+</head>
+<body>
+<svg viewBox="0 0 400 240">
+  <defs>
+    <filter id="glowBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+    </filter>
+
+    <filter id="glowDot" x="-150%" y="-150%" width="400%" height="400%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 底层静态边框 -->
+  <rect x="12" y="12" width="376" height="216" rx="12" fill="none" stroke="#1e2d3d" stroke-width="2"/>
+
+  <!-- 淡淡的外发光底边 -->
+  <rect x="12" y="12" width="376" height="216" rx="12" fill="none" stroke="rgba(0,255,255,0.12)"
+        stroke-width="2" filter="url(#glowBlur)"/>
+
+  <!-- 沿边移动的拖尾 -->
+  <rect id="lightLine" x="12" y="12" width="376" height="216" rx="12" pathLength="1000"
+        fill="none" stroke="#66f7ff" stroke-width="3" stroke-linecap="round"
+        filter="url(#glowBlur)"/>
+
+  <!-- 沿边移动的高亮光点 -->
+  <circle r="5" fill="#ffffff" filter="url(#glowDot)">
+    <animateMotion dur="4.8s" repeatCount="indefinite" rotate="auto">
+      <mpath href="#lightLine"/>
+    </animateMotion>
+  </circle>
+
+  <circle r="3" fill="#00eaff">
+    <animateMotion dur="4.8s" repeatCount="indefinite" rotate="auto">
+      <mpath href="#lightLine"/>
+    </animateMotion>
+  </circle>
+
+  <style>
+    #lightLine {
+      stroke-dasharray: 110 890;
+      stroke-dashoffset: 0;
+      animation: circleLoop 4.8s linear infinite;
+    }
+
+    @keyframes circleLoop {
+      0% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -1000; }
+    }
+  </style>
+</svg>
+</body>
+</html>

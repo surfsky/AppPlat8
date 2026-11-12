@@ -17,6 +17,11 @@
         const toImageSourceCoordinatesFromRegion = ctx.toImageSourceCoordinatesFromRegion;
         const toImageSourceCoordinatesFromRing = ctx.toImageSourceCoordinatesFromRing;
         const toImageSourceCoordinatesFromGeoJson = ctx.toImageSourceCoordinatesFromGeoJson;
+        const getDefaultVisibleMenuIds = ctx.getDefaultVisibleMenuIds || (() => []);
+        const getGeometryMenuRoots = ctx.getGeometryMenuRoots || (ids => ids);
+        const expandGeometryMenuIds = ctx.expandGeometryMenuIds || (ids => ids);
+        const loadedMenuIds = new Set();
+        const geometryRequests = new Map();
         let markerRender = null;
         let markerRenderControlAdded = false;
 
@@ -523,13 +528,49 @@
             renderMenuTree();
         }
 
-        async function loadGeometries() {
-            try {
-                const resp = await fetch('?handler=GeometryLayerData');
-                const res = await resp.json();
-                if (res.code !== 0 || !Array.isArray(res.data)) return;
+        async function loadGeometries(menuIds = null, force = false) {
+            let requestedIds = Array.isArray(menuIds)
+                ? menuIds.map(Number).filter(id => Number.isFinite(id) && id > 0)
+                : [];
 
-                state.geometries = res.data;
+            if (requestedIds.length === 0) {
+                requestedIds = loadedMenuIds.size > 0
+                    ? [...loadedMenuIds]
+                    : getDefaultVisibleMenuIds();
+                if (loadedMenuIds.size > 0 && !force) return true;
+            }
+
+            const roots = [...new Set(getGeometryMenuRoots(requestedIds))];
+            const pendingRoots = force
+                ? roots
+                : roots.filter(root => {
+                    const coverage = expandGeometryMenuIds([root]);
+                    return coverage.some(id => !loadedMenuIds.has(Number(id)));
+                });
+            if (pendingRoots.length === 0) return true;
+
+            const requestKey = pendingRoots.slice().sort((a, b) => a - b).join(',');
+            if (geometryRequests.has(requestKey)) return geometryRequests.get(requestKey);
+
+            const request = (async () => {
+                const coverage = [...new Set(expandGeometryMenuIds(pendingRoots))].map(Number);
+                const query = new URLSearchParams({ handler: 'GeometryLayerData', menuIds: coverage.join(',') });
+                const resp = await fetch(`?${query.toString()}`);
+                if (!resp.ok) throw new Error(`图层数据加载失败(${resp.status})`);
+                const res = await resp.json();
+                if (res.code !== 0 || !Array.isArray(res.data))
+                    throw new Error(res.msg || '图层数据格式不正确');
+
+                if (!Array.isArray(state.geometries)) state.geometries = [];
+                if (force) {
+                    const replacedMenus = new Set(coverage);
+                    state.geometries = state.geometries.filter(item => !replacedMenus.has(Number(item.menuId)));
+                }
+                const byId = new Map(state.geometries.map(item => [String(item.id), item]));
+                res.data.forEach(item => byId.set(String(item.id), item));
+                state.geometries = [...byId.values()];
+                coverage.forEach(id => loadedMenuIds.add(id));
+
                 state.geometryByMenuId = new Map();
                 state.geometries.forEach(item => {
                     const itemId = item.id;
@@ -538,19 +579,15 @@
                     const existingVisibleByKey = state.geometryVisibleMap.get(itemKey);
                     const hasExisting = existingVisible !== undefined || existingVisibleByKey !== undefined;
                     const preservedVisible = state.preservedVisibleGeometryIds.has(itemKey);
-
-                    if (!hasExisting) {
+                    if (!hasExisting)
                         state.geometryVisibleMap.set(itemId, preservedVisible ? true : isGeometryDefaultVisible(item.menuId));
-                    } else if (preservedVisible) {
+                    else if (preservedVisible)
                         state.geometryVisibleMap.set(itemId, true);
-                    }
 
                     const menuId = item.menuId === null || item.menuId === undefined || item.menuId === ''
                         ? null
                         : Number(item.menuId);
-                    if (!state.geometryByMenuId.has(menuId)) {
-                        state.geometryByMenuId.set(menuId, []);
-                    }
+                    if (!state.geometryByMenuId.has(menuId)) state.geometryByMenuId.set(menuId, []);
                     state.geometryByMenuId.get(menuId).push(item.id);
                 });
 
@@ -563,8 +600,18 @@
                 applyGeometryVisibility();
                 renderMenuTree();
                 state.preservedVisibleGeometryIds = new Set();
-            } catch {
-                // ignore geometry loading failures
+                return true;
+            })();
+
+            geometryRequests.set(requestKey, request);
+            try {
+                return await request;
+            } catch (error) {
+                console.error('加载 GIS 图层数据失败', error);
+                window.EleManager?.showError?.(error.message || '图层数据加载失败');
+                return false;
+            } finally {
+                geometryRequests.delete(requestKey);
             }
         }
 

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./tailwindConfig.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100">
+    <div class="p-6 overflow-auto h-screen">
+        <div class="w-full">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-slate-900">数据分析</h1>
+                <p class="text-slate-600 mt-2">深入了解您的应用数据和趋势</p>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-6">
+                <div class="flex flex-col md:flex-row gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-2">选择时间范围</label>
+                        <select class="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-600">
+                            <option class="h-10 bg-white" selected>过去7天</option>
+                            <option class="h-10 bg-white">过去30天</option>
+                            <option class="h-10 bg-white">过去90天</option>
+                            <option class="h-10 bg-white">今年</option>
+                        </select>
+                    </div>
+                    <button class="px-4 py-2 bg-primary-600 hover:opacity-80 text-white rounded-lg font-medium transition">
+                        <i class="fas fa-sync mr-2"></i>刷新
+                    </button>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-slate-600 text-sm font-semibold">页面浏览量</h3>
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <i class="fas fa-eye text-blue-600"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900">125,430</div>
+                    <p class="text-green-600 text-xs mt-2">
+                        <i class="fas fa-arrow-up"></i> +15.3% 较前期
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-slate-600 text-sm font-semibold">独立访客</h3>
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <i class="fas fa-users text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900">45,892</div>
+                    <p class="text-green-600 text-xs mt-2">
+                        <i class="fas fa-arrow-up"></i> +8.7% 较前期
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-slate-600 text-sm font-semibold">平均会话时长</h3>
+                        <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                            <i class="fas fa-hourglass-end text-purple-600"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900">4:32</div>
+                    <p class="text-red-600 text-xs mt-2">
+                        <i class="fas fa-arrow-down"></i> -3.2% 较前期
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-slate-600 text-sm font-semibold">跳出率</h3>
+                        <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                            <i class="fas fa-sign-out-alt text-orange-600"></i>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-slate-900">32.4%</div>
+                    <p class="text-red-600 text-xs mt-2">
+                        <i class="fas fa-arrow-up"></i> +2.1% 较前期
+                    </p>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Trend Chart -->
+                <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4">访问趋势</h3>
+                    <div class="bg-slate-50 rounded h-64 flex flex-col items-center justify-center text-slate-500">
+                        <div class="w-full h-full flex items-end gap-1 p-4">
+                            <div class="flex-1 bg-primary-400 rounded-t" style="height: 30%;"></div>
+                            <div class="flex-1 bg-primary-500 rounded-t" style="height: 45%;"></div>
+                            <div class="flex-1 bg-primary-600 rounded-t" style="height: 60%;"></div>
+                            <div class="flex-1 bg-primary-500 rounded-t" style="height: 50%;"></div>
+                            <div class="flex-1 bg-primary-400 rounded-t" style="height: 40%;"></div>
+                            <div class="flex-1 bg-primary-500 rounded-t" style="height: 55%;"></div>
+                            <div class="flex-1 bg-primary-600 rounded-t" style="height: 70%;"></div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-2">最后7天的访问趋势</p>
+                </div>
+
+                <!-- Device Distribution -->
+                <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4">设备分布</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-slate-600">桌面设备</span>
+                                <span class="text-sm font-medium text-slate-900">42%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 42%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-slate-600">移动设备</span>
+                                <span class="text-sm font-medium text-slate-900">48%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2">
+                                <div class="bg-purple-600 h-2 rounded-full" style="width: 48%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-slate-600">平板设备</span>
+                                <span class="text-sm font-medium text-slate-900">10%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2">
+                                <div class="bg-cyan-600 h-2 rounded-full" style="width: 10%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Pages -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6">
+                <h3 class="text-lg font-semibold text-slate-900 mb-4">热门页面</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-600">页面</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-600">浏览量</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-600">平均停留时长</th>
+                                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-600">跳出率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                <td class="py-3 px-4 text-sm text-slate-900">/dashboard</td>
+                                <td class="py-3 px-4 text-sm text-slate-600">42,532</td>
+                                <td class="py-3 px-4 text-sm text-slate-600">5:23</td>
+                                <td class="py-3 px-4 text-sm">
+                                    <span class="text-green-600">18%</span>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                <td class="py-3 px-4 text-sm text-slate-900">/analytics</td>
+                                <td class="py-3 px-4 text-sm text-slate-600">38,124</td>
+                                <td class="py-3 px-4 text-sm text-slate-600">4:15</td>
+                                <td class="py-3 px-4 text-sm">
+                                    <span class="text-yellow-600">25%</span>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                <td class="py-3 px-4 text-sm text-slate-900">/profile</td>
+                                <td class="py-3 px-4 text-sm text-slate-600">28,756</td>
+                                <td class="py-3 px-4 text-sm text-slate-600">3:42</td>
+                                <td class="py-3 px-4 text-sm">
+                                    <span class="text-red-600">35%</span>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50">
+                                <td class="py-3 px-4 text-sm text-slate-900">/settings</td>
+                                <td class="py-3 px-4 text-sm text-slate-600">16,018</td>
+                                <td class="py-3 px-4 text-sm text-slate-600">2:30</td>
+                                <td class="py-3 px-4 text-sm">
+                                    <span class="text-red-600">42%</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Export -->
+            <div class="flex gap-3 pb-6">
+                <button class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-medium transition">
+                    <i class="fas fa-file-csv mr-2"></i>导出 CSV
+                </button>
+                <button class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg font-medium transition">
+                    <i class="fas fa-file-pdf mr-2"></i>生成报告
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

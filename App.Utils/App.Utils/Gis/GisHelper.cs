@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using App.Utils;
+using NetTopologySuite.Geometries;
+using NetTopologySuite.Operation.Union;
 
 
 namespace App.Utils.Gis
@@ -16,6 +19,166 @@ namespace App.Utils.Gis
         public const string CoordTypeWgs84 = "WGS84";
         public const string CoordTypeGcj02 = "GCJ02";
         public const string CoordTypeBd09 = "BD09";
+
+        /// <summary>合并 GeoJSON 中的 Polygon / MultiPolygon 区域，返回一个 GeoJSON FeatureCollection。</summary>
+        public static string CombineShape(string[] geoData)
+        {
+            if (geoData == null || geoData.Length < 2)
+                throw new ArgumentException("至少需要两个图形才能合并。", nameof(geoData));
+
+            var factory = new GeometryFactory(new PrecisionModel(), 4326);
+            var polygons = new List<Geometry>();
+            foreach (var json in geoData)
+            {
+                if (string.IsNullOrWhiteSpace(json))
+                    throw new ArgumentException("待合并图形包含空 GeoJSON。", nameof(geoData));
+
+                using var document = ParseJsonDocument(json);
+                CollectPolygonalGeometry(document.RootElement, factory, polygons);
+            }
+
+            if (polygons.Count < 2)
+                throw new ArgumentException("至少需要两个有效的多边形区域。", nameof(geoData));
+
+            var merged = UnaryUnionOp.Union(polygons);
+            if (merged == null || merged.IsEmpty || !(merged is Polygon || merged is MultiPolygon))
+                throw new ArgumentException("合并结果不是有效的多边形区域。", nameof(geoData));
+
+            var geometryNode = WritePolygonalGeometry(merged);
+            return new JsonObject
+            {
+                ["type"] = "FeatureCollection",
+                ["features"] = new JsonArray
+                {
+                    new JsonObject
+                    {
+                        ["type"] = "Feature",
+                        ["properties"] = new JsonObject(),
+                        ["geometry"] = geometryNode
+                    }
+                }
+            }.ToJsonString();
+        }
+
+        private static JsonDocument ParseJsonDocument(string json)
+        {
+            var document = JsonDocument.Parse(json);
+            while (document.RootElement.ValueKind == JsonValueKind.String)
+            {
+                var nested = document.RootElement.GetString();
+                document.Dispose();
+                if (string.IsNullOrWhiteSpace(nested))
+                    throw new ArgumentException("GeoJSON 内容为空。", nameof(json));
+                document = JsonDocument.Parse(nested);
+            }
+            return document;
+        }
+
+        private static void CollectPolygonalGeometry(JsonElement node, GeometryFactory factory, List<Geometry> polygons)
+        {
+            if (node.ValueKind != JsonValueKind.Object || !node.TryGetProperty("type", out var typeNode))
+                throw new ArgumentException("GeoJSON 缺少 type 字段。");
+
+            switch (typeNode.GetString())
+            {
+                case "FeatureCollection":
+                    if (node.TryGetProperty("features", out var features) && features.ValueKind == JsonValueKind.Array)
+                        foreach (var feature in features.EnumerateArray())
+                            CollectPolygonalGeometry(feature, factory, polygons);
+                    break;
+                case "Feature":
+                    if (node.TryGetProperty("geometry", out var geometry) && geometry.ValueKind != JsonValueKind.Null)
+                        CollectPolygonalGeometry(geometry, factory, polygons);
+                    break;
+                case "GeometryCollection":
+                    if (node.TryGetProperty("geometries", out var geometries) && geometries.ValueKind == JsonValueKind.Array)
+                        foreach (var collectionGeometry in geometries.EnumerateArray())
+                            CollectPolygonalGeometry(collectionGeometry, factory, polygons);
+                    break;
+                case "Polygon":
+                    polygons.Add(ParsePolygon(node.GetProperty("coordinates"), factory));
+                    break;
+                case "MultiPolygon":
+                    foreach (var polygon in node.GetProperty("coordinates").EnumerateArray())
+                        polygons.Add(ParsePolygon(polygon, factory));
+                    break;
+                // Shape GeoJSON may also include labels/points; only polygonal parts participate in union.
+                case "Point":
+                case "MultiPoint":
+                case "LineString":
+                case "MultiLineString":
+                    break;
+                default:
+                    throw new ArgumentException($"不支持的 GeoJSON 类型：{typeNode.GetString()}。");
+            }
+        }
+
+        private static Polygon ParsePolygon(JsonElement coordinates, GeometryFactory factory)
+        {
+            if (coordinates.ValueKind != JsonValueKind.Array || coordinates.GetArrayLength() == 0)
+                throw new ArgumentException("Polygon 缺少坐标环。");
+
+            var rings = coordinates.EnumerateArray().Select(ring =>
+            {
+                var points = ring.EnumerateArray().Select(ParseCoordinate).ToList();
+                if (points.Count < 3)
+                    throw new ArgumentException("Polygon 坐标环至少需要三个点。");
+                if (!SamePosition(points[0], points[^1]))
+                    points.Add(new Coordinate(points[0]));
+                if (points.Count < 4)
+                    throw new ArgumentException("Polygon 坐标环无效。");
+                return factory.CreateLinearRing(points.ToArray());
+            }).ToArray();
+
+            return factory.CreatePolygon(rings[0], rings.Skip(1).ToArray());
+        }
+
+        private static Coordinate ParseCoordinate(JsonElement position)
+        {
+            if (position.ValueKind != JsonValueKind.Array || position.GetArrayLength() < 2)
+                throw new ArgumentException("GeoJSON 坐标至少需要经度和纬度。");
+            var values = position.EnumerateArray().Select(x => x.GetDouble()).ToArray();
+            return values.Length > 2 ? new CoordinateZ(values[0], values[1], values[2]) : new Coordinate(values[0], values[1]);
+        }
+
+        private static bool SamePosition(Coordinate a, Coordinate b) => a.X.Equals(b.X) && a.Y.Equals(b.Y);
+
+        private static JsonObject WritePolygonalGeometry(Geometry geometry)
+        {
+            if (geometry is Polygon polygon)
+                return new JsonObject { ["type"] = "Polygon", ["coordinates"] = WritePolygonCoordinates(polygon) };
+
+            var multiPolygon = (MultiPolygon)geometry;
+            var coordinates = new JsonArray();
+            foreach (var polygonPart in multiPolygon.Geometries.Cast<Polygon>())
+                coordinates.Add(WritePolygonCoordinates(polygonPart));
+            return new JsonObject
+            {
+                ["type"] = "MultiPolygon",
+                ["coordinates"] = coordinates
+            };
+        }
+
+        private static JsonArray WritePolygonCoordinates(Polygon polygon)
+        {
+            var rings = new JsonArray { WriteRing(polygon.ExteriorRing.Coordinates) };
+            for (var i = 0; i < polygon.NumInteriorRings; i++)
+                rings.Add(WriteRing(polygon.GetInteriorRingN(i).Coordinates));
+            return rings;
+        }
+
+        private static JsonArray WriteRing(Coordinate[] coordinates)
+        {
+            var ring = new JsonArray();
+            foreach (var coordinate in coordinates)
+            {
+                var position = new JsonArray(coordinate.X, coordinate.Y);
+                if (!double.IsNaN(coordinate.Z) && !double.IsInfinity(coordinate.Z))
+                    position.Add(coordinate.Z);
+                ring.Add(position);
+            }
+            return ring;
+        }
 
         public static bool IsInRegion(string gps, string geoRegion)
         {

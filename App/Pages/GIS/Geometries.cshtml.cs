@@ -75,5 +75,41 @@ namespace App.Pages.GIS
                 GisGeometry.Delete(id);
             return BuildResult(0, "删除成功");
         }
+
+        public IActionResult OnPostCopy([FromBody] long[] ids)
+        {
+            if (!HasPermission(Permission.GisGeometryEdit))
+                return BuildResult(403, "无权操作");
+            if (ids == null || ids.Length != 1 || ids[0] <= 0)
+                return BuildResult(400, "复制时请只选择一个点位");
+
+            try
+            {
+                var item = GisGeometry.Copy(ids[0]);
+                return BuildResult(0, "复制成功", new { item.Id, item.Name });
+            }
+            catch (ArgumentException ex)
+            {
+                return BuildResult(400, ex.Message);
+            }
+        }
+
+        public IActionResult OnPostCombine([FromBody] long[] ids)
+        {
+            if (!HasPermission(Permission.GisGeometryEdit))
+                return BuildResult(403, "无权操作");
+            if (ids == null || ids.Length < 2 || ids.Any(id => id <= 0))
+                return BuildResult(400, "合并至少需要选择两个形状点位");
+
+            try
+            {
+                var item = GisGeometry.Combine(ids);
+                return BuildResult(0, "合并成功", new { item.Id, item.Name });
+            }
+            catch (ArgumentException ex)
+            {
+                return BuildResult(400, ex.Message);
+            }
+        }
     }
 }

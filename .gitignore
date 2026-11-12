@@ -24,12 +24,12 @@ Thumbs.db
 
 # Folders
 Design/
-Temp/
-Exam/
-Tech/
+publish/
 notebooks/
 Library/
 Data/
+Doc/AI/
+Doc/Code/
 WebTest/*
 !WebTest/tests/
 WebTest/tests/*

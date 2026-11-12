@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppPlat Home - Integrated Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/Design/tailwindConfig.js"></script>
+    <script src="/Design/MenuTree.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Smooth animations for sidebar and transitions */
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+
+        .main-content {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Slide animations for header */
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+        }
+
+        #topHeader {
+            animation: slideDown 0.3s ease-out forwards;
+        }
+
+        #topHeader.hide-mobile {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        /* Sub-items collapse/expand animation */
+        .nav-sub-items {
+            transition: all 0.3s ease;
+            max-height: 200px;
+            overflow: hidden;
+        }
+
+        /* Use 'collapsed' instead of 'hidden' to avoid conflict with Tailwind's display:none */
+        .nav-sub-items.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        /* Sidebar overlay for mobile - fixed positioning */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 30;
+            display: none;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+    <div id="app" class="flex flex-col h-screen overflow-hidden">
+        <!-- Unified Top Header Bar - Fixed Position, Always Visible -->
+        <div id="topHeader" class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary-800 to-primary-700 h-16 flex items-center justify-between px-4 shadow-lg">
+            <!-- Left Section: Back Button (Hidden by default) + Logo (Hidden on mobile) -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <!-- Back Button - only show when there is navigation history -->
+                <button id="backBtn" class="hidden w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white hover:opacity-100 opacity-30" @click="navigateBack" title="Back">
+                    <i class="fas fa-chevron-left text-lg"></i>
+                </button>
+                <!-- Logo - only show on desktop -->
+                <div class="hidden md:flex items-center gap-2 flex-shrink-0" id="logoContainer">
+                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                        <i class="fas fa-rocket text-primary-600 text-base"></i>
+                    </div>
+                    <div class="text-white text-lg font-bold">AppPlat</div>
+                </div>
+            </div>
+
+            <!-- Center Title - Always visible and horizontally centered -->
+            <div class="flex-1 text-center px-2 md:px-4 md:hidden ">
+                <h2 id="headerTitle" class="text-white font-semibold truncate text-md md:text-base">仪表板</h2>
+            </div>
+
+            <!-- Right Section: Toolbar Icons -->
+            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <!-- AI Chat Button -->
+                <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="AI Chat">
+                    <i class="fas fa-comments text-lg"></i>
+                </button>
+                <!-- Settings Button -->
+                <button class="w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" title="Settings" @click="navigateTo('setting-general', '设置 - 常规')">
+                    <i class="fas fa-cog text-lg"></i>
+                </button>
+                <!-- Menu Button - only show on mobile -->
+                <button id="menuBtn" class="md:hidden w-10 h-10 rounded-full hover:bg-white hover:bg-opacity-20 flex items-center justify-center transition-all text-white" @click="openSidebar" title="Menu">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Container - Add top padding to account for fixed header -->
+        <div class="flex flex-1 overflow-hidden pt-16">
+            <!-- Sidebar Navigation -->
+            <div id="sidebar" class="sidebar w-60 bg-primary-800 fixed left-0 top-16 md:relative md:top-0 h-[calc(100vh-64px)] md:h-auto z-40 flex flex-col overflow-y-auto -translate-x-full md:translate-x-0 transition-transform duration-300">
+                <!-- Navigation Items Section -->
+                <div class="flex-1 flex flex-col gap-1 pt-4 md:pt-4 px-3">
+                    <menu-tree 
+                        :menu-data="mainMenuItems" 
+                        default-target="contentFrame" 
+                        :text-color="menuTextColor"
+                        :active-key="currentPage"
+                        @navigate="handleMenuNavigate"
+                    ></menu-tree>
+                </div>
+
+                <!-- Footer Navigation Section -->
+                <div class="flex flex-col gap-2 px-3 py-3 border-t border-primary-700">
+                    <menu-tree 
+                        :menu-data="bottomMenuItems" 
+                        default-target="contentFrame" 
+                        :text-color="menuTextColor"
+                        :active-key="currentPage"
+                        @navigate="handleMenuNavigate"
+                    ></menu-tree>
+                </div>
+            </div>
+
+            <!-- Sidebar Overlay for Mobile - Click to close -->
+            <div id="sidebarOverlay" class="sidebar-overlay" @click="closeSidebar"></div>
+
+            <!-- Main Content Area -->
+            <div class="main-content flex-1 flex flex-col bg-slate-100 overflow-hidden">
+                <!-- Content Container with iframe -->
+                <div class="flex-1 overflow-hidden">
+                    <iframe id="contentFrame" src="/Design/dashboard-content.html" class="w-full h-full"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            components: {
+                'menu-tree': MenuTree
+            },
+            setup() {
+                const currentPage = ref('dashboard');
+                const currentTitle = ref('仪表板');
+                const sidebarOpen = ref(false);
+                const navigationHistory = ref([]);
+                const menuTextColor = ref('#cbd5e1');
+
+                // Menu Data
+                const menuItems = ref([
+                    { 
+                        key: 'dashboard-group', icon: 'fas fa-tachometer-alt', text: 'Dashboard', isOpen: true,
+                        children: [
+                            { key: 'gis-index', icon: 'fas fa-map-marked-alt', text: '驾驶舱', url: '/Gis/GisIndex' },
+                            { key: 'dashboard', icon: 'fas fa-th-large', text: '仪表板', url: '/Dashboard' }
+                        ]
+                    },
+                    {
+                        key: 'checks', icon: 'fas fa-clipboard-check', text: '检查管理', isOpen: false,
+                        children: [
+                            { key: 'check-objects', icon: 'fas fa-cubes', text: '检查对象', url: '/Checks/CheckObjects' },
+                            { key: 'check-sheets', icon: 'fas fa-list-alt', text: '检查表', url: '/Checks/CheckSheets' },
+                            { key: 'check-tasks', icon: 'fas fa-tasks', text: '检查任务', url: '/Checks/CheckTasks' },
+                            { key: 'check-logs', icon: 'fas fa-history', text: '检查记录', url: '/Checks/CheckLogs' },
+                            { key: 'check-hazards', icon: 'fas fa-exclamation-triangle', text: '隐患排查', url: '/Checks/CheckHazards' },
+                            { key: 'check-reports', icon: 'fas fa-chart-bar', text: '统计报表', url: '/Checks/CheckReports' }
+                        ]
+                    },
+                    {
+                        key: 'oa', icon: 'fas fa-briefcase', text: '办公协同', isOpen: false,
+                        children: [
+                            { key: 'oa-announces', icon: 'fas fa-bullhorn', text: '通知公告', url: '/OA/Announces' },
+                            { key: 'oa-articles', icon: 'fas fa-newspaper', text: '文章资讯', url: '/OA/Articles' },
+                            { key: 'oa-projects', icon: 'fas fa-project-diagram', text: '项目管理', url: '/OA/Projects' },
+                            { key: 'oa-tasks', icon: 'fas fa-check-square', text: '任务协作', url: '/OA/Tasks' },
+                            { key: 'oa-assets', icon: 'fas fa-box', text: '资产管理', url: '/OA/Assets' }
+                        ]
+                    },
+                    {
+                        key: 'admins', icon: 'fas fa-cogs', text: '系统管理', isOpen: false,
+                        children: [
+                            { key: 'admin-orgs', icon: 'fas fa-sitemap', text: '组织架构', url: '/Admins/Orgs' },
+                            { key: 'admin-users', icon: 'fas fa-users', text: '用户管理', url: '/Admins/Users' },
+                            { key: 'admin-roles', icon: 'fas fa-user-tag', text: '角色管理', url: '/Admins/Roles' },
+                            { key: 'admin-power', icon: 'fas fa-key', text: '权限设置', url: '/Admins/Power' },
+                            { key: 'maintain-menus', icon: 'fas fa-bars', text: '菜单管理', url: '/Maintains/Menus' },
+                            { key: 'maintain-logs', icon: 'fas fa-file-alt', text: '系统日志', url: '/Maintains/Logs' }
+                        ]
+                    },
+                    { key: 'about', icon: 'fas fa-info-circle', text: '关于应用', url: '/Design/about.html' },
+                    { key: 'setting-general', icon: 'fas fa-cog', text: '设置 - 常规', url: '/Design/setting.html', isOpen: false, fixBottom: true, hidden: true }, // Hidden menu item for navigation
+                    { key: 'account', icon: 'fas fa-user', text: 'Account', url: '/Design/profile.html', fixBottom: true },
+                    { key: 'logout', icon: 'fas fa-sign-out-alt', text: 'Logout', url: '/Logout', target: '_top', fixBottom: true }
+                ]);
+
+                // Filtered Lists
+                const mainMenuItems = computed(() => menuItems.value.filter(i => !i.fixBottom && !i.hidden));
+                const bottomMenuItems = computed(() => menuItems.value.filter(i => i.fixBottom && !i.hidden));
+
+                // Flatten menu for easy lookup
+                const pageMap = {};
+                const buildPageMap = (items) => {
+                    items.forEach(item => {
+                        if (item.children) {
+                            buildPageMap(item.children);
+                        } else {
+                            // Map all items, even if no URL (e.g. placeholders)
+                            pageMap[item.key] = { 
+                                url: item.url, 
+                                text: item.text,
+                                target: item.target
+                            };
+                        }
+                    });
+                };
+                buildPageMap(menuItems.value);
+
+                const navigateTo = (page, title = '', pushHistory = true, loadIframe = true) => {
+                    const pageConfig = pageMap[page];
+                    if (!pageConfig) return;
+
+                    // Handle different targets
+                    if (pageConfig.target === '_blank') {
+                        if (pageConfig.url) window.open(pageConfig.url, '_blank');
+                        return;
+                    }
+                    if (pageConfig.target === '_top') {
+                        if (pageConfig.url) window.top.location.href = pageConfig.url;
+                        return;
+                    }
+
+                    // Default: Show in iframe
+                    if (!pageConfig.url) return;
+
+                    if (pushHistory) navigationHistory.value.push(currentPage.value);
+                    currentPage.value = page;
+                    currentTitle.value = title || pageConfig.text || page;
+                    
+                    if (loadIframe) {
+                        const iframe = document.getElementById('contentFrame');
+                        iframe.src = pageConfig.url;
+                    }
+
+                    // Set location hash for direct navigation
+                    try { location.hash = page; } catch (e) { /* ignore */ }
+
+                    // Close sidebar on mobile
+                    closeSidebar();
+
+                    // Update title in unified header
+                    const headerTitle = document.getElementById('headerTitle');
+                    if (headerTitle) {
+                        headerTitle.innerText = `${currentTitle.value}`;
+                    }
+
+                    // Update back button visibility
+                    updateBackButtonVisibility();
+                };
+
+                const handleMenuNavigate = (item) => {
+                    // Component already handles iframe loading via defaultTarget
+                    // We just need to update the state
+                    navigateTo(item.key, item.text, true, false);
+                };
+
+                // Helper for iframe pages to request navigation
+                window.navigateToFromIframe = (page, title) => {
+                    navigateTo(page, title);
+                };
+
+                // Update back button visibility and show when history exists
+                const updateBackButtonVisibility = () => {
+                    const backBtn = document.getElementById('backBtn');
+                    const logoContainer = document.getElementById('logoContainer');
+                    
+                    if (backBtn) {
+                        if (navigationHistory.value.length > 0) {
+                            // Show back button with full opacity
+                            backBtn.classList.remove('hidden');
+                            backBtn.classList.add('flex');
+                            backBtn.style.opacity = '1';
+                            backBtn.style.pointerEvents = 'auto';
+                            
+                            // Adjust Logo margin or visibility if needed
+                            // For now, they co-exist fine
+                        } else {
+                            // Hide back button on first page
+                            backBtn.classList.add('hidden');
+                            backBtn.classList.remove('flex');
+                            backBtn.style.opacity = '0.3';
+                            backBtn.style.pointerEvents = 'none';
+                        }
+                    }
+                };
+
+                // Initialize on mount
+                onMounted(() => {
+                    // Initialize back button visibility
+                    updateBackButtonVisibility();
+
+                    // Check for direct hash navigation
+                    const hash = (location.hash || '').replace('#', '').trim();
+                    if (hash && pageMap[hash]) {
+                        navigateTo(hash, pageMap[hash].text, false);
+                    } else {
+                        const iframe = document.getElementById('contentFrame');
+                        const defaultPageConfig = pageMap['dashboard'];
+                        if (defaultPageConfig && defaultPageConfig.url) {
+                            iframe.src = defaultPageConfig.url;
+                        }
+                    }
+                });
+
+                const navigateBack = () => {
+                    if (navigationHistory.value.length > 0) {
+                        const prevPage = navigationHistory.value.pop();
+                        currentPage.value = prevPage;
+                        currentTitle.value = pageMap[prevPage]?.text || prevPage;
+                        
+                        const iframe = document.getElementById('contentFrame');
+                        const pageConfig = pageMap[prevPage];
+                        if (pageConfig) {
+                            iframe.src = pageConfig.url;
+                        }
+
+                        // Update title in unified header
+                        const headerTitle = document.getElementById('headerTitle');
+                        if (headerTitle) {
+                            headerTitle.innerHTML = `<h2 class="text-white font-semibold truncate text-xs sm:text-sm md:text-base">${currentTitle.value}</h2>`;
+                        }
+
+                        // Update back button visibility
+                        updateBackButtonVisibility();
+                    }
+                };
+
+                const openSidebar = () => {
+                    sidebarOpen.value = true;
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+                    
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebar.classList.add('translate-x-0');
+                    overlay.classList.add('active');
+                };
+
+                const closeSidebar = () => {
+                    sidebarOpen.value = false;
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+                    sidebar.classList.add('-translate-x-full');
+                    sidebar.classList.remove('translate-x-0');
+                    overlay.classList.remove('active');
+                };
+
+                return {
+                    currentPage,
+                    currentTitle,
+                    sidebarOpen,
+                    menuItems,
+                    mainMenuItems,
+                    bottomMenuItems,
+                    menuTextColor,
+                    navigateTo,
+                    navigateBack,
+                    handleMenuNavigate,
+                    openSidebar,
+                    closeSidebar
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

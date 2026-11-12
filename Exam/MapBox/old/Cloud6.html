@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapbox + 心知天气（雷达 + 卫星云图）官方版</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { overflow:hidden; }
+    #map { width:100vw; height:100vh; }
+    .ctrl {
+      position:fixed; top:20px; right:20px;
+      background:#fff; padding:15px; border-radius:8px;
+      box-shadow:0 2px 10px rgba(0,0,0,.2); z-index:999;
+    }
+    .ctrl label { display:block; margin:8px 0; cursor:pointer; }
+    .ctrl input[type="range"] { width:100px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="ctrl">
+    <label><input type="checkbox" id="radar" checked> 气象雷达（降水）</label>
+    <label><input type="range" id="radarOpacity" min="0" max="100" value="70"> 雷达透明度</label>
+
+    <label><input type="checkbox" id="cloud"> 卫星云图（FY-4A）</label>
+    <label><input type="range" id="cloudOpacity" min="0" max="100" value="60"> 云图透明度</label>
+  </div>
+
+  <script>
+    // ---------------- 替换成你自己的 ----------------
+    const SENIVERSE_KEY = "S1CRO7gLhFElvFAk-"; // 心知天气私钥
+    mapboxgl.accessToken = "YOUR_MAPBOX_TOKEN";
+    // ---------------------------------------------
+
+
+    const map = new mapboxgl.Map({
+      container: "map",
+      style: "mapbox://styles/mapbox/light-v10",
+      center: [116.4, 39.9], // 北京
+      zoom: 5,
+      minZoom: 4,
+      maxZoom: 10, // 免费版瓦片 zoom 一般 4-10
+      projection: "mercator"
+    });
+    map.addControl(new mapboxgl.NavigationControl());
+
+    const radarSourceId = "seniverse-radar";
+    const cloudSourceId = "seniverse-cloud";
+
+    map.on("load", () => {
+      // 1. 雷达降水实况（官方 V3 瓦片，免费版可用）
+      // 文档：https://docs.seniverse.com/api/layer/radar.html
+      map.addSource(radarSourceId, {
+        type: "raster",
+        tiles: [
+          `https://api.seniverse.com/v3/weather/radar/nowcast/{z}/{x}/{y}?key=${SENIVERSE_KEY}&unit=metric&language=zh-Hans`
+        ],
+        tileSize: 256
+      });
+      map.addLayer({
+        id: "radar-layer",
+        type: "raster",
+        source: radarSourceId,
+        paint: { "raster-opacity": 0.7 }
+      });
+
+      // 2. 风云四号 FY-4A 可见光云图（官方 V3 瓦片）
+      // 文档：https://docs.seniverse.com/api/layer/satellite.html
+      map.addSource(cloudSourceId, {
+        type: "raster",
+        tiles: [
+          `https://api.seniverse.com/v3/weather/satellite/fy4a/visible/{z}/{x}/{y}?key=${SENIVERSE_KEY}&language=zh-Hans`
+        ],
+        tileSize: 256
+      });
+      map.addLayer({
+        id: "cloud-layer",
+        type: "raster",
+        source: cloudSourceId,
+        paint: { "raster-opacity": 0.6 }
+      });
+      map.setLayoutProperty("cloud-layer", "visibility", "none");
+
+      // ---- 控件 ----
+      document.getElementById("radar").addEventListener("change", e => {
+        map.setLayoutProperty("radar-layer", "visibility", e.target.checked ? "visible" : "none");
+      });
+      document.getElementById("radarOpacity").addEventListener("input", e => {
+        map.setPaintProperty("radar-layer", "raster-opacity", parseInt(e.target.value)/100);
+      });
+
+      document.getElementById("cloud").addEventListener("change", e => {
+        map.setLayoutProperty("cloud-layer", "visibility", e.target.checked ? "visible" : "none");
+      });
+      document.getElementById("cloudOpacity").addEventListener("input", e => {
+        map.setPaintProperty("cloud-layer", "raster-opacity", parseInt(e.target.value)/100);
+      });
+    });
+  </script>
+</body>
+</html>

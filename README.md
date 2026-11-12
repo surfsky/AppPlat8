@@ -43,7 +43,16 @@ cd AppPlat
 dotnet build
 dotnet run --project App
 dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
-dotnet app.dll --urls=http://localhost:6060;http://abc.org # 若端口被占用，查找并杀掉占用端口 6060 的进程
+
+// 发布项目
+// 将 app/data 和 app/pages 目录拷贝到 publish 目录下（可删除所有cs文件）
+// 删除./pages 下的所有 .cs 文件
+dotnet publish App/App.csproj -c Release -o ./Publish
+cd ./Publish
+cp -r ../App/data ./data
+cp -r ../App/pages ./pages
+rm -rf ./pages/**/*.cs
+dotnet App.dll --urls=http://localhost:6060;http://abc.org # 若端口被占用，查找并杀掉占用端口 6060 的进程
 
 // 关闭进程
 lsof -nP -iTCP:6001 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9

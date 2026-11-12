@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>带拖尾小光点边框流光</title>
+  <style>
+    body {
+      background: #111;
+      margin: 0;
+      padding: 40px;
+    }
+    /* 外框容器，匹配你截图圆角矩形 */
+    .box-wrap {
+      position: relative;
+      width: 1600px;
+      height: 960px;
+      border: 2px solid #234060;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    /* 流光透明图层，悬浮上层，不拦截鼠标 */
+    #lightCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="box-wrap">
+    <canvas id="lightCanvas"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('lightCanvas');
+    const ctx = canvas.getContext('2d');
+    const wrap = document.querySelector('.box-wrap');
+
+    // 同步画布尺寸
+    function resizeCanvas() {
+      canvas.width = wrap.offsetWidth;
+      canvas.height = wrap.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // 可调参数
+    const config = {
+      radius: 12,        // 矩形圆角大小
+      speed: 0.0012,     // 移动速度
+      lightSize: 12,     // 缩小光点光晕尺寸
+      trailLength: 12,   // 拖尾残影数量
+      colorMain: '#00e0ff',
+      opacity: 0.9
+    };
+
+    let t = 0;
+    // 历史点位数组，用来绘制拖尾
+    const trailPoints = [];
+
+    // 根据进度t获取边框坐标（完整圆角闭环路径）
+    function getBorderPoint(t) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const r = config.radius;
+      const lineW = w - r * 2;
+      const lineH = h - r * 2;
+      const arcLen = Math.PI * r;
+      const total = (lineW + lineH) * 2 + arcLen * 4;
+      let dist = t * total;
+
+      // 上边直线
+      if (dist <= lineW) return [r + dist, r];
+      dist -= lineW;
+      // 右上圆角
+      if (dist <= arcLen) {
+        const rad = dist / r;
+        return [w - r + r * Math.sin(rad), r - r * Math.cos(rad)];
+      }
+      dist -= arcLen;
+      // 右边竖线
+      if (dist <= lineH) return [w - r, r + dist];
+      dist -= lineH;
+      // 右下圆角
+      if (dist <= arcLen) {
+        const rad = dist / r;
+        return [w - r - r * Math.cos(rad), h - r + r * Math.sin(rad)];
+      }
+      dist -= arcLen;
+      // 底边直线
+      if (dist <= lineW) return [w - r - dist, h - r];
+      dist -= lineW;
+      // 左下圆角
+      if (dist <= arcLen) {
+        const rad = dist / r;
+        return [r - r * Math.sin(rad), h - r + r * Math.cos(rad)];
+      }
+      dist -= arcLen;
+      // 左边竖线
+      if (dist <= lineH) return [r, h - r - dist];
+      dist -= lineH;
+      // 左上圆角
+      const rad = dist / r;
+      return [r + r * Math.cos(rad), r - r * Math.sin(rad)];
+    }
+
+    function animate() {
+      // 半透明擦除，实现拖尾残留效果（关键！不用完全清空）
+      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 获取当前光点坐标
+      const [x, y] = getBorderPoint(t);
+      trailPoints.push([x, y]);
+      // 限制拖尾最大长度
+      if (trailPoints.length > config.trailLength) trailPoints.shift();
+
+      // 绘制拖尾残影，越往后透明度越低、尺寸越小
+      trailPoints.forEach((point, idx) => {
+        const trailOpacity = idx / trailPoints.length * config.opacity * 0.6;
+        const trailSize = config.lightSize * (idx / trailPoints.length);
+        const [px, py] = point;
+        const grad = ctx.createRadialGradient(px, py, 0, px, py, trailSize);
+        grad.addColorStop(0, `rgba(255,255,255,${trailOpacity})`);
+        grad.addColorStop(0.4, `rgba(0,224,255,${trailOpacity * 0.7})`);
+        grad.addColorStop(1, 'rgba(0,224,255,0)');
+        ctx.beginPath();
+        ctx.arc(px, py, trailSize, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      });
+
+      // 绘制主光点（更小、更亮）
+      const mainGrad = ctx.createRadialGradient(x, y, 0, x, y, config.lightSize);
+      mainGrad.addColorStop(0, `rgba(255,255,255,${config.opacity})`);
+      mainGrad.addColorStop(0.3, config.colorMain);
+      mainGrad.addColorStop(1, 'rgba(0,224,255,0)');
+      ctx.beginPath();
+      ctx.arc(x, y, config.lightSize, 0, Math.PI * 2);
+      ctx.fillStyle = mainGrad;
+      ctx.fill();
+
+      // 进度循环
+      t += config.speed;
+      if (t > 1) {
+        t = 0;
+        trailPoints.length = 0; // 一圈结束清空拖尾
+      }
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>

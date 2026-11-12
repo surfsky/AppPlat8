@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Nodes;
 using App.Components;
 using App.Entities;
 using App.Utils;
+using App.Utils.Gis;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -70,6 +72,8 @@ namespace App.DAL.GIS
                 t.MenuId = this.MenuId;
                 t.Addr = this.Addr;
                 t.CreatorId = this.CreatorId;
+                t.OwnerId = this.OwnerId;
+                t.Remark = this.Remark;
                 t.GeoJson = this.GeoJson;
                 t.Gps = this.Gps;
                 t.Region = this.Region;
@@ -80,6 +84,72 @@ namespace App.DAL.GIS
                 t.Scale = this.Scale;
                 t.LabelColor = this.LabelColor;
             });
+        }
+
+        /// <summary>复制点位；未指定名称时依次使用“原名称1、原名称2……”生成未占用名称。</summary>
+        public static GisGeometry Copy(long id, string newName = "")
+        {
+            var source = Get(id) ?? throw new ArgumentException($"点位不存在：{id}", nameof(id));
+            var copy = source.Clone();
+            copy.Id = 0;
+            copy.Name = string.IsNullOrWhiteSpace(newName) ? GetNextCopyName(source.Name) : newName.Trim();
+            copy.CreateDt = null;
+            copy.UpdateDt = null;
+            copy.CreatorId = null;
+            copy.Creator = null;
+            copy.Menu = null;
+            copy.Save(EntityOp.New);
+            return copy;
+        }
+
+        /// <summary>将多个形状点位合并为一个新点位；原点位保留不变。</summary>
+        public static GisGeometry Combine(long[] ids, string newName = "")
+        {
+            var uniqueIds = ids?.Distinct().ToArray() ?? Array.Empty<long>();
+            if (uniqueIds.Length < 2)
+                throw new ArgumentException("合并至少需要选择两个形状点位。", nameof(ids));
+
+            var sources = DataSet.Where(g => uniqueIds.Contains(g.Id)).ToList();
+            if (sources.Count != uniqueIds.Length)
+                throw new ArgumentException("部分点位不存在。", nameof(ids));
+            if (sources.Any(g => g.Type != GeometryType.Shape))
+                throw new ArgumentException("只能合并“形状”类别的点位。", nameof(ids));
+
+            var first = sources.First(g => g.Id == uniqueIds[0]);
+            var name = string.IsNullOrWhiteSpace(newName) ? $"{first.Name}合并" : newName.Trim();
+            var combinedGeoJson = GisHelper.CombineShape(sources.Select(g => g.GeoJson).ToArray());
+            var geoJsonNode = JsonNode.Parse(combinedGeoJson);
+            var properties = geoJsonNode?["features"]?[0]?["properties"] as JsonObject;
+            if (properties != null)
+                properties["label"] = name;
+
+            var combined = first.Clone();
+            combined.Id = 0;
+            combined.Name = name;
+            combined.Alias = string.Empty;
+            combined.Type = GeometryType.Shape;
+            combined.GeoJson = geoJsonNode?.ToJsonString() ?? combinedGeoJson;
+            combined.Gps = string.Empty;
+            combined.Region = string.Empty;
+            combined.CreateDt = null;
+            combined.UpdateDt = null;
+            combined.CreatorId = null;
+            combined.Creator = null;
+            combined.Menu = null;
+            combined.Save(EntityOp.New);
+            return combined;
+        }
+
+        private static string GetNextCopyName(string sourceName)
+        {
+            var baseName = string.IsNullOrWhiteSpace(sourceName) ? "点位" : sourceName.Trim();
+            var index = 1;
+            string candidate;
+            do
+            {
+                candidate = $"{baseName}{index++}";
+            } while (Set.Any(g => g.Name == candidate));
+            return candidate;
         }
 
         public override object Export(ExportMode type = ExportMode.Normal)
