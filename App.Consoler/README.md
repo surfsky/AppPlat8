@@ -11,6 +11,7 @@
     - ...
 
 - 运行参数由 ConsolerConfig 统一承载；其中数据库连接串 `conn` 仅从 `App.Consoler.Config.json` 读取，其它参数可由命令行覆盖
+- 控制台启动时初始化 `ConsolerConfig.Instance`，各任务可读取该只读配置；接口检测中的相对地址以 `ApiBase` 为站点根地址。
 - 任务调度定义在 Program.cs 中；API 地址、数据库连接、高德 Key 等可写入 App.Consoler.Config.json
 
 - 用户可临时执行某个任务，如

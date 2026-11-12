@@ -13,6 +13,8 @@ public class CheckObjectGpsFixJob : IJob
 	{
 		Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 开始执行检查对象GPS修复任务");
 		var amapKey = context.MergedJobDataMap.GetString("amapKey");
+		if (string.IsNullOrWhiteSpace(amapKey))
+			amapKey = ConsolerConfig.Instance.AmapKey;
 		GpsRunner.Sync(amapKey);
 		Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 检查对象GPS修复任务执行完成");
 		return Task.CompletedTask;

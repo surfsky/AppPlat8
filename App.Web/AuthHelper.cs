@@ -111,7 +111,7 @@ namespace App.Web
         // Bearer token
         //-----------------------------------------------
         // DES key must be 8 chars for legacy helper compatibility.
-        // TODO：标准 JWT（含签名密钥轮换、aud/iss、refresh token）
+        // 标准 JWT（含签名密钥轮换、aud/iss、refresh token）
         const string BearerEncryptKey = "a8p1L2t3";
 
         public class BearerTicket

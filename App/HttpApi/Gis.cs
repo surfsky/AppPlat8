@@ -458,9 +458,9 @@ namespace App.API
                 return false;
 
             if (!raw.StartsWith("GetCheckObjects", StringComparison.OrdinalIgnoreCase)
-                && !raw.StartsWith("api/gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase)
                 && !raw.StartsWith("httpapi/gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase)
-                && !raw.StartsWith("gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase))
+                && !raw.StartsWith("gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase)
+                )
                 return false;
 
             var idx = raw.IndexOf('?');

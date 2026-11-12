@@ -46,7 +46,7 @@ namespace App.HttpApi
                     await next();
                 else if (context.Request.Path == "/signin")
                 {
-                    AuthMiddleware.SignIn(context, 1, "kevin", "kevin@some.com", "12345678");   // TODO：没看懂
+                    AuthMiddleware.SignIn(context, 1, "kevin", "kevin@some.com", "12345678"); 
                     await context.Response.WriteAsync("SignIn ok");
                 }
                 else if (context.Request.Path == "/signout")

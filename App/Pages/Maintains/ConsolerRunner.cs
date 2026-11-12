@@ -18,11 +18,13 @@ namespace App.Pages.Maintains
         public int? LastExitCode { get; set; }
         public string LastError { get; set; }
         public string CommandLine { get; set; }
-        public string ApiBaseUrl { get; set; }
-        /// <summary>调度器程序集路径（App.Consoler.dll）。</summary>
-        public string ConsolerDllPath { get; set; }
-        public string WorkingDirectory { get; set; }
+
         public string ConnectionString { get; set; }
+        public string ApiBaseUrl { get; set; }
+
+        public string ConsolerDllPath { get; set; }  // 度器程序集路径（App.Consoler.dll）
+        public string WorkingDirectory { get; set; }
+
         public string Output { get; set; }
         public int LineCount { get; set; }
         /// <summary>调度器程序集是否存在。</summary>
@@ -74,7 +76,7 @@ namespace App.Pages.Maintains
                     ConsolerDllPath = string.IsNullOrWhiteSpace(LastConsolerDllPath) ? dllPath : LastConsolerDllPath,
                     WorkingDirectory = string.IsNullOrWhiteSpace(LastWorkingDirectory) ? workingDirectory : LastWorkingDirectory,
                     ConnectionString = connectionString,
-                    Output = OutputBuffer.ToString(),
+                    Output = OutputBuffer.ToString(),  // 截取最近输出
                     LineCount = TotalLineCount,
                     HasConsolerDll = File.Exists(dllPath),
                     HasConnectionString = !string.IsNullOrWhiteSpace(connectionString)
@@ -320,7 +322,7 @@ namespace App.Pages.Maintains
         {
             try
             {
-                return ConsolerConfig.Parse(Array.Empty<string>()).Conn ?? string.Empty;
+                return ConsolerConfig.Parse(Array.Empty<string>()).ConnStr ?? string.Empty;
             }
             catch
             {

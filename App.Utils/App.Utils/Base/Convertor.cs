@@ -20,7 +20,7 @@ namespace App.Utils
     /// ParseXXXX(string)      负责将字符串解析为对应的类型
     /// ToXXX()                负责将各种数据类型相互转换
     /// CastXXX()              负责列表元素的遍历、转换、筛选
-    /// XXXEncode() XXXDecode  负责编解码
+    /// XXEncode()               负责编解码
     /// </summary>
     public static partial class Convertor
     {

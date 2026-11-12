@@ -553,7 +553,7 @@ Done
 
 2026/10/28
 2026/10/24
-    BUG: 登录还是有问题：过一阵子后就死活登录不上了，报“服务器错误”
+    修正BUG: 登录还是有问题：过一阵子后就死活登录不上了，报“服务器错误”
     数据：批量再刷新一次网格员、标签
     UI：EleTable 嵌入式使用（类似EleList），这样EleForm再无使用上的桎梏
     后台调度：
@@ -667,6 +667,16 @@ Done
         - 自动化流程都停止：如告警、后台统计、推送等（自动化流程限制）；
         - 只允许用sqlite，不允许迁移到其他数据库（开源限制）；
         - 各种拖慢系统运行的策略；
+    解决遗留问题：
+        删除checkobject和标签重复的字段
+        
+    /重构ConsolerConfig
+        /还是会在根目录生成 /Logs 和 /caches 目录，而且logs中定时访问了6060端口，感觉是Consoler并没有随着主站关闭而关闭 
+            2026-11-12 00:00:00.028 +08:00 [INF] [PAGE] http://localhost:6060/httpapi/gis/GetCheckObjectPoints from ::1 use 0.005s
+        /检查：
+            主站点关闭后能否自动关闭consoler？
+            日志为什么会记到根目录 /logs 下面？
+            ConsolerConfig 改为单例模式
 
 
 

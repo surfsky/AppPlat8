@@ -11,23 +11,23 @@ public static class Program
     /// <summary>程序入口</summary>
     public static async Task Main(string[] args)
     {
-        var config = ConsolerConfig.Parse(args);
+        var config = ConsolerConfig.Initialize(args);
         Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] 调度器启动中");
         Console.WriteLine($"配置文件: {ConsolerConfig.ConfigFilePath}");
         Console.WriteLine($"API Base Url: {config.ApiBase}");
-        Console.WriteLine($"数据库连接: {config.Conn}");
+        Console.WriteLine($"数据库连接: {config.ConnStr}");
 
         // 数据库连接校验：连不上直接退出，避免后续任务空跑
-        if (!CanConnect(config.Conn))
+        if (!CanConnect(config.ConnStr))
         {
-            Console.WriteLine($"数据库连接失败: {config.Conn}");
+            Console.WriteLine($"数据库连接失败: {config.ConnStr}");
             return;
         }
 
-        ConfigureEntity(config.Conn);
+        ConfigureEntity(config.ConnStr);
 
         // --run=JobName：单次执行指定任务，不启动调度器
-        if (!string.IsNullOrWhiteSpace(config.Run))
+        if (!string.IsNullOrWhiteSpace(config.RunJob))
         {
             await RunSingleJobAsync(config);
             return;
@@ -44,18 +44,19 @@ public static class Program
     /// <summary>执行一次指定任务（--run=JobName）</summary>
     static async Task RunSingleJobAsync(ConsolerConfig config)
     {
-        var job = CreateJob(config.Run);
+        var job = CreateJob(config.RunJob);
         if (job == null)
         {
-            Console.WriteLine($"任务 {config.Run} 不存在");
+            Console.WriteLine($"任务 {config.RunJob} 不存在");
             return;
         }
 
-        JobExtras.Current = config.Extras;
-        var context = new FakeJobExecutionContext(config.Extras);
+        var extras = new Dictionary<string, string>(config.Extras, StringComparer.OrdinalIgnoreCase);
+        JobExtras.Current = extras;
+        var context = new FakeJobExecutionContext(extras);
         await job.Execute(context);
         JobExtras.Current = null;
-        Console.WriteLine($"任务 {config.Run} 执行完成");
+        Console.WriteLine($"任务 {config.RunJob} 执行完成");
     }
 
     /// <summary>按名称创建任务实例</summary>

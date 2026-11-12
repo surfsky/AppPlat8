@@ -279,30 +279,6 @@ namespace App.Entities
             }
         }
 
-        //---------------------------------------------------
-        // SQL相关
-        //---------------------------------------------------
-        /*
-        /// <summary>运行sql语句，返回datatable（暂时只能用于sqlserver）</summary>
-        public static DataTable ExecuteSelectSql(this DbContext ctx, string sql)
-        {
-            // command 
-            var db = ctx.Database;
-            var conn = db.Connection;
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = sql;
-            cmd.CommandType = System.Data.CommandType.Text;
-
-            // data
-            DataTable dt = new DataTable();
-            DbDataAdapter adp = new SqlDataAdapter();  // TODO: 暂时只能用于sqlserver，想办法改为自动适配的
-            adp.SelectCommand = cmd;
-            adp.Fill(dt);
-
-            return dt;
-        }
-        */
-
 
         //---------------------------------------------------
         // Between

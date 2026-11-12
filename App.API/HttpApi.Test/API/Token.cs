@@ -27,7 +27,6 @@ namespace App
         /// <summary>创建验票字符串</summary>
         public static string Create(string appKey, string appSecret, int minutes)
         {
-            // TODO: 检测appKey和AppSecret有效性
             // 创建验票字符串
             var now = DateTime.Now;
             var o = new Token(appKey, now.ToTimeStamp(), now.AddMinutes(minutes));

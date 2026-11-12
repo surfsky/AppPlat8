@@ -26,11 +26,14 @@
     <ProjectReference Include="..\App.Consoler\App.Consoler.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove="Data\**" />
     <Compile Remove="Caches\**" />
     <Compile Remove="DataProtection\**" />
     <Compile Remove="Files\**" />
     <Compile Remove="Logs\**" />
     <Compile Remove="Models\**" />
+
+    <Content Remove="Data\**" />
     <Content Remove="Caches\**" />
     <Content Remove="DataProtection\**" />
     <Content Remove="Files\**" />

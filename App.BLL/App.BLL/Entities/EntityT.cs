@@ -357,17 +357,6 @@ namespace App.Entities
         /// <summary>删除相关数据</summary>
         public override void OnDeleteReference(long id)
         {
-            /*
-            if (typeof(T).IsInterface(typeof(ITree)))
-            {
-                var children = Set.Where(m => m.ParentId == id).ToList();   // TODO: 用代码动态构造
-                foreach (var child in children)
-                {
-                    OnDeleteReference(child.Id);
-                    Set.Where(t => t.Id == child.Id).Delete();
-                }
-            }
-            */
         }
 
 
