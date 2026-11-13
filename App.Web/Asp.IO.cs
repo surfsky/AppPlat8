@@ -416,32 +416,5 @@ namespace App.Web
             return "";
         }
 
-        /// <summary>打印服务器端信息</summary>
-        public static string BuildServerInfo(string title= "服务器参数")
-        {
-            /*
-            var sb = new StringBuilder();
-            var request = Request;
-            if (title.IsNotEmpty())
-                sb.AppendFormat("<h1>{0}</h1>", title);
-            //sb.AppendFormat("<table border=1 style='border-collapse: collapse' width='100%' cellpadding='2' cellspacing='0'>");
-            sb.AppendFormat("<table class='table table-sm table-hover'>");
-            sb.AppendFormat("<thead><tr><td width=300>名称</td><td>内容</td></tr></thead>");
-            sb.AppendFormat("<tr><td>服务器IP</td><td>{0}&nbsp;</td></tr>", request.ServerVariables["LOCAL_ADDR"]);
-            sb.AppendFormat("<tr><td>服务器端口</td><td>{0}&nbsp;</td></tr>", request.ServerVariables["SERVER_PORT"]);
-            sb.AppendFormat("<tr><td>IIS版本</td><td>{0}&nbsp;</td></tr>", request.ServerVariables["SERVER_SOFTWARE"]);
-            sb.AppendFormat("<tr><td>服务器操作系统</td><td>{0}&nbsp;</td></tr>", Environment.OSVersion);
-            sb.AppendFormat("<tr><td>文件</td><td>{0}&nbsp;</td></tr>", request.ServerVariables["SCRIPT_NAME"]);
-            foreach (object obj in request.ServerVariables)
-            {
-                var name = obj.ToString();
-                if (request.ServerVariables[name].Length > 0)
-                    sb.AppendFormat("<tr><td>ServerVariables[{0}]</td><td>{1}&nbsp;</td></tr>", name, request.ServerVariables[name]);
-            }
-            sb.AppendFormat("</table>");
-            return sb.ToString();
-            */
-            return "";
-        }
     }
 }

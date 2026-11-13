@@ -264,6 +264,10 @@ namespace App.Web
             return GetQueryString(queryKey).ParseBool();
         }
 
+        public static DateTime? GetQueryDate(string v)
+        {
+            return GetQuery<DateTime>(v);
+        }
 
         /// <summary>允许跨域（未测试）</summary>
         public static void EnableCros()

@@ -128,6 +128,17 @@ class EleManagerCore {
                 else go();
                 return true;
             },
+            redirect: (args) => {
+                const url = Utils.safeText(args?.url, 2000);
+                if (!url) return false;
+                try {
+                    window.location.assign(url);
+                    return true;
+                } catch (err) {
+                    console.error('redirect command failed:', err);
+                    return false;
+                }
+            },
             invokemethod: (args) => {
                 const name = Utils.safeText(args?.name || args?.method, 200);
                 if (!name) return false;

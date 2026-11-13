@@ -14,12 +14,12 @@ namespace App.Entities
     public static class EntityHelper
     {
         /// <summary>将实体上移一位；树实体只在同级节点中移动，普通实体在本表全体记录中移动。</summary>
-        public static T MoveUp<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, -1);
+        public static bool MoveUp<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, -1);
 
         /// <summary>将实体下移一位；树实体只在同级节点中移动，普通实体在本表全体记录中移动。</summary>
-        public static T MoveDown<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, 1);
+        public static bool MoveDown<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, 1);
 
-        private static T Move<T>(T entity, int direction) where T : Entity<T>, ISort, new()
+        private static bool Move<T>(T entity, int direction) where T : Entity<T>, ISort, new()
         {
             ArgumentNullException.ThrowIfNull(entity);
             if (entity.Id <= 0)
@@ -48,7 +48,7 @@ namespace App.Entities
             // 如果目标索引超出范围，则不做任何调整
             var targetIndex = index + direction;
             if (targetIndex < 0 || targetIndex >= siblings.Count)
-                return entity;
+                return false;
 
             // 交换目标索引的元素与当前元素的位置
             var moved = siblings[index];
@@ -71,8 +71,7 @@ namespace App.Entities
             // 保存所有变更的记录
             foreach (var row in changedRows)
                 row.Save();
-            entity.SortId = moved.SortId;
-            return entity;
+            return true;
         }
 
         /// <summary>导出实体列表为匿名对象列表</summary>

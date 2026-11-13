@@ -50,8 +50,41 @@ namespace App.Pages.Checks
             item.Scope = req.Scope;
             item.SetTags(req.TagIds);
             item.Save();
-            return BuildResult(0, "保存成功", item.Export(ExportMode.Normal));
+
+            if (req.Id > 0)
+            {
+                return BuildResult(0, "保存成功", item.Export(ExportMode.Normal));
+                //return EleHandler.ShowNotify("保存成功", NotifyType.Success, "提示").CloseDrawer().ToResult();                
+            }
+            else
+            {
+                // 刷新页面到最新数据
+                var url = $"/Checks/Config/CheckSheetForm?id={item.Id}";
+                return EleHandler.ShowNotify("保存成功", NotifyType.Success, "提示").Sleep(100).Redirect(url).ToResult();
+            }
         }
+
+
+        //----------------------------------------------------------------------
+        // 检查项
+        //----------------------------------------------------------------------
+        /// <summary>显示检查项（旧入口：保留兼容历史调用）</summary>
+        public IActionResult OnPostShowItems([FromBody] CheckSheet req)
+        {
+            var sheetId = req?.Id ?? 0;
+            if (sheetId <= 0)
+            {
+                return EleHandler.ShowNotify("请先保存检查表，再维护检查项", NotifyType.Warning, "提示");
+            }
+
+            var sheetName = Uri.EscapeDataString(req?.Name ?? string.Empty);
+            var url = $"/Checks/Config/CheckSheetItems?sheetId={sheetId}&sheetName={sheetName}&md={this.Mode}";
+            return EleHandler.ShowDrawer(
+                title: "检查项",
+                url: url
+                );
+        }
+
 
 
         /// <summary>EleList 数据接口：按 SortId 升序返回检查项（分页）</summary>
@@ -64,23 +97,6 @@ namespace App.Pages.Checks
             var q = CheckSheetItem.Search(sheetId, hazardLevel,  name);
             var list = q.SortPageExport(pi);
             return BuildResult(0, "success", list, pi);
-        }
-
-        /// <summary>显示检查项（旧入口：保留兼容历史调用）</summary>
-        public IActionResult OnPostShowItems([FromBody] CheckSheet req)
-        {
-            var sheetId = req?.Id ?? 0;
-            if (sheetId <= 0)
-            {
-                return EleHandler.ShowNotify("请先保存检查表，再维护检查项", NotifyType.Warning, "提示");
-            }
-
-            var sheetName = Uri.EscapeDataString(req?.Name ?? string.Empty);
-            var url = $"/Checks/CheckSheetItems?sheetId={sheetId}&sheetName={sheetName}&md={this.Mode}";
-            return EleHandler.ShowDrawer(
-                title: "检查项",
-                url: url
-                );
         }
     }
 }

@@ -15,6 +15,7 @@ namespace App.EleUI
         Save,
         SaveClose,
         SaveNew,
+        SaveRefreshPage,   // todo: implement save and refresh functionality
         Cancel,
         Close,
         Select,

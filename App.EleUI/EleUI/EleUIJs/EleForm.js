@@ -433,7 +433,7 @@ export class EleForm {
         if (!commandName) return;
         const name = commandName;
 
-        if (name === 'Save') return this.save();
+        if (name === 'Save') return this.save({ closeAfterSave: false });
         if (name === 'SaveClose') return this.save({ closeAfterSave: true });
         if (name === 'SaveNew') return this.save({ closeAfterSave: false, newAfterSave: true });
         if (name === 'Close' || name === 'Cancel') return this.close();

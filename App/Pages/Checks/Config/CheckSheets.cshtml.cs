@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using App.Components;
 using App.DAL;
+using App.EleUI;
 using App.Entities;
 using App.HttpApi;
 using App.Utils;
@@ -14,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Pages.Checks
 {
     [Auth(Permission.CheckSheetView)]
-    public class CheckSheetsModel : AuthModel
+    public class CheckSheetsModel : BaseModel // AuthModel
     {
         public CheckSheet Item { get; set; }
 
@@ -90,6 +91,30 @@ namespace App.Pages.Checks
             foreach (var id in ids)
                 CheckSheet.Delete(id);
             return BuildResult(0, "删除成功");
+        }
+
+        public IActionResult OnPostMoveUp([FromBody] ElePayload payload)
+        {
+            var item = payload?.SelectedCount == 1 && payload.FirstSelectedId.HasValue
+                ? CheckSheet.Get(payload.FirstSelectedId.Value)
+                : null;
+            if (item == null)
+                return BuildResult(400, "请先选择一个检查表");
+            if (item.MoveUp())
+                return EleHandler.Toast("上移成功", NotifyType.Success).ReloadData().ToResult();
+            return BuildResult(400, "已经是最上面的菜单");
+        }
+
+        public IActionResult OnPostMoveDown([FromBody] ElePayload payload)
+        {
+            var item = payload?.SelectedCount == 1 && payload.FirstSelectedId.HasValue
+                ? CheckSheet.Get(payload.FirstSelectedId.Value)
+                : null;
+            if (item == null)
+                return BuildResult(400, "请先选择一个检查表");
+            if (item.MoveDown())
+                return EleHandler.Toast("下移成功", NotifyType.Success).ReloadData().ToResult();
+            return BuildResult(400, "已经是最下面的菜单");
         }
     }
 }

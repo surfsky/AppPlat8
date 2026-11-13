@@ -18,12 +18,12 @@ public class EntityMoveTests
             var second = NewRole("second", 20);
             var third = NewRole("third", 30);
 
-            second.MoveUp();
+            Assert.IsTrue(second.MoveUp());
             Assert.AreEqual(10, second.SortId);
             Assert.AreEqual(20, first.SortId);
             Assert.AreEqual(30, third.SortId);
 
-            second.MoveDown();
+            Assert.IsTrue(second.MoveDown());
             Assert.AreEqual(20, second.SortId);
             Assert.AreEqual(10, first.SortId);
             Assert.AreEqual(30, third.SortId);
@@ -41,7 +41,7 @@ public class EntityMoveTests
             var movingSibling = NewMenu("moving child", parentA.Id, 20);
             var unrelated = NewMenu("other parent child", parentB.Id, 10);
 
-            movingSibling.MoveUp();
+            Assert.IsTrue(movingSibling.MoveUp());
 
             Assert.AreEqual(10, movingSibling.SortId);
             Assert.AreEqual(20, firstSibling.SortId);
@@ -58,7 +58,7 @@ public class EntityMoveTests
             var first = NewRole("first", 10);
             var second = NewRole("second", 20);
 
-            first.MoveUp();
+            Assert.IsFalse(first.MoveUp());
 
             Assert.AreEqual(10, first.SortId);
             Assert.AreEqual(20, second.SortId);

@@ -35,7 +35,8 @@ namespace App.EleUI
         SetControl,
         RefreshData,
         RefreshPage,
-        Sleep   // 暂停指定毫秒后，再执行后续命令
+        Sleep,  // 暂停指定毫秒后，再执行后续命令
+        Redirect // 将当前窗口导航到指定地址
     }
 
     /// <summary>客户端命令</summary>
@@ -89,6 +90,72 @@ namespace App.EleUI
 
     /// <summary>睡眠参数（毫秒），用于让前面的提示先显示出来，再执行后续命令</summary>
     public record SleepArgs(int Milliseconds = 1000);
+
+    /// <summary>页面跳转参数</summary>
+    public record RedirectArgs(string Url);
+
+
+    //======================================================================
+    // client command chain
+    //======================================================================
+    /// <summary>客户端命令链。实现 IActionResult 以兼容直接 return；显式调用 ToResult() 可得到 JsonResult。</summary>
+    public sealed class ClientCommandChain : IActionResult
+    {
+        private readonly List<ClientCommand> _commands = new();
+        private bool _reloadData;
+
+        internal ClientCommandChain(ClientCommand command)
+        {
+            if (command != null) _commands.Add(command);
+        }
+
+        internal ClientCommandChain(IEnumerable<ClientCommand> commands)
+        {
+            if (commands != null) _commands.AddRange(commands.Where(command => command != null));
+        }
+
+        public ClientCommandChain Then(ClientCommand command)
+        {
+            if (command != null) _commands.Add(command);
+            return this;
+        }
+
+        public ClientCommandChain Sleep(int milliseconds = 1000)
+            => Then(new ClientCommand(ClientCommandType.Sleep, new SleepArgs(milliseconds)));
+
+        public ClientCommandChain Redirect(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new ArgumentException("跳转地址不能为空。", nameof(url));
+            return Then(new ClientCommand(ClientCommandType.Redirect, new RedirectArgs(url)));
+        }
+
+        public ClientCommandChain CloseDrawer()
+            => Then(new ClientCommand(ClientCommandType.CloseDrawer, new { }));
+
+        public ClientCommandChain RefreshData(RefreshScope scope = RefreshScope.Parent, string instanceId = null)
+            => Then(new ClientCommand(ClientCommandType.RefreshData, new RefreshDataArgs(scope, instanceId)));
+
+        public ClientCommandChain RefreshPage(RefreshScope scope = RefreshScope.Parent, bool forceReload = true)
+            => Then(new ClientCommand(ClientCommandType.RefreshPage, new RefreshPageArgs(scope, forceReload)));
+
+        /// <summary>客户端命令执行后重新加载当前 EleTable 数据，并尽量保留选中行。</summary>
+        public ClientCommandChain ReloadData()
+        {
+            _reloadData = true;
+            return this;
+        }
+
+        public ClientCommandChain Toast(string message, NotifyType type = NotifyType.Info, string title = null)
+            => Then(new ClientCommand(ClientCommandType.Toast, new NotifyArgs(type, message, title)));
+
+        public ClientCommandChain Notify(string message, NotifyType type = NotifyType.Info, string title = null)
+            => Then(new ClientCommand(ClientCommandType.Notify, new NotifyArgs(type, message, title)));
+
+        public JsonResult ToResult(string msg = "ok") => EleHandler.BuildCommandChainResult(msg, _commands, _reloadData);
+
+        public Task ExecuteResultAsync(ActionContext context) => ToResult().ExecuteResultAsync(context);
+    }
 
 
 
@@ -321,6 +388,10 @@ namespace App.EleUI
 
         /// <summary>构建多条客户端命令（命令按数组顺序串行执行，可实现 toast → 关抽屉 → 刷数据 等串联动作）</summary>
         public static JsonResult BuildCommandsResult(params ClientCommand[] commands)
+            => BuildCommandsResult("ok", commands);
+
+        /// <summary>构建命令链响应。</summary>
+        internal static JsonResult BuildCommandsResult(string msg, params ClientCommand[] commands)
         {
             var list = (commands ?? Array.Empty<ClientCommand>()).ToList();
             var payload = new
@@ -328,7 +399,18 @@ namespace App.EleUI
                 commands = list,
                 commandCount = list.Count
             };
-            return BuildResult(0, "ok", payload);
+            return BuildResult(0, msg, payload);
+        }
+
+        internal static JsonResult BuildCommandChainResult(string msg, IEnumerable<ClientCommand> commands, bool reloadData)
+        {
+            var list = (commands ?? Enumerable.Empty<ClientCommand>()).ToList();
+            return BuildResult(0, msg, new
+            {
+                commands = list,
+                commandCount = list.Count,
+                reloadData
+            });
         }
 
 
@@ -336,46 +418,47 @@ namespace App.EleUI
         // 传递客户端命令
         //--------------------------------------------------------------
         /// <summary>显示客户端 Toast（就是element中的 message 走轻提示）</summary>
-        public static JsonResult ShowToast(string message, NotifyType type = NotifyType.Info, string title = "Title")
+        public static ClientCommandChain ShowToast(string message, NotifyType type = NotifyType.Info, string title = "Title")
         {
-            return BuildCommandResult(
+            return new ClientCommandChain(new ClientCommand(
                 ClientCommandType.Toast,
-                new NotifyArgs(Type: type, Message: message, Title: title)
-            );
+                new NotifyArgs(Type: type, Message: message, Title: title)));
         }
 
+        /// <summary>Toast 命令链起点。</summary>
+        public static ClientCommandChain Toast(string message, NotifyType type = NotifyType.Info, string title = "Title")
+            => ShowToast(message, type, title);
+
         /// <summary>显示客户端提示</summary>
-        public static JsonResult ShowNotify(string message, NotifyType type = NotifyType.Info, string title="Title")
+        public static ClientCommandChain ShowNotify(string message, NotifyType type = NotifyType.Info, string title="Title")
         {
-            return BuildCommandResult(
+            return new ClientCommandChain(new ClientCommand(
                 ClientCommandType.Notify,
-                new NotifyArgs(Type: type, Message: message, Title: title)
-            );
+                new NotifyArgs(Type: type, Message: message, Title: title)));
         }
 
         //---------------------------------------------------------------
         // Loading
         //---------------------------------------------------------------
         /// <summary>显示客户端 Loading</summary>
-        public static JsonResult ShowLoading(string text = "加载中...")
+        public static ClientCommandChain ShowLoading(string text = "加载中...")
         {
-            return BuildCommandResult(
+            return new ClientCommandChain(new ClientCommand(
                 ClientCommandType.ShowLoading,
-                new LoadingArgs(Text: text)
-            );
+                new LoadingArgs(Text: text)));
         }
 
         /// <summary>关闭客户端 Loading</summary>
-        public static JsonResult CloseLoading()
+        public static ClientCommandChain CloseLoading()
         {
-            return BuildCommandResult(ClientCommandType.CloseLoading, new { });
+            return new ClientCommandChain(new ClientCommand(ClientCommandType.CloseLoading, new { }));
         }
 
         //---------------------------------------------------------------
         // Drawer
         //---------------------------------------------------------------
         /// <summary>打开客户端 Drawer</summary>
-        public static JsonResult ShowDrawer(
+        public static ClientCommandChain ShowDrawer(
             string title = null,
             string content = null,
             string url = null,
@@ -411,7 +494,7 @@ namespace App.EleUI
                 ?.Where(t => !string.IsNullOrWhiteSpace(t))
                 .ToList();
 
-            return BuildCommandResult(
+            return new ClientCommandChain(new ClientCommand(
                 ClientCommandType.OpenDrawer,
                 new
                 {
@@ -435,14 +518,13 @@ namespace App.EleUI
                     serverCloseHandler,
                     closeAction,
                     html
-                }
-            );
+                }));
         }
 
         /// <summary>关闭客户端 Drawer</summary>
-        public static JsonResult CloseDrawer()
+        public static ClientCommandChain CloseDrawer()
         {
-            return BuildCommandResult(ClientCommandType.CloseDrawer, new { });
+            return new ClientCommandChain(new ClientCommand(ClientCommandType.CloseDrawer, new { }));
         }
 
         //---------------------------------------------------------------
@@ -452,23 +534,21 @@ namespace App.EleUI
         /// 刷新 EleTable 数据（不刷新页面）。
         /// 默认从 Drawer 页发给父 iframe 的 parent window，命中 Atts 列表的 window.__attsTableInstance__。
         /// </summary>
-        public static JsonResult RefreshData(RefreshScope scope = RefreshScope.Parent, string instanceId = null)
+        public static ClientCommandChain RefreshData(RefreshScope scope = RefreshScope.Parent, string instanceId = null)
         {
-            return BuildCommandResult(
+            return new ClientCommandChain(new ClientCommand(
                 ClientCommandType.RefreshData,
-                new RefreshDataArgs(Scope: scope, InstanceId: instanceId)
-            );
+                new RefreshDataArgs(Scope: scope, InstanceId: instanceId)));
         }
 
         /// <summary>
         /// 刷新整个页面（location.reload）。
         /// </summary>
-        public static JsonResult RefreshPage(RefreshScope scope = RefreshScope.Parent, bool forceReload = true)
+        public static ClientCommandChain RefreshPage(RefreshScope scope = RefreshScope.Parent, bool forceReload = true)
         {
-            return BuildCommandResult(
+            return new ClientCommandChain(new ClientCommand(
                 ClientCommandType.RefreshPage,
-                new RefreshPageArgs(Scope: scope, ForceReload: forceReload)
-            );
+                new RefreshPageArgs(Scope: scope, ForceReload: forceReload)));
         }
 
         /// <summary>
@@ -478,7 +558,7 @@ namespace App.EleUI
         /// <param name="isAlert">是否为 Alert 类型，若为 true，则仅显示一个确定按钮。</param>
         /// <param name="clientHandler">客户端回调处理函数名称。</param>
         /// <param name="serverHandler">服务端回调处理函数名称。</param>
-        public static JsonResult ShowMessageBox(
+        public static ClientCommandChain ShowMessageBox(
             string text,
             string title = null,
             NotifyType type = NotifyType.Info,
@@ -488,7 +568,7 @@ namespace App.EleUI
             string clientHandler = null,
             string serverHandler = null)
         {
-            return BuildCommandResult(
+            return new ClientCommandChain(new ClientCommand(
                 ClientCommandType.MessageBox,
                 new MessageBoxArgs(
                     Text: text,
@@ -498,7 +578,7 @@ namespace App.EleUI
                     CancelButtonText: cancelButtonText ?? Texts.Current.Cancel,
                     IsAlert: isAlert,
                     ClientHandler: clientHandler,
-                    ServerHandler: serverHandler));
+                    ServerHandler: serverHandler)));
         }
 
         /// <summary>
@@ -509,7 +589,7 @@ namespace App.EleUI
         /// <param name="serverHandler">服务端回调处理函数名称。</param>
         /// <param name="inputPattern">输入验证正则表达式（可选）。</param>
         /// <param name="inputErrorMessage">验证失败提示信息（可选）。</param>
-        public static JsonResult ShowInputBox(
+        public static ClientCommandChain ShowInputBox(
             string text,
             string title = null,
             string inputPlaceholder = null,
@@ -522,7 +602,7 @@ namespace App.EleUI
             string inputPattern = null,
             string inputErrorMessage = null)
         {
-            return BuildCommandResult(
+            return new ClientCommandChain(new ClientCommand(
                 ClientCommandType.InputBox,
                 new InputBoxArgs(
                     Text: text,
@@ -535,7 +615,7 @@ namespace App.EleUI
                     ClientHandler: clientHandler,
                     ServerHandler: serverHandler,
                     InputPattern: inputPattern,
-                    InputErrorMessage: inputErrorMessage));
+                    InputErrorMessage: inputErrorMessage)));
         }
 
         //---------------------------------------------------------------

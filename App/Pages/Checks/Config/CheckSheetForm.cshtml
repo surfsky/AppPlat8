@@ -15,7 +15,7 @@
         <EleList Label="检查项"
                  FillRow="true"
                  DataHandler="?handler=ItemsData&sheetId=@sheetId"
-                 PageSize="5"
+                 PageSize="50"
                  Height="1000px"
                  MinHeight="160px"
                  EmptyText=""
@@ -55,7 +55,7 @@
         </EleList>
     
         <Bottom>
-            <EleButton Type="Primary" Command="SaveClose"  Icon="Check"Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
+            <EleButton Type="Primary" Command="Save"  Icon="Check"Visible="@(Model.Mode != PageMode.View)">保存</EleButton>
             <EleButton Command="Close" Icon="Close">关闭</EleButton>
         </Bottom>
     </EleForm>

@@ -72,21 +72,14 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     const idSet = new Set(ids.map(id => (id === null || id === undefined) ? '__nil__' : String(id)));
                     const rows = Array.isArray(table.items?.value) ? table.items.value : [];
                     const host = getTableHost();
-                    const pickedRows = [];
-                    // 优先按 snapshotRows（patch 前内存对象引用）：toggleRowSelection 对同一个引用生效最快
-                    if (Array.isArray(preferSnapshotRows)) {
-                        for (const r of preferSnapshotRows) {
-                            if (!r) continue;
-                            const k = (r.id != null) ? String(r.id) : (r.Id != null ? String(r.Id) : '__nil__');
-                            if (k !== '__nil__' && idSet.has(k)) pickedRows.push(r);
-                        }
-                    }
-                    // 再兜底：在 items.value（可能 patch 后重新排序的新对象引用）里按 id 找行也勾选
-                    for (const r of rows) {
-                        if (!r) continue;
-                        const k = (r.id != null) ? String(r.id) : (r.Id != null ? String(r.Id) : '__nil__');
-                        if (k !== '__nil__' && idSet.has(k)) pickedRows.push(r);
-                    }
+                    // 优先选择刷新后 items 中的新对象引用；只有当前页找不到时才使用快照行兜底。
+                    const matchIds = source => (Array.isArray(source) ? source : []).filter(r => {
+                        if (!r) return false;
+                        const k = r.id != null ? String(r.id) : (r.Id != null ? String(r.Id) : '__nil__');
+                        return k !== '__nil__' && idSet.has(k);
+                    });
+                    let pickedRows = matchIds(rows);
+                    if (pickedRows.length === 0) pickedRows = matchIds(preferSnapshotRows);
                     if (pickedRows.length === 0) return;
                     const dedup = new Map();
                     for (const r of pickedRows) {
@@ -107,6 +100,15 @@ export class EleTableAppBuilder extends EleAppBuilder {
                         });
                     }
                 };
+                    const originalSelectionChange = typeof table.onSelectionChange === 'function'
+                        ? table.onSelectionChange.bind(table)
+                        : null;
+                    if (originalSelectionChange) {
+                        table.onSelectionChange = rows => {
+                            if (table._suppressSelectionChange) return;
+                            originalSelectionChange(rows);
+                        };
+                    }
                 // 在 table 上挂一次性钩子：loadData 完成 items.value 更新后恢复选中
                 // （用于 sort-change 触发 handler=Data 再加载的场景，避免选中再次丢）
                 const origLoadData = typeof table.loadData === 'function' ? table.loadData.bind(table) : null;
@@ -303,6 +305,8 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     return Object.keys(envelope).length > 0 ? envelope : null;
                 };
                 const inheritedPostHandler = async (name, payload) => {
+                        const selectedIdsBeforeRequest = Array.isArray(table.selectedIds?.value) ? [...table.selectedIds.value] : [];
+                        const selectedRowsBeforeRequest = Array.isArray(table.selectedRows?.value) ? [...table.selectedRows.value] : [];
                     const hasKinds = typeof payload === 'string' && /FilterInfo|PageInfo|SelectInfo|ContextInfo/i.test(payload);
                     const finalData = hasKinds
                         ? (collectPayloadEnvelope(payload) || {})
@@ -418,8 +422,32 @@ export class EleTableAppBuilder extends EleAppBuilder {
                                     try { restoreSelectedByIds(snapshotIds, snapshotRows); } catch (err) { console.warn('[EleTable.MoveResult] 恢复选中失败', err); }
                                 }
                             }
-                            if (data.reload === true && table && typeof table.loadData === 'function') {
+                            if ((data.reload === true || data.reloadData === true) && table && typeof table.loadData === 'function') {
+                                const idsToRestore = selectedIdsBeforeRequest.length > 0
+                                    ? selectedIdsBeforeRequest
+                                    : (Array.isArray(table.selectedIds?.value) ? [...table.selectedIds.value] : []);
+                                const rowsToRestore = selectedRowsBeforeRequest.length > 0
+                                    ? selectedRowsBeforeRequest
+                                    : (Array.isArray(table.selectedRows?.value) ? [...table.selectedRows.value] : []);
                                 await table.loadData();
+                                await nextTick();
+                                if (idsToRestore.length > 0) {
+                                    table._suppressSelectionChange = true;
+                                    try {
+                                        const host = getTableHost();
+                                        try { host?.clearSelection?.(); } catch (_) {}
+                                        await nextTick();
+                                        restoreSelectedByIds(idsToRestore, rowsToRestore);
+                                        await nextTick();
+                                        // selection-change event can fire after Element Plus' internal nextTick.
+                                        table.selectedIds.value = [...idsToRestore];
+                                        const idSet = new Set(idsToRestore.map(String));
+                                        table.selectedRows.value = (table.items.value || []).filter(row =>
+                                            idSet.has(String(row?.id ?? row?.Id)));
+                                    } finally {
+                                        table._suppressSelectionChange = false;
+                                    }
+                                }
                             }
                         }
                     }

@@ -553,6 +553,14 @@ export class Utils {
                 try { if (w && typeof w.location !== 'undefined' && typeof w.location.reload === 'function') w.location.reload(force); } catch (_) { }
                 break;
             }
+            case 'redirect': {
+                const url = String(args.url || '').trim();
+                if (url) {
+                    try { window.location.assign(url); }
+                    catch (_) { window.location.href = url; }
+                }
+                break;
+            }
             // 暂停指定毫秒，让前一条命令（如 toast）先呈现，再执行后续命令
             case 'sleep':
                 await Utils.sleep(Utils.resolveSleepMs(args));

@@ -7,6 +7,7 @@ using App.DAL;
 using App.Entities;
 using App.HttpApi;
 using App.Utils;
+using App.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -32,17 +33,17 @@ namespace App.Pages.Checks
         public CheckHazard Item { get; set; }
 
         
+        //-----------------------------------------------------------------------------
+        // 初始化和控件控制
+        //-----------------------------------------------------------------------------
         public void OnGet(long? objectId, string objectName, long? checkId)
         {
             ObjectId = objectId;
             ObjectName = objectName;
             CheckId = checkId;
             OrgId = Request.Query["orgId"].FirstOrDefault().ParseLong();
-            checkStartDt = Request.Query["checkStartDt"].FirstOrDefault().Parse<DateTime?>()
-                ?? Request.Query["createStartDt"].FirstOrDefault().Parse<DateTime?>();
-            checkEndDt = Request.Query["checkEndDt"].FirstOrDefault().Parse<DateTime?>()
-                ?? Request.Query["createEndDt"].FirstOrDefault().Parse<DateTime?>();
-
+            checkStartDt = Asp.GetQueryDate("checkStartDt") ?? Asp.GetQueryDate("createStartDt");
+            checkEndDt = Asp.GetQueryDate("checkEndDt") ?? Asp.GetQueryDate("createEndDt");
             if (ObjectId.GetValueOrDefault() > 0 && string.IsNullOrWhiteSpace(ObjectName))
             {
                 ObjectName = CheckObject.Get(ObjectId.Value)?.Name ?? string.Empty;
@@ -80,6 +81,9 @@ namespace App.Pages.Checks
             ScopeExcludeArchived = rawExclude.Parse<bool?>() == true;
         }
 
+        //-----------------------------------------------------------------------------
+        // 查询。TODO：缠缠绵绵完全看不懂，简化
+        //-----------------------------------------------------------------------------
         public IActionResult OnGetData(Paging pi, string objectName, long? objectId, long? checkId, string checkerName, long? checkerId, List<string> status, DateTime? checkStartDt, DateTime? checkEndDt, long? orgId = null, List<long> orgIds = null, DateTime? expireTo = null, bool scopeCheckerOrOrg = false, bool scopeOrgOnly = false, long? taskId = null)
         {
             taskId ??= Request.Query["taskId"].FirstOrDefault().ParseLong();
@@ -182,6 +186,9 @@ namespace App.Pages.Checks
             return result.Distinct().ToList();
         }
 
+        //-----------------------------------------------------------------------------
+        // 删除检查隐患、保存检查隐患
+        //-----------------------------------------------------------------------------
         public IActionResult OnPostDelete([FromBody] long[] ids)
         {
             if (ids == null || ids.Length == 0)
