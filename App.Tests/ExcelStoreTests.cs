@@ -34,8 +34,7 @@ public class ExcelStoreTests
         Directory.CreateDirectory(_root);
         _oldRoot = Paths.FileRoot;
         Paths.FileRoot = _root;
-        _db = new AppPlatContext(new DbContextOptionsBuilder<AppPlatContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        _db = new AppPlatContext(new DbContextOptionsBuilder<AppPlatContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         _getDb = () => _db;
         EntityConfig.Instance.OnGetDb += _getDb;
     }

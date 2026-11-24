@@ -20,6 +20,7 @@ namespace App.EleUI
         [HtmlAttributeName("SaveHandler")]    public string SaveHandler { get; set; } = "?handler=Save";
         [HtmlAttributeName("BuildMode")]      public EleAppBuildMode BuildMode { get; set; } = EleAppBuildMode.Client;
         [HtmlAttributeName("DataFor")]        public ModelExpression DataFor { get; set; }
+        [HtmlAttributeName("Mixins")]         public string Mixins { get; set; }
 
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
         {
@@ -144,6 +145,11 @@ namespace App.EleUI
             return customFooterHtml;
         }
 
+        /// <summary>mixins 属性行</summary>
+        private string MixinsLine()
+            => string.IsNullOrWhiteSpace(Mixins) ? "" : $@",
+            mixins: [{Mixins}]";
+
         /// <summary>获取包装器的CSS类</summary>
         private string GetWrapperClass(bool hasBottom)
         {
@@ -172,7 +178,7 @@ namespace App.EleUI
             dataHandler: '{DataHandler}',
             saveHandler: '{SaveHandler}',
             initData: initData,
-            autoLoad: false
+            autoLoad: false{MixinsLine()}
         }});
     }});
 </script>
@@ -185,7 +191,7 @@ namespace App.EleUI
     document.addEventListener('DOMContentLoaded', function() {{
         new EleFormAppBuilder().mount('#app', {{
             dataHandler: '{DataHandler}',
-            saveHandler: '{SaveHandler}'
+            saveHandler: '{SaveHandler}'{MixinsLine()}
         }});
     }});
 </script>

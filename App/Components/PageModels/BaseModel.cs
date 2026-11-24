@@ -76,9 +76,44 @@ namespace App
                 Auth.UpdateOnlineUser(GetUserId());
         }
 
+        /// <summary>统一拦截 AppException，转为 JSON 错误结果</summary>
         public override void OnPageHandlerExecuted(PageHandlerExecutedContext context)
         {
+            if (context.Exception is AppException ex)
+            {
+                context.ExceptionHandled = true;
+                context.Result = BuildResult(ex.Code, ex.Message);
+            }
             base.OnPageHandlerExecuted(context);
+        }
+
+        //-------------------------------------------------
+        // 业务校验
+        //-------------------------------------------------
+        /// <summary>条件为 false 时抛出 AppException，由 BaseModel 统一拦截为 BuildResult</summary>
+        public static void Assert(bool condition, string message, int code = 400)
+        {
+            if (!condition) throw new AppException(code, message);
+        }
+
+        /// <summary>Func 返回 false 时抛出 AppException（延迟求值，可省不必要的计算）</summary>
+        public static void Assert(Func<bool> predicate, string message, int code = 400)
+        {
+            if (!predicate()) throw new AppException(code, message);
+        }
+
+        /// <summary>对象为 null 时抛出 AppException</summary>
+        public static T Exist<T>(T obj, string message = "数据不存在") where T : class
+        {
+            if (obj == null) throw new AppException(404, message);
+            return obj;
+        }
+
+        /// <summary>可空对象无值时抛出 AppException，否则返回 Value</summary>
+        public static T Exist<T>(T? obj, string message = "请选择一项") where T : struct
+        {
+            if (!obj.HasValue) throw new AppException(400, message);
+            return obj.Value;
         }
 
 

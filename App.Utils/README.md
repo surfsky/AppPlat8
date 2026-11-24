@@ -34,6 +34,7 @@ public void ConfigureServices(IServiceCollection services)
 - 迁移到 net8
 - 修正了一些跨平台文件路径问题
 - 删除了 Newtonsoft.Json 依赖
+- 增加 App.Web 网页辅助类库项目
 
 6.0.0.*
 

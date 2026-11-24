@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using App.Utils;
 using App.Entities;
+using App.DAL.GIS;
 
 namespace App.DAL
 {
@@ -21,15 +22,21 @@ namespace App.DAL
         [UI("网格")]  Net = 6,
         [UI("单位", Color = "Red")]  Unit = 7,
         [UI("科室")]  Dept = 8,
+
+        //
+        [UI("工业园")]  Garden = 9,
+        [UI("园中园")]  SubGarden = 10,
+        [UI("厂中厂")]  MomFactory = 11,
     }
 
     /// <summary>组织</summary>
     public class Org : TreeEntity<Org>, IFixAll
     {
+        [UI("编码")] public string Code { get; set; }
         [UI("备注")] public string Remark { get; set; }
         [UI("级别")] public OrgLevel? Level { get; set; }
         [UI("定位")] public string Gps { get; set; }
-        [UI("图形数据")] public string GeoData { get; set; }
+        [UI("图形数据")] public string GeoJson { get; set; }
 
         
         // 上级网格名称（先别加，加上后导出超级慢）
@@ -50,12 +57,13 @@ namespace App.DAL
                 ParentId,
                 Name,
                 FullName,
+                Code,
                 Level,
                 Remark,
                 SortId,
                 TreeLevel,
                 Gps,
-                GeoData = (mode == ExportMode.Detail) ? GeoData : null,
+                GeoData = (mode == ExportMode.Detail) ? GeoJson : null,
                 Enabled,
                 Children = Children?.Select(t => t.Export(mode)).ToList(),  // 递归导出子组织（以减少子节点的字段输出）,
             };
@@ -67,7 +75,7 @@ namespace App.DAL
                 .SetValue(t => t.Remark, this.Remark)
                 .SetValue(t => t.Level, this.Level)
                 .SetValue(t => t.Gps, this.Gps)
-                .SetValue(t => t.GeoData, this.GeoData)
+                .SetValue(t => t.GeoJson, this.GeoJson)
                 .SetValue(t => t.Enabled, this.Enabled)
                 ;
         }
@@ -89,5 +97,43 @@ namespace App.DAL
             Org.ClearCache();
             return Org.All.Count;
         }
+
+        /// <summary>搜索组织</summary>
+        public static IQueryable<Org> Search(string name="", string code="", OrgLevel? level = null)
+        {
+            var q = Org.All.AsQueryable();
+            if (name.IsNotEmpty())     q = q.Where(t => t.Name.Contains(name));
+            if (code.IsNotEmpty())     q = q.Where(t => t.Code.Contains(code));
+            if (level != null)         q = q.Where(t => t.Level == level);
+
+            return q;
+        }
+
+        /// <summary>导出统一 GIS 点位数据</summary>
+        public GeometryItem ToGeometryItem()
+        {
+            return new GeometryItem
+            {
+                Id = Id,
+                RawId = Id,
+                Type = GeometryType.Shape,
+                MenuId = null,
+                SortId = this.SortId,
+                Name = Name,
+                Alias = FullName,
+                Addr = null,
+                Gps = Gps,
+                Region = null,
+                Url = null,
+                File = null,
+                GeoJson = this.GeoJson,
+                Remark = this.Remark,
+                IsVisible = true,
+                Icon = null,
+                MenuName = null,
+                DataFrom = GisDataFrom.API,
+                ItemUrl = $"/Org/Detail/{Id}",
+            };
+        }        
     }
 }

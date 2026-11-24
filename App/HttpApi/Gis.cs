@@ -127,6 +127,17 @@ namespace App.API
         }
 
         //---------------------------------------------------------
+        // 组织
+        //---------------------------------------------------------
+        [HttpApi("Org", "获取组织GIS数据列表")]
+        public static APIResult GetOrgs(string name = null, string code = null, OrgLevel? level = null)
+        {
+            var orgs = DAL.Org.Search(level: level, name: name, code: code).Select(t => t.ToGeometryItem()).ToList();
+            return orgs.ToResult(type: ExportMode.Detail);
+        }
+
+
+        //---------------------------------------------------------
         // 点位
         //---------------------------------------------------------
         /// <summary>获取检查对象统一 GIS 数据</summary>
@@ -140,7 +151,7 @@ namespace App.API
 
             // tagIds
             var tagNameKeywords = ParseTagNames(tagNames);
-            var explicitTagIds = ParseTagIds(tagIds);
+            var explicitTagIds =  ParseTagIds(tagIds);
             var hasTagFilter = tagNameKeywords.Count > 0 || explicitTagIds.Count > 0;
             var matchedByName = tagNameKeywords.Count == 0
                 ? new List<long>()
@@ -408,7 +419,6 @@ namespace App.API
                 return false;
 
             if (!raw.StartsWith("GetCheckObjects", StringComparison.OrdinalIgnoreCase)
-                && !raw.StartsWith("api/gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase)
                 && !raw.StartsWith("httpapi/gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase)
                 && !raw.StartsWith("gis/GetCheckObjects", StringComparison.OrdinalIgnoreCase))
                 return false;

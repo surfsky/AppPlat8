@@ -79,5 +79,15 @@ namespace App.Entities
         {
             return All.GetDescendants(id).Select(t => t.Id).Distinct().ToList();
         }
+
+        public List<T> GetDescendants()
+        {
+            return All.GetDescendants(Id).ToList();
+        }
+
+        public static List<T> GetDescendants(List<long> ids)
+        {
+            return All.GetDescendants(ids).ToList();
+        }
     }
 }

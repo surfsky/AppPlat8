@@ -1,4 +1,5 @@
-node js 自动化测试
+网页自动化测试项目
 
+- 技术栈不限于：nodejs, playright, puppeteer, python
 - 测试脚本放在本目录，若有必要分目录进行存储；
 - 测试生成的临时文件请放在 files 目录下；

@@ -257,8 +257,8 @@ namespace App.DAL
                     OrgId,
                     OrgName,
                     CheckerId,
-                    CheckerName,
-                    DutyMan,
+                    CheckerName = CheckerName.Mask(),
+                    DutyMan = DutyMan.Mask(),
                     TagNames,
                     TagSpecNames,
                     IsDel

@@ -5,8 +5,8 @@
 - 用户管理：用户、角色、权限、组等。
 - 运维：日志、菜单、在线等。
 - OA：文章、资产、预算、项目、交办任务等。
-- 驾驶舱：地图、图层、企业、区域、面板等。
-- 隐患管理：对象、隐患、排查、任务、报表等。
+- 驾驶舱：地图、图层、企业、区域、面板、数字孪生等。
+- 隐患排查：对象、隐患、排查、任务、报表等。
 
 内置以下开源方案
 
@@ -38,40 +38,60 @@
 
 ```bash
 
-// 编译及运行# 编译并运行主项目（默认端口6001）
+#--------------------------------------------------------
+# 运行主项目
+#--------------------------------------------------------
+# 编译及运行# 编译并运行主项目（默认端口6001）
 cd AppPlat
 dotnet build
 dotnet run --project App
 dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
 
-// 发布项目
-// 将 app/data 和 app/pages 目录拷贝到 publish 目录下（可删除所有cs文件）
-// 删除./pages 下的所有 .cs 文件
+
+#--------------------------------------------------------
+# 发布主项目
+#--------------------------------------------------------
+# 发布项目，并将 app/pages 目录拷贝到 publish 目录下，同时删除所有cs文件
 dotnet publish App/App.csproj -c Release -o ./Publish
 cd ./Publish
-cp -r ../App/data ./data
 cp -r ../App/pages ./pages
 rm -rf ./pages/**/*.cs
-dotnet App.dll --urls=http://localhost:6060;http://abc.org # 若端口被占用，查找并杀掉占用端口 6060 的进程
+dotnet App.dll --urls=http://localhost:6060;
 
-// 关闭进程
+# 若有必要，做数据迁移以及备份和拷贝
+dotnet App.dll ef database update --project App.dll
+cp ../App/Data/Db/sqlite.db ./App/Data/Db/sqlite.db.bak
+cp -r ../App/data ./data
+
+#--------------------------------------------------------
+#
+#--------------------------------------------------------
+# 若有必要，关闭相关占用端口的进程（mac）
 lsof -nP -iTCP:6001 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9
 lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
 lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
 
-# 运行控制台项目（日常调度）
-dotnet run --project app.consoler
 
-// 编译及运行 EleUI 示例项目 # 编译EleUI示例项目
+# 编译及运行 EleUI 示例项目
 dotnet build App.EleUI/EleUIDemo/EleUIDemo.csproj
 dotnet run --project App.EleUI/EleUIDemo/EleUIDemo.csproj
 lsof -nP -iTCP:6002 -sTCP:LISTEN && lsof -ti tcp:6002 | xargs -n 1 kill -9  
 
-// 编译及运行控制台项目 # 或 dotnet app.Consoler.dll --conn=Data Source=./App/Db/sqlite.db
+# 编译及运行控制台项目
 dotnet run --project App.Consoler
 ```
 
 4. 打开浏览器，访问 `http://localhost:6001`
+
+### 数据库
+
+1. 数据库默认为 sqlite，可迁移到 postgresql、mysql等。
+2. 在 `appsettings.json` 中配置数据库连接字符串。
+3. 本项目采用 EntityFramework CodeFirst 模式，若实体类属性变更，可用使用 EF 机制进行数据库迁移: 运行
+
+```bash
+dotnet ef migrations add OrgGeoJson --project App/App.csproj --startup-project App/App.csproj
+```
 
 ## 2、测试
 
@@ -95,6 +115,19 @@ dotnet run --project App.Consoler
 
 ## 3、部署
 
+
+
+### 发布 Publish
+
+``` shell
+# 默认：框架依赖，win-x64，Release
+dotnet publish -c Release -r win-x64 -o ./publish
+#  自包含版本（离线服务器用）
+dotnet publish -c Release -r win-x64 --self-contained true -o ./publish
+# 精简PublishingReadyToRun，启动更快
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o ./publish
+```
+
 ### 文件部署方式
 
 - 将/App目录下的所有文件复制到部署目录下。
@@ -103,34 +136,23 @@ dotnet run --project App.Consoler
 
 ### Docker 部署方式
 
-- 应用程序目录：
-- 数据库文件映射：
-- 临时文件映射：
-
-## 4、数据库
-
-### 数据库
-
-1. 数据库默认为 sqlite，可迁移到 postgresql、mysql等。
-2. 在 `appsettings.json` 中配置数据库连接字符串。
-
-### 数据库迁移
-
-1. 本项目采用 EntityFramework CodeFirst 模式，若实体类属性变更，可用使用 EF 机制进行数据库迁移: 运行
-
-```bash
-dotnet ef migrations add CheckHazardOrgId --project App/App.csproj --startup-project App/App.csproj
+- 主程序包包装成docker包：
+``` bash
+docker build -t appplat8 .
+docker run -p 6001:6001 -v /Data:/App/data appplat8 appplat8
 ```
+- 把/Data/目录映射出去，包括数据库、用户上传的文件、临时文件等：
 
-### 数据库备份：
+## 4、备份
+
+简单的说，拷贝目录 /Data/ 到其他地方就行了，包括数据库文件、用户上传的文件等。
+
+如果用了其他数据库：
 
 - sqlite 数据库备份：直接拷贝一份到别地方就行
 - postgresql 数据库备份：用 pg_dump 命令备份，用 pgagent 配置定时任务备份
 - mysql 数据库备份：用 mysqldump 命令备份，用 mysqlbackup 配置定时任务备份
 
-### 用户上传的文件备份：
-
-- /App/Files/
 
 ## 5、项目目录说明
 

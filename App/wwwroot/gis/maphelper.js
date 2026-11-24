@@ -6,6 +6,7 @@
         var accessToken = options.accessToken || '';
         var initGeoJson = options.initGeoJson || '';
         var mapContainerId = options.mapContainerId || 'map';
+        var defaultStyle = (options.defaultStyle || options.styleName || '').trim();
         var onError = typeof options.onError === 'function' ? options.onError : function () { };
         var onPaletteChange = typeof options.onPaletteChange === 'function' ? options.onPaletteChange : function () { };
         var onToolStateChange = typeof options.onToolStateChange === 'function' ? options.onToolStateChange : function () { };
@@ -1872,7 +1873,8 @@
             map = global.MapFactory.createMap({
                 container: mapContainerId,
                 center: initialCenter,
-                zoom: initialZoom
+                zoom: initialZoom,
+                defaultStyle: defaultStyle
             });
 
             map.addControl(new maplibregl.NavigationControl(), 'top-left');

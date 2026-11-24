@@ -11,16 +11,8 @@ Thumbs.db
 .github/
 .vs/
 .vscode/*
-
-# IDE / Editor
-!.vscode/extensions.json
-*.user
-*.suo
-*.pdb
-
-# Build outputs
-**/[Bb]in/
-**/[Oo]bj/
+.dotnet/
+.dotnethome/
 
 # Folders
 Design/
@@ -30,23 +22,32 @@ Library/
 Data/
 Doc/AI/
 Doc/Code/
-WebTest/*
-!WebTest/tests/
-WebTest/tests/*
-!WebTest/tests/testAutoTable.js
+WebTest/
 App/wwwroot/tiles/
+
+
+# Sub folders
+**/[Bb]in/
+**/[Oo]bj/
+**/TestResults/
+**/Logs/
+*.log
+
+
+# IDE / Editor
+!.vscode/extensions.json
+*.user
+*.suo
+*.pdb
 
 
 # Files
 key.txt
 temp.txt
-tasklog.txt
-Deploy/
-app/webtest/
+task.txt
+taskLog.txt
+taskDoc.txt
 
-# Logs
-**/Logs/
-*.log
 
 # Databases and local runtime files
 *.db

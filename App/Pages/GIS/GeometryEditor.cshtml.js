@@ -4,6 +4,9 @@ createApp({
     setup() {
         const cfg = window.__geometryEditorConfig || {};
         const accessToken = cfg.accessToken || '';
+        const tiandituKey = cfg.tiandituKey || '';
+        const amapKey = cfg.amapKey || '';
+        const defaultStyle = cfg.defaultStyle || '';
         const initGeoJson = cfg.initGeoJson || '';
         const storageKey = '__gis_geometry_editor_reference_gps';
         const parseGpsText = (text) => {
@@ -498,6 +501,9 @@ createApp({
         onMounted(() => {
             editor = window.MapGeometryHelper.createEditor({
                 accessToken,
+                tiandituKey,
+                amapKey,
+                defaultStyle,
                 initGeoJson,
                 initialCenter,
                 initialZoom,

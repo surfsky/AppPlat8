@@ -293,11 +293,11 @@
                                 <span class="point-list-texts">
                                     <span class="point-list-title-row">
                                         <span class="point-list-title">${escapeHtml(title)}</span>
+                                        ${subtitle ? `<span class="point-list-subtitle">(${escapeHtml(subtitle)})</span>` : ''}
                                         <button type="button" class="point-list-detail-btn" data-geometry-id="${item.id}" data-raw-id="${item.rawId || 0}" data-item-url="${escapeHtml(item.itemUrl || '')}" data-data-from="${escapeHtml(item.dataFrom || '')}" title="查看详情">
                                             <i class="fa-regular fa-file-lines"></i>
                                         </button>
                                     </span>
-                                    ${subtitle ? `<span class="point-list-subtitle">${escapeHtml(subtitle)}</span>` : ''}
                                     <span class="point-list-meta">${escapeHtml(metaText)}</span>
                                 </span>
                             </div>

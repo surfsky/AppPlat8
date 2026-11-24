@@ -313,27 +313,33 @@ export class EleAppBuilder {
                 return body;
             }
 
-            // 处理命令响应
-            const commandExists = this.hasCommandPayload(body) || this.hasCommandPayload(body.data);
-            if (!commandExists)
-                EleManager.showSuccess(Utils.extractMessage(body, '操作成功'));
-            await this.executeServerCommands(body);       // ？
-            await this.executeServerCommands(body.data);  // ？
+            await this.executeServerCommands(body);
+            await this.executeServerCommands(body.data);
+            this.dispatchReloadIfNeeded(body);
 
-            // 将响应数据合并到状态中（如果有）
             if (state && body.data && typeof body.data === 'object' && !this.isCommandPayload(body.data)) {
                 this.mergeServerState(state, body.data);
             }
             return body;
         }
 
-        // 处理非标准响应格式
         await this.executeServerCommands(body);
-        if (!this.hasCommandPayload(body)) 
+        this.dispatchReloadIfNeeded(body);
+        if (!this.hasCommandPayload(body))
             EleManager.showSuccess('操作成功');
-        if (state) 
+        if (state)
             this.mergeServerState(state, body);
         return body;
+    }
+
+    dispatchReloadIfNeeded(body) {
+        if (!body || typeof body !== 'object') return;
+        const dd = body.data || body;
+        if (!dd || typeof dd !== 'object') return;
+        if (dd.reloadData !== true && dd.reload !== true) return;
+        try {
+            window.dispatchEvent(new CustomEvent('eleui:refresh-data', { detail: { reloadData: true } }));
+        } catch (_) {}
     }    
 
     // 执行服务器命令（串行等待，保证 sleep 等异步命令按顺序生效）

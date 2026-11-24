@@ -6,12 +6,13 @@
 
 @section body {
     <EleForm LabelWidth="100px">
-        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreePicker For="Item.ParentId" Label="上级组织" Api="/httpapi/orgs/GetAuthOrgTree"  Clearable="true" CheckStrictly="true"></EleTreePicker>
+        <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
+        <EleInput For="Item.Code" Label="编码" Required="false"></EleInput>
         <EleNumber For="Item.SortId" Label="排序" Min="0" Max="1000"></EleNumber>
         <EleSelect For="Item.Level" Label="级别" Required="true"></EleSelect>
         <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="定位" Class="gps-picker" PopupUrl="../gis/Locator" Icon="Location" Editable="true"></ElePicker>
-        <ElePicker For="Item.GeoData" TextFor="Item.GeoData" Label="图形数据" Class="geojson-picker" PopupUrl="../gis/GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></ElePicker>
+        <ElePicker For="Item.GeoJson" TextFor="Item.GeoJson" Label="图形数据" Class="geojson-picker" PopupUrl="../gis/GeometryEditor" KeyMode="Storage" Icon="Location" Rows="12" Editable="true" FillRow="true"></ElePicker>
         <EleInput For="Item.Remark" Label="备注" Rows="3" FillRow="true"></EleInput>
     
         <Bottom>

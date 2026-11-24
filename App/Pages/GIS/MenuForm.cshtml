@@ -6,8 +6,10 @@
     var selectedId = Request.Query["selectId"].ToString();
 }
 
+
+
 @section body {
-    <EleForm LabelWidth="120px">
+    <EleForm LabelWidth="120px" Mixins="menuMixin">
         <EleInput For="Item.Name" Label="名称" Required="true"></EleInput>
         <EleTreePicker For="Item.ParentId" Label="上级菜单" Api="/httpapi/gis/GetMenuTree?excludeId=@currentId&amp;selectedId=@selectedId" Clearable="true" CheckStrictly="true"></EleTreePicker>
         <EleImageUpload For="Item.Icon" Label="图标" FillRow="true" ItemWidth="64"></EleImageUpload>
@@ -19,7 +21,7 @@
         <div v-show="Number(form.dataFrom ?? 0) === 2 || String(form.dataFrom ?? '').toLowerCase() === 'api'">
             <EleInput For="Item.DataUrl" Label="数据地址" FillRow="true" Placeholder="如: /httpapi/gis/getcheckobjects?tagnames=危化品">
                 <template #append>
-                    <el-button class="menu-dataurl-test-btn" link type="primary" @@click="invokeCommand('TestDataUrl')" title="测试">
+                    <el-button class="menu-dataurl-test-btn" link type="primary" @@click="testApiUrl(form.dataUrl)" title="测试">
                         <i class="fa-solid fa-flask-vial"></i>
                     </el-button>
                 </template>
@@ -39,17 +41,31 @@
     </EleForm>
 }
 
-@section head{
-    <style>
-        .menu-dataurl-test-btn {
-            padding: 0 6px;
-            min-height: 30px;
-        }
-
-        .el-message,
-        .el-notification {
-            z-index: 100000 !important;
-            top: 72px !important;
-        }
-    </style>
+@section script{
+    <script>
+        const menuMixin = {
+            methods: {
+                async testApiUrl(url) {
+                    if (!url || !String(url).trim()) {
+                        EleManager.showWarning('请先填写数据地址');
+                        return;
+                    }
+                    try {
+                        const fullUrl = /^https?:\/\//i.test(url) ? url : window.location.origin + url;
+                        const resp = await fetch(fullUrl, { credentials: 'same-origin' });
+                        const json = await resp.json();
+                        const data = json?.data ?? json;
+                        const cnt = Array.isArray(data) ? data.length : (data ? 1 : 0);
+                        if (this.form) {
+                            if ('dataCnt' in this.form) this.form.dataCnt = cnt;
+                            if ('dataDt' in this.form) this.form.dataDt = new Date().toISOString().replace('T', ' ').slice(0, 19);
+                        }
+                        EleManager.showSuccess(`测试成功，共 ${cnt} 条数据`);
+                    } catch (e) {
+                        EleManager.showError(`测试失败: ${e?.message || e}`);
+                    }
+                }
+            }
+        };
+    </script>
 }

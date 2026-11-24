@@ -2,6 +2,8 @@ using System.Linq;
 using App.Components;
 using App.DAL;
 using App.DAL.GIS;
+using App.Entities;
+using App.EleUI;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Pages.GIS
@@ -44,5 +46,42 @@ namespace App.Pages.GIS
             GisMenu.ClearCache();
             return BuildResult(0, "删除成功");
         }
+
+
+        //-------------------------------------------------------
+        // Move
+        //-------------------------------------------------------
+        public IActionResult OnPostMoveUp([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(GisMenu.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveUp(), "已经是最顶层");
+            return EleHandler.Toast("上移成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveDown([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(GisMenu.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveDown(), "已经是最底层");
+            return EleHandler.Toast("下移成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveFirst([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(GisMenu.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveFirst(), "已经是最顶层");
+            return EleHandler.Toast("到顶成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveLast([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(GisMenu.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveLast(), "已经是最底层");
+            return EleHandler.Toast("到底成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
     }
 }

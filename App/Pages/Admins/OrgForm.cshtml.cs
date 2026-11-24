@@ -57,12 +57,13 @@ namespace App.Pages.Admins
 
             // 
             item.Name = req.Name;
+            item.Code = req.Code;
             item.ParentId = req.ParentId;
             item.SortId = req.SortId;
             item.Level = req.Level;
             item.Remark = req.Remark;
             item.Gps = req.Gps;
-            item.GeoData = req.GeoData;
+            item.GeoJson = req.GeoJson;
             item.Save();
             App.DAL.Org.ClearCache(); // Refresh cache
             return BuildResult(0, "保存成功");

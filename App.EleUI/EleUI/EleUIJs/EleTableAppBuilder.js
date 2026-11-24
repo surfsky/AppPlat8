@@ -342,111 +342,108 @@ export class EleTableAppBuilder extends EleAppBuilder {
                             console.warn('[EleTable.TestResult]', err, resp);
                         }
                     }
-                    // ---------- MoveUp/MoveDown：按响应体 sortChanges **只更新 sortId 字段**，无全量 reload ----------
+                    // ---------- 响应驱动：有 sortChanges 则本地 patch，有 reloadData 则 loadData ----------
                     else if (resp && typeof resp === 'object' && resp.code === 0) {
-                        const n = (name || '').toString().trim().toLowerCase();
-                        if (n === 'moveup' || n === 'movedown') {
-                            const data = resp.data || {};
-                            const changes = Array.isArray(data.sortChanges) ? data.sortChanges : [];
-                            if (changes.length > 0 && table && Array.isArray(table.items?.value)) {
-                                // 快照：当前勾选状态，用于 patch 重排后把勾选恢复（否则连点"下移"每次都要重新勾选，很麻烦）
-                                const snapshotIds  = Array.isArray(table.selectedIds?.value)  ? [...table.selectedIds.value]  : [];
-                                const snapshotRows = Array.isArray(table.selectedRows?.value) ? [...table.selectedRows.value] : [];
+                        const data = resp.data || {};
+                        const changes = Array.isArray(data.sortChanges) ? data.sortChanges : [];
+                        if (changes.length > 0 && table && Array.isArray(table.items?.value)) {
+                            // 快照：当前勾选状态，用于 patch 重排后把勾选恢复（否则连点"下移"每次都要重新勾选，很麻烦）
+                            const snapshotIds  = Array.isArray(table.selectedIds?.value)  ? [...table.selectedIds.value]  : [];
+                            const snapshotRows = Array.isArray(table.selectedRows?.value) ? [...table.selectedRows.value] : [];
 
-                                const rows = table.items.value;
-                                const byId = new Map();
-                                for (let i = 0; i < rows.length; i++) {
-                                    const r = rows[i];
-                                    if (r && (r.id != null || r.Id != null)) {
-                                        const k = r.id != null ? String(r.id) : String(r.Id);
-                                        byId.set(k, r);
-                                    }
-                                }
-                                let patched = 0;
-                                for (const ch of changes) {
-                                    if (!ch || ch.id == null || ch.sortId == null) continue;
-                                    const k = String(ch.id);
-                                    const r = byId.get(k);
-                                    if (!r) continue;
-                                    // 兼容：行里 sortId / SortId 两种命名（STJ CamelCase 默认会是 sortId）
-                                    if ('sortId' in r) r.sortId = ch.sortId;
-                                    if ('SortId' in r) r.SortId = ch.sortId;
-                                    // 兜底：两者都不在（字段名不一致）→ 强制写 camel 版让 EleTable Column prop="sortId" 命中
-                                    if (!('sortId' in r) && !('SortId' in r)) r.sortId = ch.sortId;
-                                    patched += 1;
-                                }
-                                if (patched > 0) {
-                                    // 触发 EleTable 本地重排：如果当前就是 SortId asc/desc，onSortChange 会重新 loadData →
-                                    // 为了满足"不 reload"，用手动 replace+保持相同 pageIndex 的方式：
-                                    // 1) 保证 sortField/sortDirection.value 与后端约定一致 = SortId ASC
-                                    // 2) 将 items.value 原地按 SortId asc（或用户当前方向）重排；Vue 响应式 → 表格立刻刷新
-                                    try {
-                                        const field = (data.sortField || table.sortField?.value || 'SortId').toString().trim();
-                                        const isAsc = (typeof data.asc === 'boolean')
-                                            ? data.asc
-                                            : !((table.sortDirection?.value || 'ASC').toString().toUpperCase() === 'DESC');
-                                        const cmpFieldCandidates = [
-                                            field,
-                                            field.charAt(0).toLowerCase() + field.slice(1),
-                                            field.charAt(0).toUpperCase() + field.slice(1)
-                                        ];
-                                        const pickVal = (r) => {
-                                            for (const f of cmpFieldCandidates) {
-                                                if (r && (f in r) && r[f] != null) {
-                                                    const v = r[f];
-                                                    if (typeof v === 'number' || typeof v === 'bigint') return Number(v);
-                                                    const n = Number(v);
-                                                    if (!Number.isNaN(n)) return n;
-                                                    return String(v);
-                                                }
-                                            }
-                                            return Number.MAX_SAFE_INTEGER;
-                                        };
-                                        table.items.value = [...rows].sort((a, b) => {
-                                            const av = pickVal(a);
-                                            const bv = pickVal(b);
-                                            if (av === bv) {
-                                                const ai = a?.id != null ? Number(a.id) : 0;
-                                                const bi = b?.id != null ? Number(b.id) : 0;
-                                                return bi - ai;
-                                            }
-                                            if (typeof av === 'number' && typeof bv === 'number') return isAsc ? av - bv : bv - av;
-                                            return isAsc ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
-                                        });
-                                    } catch (sortErr) {
-                                        console.warn('[EleTable.MoveResult] patch后本地重排失败，降级为不重排：', sortErr);
-                                    }
-                                }
-                                // ✅ 核心：patch + 重排之后，把原来的勾选状态恢复（勾选行继续保持选中，便于连点下移）
-                                if (snapshotIds.length > 0) {
-                                    try { restoreSelectedByIds(snapshotIds, snapshotRows); } catch (err) { console.warn('[EleTable.MoveResult] 恢复选中失败', err); }
+                            const rows = table.items.value;
+                            const byId = new Map();
+                            for (let i = 0; i < rows.length; i++) {
+                                const r = rows[i];
+                                if (r && (r.id != null || r.Id != null)) {
+                                    const k = r.id != null ? String(r.id) : String(r.Id);
+                                    byId.set(k, r);
                                 }
                             }
-                            if ((data.reload === true || data.reloadData === true) && table && typeof table.loadData === 'function') {
-                                const idsToRestore = selectedIdsBeforeRequest.length > 0
-                                    ? selectedIdsBeforeRequest
-                                    : (Array.isArray(table.selectedIds?.value) ? [...table.selectedIds.value] : []);
-                                const rowsToRestore = selectedRowsBeforeRequest.length > 0
-                                    ? selectedRowsBeforeRequest
-                                    : (Array.isArray(table.selectedRows?.value) ? [...table.selectedRows.value] : []);
-                                await table.loadData();
-                                await nextTick();
-                                if (idsToRestore.length > 0) {
-                                    table._suppressSelectionChange = true;
-                                    try {
-                                        const host = getTableHost();
-                                        try { host?.clearSelection?.(); } catch (_) {}
-                                        await nextTick();
-                                        restoreSelectedByIds(idsToRestore, rowsToRestore);
-                                        await nextTick();
-                                        // selection-change event can fire after Element Plus' internal nextTick.
-                                        table.selectedIds.value = [...idsToRestore];
-                                        const idSet = new Set(idsToRestore.map(String));
-                                        table.selectedRows.value = (table.items.value || []).filter(row =>
-                                            idSet.has(String(row?.id ?? row?.Id)));
-                                    } finally {
-                                        table._suppressSelectionChange = false;
-                                    }
+                            let patched = 0;
+                            for (const ch of changes) {
+                                if (!ch || ch.id == null || ch.sortId == null) continue;
+                                const k = String(ch.id);
+                                const r = byId.get(k);
+                                if (!r) continue;
+                                // 兼容：行里 sortId / SortId 两种命名（STJ CamelCase 默认会是 sortId）
+                                if ('sortId' in r) r.sortId = ch.sortId;
+                                if ('SortId' in r) r.SortId = ch.sortId;
+                                // 兜底：两者都不在（字段名不一致）→ 强制写 camel 版让 EleTable Column prop="sortId" 命中
+                                if (!('sortId' in r) && !('SortId' in r)) r.sortId = ch.sortId;
+                                patched += 1;
+                            }
+                            if (patched > 0) {
+                                // 触发 EleTable 本地重排：如果当前就是 SortId asc/desc，onSortChange 会重新 loadData →
+                                // 为了满足"不 reload"，用手动 replace+保持相同 pageIndex 的方式：
+                                // 1) 保证 sortField/sortDirection.value 与后端约定一致 = SortId ASC
+                                // 2) 将 items.value 原地按 SortId asc（或用户当前方向）重排；Vue 响应式 → 表格立刻刷新
+                                try {
+                                    const field = (data.sortField || table.sortField?.value || 'SortId').toString().trim();
+                                    const isAsc = (typeof data.asc === 'boolean')
+                                        ? data.asc
+                                        : !((table.sortDirection?.value || 'ASC').toString().toUpperCase() === 'DESC');
+                                    const cmpFieldCandidates = [
+                                        field,
+                                        field.charAt(0).toLowerCase() + field.slice(1),
+                                        field.charAt(0).toUpperCase() + field.slice(1)
+                                    ];
+                                    const pickVal = (r) => {
+                                        for (const f of cmpFieldCandidates) {
+                                            if (r && (f in r) && r[f] != null) {
+                                                const v = r[f];
+                                                if (typeof v === 'number' || typeof v === 'bigint') return Number(v);
+                                                const n = Number(v);
+                                                if (!Number.isNaN(n)) return n;
+                                                return String(v);
+                                            }
+                                        }
+                                        return Number.MAX_SAFE_INTEGER;
+                                    };
+                                    table.items.value = [...rows].sort((a, b) => {
+                                        const av = pickVal(a);
+                                        const bv = pickVal(b);
+                                        if (av === bv) {
+                                            const ai = a?.id != null ? Number(a.id) : 0;
+                                            const bi = b?.id != null ? Number(b.id) : 0;
+                                            return bi - ai;
+                                        }
+                                        if (typeof av === 'number' && typeof bv === 'number') return isAsc ? av - bv : bv - av;
+                                        return isAsc ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+                                    });
+                                } catch (sortErr) {
+                                    console.warn('[EleTable.MoveResult] patch后本地重排失败，降级为不重排：', sortErr);
+                                }
+                            }
+                            // ✅ 核心：patch + 重排之后，把原来的勾选状态恢复（勾选行继续保持选中，便于连点下移）
+                            if (snapshotIds.length > 0) {
+                                try { restoreSelectedByIds(snapshotIds, snapshotRows); } catch (err) { console.warn('[EleTable.MoveResult] 恢复选中失败', err); }
+                            }
+                        }
+                        if ((data.reload === true || data.reloadData === true) && table && typeof table.loadData === 'function') {
+                            const idsToRestore = selectedIdsBeforeRequest.length > 0
+                                ? selectedIdsBeforeRequest
+                                : (Array.isArray(table.selectedIds?.value) ? [...table.selectedIds.value] : []);
+                            const rowsToRestore = selectedRowsBeforeRequest.length > 0
+                                ? selectedRowsBeforeRequest
+                                : (Array.isArray(table.selectedRows?.value) ? [...table.selectedRows.value] : []);
+                            await table.loadData();
+                            await nextTick();
+                            if (idsToRestore.length > 0) {
+                                table._suppressSelectionChange = true;
+                                try {
+                                    const host = getTableHost();
+                                    try { host?.clearSelection?.(); } catch (_) {}
+                                    await nextTick();
+                                    restoreSelectedByIds(idsToRestore, rowsToRestore);
+                                    await nextTick();
+                                    // selection-change event can fire after Element Plus' internal nextTick.
+                                    table.selectedIds.value = [...idsToRestore];
+                                    const idSet = new Set(idsToRestore.map(String));
+                                    table.selectedRows.value = (table.items.value || []).filter(row =>
+                                        idSet.has(String(row?.id ?? row?.Id)));
+                                } finally {
+                                    table._suppressSelectionChange = false;
                                 }
                             }
                         }

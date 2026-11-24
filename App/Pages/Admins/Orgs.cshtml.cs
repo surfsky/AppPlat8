@@ -10,6 +10,7 @@ using App.HttpApi;
 using App.Utils;
 using App.Entities;
 using App.EleUI;
+using System.Linq.Expressions;
 
 namespace App.Pages.Admins
 {
@@ -23,9 +24,15 @@ namespace App.Pages.Admins
         /// <summary>获取清单</summary>
         public async Task<IActionResult> OnGetData(string name)
         {
-            var allOrgs = await App.DAL.Org.Set.OrderBy(o => o.SortId).ToListAsync();
+            var allOrgs = App.DAL.Org.All; //await.Set.OrderBy(o => o.SortId).ToListAsync();
             if (!string.IsNullOrEmpty(name))
-                allOrgs = allOrgs.Where(o => o.Name.Contains(name)).ToList();
+            {
+                //allOrgs = allOrgs.Where(o => o.Name.Contains(name)).ToList();
+                //allOrgs = allOrgs.FirstOrDefault(t => t.Name.Contains(name)).GetDescendants();
+                var ids = allOrgs.Where(o => o.Name.Contains(name)).Select(t => t.Id).ToList();
+                allOrgs = DAL.Org.GetDescendants(ids).ToList();
+            }
+
             
             // Convert to nested structure
             var tree = allOrgs.ToTree();
@@ -66,11 +73,41 @@ namespace App.Pages.Admins
         /// <summary>补全所有组织全称</summary>
         public IActionResult OnPostFixAll()
         {
-            if (!HasPermission(Permission.OrgEdit))
-                return BuildResult(403, "无权操作");
-
+            Assert(HasPermission(Permission.OrgEdit), "无权操作");
             var cnt = App.DAL.Org.FixAll();
             return BuildResult(0, $"已补全 {cnt} 条组织全称");
+        }
+
+        public IActionResult OnPostMoveUp([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(App.DAL.Org.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveUp(), "已经是最顶层");
+            return EleHandler.Toast("上移成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveDown([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(App.DAL.Org.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveDown(), "已经是最底层");
+            return EleHandler.Toast("下移成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveFirst([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(App.DAL.Org.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveFirst(), "已经是最顶层");
+            return EleHandler.Toast("到顶成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveLast([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(App.DAL.Org.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveLast(), "已经是最底层");
+            return EleHandler.Toast("到底成功", NotifyType.Success).ReloadData().ToResult();
         }
     }
 }

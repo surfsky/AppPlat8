@@ -52,7 +52,7 @@ namespace App.API
             var all = App.DAL.Org.All
                 .OrderBy(t => t.SortId)
                 .ThenBy(t => t.Id)
-                .Select(t => t.Clone().SetValue(x => x.GeoData, null))
+                .Select(t => t.Clone().SetValue(x => x.GeoJson, null))
                 .ToList();
 
             // admin

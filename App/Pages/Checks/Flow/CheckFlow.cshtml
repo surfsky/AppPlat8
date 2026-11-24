@@ -6,7 +6,7 @@
 }
 
 @section body {
-    <EleForm BuildMode="None">
+    <EleForm Mixins="checkFlowMixin">
         <EleHidden For="Item.ObjectId"></EleHidden>
         <EleHidden For="Item.CheckLogId"></EleHidden>
 
@@ -89,102 +89,6 @@
 }
 
 @section script {
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const checkFlowMixin = {
-                data() {
-                    return {
-                        itemCodeKeyword: '',
-                        itemNameKeyword: '',
-                        itemHazardLevelFilter: '',
-                        itemResultFilter: ''
-                    };
-                },
-                computed: {
-                    hazardLevelOptions() {
-                        const rows = Array.isArray(this.form?.checkItems) ? this.form.checkItems : [];
-                        const levels = rows
-                            .map((row) => (row?.hazardLevelName || '').toString().trim())
-                            .filter((name) => !!name);
-                        return Array.from(new Set(levels));
-                    },
-                    filteredCheckItems() {
-                        const rows = Array.isArray(this.form?.checkItems) ? this.form.checkItems : [];
-                        const codeKeyword = (this.itemCodeKeyword || '').trim().toLowerCase();
-                        const nameKeyword = (this.itemNameKeyword || '').trim().toLowerCase();
-                        const hazardLevelFilter = (this.itemHazardLevelFilter || '').trim();
-                        const resultFilter = (this.itemResultFilter || '').trim().toLowerCase();
-                        if (!codeKeyword && !nameKeyword && !hazardLevelFilter && !resultFilter)
-                            return rows;
-                        return rows.filter((row) => {
-                            const code = (row?.code || '').toString().toLowerCase();
-                            const name = (row?.name || '').toString().toLowerCase();
-                            const hazardLevelName = (row?.hazardLevelName || '').toString().trim();
-                            const result = (row?.result || '').toString().toLowerCase();
-                            const hitCode = !codeKeyword || code.includes(codeKeyword);
-                            const hitName = !nameKeyword || name.includes(nameKeyword);
-                            const hitHazardLevel = !hazardLevelFilter || hazardLevelName === hazardLevelFilter;
-                            const hitResult = !resultFilter || result === resultFilter;
-                            return hitCode && hitName && hitHazardLevel && hitResult;
-                        });
-                    }
-                },
-                methods: {
-                    getHazardLevelTagType(name) {
-                        const n = (name || '').toString().trim();
-                        if (!n) return 'info';
-                        if (n.includes('重大')) return 'danger';
-                        if (n.includes('较大')) return 'warning';
-                        if (n.includes('一般')) return 'warning';
-                        if (n.includes('无')) return 'success';
-                        return 'info';
-                    },
-                    getCheckItemRowClass({ row }) {
-                        return row && row.result === 'fail' ? 'check-flow-row-fail' : '';
-                    },
-                    async onCheckFlowItemResultChanged(form, row, val, save) {
-                        if (!row || val !== 'fail') return;
-
-                        const objId = form && form.objectId ? '' + form.objectId : '';
-                        const checkLogId = form && form.checkLogId ? '' + form.checkLogId : '';
-                        if (!objId || !checkLogId) {
-                            EleManager.showWarning('缺少检查对象或检查记录标识');
-                            return;
-                        }
-
-                        const sheetId = row.sheetId ? '' + row.sheetId : '';
-                        const itemId = row.checkItemId ? '' + row.checkItemId : '';
-                        const itemText = row.name ? '' + row.name : '';
-                        const url =
-                            '/Checks/flow/CheckHazardForm?md=new'
-                            + '&objectId=' + encodeURIComponent(objId)
-                            + '&checkLogId=' + encodeURIComponent(checkLogId)
-                            + '&checkSheetId=' + encodeURIComponent(sheetId)
-                            + '&checkItemId=' + encodeURIComponent(itemId)
-                            + '&checkItemText=' + encodeURIComponent(itemText);
-
-                        EleManager.openDrawer({
-                            title: '隐患录入',
-                            url,
-                            closeHandler: async (payload) => {
-                                const saved = payload && payload.data && payload.data.saved === true;
-                                if (saved && typeof save === 'function') {
-                                    await save({ closeAfterSave: false });
-                                }
-                            }
-                        });
-                    }
-                }
-            };
-
-            new EleFormAppBuilder().mount('#app', {
-                dataHandler: '?handler=Data',
-                saveHandler: '?handler=Save',
-                mixins: [checkFlowMixin]
-            });
-        });
-    </script>
-
     <style>
         .el-table thead th.el-table__cell {
             background: #f8fafc;
@@ -223,4 +127,93 @@
             background: #fff7ed;
         }
     </style>
+
+    <script>
+        const checkFlowMixin = {
+            data() {
+                return {
+                    itemCodeKeyword: '',
+                    itemNameKeyword: '',
+                    itemHazardLevelFilter: '',
+                    itemResultFilter: ''
+                };
+            },
+            computed: {
+                hazardLevelOptions() {
+                    const rows = Array.isArray(this.form?.checkItems) ? this.form.checkItems : [];
+                    const levels = rows
+                        .map((row) => (row?.hazardLevelName || '').toString().trim())
+                        .filter((name) => !!name);
+                    return Array.from(new Set(levels));
+                },
+                filteredCheckItems() {
+                    const rows = Array.isArray(this.form?.checkItems) ? this.form.checkItems : [];
+                    const codeKeyword = (this.itemCodeKeyword || '').trim().toLowerCase();
+                    const nameKeyword = (this.itemNameKeyword || '').trim().toLowerCase();
+                    const hazardLevelFilter = (this.itemHazardLevelFilter || '').trim();
+                    const resultFilter = (this.itemResultFilter || '').trim().toLowerCase();
+                    if (!codeKeyword && !nameKeyword && !hazardLevelFilter && !resultFilter)
+                        return rows;
+                    return rows.filter((row) => {
+                        const code = (row?.code || '').toString().toLowerCase();
+                        const name = (row?.name || '').toString().toLowerCase();
+                        const hazardLevelName = (row?.hazardLevelName || '').toString().trim();
+                        const result = (row?.result || '').toString().toLowerCase();
+                        const hitCode = !codeKeyword || code.includes(codeKeyword);
+                        const hitName = !nameKeyword || name.includes(nameKeyword);
+                        const hitHazardLevel = !hazardLevelFilter || hazardLevelName === hazardLevelFilter;
+                        const hitResult = !resultFilter || result === resultFilter;
+                        return hitCode && hitName && hitHazardLevel && hitResult;
+                    });
+                }
+            },
+            methods: {
+                getHazardLevelTagType(name) {
+                    const n = (name || '').toString().trim();
+                    if (!n) return 'info';
+                    if (n.includes('重大')) return 'danger';
+                    if (n.includes('较大')) return 'warning';
+                    if (n.includes('一般')) return 'warning';
+                    if (n.includes('无')) return 'success';
+                    return 'info';
+                },
+                getCheckItemRowClass({ row }) {
+                    return row && row.result === 'fail' ? 'check-flow-row-fail' : '';
+                },
+                async onCheckFlowItemResultChanged(form, row, val, save) {
+                    if (!row || val !== 'fail') return;
+
+                    const objId = form && form.objectId ? '' + form.objectId : '';
+                    const checkLogId = form && form.checkLogId ? '' + form.checkLogId : '';
+                    if (!objId || !checkLogId) {
+                        EleManager.showWarning('缺少检查对象或检查记录标识');
+                        return;
+                    }
+
+                    const sheetId = row.sheetId ? '' + row.sheetId : '';
+                    const itemId = row.checkItemId ? '' + row.checkItemId : '';
+                    const itemText = row.name ? '' + row.name : '';
+                    const url =
+                        '/Checks/flow/CheckHazardForm?md=new'
+                        + '&objectId=' + encodeURIComponent(objId)
+                        + '&checkLogId=' + encodeURIComponent(checkLogId)
+                        + '&checkSheetId=' + encodeURIComponent(sheetId)
+                        + '&checkItemId=' + encodeURIComponent(itemId)
+                        + '&checkItemText=' + encodeURIComponent(itemText);
+
+                    EleManager.openDrawer({
+                        title: '隐患录入',
+                        url,
+                        closeHandler: async (payload) => {
+                            const saved = payload && payload.data && payload.data.saved === true;
+                            if (saved && typeof save === 'function') {
+                                await save({ closeAfterSave: false });
+                            }
+                        }
+                    });
+                }
+            }
+        };
+    </script>
 }
+

@@ -19,7 +19,13 @@ namespace App.Entities
         /// <summary>将实体下移一位；树实体只在同级节点中移动，普通实体在本表全体记录中移动。</summary>
         public static bool MoveDown<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, 1);
 
-        private static bool Move<T>(T entity, int direction) where T : Entity<T>, ISort, new()
+        /// <summary>将实体移到同级节点最前；树实体只在同级节点中移动，普通实体在本表全体记录中移动。</summary>
+        public static bool MoveFirst<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, 0, toEnd: false);
+
+        /// <summary>将实体移到同级节点最后；树实体只在同级节点中移动，普通实体在本表全体记录中移动。</summary>
+        public static bool MoveLast<T>(this T entity) where T : Entity<T>, ISort, new() => Move(entity, 0, toEnd: true);
+
+        private static bool Move<T>(T entity, int direction, bool toEnd = false) where T : Entity<T>, ISort, new()
         {
             ArgumentNullException.ThrowIfNull(entity);
             if (entity.Id <= 0)
@@ -45,9 +51,9 @@ namespace App.Entities
             if (index < 0)
                 throw new InvalidOperationException($"排序实体 {typeof(T).Name}({entity.Id}) 不存在于当前数据集中。");
 
-            // 如果目标索引超出范围，则不做任何调整
-            var targetIndex = index + direction;
-            if (targetIndex < 0 || targetIndex >= siblings.Count)
+            // 计算目标索引：toEnd 为 true 移到末尾，false 移到开头，否则按 direction 偏移
+            var targetIndex = toEnd ? siblings.Count - 1 : direction == 0 ? 0 : index + direction;
+            if (targetIndex < 0 || targetIndex >= siblings.Count || targetIndex == index)
                 return false;
 
             // 交换目标索引的元素与当前元素的位置
@@ -92,6 +98,7 @@ namespace App.Entities
         //---------------------------------------------
         // ITree
         //---------------------------------------------
+        /*
         /// <summary>构建树结构</summary>
         /// <param name="all"></param>
         /// <param name="parentId"></param>
@@ -102,6 +109,27 @@ namespace App.Entities
             {
                 item.Children = ToTree(all, item.Id, treeLevel + 1);
                 item.TreeLevel = treeLevel;
+            }
+            return list;
+        }
+        */
+
+        /// <summary>智能构建树：根节点=ParentId为null或ParentId不在子集里</summary>
+        public static List<T> ToTree<T>(this List<T> all) where T : ITree<T>, ISort
+        {
+            var ids = all.Select(t => t.Id).ToHashSet();
+            return ToTree(all, null, 0, ids);
+        }
+        static List<T> ToTree<T>(List<T> all, long? parentId, int level, HashSet<long> ids)
+            where T : ITree<T>, ISort
+        {
+            var list = parentId == null
+                ? all.Where(c => c.ParentId == null || !ids.Contains(c.ParentId.Value)).OrderBy(m => m.SortId).ToList()
+                : all.Where(c => c.ParentId == parentId).OrderBy(m => m.SortId).ToList();
+            foreach (var item in list)
+            {
+                item.Children = ToTree(all, item.Id, level + 1, ids);
+                item.TreeLevel = level;
             }
             return list;
         }

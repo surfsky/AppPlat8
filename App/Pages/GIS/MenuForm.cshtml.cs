@@ -100,7 +100,7 @@ namespace App.Pages.GIS
         public IActionResult OnPostTestDataUrl([FromBody] GisMenu req)
         {
             if (req == null)
-                return BuildResult(400, "参数错误");
+                return BuildResult(400, "参数错误");   // Assert(req != null, "参数错误");
 
             try
             {
