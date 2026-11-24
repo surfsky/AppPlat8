@@ -135,5 +135,75 @@ namespace App
             writer.WriteStringValue(value.Value.ToString(CultureInfo.InvariantCulture));
         }
     }
-}
 
+    /// <summary>
+    /// 宽松 DateTime 转换器：支持 ISO 8601 和常见中文格式（yyyy-MM-dd HH:mm:ss）
+    /// </summary>
+    public sealed class FlexibleDateTimeJsonConverter : JsonConverter<DateTime>
+    {
+        private static readonly string[] Formats = new[]
+        {
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss.fff",
+            "yyyy-MM-ddTHH:mm:ss",
+            "yyyy-MM-ddTHH:mm:ss.fff",
+        };
+
+        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var text = reader.GetString();
+                if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                    return dt;
+                if (DateTime.TryParseExact(text, Formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+                    return dt;
+                throw new JsonException($"Invalid DateTime format: {text}");
+            }
+            if (reader.TokenType == JsonTokenType.Number)
+                return DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64()).DateTime;
+            throw new JsonException($"Unexpected token parsing DateTime: {reader.TokenType}");
+        }
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+            => writer.WriteStringValue(value.ToString("o", CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>
+    /// 宽松可空 DateTime 转换器
+    /// </summary>
+    public sealed class FlexibleNullableDateTimeJsonConverter : JsonConverter<DateTime?>
+    {
+        private static readonly string[] Formats = new[]
+        {
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss.fff",
+            "yyyy-MM-ddTHH:mm:ss",
+            "yyyy-MM-ddTHH:mm:ss.fff",
+        };
+
+        public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Null)
+                return null;
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var text = reader.GetString();
+                if (string.IsNullOrWhiteSpace(text))
+                    return null;
+                if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                    return dt;
+                if (DateTime.TryParseExact(text, Formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+                    return dt;
+                throw new JsonException($"Invalid DateTime format: {text}");
+            }
+            if (reader.TokenType == JsonTokenType.Number)
+                return DateTimeOffset.FromUnixTimeMilliseconds(reader.GetInt64()).DateTime;
+            throw new JsonException($"Unexpected token parsing nullable DateTime: {reader.TokenType}");
+        }
+        public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+        {
+            if (!value.HasValue) { writer.WriteNullValue(); return; }
+            writer.WriteStringValue(value.Value.ToString("o", CultureInfo.InvariantCulture));
+        }
+    }
+}

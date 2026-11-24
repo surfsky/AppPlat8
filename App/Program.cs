@@ -36,7 +36,9 @@ namespace App
             // 确保 4 个数据目录存在
             var summary = Paths.Summary();
             Logger.Info(summary);
-            CreateDbIfNotExists(host);
+
+            // 初始化数据库
+            PrepareDb(host);
 
             // 随站点生命周期自动拉起/结束控制台调度器，避免忘记启动，也避免退出时留下孤儿进程
             var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
@@ -50,6 +52,32 @@ namespace App
             host.Run();
         }
 
+        //---------------------------------------------------------------------
+        // 数据库初始化
+        //---------------------------------------------------------------------
+        // https://docs.microsoft.com/zh-cn/aspnet/core/data/ef-rp/intro
+        private static void PrepareDb(IHost host)
+        {
+            using (var scope = host.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<AppPlatContext>();
+                    AppPlatContextInitializer.Initialize(context);
+                    Logger.Info("数据库已初始化");
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred creating the DB.");
+                }
+            }
+        }
+
+        //---------------------------------------------------------------------
+        // 控制台调度
+        //---------------------------------------------------------------------
         /// <summary>站点启动完成后自动拉起控制台调度器（App.Consoler）。</summary>
         private static void StartConsolerOnBoot(IHost host)
         {
@@ -102,23 +130,6 @@ namespace App
         }
 
 
-        // https://docs.microsoft.com/zh-cn/aspnet/core/data/ef-rp/intro
-        private static void CreateDbIfNotExists(IHost host)
-        {
-            using (var scope = host.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                try
-                {
-                    var context = services.GetRequiredService<AppPlatContext>();
-                    AppPlatContextInitializer.Initialize(context);
-                }
-                catch (Exception ex)
-                {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred creating the DB.");
-                }
-            }
-        }
+
     }
 }

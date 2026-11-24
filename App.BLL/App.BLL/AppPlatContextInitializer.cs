@@ -17,8 +17,9 @@ namespace App.DAL
     {
         public static void Initialize(AppPlatContext context)
         {
-            //context.Database.EnsureCreated();
-            context.Database.Migrate();
+            // 这两个命令会冲突，自用Migrate就行了。
+            //context.Database.EnsureCreated();  // 根据实体模型的当前状态一次性创建整个数据库。但代价是——之后再也不能用迁移了，因为 EF Core 认为数据库已经"就绪"，没有迁移历史。
+            context.Database.Migrate();          // 数据库不存在 → 创建数据库 + 执行所有迁移 
 
             // 已经初始化
             if (context.Users.Any())
@@ -40,8 +41,8 @@ namespace App.DAL
                 {
                     Title = "AppPlat8",
                     BeiAnNo = "浙ICP备XXX号",
-                    Icon = "/Files/SiteConfig/2139794460303691776.png",
-                    LoginBg = "/Files/SiteConfig/2139794464653185024.png",
+                    Icon = "/Data/Files/SiteConfig/2139794460303691776.png",
+                    LoginBg = "/Data/Files/SiteConfig/2139794464653185024.png",
                     PageSize = 50,
                     DefaultPassword = "abc@123",
                     UpFileTypes = ".gif, .png, .jpg, .jpeg, .bmp, .mp3, .mp4, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .pdf, .cdr",
@@ -60,82 +61,12 @@ namespace App.DAL
                     SortId = 0,
                     NavigateUrl = "Me/WorkDesk",
                     ImageUrl = "fas fa-chart-line",
-                    Power = (Permission?)0,
-                },
-                new Menu
-                {
-                    Name = "排查",
-                    SortId = 10,
-                    Remark = "顶级菜单",
-                    ImageUrl = "fas fa-folder",
-                    Power = (Permission?)0,
-                    Expanded = true,
-                    Children = new List<Menu> {
-                        new Menu
-                        {
-                            Name = "对象",
-                            SortId = 10,
-                            NavigateUrl = "Checks/CheckObjects",
-                            ImageUrl = "fas fa-university",
-                            Power = (Permission?)0,
-                        },
-                        new Menu
-                        {
-                            Name = "排查",
-                            SortId = 20,
-                            NavigateUrl = "Checks/CheckLogs",
-                            ImageUrl = "fas fa-search",
-                            Power = (Permission?)321,
-                        },
-                        new Menu
-                        {
-                            Name = "标签",
-                            SortId = 25,
-                            NavigateUrl = "Checks/CheckTags",
-                            ImageUrl = "fas fa-flag",
-                            Power = (Permission?)341,
-                            Fixed = false,
-                        },
-                        new Menu
-                        {
-                            Name = "检查表",
-                            SortId = 30,
-                            NavigateUrl = "Checks/CheckSheets",
-                            ImageUrl = "fas fa-tachometer-alt",
-                            Power = (Permission?)341,
-                        },
-                        new Menu
-                        {
-                            Name = "隐患",
-                            SortId = 40,
-                            NavigateUrl = "Checks/CheckHazards",
-                            ImageUrl = "fas fa-file-excel",
-                            Power = (Permission?)331,
-                        },
-                        new Menu
-                        {
-                            Name = "任务",
-                            SortId = 50,
-                            NavigateUrl = "Checks/CheckTasks",
-                            ImageUrl = "fas fa-list",
-                            Power = (Permission?)311,
-                        },
-                        new Menu
-                        {
-                            Name = "报表",
-                            SortId = 60,
-                            NavigateUrl = "Checks/CheckReports",
-                            ImageUrl = "fas fa-chart-pie",
-                            Power = (Permission?)0,
-                        },
-                    }
                 },
                 new Menu
                 {
                     Name = "OA",
                     SortId = 20,
                     ImageUrl = "fas fa-folder",
-                    Power = (Permission?)0,
                     Children = new List<Menu> {
                         new Menu
                         {
@@ -143,23 +74,6 @@ namespace App.DAL
                             SortId = 0,
                             NavigateUrl = "OA/Announces",
                             ImageUrl = "fas fa-bullhorn",
-                            Power = (Permission?)71,
-                        },
-                        new Menu
-                        {
-                            Name = "公司",
-                            SortId = 0,
-                            NavigateUrl = "OA/Companies",
-                            ImageUrl = "fas fa-university",
-                            Power = (Permission?)81,
-                        },
-                        new Menu
-                        {
-                            Name = "联系人目录",
-                            SortId = 5,
-                            NavigateUrl = "OA/ContactMenus",
-                            ImageUrl = "fas fa-folder-tree",
-                            Power = (Permission?)247,
                         },
                         new Menu
                         {
@@ -167,73 +81,6 @@ namespace App.DAL
                             SortId = 6,
                             NavigateUrl = "OA/Contacts",
                             ImageUrl = "fas fa-address-book",
-                            Power = (Permission?)265,
-                        },
-                        new Menu
-                        {
-                            Name = "资产",
-                            SortId = 10,
-                            NavigateUrl = "OA/Assets",
-                            ImageUrl = "fas fa-print",
-                            Power = (Permission?)201,
-                        },
-                        new Menu
-                        {
-                            Name = "预算",
-                            SortId = 20,
-                            NavigateUrl = "OA/Budgets",
-                            ImageUrl = "fas fa-chart-line",
-                            Power = (Permission?)241,
-                        },
-                        new Menu
-                        {
-                            Name = "交办",
-                            SortId = 30,
-                            NavigateUrl = "Tasks/Tasks",
-                            ImageUrl = "fas fa-list-ol",
-                            Power = (Permission?)261,
-                        },
-                        new Menu
-                        {
-                            Name = "项目",
-                            SortId = 40,
-                            NavigateUrl = "Tasks/Projects",
-                            ImageUrl = "fas fa-cubes",
-                            Power = (Permission?)231,
-                        },
-                        new Menu
-                        {
-                            Name = "事件",
-                            SortId = 50,
-                            NavigateUrl = "Events/Events",
-                            ImageUrl = "fas fa-edit",
-                            Power = (Permission?)221,
-                        },
-                    }
-                },
-                new Menu
-                {
-                    Name = "知识库",
-                    SortId = 25,
-                    ImageUrl = "fas fa-folder",
-                    Power = (Permission?)0,
-                    Fixed = false,
-                    Children = new List<Menu> {
-                        new Menu
-                        {
-                            Name = "文档",
-                            SortId = 20,
-                            NavigateUrl = "Articles/Articles",
-                            ImageUrl = "fas fa-file-alt",
-                            Power = (Permission?)251,
-                        },
-                        new Menu
-                        {
-                            Name = "目录",
-                            SortId = 30,
-                            NavigateUrl = "Articles/ArticleDirs",
-                            ImageUrl = "fas fa-boxes",
-                            Fixed = false,
                         },
                     }
                 },
@@ -243,7 +90,6 @@ namespace App.DAL
                     SortId = 30,
                     Remark = "顶级菜单",
                     ImageUrl = "fas fa-folder",
-                    Power = (Permission?)0,
                     Children = new List<Menu> {
                         new Menu
                         {
@@ -252,7 +98,6 @@ namespace App.DAL
                             Remark = "二级菜单",
                             NavigateUrl = "Admins/Orgs",
                             ImageUrl = "fas fa-sitemap",
-                            Power = (Permission?)61,
                         },
                         new Menu
                         {
@@ -261,7 +106,6 @@ namespace App.DAL
                             Remark = "二级菜单",
                             NavigateUrl = "Admins/Users",
                             ImageUrl = "fas fa-users",
-                            Power = (Permission?)51,
                         },
                         new Menu
                         {
@@ -270,7 +114,6 @@ namespace App.DAL
                             Remark = "二级菜单",
                             NavigateUrl = "Admins/RolePower",
                             ImageUrl = "fas fa-cubes",
-                            Power = (Permission?)57,
                         },
                     }
                 },
@@ -279,7 +122,6 @@ namespace App.DAL
                     Name = "运维",
                     SortId = 40,
                     ImageUrl = "fas fa-folder",
-                    Power = (Permission?)0,
                     Children = new List<Menu> {
                         new Menu
                         {
@@ -288,7 +130,6 @@ namespace App.DAL
                             Remark = "二级菜单",
                             NavigateUrl = "Maintains/Menus",
                             ImageUrl = "fas fa-list",
-                            Power = (Permission?)22,
                         },
                         new Menu
                         {
@@ -297,7 +138,6 @@ namespace App.DAL
                             Remark = "二级菜单",
                             NavigateUrl = "Maintains/Logs",
                             ImageUrl = "fas fa-check-double",
-                            Power = (Permission?)31,
                         },
                         new Menu
                         {
@@ -306,7 +146,6 @@ namespace App.DAL
                             Remark = "二级菜单",
                             NavigateUrl = "Maintains/SiteConfigForm",
                             ImageUrl = "fas fa-cog",
-                            Power = (Permission?)21,
                         },
                         new Menu
                         {
@@ -314,56 +153,7 @@ namespace App.DAL
                             SortId = 40,
                             NavigateUrl = "AI/AiConfigs",
                             ImageUrl = "fas fa-rocket",
-                            Power = (Permission?)24,
                             Fixed = false,
-                        },
-                    }
-                },
-                new Menu
-                {
-                    Name = "开发",
-                    SortId = 50,
-                    ImageUrl = "fas fa-folder",
-                    Power = (Permission?)6,
-                    Children = new List<Menu> {
-                        new Menu
-                        {
-                            Name = "API",
-                            SortId = 0,
-                            NavigateUrl = "Dev/API",
-                            ImageUrl = "fas fa-link",
-                            Power = (Permission?)6,
-                        },
-                        new Menu
-                        {
-                            Name = "Chat",
-                            SortId = 30,
-                            NavigateUrl = "Chats/Chat",
-                            ImageUrl = "fas fa-cogs",
-                        },
-                        new Menu
-                        {
-                            Name = "测试",
-                            SortId = 60,
-                            ImageUrl = "fas fa-folder",
-                            Power = (Permission?)6,
-                            Children = new List<Menu> {
-                                new Menu
-                                {
-                                    Name = "图标2",
-                                    SortId = 20,
-                                    NavigateUrl = "Dev/IconFas",
-                                    ImageUrl = "fas fa-sliders-h",
-                                    Power = (Permission?)6,
-                                },
-                                new Menu
-                                {
-                                    Name = "Blazor",
-                                    SortId = 60,
-                                    NavigateUrl = "Blazors/Index",
-                                    ImageUrl = "fas fa-file",
-                                },
-                            }
                         },
                     }
                 },
@@ -372,7 +162,6 @@ namespace App.DAL
                     Name = "驾驶舱",
                     SortId = 70,
                     ImageUrl = "fas fa-folder",
-                    Power = (Permission?)0,
                     Children = new List<Menu> {
                         new Menu
                         {
@@ -380,7 +169,6 @@ namespace App.DAL
                             SortId = 0,
                             NavigateUrl = "GIS/GisIndex",
                             ImageUrl = "fas fa-tachometer-alt",
-                            Power = (Permission?)0,
                             Target = "_blank",
                         },
                         new Menu
@@ -389,7 +177,6 @@ namespace App.DAL
                             SortId = 20,
                             NavigateUrl = "GIS/Regions",
                             ImageUrl = "fas fa-project-diagram",
-                            Power = (Permission?)0,
                         },
                         new Menu
                         {
@@ -397,7 +184,6 @@ namespace App.DAL
                             SortId = 30,
                             NavigateUrl = "GIS/Panels",
                             ImageUrl = "fas fa-chart-bar",
-                            Power = (Permission?)271,
                         },
                     }
                 },
@@ -407,7 +193,6 @@ namespace App.DAL
                     SortId = 130,
                     NavigateUrl = "me/Profile",
                     ImageUrl = "fas fa-user",
-                    Power = (Permission?)0,
                     Fixed = true,
                 },
                 new Menu
@@ -416,7 +201,6 @@ namespace App.DAL
                     SortId = 140,
                     NavigateUrl = "Logout",
                     ImageUrl = "fas fa-external-link-alt",
-                    Power = (Permission?)0,
                     Remark = "二级菜单",
                     Target = "_top",
                     Fixed = true,

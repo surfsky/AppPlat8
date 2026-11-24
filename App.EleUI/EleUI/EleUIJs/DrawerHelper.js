@@ -223,6 +223,18 @@ export class DrawerHelper {
     color: #303133;
 }
 
+.ele-manager-drawer-close-btn,
+.ele-manager-drawer-max-btn,
+.ele-manager-drawer-refresh-btn {
+    transition: transform 0.08s ease, color 0.15s ease;
+}
+
+.ele-manager-drawer-close-btn:active,
+.ele-manager-drawer-max-btn:active,
+.ele-manager-drawer-refresh-btn:active {
+    transform: translateY(1px);
+}
+
 .ele-manager-drawer-actions {
     display: inline-flex;
     align-items: center;

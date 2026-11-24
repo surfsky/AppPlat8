@@ -257,7 +257,7 @@ namespace App.HttpApi
         {
             foreach (var api in typeapi.Apis)
             {
-                if (api.Name == methodName)
+                if (api.Name.ToLower() == methodName.ToLower())
                     return api;
             }
             return null;

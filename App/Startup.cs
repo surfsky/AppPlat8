@@ -57,9 +57,11 @@ namespace App
                 .AddRazorRuntimeCompilation()
                 .AddJsonOptions(options =>
                 {
-                    // Keep compatibility with legacy payloads that send enum names as strings.
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    options.JsonSerializerOptions.Converters.Add(new FlexibleDateTimeJsonConverter());
+                    options.JsonSerializerOptions.Converters.Add(new FlexibleNullableDateTimeJsonConverter());
                     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                    options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
                 });  // MVC + Razor Runtime Compilation
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
             {

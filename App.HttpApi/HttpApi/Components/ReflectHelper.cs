@@ -301,7 +301,12 @@ namespace App.HttpApi
                 if (!args.Keys.Contains(pi.Name))
                 {
                     if (pi.HasDefaultValue)
-                        array.Add(pi.DefaultValue);
+                    {
+                        var v = pi.DefaultValue;
+                        if (pi.ParameterType.GetRealType().IsEnum() && v != null && v.GetType().IsValueType)
+                            v = v.ToText().ParseBasicType(pi.ParameterType);
+                        array.Add(v);
+                    }
                     else if (pi.ParameterType.IsNullable())
                         array.Add(null);
                     else

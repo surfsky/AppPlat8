@@ -598,7 +598,6 @@
                 }
                 rebuildGeometryPointMarkers();
                 applyGeometryVisibility();
-                renderMenuTree();
                 state.preservedVisibleGeometryIds = new Set();
                 return true;
             })();

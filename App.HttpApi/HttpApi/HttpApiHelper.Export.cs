@@ -166,6 +166,7 @@ namespace App.HttpApi
         /// </summary>
         static string BuildApiTestHtml(API api)
         {
+            if (api == null) return "";
             var sb = new StringBuilder();
             if (api.PostFile)
                 sb.AppendFormat("<form action='{0}' method='post' enctype='multipart/form-data'>", api.Url.TrimEnd('_', '$', '!'));

@@ -48,5 +48,10 @@ namespace App.HttpApi
 
         [NonSerialized]
         public ResponseType RType;
+
+        public override string ToString()
+        {
+            return $"{Name}";
+        }
     }
 }

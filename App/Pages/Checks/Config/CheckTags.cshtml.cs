@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using App.Components;
 using App.DAL;
+using App.EleUI;
 using App.Entities;
 using App.Pages;
 using App.Utils;
@@ -61,6 +62,39 @@ namespace App.Pages.Checks
 
             CheckTag.ClearCache(); // 刷新缓存
             return BuildResult(0, "删除成功");
+        }
+
+
+        public IActionResult OnPostMoveUp([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(CheckTag.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveUp(), "已经是最顶层");
+            return EleHandler.Toast("上移成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveDown([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(CheckTag.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveDown(), "已经是最底层");
+            return EleHandler.Toast("下移成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveFirst([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(CheckTag.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveFirst(), "已经是最顶层");
+            return EleHandler.Toast("到顶成功", NotifyType.Success).ReloadData().ToResult();
+        }
+
+        public IActionResult OnPostMoveLast([FromBody] ElePayload payload)
+        {
+            Assert(payload?.SelectedCount == 1, "请先选择一行");
+            var item = Exist(CheckTag.Get(payload.FirstSelectedId.Value));
+            Assert(item.MoveLast(), "已经是最底层");
+            return EleHandler.Toast("到底成功", NotifyType.Success).ReloadData().ToResult();
         }
     }
 }

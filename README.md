@@ -51,12 +51,19 @@ dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
 #--------------------------------------------------------
 # 发布主项目
 #--------------------------------------------------------
-# 发布项目，并将 app/pages 目录拷贝到 publish 目录下，同时删除所有cs文件
+# 发布项目，并将 app/pages 目录拷贝到 publish 目录下，同时删除所有cs文件。
 dotnet publish App/App.csproj -c Release -o ./Publish
-cd ./Publish
-cp -r ../App/pages ./pages
-rm -rf ./pages/**/*.cs
-dotnet App.dll --urls=http://localhost:6060;
+cp -r  ./App/pages ./Publish/pages
+rm -rf ./Publish/pages/**/*.cs
+
+# 手工将生产环境的 Data 目录拷贝到发布目录下
+#cp -r  ./App/data ./Publish/data
+
+# 可拷贝到外面运行，保持项目目录干净
+mv ./Publish ../Publish
+cd ../Publish
+dotnet App.dll --urls="http://172.20.165.221:6060"
+
 
 # 若有必要，做数据迁移以及备份和拷贝
 dotnet App.dll ef database update --project App.dll

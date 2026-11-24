@@ -19,7 +19,7 @@ namespace App.Pages.Shared
         public IActionResult OnGetUsers(string keyword)
         {
             var cu = Auth.GetUser();
-            var q = App.DAL.User.Search(keyword: keyword);
+            var q = App.DAL.User.Search(keyword: keyword, isDel: false);
             q = q.FilterByOrg(cu);
             var users = q.SortPageExport();
             return BuildResult(0, "ok", users);

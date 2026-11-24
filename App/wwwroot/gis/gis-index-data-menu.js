@@ -75,12 +75,12 @@
 
         function getMenuGeometryIds(node, cache = new Map()) {
             if (!node) return [];
-            if (cache.has(node.id)) return cache.get(node.id);
-
-            const own = state.geometryByMenuId.get(node.id) || [];
+            const key = Number(node.id);
+            if (cache.has(key)) return cache.get(key);
+            const own = state.geometryByMenuId.get(key) || [];
             const childIds = (node.children || []).flatMap(child => getMenuGeometryIds(child, cache));
             const result = [...own, ...childIds];
-            cache.set(node.id, result);
+            cache.set(key, result);
             return result;
         }
 
@@ -122,11 +122,14 @@
             return result;
         }
 
-        async function setMenuChecked(node, checked, cache = new Map()) {
-            if (checked && await ensureGeometryMenus(collectMenuIds(node)) === false) return;
-            const ids = getMenuGeometryIds(node, cache);
+        async function setMenuChecked(node, checked) {
+            if (checked) {
+                await ensureGeometryMenus(collectMenuIds(node));
+            }
+            const ids = getMenuGeometryIds(node, new Map());
             ids.forEach(id => state.geometryVisibleMap.set(id, !!checked));
             applyGeometryVisibility();
+            renderMenuTree();
         }
 
         async function setBatchMenusChecked(menuIds, options = {}) {
@@ -243,7 +246,9 @@
                 checkbox.checked = ids.length > 0 && visibleCount === ids.length;
                 checkbox.indeterminate = visibleCount > 0 && visibleCount < ids.length;
                 checkbox.title = !zoomVisible && zoom !== null ? `缩放到 ${zoom} 级后显示` : '';
-                checkbox.addEventListener('change', () => setMenuChecked(node, !!checkbox.checked, geometryCache));
+                checkbox.addEventListener('change', () => {
+                    setMenuChecked(node, !!checkbox.checked);
+                });
 
                 const labelBtn = document.createElement('button');
                 labelBtn.type = 'button';

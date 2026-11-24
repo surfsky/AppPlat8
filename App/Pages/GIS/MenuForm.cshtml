@@ -54,11 +54,12 @@
                         const fullUrl = /^https?:\/\//i.test(url) ? url : window.location.origin + url;
                         const resp = await fetch(fullUrl, { credentials: 'same-origin' });
                         const json = await resp.json();
-                        const data = json?.data ?? json;
-                        const cnt = Array.isArray(data) ? data.length : (data ? 1 : 0);
+                        //const data = json?.data ?? json;
+                        //const cnt = Array.isArray(data) ? data.length : (data ? 1 : 0);
+                        const cnt = json?.pageInfo?.total ?? json?.data?.pageInfo?.total ?? 0;
                         if (this.form) {
                             if ('dataCnt' in this.form) this.form.dataCnt = cnt;
-                            if ('dataDt' in this.form) this.form.dataDt = new Date().toISOString().replace('T', ' ').slice(0, 19);
+                            if ('dataDt'  in this.form) this.form.dataDt = new Date().toISOString();
                         }
                         EleManager.showSuccess(`测试成功，共 ${cnt} 条数据`);
                     } catch (e) {

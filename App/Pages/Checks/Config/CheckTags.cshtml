@@ -14,6 +14,10 @@
             <Buttons>
                 <EleButton Type="Primary" Command="Search" Icon="Search" Width="120px">查询</EleButton>
                 <EleButton Type="Primary" Command="Add" Icon="Plus" Width="120px">新增</EleButton>
+                <EleButton Type="Warning" Handler="MoveFirst" Icon="ArrowUp" Payload="SelectInfo" >到顶</EleButton>
+                <EleButton Type="Warning" Handler="MoveUp" Icon="ArrowUp" Payload="SelectInfo" >上移</EleButton>
+                <EleButton Type="Warning" Handler="MoveDown" Icon="ArrowDown" Payload="SelectInfo" >下移</EleButton>
+                <EleButton Type="Warning" Handler="MoveLast" Icon="ArrowDown" Payload="SelectInfo" >到底</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

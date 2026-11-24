@@ -252,10 +252,42 @@
             }
         }
 
-        function renderList(menuName, items) {
+        function buildItemHtml(item) {
+            const title = item.alias || item.name || `点位${item.id}`;
+            const subtitle = item.name && item.alias && item.name !== item.alias ? item.name : '';
+            const addr = item.addr || '';
+            const dataText = getDataJsonValueText(item);
+            const metaText = [addr, dataText].filter(Boolean).join(' / ') || '暂无地址';
+            const disableClass = item.hasCoord ? '' : ' no-coord';
+            const tip = item.hasCoord ? '点击定位到地图中心' : '该点位缺少经纬度';
+            const seq = escapeHtml(item.seq ?? '');
+            return `
+                <div class="point-list-item${disableClass}" data-geometry-id="${item.id}" title="${escapeHtml(tip)}">
+                    <div class="point-list-main">
+                        <span class="point-list-no">${seq}</span>
+                        <span class="point-list-texts">
+                            <span class="point-list-title-row">
+                                <span class="point-list-title">${escapeHtml(title)}</span>
+                                ${subtitle ? `<span class="point-list-subtitle">(${escapeHtml(subtitle)})</span>` : ''}
+                                <button type="button" class="point-list-detail-btn" data-geometry-id="${item.id}" data-raw-id="${item.rawId || 0}" data-item-url="${escapeHtml(item.itemUrl || '')}" data-data-from="${escapeHtml(item.dataFrom || '')}" title="查看详情">
+                                    <i class="fa-regular fa-file-lines"></i>
+                                </button>
+                            </span>
+                            <span class="point-list-meta">${escapeHtml(metaText)}</span>
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderList(menuName, items, preserveScroll) {
             syncPanelHeader(menuName, Array.isArray(items) ? items.length : 0, currentTotal || (Array.isArray(items) ? items.length : 0));
             const body = getBody();
             if (!body) return;
+
+            const wrapBefore = body.querySelector('.point-list-wrap');
+            const savedScroll = preserveScroll && wrapBefore ? wrapBefore.scrollTop : 0;
+
             const visibleOptions = `
                 <option value=""${currentIsVisible === '' ? ' selected' : ''}>全部</option>
                 <option value="true"${currentIsVisible === 'true' ? ' selected' : ''}>可见</option>
@@ -275,37 +307,7 @@
                 return;
             }
 
-            const rowHtml = items
-                .map(item => {
-                    const title = item.alias || item.name || `点位${item.id}`;
-                    const subtitle = item.name && item.alias && item.name !== item.alias ? item.name : '';
-                    const addr = item.addr || '';
-                    const dataText = getDataJsonValueText(item);
-                    const metaText = [addr, dataText].filter(Boolean).join(' / ') || '暂无地址';
-                    const disableClass = item.hasCoord ? '' : ' no-coord';
-                    const tip = item.hasCoord ? '点击定位到地图中心' : '该点位缺少经纬度';
-                    const seq = escapeHtml(item.seq ?? '');
-
-                    return `
-                        <div class="point-list-item${disableClass}" data-geometry-id="${item.id}" title="${escapeHtml(tip)}">
-                            <div class="point-list-main">
-                                <span class="point-list-no">${seq}</span>
-                                <span class="point-list-texts">
-                                    <span class="point-list-title-row">
-                                        <span class="point-list-title">${escapeHtml(title)}</span>
-                                        ${subtitle ? `<span class="point-list-subtitle">(${escapeHtml(subtitle)})</span>` : ''}
-                                        <button type="button" class="point-list-detail-btn" data-geometry-id="${item.id}" data-raw-id="${item.rawId || 0}" data-item-url="${escapeHtml(item.itemUrl || '')}" data-data-from="${escapeHtml(item.dataFrom || '')}" title="查看详情">
-                                            <i class="fa-regular fa-file-lines"></i>
-                                        </button>
-                                    </span>
-                                    <span class="point-list-meta">${escapeHtml(metaText)}</span>
-                                </span>
-                            </div>
-                        </div>
-                    `;
-                })
-                .join('');
-
+            const rowHtml = items.map(buildItemHtml).join('');
             body.innerHTML = `
                 <div class="point-list-tools">
                     <input class="point-list-search" data-role="point-list-search" value="${escapeHtml(currentKeyword)}" placeholder="检索名称、地址、坐标" />
@@ -318,14 +320,21 @@
                     <button type="button" class="point-list-loadmore-btn" data-command="load-more-items"${items.length >= currentTotal ? ' disabled' : ''}>上滑换页 / 加载更多</button>
                 </div>
             `;
-
             bindListItemEvents();
+
+            if (savedScroll > 0) {
+                requestAnimationFrame(() => {
+                    const newWrap = body.querySelector('.point-list-wrap');
+                    if (newWrap) newWrap.scrollTop = savedScroll;
+                });
+            }
         }
 
         async function loadItems(reset) {
             if (!currentMenuNode) return;
             if (loading) return;
             loading = true;
+            const body = getBody();
 
             try {
                 if (typeof onLoadMenuItems === 'function') {
@@ -359,7 +368,7 @@
                         isVisible: currentIsVisible,
                         keyword: currentKeyword
                     });
-                    renderList(currentMenuNode?.name || '', state.pointListItems);
+                    renderList(currentMenuNode?.name || '', state.pointListItems, !reset);
                     return;
                 }
 
@@ -374,7 +383,7 @@
                     isVisible: currentIsVisible,
                     keyword: currentKeyword
                 });
-                renderList(currentMenuNode?.name || '', state.pointListItems);
+                renderList(currentMenuNode?.name || '', state.pointListItems, !reset);
             } finally {
                 loading = false;
             }
