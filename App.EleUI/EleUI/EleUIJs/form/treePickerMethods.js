@@ -404,8 +404,9 @@ export const treePickerMethods = {
                 });
 
                 app.use(hostWindow.ElementPlus, hostWindow.ElementPlusLocaleZhCn ? { locale: hostWindow.ElementPlusLocaleZhCn } : undefined);
-                if (hostWindow.ElementPlusIconsVue) {
-                    for (const [key, component] of Object.entries(hostWindow.ElementPlusIconsVue)) {
+                const treeIcons = hostWindow.ElementPlusIconsVue || window.ElementPlusIconsVue;
+                if (treeIcons) {
+                    for (const [key, component] of Object.entries(treeIcons)) {
                         app.component(key, component);
                     }
                 }

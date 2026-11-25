@@ -60,7 +60,7 @@ rm -rf ./Publish/pages/**/*.cs
 #cp -r  ./App/data ./Publish/data
 
 # 可拷贝到外面运行，保持项目目录干净
-mv ./Publish ../Publish
+mv ./Publish ../
 cd ../Publish
 dotnet App.dll --urls="http://172.20.165.221:6060"
 

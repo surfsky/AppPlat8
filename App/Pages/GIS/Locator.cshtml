@@ -60,7 +60,7 @@
         <div class="panel">
             <div style="display:flex; gap:8px; align-items:center;">
                 <el-input v-model="keyword" placeholder="输入地址或经纬度搜索定位" clearable @@keyup.enter="searchPlace"></el-input>
-                <el-button type="primary" @@click="searchPlace" :loading="searching" icon="search">搜索</el-button>
+                <el-button type="success" @@click="searchPlace" :loading="searching" icon="search">搜索</el-button>
                 <el-button type="primary" @@click="confirmLocation" icon="check">保存</el-button>
             </div>
             <div v-if="searchResults.length > 0" style="margin-top:8px; max-height:180px; overflow:auto; border:1px solid #e5e7eb; border-radius:6px;">

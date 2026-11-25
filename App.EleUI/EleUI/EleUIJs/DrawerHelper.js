@@ -45,7 +45,6 @@ export class DrawerHelper {
                 return window.top;
             }
         } catch {
-            // Cross-origin or inaccessible top window.
         }
         return window;
     }
@@ -673,11 +672,16 @@ export class DrawerHelper {
             } else {
                 app.use(hostWindow.ElementPlus);
             }
-            if (hostWindow.ElementPlusIconsVue) {
-                for (const [key, component] of Object.entries(hostWindow.ElementPlusIconsVue)) {
+            const iconsSource = hostWindow.ElementPlusIconsVue || window.ElementPlusIconsVue;
+            if (iconsSource) {
+                for (const [key, component] of Object.entries(iconsSource)) {
                     app.component(key, component);
                 }
             }
+            const checkIcon = iconsSource?.Check || iconsSource?.CircleCheck;
+            const closeIcon = iconsSource?.Close || iconsSource?.CircleClose;
+            if (checkIcon) app.component('Check', checkIcon);
+            if (closeIcon) app.component('Close', closeIcon);
 
             app.mount(mountEl);
             instance.app = app;

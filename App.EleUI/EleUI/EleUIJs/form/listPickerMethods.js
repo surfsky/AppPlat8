@@ -321,8 +321,9 @@ export const listPickerMethods = {
                 });
 
                 app.use(hostWindow.ElementPlus, hostWindow.ElementPlusLocaleZhCn ? { locale: hostWindow.ElementPlusLocaleZhCn } : undefined);
-                if (hostWindow.ElementPlusIconsVue) {
-                    for (const [key, component] of Object.entries(hostWindow.ElementPlusIconsVue)) {
+                const listIcons = hostWindow.ElementPlusIconsVue || window.ElementPlusIconsVue;
+                if (listIcons) {
+                    for (const [key, component] of Object.entries(listIcons)) {
                         app.component(key, component);
                     }
                 }
