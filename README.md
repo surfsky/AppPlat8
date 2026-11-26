@@ -115,48 +115,33 @@ dotnet ef migrations add OrgGeoJson --project App/App.csproj --startup-project A
 ### 网页自动化测试
 
 - 测试用例：在 WebTest 目录下的测试用例文件
-- 测试环境：Selenium WebDriver
-
-## 3、部署
-
-
-
-### 发布 Publish
-
-``` shell
-# 默认：框架依赖，win-x64，Release
-dotnet publish -c Release -r win-x64 -o ./publish
-#  自包含版本（离线服务器用）
-dotnet publish -c Release -r win-x64 --self-contained true -o ./publish
-# 精简PublishingReadyToRun，启动更快
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -o ./publish
-```
-
-### 文件部署方式
-
-- 将/App目录下的所有文件复制到部署目录下。
-- 配置数据库连接字符串：在部署目录下的 `appsettings.json` 文件中配置数据库连接字符串。
-- dotnet app.dll --urls=http://localhost:6001;http://abc.org
-
-### Docker 部署方式
-
-- 主程序包包装成docker包：
-``` bash
-docker build -t appplat8 .
-docker run -p 6001:6001 -v /Data:/App/data appplat8 appplat8
-```
-- 把/Data/目录映射出去，包括数据库、用户上传的文件、临时文件等：
+- 测试环境：Selenium WebDriver, Playwright
 
 ## 4、备份
 
 简单的说，拷贝目录 /Data/ 到其他地方就行了，包括数据库文件、用户上传的文件等。
 
-如果用了其他数据库：
+### 关于sqlite 数据库备份，更稳妥的办法是：
 
-- sqlite 数据库备份：直接拷贝一份到别地方就行
+```bash
+关闭网站，避免读写冲突
+sqlite3 App/Data/Db/sqlite.db "PRAGMA wal_checkpoint(TRUNCATE);"
+sqlite3 App/Data/Db/sqlite.db "VACUUM INTO 'App/Data/Db/sqlite.bak.db';"
+```
+
+### sqlite 的加密方案
+
+改用 SQLCipher 库加密数据库文件：
+
+```c#
+<PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.10" />
+SQLitePCL.Batteries_V2.Init();
+```
+
+### 其它数据库的备份
+
 - postgresql 数据库备份：用 pg_dump 命令备份，用 pgagent 配置定时任务备份
 - mysql 数据库备份：用 mysqldump 命令备份，用 mysqlbackup 配置定时任务备份
-
 
 ## 5、项目目录说明
 

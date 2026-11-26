@@ -21,10 +21,11 @@ namespace App.Entities
         [UI("全称")] public string FullName { get; set; }
 
         // Relations
-        public virtual List<T> Children { get; set; }
+        [UI("子节点")] public virtual List<T> Children { get; set; }
 
-        [NotMapped]      public int TreeLevel { get; set; }
-        [NotMapped]      public bool Enabled { get; set; } = true;
+        // virtual
+        [NotMapped, UI("层级")]      public virtual int TreeLevel { get; set; }
+        [NotMapped, UI("是否启用")]   public virtual bool Enabled { get; set; } = true;
 
 
         //-------------------------------------------------------

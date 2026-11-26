@@ -15,6 +15,21 @@
             <div>导入类型: <span class="font-semibold">@typeTitle</span></div>
         </div>
 
+        @if (!string.IsNullOrWhiteSpace(Model.KeyField))
+        {
+            <div class="mb-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                匹配字段: <span class="font-semibold">@Model.KeyField</span>
+                <span class="text-blue-500">（已存在则更新，不存在则新增；Excel 中未出现的列不会被覆盖）</span>
+            </div>
+        }
+
+        @if (Model.Lenient)
+        {
+            <div class="mb-3 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                宽松模式: 无法识别的单元格会被置空并提示，该行仍然导入。
+            </div>
+        }
+
         <div class="flex flex-wrap gap-2 mb-3">
             <el-button @@click="downloadTemplate" :loading="downloading" icon="Download">下载模板</el-button>
             <el-button type="primary" @@click="chooseFile" icon="DocumentAdd">选择Excel文件</el-button>
@@ -30,15 +45,23 @@
             <el-progress :percentage="progress" :status="progressStatus"></el-progress>
         </div>
 
-        <div class="flex-1 overflow-hidden">
-            <el-input type="textarea" :rows="16" resize="none" readonly v-model="logsText" class="h-full"></el-input>
+        <!-- 日志区：占满底部剩余空间 -->
+        <div class="flex-1 min-h-[160px] flex flex-col rounded border border-slate-200 overflow-hidden">
+            <div class="flex-none flex items-center justify-between px-3 py-1.5 bg-slate-50 border-b border-slate-200">
+                <span class="text-xs text-slate-500">导入日志</span>
+                <div class="flex items-center">
+                    <el-button link size="small" @@click="copyLogs" icon="DocumentCopy">复制</el-button>
+                    <el-button link size="small" @@click="clearLogs" icon="Delete">清空</el-button>
+                </div>
+            </div>
+            <div ref="logsBox" class="flex-1 min-h-0 overflow-auto bg-white px-3 py-2 font-mono text-xs leading-5 text-slate-700 whitespace-pre-wrap break-words">{{ logsText }}</div>
         </div>
     </div>
 }
 
 @section script {
     <script>
-        const { createApp, ref } = Vue;
+        const { createApp, ref, watch, nextTick } = Vue;
 
         const app = createApp({
             setup() {
@@ -53,6 +76,45 @@
                 const progress = ref(0);
                 const progressStatus = ref('');
                 const logsText = ref('');
+                const logsBox = ref(null);
+
+                // 日志变化时自动滚动到底部
+                const scrollLogsToBottom = () => {
+                    nextTick(() => {
+                        const el = logsBox.value;
+                        if (el) el.scrollTop = el.scrollHeight;
+                    });
+                };
+                watch(logsText, scrollLogsToBottom);
+
+                const clearLogs = () => {
+                    logsText.value = '';
+                };
+
+                const copyLogs = async () => {
+                    const text = logsText.value || '';
+                    if (!text) {
+                        EleManager?.showWarning?.('暂无日志可复制');
+                        return;
+                    }
+                    try {
+                        if (navigator.clipboard?.writeText) {
+                            await navigator.clipboard.writeText(text);
+                        } else {
+                            const ta = document.createElement('textarea');
+                            ta.value = text;
+                            ta.style.position = 'fixed';
+                            ta.style.opacity = '0';
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                        }
+                        EleManager?.showSuccess?.('日志已复制');
+                    } catch (e) {
+                        EleManager?.showError?.('复制失败，请手动选择文本复制');
+                    }
+                };
 
                 const appendServerLogs = (body) => {
                     const logs = body && body.data && Array.isArray(body.data.logs) ? body.data.logs : [];
@@ -159,10 +221,13 @@
                     progress,
                     progressStatus,
                     logsText,
+                    logsBox,
                     chooseFile,
                     onFileChange,
                     downloadTemplate,
-                    startImport
+                    startImport,
+                    copyLogs,
+                    clearLogs
                 };
             }
         })

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Web;
 
@@ -14,15 +15,22 @@ namespace App.Utils
     public class ExcelHelper
     {
         // 输出 Excel Xml
-        public static string ToExcelXml<T>(IList<T> objs, bool showFieldDescription=false)
+        /// <summary>
+        /// 输出 Excel Xml（泛型版本）。
+        /// 列会自动过滤：virtual 属性（EF 导航属性/延迟加载代理）不导出；
+        /// 复杂类型属性（非基元/字符串/枚举/日期等）若未重写 ToString() 也不导出。
+        /// </summary>
+        /// <param name="showTitleOrName">显示属性的标题还是名称（默认 false显示标题）</param>
+        /// <param name="excludeVirtual">是否排除 virtual 属性。置为 false 可保留 Id/创建时间 等"标量 virtual"列
+        /// （复杂类型的 virtual 属性仍会被"无 ToString 不导出"规则过滤）。</param>
+        public static string ToExcelXml<T>(IList<T> objs, bool showTitleOrName = true, bool excludeVirtual = true)
         {
             if (objs.IsEmpty())
                 return "";
 
-            //var type = typeof(T);
             var type = objs[0].GetType();
             var attrs = new UISetting(type).Items;
-            var props = type.GetProperties();
+            var cols = BuildExportColumns(type, attrs, excludeVirtual);
 
             // 表开始
             StringBuilder sb = new StringBuilder();
@@ -34,25 +42,25 @@ namespace App.Utils
 
             // 默认中文标题（第 1 行）；当 showFieldDescription=true 时追加英文属性名（第 2 行）
             sb.AppendLine("   <Row>");
-            foreach (var attr in attrs)
-                sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + (attr?.Title ?? "").Replace("<", "＜") + "</Data></Cell>");
-            sb.AppendLine("   </Row>");
-            if (showFieldDescription)
+            if (showTitleOrName)
             {
-                sb.AppendLine("   <Row>");
-                foreach (var prop in props)
-                    sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + prop.Name + "</Data></Cell>");
-                sb.AppendLine("   </Row>");
+                foreach (var col in cols)
+                    sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + (col.Title ?? "").Replace("<", "＜") + "</Data></Cell>");
             }
+            else{
+                foreach (var col in cols)
+                    sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + col.Name + "</Data></Cell>");
+            }
+            sb.AppendLine("   </Row>");
 
 
             // 输出数据
             foreach (var obj in objs)
             {
                 sb.AppendLine("   <Row>");
-                foreach (var prop in props)
+                foreach (var col in cols)
                 {
-                    var val = obj.GetValue(prop.Name).ToText();
+                    var val = obj.GetValue(col.Name).ToText();
                     sb.AppendLine("    <Cell><Data ss:Type=\"String\">" + val.Replace("<", "＜") + "</Data></Cell>");
                 }
                 sb.AppendLine("   </Row>");
@@ -63,6 +71,86 @@ namespace App.Utils
             sb.AppendLine(" </Worksheet>");
             sb.AppendLine("</Workbook>");
             return sb.ToString();
+        }
+
+        /// <summary>导出列（中文标题 + 属性名）</summary>
+        private sealed class ExportColumnInfo
+        {
+            public string Title { get; set; }
+            public string Name { get; set; }
+        }
+
+        /// <summary>构建导出列清单（表头与数据列共用同一份，保证列对齐）</summary>
+        private static List<ExportColumnInfo> BuildExportColumns(Type type, List<UIAttribute> attrs, bool excludeVirtual)
+        {
+            var titles = new Dictionary<string, string>();
+            foreach (var attr in (attrs ?? new List<UIAttribute>()))
+            {
+                if (attr == null || string.IsNullOrEmpty(attr.Name) || titles.ContainsKey(attr.Name))
+                    continue;
+                titles[attr.Name] = string.IsNullOrEmpty(attr.Title) ? attr.Name : attr.Title;
+            }
+
+            var list = new List<ExportColumnInfo>();
+            foreach (var prop in type.GetProperties())
+            {
+                if (!IsExportableProperty(prop, excludeVirtual))
+                    continue;
+                titles.TryGetValue(prop.Name, out var title);
+                list.Add(new ExportColumnInfo { Name = prop.Name, Title = string.IsNullOrEmpty(title) ? prop.Name : title });
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// 判断属性是否可以导出到 Excel：
+        /// 1) 索引器 / 只写属性 / 静态属性 不导出；
+        /// 2) virtual 属性（EF 导航属性、动态代理）不导出（excludeVirtual=true 时）；
+        /// 3) 复杂类型属性必须重写 ToString() 才导出（否则只能输出类型名，没有意义）。
+        /// </summary>
+        public static bool IsExportableProperty(PropertyInfo prop, bool excludeVirtual)
+        {
+            if (prop == null) return false;
+            if (prop.GetIndexParameters().Length > 0) return false;
+
+            var getter = prop.GetGetMethod(true);
+            if (getter == null || getter.IsStatic) return false;
+
+            // 复杂类型：非简单类型且未重写 ToString() → 不导出（如 List<Org>、Att 等子属性）
+            var propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+            if (!IsSimpleType(propType) && !OverridesToString(propType)) return false;
+
+            // virtual 属性不导出。注意：C# 接口实现的 getter 也是 virtual，但带 final 标记，不算 virtual。
+            if (excludeVirtual && getter.IsVirtual && !getter.IsFinal) return false;
+
+            return true;
+        }
+
+        /// <summary>是否为可直接生成文本的简单类型</summary>
+        private static bool IsSimpleType(Type type)
+        {
+            return type != null && (
+                type.IsPrimitive
+                || type.IsEnum
+                || type == typeof(string)
+                || type == typeof(decimal)
+                || type == typeof(DateTime)
+                || type == typeof(DateTimeOffset)
+                || type == typeof(TimeSpan)
+                || type == typeof(Guid)
+                || type == typeof(Uri)
+            );
+        }
+
+        /// <summary>类型是否重写了 ToString()（排除 object / ValueType 的默认实现）</summary>
+        private static bool OverridesToString(Type type)
+        {
+            if (type == null) return false;
+            var method = type.GetMethod(nameof(ToString), BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
+            return method != null
+                && method.DeclaringType != null
+                && method.DeclaringType != typeof(object)
+                && method.DeclaringType != typeof(ValueType);
         }
 
         // 将 DataTable 转化为 ExcelXml

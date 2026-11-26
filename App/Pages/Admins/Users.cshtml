@@ -30,6 +30,7 @@
         </Toolbar>
         <Columns>
             <EleNumColumn></EleNumColumn>
+            <EleColumn For="Item.Id" Label="Id" Width="60" Sortable="true"></EleColumn>
             <EleOpColumn Width="100" Fixed="right" Shows="3">
                 <Op Command="Edit" Tooltip="编辑" Icon="Edit" Visible="@Auth.HasPermission(Permission.UserEdit)"></Op>
                 <Op Command="Delete" Tooltip="删除" Icon="Delete" Visible="@Auth.HasPermission(Permission.UserDelete)"></Op>

@@ -329,7 +329,7 @@ namespace App.Pages.Checks
             if (!HasPermission(Permission.CheckObjectEdit))
                 return BuildResult(403, "无权操作");
 
-            var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckObject");
+            var url = "/Shared/Importor?type=" + Uri.EscapeDataString("App.DAL.CheckObject") + "&keyField=Name";
             return EleHandler.ShowDrawer(
                 title: "导入检查对象",
                 url: url,

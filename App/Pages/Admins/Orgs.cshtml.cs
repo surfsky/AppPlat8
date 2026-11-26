@@ -28,25 +28,21 @@ namespace App.Pages.Admins
         /// <summary>获取清单</summary>
         public async Task<IActionResult> OnGetData(string name)
         {
-            List<DAL.Org> tree = Search(name);
+            List<DAL.Org> tree = Search(name).ToTree();
             return BuildResult(0, "success", tree, null);
         }
 
         private static List<DAL.Org> Search(string name)
         {
-            var allOrgs = App.DAL.Org.All; //await.Set.OrderBy(o => o.SortId).ToListAsync();
+            var orgs = App.DAL.Org.All; //await.Set.OrderBy(o => o.SortId).ToListAsync();
             if (!string.IsNullOrEmpty(name))
             {
                 //allOrgs = allOrgs.Where(o => o.Name.Contains(name)).ToList();
                 //allOrgs = allOrgs.FirstOrDefault(t => t.Name.Contains(name)).GetDescendants();
-                var ids = allOrgs.Where(o => o.Name.Contains(name)).Select(t => t.Id).ToList();
-                allOrgs = DAL.Org.GetDescendants(ids).ToList();
+                var ids = orgs.Where(o => o.Name.Contains(name)).Select(t => t.Id).ToList();
+                orgs = DAL.Org.GetDescendants(ids).ToList();
             }
-
-
-            // Convert to nested structure
-            var tree = allOrgs.ToTree();
-            return tree;
+            return orgs;
         }
 
 
@@ -55,7 +51,7 @@ namespace App.Pages.Admins
         {
             var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
             var list = Search(name);
-            ExcelExporter.Export(list, $"组织_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+            ExcelExporter.Export(list, $"组织_{DateTime.Now:yyyyMMddHHmmss}.xlsx", true, false);
             return new EmptyResult();
         }
 

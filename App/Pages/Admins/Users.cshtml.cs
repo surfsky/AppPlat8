@@ -45,8 +45,9 @@ namespace App.Pages.Admins
         }
 
         /// <summary>获取用户列表</summary>
-        public IActionResult OnGetData(Paging pi, string name, string realName, string mobile, long? orgId, long? roleId, bool? isDel, bool includeSubOrg = true)
+        public IActionResult OnGetData(Paging pi, User? item,  string name, string realName, string mobile, long? orgId, long? authOrgId, long? roleId, bool? isDel, bool includeSubOrg = true)
         {
+            orgId = authOrgId ?? orgId;
             var cu = Auth.GetUser();
             var exportMode = this.Mode == PageMode.Select ? ExportMode.Simple : ExportMode.Detail;
             var q = App.DAL.User.Search(name: name, realName: realName, mobile: mobile, orgId: orgId, roleId: roleId, isDel: isDel, includeSubOrg: includeSubOrg);

@@ -22,6 +22,62 @@ namespace App.Components
     }
 
     /// <summary>
+    /// 单元格值自定义解析器。
+    /// 当默认类型转换失败时（例如 XxxId 列填的是名称文本而不是数字），
+    /// 由实现者尝试把文本转换为目标属性值。
+    /// </summary>
+    public interface IExcelValueResolver
+    {
+        /// <summary>尝试把原始单元格文本解析为属性值</summary>
+        /// <param name="property">目标属性</param>
+        /// <param name="rawText">单元格原始文本</param>
+        /// <param name="value">解析结果（返回 true 时有效）</param>
+        /// <param name="error">失败原因（返回 false 时用于提示）</param>
+        bool TryResolve(PropertyInfo property, string rawText, out object value, out string error);
+    }
+
+    /// <summary>Excel 行/单元格解析问题</summary>
+    public class ExcelRowIssue
+    {
+        /// <summary>Excel 中的行号（1-based，含表头行）</summary>
+        public int RowNo { get; set; }
+        /// <summary>Excel 中的列号（1-based）</summary>
+        public int ColNo { get; set; }
+        /// <summary>列显示名（如「规模(Scale)」）</summary>
+        public string Column { get; set; }
+        /// <summary>问题描述</summary>
+        public string Message { get; set; }
+
+        public override string ToString() => $"第{RowNo}行第{ColNo}列({Column}): {Message}";
+    }
+
+    /// <summary>解析出的一行数据（带 Excel 行号）</summary>
+    public class ExcelParsedRow
+    {
+        public int RowNo { get; set; }
+        public object Item { get; set; }
+    }
+
+    /// <summary>
+    /// 逐行容错的解析结果：解析失败的行只记 Errors，不影响其它行。
+    /// </summary>
+    public class ExcelFetchResult
+    {
+        /// <summary>解析成功的数据行</summary>
+        public List<ExcelParsedRow> Rows { get; } = new List<ExcelParsedRow>();
+        /// <summary>致命错误（该行被跳过，不参与导入）</summary>
+        public List<ExcelRowIssue> Errors { get; } = new List<ExcelRowIssue>();
+        /// <summary>宽松模式下被忽略的单元格（该行仍导入）</summary>
+        public List<ExcelRowIssue> Warnings { get; } = new List<ExcelRowIssue>();
+        /// <summary>本次文件实际匹配到的属性名（用于"只更新 Excel 里有的列"）</summary>
+        public List<string> MatchedProperties { get; } = new List<string>();
+        /// <summary>扫描到的数据行数（不含表头、不含空行）</summary>
+        public int DataRowCount { get; set; }
+        /// <summary>解析失败被跳过的行数</summary>
+        public int SkippedRowCount => Errors.Select(t => t.RowNo).Distinct().Count();
+    }
+
+    /// <summary>
     /// 基于类型定义的 Excel 读写工具。
     /// 支持按属性名、UI 标题、组合列头匹配字段。
     /// </summary>
@@ -29,6 +85,9 @@ namespace App.Components
     {
         private readonly List<ExcelColumn> _columns;
         private readonly Func<PropertyInfo, bool> _propertyFilter;
+
+        /// <summary>默认类型转换失败时的自定义解析器（可选），如把 "龙港市应急管理局" 解析成 OrgId</summary>
+        public IExcelValueResolver ValueResolver { get; set; }
 
         public ExcelParser() : this(null)
         {
@@ -55,50 +114,109 @@ namespace App.Components
 
         public List<T> Fetch(Stream stream, string fileNameHint)
         {
+            var result = FetchWithErrors(stream, fileNameHint);
+            if (result.Errors.Count > 0)
+            {
+                var first = result.Errors[0];
+                var more = result.Errors.Count > 1 ? $"（共 {result.Errors.Count} 处错误）" : "";
+                throw new FormatException($"第{first.RowNo}行第{first.ColNo}列({first.Column})解析失败: {first.Message}{more}");
+            }
+            return result.Rows.Select(r => (T)r.Item).ToList();
+        }
+
+        /// <summary>
+        /// 解析 Excel（逐行容错）：解析失败的行只记入 Errors，其它行照常返回。
+        /// </summary>
+        /// <param name="stream">文件流</param>
+        /// <param name="fileNameHint">文件名（用于判断 xls/xlsx）</param>
+        /// <param name="lenient">宽松模式：单个单元格无法识别时置空并记 Warnings，该行仍导入</param>
+        public ExcelFetchResult FetchWithErrors(Stream stream, string fileNameHint = "", bool lenient = false)
+        {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
+            var result = new ExcelFetchResult();
             var workbook = CreateWorkbookForRead(stream, fileNameHint);
             var sheet = workbook.NumberOfSheets > 0 ? workbook.GetSheetAt(0) : null;
             if (sheet == null)
-                return new List<T>();
+                return result;
 
             var headerRow = sheet.GetRow(sheet.FirstRowNum);
             if (headerRow == null)
-                return new List<T>();
+                return result;
 
             var evaluator = workbook.GetCreationHelper().CreateFormulaEvaluator();
             var headerMap = BuildHeaderMap(headerRow, evaluator);
             if (headerMap.Count == 0)
                 throw new InvalidOperationException("未匹配到可导入列，请检查表头。");
 
-            var list = new List<T>();
+            // 本次文件实际匹配到的属性（按列顺序），供上层做"只更新 Excel 里存在的列"
+            foreach (var kv in headerMap.OrderBy(t => t.Key))
+            {
+                var name = kv.Value.Property.Name;
+                if (!result.MatchedProperties.Contains(name))
+                    result.MatchedProperties.Add(name);
+            }
+
             for (var i = sheet.FirstRowNum + 1; i <= sheet.LastRowNum; i++)
             {
                 var row = sheet.GetRow(i);
                 if (row == null || RowIsEmpty(row))
                     continue;
 
+                var rowNo = i + 1;
+                result.DataRowCount++;
+
                 var item = new T();
-                foreach (var kv in headerMap)
+                var rowFailed = false;
+
+                foreach (var kv in headerMap.OrderBy(t => t.Key))
                 {
                     var colIndex = kv.Key;
                     var col = kv.Value;
                     var cell = row.GetCell(colIndex);
+                    var colNo = colIndex + 1;
 
-                    if (!TryConvertCell(cell, evaluator, col.Property.PropertyType, out var value, out var error))
+                    // 1) 默认类型转换
+                    if (TryConvertCell(cell, evaluator, col.Property.PropertyType, out var value, out var error))
                     {
-                        var colNo = colIndex + 1;
-                        var rowNo = i + 1;
-                        throw new FormatException($"第{rowNo}行第{colNo}列({col.HeaderDisplay})解析失败: {error}");
+                        col.Property.SetValue(item, value);
+                        continue;
                     }
 
-                    col.Property.SetValue(item, value);
+                    // 2) 自定义解析器（如 XxxId 列填名称 → 到关联表反查 Id）
+                    string reason = error;
+                    if (ValueResolver != null)
+                    {
+                        var rawText = GetCellText(cell, evaluator);
+                        if (ValueResolver.TryResolve(col.Property, rawText, out var resolved, out var resolveError))
+                        {
+                            col.Property.SetValue(item, resolved);
+                            continue;
+                        }
+                        if (!string.IsNullOrWhiteSpace(resolveError))
+                            reason = resolveError;
+                    }
+
+                    // 3) 记录问题
+                    var issue = new ExcelRowIssue { RowNo = rowNo, ColNo = colNo, Column = col.HeaderDisplay, Message = reason };
+                    if (lenient)
+                    {
+                        issue.Message = "已忽略：" + reason;
+                        result.Warnings.Add(issue);
+                        continue;               // 该单元格跳过，行继续
+                    }
+
+                    result.Errors.Add(issue);
+                    rowFailed = true;
+                    break;                       // 该行其它列不再解析
                 }
-                list.Add(item);
+
+                if (!rowFailed)
+                    result.Rows.Add(new ExcelParsedRow { RowNo = rowNo, Item = item });
             }
 
-            return list;
+            return result;
         }
 
         public void Save(string filePath)
@@ -517,6 +635,33 @@ namespace App.Components
             }
 
             var normalized = Normalize(text);
+            if (TryMatchEnumField(enumType, normalized, out value))
+                return true;
+
+            // 兜底：去掉「①」「1、」「(1)」之类的前缀序号再试一次（台账里很常见，如「④有限空间作业」）
+            var stripped = StripLeadingOrdinal(text);
+            if (!string.IsNullOrWhiteSpace(stripped) && !string.Equals(stripped, text.Trim(), StringComparison.Ordinal))
+            {
+                if (Enum.TryParse(enumType, stripped, true, out var namedValue))
+                {
+                    value = namedValue;
+                    return true;
+                }
+
+                if (TryMatchEnumField(enumType, Normalize(stripped), out value))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>按枚举字段名 / UI 标题 / 描述匹配枚举值</summary>
+        private static bool TryMatchEnumField(Type enumType, string normalized, out object value)
+        {
+            value = null;
+            if (string.IsNullOrEmpty(normalized))
+                return false;
+
             foreach (var field in enumType.GetFields(BindingFlags.Public | BindingFlags.Static))
             {
                 if (Normalize(field.Name) == normalized)
@@ -539,8 +684,40 @@ namespace App.Components
                     return true;
                 }
             }
-
             return false;
+        }
+
+        /// <summary>去掉文本开头的序号/标点前缀（①、⑷、1、1.、(1)、-、空格等）</summary>
+        private static string StripLeadingOrdinal(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            var s = text.Trim();
+            var i = 0;
+            while (i < s.Length)
+            {
+                var ch = s[i];
+                var code = (int)ch;
+                var isOrdinalSymbol =
+                    (code >= 0x2460 && code <= 0x2473) ||   // ①-⑳
+                    (code >= 0x2474 && code <= 0x2487) ||   // ⑴-⒇
+                    (code >= 0x2488 && code <= 0x249B) ||   // ⒈-⒛
+                    (code >= 0x24EA && code <= 0x24FF) ||   // ⓪-⓿
+                    (code >= 0x2776 && code <= 0x2793) ||   // ❶-➓
+                    char.IsDigit(ch) || ch == '.' || ch == '、' || ch == ',' || ch == '，' ||
+                    ch == ':' || ch == '：' || ch == '（' || ch == '(' || ch == '）' || ch == ')' ||
+                    ch == '-' || ch == '_' || ch == ' ' || ch == '\u3000' || ch == '\t';
+
+                if (!isOrdinalSymbol)
+                    break;
+                i++;
+            }
+
+            if (i == 0 || i >= s.Length)
+                return s;      // 没有前缀，或整串都是序号（如纯数字）→ 保持原样
+
+            return s.Substring(i).Trim();
         }
 
         private static bool TryParseBool(string text, out bool value)
