@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Element Plus 表头拖拽排序演示</title>
+  <!-- CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <script src="https://unpkg.com/element-plus"></script>
+  <!-- <script src="https://unpkg.com/sortablejs@1.15.0/Sortable.min.js"></script> -->
+  <script src="Sortable.min.js"></script>
+</head>
+<body>
+<div id="app" style="padding:20px;">
+  <el-card title="表头拖拽排序演示">
+    <div style="margin-bottom:12px">
+      <el-button @click="resetColumns">重置列顺序</el-button>
+      <el-popover trigger="click" title="列设置" width="240">
+        <el-checkbox-group v-model="visibleKeys">
+          <el-checkbox
+            v-for="col in allColumns"
+            :key="col.prop"
+            :label="col.prop"
+          >
+            {{ col.label }}
+          </el-checkbox>
+        </el-checkbox-group>
+        <template #reference>
+          <el-button>列设置</el-button>
+        </template>
+      </el-popover>
+    </div>
+
+    <el-table
+      ref="tableRef"
+      border
+      stripe
+      :data="tableData"
+      style="width:100%"
+    >
+      <el-table-column
+        v-for="col in showColumns"
+        :key="col.prop"
+        :prop="col.prop"
+        :label="col.label"
+        :fixed="col.fixed"
+      />
+    </el-table>
+  </el-card>
+</div>
+
+<script>
+const { ref, computed, onMounted, watch } = Vue
+
+const app = Vue.createApp({
+  setup() {
+    const allColumns = ref([
+      { label: 'ID', prop: 'id', fixed: 'left' },
+      { label: '名称', prop: 'name' },
+      { label: '地址', prop: 'address' },
+      { label: '隐患等级', prop: 'level' },
+      { label: '责任人', prop: 'owner' },
+      { label: '更新时间', prop: 'updateTime' },
+    ])
+
+    const STORAGE_KEY = 'table_column_sort_demo'
+    const tableRef = ref(null)
+
+    const loadStorage = () => {
+      const str = localStorage.getItem(STORAGE_KEY)
+      if (!str) return null
+      try {
+        return JSON.parse(str)
+      } catch {
+        return null
+      }
+    }
+    const saveStorage = (list) => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+    }
+
+    const initOrder = loadStorage()
+    if (initOrder && Array.isArray(initOrder)) {
+      const map = new Map(allColumns.value.map(i => [i.prop, i]))
+      const newList = []
+      initOrder.forEach(k => {
+        if (map.has(k)) newList.push(map.get(k))
+      })
+      allColumns.value.forEach(item => {
+        if (!newList.find(i => i.prop === item.prop)) {
+          newList.push(item)
+        }
+      })
+      allColumns.value = newList
+    }
+
+    const visibleKeys = ref(allColumns.value.map(c => c.prop))
+
+    const showColumns = computed(() => {
+      return allColumns.value.filter(c => visibleKeys.value.includes(c.prop))
+    })
+
+    const tableData = ref([
+      { id: 1, name: '厂房A', address: '龙港XX路', level: '重大', owner: '张三', updateTime: '2026-11-26' },
+      { id: 2, name: '储罐区', address: '龙港工业区', level: '较大', owner: '李四', updateTime: '2026-11-26' },
+      { id: 3, name: '仓库B', address: '龙港XX园区', level: '一般', owner: '王五', updateTime: '2026-11-26' },
+    ])
+
+    const resetColumns = () => {
+      localStorage.removeItem(STORAGE_KEY)
+      location.reload()
+    }
+
+    let sortable = null
+    onMounted(() => {
+      const wrapper = tableRef.value.$el.querySelector('.el-table__header-wrapper')
+      if (!wrapper) return
+      const tr = wrapper.querySelector('thead tr')
+      if (!tr) return
+
+      sortable = Sortable.create(tr, {
+        animation: 150,
+        filter: '.is-fixed',
+        preventOnFilter: true,
+        onEnd(evt) {
+          const oldIdx = evt.oldIndex
+          const newIdx = evt.newIndex
+          if (oldIdx === newIdx) return
+
+          const sourceCol = showColumns.value[oldIdx]
+          const allIdx = allColumns.value.findIndex(i => i.prop === sourceCol.prop)
+          const targetShowCol = showColumns.value[newIdx]
+          const targetAllIdx = allColumns.value.findIndex(i => i.prop === targetShowCol.prop)
+
+          const item = allColumns.value.splice(allIdx, 1)[0]
+          allColumns.value.splice(targetAllIdx, 0, item)
+          saveStorage(allColumns.value.map(c => c.prop))
+        }
+      })
+    })
+
+    watch(()=>{}, ()=>{}, {
+      onCleanup: () => sortable?.destroy()
+    })
+
+    return {
+      tableRef,
+      allColumns,
+      visibleKeys,
+      showColumns,
+      tableData,
+      resetColumns
+    }
+  }
+})
+app.use(ElementPlus)
+app.mount('#app')
+</script>
+</body>
+</html>
+<!-- （注：内容由AI生成） -->

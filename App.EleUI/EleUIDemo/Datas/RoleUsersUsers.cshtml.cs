@@ -14,7 +14,7 @@ namespace App.Pages.EleUIDemo
 
         public IActionResult OnGetData(App.Components.Paging pi, string roleName, string name, string chineseName)
         {
-            var result = Data.QueryUsers(pi.PageIndex, pi.PageSize, name, chineseName, roleName);
+            var result = Data.QueryUsers(pi, name, chineseName, roleName);
             return BuildResult(0, "success", new
             {
                 items = result.Items,

@@ -11,6 +11,7 @@ using App.Utils;
 using App.Entities;
 using App.EleUI;
 using System.Linq.Expressions;
+using App.Web;
 
 namespace App.Pages.Admins
 {
@@ -21,8 +22,17 @@ namespace App.Pages.Admins
 
         public void OnGet(){}
 
+        //--------------------------------------------------------------------------------
+        // 查询和导出
+        //--------------------------------------------------------------------------------
         /// <summary>获取清单</summary>
         public async Task<IActionResult> OnGetData(string name)
+        {
+            List<DAL.Org> tree = Search(name);
+            return BuildResult(0, "success", tree, null);
+        }
+
+        private static List<DAL.Org> Search(string name)
         {
             var allOrgs = App.DAL.Org.All; //await.Set.OrderBy(o => o.SortId).ToListAsync();
             if (!string.IsNullOrEmpty(name))
@@ -33,13 +43,26 @@ namespace App.Pages.Admins
                 allOrgs = DAL.Org.GetDescendants(ids).ToList();
             }
 
-            
+
             // Convert to nested structure
             var tree = allOrgs.ToTree();
-            return BuildResult(0, "success", tree, null);
+            return tree;
         }
 
 
+        // 导出列表到 Excel
+        public IActionResult OnPostExport(Paging pi, string name)
+        {
+            var exportPi = new Paging { PageIndex = 1, PageSize = int.MaxValue, SortField = pi.SortField, SortDirection = pi.SortDirection }; // 导出所有匹配的数据（不分页）,保持与页面上相同的排序
+            var list = Search(name);
+            ExcelExporter.Export(list, $"组织_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+            return new EmptyResult();
+        }
+
+        //--------------------------------------------------------------------------------
+        // 删除
+        //--------------------------------------------------------------------------------
+        /// <summary>删除</summary>
         public async Task<IActionResult> OnPostDelete([FromBody]long[] ids)
         {
             Logger.Info($"尝试删除组织: {string.Join(",", ids)}");
@@ -70,6 +93,9 @@ namespace App.Pages.Admins
             return BuildResult(0, "删除成功");
         }
 
+        //--------------------------------------------------------------------------------
+        // 修正
+        //--------------------------------------------------------------------------------
         /// <summary>补全所有组织全称</summary>
         public IActionResult OnPostFixAll()
         {
@@ -78,6 +104,9 @@ namespace App.Pages.Admins
             return BuildResult(0, $"已补全 {cnt} 条组织全称");
         }
 
+        //--------------------------------------------------------------------------------
+        // 移动
+        //--------------------------------------------------------------------------------
         public IActionResult OnPostMoveUp([FromBody] ElePayload payload)
         {
             Assert(payload?.SelectedCount == 1, "请先选择一行");

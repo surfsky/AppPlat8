@@ -1,4 +1,5 @@
 import { initPaginationState, paginationMethods } from './table/paginationMethods.js';
+import { initColumnState, columnMethods } from './table/columnMethods.js';
 import { commandMethods } from './table/commandMethods.js';
 import { initDrawerState, drawerMethods } from './table/drawerMethods.js';
 import { messageMethods } from './table/messageMethods.js';
@@ -15,6 +16,8 @@ export class EleTable {
         initPaginationState(this, Vue, options);
         initDrawerState(this, Vue);
         initPickerState(this, Vue);
+        // 列控制：表头拖动排序 + 列显隐设置（columns 由 EleTableAppBuilder 在 mount 前解析）
+        initColumnState(this, Vue, options);
     }
 
     // Dynamic options (for TreeSelect etc)
@@ -589,6 +592,7 @@ export class EleTable {
 Object.assign(
     EleTable.prototype,
     paginationMethods,
+    columnMethods,
     commandMethods,
     drawerMethods,
     messageMethods,

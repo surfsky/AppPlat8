@@ -63,7 +63,7 @@ namespace App.Pages.EleUIDemo
             CultureName = culture.ToString();
             Texts.SetCurrent(culture);
 
-            SampleRows = Data.QueryUsers(1, 5, "", "", "").Items ?? new List<User>();
+            SampleRows = Data.QueryUsers(new App.Components.Paging { PageIndex = 1, PageSize = 5 }).Items ?? new List<User>();
         }
 
         public IActionResult OnPostSwitchCulture([FromBody] SwitchCultureRequest req)
@@ -87,7 +87,7 @@ namespace App.Pages.EleUIDemo
 
         public IActionResult OnGetSampleData(App.Components.Paging pi, string name)
         {
-            var result = Data.QueryUsers(pi.PageIndex, pi.PageSize, name, "", "");
+            var result = Data.QueryUsers(pi, name);
             return BuildResult(0, "success", new { items = result.Items, total = result.Total });
         }
 

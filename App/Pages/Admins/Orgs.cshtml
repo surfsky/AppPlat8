@@ -18,6 +18,7 @@
                 <EleButton Type="Warning" Handler="MoveUp" Icon="ArrowUp" Payload="SelectInfo" >上移</EleButton>
                 <EleButton Type="Warning" Handler="MoveDown" Icon="ArrowDown" Payload="SelectInfo" >下移</EleButton>
                 <EleButton Type="Warning" Handler="MoveLast" Icon="ArrowDown" Payload="SelectInfo" >到底</EleButton>
+                <EleButton Type="Success" Icon="Download" Command="Export" Visible="@Auth.HasPermission(Permission.OrgEdit)">导出</EleButton>
             </Buttons>
         </Toolbar>
         <Columns>

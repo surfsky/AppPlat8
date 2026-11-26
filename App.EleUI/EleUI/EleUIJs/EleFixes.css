@@ -303,3 +303,86 @@ body.ele-fullscreen-page,
     height: 32px !important;
 }
 */
+
+/* ============================================================
+ * EleTable 列控制：表头拖动排序 + 底部「齿轮」列设置
+ * ============================================================ */
+/* 拖动中：光标与文字选择 */
+.el-table.ele-col-dragging,
+.el-table.ele-col-dragging th.el-table__cell,
+.el-table.ele-col-dragging th.el-table__cell .cell {
+    cursor: grabbing !important;
+    user-select: none !important;
+}
+
+/* 被拖动的表头（幽灵态） */
+.el-table th.el-table__cell.ele-col-drag-source .cell {
+    opacity: .45;
+}
+
+/* 插入位置指示线（inset 阴影，不改变布局宽度） */
+.el-table th.el-table__cell.ele-col-drop-before {
+    box-shadow: inset 3px 0 0 0 var(--el-color-primary) !important;
+}
+
+.el-table th.el-table__cell.ele-col-drop-after {
+    box-shadow: inset -3px 0 0 0 var(--el-color-primary) !important;
+}
+
+/* 底部左侧齿轮按钮 */
+.ele-col-setting-btn {
+    color: var(--el-text-color-secondary);
+    padding: 4px !important;
+    height: 24px !important;
+    width: 24px !important;
+}
+
+.ele-col-setting-btn:hover {
+    color: var(--el-color-primary);
+    background-color: var(--el-fill-color-light) !important;
+}
+
+/* 列设置弹层 */
+.ele-col-setting-popper {
+    padding: 10px 12px !important;
+}
+
+.ele-col-setting {
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+}
+
+.ele-col-setting-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.ele-col-setting-title {
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+}
+
+.ele-col-setting-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.ele-col-setting-item {
+    margin-right: 0 !important;
+    height: 28px;
+    display: flex;
+    align-items: center;
+}
+
+.ele-col-setting-item .el-checkbox__label {
+    font-size: 13px;
+    color: var(--el-text-color-regular);
+}
+

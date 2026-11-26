@@ -18,7 +18,7 @@
         <ElePicker For="Item.Gps" TextFor="Item.Gps" Label="地图定位" PopupUrl="/GIS/Locator" Icon="Location" TagType="Warning"></ElePicker>
         <EleDatePicker For="Item.ArchieveDt" Label="建档日期"></EleDatePicker>
         <EleDatePicker For="Item.LastCheckDt" Label="最后巡查时间" Type="@EleDatePickerType.DateTime"></EleDatePicker>
-        <EleSwitch For="Item.IsDel" Label="是否失效" Enabled="false"></EleSwitch>
+        <EleSwitch For="Item.IsDel" Label="是否失效"></EleSwitch>
         <div v-show="form.isDel === true">
             <EleSelect For="Item.FailReason" Label="失效原因" FillRow="true" ></EleSelect>
         </div>

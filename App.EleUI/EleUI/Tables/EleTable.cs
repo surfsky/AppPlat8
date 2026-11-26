@@ -52,6 +52,11 @@ namespace App.EleUI
         [HtmlAttributeName("SortField")]             public string SortField { get; set; } = "";
         [HtmlAttributeName("SortDirection")]         public string SortDirection { get; set; } = "ASC";
 
+        /// <summary>是否允许拖动表头调整列顺序（固定列、序号列、选择列不参与）。</summary>
+        [HtmlAttributeName("EnableColumnDrag")]      public bool EnableColumnDrag { get; set; } = true;
+        /// <summary>是否显示底部栏"齿轮"列设置按钮（弹层勾选可展示的列）。</summary>
+        [HtmlAttributeName("EnableColumnSetting")]   public bool EnableColumnSetting { get; set; } = true;
+
         [HtmlAttributeName("HighlightCurrentRow")]   public bool HighlightCurrentRow { get; set; } = true;
         [HtmlAttributeName("LineColor")]             public string LineColor { get; set; } = "#e5e5e5";
 
@@ -228,24 +233,25 @@ namespace App.EleUI
         }
 
         // 2. Footer (Pagination) -> el-footer
+        // 布局：左侧「齿轮」列设置按钮；右侧「共 x 条」+ 每页记录数 + 分页器
         private string CreateFooter()
         {
-            if (!ShowPage)
-                // 无分页：彻底不留空白（无 min-height 占位），让 el-table flex:1 占满容器
+            if (!ShowPage && !EnableColumnSetting)
+                // 无分页且无列设置：彻底不留空白（无 min-height 占位），让 el-table flex:1 占满容器
                 return @"
         <el-footer class=""flex-none p-0 bg-transparent"" style=""height:0;min-height:0;display:none""></el-footer>
 ";
+
             var defaultPageSize = ResolveDefaultPageSize();
             var pageSizeOptions = BuildPageSizeOptions(defaultPageSize);
             var totalPrefix = Texts.Current.TotalPrefix;
             var totalSuffix = Texts.Current.TotalSuffix;
             var pageSizeLabel = Texts.Current.PageSizeLabel;
-            return $@"
-        <el-footer class=""h-auto flex-none p-0 bg-white"">
-            <div class=""py-1.5 px-4 flex items-center justify-between"">
-                <div class=""text-gray-500 whitespace-nowrap"">{totalPrefix} {{{{ total }}}} {totalSuffix}</div>
-                <div class=""flex items-center space-x-2"">
-                    <span class=""text-gray-500 whitespace-nowrap"">{pageSizeLabel}</span>
+            var charComma = Texts.Current.CharComma;
+
+            var leftHtml = EnableColumnSetting ? BuildColumnSettingHtml() : "";
+            var rightHtml = ShowPage ? $@"
+                    <div class=""text-gray-500 whitespace-nowrap"">{totalPrefix} {{{{ total }}}} {totalSuffix}{charComma}</div><span class=""text-gray-500 whitespace-nowrap"">{pageSizeLabel}</span>
                     <el-select v-model=""pageSize"" class=""min-w-[80px] w-auto"" v-on:change=""handlePageSizeChange"" style=""max-width:120px;"">
                         {pageSizeOptions}
                     </el-select>
@@ -257,11 +263,54 @@ namespace App.EleUI
                         :current-page=""pageIndex + 1""
                         v-on:current-change=""handlePageChange""
                     >
-                    </el-pagination>
+                    </el-pagination>" : "";
+
+            return $@"
+        <el-footer class=""h-auto flex-none p-0 bg-white"">
+            <div class=""py-1.5 px-4 flex items-center justify-between"">
+                <div class=""flex items-center"">{leftHtml}
+                </div>
+                <div class=""flex items-center space-x-2"">{rightHtml}
                 </div>
             </div>
         </el-footer>
 ";
+        }
+
+        // 底部左侧：齿轮按钮 + 列设置弹层（勾选需要展示的列）
+        private string BuildColumnSettingHtml()
+        {
+            return $@"
+                    <el-popover placement=""top-start"" trigger=""click"" :width=""220"" popper-class=""ele-col-setting-popper"">
+                        <template #reference>
+                            <el-button text circle size=""small"" class=""ele-col-setting-btn"" title=""{EscapeHtml("列设置")}"">
+                                <el-icon><Setting /></el-icon>
+                            </el-button>
+                        </template>
+                        <div class=""ele-col-setting"">
+                            <div class=""ele-col-setting-head"">
+                                <span class=""ele-col-setting-title"">{EscapeHtml("列设置")}</span>
+                                <el-button link type=""primary"" size=""small"" v-on:click=""resetColumnSetting"">{EscapeHtml("重置")}</el-button>
+                            </div>
+                            <div class=""ele-col-setting-list"">
+                                <el-checkbox
+                                    v-for=""col in columnOptions""
+                                    :key=""col.key""
+                                    :model-value=""col.visible""
+                                    v-on:change=""toggleColumnVisible(col.key, $event)""
+                                    class=""ele-col-setting-item""
+                                >{{{{ col.label }}}}</el-checkbox>
+                            </div>
+                        </div>
+                    </el-popover>";
+        }
+
+        // 转义 HTML 文本（列设置弹层内的静态文案）
+        private static string EscapeHtml(string text)
+        {
+            return string.IsNullOrEmpty(text)
+                ? ""
+                : text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
         }
 
         // 3. Script
@@ -284,7 +333,10 @@ namespace App.EleUI
             formDrawerSize: '{formDrawerSize}',
             pageSize: {defaultPageSize},
             defaultSortField: '{defaultSortField}',
-            defaultSortDirection: '{defaultSortDirection}'
+            defaultSortDirection: '{defaultSortDirection}',
+            enableColumnDrag: {(EnableColumnDrag ? "true" : "false")},
+            enableColumnSetting: {(EnableColumnSetting ? "true" : "false")},
+            columnStateTitle: '{EscapeJs(drawerTitle)}'
         }};
         function mountTable(retry) {{
             if (typeof retry === 'undefined') retry = 0;

@@ -49,7 +49,7 @@ dotnet run --project App/App.csproj --urls "http://172.20.165.221:6060"
 
 
 #--------------------------------------------------------
-# 发布主项目
+# 发布主项目（默认端口6001）
 #--------------------------------------------------------
 # 发布项目，并将 app/pages 目录拷贝到 publish 目录下，同时删除所有cs文件。
 dotnet publish App/App.csproj -c Release -o ./Publish
@@ -71,19 +71,16 @@ cp ../App/Data/Db/sqlite.db ./App/Data/Db/sqlite.db.bak
 cp -r ../App/data ./data
 
 #--------------------------------------------------------
-#
+# EleUI 项目
 #--------------------------------------------------------
-# 若有必要，关闭相关占用端口的进程（mac）
-lsof -nP -iTCP:6001 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9
-lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
-lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
-
-
-# 编译及运行 EleUI 示例项目
+# 编译及运行 EleUI 示例项目（默认端口6062）
 dotnet build App.EleUI/EleUIDemo/EleUIDemo.csproj
 dotnet run --project App.EleUI/EleUIDemo/EleUIDemo.csproj
-lsof -nP -iTCP:6002 -sTCP:LISTEN && lsof -ti tcp:6002 | xargs -n 1 kill -9  
 
+
+#--------------------------------------------------------
+# Consoler 控制台调度项目
+#--------------------------------------------------------
 # 编译及运行控制台项目
 dotnet run --project App.Consoler
 ```

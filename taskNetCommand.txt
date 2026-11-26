@@ -1,0 +1,17 @@
+列出绑定IP在监听的端口
+
+lsof -nP -iTCP -sTCP:LISTEN | grep 172.20.165.221       
+
+
+
+# 关闭相关占用端口的进程（mac）
+lsof -nP -iTCP:6001 -sTCP:LISTEN && lsof -ti tcp:6001 | xargs -n 1 kill -9
+lsof -nP -iTCP:6060 -sTCP:LISTEN && lsof -ti tcp:6060 | xargs -n 1 kill -9
+lsof -nP -iTCP:5000 -sTCP:LISTEN && lsof -ti tcp:5000 | xargs -n 1 kill -9
+
+lsof -nP -iTCP:6002 -sTCP:LISTEN && lsof -ti tcp:6002 | xargs -n 1 kill -9  
+
+lsof -nP -iTCP:5199 -sTCP:LISTEN && lsof -ti tcp:5199 | xargs -n 1 kill -9
+lsof -nP -iTCP:7860 -sTCP:LISTEN && lsof -ti tcp:7860 | xargs -n 1 kill -9
+lsof -nP -iTCP:8787 -sTCP:LISTEN && lsof -ti tcp:8787 | xargs -n 1 kill -9
+

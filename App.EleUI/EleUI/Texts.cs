@@ -21,6 +21,10 @@ namespace App.EleUI
     {
         public Culture Culture { get; set; }
 
+        public string CharComma { get; set; } = ","; // 逗号
+        public string CharColon { get; set; } = ":"; // 冒号
+        public string CharPeriod { get; set; } = "."; // 句号
+
         public string Select { get; set; }
         public string PleaseSelect { get; set; }
         public string SelectIcon { get; set; }
@@ -94,6 +98,9 @@ namespace App.EleUI
             new Texts
             {
                 Culture = Culture.Chinese,
+                CharComma = "，",
+                CharColon = "：",
+                CharPeriod = "。",
                 Select = "选择",
                 PleaseSelect = "请选择",
                 SelectIcon = "选择图标",

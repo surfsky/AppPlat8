@@ -141,12 +141,15 @@ namespace App.Pages.EleUIDemo
             }
         }
 
-        public static (List<User> Items, int Total) QueryUsers(int pageIndex, int pageSize, string name = "", string chineseName = "", string roleName = "")
+        /// <summary>
+        /// 分页查询用户。排序由 paging.SortField / paging.SortDirection 控制
+        /// （字段名大小写不敏感，未指定时默认按 Id 倒序，即最新在前）。
+        /// </summary>
+        public static (List<User> Items, int Total) QueryUsers(App.Components.Paging paging, string name = "", string chineseName = "", string roleName = "")
         {
-            if (pageSize <= 0)
-                pageSize = 10;
-            if (pageIndex < 0)
-                pageIndex = 0;
+            paging ??= new App.Components.Paging();
+            var pageSize = paging.PageSize <= 0 ? 10 : paging.PageSize;
+            var pageIndex = paging.PageIndex < 0 ? 0 : paging.PageIndex;
 
             lock (_syncRoot)
             {
@@ -159,14 +162,58 @@ namespace App.Pages.EleUIDemo
                     query = query.Where(t => string.Equals(t.RoleName, roleName, StringComparison.OrdinalIgnoreCase));
 
                 var total = query.Count();
-                var items = query
-                    .OrderByDescending(t => t.Id)
+                paging.SetTotal(total);
+
+                var items = ApplyUserSort(query, paging.SortField, paging.SortDirection)
                     .Skip(pageIndex * pageSize)
                     .Take(pageSize)
                     .Select(CloneUser)
                     .ToList();
                 return (items, total);
             }
+        }
+
+        /// <summary>按前端传入的排序字段（大小写不敏感）排序；未知字段回落到 Id 倒序。</summary>
+        private static IEnumerable<User> ApplyUserSort(IEnumerable<User> query, string sortField, string sortDirection)
+        {
+            var desc = string.Equals((sortDirection ?? "ASC").Trim(), "DESC", StringComparison.OrdinalIgnoreCase);
+            IOrderedEnumerable<User> ordered;
+            switch ((sortField ?? "").Trim().ToLowerInvariant())
+            {
+                case "name":
+                    ordered = desc ? query.OrderByDescending(t => t.Name, StringComparer.OrdinalIgnoreCase) : query.OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase);
+                    break;
+                case "chinesename":
+                    ordered = desc ? query.OrderByDescending(t => t.ChineseName, StringComparer.OrdinalIgnoreCase) : query.OrderBy(t => t.ChineseName, StringComparer.OrdinalIgnoreCase);
+                    break;
+                case "rolename":
+                    ordered = desc ? query.OrderByDescending(t => t.RoleName, StringComparer.OrdinalIgnoreCase) : query.OrderBy(t => t.RoleName, StringComparer.OrdinalIgnoreCase);
+                    break;
+                case "age":
+                    ordered = desc ? query.OrderByDescending(t => t.Age) : query.OrderBy(t => t.Age);
+                    break;
+                case "score":
+                    ordered = desc ? query.OrderByDescending(t => t.Score) : query.OrderBy(t => t.Score);
+                    break;
+                case "birthday":
+                    ordered = desc ? query.OrderByDescending(t => t.Birthday) : query.OrderBy(t => t.Birthday);
+                    break;
+                case "isenabled":
+                    ordered = desc ? query.OrderByDescending(t => t.IsEnabled) : query.OrderBy(t => t.IsEnabled);
+                    break;
+                case "url":
+                    ordered = desc ? query.OrderByDescending(t => t.Url, StringComparer.OrdinalIgnoreCase) : query.OrderBy(t => t.Url, StringComparer.OrdinalIgnoreCase);
+                    break;
+                case "id":
+                    ordered = desc ? query.OrderByDescending(t => t.Id) : query.OrderBy(t => t.Id);
+                    break;
+                default: // 空/未知字段：默认按 Id 倒序（最新在前），保持原有列表体验
+                    ordered = query.OrderByDescending(t => t.Id);
+                    break;
+            }
+
+            // 并列值时按 Id 兜底，保证翻页顺序稳定
+            return ordered.ThenBy(t => t.Id);
         }
 
         public static User SaveUser(User req)

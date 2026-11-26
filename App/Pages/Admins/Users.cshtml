@@ -22,7 +22,7 @@
                 <EleButton Type="Primary" Command="Add" Icon="Plus">新增</EleButton>
                 <EleButton Type="Danger" Command="DeleteBatch" Icon="Delete" Visible="false">删除</EleButton>
                 <EleButton Type="Success" PopupUrl="Orgs" PopupTitle="组织管理" IconCls="fas fa-sitemap" Visible="false">组织管理</EleButton>
-                <EleButton Type="Success" Command="Export" Icon="Download" Visible="false">导出</EleButton>
+                <EleButton Type="Success" Command="Export" Icon="Download" Visible="@Auth.HasPermission(Permission.UserEdit)">导出</EleButton>
                 <EleButton Type="Warning" Icon="Upload" Handler="Import" Visible="@Auth.HasPermission(Permission.UserNew)">导入</EleButton>
                 <EleButton Type="Success" Command="Select" Icon="Check" Visible="Model.Mode==PageMode.Select">选择</EleButton>
                 <EleButton Type="Success" Handler="FixAll" Icon="Edit" Visible="@Auth.HasPermission(Permission.AdminMaintain)" Confirm="确认修复所有用户的错误数据吗？">修复所有用户</EleButton>

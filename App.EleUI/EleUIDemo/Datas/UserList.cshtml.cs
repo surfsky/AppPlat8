@@ -12,7 +12,7 @@ namespace App.Pages.EleUIDemo
 
         public IActionResult OnGetData(App.Components.Paging pi, string name)
         {
-            var result = Data.QueryUsers(pi.PageIndex, pi.PageSize, name, "", "");
+            var result = Data.QueryUsers(pi, name);
             return BuildResult(0, "success", new
             {
                 items = result.Items,

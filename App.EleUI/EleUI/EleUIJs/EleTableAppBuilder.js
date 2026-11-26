@@ -1,5 +1,6 @@
 import { EleTable } from "./EleTable.js";
 import { EleAppBuilder } from "./EleAppBuilder.js";
+import { prepareTableColumns } from "./table/columnMethods.js";
 
 /***********************************************************************
  * EleTableAppBuilder Class
@@ -38,6 +39,19 @@ export class EleTableAppBuilder extends EleAppBuilder {
         // 之前立即快照当前 SSR 原始 DOM 的 data-filter-default/data-filter-model，
         // 后续 onMounted / resetFilters 都复用这份稳定快照。
         const snapshotDefaults = builder.collectFilterDefaults(selector || '#app');
+
+        // 列控制（表头拖动排序 / 列显隐设置）：必须在 app.mount() 之前把 SSR 输出的
+        // <el-table-column> 改写成数据驱动模板（v-for="col in eleTableColumns" + v-if 分支），
+        // 否则列顺序/显隐无法由 Vue 响应式状态驱动。
+        if (config.enableColumnDrag !== false || config.enableColumnSetting !== false) {
+            try {
+                const rootEl = document.querySelector(selector || '#app');
+                const columns = prepareTableColumns(rootEl);
+                if (columns && columns.length > 0) config.columns = columns;
+            } catch (err) {
+                console.warn('[EleTable] 列控制模板准备失败：', err);
+            }
+        }
 
         const app = this.createConfiguredApp(config, {
             setup() {
@@ -143,6 +157,15 @@ export class EleTableAppBuilder extends EleAppBuilder {
                     // 将 data-filter-default 属性删除导致重置失效。
                     table._snapshotDefaults = filterDefaults;
                     table.loadData();
+
+                    // 列控制：表头拖动排序（事件委托绑定在 el-table 根节点上）
+                    try {
+                        const host = getTableHost();
+                        const tableEl = host && host.$el ? host.$el : null;
+                        if (tableEl && typeof table.bindColumnDrag === 'function')
+                            table.bindColumnDrag(tableEl);
+                    } catch (_) { /* ignore */ }
+
                     window.addEventListener('message', msgHandler);
                     document.addEventListener('keydown', enterSearchHandler, true);
                     console.log('[EnterSearch] listener registered');
@@ -211,6 +234,9 @@ export class EleTableAppBuilder extends EleAppBuilder {
                 });
                 onUnmounted(() => {
                     table.stopAutoRefresh();
+                });
+                onUnmounted(() => {
+                    if (typeof table.destroyColumnDrag === 'function') table.destroyColumnDrag();
                 });
 
                 // Form page URL configuration
